@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flight-sim rudder pedals . Mert Tureli</title>
+<link rel="canonical" href="https://merttureli.com/rudder-pedals.html">
+<meta property="og:title" content="Flight-sim rudder pedals . Mert Tureli">
+<meta property="og:description" content="Three-axis F-15 style rudder pedals with A1301 Hall-effect sensing on a Teensy 2.0 and driverless USB-HID firmware. Contactless position sensing: no wear parts, nothing to drift.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://merttureli.com/rudder-pedals.html">
+<meta property="og:image" content="https://merttureli.com/assets/og-cover.png">
+
+<meta name="description" content="Three-axis F-15 style rudder pedals with A1301 Hall-effect sensing on a Teensy 2.0 and driverless USB-HID firmware. Contactless position sensing: no wear parts, nothing to drift.">
+<meta name="theme-color" content="#000000">
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="case.css">
+</head>
+<body>
+
+<nav class="nav"><div class="in"><div class="panel">
+  <a class="mark" href="index.html">MERT</a>
+  <ul>
+    <li><a href="index.html#projects">Projects</a></li>
+    <li><a href="index.html#approach">Approach</a></li>
+    <li><a href="index.html#log">Log</a></li>
+  </ul>
+  <a class="cta" href="index.html#contact">Contact</a>
+</div></div></nav>
+
+<main><div class="wrap">
+  <span class="crumb rise">Project 04 of 07 . Personal build . mechatronics</span>
+  <h1 class="title rise">Rudder pedals that feel like the jet</h1>
+  <p class="lead rise">I fly ultralights, and consumer sim pedals never felt right: short
+    throw, toy-like centering, and potentiometers that get jittery with wear. So I built my
+    own. <b>F-15 style geometry, three axes, magnetic sensing that cannot wear out</b>, and
+    firmware any PC recognises without drivers.</p>
+
+  <table class="tblock rise">
+    <tr><th>Role</th><td>Design, print, wiring and firmware, solo</td>
+        <th>Type</th><td>Personal project</td></tr>
+    <tr><th>Tools</th><td>SolidWorks . FDM 3D printing . Teensy 2.0 . A1301 Hall-effect sensors . C++</td>
+        <th>Timeline</th><td>2026</td></tr>
+    <tr><th>Result</th><td>3-axis plug-and-play USB HID controller</td>
+        <th>Status</th><td>In daily use at my sim</td></tr>
+  </table>
+
+  <div class="body">
+    <h2>The problem</h2>
+    <p>Rudder pedals do three jobs at once: yaw through the sliding pedal motion, plus
+      independent left and right toe brakes. Consumer hardware compresses all of that into
+      short springy travel measured by potentiometers, and a potentiometer is a wiper
+      physically dragging on a resistive track. That wiper is friction you feel through your
+      feet, it wears into dead spots exactly where you use it most, and the wear is invisible
+      until it shows up as jitter.</p>
+
+    <figure class="rise">
+      <img src="assets/img/pedals/pedals-hero-900.webp" alt="CAD render of the rudder pedal assembly: curved slotted footplate on its pivot arm between printed side walls" width="900" height="600">
+      <figcaption><b>The assembly.</b> Curved slotted footplate on its pivot arm between
+        printed side walls. My CAD.</figcaption>
+    </figure>
+
+    <h2>Constraints</h2>
+    <ul class="rise">
+      <li>Three independent axes (yaw plus left and right toe brakes) in one mechanism</li>
+      <li>Every structural part printable on a hobby FDM printer</li>
+      <li><b>No contact-based sensing anywhere in the signal path</b></li>
+      <li>Plug-and-play: a standard game controller to any PC, no drivers, no companion app</li>
+    </ul>
+
+    <h2>Sensing without touching</h2>
+    <p>Each axis is measured by an <b>A1301 Hall-effect sensor</b> reading a magnet on the
+      moving part. The only thing that crosses the gap is a magnetic field: no wiper, no
+      contact, nothing to wear. The output is smooth, continuous, and identical on day one
+      and day one thousand. That single component choice deletes the entire failure mode
+      that ruins potentiometer controls.</p>
+
+    <figure class="figwrap rise">
+      <div class="figure" data-fig="hall" role="img"
+        aria-label="A magnet carried on the pivoting pedal arm sweeping past a fixed A1301 Hall-effect sensor across an air gap, with field lines shown across the gap and the sensor output voltage plotted against pedal travel around a 2.5 volt quiescent point.">
+        <span class="ftag">Contactless sensing, drawn live</span>
+      </div>
+      <figcaption><b>The magnet sweeps, the sensor sits still.</b> Output tracks travel around
+        a 2.5 V quiescent point; the air gap is the whole idea.</figcaption>
+    </figure>
+
+    <div class="duo rise">
+      <figure><img src="assets/img/pedals/pedals-profile-900.webp" alt="Side profile CAD render of the pedal mechanism showing the pivot geometry" loading="lazy" width="900" height="600">
+        <figcaption>The mechanism in profile: pivot placement set the feel.</figcaption></figure>
+      <figure><img src="assets/img/pedals/pedals-sensor-900.webp" alt="CAD render of the sensor lever and centre magnet holder parts" loading="lazy" width="900" height="600">
+        <figcaption>Sensor lever and magnet holder: printed geometry sets the air gap.</figcaption></figure>
+    </div>
+
+    <h2>Mechanism first, firmware that gets out of the way</h2>
+    <p>I designed the three-axis assembly around F-15 style pedal geometry and printed it,
+      iterating on pivot placement and return feel. Rapid prototyping earns its name here:
+      <b>pedal feel is subjective, and the fastest way to evaluate a linkage is to stand on
+      it.</b></p>
+    <p>A Teensy 2.0 reads the sensors and presents itself as a standard <b>USB HID</b> game
+      controller; plug it in and every simulator sees it instantly. The C++ firmware handles
+      per-axis calibration, learning each axis's real min, centre and max, plus configurable
+      deadzone logic so a resting foot never commands a tiny continuous input.</p>
+
+    <h2>The result</h2>
+    <div class="results rise">
+      <div><span class="n">3</span><span class="k">independent axes, fighter-style geometry</span></div>
+      <div><span class="n">0</span><span class="k">wear parts in the sensing path</span></div>
+      <div><span class="n">0</span><span class="k">drivers: native USB HID</span></div>
+      <div><span class="n">A1301</span><span class="k">ratiometric Hall sensing per axis</span></div>
+    </div>
+
+    <h2>What I learned</h2>
+    <p>This is where mechanical design and embedded software stopped being separate skills for
+      me. The feel comes from the linkage, the precision from the sensor choice, the usability
+      from the firmware, and no one of those can compensate for getting another wrong. It also
+      connects to flying: <b>a control input has to feel right, not only measure right</b>,
+      and friction in a sensor is a lie about where the pilot actually put their foot.</p>
+  </div>
+
+  <nav class="casenav">
+    <a href="bend-fixture.html">&larr; Bend fixture</a>
+    <a href="index.html#projects">All projects</a>
+    <a href="therma-shift.html">Therma-Shift &rarr;</a>
+  </nav>
+</div></main>
+
+<footer><div class="in wrap"><span>&copy; 2026 Mert Tureli</span><span>Schenectady, NY</span></div></footer>
+<script src="figures.js" defer></script>
+<script src="js/analytics-config.js"></script>
+<script src="js/track.js"></script>
+<script src="js/clarity.js"></script>
+</body>
+</html>

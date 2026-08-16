@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Robo-Catcher . Mert Tureli</title>
+<link rel="canonical" href="https://merttureli.com/robo-catcher.html">
+<meta property="og:title" content="Robo-Catcher . Mert Tureli">
+<meta property="og:description" content="Senior capstone: an automatic softball catching and return machine, under $700, 100% feed-indexing reliability on competition day. Feeding co-lead and owner of every wire in the robot.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://merttureli.com/robo-catcher.html">
+<meta property="og:image" content="https://merttureli.com/assets/og-cover.png">
+
+<meta name="description" content="Senior capstone: an automatic softball catching and return machine, under $700, 100% feed-indexing reliability on competition day. Feeding co-lead and owner of every wire in the robot.">
+<meta name="theme-color" content="#000000">
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="case.css">
+</head>
+<body>
+
+<nav class="nav"><div class="in"><div class="panel">
+  <a class="mark" href="index.html">MERT</a>
+  <ul>
+    <li><a href="index.html#projects">Projects</a></li>
+    <li><a href="index.html#approach">Approach</a></li>
+    <li><a href="index.html#log">Log</a></li>
+  </ul>
+  <a class="cta" href="index.html#contact">Contact</a>
+</div></div></nav>
+
+<main><div class="wrap">
+  <span class="crumb rise">Project 01 of 07 . Senior capstone . MER419</span>
+  <h1 class="title rise">Robo-Catcher: a softball machine that catches and throws back</h1>
+  <p class="lead rise">Pitching machines are everywhere. Machines that <b>catch</b> the ball
+    and return it do not exist, so our twelve-person capstone team built one for under $700.
+    I co-led the four-person feeding subsystem, and when it became clear nobody had claimed
+    the electronics for the rest of the robot, <b>I took over every wire in it</b>.</p>
+
+  <table class="tblock rise">
+    <tr><th>Role</th><td>Feeding co-lead, then all electronics and firmware</td>
+        <th>Team</th><td>12, across capture, feeding and return</td></tr>
+    <tr><th>Tools</th><td>ESP32 . C++ . MATLAB . NEMA 17 + TB6600 . SolidWorks . laser-cut HDF . 3D printing</td>
+        <th>Timeline</th><td>2025 . two academic terms</td></tr>
+    <tr><th>Result</th><td>100% feed-indexing success on competition day</td>
+        <th>Status</th><td>Delivered</td></tr>
+  </table>
+
+  <div class="body">
+    <h2>The problem</h2>
+    <p>A solo player can buy a machine that pitches, but someone still has to walk every ball
+      back. We set out to close the loop: a machine that catches an incoming throw, feeds it
+      internally, and returns it, with no human in the middle. Off-the-shelf solutions do not
+      exist at any price; ours had to come in under a $700 budget.</p>
+    <p>Catching is the easy half. A net absorbs the ball and gravity delivers it somewhere
+      predictable. <b>Feeding is the subsystem that decides whether the whole machine
+      works</b>, because the ball has to move from wherever it landed into a thrower that is
+      already spinning, one at a time, without jamming.</p>
+
+    <h2>Constraints</h2>
+    <ul class="rise">
+      <li>Total build cost under <b>$700</b>, every actuator and driver chosen with cost in mind</li>
+      <li>Portable by one person: <b>55 lb</b>, fits in a car trunk, assembles at the field with no tools</li>
+      <li>Battery powered: a full practice session on one 12 V 20 Ah SLA battery</li>
+      <li>Safe around players: wireless emergency stop and <b>hardware cut-offs</b> required</li>
+    </ul>
+
+    <h2>The mechanism I owned</h2>
+    <p>The feeder is a rotating drum carrying two pockets, 180 degrees apart. One pocket sits
+      under the collection funnel and loads while the other sits over the thrower throat and
+      discharges. Half a turn swaps them. <b>Because loading and discharging happen at the same
+      time in different places, the machine never waits on itself</b>, and there is no state in
+      which a second ball can enter an occupied pocket.</p>
+
+    <figure class="figwrap rise">
+      <div class="figure tall" data-fig="indexer" role="img"
+        aria-label="The dual-chamber indexer drawn from its geometry: two pockets 180 degrees apart on one drum, stepping half a turn per cycle, with a ball dropping in from the funnel and another discharging.">
+        <span class="ftag">The dual-chamber indexer, drawn live</span>
+        <span class="fhint">Drag to rotate</span>
+      </div>
+      <figcaption><b>Drawn from the real geometry, not filmed.</b> Two pockets, a 180 degree
+        step per cycle. This is the same code that animates it on the homepage.</figcaption>
+    </figure>
+
+    <p>The failure mode that kills machines like this is a stall mid-rotation, so before any
+      parts were made I modelled the load case in <b>MATLAB</b> (a 0.19 kg ball lifted through
+      180 degrees) and sized the NEMA 17 stepper and TB6600 driver to a <b>1.8x torque safety
+      factor</b>. The motor selection was an argument, not a guess.</p>
+
+    <h2>As built</h2>
+    <div class="duo rise">
+      <figure><img src="assets/img/plate/assembly-dark-900.webp" alt="Line drawing of the full machine: catch net panel, ball ramp and thrower on the base frame" loading="lazy" width="900" height="790">
+        <figcaption>General arrangement, derived from my SolidWorks model.</figcaption></figure>
+      <figure><img src="assets/img/plate/thrower-dark-900.webp" alt="Line drawing of the thrower assembly: two flywheels, timing gears and the drive motor in a cage" loading="lazy" width="900" height="1392">
+        <figcaption>The return thrower: a 120 W DC flywheel pair.</figcaption></figure>
+    </div>
+
+    <h2>Electronics and firmware</h2>
+    <p>Everything runs on one <b>ESP32</b>: PWM speed control for the 120 W return flywheel
+      through a MOSFET stage, stepper indexing for the feeder, and limit-switch logic so the
+      firmware knows the drum's real position rather than its commanded one. A wireless remote
+      gives start and stop from across the field.</p>
+    <p>The emergency stop is hardware, not software, on purpose. <b>A machine that throws a
+      softball at a person should not rely on a microcontroller having survived in order to
+      stop.</b></p>
+
+    <div class="duo rise">
+      <figure><img src="assets/img/shop/uc-track-900.webp" alt="Two team members crouched on the indoor track, testing a wooden ramp module with a battery beside it" loading="lazy" width="900" height="600">
+        <figcaption>Module testing on the indoor track. Photograph: Paul Buckowski / Union College.</figcaption></figure>
+      <figure><img src="assets/img/shop/uc-netframe-900.webp" alt="Team members stretching the catch net across its frame on a lab bench" loading="lazy" width="900" height="600">
+        <figcaption>Stretching the catch net over its frame. Photograph: Paul Buckowski / Union College.</figcaption></figure>
+    </div>
+
+    <figure class="rise">
+      <video muted loop playsinline preload="none" controls
+        poster="assets/video/robo-poster.jpg"
+        aria-label="The Robo-Catcher on the field during the capstone demonstration, with the class watching">
+        <source src="assets/video/robo-desktop.mp4" type="video/mp4">
+      </video>
+      <figcaption><b>Demonstration day.</b> My footage, shot on the field.</figcaption>
+    </figure>
+
+    <div class="duo rise">
+      <figure><img src="assets/img/shop/machine-field-900.webp" alt="The assembled machine deployed on the practice field with the catch net raised" loading="lazy" width="900" height="1125">
+        <figcaption>Deployed for a test run. My photograph.</figcaption></figure>
+      <figure><img src="assets/img/shop/bench-build-900.webp" alt="Two team members fabricating the catch net frame at a workbench" loading="lazy" width="900" height="809">
+        <figcaption>Building the catch-net frame. Twelve people, one bench.</figcaption></figure>
+    </div>
+
+    <h2>The result</h2>
+    <figure class="rise">
+      <img src="assets/img/shop/uc-team-900.webp"
+        srcset="assets/img/shop/uc-team-900.webp 900w, assets/img/shop/uc-team-1600.webp 1600w"
+        sizes="(max-width:58rem) 92vw, 832px"
+        alt="The twelve-person capstone team standing on the field around the machine: the carpet-faced catch panel with its black ramp, and the wooden thrower crate at the right" loading="lazy" width="900" height="600">
+      <figcaption><b>The team, on demonstration day.</b> Photograph: Paul Buckowski / Union College.</figcaption>
+    </figure>
+    <div class="results rise">
+      <div><span class="n">100%</span><span class="k">feed-indexing success on competition day</span></div>
+      <div><span class="n">&lt;$700</span><span class="k">total build cost, on a $700 cap</span></div>
+      <div><span class="n">55 lb</span><span class="k">one-person portable, no tools to assemble</span></div>
+      <div><span class="n">1.5 hr</span><span class="k">runtime per battery charge</span></div>
+    </div>
+    <p>Our professor described the electronics choices as "uncommonly sophisticated for this
+      course", and noted the team had built both the simplest feeder and the most accurate
+      return thrower of the two class teams.</p>
+
+    <h2>What I learned</h2>
+    <p>The MATLAB torque study felt slow while teammates were already printing parts, and then
+      the feeder ran a full competition day without a single missed index. <b>Analysis before
+      fabrication is cheaper than iteration after it.</b> If I built it again I would close the
+      loop on flywheel RPM, so return speed stays constant as the battery sags, and I would
+      instrument the thrower throat so exit velocity is measured rather than tuned by feel.</p>
+  </div>
+
+  <nav class="casenav">
+    <a href="lab-logger.html">&larr; Lab Run Logger</a>
+    <a href="index.html#projects">All projects</a>
+    <a href="thermal-rig.html">Thermal test rig &rarr;</a>
+  </nav>
+</div></main>
+
+<footer><div class="in wrap"><span>&copy; 2026 Mert Tureli</span><span>Schenectady, NY</span></div></footer>
+<script src="figures.js" defer></script>
+<script src="js/analytics-config.js"></script>
+<script src="js/track.js"></script>
+<script src="js/clarity.js"></script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab Run Logger . Mert Tureli</title>
+<link rel="canonical" href="https://merttureli.com/lab-logger.html">
+<meta property="og:title" content="Lab Run Logger . Mert Tureli">
+<meta property="og:description" content="A zero-install, single-file Python lab logger with atomic persistence and a self-healing CSV mirror, built so a materials lab cannot lose a run.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://merttureli.com/lab-logger.html">
+<meta property="og:image" content="https://merttureli.com/assets/og-cover.png">
+
+<meta name="description" content="A zero-install, single-file Python lab logger with atomic persistence and a self-healing CSV mirror, built so a materials lab cannot lose a run.">
+<meta name="theme-color" content="#000000">
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="case.css">
+</head>
+<body>
+
+<nav class="nav"><div class="in"><div class="panel">
+  <a class="mark" href="index.html">MERT</a>
+  <ul>
+    <li><a href="index.html#projects">Projects</a></li>
+    <li><a href="index.html#approach">Approach</a></li>
+    <li><a href="index.html#log">Log</a></li>
+  </ul>
+  <a class="cta" href="index.html#contact">Contact</a>
+</div></div></nav>
+
+<main><div class="wrap">
+  <span class="crumb rise">Project 07 of 07 . Software for the lab . SunThru</span>
+  <h1 class="title rise">The lab logger that cannot lose a run</h1>
+  <p class="lead rise">Sample characterisation runs were living in scattered spreadsheets:
+    the same measurements taken before and after processing, logged a slightly different way
+    every time. A lab tool is only trusted if it never eats data, so I built one whose
+    <b>whole design revolves around not losing a run</b>.</p>
+
+  <table class="tblock rise">
+    <tr><th>Role</th><td>Design and development, solo</td>
+        <th>For</th><td>SunThru . early-stage hardware R&amp;D</td></tr>
+    <tr><th>Tools</th><td>Python 3, standard library only, single file</td>
+        <th>Timeline</th><td>2026</td></tr>
+    <tr><th>Result</th><td>16 tracked fields per run . 0 dependencies . lock-proof persistence</td>
+        <th>Status</th><td>In daily lab use</td></tr>
+  </table>
+
+  <div class="body">
+    <h2>The problem</h2>
+    <p>Every run produces the same set of measurements: a handful of before-and-after readings,
+      a follow-up check the next day, condition notes, and a verdict. Scattered spreadsheets
+      meant inconsistent columns, missed fields, and no single source of truth. And a lab PC is
+      a hostile environment for software: <b>no admin rights, no package installs, and Excel
+      permanently open on the very file you want to write</b>.</p>
+
+    <h2>Constraints</h2>
+    <ul class="rise">
+      <li>Zero installation: runs by double-clicking one file on any machine with Python</li>
+      <li>Fully offline: measurement data never leaves the lab PC</li>
+      <li>Output must be Excel-friendly, because Excel is where the team actually reads data</li>
+      <li>Must survive the guaranteed failure: someone logging a run while the CSV is open in Excel</li>
+    </ul>
+
+    <h2>One file, no dependencies, on purpose</h2>
+    <p>The entire app is a single Python file using only the standard library. It spins up a
+      local HTTP server, opens the UI in the default browser, and everything, the form, the
+      table, and the derived percentages the team cares about, is served from that one process.
+      No pip, no IT ticket, no version drift between lab machines. <b>Sixteen fields per run</b>,
+      with the derived quantities computed for you.</p>
+
+    <h2>Designing for the failure you know will happen</h2>
+    <p>The data layer is two files with different jobs. A <b>JSON master</b> is the source of
+      truth: every save writes to a temp file first, then atomically replaces the master, so a
+      crash mid-write can never corrupt it. If the master is ever found unreadable it is
+      quarantined to a backup instead of overwritten, because <b>a corrupt file must never be
+      mistaken for an empty one</b>.</p>
+    <p>The <b>CSV is a mirror for humans</b>. Excel holds an exclusive lock on open files, so
+      mirror writes fail routinely, and that is fine: the run is already safe in the master.
+      The app reports the mirror as stale and catches it up automatically on a later save,
+      once Excel lets go. Logging never blocks on someone else's open spreadsheet.</p>
+
+    <h2>The result</h2>
+    <div class="results rise">
+      <div><span class="n">16</span><span class="k">structured fields per run, derived values computed</span></div>
+      <div><span class="n">0</span><span class="k">dependencies beyond stock Python</span></div>
+      <div><span class="n">Atomic</span><span class="k">persistence: no crash or lock can corrupt the log</span></div>
+    </div>
+
+    <h2>What I learned</h2>
+    <p>Reliability engineering is not reserved for big systems: a 400-line lab tool deserves
+      the same failure-mode thinking as a flight computer. Enumerate what will go wrong, the
+      Excel lock, the mid-write crash, the corrupt file, then make each one boring. <b>The tool
+      people trust is the one that already planned for their Tuesday.</b></p>
+  </div>
+
+  <nav class="casenav">
+    <a href="rocket-program.html">&larr; CHARGER</a>
+    <a href="index.html#projects">All projects</a>
+    <a href="robo-catcher.html">Robo-Catcher &rarr;</a>
+  </nav>
+</div></main>
+
+<footer><div class="in wrap"><span>&copy; 2026 Mert Tureli</span><span>Schenectady, NY</span></div></footer>
+<script src="js/analytics-config.js"></script>
+<script src="js/track.js"></script>
+<script src="js/clarity.js"></script>
+</body>
+</html>

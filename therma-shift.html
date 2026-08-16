@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Therma-Shift . Mert Tureli</title>
+<link rel="canonical" href="https://merttureli.com/therma-shift.html">
+<meta property="og:title" content="Therma-Shift . Mert Tureli">
+<meta property="og:description" content="A dual-mode thermoelectric coaster that heats or cools any mug from one Peltier module by reversing current. Bench-validated: 11 C cold face at 12 V. Closed-loop control with thermal-runaway protection, USB-C PD powered.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://merttureli.com/therma-shift.html">
+<meta property="og:image" content="https://merttureli.com/assets/og-cover.png">
+
+<meta name="description" content="A dual-mode thermoelectric coaster that heats or cools any mug from one Peltier module by reversing current. Bench-validated: 11 C cold face at 12 V. Closed-loop control with thermal-runaway protection, USB-C PD powered.">
+<meta name="theme-color" content="#000000">
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="case.css">
+</head>
+<body>
+
+<nav class="nav"><div class="in"><div class="panel">
+  <a class="mark" href="index.html">MERT</a>
+  <ul>
+    <li><a href="index.html#projects">Projects</a></li>
+    <li><a href="index.html#approach">Approach</a></li>
+    <li><a href="index.html#log">Log</a></li>
+  </ul>
+  <a class="cta" href="index.html#contact">Contact</a>
+</div></div></nav>
+
+<main><div class="wrap">
+  <span class="crumb rise">Project 05 of 07 . Personal build . SparkLab competition 2026</span>
+  <h1 class="title rise">Therma-Shift: a coaster that heats or cools, on one module</h1>
+  <p class="lead rise">Existing options split into two bad camps: proprietary heated mugs that
+    lock you into their drinkware, and unregulated USB warmers, some of them genuine fire
+    hazards. The interesting question sits in between: <b>one compact device that both heats
+    and cools, works with whatever cup is on your desk, and can be trusted unattended</b>.</p>
+
+  <table class="tblock rise">
+    <tr><th>Role</th><td>Design, thermal validation, firmware, solo</td>
+        <th>Context</th><td>SparkLab seed competition, March 2026</td></tr>
+    <tr><th>Tools</th><td>TEC1-12703 Peltier . Arduino C++ . NTC thermistors . DRV8871 driver . USB-C PD</td>
+        <th>Timeline</th><td>2026 . closed loop in progress</td></tr>
+    <tr><th>Result</th><td>Thermal stack bench-validated: 11 C cold face at 12 V</td>
+        <th>Status</th><td>Physics proven; closed-loop integration underway</td></tr>
+  </table>
+
+  <div class="body">
+    <h2>The design</h2>
+    <p>A thermoelectric module is a heat pump with no moving parts. Drive current one way and
+      the top plate cools; reverse it and the plate heats. The TEC1-12703 sits between an
+      aluminium top plate and a finned heatsink with a blower, an NTC thermistor at the plate
+      closes the loop targeting a <b>2 degree F band</b>, and a DRV8871 H-bridge lets the
+      firmware command both power and polarity.</p>
+
+    <figure class="figwrap rise">
+      <div class="figure" data-fig="peltier" role="img"
+        aria-label="Section through the coaster: mug, aluminium top plate, the Peltier module with its pellet array between two ceramic plates, a finned heatsink and a blower, with arrows showing heat pumped away from the cold face and expelled at the fins. Reverses when the current reverses.">
+        <span class="ftag">The reversible stack, drawn live</span>
+        <span class="fhint">Click to reverse the current</span>
+      </div>
+      <figcaption><b>Click it.</b> The current reverses and the direction of heat transport
+        reverses with it, which is the whole product.</figcaption>
+    </figure>
+
+    <h2>The real problem is the hot side</h2>
+    <p>Making the cold face cold is easy. Keeping it cold is the engineering. A Peltier does
+      not destroy heat, it moves it, and adds its own electrical losses on top; every watt
+      pulled off the drink plus every watt burned doing so arrives at the hot face and has to
+      leave. If it does not leave fast enough, efficiency collapses and the cold side warms
+      back up. <b>The cold side's performance is set almost entirely by how well the hot side
+      is cooled</b>, which is why most of the design is a heatsink and a blower rather than
+      anything clever near the mug.</p>
+
+    <h2>Validate the physics before the electronics</h2>
+    <p>Before integrating any control loop I bench-tested the bare stack against a lab supply
+      with K-type thermocouples on both faces. There is no point writing a controller for a
+      plant that cannot reach the setpoint, and measuring first meant the control target was
+      chosen from data rather than datasheet optimism.</p>
+    <ul class="rise">
+      <li>At 12 V the cold face held <b>10.7 to 12 C</b> with the heatsink at 53 to 56 C</li>
+      <li>Thermal equilibrium in about <b>five minutes</b></li>
+      <li>A voltage sweep mapped cold-face temperature against input power to find the efficient operating window</li>
+      <li>Swapping the heatsink's stock adhesive pad for proper thermal paste produced a measurable gain: <b>the interfaces matter as much as the module</b></li>
+      <li>Verdict: <b>PASS</b>, dual mode confirmed from the same stack by polarity</li>
+    </ul>
+
+    <h2>Safety, same instinct as the lab rig</h2>
+    <p>The control loop regulates; separate firmware cutoffs watch for <b>thermal runaway</b>
+      independently of it. The failure mode is specific: if the blower stalls or the firmware
+      hangs while the module is driven hard, the hot side has nowhere to dump heat and the
+      stack cooks itself. The cutoffs assume that day will come rather than trusting it will
+      not.</p>
+
+    <h2>Where it stands</h2>
+    <div class="results rise">
+      <div><span class="n">11 C</span><span class="k">cold face at 12 V, steady state</span></div>
+      <div><span class="n">~5 min</span><span class="k">to thermal equilibrium</span></div>
+      <div><span class="n">±2 F</span><span class="k">closed-loop control band target</span></div>
+      <div><span class="n">1</span><span class="k">moving part: the blower</span></div>
+    </div>
+    <p>The numbers above are open-loop bench results, labelled as such on purpose: what is
+      proven so far is that the plant can reach the target. The staged firmware test suite is
+      written and closed-loop integration is in progress.</p>
+
+    <h2>What I learned</h2>
+    <p>Thermal interfaces dominate the budget: the cheapest change in the whole project, paste
+      instead of pad, produced one of the biggest measured gains. And this project is the
+      other end of the same problem as my test rig: <b>the rig exists to measure heat crossing
+      a boundary, the coaster exists to move it</b>, and the rig's lesson about not trusting
+      inferred heat flow is demonstrated here, where the losses land exactly where they hurt.</p>
+  </div>
+
+  <nav class="casenav">
+    <a href="rudder-pedals.html">&larr; Rudder pedals</a>
+    <a href="index.html#projects">All projects</a>
+    <a href="rocket-program.html">CHARGER &rarr;</a>
+  </nav>
+</div></main>
+
+<footer><div class="in wrap"><span>&copy; 2026 Mert Tureli</span><span>Schenectady, NY</span></div></footer>
+<script src="figures.js" defer></script>
+<script src="js/analytics-config.js"></script>
+<script src="js/track.js"></script>
+<script src="js/clarity.js"></script>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Three-point bend fixture . Mert Tureli</title>
+<link rel="canonical" href="https://merttureli.com/bend-fixture.html">
+<meta property="og:title" content="Three-point bend fixture . Mert Tureli">
+<meta property="og:description" content="A fully printable 12-part three-point bend fixture designed in SolidWorks 2025 for specimens too delicate for commercial fixtures: compliant contacts, M3 hardware throughout, zero machined parts, VBA-automated rebuilds.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://merttureli.com/bend-fixture.html">
+<meta property="og:image" content="https://merttureli.com/assets/og-cover.png">
+
+<meta name="description" content="A fully printable 12-part three-point bend fixture designed in SolidWorks 2025 for specimens too delicate for commercial fixtures: compliant contacts, M3 hardware throughout, zero machined parts, VBA-automated rebuilds.">
+<meta name="theme-color" content="#000000">
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="case.css">
+</head>
+<body>
+
+<nav class="nav"><div class="in"><div class="panel">
+  <a class="mark" href="index.html">MERT</a>
+  <ul>
+    <li><a href="index.html#projects">Projects</a></li>
+    <li><a href="index.html#approach">Approach</a></li>
+    <li><a href="index.html#log">Log</a></li>
+  </ul>
+  <a class="cta" href="index.html#contact">Contact</a>
+</div></div></nav>
+
+<main><div class="wrap">
+  <span class="crumb rise">Project 03 of 07 . Test fixture design . SunThru</span>
+  <h1 class="title rise">A fully printable three-point bend fixture</h1>
+  <p class="lead rise">Some specimens are far too delicate for commercial bend fixtures, which
+    are built for metals and plastics and will damage a fragile sample before the test even
+    begins. SunThru needed a fixture matched to its own samples. I designed a <b>fully
+    printable 12-part jig</b> in SolidWorks 2025, built entirely around gentle handling.</p>
+
+  <table class="tblock rise">
+    <tr><th>Role</th><td>Design engineer, solo</td>
+        <th>For</th><td>SunThru . early-stage hardware R&amp;D</td></tr>
+    <tr><th>Tools</th><td>SolidWorks 2025 . VBA macro automation . FDM 3D printing</td>
+        <th>Timeline</th><td>2026</td></tr>
+    <tr><th>Result</th><td>12-part fully printable fixture, zero machined components</td>
+        <th>Status</th><td>Printed and in lab use</td></tr>
+  </table>
+
+  <div class="body">
+    <h2>The load case</h2>
+    <p>A three-point test is deliberately simple: carry the specimen on two supports a known
+      distance apart, push down at mid-span, and record load against deflection. The whole
+      value of the measurement rests on the specimen seeing <b>that load and nothing else</b>:
+      no clamping, no twist, no stress concentration where the fixture happens to touch it.
+      When the sample cannot take being clamped, the fixture itself becomes the thing that
+      breaks it.</p>
+
+    <figure class="figwrap rise">
+      <div class="figure" data-fig="bend" role="img"
+        aria-label="Three-point bend loading diagram: a specimen carried on two compliant supports with a compliant load nose descending at mid-span, showing the deflected shape, the span dimension, support reactions, and a load against deflection plot.">
+        <span class="ftag">The load case, drawn live</span>
+      </div>
+      <figcaption><b>The three compliant contacts are the design.</b> The deflected shape is
+        the standard simply-supported beam result, so the drawing and the mechanics agree.</figcaption>
+    </figure>
+
+    <h2>Constraints</h2>
+    <ul class="rise">
+      <li>Every part printable on the lab's FDM printer, with <b>no machined components</b>, so a revision costs an afternoon rather than a purchase order</li>
+      <li><b>12 interlocking parts sharing one coordinate system</b>, so dimension changes ripple predictably</li>
+      <li>Standard <b>M3 hardware</b> throughout, with horizontal cross-holes shaped as printable channels</li>
+      <li><b>Compliant contact geometry</b> at the load nose and both supports, so the specimen sees a clean three-point load and nothing else</li>
+    </ul>
+
+    <h2>Twelve parts that stay in agreement</h2>
+    <p>A 12-part fixture with interlocked dimensions is a maintenance problem before it is a
+      design problem: change one dimension by hand and eleven other parts silently stop
+      fitting, usually discovered after they are printed. I kept every part on a shared
+      coordinate system and automated the rebuilds with <b>SolidWorks VBA</b>, so a dimension
+      change regenerates the affected parts consistently, with each part's geometry
+      <b>checked against its expected volume</b> before acceptance. That volume check is crude,
+      and it catches the failure that actually happens: a feature that silently failed to
+      rebuild.</p>
+
+    <h2>Designing for the printer, not around it</h2>
+    <p>The parts are shaped the way the printer builds them: geometry that accumulates in
+      support-free layers, load paths running along the layers where it matters, and holes
+      drawn as printable channels rather than as circles a drill would later fix. This is the
+      part that generalises. <b>Designing for the process beat designing around it.</b></p>
+
+    <h2>Where it stands</h2>
+    <div class="results rise">
+      <div><span class="n">12</span><span class="k">interlocking parts, one coordinate system</span></div>
+      <div><span class="n">0</span><span class="k">machined components required</span></div>
+      <div><span class="n">M3</span><span class="k">one hardware standard throughout</span></div>
+      <div><span class="n">3</span><span class="k">compliant contact points</span></div>
+    </div>
+    <p>In daily lab use. The open item is a published repeatability figure: a fixture that
+      claims gentle handling should be able to prove it, and measuring that scatter is the
+      next thing I would do with it.</p>
+
+    <h2>What I learned</h2>
+    <p>The robust design decisions were the ones that thought like the manufacturing process.
+      The decision I am least sure about is printing the compliant contacts rather than using
+      a moulded elastomer: printed compliance is tunable and free, but it is also a wear
+      surface that changes slowly over months. Measuring that drift is the same job as
+      measuring the repeatability.</p>
+  </div>
+
+  <nav class="casenav">
+    <a href="thermal-rig.html">&larr; Thermal test rig</a>
+    <a href="index.html#projects">All projects</a>
+    <a href="rudder-pedals.html">Rudder pedals &rarr;</a>
+  </nav>
+</div></main>
+
+<footer><div class="in wrap"><span>&copy; 2026 Mert Tureli</span><span>Schenectady, NY</span></div></footer>
+<script src="figures.js" defer></script>
+<script src="js/analytics-config.js"></script>
+<script src="js/track.js"></script>
+<script src="js/clarity.js"></script>
+</body>
+</html>
