@@ -77,15 +77,13 @@
   <section style="padding: var(--section-y) var(--page-margin)">
     <div style="max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-8)">
       <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="About" right="01" hint-size="100%,14px"></x-import>
-      <div style="display: grid; grid-template-columns: minmax(240px, 1fr) minmax(0, 1.5fr); gap: var(--space-9); align-items: start">
-
-        <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-3)">
-          <div style="position: relative; aspect-ratio: 4 / 5; border-radius: var(--radius-md); overflow: hidden; background: var(--ink-900)">
-            <img src="assets/portrait/mert-cutout.png" alt="Mert Türeli" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 12%">
-            <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Grain" blend="overlay" strength="normal" hint-size="100%,100%"></x-import>
-          </div>
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Caption" index="00" hint-size="220px,16px">Portrait / 2026</x-import>
-        </div>
+      <div style="display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-9); align-items: start">
+        <!-- Portrait removed 2026-08-17 pending a replacement shot. To put it
+             back: restore the two-column grid above
+             (minmax(240px, 1fr) minmax(0, 1.5fr)) and re-add the image column
+             here: a 4/5 aspect-ratio div, radius-md, overflow hidden, ink-900
+             ground, the <img> object-fit cover at 50% 12%, a Grain overlay
+             (blend overlay, strength normal), and a Caption index="00". -->
 
         <div data-reveal="1" style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-6)">
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="3" hint-size="100%,90px">Mert Türeli</x-import>
@@ -100,7 +98,6 @@
   <section id="work" style="padding: 0 var(--page-margin) var(--section-y)">
     <div style="max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-8)">
       <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Selected work" hint-size="100%,14px"></x-import>
-      <p style="font-size: var(--fs-body-lg); line-height: var(--lh-body); color: var(--text-muted); max-width: var(--measure)">Four of these have a full case study in the engineering portfolio.</p>
 
       <article data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; padding-top: var(--space-7); margin-top: var(--space-6); border-top: 1px solid var(--line-hairline)">
         <div style="display: flex; flex-direction: column; gap: var(--space-5)">
