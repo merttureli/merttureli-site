@@ -1,0 +1,28 @@
+<!-- @dsCard group="Components" viewport="700x400" name="Content" subtitle="Display headings, spec rows, work cards, pull quotes" -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{margin:0;padding:28px var(--space-6);background:var(--paper);font-family:var(--font-body)}.row{display:flex;align-items:center;gap:var(--space-5);flex-wrap:wrap}.col{display:flex;flex-direction:column;gap:var(--space-6)}.lbl{font-family:var(--font-mono);font-size:9px;letter-spacing:var(--ls-caps);text-transform:uppercase;color:var(--ink-300)}</style></head><body><div id="root"></div>
+<script type="text/babel">
+const { DisplayHeading, SpecList, WorkCard, PullQuote, Rule } = window.MertTReliDesignSystem_56763c;
+function Demo(){return(
+<div className="col" style={{gap:'var(--space-7)'}}>
+  <div>
+    <DisplayHeading level={3} style={{fontSize:44}}>Selected work</DisplayHeading>
+    <DisplayHeading level={3} treatment="outline" style={{fontSize:44}}>Outline</DisplayHeading>
+  </div>
+  <Rule label="Spec rows" right="03"/>
+  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'var(--space-8)',alignItems:'start'}}>
+    <SpecList items={[{label:'Aircraft',value:'Cessna 172S',aside:'PA-28'},{label:'Hours',value:'412',aside:'PIC 260'},{label:'Body',value:'Nikon FM2',aside:'50mm'}]}/>
+    <PullQuote attribution="Field notes / 2025">The approach is the same whether it is a wing or a frame.</PullQuote>
+  </div>
+  <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'var(--space-6)'}}>
+    <WorkCard index="01" title="Wing rib" discipline="Engineering" year="2025"/>
+    <WorkCard index="02" title="Night VFR" discipline="Aviation" year="2024"/>
+    <WorkCard index="03" title="Coastline" discipline="Photography" year="2024"/>
+  </div>
+</div>);}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo/>);
+</script></body></html>

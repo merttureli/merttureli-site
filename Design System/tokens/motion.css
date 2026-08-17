@@ -1,0 +1,29 @@
+/* Smooth and natural: long, decelerating, no bounce, no elastic. */
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);    /* @kind other */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1); /* @kind other */
+  --ease-linear: linear;                          /* @kind other */
+
+  --dur-1: 120ms; /* @kind other */
+  --dur-2: 240ms; /* @kind other */
+  --dur-3: 480ms; /* @kind other */
+  --dur-4: 780ms; /* @kind other */
+  --dur-5: 1200ms; /* @kind other */
+  --dur-6: 2400ms; /* @kind other */
+
+  --stagger: 90ms; /* @kind other */
+
+  --t-hover: var(--dur-2) var(--ease-out); /* @kind other */
+  --t-enter: var(--dur-4) var(--ease-out); /* @kind other */
+  --t-media: var(--dur-5) var(--ease-out); /* @kind other */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-3: 1ms; /* @kind other */
+    --dur-4: 1ms; /* @kind other */
+    --dur-5: 1ms; /* @kind other */
+    --dur-6: 1ms; /* @kind other */
+    --stagger: 0ms; /* @kind other */
+  }
+}

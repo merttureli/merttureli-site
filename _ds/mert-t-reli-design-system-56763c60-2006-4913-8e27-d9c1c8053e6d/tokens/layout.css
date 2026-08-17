@@ -1,0 +1,13 @@
+:root {
+  --grid-columns: 12;      /* @kind other */
+  --max-width: 1680px;     /* @kind spacing */
+  --max-text: 720px;       /* @kind spacing */
+  --header-h: 88px;        /* @kind spacing */
+  --rail-w: 48px;          /* @kind spacing */
+  --z-base: 0;             /* @kind other */
+  --z-media: 1;            /* @kind other */
+  --z-content: 10;         /* @kind other */
+  --z-rail: 40;            /* @kind other */
+  --z-header: 50;          /* @kind other */
+  --z-overlay: 90;         /* @kind other */
+}

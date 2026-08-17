@@ -1,1120 +1,647 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mert Tureli . mechanical engineer</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mert Türeli · Mechanical Engineer</title>
+<meta name="description" content="Mechanical engineer in Schenectady, NY. I design, build, and test hardware end to end: CAD and drawings, electronics and firmware, and the test rigs that prove it works.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230A0A0A'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='26' font-weight='600' fill='%23FFFFFF'%3EMT%3C/text%3E%3C/svg%3E">
 <link rel="canonical" href="https://merttureli.com/">
-<meta property="og:title" content="Mert Tureli . mechanical engineer">
-<meta property="og:description" content="Mechanical engineer working across design, test and controls.">
+<meta property="og:title" content="Mert Türeli · Mechanical Engineer">
+<meta property="og:description" content="Design, build, test: hardware end to end. CAD, electronics, firmware, and the test rigs that prove it works.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://merttureli.com/">
 <meta property="og:image" content="https://merttureli.com/assets/og-cover.png">
 
-<meta name="description" content="Mechanical engineer working across design, test and controls.">
-<meta name="theme-color" content="#000000">
-<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
-<link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500&display=swap" rel="stylesheet">
-<link rel="preload" as="image" href="assets/video/hero-desktop-poster.jpg">
-
-<style>
-/* ==========================================================================
-   TOKENS . two tiers, primitives then semantic, the way lila.ai does it.
-   Retheme the whole site by editing tier 1 only.
-   ========================================================================== */
-:root{
-  /* ---- tier 1 . primitives ---------------------------------------------- */
-  --brand-black:#000000;
-  --brand-white:#ffffff;
-  --brand-off-white:#fffff5;          /* warm, never pure white */
-  --brand-copper-dark:#5b2100;
-  --brand-copper-mid:#956c2f;
-  --brand-copper-light:#cd9e54;       /* the accent you actually see */
-  --brand-teal:#53917e;               /* the cool secondary */
-
-  --white-80:rgba(255,255,255,.8);
-  --white-25:rgba(255,255,255,.25);
-  --white-10:rgba(255,255,255,.1);
-  --white-5:rgba(255,255,255,.05);
-  --black-80:rgba(0,0,0,.8);
-  --black-50:rgba(0,0,0,.5);
-  --grey-80:rgba(21,21,21,.8);         /* the nav bar */
-
-  /* type scale, mobile first. The desktop step is in the media query below. */
-  --fs-display:3rem;  --fs-h1:3rem;   --fs-h2:3rem;  --fs-h3:2.25rem;
-  --fs-h4:2.25rem;    --fs-h5:1.5rem; --fs-h6:1.25rem;
-  --fs-xs:.75rem; --fs-s:.875rem; --fs-r:1rem; --fs-m:1.25rem; --fs-l:1.5rem; --fs-xl:2rem;
-  --fs-stat:3rem;
-
-  --lh-s:1.1; --lh-m:1.15; --lh-l:1.2; --lh-xl:1.4;
-  --fw-light:300; --fw-regular:400; --fw-medium:500;   /* nothing heavier. ever. */
-
-  /* 4px base grid */
-  --sp-4:.25rem;  --sp-8:.5rem;   --sp-12:.75rem; --sp-16:1rem;  --sp-20:1.25rem;
-  --sp-24:1.5rem; --sp-32:2rem;   --sp-40:2.5rem; --sp-48:3rem;  --sp-64:4rem;
-  --sp-96:6rem;   --sp-120:7.5rem;--sp-160:10rem; --sp-180:11.25rem;
-
-  --r-none:0; --r-xs:.25rem; --r-s:.5rem; --r-m:.75rem; --r-l:1.25rem; --r-xl:2rem;
-  --blur-xs:40px; --blur-m:100px; --blur-l:200px;
-
-  --ease:cubic-bezier(.25,.46,.45,.94);   /* theirs, on the overlay */
-  --maxw:82rem;
-  --gut:clamp(1.25rem,5vw,3rem);
-
-  /* ---- tier 2 . semantic ------------------------------------------------ */
-  --bg-dark:var(--brand-black);
-  --bg-white:var(--brand-off-white);
-  --bg-teal:var(--brand-teal);
-  --bg-grey:var(--white-10);
-  --bg-nav:var(--grey-80);
-  --fg:var(--white-5);
-  --text-light:var(--white-80);        /* body copy. NOT pure white */
-  --text-white:var(--brand-white);
-  --text-dark:var(--brand-black);
-  --text-teal:var(--brand-teal);
-  --text-copper:var(--brand-copper-light);
-  --border:var(--white-10);
-}
-@media(min-width:64rem){
-  :root{
-    --fs-display:6rem; --fs-h1:4.75rem; --fs-h2:4rem; --fs-h3:3.5rem;
-    --fs-h4:3rem; --fs-h5:2.25rem; --fs-h6:1.5rem; --fs-stat:7.5rem;
-  }
-}
-
-/* ==========================================================================
-   BASE
-   ========================================================================== */
-*{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%;height:100%;
-  /* Reserve the scrollbar gutter so the layout does not jump if a scrollbar appears
-     or disappears. Note for anyone measuring this later: it makes the nav panel read
-     as 105px from the left and 120px from the right in a viewport-relative
-     measurement, which looks asymmetric and is not. The extra 15px is the reserved
-     gutter, which a real scrollbar occupies. What matters is that the nav and every
-     section's text share the same left edge, verified at 105px on both. */
-  scrollbar-gutter:stable}
-body{margin:0;min-height:100%;background:var(--bg-dark);color:var(--text-light);
-  font-family:"Satoshi","Geist",system-ui,Arial,sans-serif;
-  font-size:var(--fs-r);line-height:1.5;font-weight:var(--fw-regular);
-  -webkit-font-smoothing:antialiased;
-  /* clip, not hidden: hidden makes body a scroll container and kills scroll timelines */
-  overflow-x:clip}
-/* NOTE: there is not one letter-spacing declaration in 205 KB of lila's CSS.
-   The type is set at its natural fit. Do not add tracking here. */
-h1,h2,h3,h4,h5,h6{margin:0;font-weight:var(--fw-regular);line-height:var(--lh-m);
-  color:var(--text-white)}
-h1{font-size:var(--fs-h1)} h2{font-size:var(--fs-h2)} h3{font-size:var(--fs-h3)}
-h4{font-size:var(--fs-h4)} h5{font-size:var(--fs-h5)} h6{font-size:var(--fs-h6)}
-p{margin:0}
-a{color:inherit;text-decoration:none}
-/* height:auto matters more than it looks. Every img carries width/height
-   attributes (correctly, they prevent layout shift), but those set a used height,
-   which beat `aspect-ratio` and produced boxes like 134x1920. Setting height:auto
-   here lets aspect-ratio govern, and it is early enough that the few rules which
-   genuinely want height:100% (cards, bands) still override it. */
-img,video{display:block;max-width:100%;height:auto}
-.wrap{max-width:var(--maxw);margin-inline:auto;padding-inline:var(--gut)}
-section{padding-block:clamp(var(--sp-40),6.5vw,var(--sp-96))}
-.display{font-size:var(--fs-display);line-height:var(--lh-s);font-weight:var(--fw-medium)}
-.eyebrow{font-size:var(--fs-xs);text-transform:uppercase;color:var(--text-copper);
-  font-weight:var(--fw-medium);display:block;margin-bottom:var(--sp-24)}
-.lead{font-size:var(--fs-m);line-height:var(--lh-xl);color:var(--text-light);max-width:54rem}
-.muted{color:var(--text-light)}
-.rule{height:1px;background:var(--border);border:0;margin:0}
-
-/* ==========================================================================
-   NAV
-   ========================================================================== */
-/* The nav is NOT a full-bleed bar. It is a transparent fixed shell with
-   margin-top .75rem, holding an 82rem container, and the visible dark panel is a
-   child with background rgba(21,21,21,.8) and a SMALL radius (.25rem), not a pill.
-   That inset is most of why it reads as considered. */
-.nav{position:fixed;inset:var(--sp-12) 0 auto;z-index:60;background:transparent;
-  pointer-events:none}
-.nav .in{max-width:var(--maxw);margin-inline:auto;padding-inline:var(--gut);
-  pointer-events:none}
-.nav .panel{pointer-events:auto;display:flex;align-items:center;gap:var(--sp-24);
-  background:var(--bg-nav);border-radius:var(--r-xs);
-  backdrop-filter:blur(var(--blur-l)) saturate(140%);
-  padding:var(--sp-12) var(--sp-12) var(--sp-12) var(--sp-32)}
-.nav .mark{font-size:var(--fs-s);font-weight:var(--fw-medium);color:var(--text-white);
-  flex:none;letter-spacing:.34em}                 /* the one place tracking is used */
-.nav ul{display:flex;gap:var(--sp-4);list-style:none;margin:0 auto;padding:0;
-  font-size:var(--fs-s)}
-.nav ul a{display:block;padding:.375rem var(--sp-12);line-height:var(--lh-s)}
-.nav ul a:hover{color:var(--text-teal)}          /* theirs goes teal, not white */
-.nav .cta{flex:none;font-size:var(--fs-xs);padding:.375rem var(--sp-12);
-  border-radius:var(--r-xs);background:var(--bg-white);color:var(--text-dark);
-  border:1px solid var(--bg-white);
-  transition:background-color .25s var(--ease),color .25s var(--ease),border-color .25s var(--ease)}
-.nav .cta:hover{background:var(--bg-teal);border-color:var(--bg-teal);color:var(--text-white)}
-@media(max-width:52rem){
-  .nav ul{display:none}
-  .nav .panel{padding-left:var(--sp-20);justify-content:space-between}
-}
-.btn{display:inline-flex;align-items:center;gap:var(--sp-8);font-size:var(--fs-s);
-  padding:var(--sp-12) var(--sp-24);border-radius:var(--r-xl);
-  border:1px solid var(--border);color:var(--text-white);
-  transition:background-color .25s var(--ease),border-color .25s var(--ease),color .25s var(--ease)}
-.btn:hover{background:var(--brand-off-white);border-color:var(--brand-off-white);color:var(--text-dark)}
-.btn.teal{background:var(--bg-teal);border-color:var(--bg-teal)}
-.btn.teal:hover{background:var(--brand-off-white);border-color:var(--brand-off-white)}
-
-/* ==========================================================================
-   HERO . the mechanic from lila.ai, rebuilt
-   video plays -> ends -> black overlay fades in over .2s and the headline
-   slides up -> holds 4s -> fades out -> video restarts
-   ========================================================================== */
-.hero{position:relative;min-height:100svh;display:flex;align-items:flex-end;
-  overflow:clip;isolation:isolate}
-.hero-video{position:absolute;inset:0;z-index:0}
-/* a flat 50% black scrim, applied as a gradient in one element, exactly as they do */
-.hero-video::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
-  background-image:linear-gradient(var(--black-50),var(--black-50))}
-.hero-video video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-#vDesk{display:none} #vMob{display:block}
-@media(min-width:52rem){#vDesk{display:block} #vMob{display:none}}
-
-.hero-copy{position:relative;z-index:2;width:100%;padding-bottom:clamp(var(--sp-48),8vw,var(--sp-120));
-  padding-top:var(--sp-120)}
-.hero-copy h1{font-size:var(--fs-display);line-height:var(--lh-s);font-weight:var(--fw-medium);
-  max-width:22ch}
-.hero-copy .sub{margin-top:var(--sp-24);font-size:var(--fs-m);line-height:var(--lh-xl);
-  max-width:44ch}
-.hero-copy .row{display:flex;gap:var(--sp-12);flex-wrap:wrap;margin-top:var(--sp-40)}
-
-/* the overlay that takes over when the footage ends */
-.hero-overlay{position:absolute;inset:0;z-index:3;display:flex;align-items:center;
-  justify-content:center;text-align:center;background:var(--bg-dark);
-  opacity:0;pointer-events:none;transition:opacity .2s var(--ease)}
-.hero-overlay.is-visible{opacity:1}
-.hero-overlay .statement{font-size:var(--fs-h2);line-height:var(--lh-s);
-  font-weight:var(--fw-medium);color:var(--text-white);max-width:24ch;padding-inline:var(--gut)}
-.hero-overlay .statement .ch{display:inline-block;white-space:pre}
-.hero-cap{position:absolute;left:0;right:0;bottom:var(--sp-24);z-index:4;
-  pointer-events:none}
-.hero-cap span{display:block;max-width:var(--maxw);margin-inline:auto;
-  padding-inline:var(--gut);font-size:var(--fs-xs);color:var(--text-light);
-  text-shadow:0 1px 14px rgba(0,0,0,.9);max-width:52ch}
-.hero-cap b{color:var(--text-white);font-weight:var(--fw-medium)}
-@media(max-width:52rem){.hero-cap{display:none}}
-.hero-ctl{position:absolute;right:var(--gut);bottom:var(--sp-24);z-index:4;
-  font-size:var(--fs-xs);text-transform:uppercase;background:var(--white-10);
-  border:1px solid var(--border);color:var(--text-light);padding:var(--sp-8) var(--sp-16);
-  border-radius:var(--r-xl);cursor:pointer;backdrop-filter:blur(var(--blur-xs))}
-.hero-ctl:hover{color:var(--text-white)}
-
-/* ==========================================================================
-   STATS . 120px numbers
-   ========================================================================== */
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,12rem),1fr));
-  gap:var(--sp-32) var(--sp-24)}
-.stats .n{font-size:var(--fs-stat);line-height:var(--lh-s);font-weight:var(--fw-medium);
-  color:var(--text-white);display:block}
-.stats .k{display:block;margin-top:var(--sp-12);font-size:var(--fs-s);color:var(--text-light);
-  max-width:22ch}
-.stats .k b{color:var(--text-copper);font-weight:var(--fw-medium)}
-
-/* ==========================================================================
-   DOMAIN CARDS . their "industries" grid
-   ========================================================================== */
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,18rem),1fr));
-  gap:var(--sp-16)}
-.card{position:relative;border-radius:var(--r-l);overflow:clip;background:var(--fg);
-  border:1px solid var(--border);min-height:22rem;display:flex;flex-direction:column;
-  justify-content:flex-end;isolation:isolate;
-  transition:border-color .35s var(--ease)}
-.card:hover{border-color:var(--white-25)}
-.card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;
-  transition:transform .9s var(--ease)}
-.card:hover img{transform:scale(1.04)}
-.card::before{content:"";position:absolute;inset:0;z-index:-1;
-  background:linear-gradient(transparent 25%,rgba(0,0,0,.85))}
-.card .body{padding:var(--sp-24)}
-.card h3{font-size:var(--fs-h5);font-weight:var(--fw-medium)}
-.card p{margin-top:var(--sp-8);font-size:var(--fs-s);color:var(--text-light);max-width:34ch}
-
-/* ==========================================================================
-   APPROACH . dark panel, teal rule, big narrative
-   ========================================================================== */
-.approach{background:var(--fg);border-block:1px solid var(--border)}
-.approach .grid{display:grid;gap:var(--sp-32)}
-@media(min-width:64rem){.approach .grid{grid-template-columns:1fr 1fr;gap:var(--sp-64)}}
-.approach h2{font-size:var(--fs-h3);font-weight:var(--fw-regular);max-width:26ch}
-.approach .body p+p{margin-top:var(--sp-20)}
-.approach .body b{color:var(--text-white);font-weight:var(--fw-medium)}
-.tealrule{width:var(--sp-64);height:2px;background:var(--bg-teal);margin-bottom:var(--sp-24)}
-
-/* ==========================================================================
-   LOG . their "news" row
-   ========================================================================== */
-.log a,.log div.row{display:grid;grid-template-columns:7rem 1fr auto;gap:var(--sp-24);
-  align-items:baseline;padding-block:var(--sp-24);border-top:1px solid var(--border);
-  transition:padding-left .3s var(--ease)}
-.log a:hover{padding-left:var(--sp-8)}
-.log .when{font-size:var(--fs-s);color:var(--text-light)}
-.log h3{font-size:var(--fs-h6);font-weight:var(--fw-medium)}
-.log .note{grid-column:2;margin-top:var(--sp-8);font-size:var(--fs-s);color:var(--text-light);
-  max-width:56ch;line-height:var(--lh-xl)}
-.log .go{font-size:var(--fs-s);color:var(--text-copper);white-space:nowrap}
-/* rows carrying a flyover animation; the crosshair is the only tell */
-.log [data-fly]{cursor:crosshair}
-@media(max-width:52rem){
-  .log a,.log div.row{grid-template-columns:1fr}
-  .log .note{grid-column:1}.log .go{display:none}
-}
-
-/* ==========================================================================
-   PROJECTS . the write-up index. One large row per project, thumbnails only
-   where a real photograph or render exists. h3 at h4 scale on purpose: this
-   list is the site's centre of gravity, so it reads big.
-   ========================================================================== */
-.projlist{border-bottom:1px solid var(--border)}
-.proj{display:grid;grid-template-columns:4.5rem minmax(0,1fr) auto auto;gap:var(--sp-24);
-  align-items:center;padding-block:var(--sp-24);border-top:1px solid var(--border);
-  transition:padding-left .3s var(--ease)}
-.proj:hover{padding-left:var(--sp-12)}
-.proj .pn{font-size:var(--fs-s);color:var(--text-copper)}
-.proj h3{font-size:var(--fs-h4);font-weight:var(--fw-medium);line-height:var(--lh-s)}
-.proj p{margin-top:var(--sp-8);font-size:var(--fs-s);color:var(--text-light);max-width:56ch;
-  line-height:var(--lh-xl)}
-.proj img{width:7.5rem;height:5rem;object-fit:cover;border-radius:var(--r-xs);
-  border:1px solid var(--border)}
-.proj .go{font-size:var(--fs-s);color:var(--text-copper);white-space:nowrap}
-.proj:hover .go{color:var(--text-white)}
-@media(max-width:52rem){
-  .proj{grid-template-columns:2.5rem minmax(0,1fr)}
-  .proj img,.proj .go{display:none}
-}
-
-/* ==========================================================================
-   CTA on off-white, the one light panel
-   ========================================================================== */
-.cta{background:var(--bg-white);color:var(--text-dark)}
-.cta h2{color:var(--text-dark);font-size:var(--fs-h2);font-weight:var(--fw-medium);max-width:20ch}
-.cta p{margin-top:var(--sp-24);color:var(--black-80);font-size:var(--fs-m);max-width:44ch;
-  line-height:var(--lh-xl)}
-.cta .row{display:flex;gap:var(--sp-12);flex-wrap:wrap;margin-top:var(--sp-40)}
-.cta .btn{border-color:rgba(0,0,0,.2);color:var(--text-dark)}
-.cta .btn:hover{background:var(--brand-black);border-color:var(--brand-black);color:var(--brand-off-white)}
-.cta .btn.teal{background:var(--bg-teal);border-color:var(--bg-teal);color:var(--brand-off-white)}
-
-footer{padding-block:var(--sp-48);border-top:1px solid var(--border)}
-footer .in{display:flex;justify-content:space-between;gap:var(--sp-24);flex-wrap:wrap;
-  font-size:var(--fs-s)}
-
-/* ==========================================================================
-   MEDIA . a full-bleed video band, and an inline clip with a caption
-   ========================================================================== */
-.band{position:relative;margin-inline:calc(50% - 50vw);width:100vw;
-  min-height:clamp(19rem,48vh,30rem);display:flex;align-items:flex-end;
-  overflow:clip;isolation:isolate}
-.band video,.band img{position:absolute;inset:0;width:100%;height:100%;
-  object-fit:cover;z-index:-2}
-.band::after{content:"";position:absolute;inset:0;z-index:-1;
-  background:linear-gradient(to top,rgba(0,0,0,.92) 4%,rgba(0,0,0,.55) 46%,rgba(0,0,0,.35))}
-.band .in{position:relative;z-index:1;max-width:var(--maxw);margin-inline:auto;
-  padding:var(--sp-32) var(--gut);width:100%}
-.band h3{font-size:var(--fs-h4);font-weight:var(--fw-medium);max-width:24ch}
-.band p{margin-top:var(--sp-16);font-size:var(--fs-r);color:var(--text-light);
-  max-width:52ch;line-height:var(--lh-xl)}
-.band .cap{margin-top:var(--sp-20);font-size:var(--fs-xs);color:var(--text-light)}
-.bandctl{position:absolute;right:var(--gut);top:var(--sp-24);z-index:2;
-  font-size:var(--fs-xs);text-transform:uppercase;background:var(--white-10);
-  border:1px solid var(--border);color:var(--text-light);
-  padding:var(--sp-8) var(--sp-16);border-radius:var(--r-xl);cursor:pointer;
-  backdrop-filter:blur(var(--blur-xs))}
-.bandctl:hover{color:var(--text-white)}
-
-.clip{margin:0;border:1px solid var(--border);border-radius:var(--r-m);overflow:clip;
-  background:var(--fg)}
-.clip video{width:100%;height:auto;display:block}
-.clip figcaption{padding:var(--sp-16) var(--sp-20);font-size:var(--fs-s);
-  color:var(--text-light);border-top:1px solid var(--border);line-height:var(--lh-xl)}
-.clip figcaption b{color:var(--text-white);font-weight:var(--fw-medium)}
-.split{display:grid;gap:var(--sp-24)}
-@media(min-width:64rem){.split{grid-template-columns:1fr 1fr;gap:var(--sp-64);align-items:start}}
-
-/* ==========================================================================
-   PORTRAIT MEDIA . both CHARGER frames are 1440x1920, aspect 0.75.
-   They were in a 3.30-wide band, which showed 23% of the photograph and threw
-   away the thing that makes the tall shot good: the rocket standing alone
-   against all that sky. Give a portrait asset a portrait box.
-   ========================================================================== */
-.plates{display:grid;gap:var(--sp-16);align-items:start}
-@media(min-width:56rem){.plates{grid-template-columns:1.15fr .8fr 1.35fr;gap:var(--sp-32)}}
-.plate{margin:0;position:relative;border-radius:var(--r-m);overflow:clip;
-  background:var(--fg);border:1px solid var(--border)}
-.plate img{width:100%;aspect-ratio:3/4;object-fit:cover;display:block;
-  transition:transform .9s var(--ease)}
-.plate:hover img{transform:scale(1.03)}
-.plate figcaption{position:absolute;inset:auto 0 0 0;padding:var(--sp-32) var(--sp-16) var(--sp-12);
-  font-size:var(--fs-xs);color:#fff;
-  background:linear-gradient(transparent,rgba(0,0,0,.86))}
-/* Both frames keep their native 3:4. The tall one gets more COLUMN instead of a
-   taller crop: making the box 9/16 looked good but threw away 25% of a photograph
-   whose whole subject is how much sky is above the rocket. */
-.plates .say{align-self:center}
-.plates .say h3{font-size:var(--fs-h4);font-weight:var(--fw-medium);max-width:20ch}
-.plates .say p{margin-top:var(--sp-16);color:var(--text-light);line-height:var(--lh-xl);
-  max-width:44ch}
-.plates .say .cap{margin-top:var(--sp-20);font-size:var(--fs-xs)}
-@media(max-width:56rem){
-  .plates{grid-template-columns:1fr 1fr}
-  .plates .say{grid-column:1/-1}
-}
-
-/* ==========================================================================
-   RINGS . the concentric-arc background detail.
-   lila.ai ships this as a flat AVIF, so it is stuck at one colour forever.
-   Ours comes out of tools/rings.py, so hue, ring count, light direction, grain
-   and crop are all parameters. Swap --rings-img to retheme it.
-   Put class="has-rings" on any section that should carry it.
-   ========================================================================== */
-/* ==========================================================================
-   SMOKE . one fixed layer behind the whole document.
-   It does not scroll. Everything scrolls over it. Drifting exhaust rising from
-   the bottom corners, deliberately faint: it should register as texture, not as
-   something competing for attention.
-   Replaces the per-section copper rings, which scrolled with their section and
-   pulled focus. tools/rings.py and the ring images are kept, just unused here.
-   ========================================================================== */
-#smoke{position:fixed;inset:0;width:100%;height:100%;z-index:-10;
-  pointer-events:none;display:block;
-  /* if WebGL is unavailable this gradient is what remains, and it is enough */
-  background:
-    radial-gradient(50% 42% at 12% 104%,rgba(120,96,80,.20),transparent 70%),
-    radial-gradient(46% 40% at 88% 106%,rgba(110,92,86,.16),transparent 70%),
-    var(--bg-dark)}
-/* every band and panel that draws its own background must sit above the smoke,
-   otherwise it paints over it and the effect stops halfway down the page */
-.statement,.approach,.cta,.band{position:relative;z-index:0}
-
-/* reveal, native scroll timeline, no ScrollTrigger and no 1px scroll hack */
-@keyframes rise{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
-@supports (animation-timeline: view()){
-  .rise{animation:rise linear both;animation-timeline:view();animation-range:entry 5% cover 32%}
-}
-@media(prefers-reduced-motion:reduce){
-  .rise{animation:none!important;opacity:1!important;transform:none!important}
-  .card img,.hero-overlay{transition:none!important}
-}
-.pb{position:fixed;left:0;right:0;bottom:0;z-index:80;background:var(--brand-off-white);
-  color:var(--brand-black);font-size:var(--fs-xs);padding:var(--sp-8) var(--gut);
-  display:flex;justify-content:space-between;gap:var(--sp-16);flex-wrap:wrap}
-body{padding-bottom:2.4rem}
-</style>
+<script src="./support.js"></script>
 </head>
 <body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/colors.css">
+<link rel="stylesheet" href="_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/typography.css">
+<link rel="stylesheet" href="_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/layout.css">
+<link rel="stylesheet" href="_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/effects.css">
+<link rel="stylesheet" href="_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/motion.css">
+<link rel="stylesheet" href="_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/base.css">
+<link rel="stylesheet" href="_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/styles.css">
+<script src="_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/_ds_bundle.js"></script>
+<style>
+  html { scroll-behavior: smooth; }
+  body { background: var(--paper); }
+  @keyframes up { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+  @keyframes reveal { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+  @keyframes kb { from { transform: scale(1.04); } to { transform: scale(1); } }
+</style>
+</helmet>
 
-<canvas id="smoke" aria-hidden="true"></canvas>
+<div style="background: var(--paper); overflow-x: hidden">
 
-<nav class="nav">
-  <div class="in">
-    <div class="panel">
-      <a class="mark" href="#top">MERT</a>
-      <ul>
-        <li><a href="#work">Work</a></li>
-        <li><a href="#projects">Projects</a></li>
-        <li><a href="#approach">Approach</a></li>
-        <li><a href="#log">Log</a></li>
-        <li><a href="#outside">Outside</a></li>
-      </ul>
-      <a class="cta" href="#contact">Contact</a>
+  <section class="on-dark" style="position: relative; min-height: min(940px, 100vh); background: var(--ink-900); overflow: hidden; display: flex; flex-direction: column">
+    <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Grain" blend="overlay" strength="normal" hint-size="100%,100%"></x-import>
+    <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SiteHeader" items="{{ nav }}" active="index" inverse="true" floating="true" hint-size="100%,88px"></x-import>
+    <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SocialRail" items="{{ social }}" inverse="true" fixed="true" hint-size="36px,120px"></x-import>
+
+    <div style="position: relative; flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr); align-items: center; gap: var(--space-7); padding: calc(var(--header-h) + var(--space-7)) var(--page-margin) var(--space-6); max-width: var(--max-width); margin: 0 auto; width: 100%">
+
+      <div style="display: flex; flex-direction: column; gap: var(--space-6); animation: up var(--dur-4) var(--ease-out) both">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" wide="true" dc-props="{{ metaOnPhoto }}" hint-size="240px,16px">Mechanical engineer / Schenectady, New York</x-import>
+        <div style="display: flex; flex-direction: column">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="2" as="h1" treatment="inverse" hint-size="100%,120px">Mert</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="2" treatment="inverse" hint-size="100%,120px">Türeli</x-import>
+        </div>
+        <p style="max-width: var(--measure-narrow); font-size: var(--fs-body-lg); line-height: var(--lh-body); color: var(--paper-a90)">I design, build, and test hardware end to end, from CAD and drawings through electronics and firmware to the test rig that proves it works.</p>
+        <div style="display: flex; flex-wrap: wrap; gap: var(--space-4); margin-top: var(--space-2)">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="glass" trailing="→" href="#work" hint-size="180px,44px">See the work</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="link" trailing="→" href="https://merttureli.github.io" dc-props="{{ linkOnDark }}" hint-size="200px,24px">Full portfolio</x-import>
+        </div>
+      </div>
+
+      <div style="position: relative; width: 100%; aspect-ratio: 16 / 9; animation: kb var(--dur-6) var(--ease-out) both">
+        <video data-hero-clip="charger" poster="assets/motion/charger-wide-poster.png" autoplay loop muted playsinline preload="auto" style="width: 100%; height: 100%; object-fit: contain; display: block; transform: scale(1.16)">
+          <source src="assets/motion/charger-wide-alpha.webm" type="video/webm">
+          <source src="assets/motion/charger-wide.mp4" type="video/mp4">
+        </video>
+      </div>
     </div>
-  </div>
-</nav>
 
-<!-- ============================ HERO ============================ -->
-<header class="hero" id="top">
-  <div class="hero-video">
-    <video id="vDesk" muted playsinline preload="metadata" poster="assets/video/hero-desktop-poster.jpg"
-      aria-label="Silent footage of a deliberate motor-failure ground test at night in snow. The motor was cracked on purpose to make it fail, with thermocouples recording the temperature rise.">
-      <source src="assets/video/hero-desktop.webm" type="video/webm">
-      <source src="assets/video/hero-desktop.mp4" type="video/mp4">
-    </video>
-    <video id="vMob" muted playsinline preload="metadata" poster="assets/video/hero-mobile-poster.jpg"
-      aria-label="Silent footage of a deliberate motor-failure ground test at night in snow. The motor was cracked on purpose to make it fail, with thermocouples recording the temperature rise.">
-      <source src="assets/video/hero-mobile.mp4" type="video/mp4">
-    </video>
-  </div>
-
-  <div class="hero-copy wrap">
-    <span class="eyebrow">Design . Test . Controls</span>
-    <h1>I build machines, then I measure them.</h1>
-    <p class="sub">Mechanical engineer, Union College '26. A $420 test rig that a supplier
-      quoted at $1,700, a national rocketry win, and 344 frames from the drive north.</p>
-    <div class="row">
-      <a class="btn teal" href="#contact">Available for work</a>
-      <a class="btn" href="#work">See the work</a>
+    <div style="position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-6); padding: 0 var(--page-margin) var(--space-7); max-width: var(--max-width); margin: 0 auto; width: 100%">
+      <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Caption" index="01" dc-props="{{ heroCaption }}" hint-size="380px,16px">CHARGER / rendered from the flight model, thirty internal components at their true stations</x-import>
+      <x-import component-from-global-scope="MertTReliDesignSystem_56763c.ScrollCue" inverse="true" shape="square" hint-size="72px,72px"></x-import>
     </div>
-  </div>
+  </section>
 
-  <!-- takes over when the footage ends -->
-  <div class="hero-overlay" id="heroOverlay" aria-hidden="true">
-    <p class="statement" id="heroStatement">Anyone can build the thing. The engineering is proving it works.</p>
-  </div>
+  <section style="padding: var(--section-y) var(--page-margin)">
+    <div style="max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-8)">
+      <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="About" right="01" hint-size="100%,14px"></x-import>
+      <div style="display: grid; grid-template-columns: minmax(240px, 1fr) minmax(0, 1.5fr); gap: var(--space-9); align-items: start">
 
-  <div class="hero-cap" aria-hidden="true">
-    <span><b>Above:</b> a motor we cracked on purpose, to find out what an explosive
-      failure would do to the mount. It destroyed it.</span>
-  </div>
+        <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-3)">
+          <div style="position: relative; aspect-ratio: 4 / 5; border-radius: var(--radius-md); overflow: hidden; background: var(--ink-900)">
+            <img src="assets/portrait/mert-cutout.png" alt="Mert Türeli" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 12%">
+            <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Grain" blend="overlay" strength="normal" hint-size="100%,100%"></x-import>
+          </div>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Caption" index="00" hint-size="220px,16px">Portrait / 2026</x-import>
+        </div>
 
-  <button class="hero-ctl" id="heroCtl" aria-pressed="false">Play footage</button>
-</header>
-
-<!-- ============================ INTRO ============================ -->
-<section class="wrap">
-  <p class="lead rise" style="font-size:var(--fs-l)">I work across design, test and controls,
-    and the part I am actually good at is the middle one. Building something is the easy
-    half. Knowing whether it works, to what tolerance, and how you would prove it to
-    someone who does not trust you yet, is the half that takes judgement.</p>
-</section>
-
-<!-- ============================ STATS ============================ -->
-<section class="wrap">
-  <div class="stats rise">
-    <div><span class="n">$420</span><span class="k">Thermal test rig, built end to end. A supplier quoted <b>$1,700</b> for comparable capability</span></div>
-    <div><span class="n">100%</span><span class="k">Feed-indexing reliability on competition day, not in the lab</span></div>
-    <div><span class="n">1st</span><span class="k">Battle of the Rockets, deployable sensor payload, as <b>captain and chief engineer</b></span></div>
-    <div><span class="n">344</span><span class="k">Frames from one road trip. Three days, one camera, no plan</span></div>
-  </div>
-</section>
-
-<!-- ============================ DOMAINS ============================ -->
-<section class="wrap" id="work">
-  <span class="eyebrow rise">What I work on</span>
-  <h2 class="rise" style="max-width:24ch;margin-bottom:var(--sp-48)">Machines, the instruments that
-    judge them, and the control systems that run them.</h2>
-  <div class="cards">
-    <a class="card rise" href="bend-fixture.html">
-      <img src="assets/img/plate/assembly-dark-900.webp" alt="Drawing of a full machine assembly" loading="lazy" width="900" height="675">
-      <div class="body"><h3>Design</h3><p>SolidWorks, GD&amp;T, tolerance stack-up, and drawings a machine shop can quote from without phoning me.</p></div>
-    </a>
-    <a class="card rise" href="thermal-rig.html">
-      <img src="assets/img/shop/bench-build-900.webp" alt="Bench fabrication work on a metal frame" loading="lazy" width="900" height="675">
-      <div class="body"><h3>Test</h3><p>Rigs, fixtures and instrumentation. Heat flux, thermocouples, 24-bit ADCs, and a steady-state criterion the firmware enforces instead of me.</p></div>
-    </a>
-    <a class="card rise" href="therma-shift.html">
-      <img src="assets/img/plate/indexer-dark-900.webp" alt="Cross-section drawing of an indexer mechanism" loading="lazy" width="900" height="675">
-      <div class="body"><h3>Controls</h3><p>Ladder logic, panel wiring, relays and solenoids, 4-20 mA instrumentation, PID heater loops, and embedded C++ when the PLC is the wrong tool.</p></div>
-    </a>
-    <a class="card rise" href="robo-catcher.html">
-      <img src="assets/img/shop/machine-field-900.webp" alt="A student-built machine deployed on a field" loading="lazy" width="900" height="675">
-      <div class="body"><h3>Build</h3><p>Printed in PETG, milled, laser cut, wired and calibrated. If I designed it, I have also held it.</p></div>
-    </a>
-  </div>
-</section>
-
-<!-- ============================ PROJECTS ============================ -->
-<section class="wrap" id="projects">
-  <span class="eyebrow rise">The write-ups</span>
-  <h2 class="rise" style="max-width:26ch;margin-bottom:var(--sp-48)">Seven projects, documented
-    the way I would want to read them.</h2>
-  <div class="projlist">
-    <a class="proj rise" href="robo-catcher.html">
-      <span class="pn">01</span>
-      <span><h3>Robo-Catcher</h3><p>A softball machine that catches and throws back. Twelve
-        people; I co-led the feeder and owned every wire in the robot. 100% indexing on the day.</p></span>
-      <img src="assets/img/shop/machine-field-900.webp" alt="" loading="lazy" width="900" height="1125">
-      <span class="go">Read it</span>
-    </a>
-    <a class="proj rise" href="thermal-rig.html">
-      <span class="pn">02</span>
-      <span><h3>Benchtop thermal test rig</h3><p>Ranks samples by thermal resistance on a $420
-        build a supplier quoted $1,700 for. Calibrated heat flux, a steady-state acceptance
-        rule, and safety that survives dead firmware.</p></span>
-      <span class="go">Read it</span>
-    </a>
-    <a class="proj rise" href="bend-fixture.html">
-      <span class="pn">03</span>
-      <span><h3>Three-point bend fixture</h3><p>Twelve printed parts on one coordinate system,
-        compliant contacts, zero machined components. For specimens a commercial fixture would
-        break before the test starts.</p></span>
-      <span class="go">Read it</span>
-    </a>
-    <a class="proj rise" href="rudder-pedals.html">
-      <span class="pn">04</span>
-      <span><h3>Flight-sim rudder pedals</h3><p>Fighter-style geometry, three axes, Hall-effect
-        sensing with zero wear parts, and USB HID firmware that needs no drivers.</p></span>
-      <img src="assets/img/pedals/pedals-hero-900.webp" alt="" loading="lazy" width="900" height="600">
-      <span class="go">Read it</span>
-    </a>
-    <a class="proj rise" href="therma-shift.html">
-      <span class="pn">05</span>
-      <span><h3>Therma-Shift</h3><p>One Peltier module that heats or cools any mug by reversing
-        current. Bench-validated at 11 C cold face before a line of control code.</p></span>
-      <span class="go">Read it</span>
-    </a>
-    <a class="proj rise" href="rocket-program.html">
-      <span class="pn">06</span>
-      <span><h3>CHARGER and the rocket program</h3><p>Founded the team in 2023, grew the budget
-        700%, chartered an NAR section, then took first place nationally as captain and chief
-        engineer.</p></span>
-      <img src="assets/img/rocket/charger-pad-close-600.webp" alt="" loading="lazy" width="600" height="800">
-      <span class="go">Read it</span>
-    </a>
-    <a class="proj rise" href="lab-logger.html">
-      <span class="pn">07</span>
-      <span><h3>Lab Run Logger</h3><p>A single-file, zero-install Python tool whose whole design
-        is about never losing a run, even with Excel holding the file hostage.</p></span>
-      <span class="go">Read it</span>
-    </a>
-  </div>
-</section>
-
-<!-- ============================ APPROACH ============================ -->
-<section class="approach" id="approach">
-  <div class="wrap grid">
-    <div>
-      <div class="tealrule"></div>
-      <span class="eyebrow">The approach</span>
-      <h2>Choose the measurement first. The hardware is downstream of it.</h2>
+        <div data-reveal="1" style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-6)">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="3" hint-size="100%,90px">Mert Türeli</x-import>
+          <p style="font-size: var(--fs-body-lg); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">I grew up in Izmir and came to New York for the degree. Outside of engineering I fly, make short films, shoot photography, cook, and travel as much as I can get away with.</p>
+          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">I am a mechanical engineer who does not stop at the mechanical part. Most of my work has the same shape: something needs to exist, nobody has built it yet, and the fastest way to find out if it works is to design it, wire it, write the firmware, and then build the rig that measures it.</p>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SpecList" items="{{ aboutSpecs }}" hint-size="100%,140px"></x-import>
+        </div>
+      </div>
     </div>
-    <div class="body">
-      <p>The company needed to rank flat samples by thermal resistance and had no way to do
-        it. The cheap approach, using a Peltier element as the sensor, proved inaccurate
-        enough to be useless. So I stopped and paid for a <b>calibrated heat-flux
-        sensor</b>. That one decision is the reason any of the numbers mean anything: the
-        rig reads actual watts per square metre through the sample instead of inferring it
-        from heater power.</p>
-      <p>The firmware then refuses to report a result until the reading has <b>held steady
-        within 1% for a full hour</b>. A person watching a graph makes that call
-        impatiently and differently every time. The rig makes it the same way every time,
-        which is the entire point of a test rig.</p>
-      <p>And because runs happen overnight in an empty building, the heater is
-        <b>physically limited to 37 W</b>, behind a one-shot thermal fuse and a mechanical
-        thermostat that need no software to work. If the code crashes, nothing happens.</p>
-      <p class="muted" style="margin-top:var(--sp-32);font-size:var(--fs-s)">My supervisor's
-        written review: "I did not alter your design or parts because I believe your rig is
-        already in a good place."</p>
+  </section>
+
+  <section id="work" style="padding: 0 var(--page-margin) var(--section-y)">
+    <div style="max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-8)">
+      <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Selected work" hint-size="100%,14px"></x-import>
+      <p style="font-size: var(--fs-body-lg); line-height: var(--lh-body); color: var(--text-muted); max-width: var(--measure)">Ranked, strongest first. Four of them have a full case study in the engineering portfolio.</p>
+
+      <article data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; padding-top: var(--space-7); margin-top: var(--space-6); border-top: 1px solid var(--line-hairline)">
+        <div style="display: flex; flex-direction: column; gap: var(--space-5)">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="01" hint-size="240px,16px">Thermal / Instrumentation</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" hint-size="100%,60px">Benchtop thermal test rig</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="muted" hint-size="100%,16px">SunThru, 2026 / Design, electronics, firmware, safety systems</x-import>
+          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">The company needed to rank glazing samples by insulating performance and had no way to measure it. I designed and built the whole bench: the insulated test chamber, the sensor stack, the electronics, the firmware, and the safety system that lets it run unattended overnight.</p>
+          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">The measurement approach was the interesting decision. Rather than inferring performance from heater power, the rig reads actual heat flow through the sample with a calibrated sensor, and it will not accept a result until the readings have held steady for a full hour. The safety design is layered and redundant, because a heater running all night with nobody watching is a real hazard and not a theoretical one.</p>
+          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">It was built for roughly a quarter of what a comparable commercial unit was quoted at, and the same electronics and firmware scale to a larger chamber for full size windows.</p>
+        </div>
+        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-3)">
+          <div style="position: relative; border-radius: var(--radius-xl); overflow: hidden; background: var(--board); padding: var(--space-7)">
+            <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Grain" blend="multiply" strength="subtle" hint-size="100%,100%"></x-import>
+            <div style="position: relative; display: flex; flex-direction: column; gap: var(--space-5)">
+              <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="strong" wide="true" hint-size="200px,16px">Measurement</x-import>
+              <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SpecList" items="{{ rigSpecs }}" columns="minmax(64px,80px) minmax(0,1fr)" hint-size="100%,220px"></x-import>
+            </div>
+          </div>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Caption" hint-size="100%,16px">No render yet</x-import>
+        </div>
+      </article>
+
+      <article data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; padding-top: var(--space-7); border-top: 1px solid var(--line-hairline)">
+        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-3)">
+          <div style="position: relative; aspect-ratio: 16 / 9; overflow: hidden">
+            <video data-clip="1" poster="assets/motion/robo-catcher-360-poster.png" autoplay loop muted playsinline preload="metadata" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain">
+              <source src="assets/motion/robo-catcher-360-alpha.webm" type="video/webm">
+            </video>
+          </div>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Caption" index="02" hint-size="100%,16px">Full 84 part assembly. Net, ramps, indexer, flywheel thrower</x-import>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-top: var(--space-4)">
+            <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="assets/photos/shop-and-machine-photography/machine-field.jpg" alt="Robo-Catcher on the field" ratio="4 / 3" caption="On the field" index="a" hover-zoom="true" hint-size="100%,180px"></x-import>
+            <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="assets/photos/shop-and-machine-photography/uc-track.jpg" alt="Team testing the machine" ratio="4 / 3" caption="Testing. Photograph Paul Buckowski / Union College" index="b" hover-zoom="true" hint-size="100%,180px"></x-import>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-5)">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="02" hint-size="240px,16px">Mechanism / Electronics / Firmware</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" hint-size="100%,60px">Robo-Catcher</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="muted" hint-size="100%,16px">Senior capstone, 2025 / Twelve person team</x-import>
+          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">An automatic softball catching and return machine. I co-led the feeding subsystem and then took over all the electronics and firmware for the entire robot when the project needed someone to own it. That meant the flywheel drive, the stepper based feed indexing, the limit switch and interlock logic, wireless start and stop, and hardware emergency cutoffs wired independently of the microcontroller.</p>
+          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">It hit one hundred percent feed indexing reliability on competition day, came in under budget, and fits in a car trunk. The reliability number came from testing the indexing path to failure ahead of time and fixing what jammed, not from luck on the day.</p>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="outline" trailing="→" href="https://merttureli.github.io" hint-size="220px,44px">Case study</x-import>
+        </div>
+      </article>
+
+      <article data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; padding-top: var(--space-7); border-top: 1px solid var(--line-hairline)">
+        <div style="display: flex; flex-direction: column; gap: var(--space-5)">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="03" hint-size="240px,16px">Airframe / Payload</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" hint-size="100%,60px">Deployable sensor payload</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="muted" hint-size="100%,16px">Union College Rocket Team, 2026 / Captain and chief engineer / First place</x-import>
+          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">The competition entry that won its event at Battle of the Rockets 2026. I led the design and manufacture of the airframe and the deployable payload, and ran the team through design review, build, and launch day recovery.</p>
+          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">The win is published by both Union College and the competition organizer.</p>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SpecList" items="{{ chargerSpecs }}" hint-size="100%,140px"></x-import>
+        </div>
+        <div style="min-width: 0">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="assets/photos/charger-rocket-photography/charger-pad-tall.jpg" alt="CHARGER on the launch pad" ratio="3 / 4" caption="On the pad" index="03" hover-zoom="true" hint-size="100%,420px"></x-import>
+        </div>
+      </article>
+
+      <article data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; padding-top: var(--space-7); border-top: 1px solid var(--line-hairline)">
+        <div style="display: flex; flex-direction: column; gap: var(--space-5)">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="04" hint-size="240px,16px">Design for manufacture</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" hint-size="100%,60px">Aerogel three-point bend jig</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="muted" hint-size="100%,16px">SunThru, 2026 / Solo design</x-import>
+          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Aerogel is too fragile for off the shelf flexural test fixtures, so I designed one. It is fully 3D printable, built from interlocking parts on a shared coordinate system, and sized for the lab's samples with gentle repeatable clamping. It is in use for flexural characterization.</p>
+          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">A small, clean example of design for manufacture, and of solving a problem by making the tool rather than buying it.</p>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="outline" trailing="→" href="https://merttureli.github.io" hint-size="220px,44px">Case study</x-import>
+        </div>
+        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-3)">
+          <div style="position: relative; border-radius: var(--radius-xl); overflow: hidden; background: var(--board); padding: var(--space-7)">
+            <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Grain" blend="multiply" strength="subtle" hint-size="100%,100%"></x-import>
+            <div style="position: relative; display: flex; flex-direction: column; gap: var(--space-5)">
+              <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="strong" wide="true" hint-size="200px,16px">Build</x-import>
+              <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SpecList" items="{{ jigSpecs }}" columns="minmax(64px,80px) minmax(0,1fr)" hint-size="100%,190px"></x-import>
+            </div>
+          </div>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Caption" hint-size="100%,16px">No render yet</x-import>
+        </div>
+      </article>
+
+      <article data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: var(--space-8); align-items: start; padding-top: var(--space-7); border-top: 1px solid var(--line-hairline)">
+        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-3)">
+          <div style="position: relative; aspect-ratio: 4 / 3; overflow: hidden">
+            <video data-clip="1" poster="assets/motion/rudder-pedals-working-poster.png" autoplay loop muted playsinline preload="metadata" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover">
+              <source src="assets/motion/rudder-pedals-working-alpha.webm" type="video/webm">
+            </video>
+          </div>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Caption" index="05" hint-size="100%,16px">Rudder sweep, then each toe brake. Motion solved from the real pivot geometry</x-import>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-5)">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="05" hint-size="240px,16px">Mechanism / Firmware</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" hint-size="100%,60px">Flight sim rudder pedals</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="muted" hint-size="100%,16px">Personal project, 2026 / Solo</x-import>
+          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">A three axis fighter style rudder and toe brake set, designed in CAD and 3D printed, using contactless magnetic sensing so there is nothing to wear out. I wrote the USB HID firmware myself, so it is plug and play in any simulator with no drivers, custom calibration, and its own deadzone logic.</p>
+          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">A solo project that goes all the way from mechanism design to firmware, and it connects to the flying.</p>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="outline" trailing="→" href="https://merttureli.github.io" hint-size="220px,44px">Case study</x-import>
+        </div>
+      </article>
+
+      <article data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; padding-top: var(--space-7); border-top: 1px solid var(--line-hairline)">
+        <div style="display: flex; flex-direction: column; gap: var(--space-5)">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="06" hint-size="240px,16px">Thermal / Control electronics</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" hint-size="100%,60px">Therma-Shift coaster</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="muted" hint-size="100%,16px">Personal project, 2026 / Solo</x-import>
+          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">A solid state coaster that actively heats or cools any mug or glass, built for a seed competition. Closed loop temperature control with thermal runaway cutoffs, in an aluminum topped form factor designed to work with drinkware people already own rather than a proprietary cup.</p>
+          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">I bench validated the thermal core before integrating the control electronics, which is the part most projects skip.</p>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="outline" trailing="→" href="https://merttureli.github.io" hint-size="220px,44px">Case study</x-import>
+        </div>
+        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-3)">
+          <div style="position: relative; aspect-ratio: 5 / 4; overflow: hidden">
+            <video data-clip="1" poster="assets/motion/therma-shift-360-noflow-poster.png" autoplay loop muted playsinline preload="metadata" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover">
+              <source src="assets/motion/therma-shift-360-noflow-alpha.webm" type="video/webm">
+            </video>
+          </div>
+        </div>
+      </article>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- ============================ LOG ============================ -->
-<section class="wrap" id="log">
-  <span class="eyebrow rise">Recently</span>
-  <h2 class="rise" style="margin-bottom:var(--sp-48)">The log</h2>
-  <div class="log">
-    <a href="thermal-rig.html" class="rise">
-      <span class="when">Aug 2026</span>
-      <h3>The rig is running unattended overnight</h3>
-      <span class="go">Read it</span>
-      <span class="note">One sample per run, about five percent comparative accuracy, and a
-        safety case that does not depend on the firmware being correct.</span>
-    </a>
-    <a href="#outside" class="rise">
-      <span class="when">Jun 2026</span>
-      <h3>Graduated on a Sunday, drove to Acadia on the Thursday</h3>
-      <span class="go">See the frames</span>
-      <span class="note">Three days, 344 frames on a Fujifilm X-M5, then started the job on
-        the Monday.</span>
-    </a>
-    <a href="rocket-program.html" class="rise">
-      <span class="when">Apr 2026</span>
-      <h3>First place at Battle of the Rockets</h3>
-      <span class="go">Read it</span>
-      <span class="note">Deployable sensor payload. I founded the team in 2023 with nobody on
-        it, led thirteen members, and grew the budget seven hundred percent to get there.</span>
-    </a>
-    <a href="robo-catcher.html" class="rise">
-      <span class="when">2025</span>
-      <h3>Took over every wire in a twelve-person capstone robot</h3>
-      <span class="go">Read it</span>
-      <span class="note">ESP32, a 120 W flywheel on a MOSFET stage, stepper indexing and
-        hardware emergency cut-offs. It indexed perfectly on the day.</span>
-    </a>
-    <div class="row rise" data-fly="jet">
-      <span class="when">Summer 2024</span>
-      <h3>Thermal hardware for two fighter programs</h3>
-      <span class="note">Design engineer intern at TASECS in Izmir: stress and fatigue
-        analysis and HVAC valve components for the KAAN and HURJET programs, sized for
-        cockpit cooling in serious ambient heat. This row is worth hovering.</span>
+  <section class="on-dark" style="position: relative; background: var(--ink-900); padding: var(--space-9) var(--page-margin); overflow: hidden">
+    <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Grain" blend="overlay" strength="normal" hint-size="100%,100%"></x-import>
+    <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-7)">
+      <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Subsystem views" right="Robo-Catcher" hint-size="100%,14px"></x-import>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(158px, 100%), 1fr)); gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="assets/photos/cad-drawing-plates/assembly-dark.jpg" alt="Full assembly plate" ratio="4 / 3" caption="Full assembly" index="01" hint-size="100%,180px"></x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="assets/photos/cad-drawing-plates/feeder-dark.jpg" alt="Feeder plate" ratio="4 / 3" caption="Feeder" index="02" hint-size="100%,180px"></x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="assets/photos/cad-drawing-plates/indexer-dark.jpg" alt="Indexer plate" ratio="4 / 3" caption="Indexer" index="03" hint-size="100%,180px"></x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="assets/photos/cad-drawing-plates/thrower-dark.jpg" alt="Thrower plate" ratio="4 / 3" caption="Thrower" index="04" hint-size="100%,180px"></x-import>
+      </div>
+      <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Caption" hint-size="100%,16px" style="max-width: 92ch">CAD views of the four subsystems, exported from the assembly</x-import>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- ============================ CHARGER ON THE PAD ============================ -->
-<section class="wrap" id="charger">
-  <div class="sechead">
-    <h2 class="rise">CHARGER, on the rail</h2>
-    <span class="n">03 . Battle of the Rockets, pad 1</span>
-  </div>
-  <div class="plates rise">
-    <figure class="plate tall">
-      <img src="assets/img/rocket/charger-pad-tall-1440.webp"
-        alt="CHARGER standing on the launch rail, small against an open sky and a green field, with sponsor banners at the base"
-        loading="lazy" width="1440" height="1920">
-      <figcaption>On the rail. Twenty minutes before it flew.</figcaption>
-    </figure>
-    <figure class="plate">
-      <img src="assets/img/rocket/charger-pad-close-1440.webp"
-        alt="Close view of the airframe with CHARGER and UCRC 2026 lettering running up it, fins at the base"
-        loading="lazy" width="1440" height="1920">
-      <figcaption>CHARGER . UCRC 2026, up the airframe.</figcaption>
-    </figure>
-    <div class="say">
-      <p>I founded the Union College Rocket Team in 2023 with nobody on it. Thirteen
-        members led, twelve more trained, a <b>700% budget increase</b> I wrote the
-        proposals for, and a charter as an official NAR section.</p>
-      <p style="margin-top:var(--sp-16)">Then <b>first place</b> in the deployable sensor
-        payload event, as captain and chief engineer.</p>
-      <p class="cap">My photographs. The result is verifiable on union.edu and
-        rocketbattle.org. <a href="rocket-program.html" style="color:var(--text-copper)">Read the program story</a></p>
+  <section id="experience" style="padding: var(--section-y) var(--page-margin)">
+    <div style="max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-8)">
+      <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Experience" right="004" hint-size="100%,14px"></x-import>
+
+      <div data-reveal="1" style="display: grid; grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr); gap: var(--space-8); align-items: start; padding-top: var(--space-6); border-top: 1px solid var(--line-hairline)">
+        <div style="display: flex; flex-direction: column; gap: var(--space-4)">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" hint-size="100%,50px">Engineering intern</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="strong" hint-size="100%,16px">SunThru</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="100%,16px">Schenectady, NY / June 2026 to present</x-import>
+        </div>
+        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-4)">
+          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">SunThru is a Union College spin-out developing silica aerogel inserts that give double pane windows triple pane performance. I work on the prototype side and the equipment side.</p>
+          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">On the product: building and testing the company's first full in-house prototype units, and leading the validation work on thermal performance and optical clarity. I produce the toleranced drawings that go out to machine shops for quoting, and I manage component sourcing when lead times are tight.</p>
+          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">On the equipment: supporting bring-up of a PLC automation system for production equipment, which means ladder logic, panel wiring, instrumentation, and running structured test procedures on live hardware.</p>
+          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-muted); max-width: var(--measure)">I also led sourcing for a replacement production blower on a one week deadline, which involved specifying the requirement, working the manufacturer's rep, catching a power spec mismatch against the site's actual supply, and raising material compatibility questions before anyone ordered anything.</p>
+        </div>
+      </div>
+
+      <div data-reveal="1" style="display: grid; grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr); gap: var(--space-8); align-items: start; padding-top: var(--space-6); border-top: 1px solid var(--line-hairline)">
+        <div style="display: flex; flex-direction: column; gap: var(--space-4)">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" hint-size="100%,50px">Founder and president</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="strong" hint-size="100%,16px">Union College Rocket Team</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="100%,16px">Schenectady, NY / August 2023 to June 2026</x-import>
+        </div>
+        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-4)">
+          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Started the team from nothing and built it to competition standard. Led thirteen members as captain, trained new members through build labs, and owned safety compliance for high power launches. Grew the team budget by seven hundred percent by writing funding proposals, which is what made a competitive airframe possible at all.</p>
+          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">The team won first place at Battle of the Rockets 2026 in the Deployable Sensor Payload event, and was chartered as an official section of the National Association of Rocketry.</p>
+        </div>
+      </div>
+
+      <div data-reveal="1" style="display: grid; grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr); gap: var(--space-8); align-items: start; padding-top: var(--space-6); border-top: 1px solid var(--line-hairline)">
+        <div style="display: flex; flex-direction: column; gap: var(--space-4)">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" hint-size="100%,50px">Founder</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="strong" hint-size="100%,16px">ModuFly</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="100%,16px">Schenectady, NY / September 2024 to January 2026</x-import>
+        </div>
+        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-4)">
+          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Co-founded a startup around a modular interlocking rocket system for STEM education. Raised $70,000 in seed funding, starting with a $10,000 prize at the SparkLabs competition and then a further $60,000 from private investors. Led R&D and production, and ran hands-on rocketry workshops teaching design and troubleshooting to more than twenty high school students.</p>
+        </div>
+      </div>
+
+      <div data-reveal="1" style="display: grid; grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr); gap: var(--space-8); align-items: start; padding-top: var(--space-6); border-top: 1px solid var(--line-hairline)">
+        <div style="display: flex; flex-direction: column; gap: var(--space-4)">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" hint-size="100%,50px">Design engineer and materials intern</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="strong" hint-size="100%,16px">TASECS</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="100%,16px">Ankara, Turkey / Summer 2024</x-import>
+        </div>
+        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-5)">
+          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Aerospace thermal management. Designed high efficiency HVAC valve components, ran material stress and fatigue analysis supporting two national fighter and jet trainer programs, and selected aerospace grade materials for printed prototypes, including cooling upgrades for high ambient temperature operation.</p>
+          <div style="display: flex; flex-direction: column; gap: var(--space-3)">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4)">
+              <div style="position: relative; aspect-ratio: 16 / 9; overflow: hidden">
+                <video data-clip="1" poster="assets/motion/kaan-360-poster.png" autoplay loop muted playsinline preload="metadata" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain">
+                  <source src="assets/motion/kaan-360-alpha.webm" type="video/webm">
+                </video>
+              </div>
+              <div style="position: relative; aspect-ratio: 16 / 9; overflow: hidden">
+                <video data-clip="1" poster="assets/motion/hurjet-360-poster.png" autoplay loop muted playsinline preload="metadata" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain">
+                  <source src="assets/motion/hurjet-360-alpha.webm" type="video/webm">
+                </video>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- ============================ THE FAILURE TEST ============================ -->
-<section class="wrap" id="failure">
-  <div class="sechead">
-    <h2 class="rise">The test where we broke it on purpose</h2>
-    <span class="n">04 . a negative result worth having</span>
-  </div>
-  <div class="split">
-    <div class="rise">
-      <p class="lead" style="font-size:var(--fs-r)">ModuFly's airframes are 3D printed, which
-        raises an obvious question nobody had answered: <b>what happens to a printed motor
-        mount when the motor itself fails?</b> Not degrades. Fails, with an explosion.</p>
-      <p style="margin-top:var(--sp-20);color:var(--text-light);line-height:var(--lh-xl)">
-        So we made one fail. The motor was <b>deliberately cracked down the middle</b> to
-        guarantee an explosive failure rather than a clean burn, and we instrumented the mount
-        with <b>two thermocouples</b> to record how fast and how far the temperature actually
-        moved, so deformation could be tied to real numbers instead of impressions.</p>
-      <p style="margin-top:var(--sp-20);color:var(--text-light);line-height:var(--lh-xl)">
-        The answer was unambiguous and not the one we wanted. <b>The mount fails immediately
-        and is not reusable.</b> There is no partial survival and no safe margin to design
-        against. That result is the reason the mount was redesigned around containment rather
-        than around nominal loads, and it is the sort of thing you only learn by choosing to
-        destroy something on a night you control.</p>
-      <span class="nums" style="display:flex;gap:var(--sp-24);flex-wrap:wrap;margin-top:var(--sp-24);padding-top:var(--sp-16);border-top:1px solid var(--border);font-size:var(--fs-s);color:var(--text-light)">
-        <span>Thermocouples <b style="color:var(--text-white)">2</b></span>
-        <span>Failure mode <b style="color:var(--text-white)">induced</b></span>
-        <span>Mount survival <b style="color:var(--text-white)">none</b></span>
-      </span>
+  <section style="padding: 0 var(--page-margin) var(--section-y)">
+    <div style="max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-8)">
+      <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="What I work with" right="007" hint-size="100%,14px"></x-import>
+      <div data-reveal="1" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(400px, 100%), 1fr)); gap: var(--space-8) var(--space-7)">
+        <div style="display: flex; flex-direction: column; gap: var(--space-4)">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="01" tone="strong" hint-size="200px,16px">Design and CAD</x-import>
+          <div style="display: flex; flex-wrap: wrap; gap: var(--space-2)">
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">SolidWorks / expert</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Macro and API automation</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">GD&amp;T to ASME Y14.5</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Tolerance stack-up</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Design for manufacture</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Design for assembly</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Shop drawings for quoting</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">AutoCAD</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">CATIA</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Revit</span>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-4)">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="02" tone="strong" hint-size="200px,16px">Controls and automation</x-import>
+          <div style="display: flex; flex-wrap: wrap; gap: var(--space-2)">
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">PLC ladder logic</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Control panel wiring</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Hardware termination</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">4-20 mA instrumentation</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Pressure transducers</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Thermocouples</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">PID control</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">I/O documentation</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Fault troubleshooting</span>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-4)">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="03" tone="strong" hint-size="200px,16px">Electronics and firmware</x-import>
+          <div style="display: flex; flex-wrap: wrap; gap: var(--space-2)">
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">C++</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">ESP32</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Teensy</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Embedded data acquisition</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Closed loop control firmware</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">USB HID</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Hall effect sensors</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Thermistors</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Digital temperature sensors</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Heat flux sensors</span>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-4)">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="04" tone="strong" hint-size="200px,16px">Analysis</x-import>
+          <div style="display: flex; flex-wrap: wrap; gap: var(--space-2)">
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">FEA</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">CFD</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">MATLAB</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Heat transfer</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Thermal analysis</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">HVAC load calculation</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Stress analysis</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Fatigue analysis</span>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-4)">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="05" tone="strong" hint-size="200px,16px">Fabrication</x-import>
+          <div style="display: flex; flex-wrap: wrap; gap: var(--space-2)">
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">3D printing / FDM</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">3D printing / SLA</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Laser cutting</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Milling</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Lathe</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Rapid prototyping</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Bench assembly</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Calibration</span>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-4)">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="06" tone="strong" hint-size="200px,16px">Software</x-import>
+          <div style="display: flex; flex-wrap: wrap; gap: var(--space-2)">
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Python</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">JavaScript</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">HTML</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">CSS</span>
+          </div>
+          <p style="font-size: var(--fs-body-sm); line-height: var(--lh-body); color: var(--text-muted)">This site's predecessor was hand built with no framework.</p>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-4)">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="07" tone="strong" hint-size="200px,16px">Languages</x-import>
+          <div style="display: flex; flex-wrap: wrap; gap: var(--space-2)">
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Turkish / native</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">English / professional</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">German / intermediate</span>
+            <span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">Spanish / beginner</span>
+          </div>
+        </div>
+      </div>
     </div>
-    <figure class="clip rise">
-      <video id="vNose" muted loop playsinline preload="none"
-        poster="assets/video/nosecone-poster.jpg" controls
-        aria-label="Ground ejection test of the nose cone separation charge, filmed from across a field">
-        <source src="assets/video/nosecone-test.mp4" type="video/mp4">
-      </video>
-      <figcaption><b>Ground ejection test.</b> Separate from the failure test above: this one
-        fires the nose cone separation charge on the ground, where a charge that is too small
-        to separate the airframe or too large to survive is cheap to find out about. Watch for
-        the puff about halfway through.</figcaption>
-    </figure>
-  </div>
-</section>
+  </section>
 
-<!-- ============================ ROBO-CATCHER BAND ============================ -->
-<section class="band" style="padding-block:0" data-fly="ball">
-  <video id="vRobo" muted loop playsinline preload="none" poster="assets/video/robo-poster.jpg"
-    aria-label="The Robo-Catcher on a field during the capstone demonstration, with the class watching">
-    <source src="assets/video/robo-desktop.mp4" type="video/mp4">
-  </video>
-  <button class="bandctl" id="roboCtl" aria-pressed="false">Play</button>
-  <div class="in">
-    <span class="eyebrow">Senior capstone . demonstration day</span>
-    <h3>Twelve people, one machine, and the whole class watching it work.</h3>
-    <p>It catches a softball and throws it back. I co-led the four-person feeder, then took
-      over <b>every wire in the robot</b>: ESP32, a 120 W flywheel on a MOSFET stage, stepper
-      indexing, hardware emergency cut-offs. On the day it indexed <b>100% reliably</b>.</p>
-    <p class="cap">My footage. Shot on the field at the demonstration. <a href="robo-catcher.html" style="color:var(--text-copper)">Read the write-up</a></p>
-  </div>
-</section>
-
-<!-- ============================ OUTSIDE ============================ -->
-<section class="wrap" id="outside">
-  <span class="eyebrow rise">Outside the shop</span>
-  <h2 class="rise" style="max-width:22ch;margin-bottom:var(--sp-48)">Every photograph on this
-    site is mine.</h2>
-  <div class="cards">
-    <a class="card rise" href="#">
-      <img src="assets/img/trip/jordan-bubbles-1200.webp" alt="Jordan Pond with the two rounded hills known as the Bubbles behind it" loading="lazy" width="1200" height="800">
-      <div class="body"><h3>Photography</h3><p>344 frames from one road trip north. Granite summits before the light came up, the coast, and Portland Head Light on the way home.</p></div>
-    </a>
-    <a class="card rise" href="#">
-      <img src="assets/img/trip/summit-sunset-1200.webp" alt="A figure on bare granite looking out over a lake in low evening light" loading="lazy" width="1200" height="800">
-      <div class="body"><h3>Three short films</h3><p>Room 135 I made alone, and it was nominated for cinematography, editing and sound design. Three nominations for doing three jobs.</p></div>
-    </a>
-    <a class="card rise" href="#">
-      <img src="assets/img/trip/ridge-rock-1200.webp" alt="Bare granite ridge above the treeline" loading="lazy" width="1200" height="800">
-      <div class="body"><h3>Flying and archery</h3><p>Licensed ultralight pilot. Competitive archery, which is the same skill as flying: hold still, then commit.</p></div>
-    </a>
-  </div>
-</section>
-
-<!-- ============================ CTA ============================ -->
-<section class="cta" id="contact">
-  <div class="wrap">
-    <h2>The next thing I build could be yours.</h2>
-    <p>Looking for design, test or controls work. I will bring CAD a shop can quote from,
-      firmware that does not need babysitting, and the habit of measuring the thing rather
-      than assuming.</p>
-    <div class="row">
-      <a class="btn teal" href="mailto:merttureli0@gmail.com">merttureli0@gmail.com</a>
-      <a class="btn" href="assets/Mert-Tureli-Resume.pdf">Resume, PDF</a>
-      <a class="btn" href="https://www.linkedin.com/in/merttureli">LinkedIn</a>
+  <section id="beyond" class="on-dark" style="position: relative; background: var(--ink-900)">
+    <div style="position: relative; height: min(560px, 62vh); overflow: hidden">
+      <span style="position: absolute; inset: 0; background: linear-gradient(150deg, #1b1e22 0%, #6f7478 52%, #b7babe 100%)"></span>
+      <span style="position: absolute; inset: 0; background: var(--scrim-hero)"></span>
+      <span style="position: absolute; top: var(--space-7); right: var(--page-margin); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70)">Image to come / full bleed</span>
+      <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Grain" blend="overlay" strength="normal" hint-size="100%,100%"></x-import>
+      <div style="position: absolute; inset: auto 0 0 0; padding: var(--space-8) var(--page-margin); max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" wide="true" dc-props="{{ metaOnPhoto }}" hint-size="260px,16px">Beyond engineering / 005</x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="2" treatment="inverse" hint-size="100%,120px">Beyond engineering</x-import>
+      </div>
     </div>
-  </div>
-</section>
 
-<footer>
-  <div class="in wrap">
-    <span>Mert Tureli . Schenectady, NY . 838 251 9707</span>
-    <span>Turkish, English, German, some Spanish · <a href="privacy.html">Privacy</a></span>
-  </div>
-</footer>
+    <div style="position: relative; padding: var(--space-9) var(--page-margin) var(--space-8); overflow: hidden">
+      <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Grain" blend="overlay" strength="normal" hint-size="100%,100%"></x-import>
+      <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-8)">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: var(--space-8) var(--space-7)">
+          <div style="display: flex; flex-direction: column; gap: var(--space-4)">
+            <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="01" tone="strong" hint-size="200px,16px">Piloting</x-import>
+            <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--paper-a90)">Licensed ultralight pilot, certified through the Turkish civil aviation authority. The rudder pedals came out of the same interest.</p>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: var(--space-4)">
+            <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="02" tone="strong" hint-size="200px,16px">Filmmaking</x-import>
+            <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--paper-a90)">Three short films screened at the Robert College Film Festival in 2022, made while in high school in Istanbul. One of them, a solo project, was nominated in three technical categories: cinematography, editing, and sound design. Entirely self taught.</p>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: var(--space-4)">
+            <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="03" tone="strong" hint-size="200px,16px">Photography</x-import>
+            <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--paper-a90)">An ongoing thing rather than a project.</p>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: var(--space-4)">
+            <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="04" tone="strong" hint-size="200px,16px">Cooking</x-import>
+            <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--paper-a90)">I cook most days, mostly the food I grew up with in Izmir.</p>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: var(--space-4)">
+            <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="05" tone="strong" hint-size="200px,16px">Travelling</x-import>
+            <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--paper-a90)">I grew up in Izmir, moved to New York for the degree, and travel whenever there is room to. The camping and the vlogging fit in here.</p>
+          </div>
+        </div>
+      </div>
+    </div>
 
-<script>
-(function(){
-'use strict';
-const REDUCE=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    <div data-reveal="1" style="position: relative; padding: 0 var(--page-margin) var(--space-9)">
+      <div style="max-width: var(--max-width); margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(158px, 100%), 1fr)); gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" alt="Image to come" ratio="4 / 5" caption="Image to come" index="01" hint-size="100%,280px"></x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" alt="Image to come" ratio="4 / 5" caption="Image to come" index="02" hint-size="100%,280px"></x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" alt="Image to come" ratio="4 / 5" caption="Image to come" index="03" hint-size="100%,280px"></x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" alt="Image to come" ratio="4 / 5" caption="Image to come" index="04" hint-size="100%,280px"></x-import>
+      </div>
+    </div>
+  </section>
 
-/* ------------------------------------------------------------------
-   THE HERO CYCLE, rebuilt from lila.ai's mechanic.
-   video plays -> "ended" -> overlay fades in and the statement splits up ->
-   holds 4s -> fades out -> video restarts.
-   Differences from theirs, on purpose:
-     . a visible pause control, which they do not have
-     . honours prefers-reduced-motion by not autoplaying and not cycling
-     . the statement text lives in the HTML, so it is never generated
-   ------------------------------------------------------------------ */
-const HOLD_MS=4000;
-const overlay=document.getElementById('heroOverlay');
-const statement=document.getElementById('heroStatement');
-const ctl=document.getElementById('heroCtl');
+  <section style="padding: var(--section-y) var(--page-margin) 0">
+    <div style="max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-8)">
+      <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Recognition" right="004" hint-size="100%,14px"></x-import>
+      <div data-reveal="1" style="display: flex; flex-direction: column">
+        <div style="display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-6) 0; border-bottom: 1px solid var(--line-hairline)">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="strong" hint-size="40px,16px">01</x-import>
+          <p style="font-size: var(--fs-title-3); line-height: 1.35; color: var(--text-display); max-width: var(--measure)">First place, Battle of the Rockets 2026, Deployable Sensor Payload, as captain and chief engineer</p>
+        </div>
+        <div style="display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-6) 0; border-bottom: 1px solid var(--line-hairline)">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="strong" hint-size="40px,16px">02</x-import>
+          <p style="font-size: var(--fs-title-3); line-height: 1.35; color: var(--text-display); max-width: var(--measure)">Founded the Union College Rocket Team and grew its budget by seven hundred percent</p>
+        </div>
+        <div style="display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-6) 0; border-bottom: 1px solid var(--line-hairline)">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="strong" hint-size="40px,16px">03</x-import>
+          <p style="font-size: var(--fs-title-3); line-height: 1.35; color: var(--text-display); max-width: var(--measure)">Raised $70,000 in seed funding for ModuFly, a $10,000 SparkLabs competition prize plus $60,000 from private investors</p>
+        </div>
+        <div style="display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-6) 0; border-bottom: 1px solid var(--line-hairline)">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="strong" hint-size="40px,16px">04</x-import>
+          <p style="font-size: var(--fs-title-3); line-height: 1.35; color: var(--text-display); max-width: var(--measure)">Three film nominations at the Robert College Film Festival 2022 for a single solo short</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-/* split the statement into characters once, keeping the original text */
-const words=statement.textContent.trim();
-statement.textContent='';
-[...words].forEach(c=>{
-  const s=document.createElement('span');
-  s.className='ch'; s.textContent=c;
-  statement.appendChild(s);
-});
-const chars=[...statement.querySelectorAll('.ch')];
-function resetChars(){
-  chars.forEach(s=>{s.style.transition='none';s.style.opacity='0';
-    s.style.transform='translateY(.5em)'});
-}
-function slideInUp(){
-  chars.forEach((s,i)=>{
-    s.style.transition='opacity .5s cubic-bezier(.25,.46,.45,.94) '+(i*14)+'ms,'
-                      +'transform .6s cubic-bezier(.25,.46,.45,.94) '+(i*14)+'ms';
-    s.style.opacity='1'; s.style.transform='none';
-  });
-}
-if(REDUCE){ chars.forEach(s=>{s.style.opacity='1';s.style.transform='none'}) }
-else resetChars();
+  <section id="contact" style="padding: var(--section-y) var(--page-margin) var(--space-9)">
+    <div style="max-width: var(--max-width); margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--space-9); align-items: start">
+      <div style="display: flex; flex-direction: column; gap: var(--space-6)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" wide="true" tone="strong" hint-size="200px,16px">Contact</x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="2" hint-size="100%,120px">Get in touch</x-import>
+        <p style="font-size: var(--fs-body-lg); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure-narrow)">Open to engineering roles in design, test, manufacturing and controls. The full write-ups, drawings and numbers are in the portfolio.</p>
+        <div style="display: flex; flex-wrap: wrap; gap: var(--space-4)">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="solid" trailing="→" href="https://merttureli.github.io" hint-size="220px,44px">Engineering portfolio</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="outline" trailing="→" href="https://linkedin.com/in/merttureli" hint-size="160px,44px">LinkedIn</x-import>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Elsewhere" hint-size="100%,14px"></x-import>
+      <div style="display: flex; flex-direction: column">
+        <a href="https://merttureli.github.io" style="display: grid; grid-template-columns: minmax(64px,110px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-display); text-decoration: none" style-hover="border-bottom-color: var(--line-strong)">
+          <span style="color: var(--text-meta)">Portfolio</span>
+          <span>merttureli.github.io</span>
+        </a>
+        <a href="https://linkedin.com/in/merttureli" style="display: grid; grid-template-columns: minmax(64px,110px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-display); text-decoration: none" style-hover="border-bottom-color: var(--line-strong)">
+          <span style="color: var(--text-meta)">LinkedIn</span>
+          <span>linkedin.com/in/merttureli</span>
+        </a>
+        <a href="https://github.com/merttureli" style="display: grid; grid-template-columns: minmax(64px,110px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-display); text-decoration: none" style-hover="border-bottom-color: var(--line-strong)">
+          <span style="color: var(--text-meta)">GitHub</span>
+          <span>github.com/merttureli</span>
+        </a>
+        <a href="mailto:merttureli0@gmail.com" style="display: grid; grid-template-columns: minmax(64px,110px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-display); text-decoration: none" style-hover="border-bottom-color: var(--line-strong)">
+          <span style="color: var(--text-meta)">Email</span>
+          <span>merttureli0@gmail.com</span>
+        </a>
+      </div>
+      </div>
+    </div>
+  </section>
 
-/* pick whichever video is actually displayed at this breakpoint */
-function activeVideo(){
-  const d=document.getElementById('vDesk'), m=document.getElementById('vMob');
-  return getComputedStyle(d).display!=='none' ? d : m;
-}
-let holdTimer=0, cycling=false;
-
-function onEnded(v){
-  if(REDUCE)return;
-  cycling=true;
-  overlay.classList.add('is-visible');
-  slideInUp();
-  clearTimeout(holdTimer);
-  holdTimer=setTimeout(()=>{
-    overlay.classList.remove('is-visible');
-    // wait out the .2s opacity transition before resetting, so the reset is unseen
-    setTimeout(()=>{
-      resetChars();
-      cycling=false;
-      v.currentTime=0;
-      v.play().catch(()=>{});
-    },260);
-  },HOLD_MS);
-}
-
-[document.getElementById('vDesk'),document.getElementById('vMob')].forEach(v=>{
-  if(!v)return;
-  v.loop=false;                        // the cycle replaces native looping
-  v.addEventListener('ended',()=>onEnded(v));
-});
-
-function label(playing){
-  ctl.textContent = playing ? 'Pause footage' : 'Play footage';
-  ctl.setAttribute('aria-pressed',String(playing));
-}
-ctl.addEventListener('click',()=>{
-  const v=activeVideo();
-  if(v.paused){ v.play().then(()=>label(true)).catch(()=>label(false)) }
-  else{
-    v.pause(); label(false);
-    clearTimeout(holdTimer);
-    overlay.classList.remove('is-visible');
-    if(cycling){ setTimeout(resetChars,260); cycling=false }
+  <footer style="padding: var(--space-7) var(--page-margin) var(--space-8); border-top: 1px solid var(--line-hairline)">
+    <div style="max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-6)">
+      <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Wordmark" name="MERT TÜRELI" size="md" hint-size="220px,20px"></x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="320px,16px">Schenectady, New York / B.S. Mechanical Engineering, Union College, 2026</x-import>
+      </div>
+      <p style="max-width: 96ch; font-family: var(--font-mono); font-size: var(--fs-meta-sm); line-height: 1.5; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-meta)">Photographs of the machine and the team by Paul Buckowski / Union College. CAD animations rendered from the source assemblies. Aircraft models are third-party, illustration only. / <a href="privacy.html" style="color: var(--text-meta); text-decoration: underline; text-underline-offset: 3px">Privacy</a></p>
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;heroClip&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;charger&quot;,&quot;therma-shift&quot;,&quot;robo-catcher&quot;],&quot;default&quot;:&quot;charger&quot;,&quot;tsType&quot;:&quot;\&quot;charger\&quot; | \&quot;therma-shift\&quot; | \&quot;robo-catcher\&quot;&quot;,&quot;section&quot;:&quot;Motion&quot;},&quot;motion&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Motion&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props || {};
+    return {
+      nav: [
+        { id: "work", label: "Work", href: "#work" },
+        { id: "experience", label: "Experience", href: "#experience" },
+        { id: "beyond", label: "Beyond", href: "#beyond" },
+        { id: "contact", label: "Contact", href: "#contact" },
+      ],
+      social: [
+        { name: "LinkedIn", icon: "linkedin", href: "https://linkedin.com/in/merttureli" },
+        { name: "GitHub", icon: "github", href: "https://github.com/merttureli" },
+        { name: "Mail", icon: "mail", href: "#contact" },
+      ],
+      aboutSpecs: [
+        { label: "Title", value: "Mechanical engineer" },
+        { label: "Based", value: "Schenectady, New York" },
+        { label: "From", value: "Izmir, Turkey" },
+        { label: "Degree", value: "B.S. Mechanical Engineering", aside: "Union College, 2026" },
+      ],
+      rigSpecs: [
+        { label: "Measures", value: "Heat flow through the sample" },
+        { label: "Sensor", value: "Calibrated heat flux" },
+        { label: "Accepts", value: "One hour of steady readings" },
+        { label: "Safety", value: "Layered, redundant, unattended" },
+        { label: "Cost", value: "About a quarter of the quote" },
+        { label: "Scales", value: "Full size window chamber" },
+      ],
+      jigSpecs: [
+        { label: "Printing", value: "Fully 3D printable" },
+        { label: "Build", value: "Interlocking parts, one coordinate system" },
+        { label: "Sized for", value: "The lab's aerogel samples" },
+        { label: "Clamping", value: "Gentle and repeatable" },
+        { label: "Status", value: "In use for characterization" },
+      ],
+      chargerSpecs: [
+        { label: "Event", value: "Battle of the Rockets 2026" },
+        { label: "Result", value: "First place" },
+        { label: "Role", value: "Captain, chief engineer" },
+        { label: "Scope", value: "Airframe and deployable payload" },
+      ],
+      languages: [
+        { label: "Turkish", value: "Native" },
+        { label: "English", value: "Professional" },
+        { label: "German", value: "Intermediate" },
+        { label: "Spanish", value: "Beginner" },
+      ],
+      metaOnPhoto: { style: { color: "var(--paper-a70)" } },
+      heroCaption: { style: { color: "var(--paper-a45)", maxWidth: "46ch" } },
+      linkOnDark: { style: { color: "var(--paper)", borderBottomColor: "var(--paper-a45)" } },
+    };
   }
-});
-{
-  const v=activeVideo();
-  v.addEventListener('play',()=>label(true));
-  v.addEventListener('pause',()=>label(false));
-  if(!REDUCE) v.play().then(()=>label(true)).catch(()=>label(false));
-  else label(false);
-}
 
-/* Stop the cycle while the hero is off screen so it is not burning decode and
-   timers the whole way down the page. Guarded, because an IntersectionObserver
-   that never fires must not be able to freeze the hero. */
-if('IntersectionObserver' in window && !REDUCE){
-  const hero=document.querySelector('.hero');
-  new IntersectionObserver(es=>{
-    const v=activeVideo();
-    if(es[0].isIntersecting){ if(!cycling) v.play().catch(()=>{}) }
-    else { v.pause(); clearTimeout(holdTimer); }
-  },{threshold:.05}).observe(hero);
-}
-
-/* ------------------------------------------------------------------
-   The two section videos. Both preload="none" so they cost nothing until
-   asked for, and neither autoplays: a background that starts itself halfway
-   down a page is just noise. The robo band gets a play toggle, the nose cone
-   clip uses native controls because it is documentation you want to scrub.
-   ------------------------------------------------------------------ */
-(function(){
-  const v=document.getElementById('vRobo'), b=document.getElementById('roboCtl');
-  if(!v||!b)return;
-  function label(p){ b.textContent=p?'Pause':'Play'; b.setAttribute('aria-pressed',String(p)) }
-  b.addEventListener('click',()=>{
-    if(v.paused){ v.play().then(()=>label(true)).catch(()=>label(false)) }
-    else { v.pause(); label(false) }
-  });
-  v.addEventListener('play',()=>label(true));
-  v.addEventListener('pause',()=>label(false));
-  // pause when it leaves the screen so it is not decoding out of sight
-  if('IntersectionObserver' in window){
-    new IntersectionObserver(es=>{ if(!es[0].isIntersecting && !v.paused) v.pause() },
-      {threshold:0}).observe(v);
+  componentDidMount() {
+    this.reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    this.seen = this.seen || new WeakSet();
+    this.pending = this.pending || new Set();
+    this.onTick = () => this.tick();
+    window.addEventListener("scroll", this.onTick, { passive: true });
+    window.addEventListener("resize", this.onTick);
+    document.addEventListener("visibilitychange", this.onTick);
+    clearInterval(this.iv);
+    this.iv = setInterval(this.onTick, 1200);
+    this.tick();
   }
-})();
 
+  componentDidUpdate() { this.tick(); }
 
-/* ------------------------------------------------------------------
-   SMOKE . a fixed full-page backdrop, drifting exhaust from the bottom
-   corners. Two emitters, domain-warped fbm, advected upward. It is
-   deliberately faint: this is texture, not a feature.
-
-   It costs one triangle and zero image bytes, runs on the GPU so it does
-   not fight the main thread, stops when the tab is hidden or the page is
-   scrolled past nothing, and never starts at all under reduced motion.
-   If WebGL is missing the CSS gradient behind it is the whole fallback.
-   ------------------------------------------------------------------ */
-(function(){
-  const c=document.getElementById('smoke'); if(!c)return;
-  if(REDUCE)return;                       // gradient only, no animation
-  const gl=c.getContext('webgl2',{antialias:false,alpha:true,depth:false})
-        || c.getContext('webgl',{antialias:false,alpha:true,depth:false});
-  if(!gl)return;
-
-  const VS='attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
-  const FS=`precision highp float;uniform vec2 R;uniform float T;
-  float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
-  float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
-    return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
-  float fbm(vec2 p){float v=0.,a=.5;for(int k=0;k<5;k++){v+=a*n(p);p*=2.02;a*=.5;}return v;}
-  void main(){
-    vec2 uv=(gl_FragCoord.xy-.5*R)/R.y;
-    float asp=R.x/R.y;
-
-    // rise. Advecting the field upward is what makes it read as smoke
-    // rather than as fog sitting still.
-    vec2 p=uv*2.3; p.y-=T*0.055;
-    vec2 q=vec2(fbm(p+vec2(0.0,T*0.02)),fbm(p+vec2(4.7,1.3)));
-    float d=fbm(p+q*1.6);
-
-    // two emitters, roughly at the bottom corners, widened by aspect so they
-    // stay in the corners on a wide monitor instead of drifting inward
-    float e1=exp(-length((uv-vec2(-asp*0.42,-0.62))*vec2(0.62,1.35))*2.3);
-    float e2=exp(-length((uv-vec2( asp*0.44,-0.66))*vec2(0.60,1.30))*2.1);
-    float mask=clamp(e1*1.05+e2*0.9,0.0,1.0);
-    mask*=smoothstep(0.62,-0.30,uv.y);       // gone well before the top
-
-    float s=pow(clamp(d,0.0,1.0),1.45)*mask;
-
-    // warm at the base where the plume would still be hot, neutral above
-    vec3 warm=vec3(1.00,0.52,0.26);
-    vec3 cool=vec3(0.62,0.66,0.74);
-    vec3 col=mix(cool,warm,clamp((-uv.y-0.16)*1.5,0.0,1.0));
-
-    float a=s*0.30;                          // the whole effect lives here
-    a+=(h(gl_FragCoord.xy+T)-0.5)*0.004;     // break up banding
-    gl_FragColor=vec4(col*a, a);
-  }`;
-  function sh(t,s){const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);
-    if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(o));return o}
-  let prog;
-  try{
-    prog=gl.createProgram();
-    gl.attachShader(prog,sh(gl.VERTEX_SHADER,VS));
-    gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,FS));
-    gl.linkProgram(prog);
-    if(!gl.getProgramParameter(prog,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(prog));
-  }catch(e){ console.warn('[site] smoke shader failed, gradient remains',e); return }
-
-  gl.useProgram(prog);
-  gl.enable(gl.BLEND); gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
-  const buf=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,buf);
-  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
-  const loc=gl.getAttribLocation(prog,'p');
-  gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
-  const uR=gl.getUniformLocation(prog,'R'), uT=gl.getUniformLocation(prog,'T');
-
-  // half resolution. It is out-of-focus smoke; nobody can tell, and it keeps a
-  // full-viewport fragment shader cheap on an integrated GPU.
-  const SCALE=0.5;
-  function size(){
-    const d=Math.min(devicePixelRatio||1,2)*SCALE;
-    c.width=Math.max(2,(innerWidth*d)|0);
-    c.height=Math.max(2,(innerHeight*d)|0);
-    gl.viewport(0,0,c.width,c.height);
+  tick() {
+    const vh = window.innerHeight;
+    document.querySelectorAll("[data-reveal]").forEach((el) => {
+      if (this.seen.has(el)) {
+        if (el.style.opacity === "0") this.pending.add(el);
+        return;
+      }
+      this.seen.add(el);
+      if (this.reduced) return;
+      if (el.getBoundingClientRect().top > vh * 0.9) {
+        el.style.opacity = "0";
+        el.style.transform = "translateY(26px)";
+        this.pending.add(el);
+      }
+    });
+    this.pending.forEach((el) => {
+      if (el.getBoundingClientRect().top < vh * 0.88) {
+        el.style.opacity = "";
+        el.style.transform = "";
+        el.style.animation = "reveal var(--dur-4) var(--ease-out) both";
+        setTimeout(() => { el.style.animation = ""; }, 1200);
+        this.pending.delete(el);
+      }
+    });
+    this.syncClips();
   }
-  function draw(t){
-    gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.uniform2f(uR,c.width,c.height); gl.uniform1f(uT,t);
-    gl.drawArrays(gl.TRIANGLES,0,3);
-  }
-  size(); draw(0);                       // frame zero synchronously, never blank
-  addEventListener('resize',()=>{size();draw((performance.now()-t0)/1000)});
-  c.addEventListener('webglcontextlost',e=>e.preventDefault());
 
-  const t0=performance.now();
-  let run=true;
-  document.addEventListener('visibilitychange',()=>{run=!document.hidden});
-  (function frame(){
-    requestAnimationFrame(frame);
-    if(run) draw((performance.now()-t0)/1000);
-  })();
-})();
-
-/* ------------------------------------------------------------------
-   FLYOVERS . any element with data-fly="<name>" plays a sprite
-   animation over the whole viewport when hovered (tapped, on touch).
-   Sprites come from tools/flyover.py; the first one is the jet on
-   the TASECS row (tools/jet.py, see LAB-JOURNAL 2026-08-14: drawn,
-   not footage, on purpose). Trajectory, duration and size come from
-   the sprite's meta.json when present, else the jet defaults below,
-   so a new animation needs zero edits here.
-
-   Rules so a flourish never becomes a nuisance:
-     . plays once per trigger, never loops
-     . retrigger is ignored while one is in flight
-     . pointer-events:none, so it can never eat a click
-     . hover on fine pointers, tap on coarse ones
-     . reduced motion disables the module entirely
-     . a sprite loads once its trigger nears the viewport, with a
-       second chance at trigger time, because one mechanism that
-       must fire is one mechanism too few (see LAB-JOURNAL 5)
-   ------------------------------------------------------------------ */
-(function(){
-  const els=[...document.querySelectorAll('[data-fly]')];
-  if(!els.length||REDUCE)return;
-  const FINE=matchMedia('(hover:hover) and (pointer:fine)').matches;
-  // the jet predates the shared assets/img/fly/ home; everything new lands there
-  const PATHS={jet:'assets/img/jet/jet-'};
-  const DEF={dur:2200,size:[0.30,240,470],
-             path:[[-0.10,0.88],[0.52,0.56],[1.14,-0.20]]};
-  const A={};                              // name -> animation state
-
-  function st(name){
-    return A[name]||(A[name]={meta:null,img:null,ready:false,loading:false,
-                              flying:false,want:false});
-  }
-  function base(name){ return PATHS[name]||('assets/img/fly/'+name+'-'); }
-  function load(name){
-    const a=st(name);
-    if(a.loading)return; a.loading=true;
-    fetch(base(name)+'meta.json')
-      .then(r=>r.json())
-      .then(m=>{
-        a.meta=m; a.img=new Image();
-        a.img.onload=()=>{ a.ready=true; if(a.want){ a.want=false; fly(name); } };
-        a.img.src=base(name)+'sprite.webp';
-      })
-      .catch(()=>{});                      // no sprite, no flyover, no error
-  }
-  let frozen=null;
-  function vsize(){
-    return [innerWidth||document.documentElement.clientWidth||1280,
-            innerHeight||document.documentElement.clientHeight||800];
-  }
-  function makeCanvas(){
-    const cv=document.createElement('canvas');
-    cv.setAttribute('aria-hidden','true');
-    cv.style.cssText='position:fixed;inset:0;width:100%;height:100%;z-index:90;pointer-events:none';
-    const [vw,vh]=vsize();
-    const DPR=Math.min(devicePixelRatio||1,2);
-    cv.width=Math.round(vw*DPR); cv.height=Math.round(vh*DPR);
-    document.body.appendChild(cv);
-    const ctx=cv.getContext('2d');
-    ctx.setTransform(DPR,0,0,DPR,0,0);
-    return {cv,ctx,vw,vh};
-  }
-  const qbez=(t,a,b,c)=>{const u=1-t;return u*u*a+2*u*t*b+t*t*c};
-
-  /* one frame at progress t along the animation's bezier */
-  function draw(name,c,t){
-    const a=st(name), m=a.meta;
-    const P=m.path||DEF.path, S=m.size||DEF.size;
-    const k=Math.pow(t,1.05);
-    const x=qbez(k,P[0][0]*c.vw,P[1][0]*c.vw,P[2][0]*c.vw);
-    const y=qbez(k,P[0][1]*c.vh,P[1][1]*c.vh,P[2][1]*c.vh);
-    const fi=Math.min(m.frames-1,Math.floor(t*m.frames));
-    const sx=(fi%m.cols)*m.fw, sy=Math.floor(fi/m.cols)*m.fh;
-    const w=Math.min(Math.max(c.vw*S[0],S[1]),S[2]), h=w*m.fh/m.fw;
-    c.ctx.clearRect(0,0,c.vw,c.vh);
-    c.ctx.drawImage(a.img,sx,sy,m.fw,m.fh,x-w/2,y-h/2,w,h);
-  }
-  function fly(name){
-    const a=st(name);
-    if(a.flying||frozen)return;
-    if(!a.ready){ a.want=true; load(name); return; }
-    a.flying=true;
-    const c=makeCanvas();
-    const dur=a.meta.dur||DEF.dur;
-    const t0=performance.now();
-    (function tick(now){
-      const t=(now-t0)/dur;
-      if(t>=1){ c.cv.remove(); a.flying=false; return; }
-      draw(name,c,t);
-      requestAnimationFrame(tick);
-    })(t0);
-  }
-  els.forEach(el=>{
-    const name=el.dataset.fly;
-    el.addEventListener(FINE?'pointerenter':'click',()=>fly(name));
-    if('IntersectionObserver' in window){
-      const io=new IntersectionObserver(es=>{
-        if(es[0].isIntersecting){ load(name); io.disconnect(); }
-      },{rootMargin:'600px'});
-      io.observe(el);
+  syncClips() {
+    const play = (this.props || {}).motion !== false;
+    const hero = (this.props || {}).heroClip || "charger";
+    const CLIPS = {
+      charger: "charger-wide",
+      "therma-shift": "therma-shift-360-noflow",
+      "robo-catcher": "robo-catcher-360",
+    };
+    const heroEl = document.querySelector("[data-hero-clip]");
+    if (heroEl && heroEl.getAttribute("data-hero-clip") !== hero) {
+      const slug = CLIPS[hero] || CLIPS.charger;
+      heroEl.setAttribute("data-hero-clip", hero);
+      heroEl.poster = "assets/motion/" + slug + "-poster.png";
+      const src = heroEl.querySelectorAll("source");
+      if (src[0]) src[0].src = "assets/motion/" + slug + "-alpha.webm";
+      if (src[1]) src[1].src = "assets/motion/" + slug + ".mp4";
+      heroEl.load();
     }
-  });
-
-  /* dev hooks: freeze(name,t) paints one deterministic frame synchronously
-     and leaves it up, which is how these are verified by reading canvas
-     pixels back in a pane where requestAnimationFrame cannot be trusted. */
-  window.MTFly={
-    fly,load,
-    ready:name=>st(name).ready,
-    freeze(name,t){ if(!st(name).ready)return false;
-      if(frozen)frozen.cv.remove();
-      frozen=makeCanvas(); draw(name,frozen,Math.min(Math.max(t,0),0.999)); return true },
-    clear(){ if(frozen){frozen.cv.remove();frozen=null} }
-  };
-})();
-
-})();
+    document.querySelectorAll("video").forEach((v) => {
+      v.muted = true;
+      v.loop = true;
+      v.playsInline = true;
+      if (play) { if (v.paused) v.play().catch(() => {}); }
+      else if (!v.paused) { v.pause(); v.currentTime = 0; }
+    });
+  }
+}
 </script>
 <script src="js/analytics-config.js"></script>
 <script src="js/track.js"></script>

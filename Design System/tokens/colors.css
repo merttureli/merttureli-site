@@ -1,0 +1,69 @@
+/* Monochrome. The system carries no chromatic accent by decision —
+   emphasis comes from scale, weight, whitespace and photography. */
+:root {
+  /* Base ramp — ink */
+  --ink-900: #0A0A0A;
+  --ink-800: #141414;
+  --ink-700: #2B2B2B;
+  --ink-600: #454545;
+  --ink-500: #6B6B6B;
+  --ink-400: #8C8C8C;
+  --ink-300: #A8A8A8;
+  --ink-200: #C9C9C9;
+  --ink-100: #DEDEDE;
+  --ink-050: #EFEFEE;
+  --paper: #FFFFFF;
+
+  /* Board grey — the LUX panel field */
+  --board: #D9D9D9;
+
+  /* Alpha ramps, for type and rules over photography */
+  --ink-a80: rgba(10,10,10,.80);
+  --ink-a55: rgba(10,10,10,.55);
+  --ink-a30: rgba(10,10,10,.30);
+  --ink-a12: rgba(10,10,10,.12);
+  --ink-a06: rgba(10,10,10,.06);
+  --paper-a90: rgba(255,255,255,.90);
+  --paper-a70: rgba(255,255,255,.70);
+  --paper-a45: rgba(255,255,255,.45);
+  --paper-a18: rgba(255,255,255,.18);
+  --paper-a08: rgba(255,255,255,.08);
+
+  /* Semantic — light surface (default) */
+  --surface-page: var(--paper);
+  --surface-raised: var(--paper);
+  --surface-sunken: var(--ink-050);
+  --surface-board: var(--board);
+  --surface-inverse: var(--ink-900);
+
+  --text-display: var(--ink-900);
+  --text-body: var(--ink-700);
+  --text-muted: var(--ink-500);
+  --text-meta: var(--ink-400);
+  --text-inverse: var(--paper);
+  --text-inverse-muted: var(--paper-a70);
+
+  --line-hairline: var(--ink-a12);
+  --line-strong: var(--ink-900);
+  --line-inverse: var(--paper-a18);
+
+  --accent: #111111;          /* the single accent, deliberately achromatic */
+  --accent-contrast: var(--paper);
+
+  /* Overlay for full-bleed photographic heroes */
+  --scrim-top: rgba(0,0,0,.42);
+  --scrim-bottom: rgba(0,0,0,.05);
+}
+
+/* Inverse scope — dark plates and photographic sections */
+.on-dark {
+  --surface-page: var(--ink-900);
+  --text-display: var(--paper);
+  --text-body: var(--paper-a90);
+  --text-muted: var(--paper-a70);
+  --text-meta: var(--paper-a45);
+  --line-hairline: var(--paper-a18);
+  --line-strong: var(--paper);
+  --accent: #FFFFFF;
+  --accent-contrast: var(--ink-900);
+}
