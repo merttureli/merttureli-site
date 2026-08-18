@@ -1,2 +1,5 @@
 Design System/
 *.zip
+
+# local dev server config, not part of the site
+.claude/

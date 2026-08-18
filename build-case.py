@@ -532,6 +532,146 @@ CASES["robo-catcher"] = {
             "steady as the battery sags.",
         ]},
     ],
+    "next": ("CHARGER", "charger.html"),
+}
+
+
+CASES["charger"] = {
+    "slug": "charger",
+    "eyebrow": "Case study / Union College Rocket Team",
+    "title": "Deployable sensor payload",
+    "description": ("CHARGER, the rocket that won the Deployable Sensor Payload event at Battle "
+                    "of the Rockets 2026. Custom payload electronics, five live telemetry "
+                    "channels, and a team that did not exist three years earlier."),
+    "lede": ("The event asks for a rocket that puts a custom built sensor payload into a five "
+             "hundred foot window, drops it at apogee, sheds its nose cone partway down, and "
+             "streams five channels of telemetry to a handheld ground station the whole way to "
+             "the ground. We built CHARGER, and it won."),
+    "clip": "charger-square",
+    "clip_ratio": "1 / 1",
+    "brief": [
+        ("Role", "Captain and chief engineer", ""),
+        ("Team", "Union College Rocket Team, twelve competing", ""),
+        ("Event", "Battle of the Rockets 2026", "Deployable Sensor Payload"),
+        ("Where", "Culpeper, Virginia, April 2026", ""),
+        ("Result", "First place", ""),
+        ("Advisers", "Scott Suriano, Ashok Ramasubramanian", ""),
+    ],
+    "brief_note": [
+        "There was no rocket team at Union College when I started. I founded it, ran it as captain "
+        "and chief engineer, trained new members through build labs, owned NAR and Tripoli "
+        "safety compliance for high power launches, and grew the budget by seven hundred percent "
+        "by writing funding proposals. The team was chartered as an official section of the "
+        "National Association of Rocketry.",
+        "The win is published by " + '<a href="https://www.union.edu/news/stories/202604/rocket-club-soars-new-heights-first-place-finish-national-competition" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-hairline)">Union College</a>' + " and by " + '<a href="https://www.rocketbattle.org/winners.html" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-hairline)">the competition organizer</a>' + ", so it does not "
+        "need taking on trust.",
+    ],
+    "sections": [
+        {"kind": "stats", "stats": [
+            ("1st", "Deployable Sensor Payload event"),
+            ("500 ft", "The whole apogee window"),
+            ("5", "Live telemetry channels"),
+            ("700%", "Budget growth, written into proposals"),
+        ]},
+        {"label": "The event", "paras": [
+            "Deployable Sensor Payload is not an altitude race. It is a systems problem with a "
+            "narrow flight envelope around it. The rocket flies a commercial G motor to between "
+            "seven hundred and twelve hundred feet, drops the payload at apogee, and at seventy "
+            "five percent of peak altitude the payload lets go of the nose cone, which then has "
+            "to reach the ground gently on its own.",
+            "With the nose cone gone the payload exposes a camera and films the ground until it "
+            "lands. Throughout, from the moment it goes on the pad, it transmits air pressure, "
+            "altitude, acceleration, temperature and rotation rate to a ground station that has "
+            "to plot all of it live and derive the descent rate as it happens.",
+        ], "ratio": "3 / 4", "cols": "minmax(0, 1fr) minmax(0, 1fr)", "frames": [
+            ("F", "assets/photos/charger-rocket-photography/charger-pad-tall.jpg",
+             "CHARGER on the launch rail before a flight", "On the rail", "01"),
+            ("F", "assets/photos/charger-rocket-photography/charger-pad-close.jpg",
+             "CHARGER standing on pad one", "Pad one", "02"),
+        ]},
+        {"label": "Constraints", "cards": [
+            "Commercial G motor. Apogee at least seven hundred feet and no more than twelve hundred",
+            "Payload separates at apogee and descends at under fifteen feet per second",
+            "Nose cone released at seventy five percent of peak, and it must land gently on its own",
+            "Payload electronics must be custom designed. Commercial flight computers are not allowed",
+            "Five sensor channels transmitted at two hertz or better, from the pad until landing",
+            "Ground station portable, handheld antenna, two hours on battery, everything plotted live",
+        ]},
+        {"label": "Where the points are", "paras": [
+            "The rubric tells you what the event actually cares about. The flight is worth two "
+            "hundred and fifteen points plus a tenth of a point per foot above seven hundred, and "
+            "almost all of it is the data path rather than the rocket.",
+        ], "list": [
+            "Camera captures the ground from nose cone release until landing. 50 points",
+            "Ground station receives and displays telemetry live, at least ten packets after "
+            "liftoff. 30 points",
+            "Altitude, acceleration, rotation rate and temperature each plotted in real time. "
+            "20 points each",
+            "Descent rate calculated and displayed in real time. 20 points",
+            "Nose cone released at seventy five percent of peak altitude. 20 points",
+            "Apogee inside the window. 10 points, plus a tenth of a point per foot above seven "
+            "hundred",
+            "Payload deploys from the rocket at apogee. 5 points",
+        ]},
+        {"label": "The paperwork is scored too", "dark": True, "paras": [
+            "Flight points are added to the design review scores rather than compared against "
+            "them. A preliminary review is due in December and a critical review in March, both "
+            "presented live to judges and both scored. You can fly a perfect mission in April "
+            "and still lose to a team that wrote better documents in December.",
+            "Our preliminary review came back at 134.5 out of 216. The judges liked the "
+            "presentation and said so, and then listed what was not in it: no radio or antenna "
+            "trade study, no power budget, no software flow chart, no flight simulation plots, no "
+            "fin dimensions, no mass with the motor installed. That scoresheet was the most "
+            "useful document the team got all year, because it was an itemized list of the "
+            "engineering we had not done yet, written by the people who would score us again in "
+            "March.",
+        ]},
+        {"label": "CHARGER", "paras": [
+            "Just under four feet tall, single stage, four fins, flying a commercial G motor on a "
+            "proper retainer because the rules do not accept a friction fit. A commercial "
+            "altimeter rides along purely so a judge can read the peak altitude off it after "
+            "recovery, and it has to still be switched on when the rocket reaches the judges' "
+            "table.",
+            "The payload occupies the upper body and the nose cone counts as part of it, which is "
+            "the detail that shapes the whole airframe: the nose is not structure you design "
+            "around, it is a component the payload has to let go of in flight and then be scored "
+            "on separately.",
+        ]},
+        {"kind": "bleed", "src": "assets/photos/charger-rocket-photography/charger-pad-band.jpg",
+         "alt": "CHARGER vertical on pad one at Battle of the Rockets, Culpeper, Virginia",
+         "caption": "Pad one, Culpeper, Virginia, April 2026"},
+        {"label": "Launch day", "paras": [
+            "Three attempts per team, and the range closes at four in the afternoon. Nobody "
+            "manages your time for you. Weather can take the whole weekend, and if it does, the "
+            "awards are decided on the December and March review scores alone.",
+            "We got two clean flights away on the first day while the weather held, then put up "
+            "the qualifying flight before noon on the second. One team member stands at the "
+            "launch control officer's position as mission control and nothing leaves the pad "
+            "until they say it does.",
+        ], "strong": True},
+        {"label": "The result", "dark": True, "paras": [
+            "The event finished in this order, published by "
+            + '<a href="https://www.union.edu/news/stories/202604/rocket-club-soars-new-heights-first-place-finish-national-competition" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--paper-a45)">Union College on 23 April 2026</a>' + " and listed by " + '<a href="https://www.rocketbattle.org/winners.html" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--paper-a45)">the competition organizer</a>' + ", so nobody has to take it on trust.",
+        ], "list": [
+            "Union College Rocket Club",
+            "Chantilly Aerospace Club Team 3",
+            "Thomas Jefferson High School",
+            "Spring Grove Area High School Team 2",
+            "George Mason University",
+        ]},
+        {"label": "What I learned", "strong": True, "paras": [
+            "One rule shapes this competition more than any technical requirement: only team "
+            "members may work on any part of it. Not the design, not the simulation, not the "
+            "build, not the repairs, not the launch. Advisers can guide and mentors can review, "
+            "but no adult, company or outsider can touch the rocket. There is no route to a win "
+            "that goes around building the team.",
+            "So the engineering problem and the organizational problem were the same problem. "
+            "The budget proposals were what made a competitive airframe affordable. The build "
+            "labs were what made twelve people able to fly it. And the December scoresheet, the "
+            "one that said we were not ready, was worth more than the trophy was.",
+        ]},
+    ],
+    "prev": ("Robo-Catcher", "robo-catcher.html"),
     "next": ("The bend fixture", "bend-fixture.html"),
 }
 
@@ -606,7 +746,7 @@ CASES["bend-fixture"] = {
             "Designing for the process beat designing around it.",
         ]},
     ],
-    "prev": ("Robo-Catcher", "robo-catcher.html"),
+    "prev": ("CHARGER", "charger.html"),
     "next": ("Rudder pedals", "rudder-pedals.html"),
 }
 
@@ -779,9 +919,13 @@ def main():
         for sec in case["sections"]:
             if sec.get("frames") and isinstance(sec["frames"][0], tuple):
                 # a single frame beside prose gets a wide crop so it does not
-                # tower over a short paragraph; pairs and galleries keep 3:2
+                # tower over a short paragraph; pairs and galleries keep 3:2.
+                # A section can override both, which portrait sources need: a
+                # 16:9 crop of a vertical rocket keeps the middle of the tube
+                # and throws away the nose and the fins.
                 beside_text = bool(sec.get("paras") or sec.get("list")) and not sec.get("cards")
-                ratio = "16 / 9" if (beside_text and len(sec["frames"]) == 1) else "3 / 2"
+                ratio = sec.get("ratio") or (
+                    "16 / 9" if (beside_text and len(sec["frames"]) == 1) else "3 / 2")
                 sec["frames"] = [frame(src, alt, cap, ratio=ratio, idx=i)
                                  for (_tag, src, alt, cap, i) in sec["frames"]]
         out, size = build(case, index)

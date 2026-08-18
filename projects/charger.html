@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deployable sensor payload · Mert Türeli</title>
+<meta name="description" content="CHARGER, the rocket that won the Deployable Sensor Payload event at Battle of the Rockets 2026. Custom payload electronics, five live telemetry channels, and a team that did not exist three years earlier.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230A0A0A'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='26' font-weight='600' fill='%23FFFFFF'%3EMT%3C/text%3E%3C/svg%3E">
+<link rel="canonical" href="https://merttureli.com/projects/charger.html">
+<meta property="og:title" content="Deployable sensor payload · Mert Türeli">
+<meta property="og:description" content="CHARGER, the rocket that won the Deployable Sensor Payload event at Battle of the Rockets 2026. Custom payload electronics, five live telemetry channels, and a team that did not exist three years earlier.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://merttureli.com/projects/charger.html">
+<meta property="og:image" content="https://merttureli.com/assets/og-cover.png">
+<script src="../support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/fonts.css">
+<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/colors.css">
+<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/typography.css">
+<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/spacing.css">
+<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/layout.css">
+<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/effects.css">
+<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/motion.css">
+<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/base.css">
+<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/styles.css">
+<script src="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/_ds_bundle.js"></script>
+<link rel="stylesheet" href="../css/mobile.css">
+<style>
+  html { scroll-behavior: smooth; }
+  body { background: var(--paper); }
+  @keyframes up { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+  @keyframes reveal { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+  @keyframes kb { from { transform: scale(1.04); } to { transform: scale(1); } }
+</style>
+</helmet>
+
+<div style="background: var(--paper); overflow-x: hidden">
+
+  <section class="on-dark" style="position: relative; min-height: min(720px, 88vh); background: var(--ink-900); overflow: hidden; display: flex; flex-direction: column">
+    <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Grain" blend="overlay" strength="normal" hint-size="100%,100%"></x-import>
+    <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SiteHeader" items="{{ nav }}" active="work" inverse="true" floating="true" hint-size="100%,88px"></x-import>
+    <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SocialRail" items="{{ social }}" inverse="true" fixed="true" hint-size="36px,120px"></x-import>
+    <div style="position: relative; flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); align-items: center; gap: var(--space-8); padding: calc(var(--header-h) + var(--space-8)) var(--page-margin) var(--space-8); max-width: var(--max-width); margin: 0 auto; width: 100%">
+      <div style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" wide="true" hint-size="300px,16px">Case study / Union College Rocket Team</x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="1" treatment="inverse" hint-size="100%,140px">Deployable sensor payload</x-import>
+        <p style="font-size: var(--fs-body-lg); line-height: var(--lh-body); color: var(--paper-a90); max-width: var(--measure)">The event asks for a rocket that puts a custom built sensor payload into a five hundred foot window, drops it at apogee, sheds its nose cone partway down, and streams five channels of telemetry to a handheld ground station the whole way to the ground. We built CHARGER, and it won.</p>
+        <div style="display: flex; gap: var(--space-4); flex-wrap: wrap; margin-top: var(--space-2)">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="glass" trailing="→" href="../index.html#work" dc-props="{{ linkOnDark }}" hint-size="150px,44px">All work</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="link" trailing="→" href="https://merttureli.github.io" dc-props="{{ linkOnDark }}" hint-size="180px,24px">Full portfolio</x-import>
+        </div>
+      </div>
+      <div data-reveal="1" style="position: relative; width: 100%; aspect-ratio: 1 / 1">
+          <video data-clip="1" poster="../assets/motion/charger-square-poster.png" autoplay loop muted playsinline preload="metadata" style="width: 100%; height: 100%; object-fit: contain; display: block"><source src="../assets/motion/charger-square-alpha.webm" type="video/webm"><source src="../assets/motion/charger-square.mp4" type="video/mp4"></video>
+        </div>
+    </div>
+  </section>
+
+  <section style="position: relative; padding: var(--section-y) var(--page-margin) var(--space-9);">
+    <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-7)">
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Brief" right="01" hint-size="100%,14px"></x-import>
+      </div>
+      <div data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-8); align-items: start">
+        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-6)"><x-import component-from-global-scope="MertTReliDesignSystem_56763c.SpecList" items="{{ brief }}" columns="minmax(64px,110px) minmax(0,1fr)" hint-size="100%%,260px"></x-import></div>
+        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-5)">      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">There was no rocket team at Union College when I started. I founded it, ran it as captain and chief engineer, trained new members through build labs, owned NAR and Tripoli safety compliance for high power launches, and grew the budget by seven hundred percent by writing funding proposals. The team was chartered as an official section of the National Association of Rocketry.</p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">The win is published by <a href="https://www.union.edu/news/stories/202604/rocket-club-soars-new-heights-first-place-finish-national-competition" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-hairline)">Union College</a> and by <a href="https://www.rocketbattle.org/winners.html" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-hairline)">the competition organizer</a>, so it does not need taking on trust.</p>
+      </div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="on-dark" style="position: relative; background: var(--ink-900); padding: var(--space-9) var(--page-margin);">
+    <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-7)">
+      <div data-reveal="1" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr)); gap: var(--space-7) var(--space-6)">
+        <div style="display: flex; flex-direction: column; gap: var(--space-3)"><span style="font-family: var(--font-display); font-size: clamp(2.2rem, 4.4vw, 3.6rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.02em; color: var(--paper)">1st</span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70)">Deployable Sensor Payload event</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-3)"><span style="font-family: var(--font-display); font-size: clamp(2.2rem, 4.4vw, 3.6rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.02em; color: var(--paper)">500 ft</span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70)">The whole apogee window</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-3)"><span style="font-family: var(--font-display); font-size: clamp(2.2rem, 4.4vw, 3.6rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.02em; color: var(--paper)">5</span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70)">Live telemetry channels</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-3)"><span style="font-family: var(--font-display); font-size: clamp(2.2rem, 4.4vw, 3.6rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.02em; color: var(--paper)">700%</span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70)">Budget growth, written into proposals</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section style="position: relative; padding: 0 var(--page-margin) var(--section-y);">
+    <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-9)">
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="The event" right="02" hint-size="100%,14px"></x-import>
+      </div>
+      <div data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-8); align-items: start">
+        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-6)">      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Deployable Sensor Payload is not an altitude race. It is a systems problem with a narrow flight envelope around it. The rocket flies a commercial G motor to between seven hundred and twelve hundred feet, drops the payload at apogee, and at seventy five percent of peak altitude the payload lets go of the nose cone, which then has to reach the ground gently on its own.</p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">With the nose cone gone the payload exposes a camera and films the ground until it lands. Throughout, from the moment it goes on the pad, it transmits air pressure, altitude, acceleration, temperature and rotation rate to a ground station that has to plot all of it live and derive the descent rate as it happens.</p>
+      </div></div>
+        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-5)"><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr)); gap: var(--space-4)"><x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="../assets/photos/charger-rocket-photography/charger-pad-tall.jpg" alt="CHARGER on the launch rail before a flight" ratio="3 / 4" caption="On the rail" index="01" hover-zoom="true" hint-size="100%,300px"></x-import><x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="../assets/photos/charger-rocket-photography/charger-pad-close.jpg" alt="CHARGER standing on pad one" ratio="3 / 4" caption="Pad one" index="02" hover-zoom="true" hint-size="100%,300px"></x-import></div></div>
+      </div>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Constraints" right="03" hint-size="100%,14px"></x-import>
+      </div>
+      <div data-reveal="1" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5)">
+        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">01</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Commercial G motor. Apogee at least seven hundred feet and no more than twelve hundred</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">02</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Payload separates at apogee and descends at under fifteen feet per second</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">03</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Nose cone released at seventy five percent of peak, and it must land gently on its own</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">04</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Payload electronics must be custom designed. Commercial flight computers are not allowed</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">05</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Five sensor channels transmitted at two hertz or better, from the pad until landing</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">06</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Ground station portable, handheld antenna, two hours on battery, everything plotted live</span></div>
+      </div>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Where the points are" right="04" hint-size="100%,14px"></x-import>
+      </div>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">The rubric tells you what the event actually cares about. The flight is worth two hundred and fifteen points plus a tenth of a point per foot above seven hundred, and almost all of it is the data path rather than the rocket.</p>
+      </div>
+      <div data-reveal="1"><div style="display: flex; flex-direction: column; max-width: var(--measure)"><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">01</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">Camera captures the ground from nose cone release until landing. 50 points</span></div><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">02</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">Ground station receives and displays telemetry live, at least ten packets after liftoff. 30 points</span></div><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">03</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">Altitude, acceleration, rotation rate and temperature each plotted in real time. 20 points each</span></div><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">04</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">Descent rate calculated and displayed in real time. 20 points</span></div><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">05</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">Nose cone released at seventy five percent of peak altitude. 20 points</span></div><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">06</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">Apogee inside the window. 10 points, plus a tenth of a point per foot above seven hundred</span></div><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">07</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">Payload deploys from the rocket at apogee. 5 points</span></div></div></div>
+    </div>
+  </section>
+
+  <section class="on-dark" style="position: relative; background: var(--ink-900); padding: var(--section-y) var(--page-margin);">
+    <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-7)">
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="The paperwork is scored too" right="05" hint-size="100%,14px"></x-import>
+      </div>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Flight points are added to the design review scores rather than compared against them. A preliminary review is due in December and a critical review in March, both presented live to judges and both scored. You can fly a perfect mission in April and still lose to a team that wrote better documents in December.</p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Our preliminary review came back at 134.5 out of 216. The judges liked the presentation and said so, and then listed what was not in it: no radio or antenna trade study, no power budget, no software flow chart, no flight simulation plots, no fin dimensions, no mass with the motor installed. That scoresheet was the most useful document the team got all year, because it was an itemized list of the engineering we had not done yet, written by the people who would score us again in March.</p>
+      </div>
+    </div>
+  </section>
+
+  <section style="position: relative; padding: 0 var(--page-margin) var(--section-y);">
+    <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-9)">
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="CHARGER" right="06" hint-size="100%,14px"></x-import>
+      </div>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Just under four feet tall, single stage, four fins, flying a commercial G motor on a proper retainer because the rules do not accept a friction fit. A commercial altimeter rides along purely so a judge can read the peak altitude off it after recovery, and it has to still be switched on when the rocket reaches the judges' table.</p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">The payload occupies the upper body and the nose cone counts as part of it, which is the detail that shapes the whole airframe: the nose is not structure you design around, it is a component the payload has to let go of in flight and then be scored on separately.</p>
+      </div>
+    </div>
+  </section>
+
+  <section data-reveal="1" style="position: relative; padding: 0 0 var(--section-y)">
+    <div style="position: relative; width: 100%; aspect-ratio: 21 / 9; overflow: hidden; background: var(--ink-900)">
+      <img src="../assets/photos/charger-rocket-photography/charger-pad-band.jpg" alt="CHARGER vertical on pad one at Battle of the Rockets, Culpeper, Virginia" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block">
+    </div>
+    <div style="max-width: var(--max-width); margin: 0 auto; padding: var(--space-4) var(--page-margin) 0">
+      <span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta)">Pad one, Culpeper, Virginia, April 2026</span>
+    </div>
+  </section>
+
+  <section style="position: relative; padding: 0 var(--page-margin) var(--section-y);">
+    <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-9)">
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Launch day" right="07" hint-size="100%,14px"></x-import>
+      </div>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">Three attempts per team, and the range closes at four in the afternoon. Nobody manages your time for you. Weather can take the whole weekend, and if it does, the awards are decided on the December and March review scores alone.</p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">We got two clean flights away on the first day while the weather held, then put up the qualifying flight before noon on the second. One team member stands at the launch control officer's position as mission control and nothing leaves the pad until they say it does.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="on-dark" style="position: relative; background: var(--ink-900); padding: var(--section-y) var(--page-margin);">
+    <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-7)">
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="The result" right="08" hint-size="100%,14px"></x-import>
+      </div>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">The event finished in this order, published by <a href="https://www.union.edu/news/stories/202604/rocket-club-soars-new-heights-first-place-finish-national-competition" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--paper-a45)">Union College on 23 April 2026</a> and listed by <a href="https://www.rocketbattle.org/winners.html" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--paper-a45)">the competition organizer</a>, so nobody has to take it on trust.</p>
+      </div>
+      <div data-reveal="1"><div style="display: flex; flex-direction: column; max-width: var(--measure)"><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">01</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">Union College Rocket Club</span></div><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">02</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">Chantilly Aerospace Club Team 3</span></div><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">03</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">Thomas Jefferson High School</span></div><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">04</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">Spring Grove Area High School Team 2</span></div><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">05</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">George Mason University</span></div></div></div>
+    </div>
+  </section>
+
+  <section style="position: relative; padding: 0 var(--page-margin) var(--section-y);">
+    <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-9)">
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="What I learned" right="09" hint-size="100%,14px"></x-import>
+      </div>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">One rule shapes this competition more than any technical requirement: only team members may work on any part of it. Not the design, not the simulation, not the build, not the repairs, not the launch. Advisers can guide and mentors can review, but no adult, company or outsider can touch the rocket. There is no route to a win that goes around building the team.</p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">So the engineering problem and the organizational problem were the same problem. The budget proposals were what made a competitive airframe affordable. The build labs were what made twelve people able to fly it. And the December scoresheet, the one that said we were not ready, was worth more than the trophy was.</p>
+      </div>
+    </div>
+  </section>
+
+  <section style="position: relative; padding: var(--space-8) var(--page-margin) var(--space-9);">
+    <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-7)">
+      <div data-reveal="1" style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-6); flex-wrap: wrap">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="link" trailing="→" href="robo-catcher.html" hint-size="240px,24px">Previous: Robo-Catcher</x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="outline" trailing="→" href="bend-fixture.html" hint-size="260px,44px">Next: The bend fixture</x-import>
+      </div>
+    </div>
+  </section>
+
+<footer class="on-dark" style="background: var(--ink-900); padding: var(--space-7) var(--page-margin) var(--space-8); border-top: 1px solid var(--line-hairline)">
+    <div style="max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-6)">
+      <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Wordmark" name="MERT TÜRELI" size="md" hint-size="220px,20px"></x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="320px,16px">Schenectady, New York / B.S. Mechanical Engineering, Union College, 2026</x-import>
+      </div>
+      <p style="max-width: 96ch; font-family: var(--font-mono); font-size: var(--fs-meta-sm); line-height: 1.5; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-meta)">Photographs of the machine and the team by Paul Buckowski / Union College. CAD animations rendered from the source assemblies. Aircraft models are third-party, illustration only. / <a href="../privacy.html" style="color: var(--text-meta); text-decoration: underline; text-underline-offset: 3px">Privacy</a></p>
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;heroClip&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;charger&quot;,&quot;therma-shift&quot;,&quot;robo-catcher&quot;],&quot;default&quot;:&quot;charger&quot;,&quot;tsType&quot;:&quot;\&quot;charger\&quot; | \&quot;therma-shift\&quot; | \&quot;robo-catcher\&quot;&quot;,&quot;section&quot;:&quot;Motion&quot;},&quot;motion&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Motion&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props || {};
+    return {
+      nav: [
+        { id: "work", label: "Work", href: "../index.html#work" },
+        { id: "experience", label: "Experience", href: "../index.html#experience" },
+        { id: "beyond", label: "Beyond", href: "../index.html#beyond" },
+        { id: "contact", label: "Contact", href: "../index.html#contact" },
+      ],
+      social: [
+        { name: "LinkedIn", icon: "linkedin", href: "https://linkedin.com/in/merttureli" },
+        { name: "Mail", icon: "mail", href: "../index.html#contact" },
+      ],
+      linkOnDark: { tone: "inverse" },
+      brief: [
+        { label: "Role", value: "Captain and chief engineer" },
+        { label: "Team", value: "Union College Rocket Team, twelve competing" },
+        { label: "Event", value: "Battle of the Rockets 2026", aside: "Deployable Sensor Payload" },
+        { label: "Where", value: "Culpeper, Virginia, April 2026" },
+        { label: "Result", value: "First place" },
+        { label: "Advisers", value: "Scott Suriano, Ashok Ramasubramanian" },
+      ],
+    };
+  }
+
+  componentDidMount() {
+    this.reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    this.seen = this.seen || new WeakSet();
+    this.pending = this.pending || new Set();
+    this.onTick = () => this.tick();
+    window.addEventListener("scroll", this.onTick, { passive: true });
+    window.addEventListener("resize", this.onTick);
+    document.addEventListener("visibilitychange", this.onTick);
+    clearInterval(this.iv);
+    this.iv = setInterval(this.onTick, 1200);
+    this.tick();
+  }
+
+  componentDidUpdate() { this.tick(); }
+
+  tick() {
+    const vh = window.innerHeight;
+    document.querySelectorAll("[data-reveal]").forEach((el) => {
+      if (this.seen.has(el)) {
+        if (el.style.opacity === "0") this.pending.add(el);
+        return;
+      }
+      this.seen.add(el);
+      if (this.reduced) return;
+      if (el.getBoundingClientRect().top > vh * 0.9) {
+        el.style.opacity = "0";
+        el.style.transform = "translateY(26px)";
+        this.pending.add(el);
+      }
+    });
+    this.pending.forEach((el) => {
+      if (el.getBoundingClientRect().top < vh * 0.88) {
+        el.style.opacity = "";
+        el.style.transform = "";
+        el.style.animation = "reveal var(--dur-4) var(--ease-out) both";
+        setTimeout(() => { el.style.animation = ""; }, 1200);
+        this.pending.delete(el);
+      }
+    });
+    this.syncClips();
+  }
+
+  syncClips() {
+    const play = (this.props || {}).motion !== false;
+    const hero = (this.props || {}).heroClip || "charger";
+    const CLIPS = {
+      charger: "charger-wide",
+      "therma-shift": "therma-shift-360-noflow",
+      "robo-catcher": "robo-catcher-360",
+    };
+    const heroEl = document.querySelector("[data-hero-clip]");
+    if (heroEl && heroEl.getAttribute("data-hero-clip") !== hero) {
+      const slug = CLIPS[hero] || CLIPS.charger;
+      heroEl.setAttribute("data-hero-clip", hero);
+      heroEl.poster = "assets/motion/" + slug + "-poster.png";
+      const src = heroEl.querySelectorAll("source");
+      if (src[0]) src[0].src = "assets/motion/" + slug + "-alpha.webm";
+      if (src[1]) src[1].src = "assets/motion/" + slug + ".mp4";
+      heroEl.load();
+    }
+    document.querySelectorAll("video").forEach((v) => {
+      v.muted = true;
+      v.loop = true;
+      v.playsInline = true;
+      if (play) { if (v.paused) v.play().catch(() => {}); }
+      else if (!v.paused) { v.pause(); v.currentTime = 0; }
+    });
+  }
+}
+</script>
+<script src="../js/mobile-nav.js"></script>
+<script src="../js/analytics-config.js"></script>
+<script src="../js/track.js"></script>
+<script src="../js/clarity.js"></script>
+</body>
+</html>
