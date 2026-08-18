@@ -474,8 +474,7 @@ CASES["robo-catcher"] = {
             "back. We set out to close the loop: a machine that catches an incoming throw, feeds it "
             "internally and returns it, with nobody in the middle.",
             "Nothing off the shelf does this at any price, and ours had to come in under a $700 cap.",
-        ], "frames": [("F", "assets/photos/shop-and-machine-photography/machine-net.jpg",
-                       "The capture net and frame", "The capture side: net, frame, return path", "01")]},
+        ]},
         {"label": "Constraints", "cards": [
             "Under $700 all in, with every actuator and driver chosen against that cap",
             "Portable by one person: 55 lb finished, fits in a car trunk",
@@ -503,34 +502,23 @@ CASES["robo-catcher"] = {
             "A wireless remote gives start and stop from across the field, and the emergency "
             "cut-offs kill motor power independently of the microcontroller.",
         ], "frames": [("F", "assets/photos/robo-catcher-photography/working-on-electronics.jpg",
-                       "Bench bring-up of the control electronics", "Bench bring-up", "04"),
+                       "The team running the machine on the field", "Running it on the field", "03"),
                       ("F", "assets/photos/robo-catcher-photography/flywheel-full.jpg",
-                       "Return flywheel assembly", "Return flywheel, 120 W DC motor", "05")]},
-        # one full width break, on the strongest photograph
-        {"kind": "bleed", "src": "assets/photos/shop-and-machine-photography/field-test.jpg",
-         "alt": "Robo-Catcher under test on the field",
-         "caption": "Field test. Photograph Paul Buckowski / Union College"},
+                       "Return flywheel assembly", "Return flywheel, 120 W DC motor", "04")]},
         {"label": "The result", "list": [
             "100% feed indexing on competition day: every ball delivered, no misses",
             "Under $700 total build cost against a $700 cap",
             "55 lb, one person portable, assembles with no tools",
             "1.5 hours continuous runtime on a single 12 V 20 Ah SLA battery",
-        ], "frames": [("F", "assets/photos/robo-catcher-photography/final-product.jpg",
-                       "The finished machine", "The finished machine", "06")]},
-        {"label": "Subsystem views", "dark": True, "frames": [
-            ("F", "assets/photos/cad-drawing-plates/assembly-dark.jpg", "Full assembly plate", "Full assembly", "01"),
-            ("F", "assets/photos/cad-drawing-plates/feeder-dark.jpg", "Feeder plate", "Feeder", "02"),
-            ("F", "assets/photos/cad-drawing-plates/indexer-dark.jpg", "Indexer plate", "Indexer", "03"),
-            ("F", "assets/photos/cad-drawing-plates/thrower-dark.jpg", "Thrower plate", "Thrower", "04"),
-        ], "min_col": "200px"},
+        ], "frames": [("F", "assets/photos/shop-and-machine-photography/machine-field.jpg",
+                       "The finished machine on the field", "The finished machine, on the field", "05")]},
         {"label": "What I learned", "strong": True, "paras": [
             "The MATLAB torque study felt slow while teammates were already printing parts, and then "
             "the feeder ran a full competition day without a single missed index. Analysis before "
             "fabrication is cheaper than iteration after it.",
             "If I built it again I would close the loop on flywheel RPM, so return speed holds "
             "steady as the battery sags.",
-        ], "frames": [("F", "assets/photos/robo-catcher-photography/full-assembly.jpg",
-                       "Full machine assembly", "Full assembly, as delivered", "07")]},
+        ]},
     ],
     "next": ("The bend fixture", "bend-fixture.html"),
 }
