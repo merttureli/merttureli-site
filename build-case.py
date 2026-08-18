@@ -618,13 +618,11 @@ CASES["charger"] = {
             "them. A preliminary review is due in December and a critical review in March, both "
             "presented live to judges and both scored. You can fly a perfect mission in April "
             "and still lose to a team that wrote better documents in December.",
-            "Our preliminary review came back at 134.5 out of 216. The judges liked the "
-            "presentation and said so, and then listed what was not in it: no radio or antenna "
-            "trade study, no power budget, no software flow chart, no flight simulation plots, no "
-            "fin dimensions, no mass with the motor installed. That scoresheet was the most "
-            "useful document the team got all year, because it was an itemized list of the "
-            "engineering we had not done yet, written by the people who would score us again in "
-            "March.",
+            "That reframes the whole year. Radio and antenna trades, a power budget, a software "
+            "state list, flight simulations, mass with the motor installed: all of it is work the "
+            "judges expect to see written down months before anything flies, and all of it is "
+            "scored by the same people twice before launch day. The review deck is not a report "
+            "on the engineering. It is part of the engineering.",
         ]},
         {"label": "CHARGER", "paras": [
             "Just under four feet tall, single stage, four fins, flying a commercial G motor on a "
@@ -667,8 +665,9 @@ CASES["charger"] = {
             "that goes around building the team.",
             "So the engineering problem and the organizational problem were the same problem. "
             "The budget proposals were what made a competitive airframe affordable. The build "
-            "labs were what made twelve people able to fly it. And the December scoresheet, the "
-            "one that said we were not ready, was worth more than the trophy was.",
+            "labs were what made twelve people able to fly it. And the two design reviews were "
+            "what turned a group of volunteers into a team that could say, in writing and on "
+            "record, exactly how its rocket was going to work.",
         ]},
     ],
     "prev": ("Robo-Catcher", "robo-catcher.html"),
