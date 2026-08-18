@@ -102,7 +102,7 @@
       <article data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; padding-top: var(--space-7); border-top: 1px solid var(--line-hairline)">
         <div style="display: flex; flex-direction: column; gap: var(--space-5)">
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="01" hint-size="240px,16px">Thermal / Instrumentation</x-import>
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" hint-size="100%,60px">Benchtop thermal test rig</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" hint-size="100%,60px">HOTBOX: thermal test bench</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="muted" hint-size="100%,16px">SunThru, 2026 / Design, electronics, firmware, safety systems</x-import>
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">The company needed to rank glazing samples by insulating performance and had no way to measure it. I designed and built the whole bench: the insulated test chamber, the sensor stack, the electronics, the firmware, and the safety system that lets it run unattended overnight.</p>
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">The measurement approach was the interesting decision. Rather than inferring performance from heater power, the rig reads actual heat flow through the sample with a calibrated sensor, and it will not accept a result until the readings have held steady for a full hour. The safety design is layered and redundant, because a heater running all night with nobody watching is a real hazard and not a theoretical one.</p>
@@ -160,7 +160,7 @@
       <article data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; padding-top: var(--space-7); border-top: 1px solid var(--line-hairline)">
         <div style="display: flex; flex-direction: column; gap: var(--space-5)">
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="04" hint-size="240px,16px">Design for manufacture</x-import>
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" hint-size="100%,60px">Aerogel three-point bend jig</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" hint-size="100%,60px">Custom three-point bend fixture and data logger</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="muted" hint-size="100%,16px">SunThru, 2026 / Solo design</x-import>
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Aerogel is too fragile for off the shelf flexural test fixtures, so I designed one. It is fully 3D printable, built from interlocking parts on a shared coordinate system, and sized for the lab's samples with gentle repeatable clamping. It is in use for flexural characterization.</p>
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">A small, clean example of design for manufacture, and of solving a problem by making the tool rather than buying it.</p>
@@ -493,10 +493,7 @@
           <span style="color: var(--text-meta)">LinkedIn</span>
           <span>linkedin.com/in/merttureli</span>
         </a>
-        <a href="https://github.com/merttureli" style="display: grid; grid-template-columns: minmax(64px,110px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-display); text-decoration: none" style-hover="border-bottom-color: var(--line-strong)">
-          <span style="color: var(--text-meta)">GitHub</span>
-          <span>github.com/merttureli</span>
-        </a>
+            
         <a href="mailto:merttureli0@gmail.com" style="display: grid; grid-template-columns: minmax(64px,110px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-display); text-decoration: none" style-hover="border-bottom-color: var(--line-strong)">
           <span style="color: var(--text-meta)">Email</span>
           <span>merttureli0@gmail.com</span>
@@ -530,8 +527,7 @@ class Component extends DCLogic {
       ],
       social: [
         { name: "LinkedIn", icon: "linkedin", href: "https://linkedin.com/in/merttureli" },
-        { name: "GitHub", icon: "github", href: "https://github.com/merttureli" },
-        { name: "Mail", icon: "mail", href: "#contact" },
+          { name: "Mail", icon: "mail", href: "#contact" },
       ],
       aboutSpecs: [
         { label: "Title", value: "Mechanical engineer" },

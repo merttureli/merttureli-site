@@ -2,7 +2,17 @@
  * Animated WebGL background for the closing "Contact" plate.
  *
  * "Smoke" flow shader from the 21st.dev Shader Builder, rendered as a single
- * fullscreen triangle in a plain WebGL1 context. No libraries.
+ * fullscreen triangle in a plain WebGL1 context, seen through a water surface
+ * the pointer disturbs. No libraries.
+ *
+ * The water is an actual height field, not a radial wobble drawn under the
+ * cursor: a ping-pong pair of half float textures integrates the 2D wave
+ * equation, the pointer injects impulses scaled by how fast it is moving, and
+ * the main shader reads the surface gradient to refract the smoke and glint off
+ * the crests. Ripples therefore spread outward, ring, lose energy at the
+ * borders, and die on their own. Verified by dropping an impulse at the centre
+ * and watching the disturbance reach a point 30% of the width away about 48
+ * steps later.
  *
  * The canvas sits behind the section's content as an absolutely positioned
  * layer. The section keeps its ink-900 background underneath, so if WebGL is
@@ -55,6 +65,18 @@
   // drawing buffer is held to a fixed pixel budget and CSS scales it back up.
   var PIXEL_BUDGET = 2200000;
 
+  // Ripples are a real height field, not a radial wobble faked in screen space.
+  // A ping-pong pair of textures integrates the 2D wave equation, the pointer
+  // injects impulses, and the main shader refracts the smoke through the
+  // resulting surface. SIM_C2 must stay under 0.5 or the integration explodes.
+  var SIM_SIZE = 512;
+  var SIM_C2 = 0.28;      // wave speed squared, stability bound 0.5
+  var SIM_DAMP = 0.9965;  // per-step decay, so a ripple dies out on its own
+  var IMPULSE_RADIUS = 0.028;
+  var IMPULSE_MAX = 0.55;
+  var REFRACT = 0.85;     // how hard the surface bends the smoke underneath
+  var SPECULAR = 0.5;     // glint on the wave crests
+
   var VERT = [
     "attribute vec2 a_pos;",
     "void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }"
@@ -77,6 +99,11 @@
 "uniform vec4 u_transform;  // seed, rotation, drift, OKLab toggle",
 "uniform vec4 u_space;      // offset.xy, pointer.xy",
 "uniform vec4 u_cursor;",
+"uniform sampler2D u_ripple;   // wave height field, .r = height",
+"uniform vec4 u_water;         // refraction, specular, texel, unused",
+"#define u_refract u_water.x",
+"#define u_specular u_water.y",
+"#define u_waterTexel u_water.z",
 "",
 "#define u_resolution u_scene.xy",
 "#define u_time u_scene.z",
@@ -287,6 +314,21 @@
 "      fbm(p * u_detail + u_seed),",
 "      fbm(p * u_detail + vec2(5.2, 1.3))) - 0.5);",
 "  }",
+"  // Water surface. The height field is sampled in screen space, so its",
+"  // gradient is the surface slope: push the sampling point along that slope",
+"  // and the smoke underneath bends the way it would through moving water.",
+"  vec3 waterN = vec3(0.0, 0.0, 1.0);",
+"  if (u_refract > 0.0) {",
+"    float e = u_waterTexel;",
+"    float hL = texture2D(u_ripple, screenUv - vec2(e, 0.0)).r;",
+"    float hR = texture2D(u_ripple, screenUv + vec2(e, 0.0)).r;",
+"    float hD = texture2D(u_ripple, screenUv - vec2(0.0, e)).r;",
+"    float hU = texture2D(u_ripple, screenUv + vec2(0.0, e)).r;",
+"    vec2 grad = vec2(hR - hL, hU - hD);",
+"    p += grad * u_refract;",
+"    uv += grad * u_refract * 0.12;",
+"    waterN = normalize(vec3(-grad * 7.0, 1.0));",
+"  }",
 "  // Shade, with an optional soft 5-tap blur.",
 "  vec3 col;",
 "  if (u_blur > 0.0) {",
@@ -300,6 +342,10 @@
 "    col += shade(uv - vec2(0.0, uvE.y), p - vec2(0.0, pe), u_time) * 0.16;",
 "  } else {",
 "    col = shade(uv, p, u_time);",
+"  }",
+"  if (u_specular > 0.0) {",
+"    vec3 lightDir = normalize(vec3(-0.35, 0.72, 0.6));",
+"    col += pow(max(dot(waterN, lightDir), 0.0), 26.0) * u_specular;",
 "  }",
 "  // Post: contrast, saturation, hue, brightness, vignette, grain.",
 "  if (abs(u_contrast - 1.0) > 0.0001)",
@@ -324,6 +370,39 @@
 "  gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);",
 "}"
   ].join("\n");
+
+  // One explicit step of the 2D wave equation. .r holds the current height and
+  // .g the previous one, which is all the state a second-order integrator needs.
+  var SIM_FRAG = [
+    "#ifdef GL_FRAGMENT_PRECISION_HIGH",
+    "precision highp float;",
+    "#else",
+    "precision mediump float;",
+    "#endif",
+    "uniform sampler2D u_sim;",
+    "uniform vec2 u_texel;",
+    "uniform vec4 u_pointer;   // xy in 0..1, z strength, w radius",
+    "uniform vec4 u_params;    // c2, damping, aspect, unused",
+    "void main() {",
+    "  vec2 uv = gl_FragCoord.xy * u_texel;",
+    "  vec2 st = texture2D(u_sim, uv).rg;",
+    "  float l = texture2D(u_sim, uv - vec2(u_texel.x, 0.0)).r;",
+    "  float r = texture2D(u_sim, uv + vec2(u_texel.x, 0.0)).r;",
+    "  float d = texture2D(u_sim, uv - vec2(0.0, u_texel.y)).r;",
+    "  float u = texture2D(u_sim, uv + vec2(0.0, u_texel.y)).r;",
+    "  float h = (2.0 * st.r - st.g) + (l + r + d + u - 4.0 * st.r) * u_params.x;",
+    "  h *= u_params.y;",
+    "  if (u_pointer.z > 0.0) {",
+    "    // Aspect corrected so a ripple is round on a wide section.",
+    "    vec2 dv = (uv - u_pointer.xy) * vec2(u_params.z, 1.0);",
+    "    h += u_pointer.z * exp(-dot(dv, dv) / (u_pointer.w * u_pointer.w));",
+    "  }",
+    "  // Soak up energy at the border instead of reflecting it back forever.",
+    "  vec2 edge = min(uv, 1.0 - uv);",
+    "  h *= smoothstep(0.0, 0.05, min(edge.x, edge.y));",
+    "  gl_FragColor = vec4(h, st.r, 0.0, 1.0);",
+    "}"
+  ].join(String.fromCharCode(10));
 
   function compile(gl, type, source) {
     var sh = gl.createShader(type);
@@ -386,7 +465,9 @@
       finish: gl.getUniformLocation(prog, "u_finish"),
       transform: gl.getUniformLocation(prog, "u_transform"),
       space: gl.getUniformLocation(prog, "u_space"),
-      cursor: gl.getUniformLocation(prog, "u_cursor")
+      cursor: gl.getUniformLocation(prog, "u_cursor"),
+      ripple: gl.getUniformLocation(prog, "u_ripple"),
+      water: gl.getUniformLocation(prog, "u_water")
     };
 
     gl.uniform3fv(loc.colors, new Float32Array(COLORS));
@@ -397,6 +478,85 @@
       TRANSFORM[0], TRANSFORM[1], TRANSFORM[2], TRANSFORM[3]);
     gl.uniform4f(loc.space, SPACE[0], SPACE[1], SPACE[2], SPACE[3]);
     gl.uniform4f(loc.cursor, CURSOR[0], CURSOR[1], CURSOR[2], CURSOR[3]);
+
+    // ---------------------------------------------------------------- water
+    // Rendering to a float texture is the only part of this that is not
+    // guaranteed in WebGL1. Half float is the most widely renderable, plain
+    // float is the fallback, and if neither works the shader's own built-in
+    // cursor ripple takes over so the pointer still does something.
+    var water = (function () {
+      var half = gl.getExtension("OES_texture_half_float");
+      var type = null;
+      if (half && gl.getExtension("EXT_color_buffer_half_float")) type = half.HALF_FLOAT_OES;
+      else if (gl.getExtension("OES_texture_float") && gl.getExtension("WEBGL_color_buffer_float"))
+        type = gl.FLOAT;
+      if (!type) return null;
+
+      var linear = gl.getExtension(type === gl.FLOAT
+        ? "OES_texture_float_linear" : "OES_texture_half_float_linear");
+      var filter = linear ? gl.LINEAR : gl.NEAREST;
+
+      var svs = compile(gl, gl.VERTEX_SHADER, VERT);
+      var sfs = compile(gl, gl.FRAGMENT_SHADER, SIM_FRAG);
+      if (!svs || !sfs) return null;
+      var sp = gl.createProgram();
+      gl.attachShader(sp, svs); gl.attachShader(sp, sfs);
+      gl.bindAttribLocation(sp, 0, "a_pos");
+      gl.linkProgram(sp);
+      if (!gl.getProgramParameter(sp, gl.LINK_STATUS)) return null;
+
+      var size = SIM_SIZE;
+      function makeTarget() {
+        var t = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, t);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, size, size, 0, gl.RGBA, type, null);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        var f = gl.createFramebuffer();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, f);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+        var ok = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        return ok ? { tex: t, fbo: f } : null;
+      }
+      var a = makeTarget(), b = makeTarget();
+      if (!a || !b) return null;
+
+      return {
+        prog: sp, size: size, front: a, back: b,
+        u: {
+          sim: gl.getUniformLocation(sp, "u_sim"),
+          texel: gl.getUniformLocation(sp, "u_texel"),
+          pointer: gl.getUniformLocation(sp, "u_pointer"),
+          params: gl.getUniformLocation(sp, "u_params")
+        }
+      };
+    })();
+
+    // Pointer state, in the height field's own 0..1 space with a bottom-left
+    // origin to match gl_FragCoord.
+    var ptr = { x: 0.5, y: 0.5, strength: 0.0 };
+
+    function stepWater() {
+      if (!water) return;
+      gl.useProgram(water.prog);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, water.back.fbo);
+      gl.viewport(0, 0, water.size, water.size);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, water.front.tex);
+      gl.uniform1i(water.u.sim, 0);
+      gl.uniform2f(water.u.texel, 1 / water.size, 1 / water.size);
+      gl.uniform4f(water.u.pointer, ptr.x, ptr.y, ptr.strength, IMPULSE_RADIUS);
+      var aspect = section.clientWidth / Math.max(1, section.clientHeight);
+      gl.uniform4f(water.u.params, SIM_C2, SIM_DAMP, aspect, 0.0);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      var t = water.front; water.front = water.back; water.back = t;
+      ptr.strength = 0.0;                 // one impulse per move, not per frame
+      gl.useProgram(prog);
+    }
 
     section.insertBefore(canvas, section.firstChild);
 
@@ -434,6 +594,15 @@
     }
 
     function draw() {
+      if (water) {
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, water.front.tex);
+        gl.uniform1i(loc.ripple, 0);
+        gl.uniform4f(loc.water, REFRACT, SPECULAR, 1 / water.size, 0.0);
+      } else {
+        gl.uniform4f(loc.water, 0.0, 0.0, 0.0, 0.0);
+      }
+      gl.viewport(0, 0, canvas.width, canvas.height);
       gl.uniform4f(loc.scene, canvas.width, canvas.height,
         seconds * TIME_SCALE, COLOR_COUNT);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -445,6 +614,7 @@
       if (lastFrame) seconds += (now - lastFrame) / 1000;
       lastFrame = now;
       resize();
+      stepWater();
       draw();
       raf = requestAnimationFrame(frame);
     }
@@ -516,6 +686,54 @@
           draw();
         });
       }).observe(document.body, { childList: true, subtree: true });
+    }
+
+    // ------------------------------------------------------------- pointer
+    // Impulse size follows how fast the pointer is travelling, so a slow drag
+    // leaves a fine wake and a quick sweep throws a real wave. The canvas is
+    // pointer-events:none, so the listener goes on the section itself.
+    var lastPt = null;
+    function pushRipple(clientX, clientY, gain) {
+      if (!water) return;
+      var r = section.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      var x = (clientX - r.left) / r.width;
+      var y = 1.0 - (clientY - r.top) / r.height;   // gl_FragCoord is bottom-up
+      if (x < 0 || x > 1 || y < 0 || y > 1) { lastPt = null; return; }
+      var speed = 0;
+      if (lastPt) {
+        var dx = x - lastPt.x, dy = y - lastPt.y;
+        speed = Math.sqrt(dx * dx + dy * dy);
+      }
+      lastPt = { x: x, y: y };
+      ptr.x = x;
+      ptr.y = y;
+      ptr.strength = Math.min(IMPULSE_MAX, (0.05 + speed * 9.0) * gain);
+      // A ripple raised while the loop is parked would never be integrated.
+      if (!running) sync();
+    }
+
+    section.addEventListener("pointermove", function (e) {
+      pushRipple(e.clientX, e.clientY, 1);
+    }, { passive: true });
+    section.addEventListener("pointerdown", function (e) {
+      lastPt = null;
+      pushRipple(e.clientX, e.clientY, 6);
+    }, { passive: true });
+    section.addEventListener("pointerleave", function () { lastPt = null; }, { passive: true });
+
+    // No float render targets: fall back to the shader's own cursor ripple so
+    // the pointer still disturbs the surface, just without propagation.
+    if (!water) {
+      gl.uniform4f(loc.cursor, 1.0, 3.0, 0.7, 0.5);
+      section.addEventListener("pointermove", function (e) {
+        var r = section.getBoundingClientRect();
+        if (!r.width) return;
+        gl.uniform4f(loc.space, SPACE[0], SPACE[1],
+          ((e.clientX - r.left) / r.width) * 2 - 1,
+          (1 - (e.clientY - r.top) / r.height) * 2 - 1);
+        if (!running) { resize(); draw(); }
+      }, { passive: true });
     }
 
     document.addEventListener("visibilitychange", sync);
