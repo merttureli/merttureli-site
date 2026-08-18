@@ -153,6 +153,60 @@ def bullets(items):
             % "".join(rows))
 
 
+def stats_band(items):
+    """
+    Big figures, straight after the hero.
+
+    The page's failure mode was a wall of measure-width prose on white. Leading
+    with the numbers at display size gives the reader the result in one glance
+    and gives the layout something with weight in it.
+    """
+    cells = []
+    for value, label in items:
+        cells.append(
+            '<div style="display: flex; flex-direction: column; gap: var(--space-3)">'
+            '<span style="font-family: var(--font-display); font-size: clamp(2.2rem, 4.4vw, 3.6rem); '
+            'font-weight: 500; line-height: 0.95; letter-spacing: -0.02em; color: var(--paper)">%s</span>'
+            '<span style="font-family: var(--font-mono); font-size: var(--fs-meta); '
+            'letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70)">%s</span>'
+            '</div>' % (value, label))
+    return ('      <div data-reveal="1" style="display: grid; grid-template-columns: '
+            'repeat(auto-fit, minmax(min(190px, 100%%), 1fr)); gap: var(--space-7) var(--space-6)">\n'
+            '        %s\n      </div>' % "\n        ".join(cells))
+
+
+def cards(items):
+    """Constraints as panels rather than a long ruled list."""
+    out = []
+    for i, t in enumerate(items, 1):
+        out.append(
+            '<div style="display: flex; flex-direction: column; gap: var(--space-4); '
+            'padding: var(--space-6); border-radius: var(--radius-lg, 14px); '
+            'background: var(--surface-sunken); min-height: 150px">'
+            '<span style="font-family: var(--font-mono); font-size: var(--fs-meta); '
+            'letter-spacing: var(--ls-caps); color: var(--text-meta)">%02d</span>'
+            '<span style="font-size: var(--fs-body); line-height: var(--lh-body); '
+            'color: var(--text-display)">%s</span></div>' % (i, t))
+    return ('      <div data-reveal="1" style="display: grid; grid-template-columns: '
+            'repeat(3, minmax(0, 1fr)); gap: var(--space-5)">\n'
+            '        %s\n      </div>' % "\n        ".join(out))
+
+
+def bleed(src, alt, caption):
+    """A full width image band, to break the column rhythm once per page."""
+    return ('  <section data-reveal="1" style="position: relative; padding: 0 0 var(--section-y)">\n'
+            '    <div style="position: relative; width: 100%%; aspect-ratio: 21 / 9; overflow: hidden; '
+            'background: var(--ink-900)">\n'
+            '      <img src="../%s" alt="%s" style="position: absolute; inset: 0; width: 100%%; '
+            'height: 100%%; object-fit: cover; display: block">\n'
+            '    </div>\n'
+            '    <div style="max-width: var(--max-width); margin: 0 auto; padding: var(--space-4) '
+            'var(--page-margin) 0">\n'
+            '      <span style="font-family: var(--font-mono); font-size: var(--fs-meta); '
+            'letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta)">%s</span>\n'
+            '    </div>\n  </section>\n' % (src, alt, caption))
+
+
 def section(inner, dark=False, pad="var(--section-y) var(--page-margin)", extra="",
             gap="var(--space-7)"):
     cls = ' class="on-dark"' if dark else ''
@@ -171,11 +225,15 @@ def block(*parts, **kw):
 
 
 def two_col(left, right, cols="minmax(0, 1.35fr) minmax(0, 1fr)"):
-    return ('      <div data-reveal="1" style="display: grid; grid-template-columns: %s; '
-            'gap: var(--space-8); align-items: start">\n'
-            '        <div style="display: flex; flex-direction: column; gap: var(--space-5)">%s</div>\n'
-            '        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-5)">%s</div>\n'
-            '      </div>' % (cols, left, right))
+    tpl = (
+        '      <div data-reveal="1" style="display: grid; grid-template-columns: {cols}; '
+        'gap: var(--space-8); align-items: start">\n'
+        '        <div style="min-width: 0; display: flex; flex-direction: column; '
+        'gap: var(--space-6)">{left}</div>\n'
+        '        <div style="min-width: 0; display: flex; flex-direction: column; '
+        'gap: var(--space-5)">{right}</div>\n'
+        '      </div>')
+    return tpl.format(cols=cols, left=left, right=right)
 
 
 def gallery(frames, min_col="220px"):
@@ -240,9 +298,10 @@ def build(case, index):
                 cols="minmax(0, 1fr) minmax(0, 1fr)"),
         pad="var(--section-y) var(--page-margin) var(--space-9)"))
 
-    # Consecutive light sections are grouped into one <section> so the article
-    # reads as continuous prose. One section per heading doubled --section-y at
-    # every seam and left a screen of dead air between blocks.
+    # Consecutive light sections share one <section> so the article reads as
+    # continuous prose. Text and media sit side by side rather than stacking,
+    # which both fills the empty half the measure width leaves behind and cuts
+    # the page length roughly in half.
     n = 2
     run = []
 
@@ -254,15 +313,44 @@ def build(case, index):
             del run[:]
 
     for sec in case["sections"]:
-        inner = [block(rule(sec["label"], right="%02d" % n))]
+        kind = sec.get("kind")
+
+        if kind == "stats":
+            flush()
+            body.append(section(stats_band(sec["stats"]), dark=True,
+                                pad="var(--space-9) var(--page-margin)"))
+            continue
+
+        if kind == "bleed":
+            flush()
+            body.append(bleed(sec["src"], sec["alt"], sec["caption"]))
+            continue
+
+        head = block(rule(sec["label"], right="%02d" % n))
         n += 1
+
+        text = []
         if sec.get("paras"):
-            inner.append(block(*[para(p, strong=sec.get("strong", False)) for p in sec["paras"]]))
+            text.append(block(*[para(p, strong=sec.get("strong", False)) for p in sec["paras"]]))
+        if sec.get("cards"):
+            text.append(cards(sec["cards"]))
         if sec.get("list"):
-            inner.append('      <div data-reveal="1">%s</div>' % bullets(sec["list"]))
-        if sec.get("frames"):
-            inner.append(gallery(sec["frames"], min_col=sec.get("min_col", "220px")))
-        piece = "\n".join(inner)
+            text.append('      <div data-reveal="1">%s</div>' % bullets(sec["list"]))
+
+        media = sec.get("frames") or []
+        if media and not sec.get("cards"):
+            # prose on one side, the pictures on the other
+            left = "\n".join(text)
+            right = "\n".join(media)
+            if sec.get("flip"):
+                left, right = right, left
+            piece = head + "\n" + two_col(left, right,
+                                        cols=sec.get("cols", "minmax(0, 1.05fr) minmax(0, 1fr)"))
+        elif media:
+            piece = "\n".join([head] + text + [gallery(media, min_col=sec.get("min_col", "220px"))])
+        else:
+            piece = "\n".join([head] + text)
+
         if sec.get("dark"):
             flush()
             body.append(section(piece, dark=True))
@@ -350,7 +438,6 @@ CASES["robo-catcher"] = {
         ("Tools", "ESP32, C++, MATLAB, NEMA 17 with TB6600, SolidWorks", ""),
         ("Build", "Laser cut HDF and 3D printed parts", ""),
         ("Timeline", "2025, two academic terms", ""),
-        ("Result", "100% feed indexing on competition day", ""),
     ],
     "brief_note": [
         "Twelve of us split across three subsystems: capture, feeding and return. I co-led the "
@@ -358,18 +445,27 @@ CASES["robo-catcher"] = {
         "motor drive, control firmware, wireless interface and safety logic.",
     ],
     "sections": [
+        # results up front, at display size, so the page opens with weight
+        {"kind": "stats", "stats": [
+            ("100%", "Feed indexing, competition day"),
+            ("&lt;$700", "Total build cost"),
+            ("55 lb", "One person portable"),
+            ("1.5 hr", "Runtime, one 12 V 20 Ah battery"),
+        ]},
         {"label": "The problem", "paras": [
             "A solo player can buy a machine that pitches, but someone still has to walk every ball "
             "back. We set out to close the loop: a machine that catches an incoming throw, feeds it "
             "internally and returns it, with nobody in the middle.",
             "Nothing off the shelf does this at any price, and ours had to come in under a $700 cap.",
-        ]},
-        {"label": "Constraints", "list": [
+        ], "frames": [("F", "assets/photos/shop-and-machine-photography/machine-net.jpg",
+                       "The capture net and frame", "The capture side: net, frame, return path", "01")]},
+        {"label": "Constraints", "cards": [
             "Under $700 all in, with every actuator and driver chosen against that cap",
             "Portable by one person: 55 lb finished, fits in a car trunk",
             "Assembles at the field with no tools",
             "Battery powered, a full practice session on one 12 V 20 Ah SLA battery",
             "Safe around players: wireless emergency stop plus hardware cut-offs",
+            "Catch, index and return without a human touching the ball",
         ]},
         {"label": "Sizing the feeder before cutting anything", "paras": [
             "The feeder is a rotating dual chamber indexer: catch a ball in one chamber, rotate 180 "
@@ -378,42 +474,37 @@ CASES["robo-catcher"] = {
             "So before any parts were made I modelled the load case in MATLAB, a 0.19 kg ball lifted "
             "through 180 degrees of rotation, and sized the NEMA 17 stepper and TB6600 driver to a "
             "1.8x torque safety factor.",
-        ], "frames": [
-            ("FRAME", "assets/photos/robo-catcher-photography/indexer-cross-section.jpg",
-             "Indexer cross-section", "Indexer cross-section. The chamber geometry self-centres the ball ahead of the flywheel.", "01"),
-            ("FRAME", "assets/photos/robo-catcher-photography/full-feeder.jpg",
-             "Assembled feeder", "The assembled feeder", "02"),
-        ], "min_col": "260px"},
+        ], "frames": [("F", "assets/photos/robo-catcher-photography/indexer-cross-section.jpg",
+                       "Indexer cross-section", "Chamber geometry self-centres the ball", "02"),
+                      ("F", "assets/photos/robo-catcher-photography/full-feeder.jpg",
+                       "The assembled feeder", "The assembled feeder", "03")],
+         "flip": True, "cols": "minmax(0, 1fr) minmax(0, 1.05fr)"},
         {"label": "Electronics and firmware", "paras": [
             "Everything runs on one ESP32. The firmware handles PWM speed control for the 120 W DC "
             "return flywheel through a MOSFET stage, stepper indexing for the feeder, and limit "
             "switch logic so the machine always knows where the chambers are.",
             "A wireless remote gives start and stop from across the field, and the emergency "
             "cut-offs kill motor power independently of the microcontroller.",
-        ], "frames": [
-            ("FRAME", "assets/photos/robo-catcher-photography/working-on-electronics.jpg",
-             "Bench bring-up of the control electronics", "Bench bring-up of the control electronics", "03"),
-            ("FRAME", "assets/photos/robo-catcher-photography/flywheel-full.jpg",
-             "Return flywheel assembly", "Return flywheel, driven by the 120 W DC motor", "04"),
-        ], "min_col": "260px"},
+        ], "frames": [("F", "assets/photos/robo-catcher-photography/working-on-electronics.jpg",
+                       "Bench bring-up of the control electronics", "Bench bring-up", "04"),
+                      ("F", "assets/photos/robo-catcher-photography/flywheel-full.jpg",
+                       "Return flywheel assembly", "Return flywheel, 120 W DC motor", "05")]},
+        # one full width break, on the strongest photograph
+        {"kind": "bleed", "src": "assets/photos/shop-and-machine-photography/field-test.jpg",
+         "alt": "Robo-Catcher under test on the field",
+         "caption": "Field test. Photograph Paul Buckowski / Union College"},
         {"label": "The result", "list": [
             "100% feed indexing on competition day: every ball delivered, no misses",
             "Under $700 total build cost against a $700 cap",
             "55 lb, one person portable, assembles with no tools",
             "1.5 hours continuous runtime on a single 12 V 20 Ah SLA battery",
-        ], "frames": [
-            ("FRAME", "assets/photos/robo-catcher-photography/final-product.jpg",
-             "The finished machine", "The finished machine", "05"),
-            ("FRAME", "assets/photos/shop-and-machine-photography/machine-field.jpg",
-             "Robo-Catcher on the field", "On the field", "06"),
-            ("FRAME", "assets/photos/shop-and-machine-photography/uc-track.jpg",
-             "Team testing the machine", "Testing. Photograph Paul Buckowski / Union College", "07"),
-        ], "min_col": "240px"},
+        ], "frames": [("F", "assets/photos/robo-catcher-photography/final-product.jpg",
+                       "The finished machine", "The finished machine", "06")]},
         {"label": "Subsystem views", "dark": True, "frames": [
-            ("FRAME", "assets/photos/cad-drawing-plates/assembly-dark.jpg", "Full assembly plate", "Full assembly", "01"),
-            ("FRAME", "assets/photos/cad-drawing-plates/feeder-dark.jpg", "Feeder plate", "Feeder", "02"),
-            ("FRAME", "assets/photos/cad-drawing-plates/indexer-dark.jpg", "Indexer plate", "Indexer", "03"),
-            ("FRAME", "assets/photos/cad-drawing-plates/thrower-dark.jpg", "Thrower plate", "Thrower", "04"),
+            ("F", "assets/photos/cad-drawing-plates/assembly-dark.jpg", "Full assembly plate", "Full assembly", "01"),
+            ("F", "assets/photos/cad-drawing-plates/feeder-dark.jpg", "Feeder plate", "Feeder", "02"),
+            ("F", "assets/photos/cad-drawing-plates/indexer-dark.jpg", "Indexer plate", "Indexer", "03"),
+            ("F", "assets/photos/cad-drawing-plates/thrower-dark.jpg", "Thrower plate", "Thrower", "04"),
         ], "min_col": "200px"},
         {"label": "What I learned", "strong": True, "paras": [
             "The MATLAB torque study felt slow while teammates were already printing parts, and then "
@@ -421,7 +512,8 @@ CASES["robo-catcher"] = {
             "fabrication is cheaper than iteration after it.",
             "If I built it again I would close the loop on flywheel RPM, so return speed holds "
             "steady as the battery sags.",
-        ]},
+        ], "frames": [("F", "assets/photos/robo-catcher-photography/full-assembly.jpg",
+                       "Full machine assembly", "Full assembly, as delivered", "07")]},
     ],
     "next": ("The bend fixture", "bend-fixture.html"),
 }
