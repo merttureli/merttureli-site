@@ -265,15 +265,27 @@ def build(case, index):
     if hero_clip:
         clip_markup = (
             '<div data-reveal="1" style="position: relative; width: 100%%; aspect-ratio: %s">\n'
-            '          <video data-clip="1" poster="../assets/motion/%s-poster.png" autoplay loop muted '
+            '          <video data-clip="1" poster="../assets/motion/%s-poster.%s" autoplay loop muted '
             'playsinline preload="metadata" style="width: 100%%; height: 100%%; object-fit: contain; display: block">'
             '<source src="../assets/motion/%s-alpha.webm" type="video/webm">'
             '<source src="../assets/motion/%s.mp4" type="video/mp4"></video>\n        </div>'
-            % (case.get("clip_ratio", "4 / 3"), hero_clip, hero_clip, hero_clip))
+            % (case.get("clip_ratio", "4 / 3"), hero_clip, case.get("poster_ext", "png"),
+               hero_clip, hero_clip))
     elif case.get("hero_image"):
         clip_markup = ('<div data-reveal="1">%s</div>'
                        % frame(case["hero_image"], case["title"], case.get("hero_caption", ""),
                                ratio=case.get("clip_ratio", "4 / 3"), zoom=False, size="100%,420px"))
+
+    if case.get("clip_note") and clip_markup:
+        clip_markup = clip_markup.replace(
+            '        </div>',
+            '          <div style="position: absolute; inset: auto 0 0 0; display: flex; '
+            'justify-content: center">\n'
+            '            <span style="font-family: var(--font-mono); font-size: var(--fs-meta); '
+            'letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper); '
+            'border: 1px solid var(--paper-a45); border-radius: var(--radius-pill); '
+            'padding: 5px 12px">' + case["clip_note"] + '</span>\n'
+            '          </div>\n        </div>')
 
     hero = (
         '  <section class="on-dark" style="position: relative; min-height: min(720px, 88vh); '
@@ -523,6 +535,235 @@ CASES["robo-catcher"] = {
     "next": ("The bend fixture", "bend-fixture.html"),
 }
 
+
+CASES["bend-fixture"] = {
+    "slug": "bend-fixture",
+    "eyebrow": "Case study / SunThru",
+    "title": "Custom three-point bend fixture",
+    "description": ("A fully 3D printable 12 part three-point bend fixture, designed in SolidWorks "
+                    "2025 around specimens too delicate for commercial fixtures, with the rebuilds "
+                    "automated in VBA."),
+    "lede": ("Commercial bend fixtures are built for metals and plastics and will damage a fragile "
+             "specimen before the test begins. SunThru needed one matched to its own samples, so I "
+             "designed a fully printable 12 part fixture built around gentle handling."),
+    "clip": "bend-fixture-blurred",
+    "poster_ext": "jpg",
+    "clip_ratio": "16 / 9",
+    "clip_note": "IP protected",
+    "brief": [
+        ("Role", "Design engineer, solo", ""),
+        ("For", "SunThru, early stage hardware R&amp;D", ""),
+        ("Tools", "SolidWorks 2025, VBA macro automation, FDM printing", ""),
+        ("Timeline", "2026", ""),
+        ("Status", "Base plate and gauge plate printed and in lab use", ""),
+    ],
+    "brief_note": [
+        "Renders are blurred here because the fixture is SunThru hardware. The engineering worth "
+        "describing is the parametric structure and the design for printing, neither of which needs "
+        "the geometry shown.",
+    ],
+    "sections": [
+        {"kind": "stats", "stats": [
+            ("12", "Interlocking parts"),
+            ("100%", "FDM printable, no machining"),
+            ("M3", "One hardware size throughout"),
+            ("VBA", "Automated rebuilds"),
+        ]},
+        {"label": "The problem", "paras": [
+            "Three-point bend testing is a standard way to measure flexural strength, but commercial "
+            "fixtures assume a specimen that can take being clamped. When the sample cannot, the "
+            "fixture itself becomes the thing that breaks it.",
+            "SunThru needed a fixture sized to its own samples, gentle enough not to pre-damage "
+            "them, and cheap enough to iterate on, which meant printing it in house.",
+        ]},
+        {"label": "Constraints", "cards": [
+            "Every part printable on the lab's FDM printer, no machined components",
+            "12 interlocking parts on one coordinate system, so dimension changes ripple predictably",
+            "Standard M3 hardware throughout, with printable cross-hole channels",
+            "Compliant contact geometry at the load nose and both supports",
+            "Cheap enough to reprint a part rather than rework it",
+            "Sized to the lab's own specimens rather than a standard",
+        ]},
+        {"label": "Parametric part design", "paras": [
+            "A 12 part fixture with interlocked dimensions is a maintenance problem: change one "
+            "dimension by hand and eleven other parts silently stop fitting. Every part sits on a "
+            "shared coordinate system, and I automated the rebuilds with SolidWorks VBA so a "
+            "dimension change regenerates the affected parts consistently.",
+            "Each part's geometry is checked against its expected volume before it is accepted, which "
+            "catches a rebuild that succeeded but produced the wrong solid.",
+        ]},
+        {"label": "Designed for the printer, not around it", "paras": [
+            "The parts are shaped the way the machine builds them: additive layer friendly geometry "
+            "throughout, and horizontal M3 cross-holes drawn as printable channels so nothing needs "
+            "support material or post-drilling.",
+            "One hardware size across the whole fixture means one driver, one drill, and no chance of "
+            "an assembly step needing something that is not on the bench.",
+        ], "strong": True},
+        {"label": "What I learned", "strong": True, "paras": [
+            "The decisions that held up were the ones that thought like the manufacturing process. "
+            "Geometry built up in layers the way the printer builds it, holes shaped for printability "
+            "instead of for drills, hardware chosen from one standard size.",
+            "Designing for the process beat designing around it.",
+        ]},
+    ],
+    "prev": ("Robo-Catcher", "robo-catcher.html"),
+    "next": ("Rudder pedals", "rudder-pedals.html"),
+}
+
+
+CASES["rudder-pedals"] = {
+    "slug": "rudder-pedals",
+    "eyebrow": "Case study / Personal project",
+    "title": "Flight sim rudder pedals",
+    "description": ("Three-axis flight sim rudder pedals with fighter style geometry, contactless "
+                    "Hall effect sensing and C++ USB HID firmware. Designed, printed, wired and "
+                    "programmed solo."),
+    "lede": ("I fly ultralights, and consumer sim pedals never felt right: short throw, toy-like "
+             "centring, and potentiometers that get jittery as they wear. So I built my own, with "
+             "fighter style geometry, three axes, and sensing that cannot wear out."),
+    "clip": "rudder-pedals-working",
+    "clip_ratio": "16 / 9",
+    "brief": [
+        ("Role", "Design, print, wiring and firmware, solo", ""),
+        ("Type", "Personal project", ""),
+        ("Tools", "SolidWorks, FDM printing, Teensy 2.0, A1301 Hall sensors, C++", ""),
+        ("Timeline", "2026", ""),
+        ("Status", "In daily use at my sim", ""),
+    ],
+    "brief_note": [
+        "Rudder pedals do three jobs at once: yaw through the sliding pedal motion, plus independent "
+        "left and right toe brakes. Consumer hardware compresses all of that into short springy "
+        "travel measured by potentiometers.",
+    ],
+    "sections": [
+        {"kind": "stats", "stats": [
+            ("3", "Independent axes"),
+            ("0", "Potentiometers in the signal path"),
+            ("USB HID", "No drivers, any simulator"),
+            ("A1301", "Contactless Hall sensing"),
+        ]},
+        {"label": "The problem", "paras": [
+            "Potentiometers drift, jitter and eventually wear out, because the measurement depends on "
+            "a wiper physically touching a track. On a control you stand on, that wear is not "
+            "hypothetical.",
+            "I wanted fighter style pedal geometry with sensing that reads the same on day one and "
+            "day one thousand.",
+        ], "frames": [("F", "assets/photos/rudder-pedal-photography/pedals-hero.jpg",
+                       "The finished rudder pedals", "The finished pedals", "01")]},
+        {"label": "Constraints", "cards": [
+            "Three independent axes, yaw plus left and right toe brakes, in one mechanism",
+            "Every structural part printable on a hobby FDM printer",
+            "No contact based sensing anywhere in the signal path",
+            "Recognised as a standard game controller by any PC, no drivers",
+            "Pedal geometry close to an F-15 or F-18 layout",
+            "Serviceable: a worn part can be reprinted, not replaced as an assembly",
+        ]},
+        {"label": "Mechanism first", "paras": [
+            "I designed the three-axis assembly in SolidWorks around fighter style pedal geometry and "
+            "printed it, iterating on pivot placement and return feel.",
+            "Rapid prototyping earns its name here. Pedal feel is subjective, and the fastest way to "
+            "evaluate a linkage is to stand on it.",
+        ], "frames": [("F", "assets/photos/rudder-pedal-photography/pedals-profile.jpg",
+                       "Pedal mechanism in profile", "The footplate rides its pivot arm between the printed side walls", "02")],
+         "flip": True},
+        {"label": "Sensing without touching", "paras": [
+            "Each axis is measured by an A1301 Hall effect sensor reading a magnet on the moving part. "
+            "No wiper, no contact, nothing to wear. The output is smooth and continuous, and it is "
+            "identical after a thousand hours.",
+            "That single component choice removes the entire failure mode that ruins potentiometer "
+            "based controls.",
+        ], "frames": [("F", "assets/photos/rudder-pedal-photography/pedals-sensor.jpg",
+                       "The sensor lever and magnet holder", "The magnet sweeps past the fixed A1301 as the axis moves", "03")]},
+        {"label": "Firmware that gets out of the way", "paras": [
+            "A Teensy 2.0 reads the three sensors and presents itself as a standard USB HID game "
+            "controller, so every simulator sees it the moment it is plugged in.",
+            "The C++ firmware learns each axis's real minimum, centre and maximum, and applies "
+            "configurable deadzone logic, so mechanical imperfection never reaches the sim.",
+        ], "strong": True},
+        {"label": "What I learned", "strong": True, "paras": [
+            "This is where mechanical design and embedded software stopped being separate skills. The "
+            "pedal feel comes from the linkage, but whether it is usable comes from the firmware, and "
+            "neither one could be finished without the other.",
+        ]},
+    ],
+    "prev": ("The bend fixture", "bend-fixture.html"),
+    "next": ("Therma-Shift", "therma-shift.html"),
+}
+
+
+CASES["therma-shift"] = {
+    "slug": "therma-shift",
+    "eyebrow": "Case study / Personal project",
+    "title": "Therma-Shift coaster",
+    "description": ("A dual mode thermoelectric coaster that heats or cools any mug or glass. "
+                    "Peltier stack bench validated to 11 C on the cold face at 12 V, with layered "
+                    "thermal runaway protection."),
+    "lede": ("A solid state desktop coaster that actively heats or cools any standard mug, glass or "
+             "can, with no proprietary drinkware. One Peltier module, closed loop control, and a "
+             "safety architecture designed for unattended desk use."),
+    "clip": "therma-shift-360",
+    "clip_ratio": "4 / 3",
+    "brief": [
+        ("Role", "Design, thermal validation, firmware, solo", ""),
+        ("Built for", "SparkLab seed competition, March 2026", ""),
+        ("Tools", "TEC1-12703 Peltier, Arduino C++, NTC thermistors, DRV8871", ""),
+        ("Power", "USB-C Power Delivery", ""),
+        ("Status", "Thermal stack validated, closed loop electronics in progress", ""),
+    ],
+    "brief_note": [
+        "Existing options split into two bad camps: proprietary heated mugs that lock you into their "
+        "drinkware, and cheap USB warmers with no temperature regulation at all. The interesting "
+        "problem sits in between.",
+    ],
+    "sections": [
+        {"kind": "stats", "stats": [
+            ("11 &deg;C", "Cold face at 12 V, steady state"),
+            ("~5 min", "To thermal equilibrium"),
+            ("2", "Modes from one stack, by polarity"),
+            ("&plusmn;2 &deg;F", "Closed loop target"),
+        ]},
+        {"label": "The problem", "paras": [
+            "One compact device that both heats and cools, works with whatever cup is already on the "
+            "desk, and can be trusted to run unattended. The last of those is the hard one: a heater "
+            "left alone on a desk is a fire risk if nothing independent is watching it.",
+        ]},
+        {"label": "Constraints", "cards": [
+            "Universal: any mug, glass or can, the device adapts to the drinkware",
+            "Dual mode, heating and cooling from the same hardware",
+            "Powered over USB-C Power Delivery, within a desk power budget",
+            "Thermal runaway prevention independent of the control loop",
+            "Low profile and quiet enough for an office desk",
+            "No proprietary cup, ever",
+        ]},
+        {"label": "The design", "paras": [
+            "A thermoelectric module does both jobs: drive current one way and the top plate cools, "
+            "reverse it and the plate heats. The TEC1-12703 sits between an aluminium top plate and a "
+            "finned heatsink with a blower carrying away waste heat.",
+            "An NTC thermistor at the plate closes the loop, targeting about 2 degrees Fahrenheit "
+            "around setpoint, with the module driven through a DRV8871 H-bridge so firmware controls "
+            "both power and polarity.",
+            "Safety is layered the way my lab test rig is: the control loop regulates, and separate "
+            "firmware cutoffs watch for thermal runaway independently of it, so an unattended fault "
+            "shuts the device down.",
+        ]},
+        {"label": "Validate the physics before the electronics", "paras": [
+            "Before integrating any control loop I bench tested the bare thermal stack against a lab "
+            "supply with K-type thermocouples on both faces. At 12 V the cold face held 10.7 to 12 "
+            "degrees C with the heatsink at 53 to 56, reaching equilibrium in about five minutes.",
+            "A voltage sweep mapped cold face temperature against input power to find the efficient "
+            "operating window. Swapping the heatsink's stock adhesive pad for proper thermal paste "
+            "measurably improved performance: the interfaces matter as much as the module.",
+        ], "strong": True},
+        {"label": "Where it stands", "list": [
+            "10.7 to 12 degrees C cold face at 12 V, steady state",
+            "About 5 minutes to thermal equilibrium",
+            "Dual mode verified: the same stack heats and cools by polarity",
+            "Staged firmware test suite written; closed loop integration in progress",
+        ]},
+    ],
+    "prev": ("Rudder pedals", "rudder-pedals.html"),
+    "next": ("Robo-Catcher", "robo-catcher.html"),
+}
 
 def main():
     index = read_index()

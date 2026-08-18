@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Custom three-point bend fixture · Mert Türeli</title>
+<meta name="description" content="A fully 3D printable 12 part three-point bend fixture, designed in SolidWorks 2025 around specimens too delicate for commercial fixtures, with the rebuilds automated in VBA.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230A0A0A'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='26' font-weight='600' fill='%23FFFFFF'%3EMT%3C/text%3E%3C/svg%3E">
+<link rel="canonical" href="https://merttureli.com/projects/bend-fixture.html">
+<meta property="og:title" content="Custom three-point bend fixture · Mert Türeli">
+<meta property="og:description" content="A fully 3D printable 12 part three-point bend fixture, designed in SolidWorks 2025 around specimens too delicate for commercial fixtures, with the rebuilds automated in VBA.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://merttureli.com/projects/bend-fixture.html">
+<meta property="og:image" content="https://merttureli.com/assets/og-cover.png">
+<script src="../support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/fonts.css">
+<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/colors.css">
+<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/typography.css">
+<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/spacing.css">
+<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/layout.css">
+<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/effects.css">
+<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/motion.css">
+<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/base.css">
+<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/styles.css">
+<script src="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/_ds_bundle.js"></script>
+<link rel="stylesheet" href="../css/mobile.css">
+<style>
+  html { scroll-behavior: smooth; }
+  body { background: var(--paper); }
+  @keyframes up { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+  @keyframes reveal { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+  @keyframes kb { from { transform: scale(1.04); } to { transform: scale(1); } }
+</style>
+</helmet>
+
+<div style="background: var(--paper); overflow-x: hidden">
+
+  <section class="on-dark" style="position: relative; min-height: min(720px, 88vh); background: var(--ink-900); overflow: hidden; display: flex; flex-direction: column">
+    <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Grain" blend="overlay" strength="normal" hint-size="100%,100%"></x-import>
+    <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SiteHeader" items="{{ nav }}" active="work" inverse="true" floating="true" hint-size="100%,88px"></x-import>
+    <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SocialRail" items="{{ social }}" inverse="true" fixed="true" hint-size="36px,120px"></x-import>
+    <div style="position: relative; flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); align-items: center; gap: var(--space-8); padding: calc(var(--header-h) + var(--space-8)) var(--page-margin) var(--space-8); max-width: var(--max-width); margin: 0 auto; width: 100%">
+      <div style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" wide="true" hint-size="300px,16px">Case study / SunThru</x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="1" treatment="inverse" hint-size="100%,140px">Custom three-point bend fixture</x-import>
+        <p style="font-size: var(--fs-body-lg); line-height: var(--lh-body); color: var(--paper-a90); max-width: var(--measure)">Commercial bend fixtures are built for metals and plastics and will damage a fragile specimen before the test begins. SunThru needed one matched to its own samples, so I designed a fully printable 12 part fixture built around gentle handling.</p>
+        <div style="display: flex; gap: var(--space-4); flex-wrap: wrap; margin-top: var(--space-2)">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="glass" trailing="→" href="../index.html#work" dc-props="{{ linkOnDark }}" hint-size="150px,44px">All work</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="link" trailing="→" href="https://merttureli.github.io" dc-props="{{ linkOnDark }}" hint-size="180px,24px">Full portfolio</x-import>
+        </div>
+      </div>
+      <div data-reveal="1" style="position: relative; width: 100%; aspect-ratio: 16 / 9">
+          <video data-clip="1" poster="../assets/motion/bend-fixture-blurred-poster.jpg" autoplay loop muted playsinline preload="metadata" style="width: 100%; height: 100%; object-fit: contain; display: block"><source src="../assets/motion/bend-fixture-blurred-alpha.webm" type="video/webm"><source src="../assets/motion/bend-fixture-blurred.mp4" type="video/mp4"></video>
+          <div style="position: absolute; inset: auto 0 0 0; display: flex; justify-content: center">
+            <span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper); border: 1px solid var(--paper-a45); border-radius: var(--radius-pill); padding: 5px 12px">IP protected</span>
+          </div>
+        </div>
+    </div>
+  </section>
+
+  <section style="position: relative; padding: var(--section-y) var(--page-margin) var(--space-9);">
+    <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-7)">
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Brief" right="01" hint-size="100%,14px"></x-import>
+      </div>
+      <div data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-8); align-items: start">
+        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-6)"><x-import component-from-global-scope="MertTReliDesignSystem_56763c.SpecList" items="{{ brief }}" columns="minmax(64px,110px) minmax(0,1fr)" hint-size="100%%,260px"></x-import></div>
+        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-5)">      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Renders are blurred here because the fixture is SunThru hardware. The engineering worth describing is the parametric structure and the design for printing, neither of which needs the geometry shown.</p>
+      </div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="on-dark" style="position: relative; background: var(--ink-900); padding: var(--space-9) var(--page-margin);">
+    <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-7)">
+      <div data-reveal="1" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr)); gap: var(--space-7) var(--space-6)">
+        <div style="display: flex; flex-direction: column; gap: var(--space-3)"><span style="font-family: var(--font-display); font-size: clamp(2.2rem, 4.4vw, 3.6rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.02em; color: var(--paper)">12</span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70)">Interlocking parts</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-3)"><span style="font-family: var(--font-display); font-size: clamp(2.2rem, 4.4vw, 3.6rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.02em; color: var(--paper)">100%</span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70)">FDM printable, no machining</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-3)"><span style="font-family: var(--font-display); font-size: clamp(2.2rem, 4.4vw, 3.6rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.02em; color: var(--paper)">M3</span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70)">One hardware size throughout</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-3)"><span style="font-family: var(--font-display); font-size: clamp(2.2rem, 4.4vw, 3.6rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.02em; color: var(--paper)">VBA</span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70)">Automated rebuilds</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section style="position: relative; padding: 0 var(--page-margin) var(--section-y);">
+    <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-9)">
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="The problem" right="02" hint-size="100%,14px"></x-import>
+      </div>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Three-point bend testing is a standard way to measure flexural strength, but commercial fixtures assume a specimen that can take being clamped. When the sample cannot, the fixture itself becomes the thing that breaks it.</p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">SunThru needed a fixture sized to its own samples, gentle enough not to pre-damage them, and cheap enough to iterate on, which meant printing it in house.</p>
+      </div>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Constraints" right="03" hint-size="100%,14px"></x-import>
+      </div>
+      <div data-reveal="1" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5)">
+        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">01</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Every part printable on the lab's FDM printer, no machined components</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">02</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">12 interlocking parts on one coordinate system, so dimension changes ripple predictably</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">03</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Standard M3 hardware throughout, with printable cross-hole channels</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">04</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Compliant contact geometry at the load nose and both supports</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">05</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Cheap enough to reprint a part rather than rework it</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">06</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Sized to the lab's own specimens rather than a standard</span></div>
+      </div>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Parametric part design" right="04" hint-size="100%,14px"></x-import>
+      </div>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">A 12 part fixture with interlocked dimensions is a maintenance problem: change one dimension by hand and eleven other parts silently stop fitting. Every part sits on a shared coordinate system, and I automated the rebuilds with SolidWorks VBA so a dimension change regenerates the affected parts consistently.</p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Each part's geometry is checked against its expected volume before it is accepted, which catches a rebuild that succeeded but produced the wrong solid.</p>
+      </div>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Designed for the printer, not around it" right="05" hint-size="100%,14px"></x-import>
+      </div>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">The parts are shaped the way the machine builds them: additive layer friendly geometry throughout, and horizontal M3 cross-holes drawn as printable channels so nothing needs support material or post-drilling.</p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">One hardware size across the whole fixture means one driver, one drill, and no chance of an assembly step needing something that is not on the bench.</p>
+      </div>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="What I learned" right="06" hint-size="100%,14px"></x-import>
+      </div>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">The decisions that held up were the ones that thought like the manufacturing process. Geometry built up in layers the way the printer builds it, holes shaped for printability instead of for drills, hardware chosen from one standard size.</p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">Designing for the process beat designing around it.</p>
+      </div>
+    </div>
+  </section>
+
+  <section style="position: relative; padding: var(--space-8) var(--page-margin) var(--space-9);">
+    <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-7)">
+      <div data-reveal="1" style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-6); flex-wrap: wrap">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="link" trailing="→" href="robo-catcher.html" hint-size="240px,24px">Previous: Robo-Catcher</x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="outline" trailing="→" href="rudder-pedals.html" hint-size="260px,44px">Next: Rudder pedals</x-import>
+      </div>
+    </div>
+  </section>
+
+<footer class="on-dark" style="background: var(--ink-900); padding: var(--space-7) var(--page-margin) var(--space-8); border-top: 1px solid var(--line-hairline)">
+    <div style="max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-6)">
+      <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Wordmark" name="MERT TÜRELI" size="md" hint-size="220px,20px"></x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="320px,16px">Schenectady, New York / B.S. Mechanical Engineering, Union College, 2026</x-import>
+      </div>
+      <p style="max-width: 96ch; font-family: var(--font-mono); font-size: var(--fs-meta-sm); line-height: 1.5; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-meta)">Photographs of the machine and the team by Paul Buckowski / Union College. CAD animations rendered from the source assemblies. Aircraft models are third-party, illustration only. / <a href="../privacy.html" style="color: var(--text-meta); text-decoration: underline; text-underline-offset: 3px">Privacy</a></p>
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;heroClip&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;charger&quot;,&quot;therma-shift&quot;,&quot;robo-catcher&quot;],&quot;default&quot;:&quot;charger&quot;,&quot;tsType&quot;:&quot;\&quot;charger\&quot; | \&quot;therma-shift\&quot; | \&quot;robo-catcher\&quot;&quot;,&quot;section&quot;:&quot;Motion&quot;},&quot;motion&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Motion&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props || {};
+    return {
+      nav: [
+        { id: "work", label: "Work", href: "../index.html#work" },
+        { id: "experience", label: "Experience", href: "../index.html#experience" },
+        { id: "beyond", label: "Beyond", href: "../index.html#beyond" },
+        { id: "contact", label: "Contact", href: "../index.html#contact" },
+      ],
+      social: [
+        { name: "LinkedIn", icon: "linkedin", href: "https://linkedin.com/in/merttureli" },
+        { name: "Mail", icon: "mail", href: "../index.html#contact" },
+      ],
+      linkOnDark: { tone: "inverse" },
+      brief: [
+        { label: "Role", value: "Design engineer, solo" },
+        { label: "For", value: "SunThru, early stage hardware R&amp;D" },
+        { label: "Tools", value: "SolidWorks 2025, VBA macro automation, FDM printing" },
+        { label: "Timeline", value: "2026" },
+        { label: "Status", value: "Base plate and gauge plate printed and in lab use" },
+      ],
+    };
+  }
+
+  componentDidMount() {
+    this.reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    this.seen = this.seen || new WeakSet();
+    this.pending = this.pending || new Set();
+    this.onTick = () => this.tick();
+    window.addEventListener("scroll", this.onTick, { passive: true });
+    window.addEventListener("resize", this.onTick);
+    document.addEventListener("visibilitychange", this.onTick);
+    clearInterval(this.iv);
+    this.iv = setInterval(this.onTick, 1200);
+    this.tick();
+  }
+
+  componentDidUpdate() { this.tick(); }
+
+  tick() {
+    const vh = window.innerHeight;
+    document.querySelectorAll("[data-reveal]").forEach((el) => {
+      if (this.seen.has(el)) {
+        if (el.style.opacity === "0") this.pending.add(el);
+        return;
+      }
+      this.seen.add(el);
+      if (this.reduced) return;
+      if (el.getBoundingClientRect().top > vh * 0.9) {
+        el.style.opacity = "0";
+        el.style.transform = "translateY(26px)";
+        this.pending.add(el);
+      }
+    });
+    this.pending.forEach((el) => {
+      if (el.getBoundingClientRect().top < vh * 0.88) {
+        el.style.opacity = "";
+        el.style.transform = "";
+        el.style.animation = "reveal var(--dur-4) var(--ease-out) both";
+        setTimeout(() => { el.style.animation = ""; }, 1200);
+        this.pending.delete(el);
+      }
+    });
+    this.syncClips();
+  }
+
+  syncClips() {
+    const play = (this.props || {}).motion !== false;
+    const hero = (this.props || {}).heroClip || "charger";
+    const CLIPS = {
+      charger: "charger-wide",
+      "therma-shift": "therma-shift-360-noflow",
+      "robo-catcher": "robo-catcher-360",
+    };
+    const heroEl = document.querySelector("[data-hero-clip]");
+    if (heroEl && heroEl.getAttribute("data-hero-clip") !== hero) {
+      const slug = CLIPS[hero] || CLIPS.charger;
+      heroEl.setAttribute("data-hero-clip", hero);
+      heroEl.poster = "assets/motion/" + slug + "-poster.png";
+      const src = heroEl.querySelectorAll("source");
+      if (src[0]) src[0].src = "assets/motion/" + slug + "-alpha.webm";
+      if (src[1]) src[1].src = "assets/motion/" + slug + ".mp4";
+      heroEl.load();
+    }
+    document.querySelectorAll("video").forEach((v) => {
+      v.muted = true;
+      v.loop = true;
+      v.playsInline = true;
+      if (play) { if (v.paused) v.play().catch(() => {}); }
+      else if (!v.paused) { v.pause(); v.currentTime = 0; }
+    });
+  }
+}
+</script>
+<script src="../js/mobile-nav.js"></script>
+<script src="../js/analytics-config.js"></script>
+<script src="../js/track.js"></script>
+<script src="../js/clarity.js"></script>
+</body>
+</html>

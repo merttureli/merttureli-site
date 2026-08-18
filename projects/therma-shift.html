@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Therma-Shift coaster · Mert Türeli</title>
+<meta name="description" content="A dual mode thermoelectric coaster that heats or cools any mug or glass. Peltier stack bench validated to 11 C on the cold face at 12 V, with layered thermal runaway protection.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230A0A0A'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='26' font-weight='600' fill='%23FFFFFF'%3EMT%3C/text%3E%3C/svg%3E">
+<link rel="canonical" href="https://merttureli.com/projects/therma-shift.html">
+<meta property="og:title" content="Therma-Shift coaster · Mert Türeli">
+<meta property="og:description" content="A dual mode thermoelectric coaster that heats or cools any mug or glass. Peltier stack bench validated to 11 C on the cold face at 12 V, with layered thermal runaway protection.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://merttureli.com/projects/therma-shift.html">
+<meta property="og:image" content="https://merttureli.com/assets/og-cover.png">
+<script src="../support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/fonts.css">
+<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/colors.css">
+<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/typography.css">
+<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/spacing.css">
+<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/layout.css">
+<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/effects.css">
+<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/motion.css">
+<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/base.css">
+<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/styles.css">
+<script src="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/_ds_bundle.js"></script>
+<link rel="stylesheet" href="../css/mobile.css">
+<style>
+  html { scroll-behavior: smooth; }
+  body { background: var(--paper); }
+  @keyframes up { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+  @keyframes reveal { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+  @keyframes kb { from { transform: scale(1.04); } to { transform: scale(1); } }
+</style>
+</helmet>
+
+<div style="background: var(--paper); overflow-x: hidden">
+
+  <section class="on-dark" style="position: relative; min-height: min(720px, 88vh); background: var(--ink-900); overflow: hidden; display: flex; flex-direction: column">
+    <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Grain" blend="overlay" strength="normal" hint-size="100%,100%"></x-import>
+    <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SiteHeader" items="{{ nav }}" active="work" inverse="true" floating="true" hint-size="100%,88px"></x-import>
+    <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SocialRail" items="{{ social }}" inverse="true" fixed="true" hint-size="36px,120px"></x-import>
+    <div style="position: relative; flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); align-items: center; gap: var(--space-8); padding: calc(var(--header-h) + var(--space-8)) var(--page-margin) var(--space-8); max-width: var(--max-width); margin: 0 auto; width: 100%">
+      <div style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" wide="true" hint-size="300px,16px">Case study / Personal project</x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="1" treatment="inverse" hint-size="100%,140px">Therma-Shift coaster</x-import>
+        <p style="font-size: var(--fs-body-lg); line-height: var(--lh-body); color: var(--paper-a90); max-width: var(--measure)">A solid state desktop coaster that actively heats or cools any standard mug, glass or can, with no proprietary drinkware. One Peltier module, closed loop control, and a safety architecture designed for unattended desk use.</p>
+        <div style="display: flex; gap: var(--space-4); flex-wrap: wrap; margin-top: var(--space-2)">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="glass" trailing="→" href="../index.html#work" dc-props="{{ linkOnDark }}" hint-size="150px,44px">All work</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="link" trailing="→" href="https://merttureli.github.io" dc-props="{{ linkOnDark }}" hint-size="180px,24px">Full portfolio</x-import>
+        </div>
+      </div>
+      <div data-reveal="1" style="position: relative; width: 100%; aspect-ratio: 4 / 3">
+          <video data-clip="1" poster="../assets/motion/therma-shift-360-poster.png" autoplay loop muted playsinline preload="metadata" style="width: 100%; height: 100%; object-fit: contain; display: block"><source src="../assets/motion/therma-shift-360-alpha.webm" type="video/webm"><source src="../assets/motion/therma-shift-360.mp4" type="video/mp4"></video>
+        </div>
+    </div>
+  </section>
+
+  <section style="position: relative; padding: var(--section-y) var(--page-margin) var(--space-9);">
+    <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-7)">
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Brief" right="01" hint-size="100%,14px"></x-import>
+      </div>
+      <div data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-8); align-items: start">
+        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-6)"><x-import component-from-global-scope="MertTReliDesignSystem_56763c.SpecList" items="{{ brief }}" columns="minmax(64px,110px) minmax(0,1fr)" hint-size="100%%,260px"></x-import></div>
+        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-5)">      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Existing options split into two bad camps: proprietary heated mugs that lock you into their drinkware, and cheap USB warmers with no temperature regulation at all. The interesting problem sits in between.</p>
+      </div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="on-dark" style="position: relative; background: var(--ink-900); padding: var(--space-9) var(--page-margin);">
+    <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-7)">
+      <div data-reveal="1" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr)); gap: var(--space-7) var(--space-6)">
+        <div style="display: flex; flex-direction: column; gap: var(--space-3)"><span style="font-family: var(--font-display); font-size: clamp(2.2rem, 4.4vw, 3.6rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.02em; color: var(--paper)">11 &deg;C</span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70)">Cold face at 12 V, steady state</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-3)"><span style="font-family: var(--font-display); font-size: clamp(2.2rem, 4.4vw, 3.6rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.02em; color: var(--paper)">~5 min</span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70)">To thermal equilibrium</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-3)"><span style="font-family: var(--font-display); font-size: clamp(2.2rem, 4.4vw, 3.6rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.02em; color: var(--paper)">2</span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70)">Modes from one stack, by polarity</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-3)"><span style="font-family: var(--font-display); font-size: clamp(2.2rem, 4.4vw, 3.6rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.02em; color: var(--paper)">&plusmn;2 &deg;F</span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70)">Closed loop target</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section style="position: relative; padding: 0 var(--page-margin) var(--section-y);">
+    <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-9)">
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="The problem" right="02" hint-size="100%,14px"></x-import>
+      </div>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">One compact device that both heats and cools, works with whatever cup is already on the desk, and can be trusted to run unattended. The last of those is the hard one: a heater left alone on a desk is a fire risk if nothing independent is watching it.</p>
+      </div>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Constraints" right="03" hint-size="100%,14px"></x-import>
+      </div>
+      <div data-reveal="1" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5)">
+        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">01</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Universal: any mug, glass or can, the device adapts to the drinkware</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">02</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Dual mode, heating and cooling from the same hardware</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">03</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Powered over USB-C Power Delivery, within a desk power budget</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">04</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Thermal runaway prevention independent of the control loop</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">05</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Low profile and quiet enough for an office desk</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">06</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">No proprietary cup, ever</span></div>
+      </div>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="The design" right="04" hint-size="100%,14px"></x-import>
+      </div>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">A thermoelectric module does both jobs: drive current one way and the top plate cools, reverse it and the plate heats. The TEC1-12703 sits between an aluminium top plate and a finned heatsink with a blower carrying away waste heat.</p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">An NTC thermistor at the plate closes the loop, targeting about 2 degrees Fahrenheit around setpoint, with the module driven through a DRV8871 H-bridge so firmware controls both power and polarity.</p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Safety is layered the way my lab test rig is: the control loop regulates, and separate firmware cutoffs watch for thermal runaway independently of it, so an unattended fault shuts the device down.</p>
+      </div>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Validate the physics before the electronics" right="05" hint-size="100%,14px"></x-import>
+      </div>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">Before integrating any control loop I bench tested the bare thermal stack against a lab supply with K-type thermocouples on both faces. At 12 V the cold face held 10.7 to 12 degrees C with the heatsink at 53 to 56, reaching equilibrium in about five minutes.</p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">A voltage sweep mapped cold face temperature against input power to find the efficient operating window. Swapping the heatsink's stock adhesive pad for proper thermal paste measurably improved performance: the interfaces matter as much as the module.</p>
+      </div>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Where it stands" right="06" hint-size="100%,14px"></x-import>
+      </div>
+      <div data-reveal="1"><div style="display: flex; flex-direction: column; max-width: var(--measure)"><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">01</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">10.7 to 12 degrees C cold face at 12 V, steady state</span></div><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">02</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">About 5 minutes to thermal equilibrium</span></div><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">03</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">Dual mode verified: the same stack heats and cools by polarity</span></div><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">04</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">Staged firmware test suite written; closed loop integration in progress</span></div></div></div>
+    </div>
+  </section>
+
+  <section style="position: relative; padding: var(--space-8) var(--page-margin) var(--space-9);">
+    <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-7)">
+      <div data-reveal="1" style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-6); flex-wrap: wrap">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="link" trailing="→" href="rudder-pedals.html" hint-size="240px,24px">Previous: Rudder pedals</x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="outline" trailing="→" href="robo-catcher.html" hint-size="260px,44px">Next: Robo-Catcher</x-import>
+      </div>
+    </div>
+  </section>
+
+<footer class="on-dark" style="background: var(--ink-900); padding: var(--space-7) var(--page-margin) var(--space-8); border-top: 1px solid var(--line-hairline)">
+    <div style="max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-6)">
+      <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Wordmark" name="MERT TÜRELI" size="md" hint-size="220px,20px"></x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="320px,16px">Schenectady, New York / B.S. Mechanical Engineering, Union College, 2026</x-import>
+      </div>
+      <p style="max-width: 96ch; font-family: var(--font-mono); font-size: var(--fs-meta-sm); line-height: 1.5; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-meta)">Photographs of the machine and the team by Paul Buckowski / Union College. CAD animations rendered from the source assemblies. Aircraft models are third-party, illustration only. / <a href="../privacy.html" style="color: var(--text-meta); text-decoration: underline; text-underline-offset: 3px">Privacy</a></p>
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;heroClip&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;charger&quot;,&quot;therma-shift&quot;,&quot;robo-catcher&quot;],&quot;default&quot;:&quot;charger&quot;,&quot;tsType&quot;:&quot;\&quot;charger\&quot; | \&quot;therma-shift\&quot; | \&quot;robo-catcher\&quot;&quot;,&quot;section&quot;:&quot;Motion&quot;},&quot;motion&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Motion&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props || {};
+    return {
+      nav: [
+        { id: "work", label: "Work", href: "../index.html#work" },
+        { id: "experience", label: "Experience", href: "../index.html#experience" },
+        { id: "beyond", label: "Beyond", href: "../index.html#beyond" },
+        { id: "contact", label: "Contact", href: "../index.html#contact" },
+      ],
+      social: [
+        { name: "LinkedIn", icon: "linkedin", href: "https://linkedin.com/in/merttureli" },
+        { name: "Mail", icon: "mail", href: "../index.html#contact" },
+      ],
+      linkOnDark: { tone: "inverse" },
+      brief: [
+        { label: "Role", value: "Design, thermal validation, firmware, solo" },
+        { label: "Built for", value: "SparkLab seed competition, March 2026" },
+        { label: "Tools", value: "TEC1-12703 Peltier, Arduino C++, NTC thermistors, DRV8871" },
+        { label: "Power", value: "USB-C Power Delivery" },
+        { label: "Status", value: "Thermal stack validated, closed loop electronics in progress" },
+      ],
+    };
+  }
+
+  componentDidMount() {
+    this.reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    this.seen = this.seen || new WeakSet();
+    this.pending = this.pending || new Set();
+    this.onTick = () => this.tick();
+    window.addEventListener("scroll", this.onTick, { passive: true });
+    window.addEventListener("resize", this.onTick);
+    document.addEventListener("visibilitychange", this.onTick);
+    clearInterval(this.iv);
+    this.iv = setInterval(this.onTick, 1200);
+    this.tick();
+  }
+
+  componentDidUpdate() { this.tick(); }
+
+  tick() {
+    const vh = window.innerHeight;
+    document.querySelectorAll("[data-reveal]").forEach((el) => {
+      if (this.seen.has(el)) {
+        if (el.style.opacity === "0") this.pending.add(el);
+        return;
+      }
+      this.seen.add(el);
+      if (this.reduced) return;
+      if (el.getBoundingClientRect().top > vh * 0.9) {
+        el.style.opacity = "0";
+        el.style.transform = "translateY(26px)";
+        this.pending.add(el);
+      }
+    });
+    this.pending.forEach((el) => {
+      if (el.getBoundingClientRect().top < vh * 0.88) {
+        el.style.opacity = "";
+        el.style.transform = "";
+        el.style.animation = "reveal var(--dur-4) var(--ease-out) both";
+        setTimeout(() => { el.style.animation = ""; }, 1200);
+        this.pending.delete(el);
+      }
+    });
+    this.syncClips();
+  }
+
+  syncClips() {
+    const play = (this.props || {}).motion !== false;
+    const hero = (this.props || {}).heroClip || "charger";
+    const CLIPS = {
+      charger: "charger-wide",
+      "therma-shift": "therma-shift-360-noflow",
+      "robo-catcher": "robo-catcher-360",
+    };
+    const heroEl = document.querySelector("[data-hero-clip]");
+    if (heroEl && heroEl.getAttribute("data-hero-clip") !== hero) {
+      const slug = CLIPS[hero] || CLIPS.charger;
+      heroEl.setAttribute("data-hero-clip", hero);
+      heroEl.poster = "assets/motion/" + slug + "-poster.png";
+      const src = heroEl.querySelectorAll("source");
+      if (src[0]) src[0].src = "assets/motion/" + slug + "-alpha.webm";
+      if (src[1]) src[1].src = "assets/motion/" + slug + ".mp4";
+      heroEl.load();
+    }
+    document.querySelectorAll("video").forEach((v) => {
+      v.muted = true;
+      v.loop = true;
+      v.playsInline = true;
+      if (play) { if (v.paused) v.play().catch(() => {}); }
+      else if (!v.paused) { v.pause(); v.currentTime = 0; }
+    });
+  }
+}
+</script>
+<script src="../js/mobile-nav.js"></script>
+<script src="../js/analytics-config.js"></script>
+<script src="../js/track.js"></script>
+<script src="../js/clarity.js"></script>
+</body>
+</html>
