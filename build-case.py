@@ -207,6 +207,21 @@ def bleed(src, alt, caption):
             '    </div>\n  </section>\n' % (src, alt, caption))
 
 
+def media_col(frames):
+    """
+    Frames laid out across, not down.
+
+    Stacking two 3:2 frames in a half width column produced 880px of pictures
+    against 180px of prose, so the text column sat empty for 700px. Side by side
+    inside the same column halves their height and the block balances.
+    """
+    if len(frames) == 1:
+        return frames[0]
+    return ('<div style="display: grid; grid-template-columns: '
+            'repeat(auto-fit, minmax(min(170px, 100%), 1fr)); gap: var(--space-4)">'
+            + "".join(frames) + '</div>')
+
+
 def section(inner, dark=False, pad="var(--section-y) var(--page-margin)", extra="",
             gap="var(--space-7)"):
     cls = ' class="on-dark"' if dark else ''
@@ -338,15 +353,17 @@ def build(case, index):
             text.append('      <div data-reveal="1">%s</div>' % bullets(sec["list"]))
 
         media = sec.get("frames") or []
-        if media and not sec.get("cards"):
-            # prose on one side, the pictures on the other
+        if media and text and not sec.get("cards"):
+            # prose on one side, the pictures on the other, laid out across
             left = "\n".join(text)
-            right = "\n".join(media)
+            right = media_col(media)
             if sec.get("flip"):
                 left, right = right, left
             piece = head + "\n" + two_col(left, right,
                                         cols=sec.get("cols", "minmax(0, 1.05fr) minmax(0, 1fr)"))
         elif media:
+            # nothing to sit beside, so the pictures take the full width. A half
+            # width column here stacked four plates into 1781px of dead page.
             piece = "\n".join([head] + text + [gallery(media, min_col=sec.get("min_col", "220px"))])
         else:
             piece = "\n".join([head] + text)
@@ -532,7 +549,11 @@ def main():
         # expand the frame tuples now that the helpers exist
         for sec in case["sections"]:
             if sec.get("frames") and isinstance(sec["frames"][0], tuple):
-                sec["frames"] = [frame(src, alt, cap, ratio="3 / 2", idx=i)
+                # a single frame beside prose gets a wide crop so it does not
+                # tower over a short paragraph; pairs and galleries keep 3:2
+                beside_text = bool(sec.get("paras") or sec.get("list")) and not sec.get("cards")
+                ratio = "16 / 9" if (beside_text and len(sec["frames"]) == 1) else "3 / 2"
+                sec["frames"] = [frame(src, alt, cap, ratio=ratio, idx=i)
                                  for (_tag, src, alt, cap, i) in sec["frames"]]
         out, size = build(case, index)
         print("built %s (%.1f KB)" % (os.path.relpath(out, ROOT), size / 1024))
