@@ -77,13 +77,15 @@
   <section style="padding: var(--section-y) var(--page-margin)">
     <div style="max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-8)">
       <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="About" right="01" hint-size="100%,14px"></x-import>
-      <div style="display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-9); align-items: start">
-        <!-- Portrait removed 2026-08-17 pending a replacement shot. To put it
-             back: restore the two-column grid above
-             (minmax(240px, 1fr) minmax(0, 1.5fr)) and re-add the image column
-             here: a 4/5 aspect-ratio div, radius-md, overflow hidden, ink-900
-             ground, the <img> object-fit cover at 50% 12%, a Grain overlay
-             (blend overlay, strength normal), and a Caption index="00". -->
+      <div style="display: grid; grid-template-columns: minmax(240px, 1fr) minmax(0, 1.5fr); gap: var(--space-9); align-items: start">
+
+        <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-3)">
+          <div style="position: relative; aspect-ratio: 4 / 5; border-radius: var(--radius-md); overflow: hidden; background: var(--ink-900)">
+            <img src="assets/portrait/mert-bridge.jpg" alt="Mert Tureli on a ship's bridge" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%">
+            <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Grain" blend="overlay" strength="normal" hint-size="100%,100%"></x-import>
+          </div>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Caption" index="00" hint-size="220px,16px">Portrait / 2024</x-import>
+        </div>
 
         <div data-reveal="1" style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-6)">
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="3" hint-size="100%,90px">Mert Türeli</x-import>
@@ -396,6 +398,7 @@
 
   <section id="beyond" class="on-dark" style="position: relative; background: var(--ink-900)">
     <div style="position: relative; height: min(560px, 62vh); overflow: hidden">
+      <video data-clip="1" poster="assets/motion/balloon-segovia-poster.jpg" autoplay loop muted playsinline preload="metadata" aria-label="Aerial shot of a hot air balloon over open country at sunrise" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block"><source src="assets/motion/balloon-segovia.mp4" type="video/mp4"></video>
       <span style="position: absolute; inset: 0; background: var(--scrim-hero)"></span>
       <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Grain" blend="overlay" strength="normal" hint-size="100%,100%"></x-import>
       <div style="position: absolute; inset: auto 0 0 0; padding: var(--space-8) var(--page-margin); max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-5)">
@@ -433,11 +436,13 @@
     </div>
 
     <div data-reveal="1" style="position: relative; padding: 0 var(--page-margin) var(--space-9)">
-      <div style="max-width: var(--max-width); margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(158px, 100%), 1fr)); gap: var(--space-5)">
-        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" alt="Image to come" ratio="4 / 5" caption="Image to come" index="01" hint-size="100%,280px"></x-import>
-        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" alt="Image to come" ratio="4 / 5" caption="Image to come" index="02" hint-size="100%,280px"></x-import>
-        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" alt="Image to come" ratio="4 / 5" caption="Image to come" index="03" hint-size="100%,280px"></x-import>
-        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" alt="Image to come" ratio="4 / 5" caption="Image to come" index="04" hint-size="100%,280px"></x-import>
+      <div style="max-width: var(--max-width); margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="assets/photos/beyond/moon-pines.jpg" alt="Crescent moon behind pine branches at dusk" ratio="4 / 5" caption="Crescent moon" index="01" hover-zoom="true" hint-size="100%,280px"></x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="assets/photos/beyond/overlook.jpg" alt="Figure looking out over forested hills to the sea" ratio="4 / 5" caption="The overlook" index="02" hover-zoom="true" hint-size="100%,280px"></x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="assets/photos/beyond/lighthouse.jpg" alt="Lighthouse framed by bare branches" ratio="4 / 5" caption="Lighthouse" index="03" hover-zoom="true" hint-size="100%,280px"></x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="assets/photos/beyond/stargazers.jpg" alt="Two people silhouetted under a star field" ratio="4 / 5" caption="Under the stars" index="04" hover-zoom="true" hint-size="100%,280px"></x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="assets/photos/beyond/rosa-rugosa.jpg" alt="Rosa rugosa in bloom above a lake" ratio="4 / 5" caption="Rosa rugosa" index="05" hover-zoom="true" hint-size="100%,280px"></x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="assets/photos/beyond/lake-framed.jpg" alt="Still water and low mountains framed by trees" ratio="4 / 5" caption="Still water" index="06" hover-zoom="true" hint-size="100%,280px"></x-import>
       </div>
     </div>
   </section>
@@ -466,8 +471,8 @@
     </div>
   </section>
 
-  <section id="contact" style="padding: var(--section-y) var(--page-margin) var(--space-9)">
-    <div style="max-width: var(--max-width); margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--space-9); align-items: start">
+  <section id="contact" class="on-dark" style="position: relative; background: var(--ink-900); padding: var(--section-y) var(--page-margin) var(--space-9)">
+    <div style="position: relative; z-index: 1; max-width: var(--max-width); margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--space-9); align-items: start">
       <div style="display: flex; flex-direction: column; gap: var(--space-6)">
         <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" wide="true" tone="strong" hint-size="200px,16px">Contact</x-import>
         <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="2" hint-size="100%,120px">Get in touch</x-import>
@@ -501,7 +506,7 @@
     </div>
   </section>
 
-  <footer style="padding: var(--space-7) var(--page-margin) var(--space-8); border-top: 1px solid var(--line-hairline)">
+  <footer class="on-dark" style="background: var(--ink-900); padding: var(--space-7) var(--page-margin) var(--space-8); border-top: 1px solid var(--line-hairline)">
     <div style="max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-6)">
       <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-5)">
         <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Wordmark" name="MERT TÜRELI" size="md" hint-size="220px,20px"></x-import>

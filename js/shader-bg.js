@@ -1,5 +1,5 @@
 /**
- * Animated WebGL background for the "Beyond engineering" section.
+ * Animated WebGL background for the closing "Contact" plate.
  *
  * "Smoke" flow shader from the 21st.dev Shader Builder, rendered as a single
  * fullscreen triangle in a plain WebGL1 context. No libraries.
@@ -12,7 +12,7 @@
 (function () {
   "use strict";
 
-  var SECTION_ID = "beyond";
+  var SECTION_ID = "contact";
 
   // Palette, low to high: #031C26, #1B6CA8, #5AD2F4, #EAF9FF.
   // The uniform is a vec3[8]; the tail repeats the last colour so the unused
@@ -39,13 +39,14 @@
 
   var MAX_DPR = 2;
 
-  // The section's type is paper-white, written for a near-black ground. The
+  // The closing plate is on-dark, so its type is paper-white on a near-black
+  // ground. The
   // palette runs up to #EAF9FF, so white body copy over the bright wisps lands
   // around 1.9:1 contrast, well under the 4.5:1 minimum, and it drifts as the
   // smoke moves. An ink scrim between the canvas and the content pulls the
   // whole field down into a range the text survives. This is the one number to
   // turn if the effect wants to be stronger (lower) or the text safer (higher).
-  var SCRIM_ALPHA = 0.5;
+  var SCRIM_ALPHA = 0.58;
 
   // Every pixel runs five 5-octave fBm evaluations, and this section is several
   // thousand CSS pixels tall. At a straight 2x device ratio that is tens of
@@ -336,7 +337,8 @@
     return sh;
   }
 
-  function start(section) {
+  function start(section) {   // `section` is rebound if the runtime swaps it
+
     if (section.querySelector(".shader-bg")) return true;
 
     var canvas = document.createElement("canvas");
@@ -474,18 +476,46 @@
 
     // Off-screen is the common case on a page this tall, and shading a couple
     // of million pixels for a section nobody is looking at is pure heat.
-    if ("IntersectionObserver" in window) {
-      new IntersectionObserver(function (entries) {
-        onScreen = entries[0].isIntersecting;
-        sync();
-      }, { rootMargin: "200px" }).observe(section);
+    var io = "IntersectionObserver" in window
+      ? new IntersectionObserver(function (entries) {
+          onScreen = entries[0].isIntersecting;
+          sync();
+        }, { rootMargin: "200px" })
+      : null;
+    var ro = "ResizeObserver" in window
+      ? new ResizeObserver(function () { if (resize() && !running) draw(); })
+      : null;
+    if (!ro) addEventListener("resize", function () { if (resize() && !running) draw(); });
+
+    function bind(el) {
+      section = el;
+      if (io) { io.disconnect(); io.observe(el); }
+      if (ro) { ro.disconnect(); ro.observe(el); }
     }
-    if ("ResizeObserver" in window) {
-      new ResizeObserver(function () {
-        if (resize() && !running) draw();
-      }).observe(section);
-    } else {
-      addEventListener("resize", function () { if (resize() && !running) draw(); });
+    bind(section);
+
+    // The design-system runtime re-renders after this script first runs, and a
+    // re-render replaces the section's children, which silently detaches the
+    // canvas and leaves a plain background. That was intermittent and looked
+    // like a caching problem for a while. Rather than racing it, put the canvas
+    // back whenever it goes missing, reusing the same element so the WebGL
+    // context is never rebuilt.
+    if (window.MutationObserver) {
+      var pending = false;
+      new MutationObserver(function () {
+        if (pending) return;
+        pending = true;
+        requestAnimationFrame(function () {
+          pending = false;
+          var cur = document.getElementById(SECTION_ID);
+          if (!cur || canvas.parentNode === cur) return;
+          cur.insertBefore(canvas, cur.firstChild);
+          cur.insertBefore(scrim, canvas.nextSibling);
+          bind(cur);
+          resize();
+          draw();
+        });
+      }).observe(document.body, { childList: true, subtree: true });
     }
 
     document.addEventListener("visibilitychange", sync);
