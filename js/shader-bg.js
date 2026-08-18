@@ -675,7 +675,10 @@
       new MutationObserver(function () {
         if (pending) return;
         pending = true;
-        requestAnimationFrame(function () {
+        // A timer, not requestAnimationFrame: rAF is throttled to nothing in a
+        // background tab, and the canvas would then stay detached until the tab
+        // was focused again. Timers keep running, so the repair always lands.
+        setTimeout(function () {
           pending = false;
           var cur = document.getElementById(SECTION_ID);
           if (!cur || canvas.parentNode === cur) return;
@@ -684,7 +687,7 @@
           bind(cur);
           resize();
           draw();
-        });
+        }, 0);
       }).observe(document.body, { childList: true, subtree: true });
     }
 
