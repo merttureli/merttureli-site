@@ -151,8 +151,12 @@
     // Origin header over this; it is sent as a fallback.
     payload.host = location.hostname;
     payload.path = location.pathname;
-    // Flagged device, or a browser openly declaring itself automated.
-    if (me || navigator.webdriver) payload.me = 1;
+    // Two different facts that used to share one field. "me" is a device this
+    // browser was told to ignore; "auto" is a browser declaring itself
+    // automated. Folding them together filed every headless scraper as one of
+    // his own machines and buried it in the self-filtered count.
+    if (me) payload.me = 1;
+    if (navigator.webdriver) payload.auto = 1;
 
     var blob;
     try {
