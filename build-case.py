@@ -568,9 +568,9 @@ CASES["charger"] = {
     "sections": [
         {"kind": "stats", "stats": [
             ("1st", "Deployable Sensor Payload event"),
-            ("500 ft", "The whole apogee window"),
-            ("5", "Live telemetry channels"),
-            ("700%", "Budget growth, written into proposals"),
+            ("1.80 cal", "Stability margin, 37 inch airframe"),
+            ("13.8 ft/s", "Descent, against a 15 ft/s limit"),
+            ("$716", "Total hardware cost"),
         ]},
         {"label": "The event", "paras": [
             "Deployable Sensor Payload is not an altitude race. It is a systems problem with a "
@@ -582,11 +582,6 @@ CASES["charger"] = {
             "lands. Throughout, from the moment it goes on the pad, it transmits air pressure, "
             "altitude, acceleration, temperature and rotation rate to a ground station that has "
             "to plot all of it live and derive the descent rate as it happens.",
-        ], "ratio": "3 / 4", "cols": "minmax(0, 1fr) minmax(0, 1fr)", "frames": [
-            ("F", "assets/photos/charger-rocket-photography/charger-pad-tall.jpg",
-             "CHARGER on the launch rail before a flight", "On the rail", "01"),
-            ("F", "assets/photos/charger-rocket-photography/charger-pad-close.jpg",
-             "CHARGER standing on pad one", "Pad one", "02"),
         ]},
         {"label": "Constraints", "cards": [
             "Commercial G motor. Apogee at least seven hundred feet and no more than twelve hundred",
@@ -623,17 +618,69 @@ CASES["charger"] = {
             "scored by the same people twice before launch day. The review deck is not a report "
             "on the engineering. It is part of the engineering.",
         ]},
-        {"label": "CHARGER", "paras": [
-            "Just under four feet tall, single stage, four fins, flying a commercial G motor on a "
-            "proper retainer because the rules do not accept a friction fit. A commercial "
-            "altimeter rides along purely so a judge can read the peak altitude off it after "
-            "recovery, and it has to still be switched on when the rocket reaches the judges' "
-            "table.",
-            "The payload occupies the upper body and the nose cone counts as part of it, which is "
-            "the detail that shapes the whole airframe: the nose is not structure you design "
-            "around, it is a component the payload has to let go of in flight and then be scored "
-            "on separately.",
+        {"label": "The airframe", "paras": [
+            "Thirty seven inches, single stage, 2.63 inches across, three "
+            "trapezoidal balsa fins on a cardboard body tube. Stability margin "
+            "1.80 calibres, which is the number that decides whether a rocket "
+            "flies straight or weathercocks into the wind, and it comes from "
+            "where the centre of pressure sits relative to the centre of "
+            "gravity at 22 inches.",
+            "The body tube is cardboard on purpose, and it is the decision on "
+            "this rocket I would defend hardest. The payload has to transmit "
+            "five channels of telemetry continuously from the pad to the "
+            "ground. Wrap that radio in a carbon fibre tube, which is the "
+            "material a rocket team reaches for when it wants to look serious, "
+            "and you have built a Faraday cage around your own antenna. "
+            "Cardboard is transparent to 2.4 GHz. The airframe material was "
+            "chosen by the radio, not by the structures.",
+        ], "ratio": "3 / 4", "cols": "minmax(0, 1fr) minmax(0, 1fr)", "frames": [
+            ("F", "assets/photos/charger-rocket-photography/charger-pad-tall.jpg",
+             "CHARGER on the launch rail before a flight", "On the rail", "01"),
+            ("F", "assets/photos/charger-rocket-photography/charger-pad-close.jpg",
+             "CHARGER standing on pad one", "Pad one", "02"),
         ]},
+        {"label": "Numbers that had to close", "paras": [
+            "An Aerotech G77R-7 at a thrust to weight ratio of 8.17, with a "
+            "G79 held as backup at 7.40. Simulated apogee 1,033 feet, which "
+            "sits in the middle of the seven hundred to twelve hundred window "
+            "rather than at an edge, because the edge of a window is where a "
+            "hot motor or a cold morning costs you the whole flight. Descent "
+            "13.8 feet per second under a 48 inch ripstop nylon canopy, "
+            "against a limit of 15.",
+        ], "list": [
+            "Length 37 in, maximum diameter 2.63 in, single stage",
+            "Three trapezoidal fins, root chord 2.76 in, height 2.36 in, sweep 2.17 in",
+            "Stability margin 1.80 cal, centre of gravity at 22 in",
+            "Aerotech G77R-7, thrust to weight 8.17, burn 1.25 s",
+            "Simulated apogee 1,033 ft, descent 13.8 ft/s on a 48 in parachute",
+            "Rail buttons at 2 in from the aft end and 22 in from the nose, near the CG",
+            "Rocket $465.42, payload $250.53, ground station $0.00 from existing kit",
+        ]},
+        {"label": "Two decisions the rules forced", "dark": True, "paras": [
+            "The motor retainer did not exist at the preliminary review. The "
+            "rules do not accept a friction fit, so a motor has to be held by "
+            "something that cannot back out under thrust, and I designed a "
+            "screw-on cap for it. The motor changed too, from a G80T to the "
+            "G77R-7, once the mass budget settled and the simulation had a "
+            "real airframe to fly rather than an estimate.",
+            "The second one is the interesting one. This rocket carries a "
+            "commercial altimeter and does not use it for recovery. Every "
+            "ejection charge is fired by the team's own board reading its own "
+            "barometric sensor, because the event bans commercial flight "
+            "computers in the payload, and once you have built an altimeter "
+            "you have to trust it with the parachute. The commercial unit "
+            "rides along for one purpose: so a judge can read peak altitude "
+            "off it after recovery, with the power still on.",
+        ]},
+        {"label": "Where the margin was", "paras": [
+            "The shock cord attachment carries the whole rocket at the instant "
+            "the parachute opens. Peak simulated acceleration 24.4 feet per "
+            "second squared on a 2.2 pound rocket is 19 pounds of force through "
+            "an M3 screw with 0.11 square inches in shear, which is 1,641 psi "
+            "against a 10,000 psi allowable. Six times margin on the one joint "
+            "whose failure loses the airframe, the payload and the flight at "
+            "once.",
+        ], "strong": True},
         {"kind": "bleed", "src": "assets/photos/charger-rocket-photography/charger-pad-band.jpg",
          "alt": "CHARGER vertical on pad one at Battle of the Rockets, Culpeper, Virginia",
          "caption": "Pad one, Culpeper, Virginia, April 2026"},
