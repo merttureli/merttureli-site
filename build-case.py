@@ -302,7 +302,7 @@ def build(case, index):
         '      <div style="display: flex; flex-direction: column; gap: var(--space-5)">\n'
         '        %s\n        %s\n        %s\n'
         '        <div style="display: flex; gap: var(--space-4); flex-wrap: wrap; margin-top: var(--space-2)">\n'
-        '          %s\n          %s\n        </div>\n'
+        '          %s\n        </div>\n'
         '      </div>\n'
         '      %s\n'
         '    </div>\n'
@@ -312,7 +312,6 @@ def build(case, index):
            heading(case["title"], level=1, treatment="inverse", size="100%,140px"),
            para_dark(case["lede"], big=True),
            button("All work", "../index.html#work", variant="glass", dark=True, size="150px,44px"),
-           button("Full portfolio", "https://merttureli.github.io", variant="link", dark=True, size="180px,24px"),
            clip_markup))
 
     body = [hero]
