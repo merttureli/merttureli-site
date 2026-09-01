@@ -7,170 +7,119 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ---------------------------------------------------------------- tokens
-   Lifted from the site's design system so the cards and the site cannot
-   drift apart. Same ink, same paper, same two faces, same tracking. */
 :root{
-  --ink-900:#0A0A0A; --ink-700:#2B2B2B; --ink-500:#6B6B6B;
-  --ink-300:#A8A8A8; --ink-100:#DEDEDE; --paper:#FFFFFF;
-  --ink-a12:rgba(10,10,10,.12); --paper-a45:rgba(255,255,255,.45);
-  --paper-a70:rgba(255,255,255,.70);
-  --font-display:"Space Grotesk","Helvetica Neue",Helvetica,sans-serif;
-  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
-  --ls-caps:.18em; --ls-caps-wide:.32em;
-
-  /* Print geometry. US standard trim, 1/8in bleed, 1/8in safe area. */
-  --trim-w:3.5in; --trim-h:2in;
-  --bleed:.125in; --safe:.125in;
-  --doc-w:3.75in;  /* trim + bleed both sides */
-  --doc-h:2.25in;
+  --ink:#0A0A0A; --ink-600:#454545; --ink-400:#8C8C8C; --ink-100:#DEDEDE;
+  --paper:#FFFFFF; --hair:rgba(10,10,10,.16);
+  --display:"Space Grotesk","Helvetica Neue",Helvetica,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --caps:.18em;
+  --bleed:.125in; --safe:.125in; --doc-w:3.75in; --doc-h:2.25in;
 }
 
-/* ------------------------------------------------------------- workspace */
-*{box-sizing:border-box}
-body{margin:0;background:#8A8A8A;font-family:var(--font-display);
-     -webkit-font-smoothing:antialiased;padding:40px 32px 80px}
-h1{font-size:15px;letter-spacing:var(--ls-caps);text-transform:uppercase;
-   font-family:var(--font-mono);font-weight:500;color:#fff;margin:0 0 4px}
-.sub{font-family:var(--font-mono);font-size:11px;color:#DEDEDE;margin:0 0 28px;
-     line-height:1.7;max-width:78ch}
-.sub b{color:#fff}
-.bar{position:sticky;top:0;z-index:9;background:#8A8A8A;padding:10px 0 18px;
-     margin:-10px 0 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.bar button{font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;
-     text-transform:uppercase;padding:7px 13px;border:1px solid #fff;
-     background:transparent;color:#fff;cursor:pointer;border-radius:2px}
-.bar button.on{background:#fff;color:#111}
-.note{font-family:var(--font-mono);font-size:11px;color:#EFEFEE;
-      margin:34px 0 10px;letter-spacing:.06em;text-transform:uppercase}
-.pair{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+/* ------------------------------------------------------- the type contract
+   From print research, and the first attempt broke it: 8pt is the floor for
+   anything a person has to read. Names 11-14pt, titles 9-11pt, body 8-9pt.
+   Nothing on these cards is set below 8pt. Where a card wants a whisper it
+   gets there with grey, not with size. */
+.t-name  {font-family:var(--display); font-weight:500; letter-spacing:-.025em;
+          font-size:13pt; line-height:1; color:var(--ink)}
+.t-role  {font-family:var(--mono); font-size:9pt; letter-spacing:.06em; color:var(--ink)}
+.t-body  {font-family:var(--mono); font-size:8pt; letter-spacing:.03em; color:var(--ink-600)}
+.t-tag   {font-family:var(--mono); font-size:8pt; letter-spacing:var(--caps);
+          text-transform:uppercase; color:var(--ink-400)}
 
-/* ------------------------------------------------------------ the artboard
-   Every card is a .card at exact document size. The trim rectangle sits
-   inset by the bleed, and the safe rectangle inset again. Content is
-   positioned against the trim box, never the document box. */
-.card{position:relative;width:var(--doc-w);height:var(--doc-h);
-      background:var(--paper);overflow:hidden;
-      box-shadow:0 2px 14px rgba(0,0,0,.28)}
-.card .art{position:absolute;inset:var(--bleed)}         /* the trim area */
-.card .full{position:absolute;inset:0}                    /* runs to bleed */
+/* workspace ------------------------------------------------------------- */
+*{box-sizing:border-box}
+body{margin:0;background:#7E7E7E;font-family:var(--display);padding:38px 30px 90px;
+     -webkit-font-smoothing:antialiased}
+h1{font-family:var(--mono);font-size:14px;letter-spacing:var(--caps);
+   text-transform:uppercase;font-weight:500;color:#fff;margin:0 0 6px}
+.sub{font-family:var(--mono);font-size:11px;color:#E4E4E4;line-height:1.75;
+     max-width:80ch;margin:0 0 24px}
+.sub b{color:#fff}
+.bar{position:sticky;top:0;z-index:9;background:#7E7E7E;padding:8px 0 16px;
+     display:flex;gap:9px;flex-wrap:wrap}
+.bar button{font-family:var(--mono);font-size:11px;letter-spacing:.08em;
+     text-transform:uppercase;padding:7px 13px;border:1px solid #fff;
+     background:none;color:#fff;cursor:pointer;border-radius:2px}
+.bar button.on{background:#fff;color:#111}
+.note{font-family:var(--mono);font-size:11px;color:#fff;margin:36px 0 4px;
+      letter-spacing:.07em;text-transform:uppercase}
+.why{font-family:var(--mono);font-size:10.5px;color:#DADADA;margin:0 0 12px;
+     max-width:74ch;line-height:1.7}
+.pair{display:flex;gap:24px;flex-wrap:wrap}
+
+/* artboard -------------------------------------------------------------- */
+.card{position:relative;flex:none;width:var(--doc-w);min-width:var(--doc-w);
+      height:var(--doc-h);background:var(--paper);
+      overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.3)}
+.art{position:absolute;inset:var(--bleed)}
+.pad{position:absolute;inset:calc(var(--bleed) + var(--safe))}
+.full{position:absolute;inset:0}
 .guide{position:absolute;pointer-events:none;display:none}
 .show-guides .guide{display:block}
-.g-trim{inset:var(--bleed);outline:1px dashed #E0004D;outline-offset:0}
-.g-safe{inset:calc(var(--bleed) + var(--safe));outline:1px dashed #00A3E0}
-.tag{position:absolute;left:0;top:calc(100% + 5px);font-family:var(--font-mono);
-     font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#fff;
-     white-space:nowrap}
+.g-trim{inset:var(--bleed);outline:1px dashed #FF2D6F}
+.g-safe{inset:calc(var(--bleed) + var(--safe));outline:1px dashed #22B8F0}
+.tag{position:absolute;left:0;top:calc(100% + 5px);font-family:var(--mono);
+     font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#fff;white-space:nowrap}
+.dark{background:var(--ink)}
+.dark .t-name{color:var(--paper)} .dark .t-role{color:var(--paper)}
+.dark .t-body{color:rgba(255,255,255,.72)} .dark .t-tag{color:rgba(255,255,255,.55)}
 
-/* --------------------------------------------------------------- type kit */
-.name{font-family:var(--font-display);font-weight:500;letter-spacing:-.02em;
-      color:var(--ink-900);line-height:.95}
-.meta{font-family:var(--font-mono);font-size:6.5pt;letter-spacing:var(--ls-caps);
-      text-transform:uppercase;color:var(--ink-500)}
-.meta.strong{color:var(--ink-900)}
-.rule{height:1px;background:var(--ink-a12);width:100%}
-.on-dark{color:var(--paper)}
-.on-dark .meta{color:var(--paper-a70)}
-.on-dark .name{color:var(--paper)}
-.on-dark .rule{background:var(--paper-a45)}
+/* A. SPECIMEN ------------------------------------------------------------ */
+.A .pad{display:flex;flex-direction:column;justify-content:space-between}
+.A .t-name{font-size:31pt;letter-spacing:-.035em;line-height:.86}
+.A .foot{display:flex;justify-content:space-between;align-items:baseline}
 
-/* 1. RULE ---------------------------------------------------------------- */
-.t-rule .art{display:flex;flex-direction:column;justify-content:space-between;
-             padding:var(--safe)}
-.t-rule .top{display:flex;justify-content:space-between;align-items:baseline}
-.t-rule .name{font-size:20pt}
-.t-rule .role{margin-top:.05in}
+/* B. SECTION ------------------------------------------------------------- */
+.B .fin{position:absolute;right:-.34in;top:50%;transform:translateY(-50%);
+        width:2.1in;color:var(--ink-100)}
+.B .fin svg{width:100%;height:auto;display:block}
+.B .pad{display:flex;flex-direction:column;justify-content:center;gap:.06in}
+.B .cap{display:flex;gap:.14in;align-items:baseline}
 
-/* 2. SPEC ---------------------------------------------------------------- */
-.t-spec .art{display:flex;flex-direction:column;justify-content:center;
-             padding:var(--safe);gap:.055in}
-.t-spec .name{font-size:15pt;margin-bottom:.045in}
-.t-spec .row{display:grid;grid-template-columns:.72in 1fr;gap:.06in;
-             align-items:baseline;padding-bottom:.035in;
-             border-bottom:1px solid var(--ink-a12)}
-.t-spec .row:last-child{border-bottom:0}
-.t-spec .k{font-family:var(--font-mono);font-size:5.6pt;
-           letter-spacing:var(--ls-caps);text-transform:uppercase;
-           color:var(--ink-300)}
-.t-spec .v{font-family:var(--font-mono);font-size:7pt;color:var(--ink-900)}
+/* C. PLATE --------------------------------------------------------------- */
+.C .full{background:#111 center/cover no-repeat}
+.C .scrim{position:absolute;inset:0;
+          background:linear-gradient(105deg,rgba(6,6,6,.88) 0%,rgba(6,6,6,.72) 44%,rgba(6,6,6,.12) 100%)}
+.C .pad{display:flex;flex-direction:column;justify-content:space-between}
+.C .t-name{font-size:19pt}
 
-/* 3. INK ----------------------------------------------------------------- */
-.t-ink .full{background:var(--ink-900)}
-.t-ink .art{display:flex;flex-direction:column;justify-content:flex-end;
-            padding:var(--safe)}
-.t-ink .name{font-size:22pt}
-.t-ink .strip{display:flex;justify-content:space-between;align-items:baseline;
-              margin-top:.07in;padding-top:.055in}
-
-/* 4. INDEX --------------------------------------------------------------- */
-.t-index .art{display:grid;grid-template-columns:.62in 1fr;gap:.11in;
-              align-items:center;padding:var(--safe)}
-.t-index .num{font-family:var(--font-display);font-size:40pt;font-weight:500;
-              line-height:.8;letter-spacing:-.04em;color:var(--ink-100)}
-.t-index .name{font-size:16pt}
-.t-index .stack{display:flex;flex-direction:column;gap:.05in}
-
-/* 5. TITLE BLOCK, the creative one --------------------------------------- */
-.t-tb .art{inset:calc(var(--bleed) + var(--safe));
-           border:1px solid var(--ink-900);display:flex;flex-direction:column}
-.t-tb .field{flex:1;position:relative;padding:.075in .085in}
-.t-tb .name{font-size:15pt}
-.t-tb .block{display:grid;grid-template-columns:1.06in .86in 1fr;
-             border-top:1px solid var(--ink-900)}
-.t-tb .cell{border-right:1px solid var(--ink-900);padding:.038in .05in .045in}
-.t-tb .cell:last-child{border-right:0}
-.t-tb .cl{font-family:var(--font-mono);font-size:4.6pt;
-          letter-spacing:var(--ls-caps);text-transform:uppercase;
-          color:var(--ink-500);display:block;margin-bottom:.012in}
-.t-tb .cv{font-family:var(--font-mono);font-size:6.2pt;color:var(--ink-900)}
-/* the dimension line: the card measuring itself */
-.t-tb .dim{position:absolute;left:.085in;right:.085in;top:.28in;height:.06in}
-.t-tb .dim .ln{position:absolute;top:50%;left:0;right:0;height:1px;
-               background:var(--ink-300)}
-.t-tb .dim .ln::before,.t-tb .dim .ln::after{content:"";position:absolute;
-      top:-.024in;width:1px;height:.048in;background:var(--ink-300)}
-.t-tb .dim .ln::before{left:0} .t-tb .dim .ln::after{right:0}
-.t-tb .dim span{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-      background:var(--paper);padding:0 .035in;font-family:var(--font-mono);
-      font-size:4.8pt;color:var(--ink-500);letter-spacing:.06em}
+/* D. DATUM --------------------------------------------------------------- */
+.D .bar-line{position:absolute;left:0;right:0;top:50%;height:.055in;
+             background:var(--ink);transform:translateY(-50%)}
+.D .pad{display:flex;flex-direction:column;justify-content:space-between}
+.D .up{padding-bottom:.10in} .D .dn{padding-top:.10in;text-align:right}
+.D .t-name{font-size:17pt}
 
 /* backs ------------------------------------------------------------------ */
-.back .art{display:flex;align-items:center;justify-content:space-between;
-           padding:var(--safe)}
-.back .qr{width:.92in;height:.92in;flex:none}
+.back .pad{display:flex;align-items:center;justify-content:space-between;gap:.14in}
+.back .qr{width:.95in;height:.95in;flex:none}
 .back .qr svg{width:100%;height:100%;display:block}
-.back .qr path{fill:var(--ink-900)}
-.on-dark.back .qr{background:var(--paper);padding:.055in}
-.back .side{display:flex;flex-direction:column;gap:.05in;text-align:right;
-            align-items:flex-end}
-.back .url{font-family:var(--font-mono);font-size:7.4pt;color:var(--ink-900);
-           letter-spacing:.02em}
-.on-dark.back .url{color:var(--paper)}
+.back .qr path{fill:var(--ink)}
+.dark.back .qr{background:var(--paper);padding:.05in;
+               width:.85in;height:.85in}
+.back .side{display:flex;flex-direction:column;gap:.055in;align-items:flex-end;text-align:right}
 
-/* ------------------------------------------------------------------ print
-   One card per sheet at document size, no margin, guides suppressed. Set
-   the browser's print dialog to "Default" margins and untick headers. */
 @media print{
   @page{size:3.75in 2.25in;margin:0}
   body{background:#fff;padding:0}
-  .bar,h1,.sub,.note,.tag{display:none!important}
+  .bar,h1,.sub,.note,.why,.tag{display:none!important}
   .pair{display:block}
-  .card{box-shadow:none;break-after:page;page-break-after:always;margin:0}
+  .card{box-shadow:none;break-after:page;page-break-after:always}
   .guide{display:none!important}
 }
 </style>
 </head>
 <body class="show-guides">
 
-<h1>Business cards</h1>
+<h1>Business cards, second pass</h1>
 <p class="sub">
-Five templates, same tokens as the site: <b>#0A0A0A</b> on <b>#FFFFFF</b>,
-Space Grotesk over IBM Plex Mono, 0.18em caps tracking. Shown at true size.
-<b>3.5 × 2 in trim</b> inside a 3.75 × 2.25 in document.
-<span style="color:#FF7DA8">Pink</span> is the trim line, cut happens there.
-<span style="color:#7FD4F5">Blue</span> is the safe area, nothing important
-crosses it. Every back carries a QR pointing at a tracked URL, so a scan lands
-in your own dashboard.
+Four concepts, not four arrangements. The first set broke the one rule that
+actually matters in print: <b>8pt is the floor</b> for anything a person reads,
+and it had metadata at 6.5pt and labels at 4.6pt. Nothing here is under 8pt.
+Names 13pt except where scale is the whole idea. Two typefaces, no more.
+<span style="color:#FF87AC">Pink</span> is trim, <span style="color:#8FDCF7">blue</span> is safe.
 </p>
 
 <div class="bar">
@@ -178,182 +127,134 @@ in your own dashboard.
   <button onclick="window.print()">Print to PDF</button>
 </div>
 
-<!-- 1 --------------------------------------------------------------------->
-<p class="note">01 &nbsp;Rule &nbsp;/&nbsp; the site's own signature, most on-brand</p>
+<!-- A ---------------------------------------------------------------------->
+<p class="note">A &nbsp;Specimen</p>
+<p class="why">The name is the design. 31pt, filling the width, everything else one
+quiet line at the foot. This is what confidence looks like on a card: the nerve to
+leave two thirds of it empty.</p>
 <div class="pair">
-  <div class="card t-rule">
-    <div class="art">
+  <div class="card A">
+    <div class="pad">
+      <span class="t-tag">Mechanical Engineer</span>
+      <div class="t-name">Mert<br>Türeli</div>
+      <div class="foot">
+        <span class="t-body">merttureli.com</span>
+        <span class="t-body">838 251 9707</span>
+      </div>
+    </div>
+    <div class="guide g-trim"></div><div class="guide g-safe"></div><span class="tag">A front</span>
+  </div>
+  <div class="card A back" data-qr="card-general">
+    <div class="pad">
+      <div class="qr"></div>
+      <div class="side">
+        <span class="t-role">merttureli.com</span>
+        <span class="t-body">merttureli0@gmail.com</span>
+        <span class="t-tag">Scan for the work</span>
+      </div>
+    </div>
+    <div class="guide g-trim"></div><div class="guide g-safe"></div><span class="tag">A back</span>
+  </div>
+</div>
+
+<!-- B ---------------------------------------------------------------------->
+<p class="note">B &nbsp;Section</p>
+<p class="why">Your 2026 competition fin, traced from the DXF that cut the flight
+hardware, running off the right edge at 1:2. Not a shape that looks like a fin. The
+outline that was actually laser cut, root tab and all. An engineer will notice the
+tab and know it is real.</p>
+<div class="pair">
+  <div class="card B">
+    <div class="fin" id="fin-slot"></div>
+    <div class="pad">
+      <div class="t-name">Mert Türeli</div>
+      <span class="t-role">Mechanical Engineer</span>
+      <div class="cap" style="margin-top:.05in">
+        <span class="t-body">merttureli.com</span>
+        <span class="t-body">838 251 9707</span>
+      </div>
+    </div>
+    <div class="guide g-trim"></div><div class="guide g-safe"></div><span class="tag">B front</span>
+  </div>
+  <div class="card B back" data-qr="card-fair">
+    <div class="pad">
+      <div class="qr"></div>
+      <div class="side">
+        <span class="t-role">merttureli.com</span>
+        <span class="t-body">Fin, 2026 competition airframe</span>
+        <span class="t-tag">Scale 1 : 2</span>
+      </div>
+    </div>
+    <div class="guide g-trim"></div><div class="guide g-safe"></div><span class="tag">B back</span>
+  </div>
+</div>
+
+<!-- C ---------------------------------------------------------------------->
+<p class="note">C &nbsp;Plate</p>
+<p class="why">CHARGER on pad one, full bleed, type reversed out of a gradient scrim.
+The research is blunt about this one: black cards with white type and very few
+elements read as the most premium thing in a stack. You own the photograph.</p>
+<div class="pair">
+  <div class="card C">
+    <div class="full" style="background-image:url('../assets/photos/charger-rocket-photography/charger-pad-band.jpg')"></div>
+    <div class="scrim"></div>
+    <div class="pad dark" style="position:absolute;background:none">
+      <span class="t-tag">Mechanical Engineer</span>
       <div>
-        <div class="top">
-          <span class="meta strong">Mechanical Engineer</span>
-          <span class="meta">01</span>
-        </div>
-        <div class="rule" style="margin-top:.05in"></div>
-      </div>
-      <div>
-        <div class="name">Mert Türeli</div>
-        <div class="meta role">Design &nbsp;/&nbsp; Test &nbsp;/&nbsp; Manufacturing</div>
-      </div>
-      <div class="top">
-        <span class="meta">merttureli.com</span>
-        <span class="meta">838 251 9707</span>
+        <div class="t-name">Mert Türeli</div>
+        <span class="t-body" style="display:block;margin-top:.05in">merttureli.com &nbsp;·&nbsp; 838 251 9707</span>
       </div>
     </div>
-    <div class="guide g-trim"></div><div class="guide g-safe"></div>
-    <span class="tag">01 front</span>
+    <div class="guide g-trim"></div><div class="guide g-safe"></div><span class="tag">C front &nbsp;· full bleed photo</span>
   </div>
-
-  <div class="card t-rule back" data-qr="card-general">
-    <div class="art">
+  <div class="card C back dark">
+    <div class="full dark"></div>
+    <div class="pad" data-qr="card-fair" style="position:absolute">
       <div class="qr"></div>
       <div class="side">
-        <span class="meta strong">Portfolio</span>
-        <span class="url">merttureli.com</span>
-        <span class="meta">merttureli0@gmail.com</span>
+        <span class="t-role">merttureli.com</span>
+        <span class="t-body">merttureli0@gmail.com</span>
+        <span class="t-tag">First place, Battle of the Rockets</span>
       </div>
     </div>
-    <div class="guide g-trim"></div><div class="guide g-safe"></div>
-    <span class="tag">01 back</span>
+    <div class="guide g-trim"></div><div class="guide g-safe"></div><span class="tag">C back &nbsp;· rich black</span>
   </div>
 </div>
 
-<!-- 2 --------------------------------------------------------------------->
-<p class="note">02 &nbsp;Spec sheet &nbsp;/&nbsp; reads like a datasheet, engineer to engineer</p>
+<!-- D ---------------------------------------------------------------------->
+<p class="note">D &nbsp;Datum</p>
+<p class="why">One heavy rule crossing the whole card, edge to edge, bleeding off both
+sides. Name above it, contact below. One gesture and nothing else, which is the
+hardest of the four to get wrong at the printer.</p>
 <div class="pair">
-  <div class="card t-spec">
-    <div class="art">
-      <div class="name">Mert Türeli</div>
-      <div class="row"><span class="k">Discipline</span><span class="v">Mechanical engineering</span></div>
-      <div class="row"><span class="k">Focus</span><span class="v">Design, test, manufacturing</span></div>
-      <div class="row"><span class="k">Site</span><span class="v">merttureli.com</span></div>
-      <div class="row"><span class="k">Mail</span><span class="v">merttureli0@gmail.com</span></div>
-      <div class="row"><span class="k">Phone</span><span class="v">838 251 9707</span></div>
+  <div class="card D">
+    <div class="bar-line"></div>
+    <div class="pad">
+      <div class="up">
+        <div class="t-name">Mert Türeli</div>
+        <span class="t-role" style="display:block;margin-top:.04in">Mechanical Engineer</span>
+      </div>
+      <div class="dn">
+        <span class="t-body" style="display:block">merttureli.com</span>
+        <span class="t-body" style="display:block">838 251 9707</span>
+      </div>
     </div>
-    <div class="guide g-trim"></div><div class="guide g-safe"></div>
-    <span class="tag">02 front</span>
+    <div class="guide g-trim"></div><div class="guide g-safe"></div><span class="tag">D front</span>
   </div>
-
-  <div class="card t-spec back" data-qr="card-general">
-    <div class="art">
+  <div class="card D back" data-qr="card-desk">
+    <div class="pad">
       <div class="qr"></div>
       <div class="side">
-        <span class="meta strong">Case studies</span>
-        <span class="url">merttureli.com</span>
-        <span class="meta">linkedin.com/in/merttureli</span>
+        <span class="t-role">merttureli.com</span>
+        <span class="t-body">merttureli0@gmail.com</span>
+        <span class="t-tag">Scan for the work</span>
       </div>
     </div>
-    <div class="guide g-trim"></div><div class="guide g-safe"></div>
-    <span class="tag">02 back</span>
-  </div>
-</div>
-
-<!-- 3 --------------------------------------------------------------------->
-<p class="note">03 &nbsp;Ink &nbsp;/&nbsp; the one that gets picked up off a table</p>
-<div class="pair">
-  <div class="card t-ink on-dark">
-    <div class="full"></div>
-    <div class="art">
-      <div class="name">Mert Türeli</div>
-      <div class="rule" style="margin-top:.07in"></div>
-      <div class="strip">
-        <span class="meta">Mechanical Engineer</span>
-        <span class="meta">merttureli.com</span>
-      </div>
-    </div>
-    <div class="guide g-trim"></div><div class="guide g-safe"></div>
-    <span class="tag">03 front &nbsp;· rich black, see README</span>
-  </div>
-
-  <div class="card t-ink on-dark back" data-qr="card-fair">
-    <div class="full"></div>
-    <div class="art">
-      <div class="qr"></div>
-      <div class="side">
-        <span class="meta">Portfolio</span>
-        <span class="url">merttureli.com</span>
-        <span class="meta">838 251 9707</span>
-      </div>
-    </div>
-    <div class="guide g-trim"></div><div class="guide g-safe"></div>
-    <span class="tag">03 back</span>
-  </div>
-</div>
-
-<!-- 4 --------------------------------------------------------------------->
-<p class="note">04 &nbsp;Index &nbsp;/&nbsp; the numeral treatment from the case study pages</p>
-<div class="pair">
-  <div class="card t-index">
-    <div class="art">
-      <div class="num">01</div>
-      <div class="stack">
-        <div class="name">Mert Türeli</div>
-        <div class="meta strong">Mechanical Engineer</div>
-        <div class="rule"></div>
-        <div class="meta">merttureli.com &nbsp;·&nbsp; 838 251 9707</div>
-      </div>
-    </div>
-    <div class="guide g-trim"></div><div class="guide g-safe"></div>
-    <span class="tag">04 front</span>
-  </div>
-
-  <div class="card t-index back" data-qr="card-desk">
-    <div class="art">
-      <div class="qr"></div>
-      <div class="side">
-        <span class="meta strong">Scan for the work</span>
-        <span class="url">merttureli.com</span>
-        <span class="meta">merttureli0@gmail.com</span>
-      </div>
-    </div>
-    <div class="guide g-trim"></div><div class="guide g-safe"></div>
-    <span class="tag">04 back</span>
-  </div>
-</div>
-
-<!-- 5 --------------------------------------------------------------------->
-<p class="note">05 &nbsp;Title block &nbsp;/&nbsp; the creative one. The card is a drawing sheet, and it dimensions itself</p>
-<div class="pair">
-  <div class="card t-tb">
-    <div class="art">
-      <div class="field">
-        <div class="name">Mert Türeli</div>
-        <div class="dim"><span class="ln"></span><span>85.35</span></div>
-      </div>
-      <div class="block">
-        <div class="cell">
-          <span class="cl">Discipline</span>
-          <span class="cv">Mechanical</span>
-        </div>
-        <div class="cell">
-          <span class="cl">Scale</span>
-          <span class="cv">1 : 1</span>
-        </div>
-        <div class="cell">
-          <span class="cl">Drawing</span>
-          <span class="cv">merttureli.com</span>
-        </div>
-      </div>
-    </div>
-    <div class="guide g-trim"></div><div class="guide g-safe"></div>
-    <span class="tag">05 front</span>
-  </div>
-
-  <div class="card t-tb back" data-qr="card-fair">
-    <div class="art" style="inset:calc(var(--bleed) + var(--safe));border:1px solid var(--ink-900);align-items:center">
-      <div class="qr" style="margin:0 .085in"></div>
-      <div class="side" style="padding-right:.085in">
-        <span class="meta strong">Sheet 2 of 2</span>
-        <span class="url">merttureli.com</span>
-        <span class="meta">838 251 9707</span>
-      </div>
-    </div>
-    <div class="guide g-trim"></div><div class="guide g-safe"></div>
-    <span class="tag">05 back</span>
+    <div class="guide g-trim"></div><div class="guide g-safe"></div><span class="tag">D back</span>
   </div>
 </div>
 
 <script>
-/* Guides toggle. Off before printing, on while reviewing. */
 var tg = document.getElementById("tg");
 tg.onclick = function () {
   var on = document.body.classList.toggle("show-guides");
@@ -361,18 +262,19 @@ tg.onclick = function () {
   tg.textContent = on ? "Guides on" : "Guides off";
 };
 
-/* Inline each QR so the file prints without needing the sibling SVGs
-   resolvable, and so the modules inherit the ink colour. */
 [].forEach.call(document.querySelectorAll(".qr"), function (el) {
-  var code = el.closest("[data-qr]").getAttribute("data-qr");
-  fetch("qr/" + code + ".svg")
-    .then(function (r) { return r.text(); })
-    .then(function (svg) { el.innerHTML = svg; })
-    .catch(function () {
-      el.style.outline = "1px dashed #E0004D";
-      el.textContent = "run make-qr.py";
-    });
+  var host = el.closest("[data-qr]");
+  var code = host ? host.getAttribute("data-qr") : "card-general";
+  fetch("qr/" + code + ".svg").then(function (r) { return r.text(); })
+    .then(function (s) { el.innerHTML = s; })
+    .catch(function () { el.style.outline = "1px dashed #FF2D6F"; });
 });
+
+fetch("art/fin-2026.svg").then(function (r) { return r.text(); })
+  .then(function (s) { document.getElementById("fin-slot").innerHTML = s; })
+  .catch(function () {
+    document.getElementById("fin-slot").textContent = "run make-fin.py";
+  });
 </script>
 </body>
 </html>

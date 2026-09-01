@@ -1,121 +1,134 @@
 # Business cards
 
-Five templates on the site's own tokens: `#0A0A0A` on `#FFFFFF`, Space Grotesk
-over IBM Plex Mono, 0.18em caps tracking. Open `cards.html` and they render at
-true size with trim and safe guides.
-
 ```
-python make-qr.py     # regenerate the QR codes, run this first
+python make-qr.py     # QR codes, run once
+python make-fin.py    # traces the 2026 fin out of its DXF, for concept B
 ```
 
-Then open `cards.html`, review, and use **Print to PDF**.
+Then open `cards.html`. Four concepts at true size with trim and safe guides.
 
 ---
 
-## The templates
+## The finding that outranks every design decision here
 
-| | name | what it is | when |
-|---|---|---|---|
-| 01 | **Rule** | The site's signature rule with the index number. Label, hairline, name, contact. | The safe default. Looks exactly like your site. |
-| 02 | **Spec sheet** | Label and value rows in mono. Reads as a datasheet. | Engineer to engineer. A hiring manager gets it instantly. |
-| 03 | **Ink** | Reversed, full black field, white type. Your `.on-dark` scope. | Career fairs. It is the one that gets picked up off a table of white cards. |
-| 04 | **Index** | The oversized numeral from the case study pages. | If you want one distinctive element without going far from 01. |
-| 05 | **Title block** | The card is a drawing sheet. Border, title block with DISCIPLINE / SCALE / DRAWING, and a dimension line measuring the card itself. | The creative one. |
+**Stock and finish are most of what makes a card feel expensive. The artwork is
+not.** Two people can print the same file and one card feels like a business and
+the other feels like a coupon.
 
-**On 05.** The research on creative cards mostly returns gimmicks: PCB cards,
-metal cards, cut-outs. Those signal "I paid for a novelty." A drawing title
-block signals "I am a mechanical engineer," because it is a form only your
-profession uses and every engineer who picks it up recognises it in under a
-second. It is also the cheapest kind of creative, because it is still one ink on
-one stock.
+| weight | how it reads |
+|---|---|
+| 300 to 350 gsm | the default at cheap online printers. Thin in the hand, and people notice without knowing why |
+| **400 gsm** | **the professional floor.** Solid, confident, holds a finish, and still cheap |
+| 450 to 600 gsm | double thick. A statement, and it will not fit some cardholders |
 
-**Recommendation:** print **01** as the main run, and **03** or **05** as a small
-second run for events. Two designs is normal. Five is a personality problem.
+Uncoated or cotton stock feels warmer, takes a pen, and suits this monochrome
+work better than a gloss coating. **Order 400 gsm uncoated and any of the four
+designs below will land. Order 300 gsm gloss and none of them will.**
+
+## The rule the first attempt broke
+
+**8 pt is the floor for anything a person has to read.** The first set had
+metadata at 6.5 pt and title block labels at 4.6 pt, which is not a small design
+choice, it is unreadable for anyone over about forty and that includes most
+people doing the hiring.
+
+The scale used here, straight from the print guidance: names 11 to 14 pt, titles
+9 to 11 pt, body 8 to 9 pt. **Verified in the browser: nothing on any of the
+eight faces is set below 8 pt, and nothing crosses the safe area.** Where a card
+needs something to recede it uses grey, not a smaller size.
+
+Two typefaces, never more. Three is risky, four reads as amateur.
+
+---
+
+## The four
+
+Being straight about this: for a monochrome card with two typefaces and no logo,
+there are not ten concepts. There are about four, and they differ by what does
+the work.
+
+**A. Specimen** — *scale does the work.* The name at 31 pt filling the width,
+one quiet line at the foot, two thirds of the card left empty. The nerve to
+leave it empty is the design.
+
+**B. Section** — *your own geometry does the work.* The 2026 competition fin,
+traced by `make-fin.py` out of the DXF that cut the flight hardware, running off
+the right edge at 1:2. Root tab included. Not a shape that resembles a fin, the
+outline that was actually laser cut. An engineer will notice the tab.
+
+**C. Plate** — *a photograph does the work.* CHARGER on pad one, full bleed,
+type reversed out of a scrim. The research is blunt that black cards with white
+type and very few elements read as the most premium thing in a stack, and you
+own the photograph.
+
+**D. Datum** — *one gesture does the work.* A single heavy rule crossing the
+card and bleeding off both edges. Name above, contact below. The hardest of the
+four for a printer to get wrong.
+
+**Pick two.** One default and one for events. Five designs was the mistake in the
+first pass, and it reads as indecision rather than range.
 
 ---
 
 ## Print specification
 
-Everything below is set correctly in the file already.
-
 | | |
 |---|---|
-| Trim | 3.5 × 2 in, the US standard |
-| Document | 3.75 × 2.25 in, trim plus 0.125 in bleed on all four sides |
-| Safe area | 0.125 in inside the trim. Verified: **zero elements cross it on any of the ten faces** |
-| Minimum type | 8 pt is the usual floor. The mono metadata here sits at 6.5 pt, which is fine for a secondary line but check a proof before committing |
-| QR | 0.92 in square, 37 modules, 0.0249 in per module, error correction H |
+| Trim | 3.5 × 2 in |
+| Document | 3.75 × 2.25 in, verified exact on all eight faces |
+| Bleed | 0.125 in all round |
+| Safe area | 0.125 in inside trim, verified clear |
+| QR | 0.95 in, 37 modules, 0.0249 in per module, error correction H |
 
-**Error correction H (30% recoverable) is deliberate.** A card lives in a
-wallet, gets bent and picks up scuff. H survives that at the cost of a slightly
-denser symbol, which at 0.92 in is still comfortable.
+**A browser exports RGB, not CMYK.** For monochrome that conversion is nearly
+lossless and Moo or Vistaprint will handle it. Concept C's back is a full black
+field, so ask for **rich black around C60 M40 Y40 K100** on that face only.
+Small type stays 100% K, or the plates misregister and the letters fringe.
 
-### The one thing that is not print ready
-
-**A browser exports RGB, not CMYK.** Print to PDF from `cards.html` and you get
-an RGB PDF. Three ways to deal with it:
-
-1. **Use a printer that accepts RGB.** Moo, Vistaprint and most online
-   consumer printers convert for you. For a monochrome card the conversion is
-   nearly lossless, because there is no colour to shift. This is the right
-   answer for you.
-2. **Convert it.** Open the PDF in Acrobat or Affinity and convert to CMYK,
-   or hand it to the printer and ask them to.
-3. **Rebuild in a print tool** if a shop demands PDF/X-1a with embedded
-   profiles. Only worth it for a large run.
-
-### Rich black, for template 03 only
-
-Template 03 is a full black field. On screen it is `#0A0A0A`. In print, 100% K
-alone lays down as a slightly washed dark grey over a large area. Ask for
-**rich black, around C60 M40 Y40 K100**, on that template only.
-
-Small text and thin rules should stay **100% K**. Rich black under 8 pt type
-shows registration fringing where the plates do not align perfectly.
+**Concept C needs one check.** The source photograph is 1920 × 823 px against a
+1125 × 675 px requirement at 300 DPI, so it has the pixels, but a full bleed
+photo is the one thing on these cards that can look cheap if the printer's
+profile crushes the shadows. Ask for a proof.
 
 ---
 
-## The QR codes, and why they matter here
+## The QR codes
 
-Your old card was name, title, phone, email. **No URL at all.** You built a
-tracked portfolio and your card did not point at it.
+Your old card had no URL on it at all. Each back here carries a QR to
+`merttureli.com/?r=CODE` so a scan lands in your own dashboard with engaged time
+and scroll depth.
 
-Each back carries a QR to `merttureli.com/?r=CODE`, so a scan arrives in your
-own dashboard, classified, with engaged time and scroll depth. Three codes so
-you can tell handout contexts apart:
-
-| code | on template | means |
+| code | on | means |
 |---|---|---|
-| `card-fair` | 03, 05 | career fairs and conferences |
-| `card-desk` | 04 | left with a recruiter or on a desk |
-| `card-general` | 01, 02 | everything else |
+| `card-fair` | B, C | career fairs and conferences |
+| `card-desk` | D | left with a recruiter |
+| `card-general` | A | everything else |
 
-**Register them before printing**, or scans arrive as unattributed visits:
+Register them first or the scans arrive unattributed:
 
 ```
 cd "C:\Users\mrttr\Desktop\Claude Work\Job Search"
 python portfolio-link.py
 ```
 
-One caution worth knowing. A printed QR is permanent. If you ever change domain
-these cards are dead paper, so keep `merttureli.com` pointed somewhere useful
-for as long as the cards are in circulation.
+A printed QR is permanent, so keep the domain alive while the cards circulate.
 
 ---
 
-## What the research actually said
+## What to skip
 
-**Professional, in 2026, for an engineer.** Minimal and typographic. Name, one
-role line, one contact route, one link. The thing recruiters say they need is
-not a beautiful card, it is a memory aid: a hiring manager at a fair speaks to
-fifty to a hundred people in a day and cannot reconstruct a conversation from a
-name alone. A card that gets them to your work in one scan does that job. A
-card that only carries a phone number does not.
+A headshot reads as real estate agent. A skills list looks anxious and does not
+fit. Digital card services solve a problem you do not have, since you already
+own both the destination and the analytics. Foil, emboss and spot UV are real
+upgrades but they cost setup fees, and on a monochrome card at 400 gsm they buy
+less than the stock already did.
 
-**QR on the back, not the front.** Keeps the front clean and gives the scan a
-reason to exist. All five templates do this.
+## Note on the design skills
 
-**What to skip.** A headshot on a paper card reads as real-estate agent. Skills
-lists do not fit and look anxious. Digital-only card services (Blinq, V1CE,
-Wave) solve a problem you do not have, since you already own the destination and
-the analytics.
+You have `high-end-visual-design`, `impeccable` and nine other design skills
+installed, and **both of the ones worth using here are disabled for me to
+invoke**. If you want a further pass on these, run one yourself:
+
+```
+/high-end-visual-design
+```

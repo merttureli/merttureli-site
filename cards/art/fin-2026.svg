@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90.000 68.000" width="90.000mm" height="68.000mm">
+  <!-- 2026 Battle of the Rockets competition fin, traced from the DXF
+       that cut the flight hardware. 90 x 68 mm. -->
+  <path d="M50.000,0.000 L0.000,52.000 L10.000,52.000 L10.000,68.000 L90.000,68.000 L90.000,5.000 L50.000,0.000 Z" fill="none" stroke="currentColor" stroke-width="0.9"
+        stroke-linejoin="miter" vector-effect="non-scaling-stroke"/>
+</svg>
