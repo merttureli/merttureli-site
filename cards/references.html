@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Card references · what actually works</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0A0A0A; --ink-600:#454545; --ink-400:#8C8C8C; --ink-200:#C9C9C9;
+  --ink-050:#EFEFEE; --paper:#FFF; --line:rgba(10,10,10,.12);
+  --display:"Space Grotesk","Helvetica Neue",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--display);
+     padding:56px 40px 120px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto}
+.kicker{font-family:var(--mono);font-size:11px;letter-spacing:.18em;
+        text-transform:uppercase;color:var(--ink-400);margin:0 0 14px}
+h1{font-size:44px;font-weight:500;letter-spacing:-.03em;line-height:1.02;margin:0 0 20px}
+.lede{font-size:18px;line-height:1.6;max-width:64ch;color:var(--ink-600);margin:0 0 10px}
+.lede b{color:var(--ink)}
+h2{font-size:13px;font-family:var(--mono);letter-spacing:.16em;text-transform:uppercase;
+   font-weight:500;margin:76px 0 6px;padding-top:20px;border-top:1px solid var(--ink)}
+h2 span{float:right;color:var(--ink-400)}
+.hint{font-family:var(--mono);font-size:12px;color:var(--ink-400);margin:0 0 26px}
+
+/* reference grid ------------------------------------------------------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:26px}
+.ref{border:1px solid var(--line);padding:20px 20px 18px;display:flex;
+     flex-direction:column;gap:9px}
+.ref .who{font-size:17px;font-weight:500;letter-spacing:-.01em}
+.ref .by{font-family:var(--mono);font-size:11px;color:var(--ink-400);
+         letter-spacing:.06em;text-transform:uppercase}
+.ref .mech{font-size:14px;line-height:1.55;color:var(--ink-600)}
+.ref .mech b{color:var(--ink)}
+.ref.hot{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.ref.hot .by{color:rgba(255,255,255,.5)}
+.ref.hot .mech{color:rgba(255,255,255,.82)}
+.ref.hot .mech b{color:#fff}
+
+.pull{border-left:3px solid var(--ink);padding:4px 0 4px 22px;margin:34px 0 0;
+      font-size:21px;line-height:1.45;max-width:60ch;font-weight:400}
+
+/* direction cards ------------------------------------------------------- */
+.dir{display:grid;grid-template-columns:2.4in 1fr;gap:30px;align-items:start;
+     padding:30px 0;border-bottom:1px solid var(--line)}
+.dir:last-child{border-bottom:0}
+.swatch{width:2.4in;height:1.37in;border:1px solid var(--line);position:relative;
+        overflow:hidden;background:var(--paper);display:flex;
+        align-items:center;justify-content:center}
+.dir h3{margin:0 0 4px;font-size:21px;font-weight:500;letter-spacing:-.015em}
+.dir .tech{font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+           text-transform:uppercase;color:var(--ink-400);margin:0 0 11px}
+.dir p{margin:0 0 9px;font-size:15px;line-height:1.6;color:var(--ink-600);max-width:56ch}
+.dir p b{color:var(--ink)}
+.cost{font-family:var(--mono);font-size:12px;color:var(--ink);
+      border:1px solid var(--line);padding:4px 9px;display:inline-block}
+
+/* fin drawing ----------------------------------------------------------- */
+.fin-svg{width:78%;color:var(--ink)}
+.fin-svg svg{width:100%;height:auto;display:block}
+.cut .fin-svg{color:#E0004D}
+.solid .fin-svg svg path{fill:var(--ink);stroke:none}
+a{color:var(--ink);text-underline-offset:3px}
+
+/* The direction rows pin a 2.4in swatch beside a text column, which blows past
+   the viewport on a narrow window or a phone. Collapse to one column before
+   that happens. */
+@media (max-width:760px){
+  body{padding:38px 22px 90px}
+  h1{font-size:32px}
+  .dir{grid-template-columns:1fr;gap:16px}
+  .swatch{width:100%;max-width:2.4in}
+  .grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<p class="kicker">Business cards · reference pass</p>
+<h1>The good ones are not about layout.</h1>
+<p class="lede">
+I designed nine cards across two attempts and you did not like any of them,
+which was the right call. Here is what I found when I stopped designing and went
+looking. <b>Almost none of the memorable cards are memorable because of where the
+type sits.</b> They are memorable because the card physically becomes the thing
+the person does.
+</p>
+
+<!-- ================================================================== -->
+<h2>What the best studios actually did <span>16 cards, Creative Boom</span></h2>
+<p class="hint">Named examples. The mechanic, not the praise.</p>
+
+<div class="grid">
+  <div class="ref hot">
+    <span class="by">Hey Studio</span>
+    <span class="who">Estampaciones Fuerte</span>
+    <p class="mech">A metal stamping company. The card carries <b>three metallic
+    strips</b> that hint at the letters E and F. The client stamps metal, so the
+    card is a stamped piece of metal. <b>This is the one closest to you.</b></p>
+  </div>
+
+  <div class="ref">
+    <span class="by">Alex Hunting Studio</span>
+    <span class="who">Wool</span>
+    <p class="mech"><b>Fabric embossing</b>, a deep clear-foil deboss and silver
+    foil. You feel textile before you read a word. The card is the product.</p>
+  </div>
+
+  <div class="ref">
+    <span class="by">DutchScot</span>
+    <span class="who">Sucre</span>
+    <p class="mech">The logo is <b>imprinted on one side so it embosses through
+    to the other</b>. One press, two different cards depending which way up it
+    lands. Nearly free, because it is one action.</p>
+  </div>
+
+  <div class="ref">
+    <span class="by">Burak Kaynak</span>
+    <span class="who">Matière Noire</span>
+    <p class="mech">Letterpress on 100% cotton Lettra, then <b>each card
+    hand-wrapped with black cotton thread</b>. The labour is the message.</p>
+  </div>
+
+  <div class="ref">
+    <span class="by">Bond</span>
+    <span class="who">Pino</span>
+    <p class="mech">Not one card. <b>The same mark on five colours</b>, magenta
+    through blue. A system that people want the set of.</p>
+  </div>
+
+  <div class="ref">
+    <span class="by">Pentagram</span>
+    <span class="who">Momofuku</span>
+    <p class="mech">Brown paper and off-white stock, wordmarks that
+    <b>stretch, squash and jitter</b>. The type misbehaves on purpose.</p>
+  </div>
+</div>
+
+<p class="pull">
+Every one of those is a physical idea, not an arrangement. Which is exactly
+what my nine cards were missing: they were all arrangements.
+</p>
+
+<!-- ================================================================== -->
+<h2>Six directions for you <span>ranked, honestly</span></h2>
+<p class="hint">Each one follows the same rule: the card becomes the thing you do.</p>
+
+<div class="dir">
+  <div class="swatch cut">
+    <div class="fin-svg" data-fin></div>
+  </div>
+  <div>
+    <h3>1. Cut the card to the fin</h3>
+    <p class="tech">Die cut · your own DXF</p>
+    <p>Not a card with a fin printed on it. <b>A card cut on the exact outline
+    you sent to the laser cutter</b> for the 2026 flight hardware, root tab and
+    all. Estampaciones Fuerte stamps metal and their card is stamped metal. You
+    cut parts, so your card is a part.</p>
+    <p>Nobody at a career fair has ever been handed a rocket fin. It does not fit
+    a cardholder, which is the point: it goes on a desk.</p>
+    <span class="cost">Die fee once, then cheap. Runs from 50.</span>
+  </div>
+</div>
+
+<div class="dir">
+  <div class="swatch solid">
+    <div class="fin-svg" data-fin></div>
+  </div>
+  <div>
+    <h3>2. Blind deboss, no ink</h3>
+    <p class="tech">Letterpress impression · zero ink</p>
+    <p>The fin, or your name, <b>pressed into thick uncoated cotton with no ink
+    at all</b>. You feel it before you see it. This is the single most expensive
+    looking thing you can do to a card and it uses no colour, which suits a site
+    that is monochrome by decision.</p>
+    <p>The Sucre trick applies here for free: press it once and it <b>embosses
+    through to the reverse</b>, so both faces carry it.</p>
+    <span class="cost">Needs 400gsm+ cotton. Minimum runs around 250.</span>
+  </div>
+</div>
+
+<div class="dir">
+  <div class="swatch" style="background:var(--ink-050);flex-direction:column;gap:6px">
+    <div style="display:flex;gap:5px">
+      <span style="width:.34in;height:.5in;background:var(--ink)"></span>
+      <span style="width:.34in;height:.5in;background:var(--ink-600)"></span>
+      <span style="width:.34in;height:.5in;background:var(--ink-400)"></span>
+      <span style="width:.34in;height:.5in;background:var(--ink-200)"></span>
+    </div>
+    <span style="font-family:var(--mono);font-size:8px;letter-spacing:.14em;color:var(--ink-400)">01 02 03 04</span>
+  </div>
+  <div>
+    <h3>3. One card per project</h3>
+    <p class="tech">Collectable series · Bond's Pino move</p>
+    <p>Four cards, identical back, <b>a different project on each front</b>:
+    CHARGER, the Robo-Catcher, the bend fixture, the pedals. Hand out whichever
+    fits the conversation. Give a recruiter the rocket one if they mentioned
+    aerospace.</p>
+    <p>People keep sets. They throw away singles. This is the cheapest idea on
+    the list because it is just four print files.</p>
+    <span class="cost">No extra process. Four files, one order.</span>
+  </div>
+</div>
+
+<div class="dir">
+  <div class="swatch" style="align-items:stretch;padding:0">
+    <div style="flex:1;border-right:1px dashed var(--ink-200)"></div>
+    <div style="flex:1"></div>
+  </div>
+  <div>
+    <h3>4. Score and fold, like a flat pattern</h3>
+    <p class="tech">Folded card · sheet metal logic</p>
+    <p>A folded card is <b>four faces instead of two</b>, and for you it can be
+    drawn as a flat pattern with a bend line, the way a sheet metal part is
+    drawn before it is formed. Opens to give a project a proper caption instead
+    of a phone number.</p>
+    <p>Honest risk: folded cards are twice the material and can read as a leaflet
+    rather than a card. It only works if the fold is the idea.</p>
+    <span class="cost">Roughly double the stock. Common, no die fee.</span>
+  </div>
+</div>
+
+<div class="dir">
+  <div class="swatch" style="background:var(--ink);position:relative">
+    <span style="position:absolute;inset:0;background:
+      repeating-linear-gradient(115deg,rgba(255,255,255,.14) 0 2px,transparent 2px 9px)"></span>
+    <span style="font-family:var(--mono);font-size:9px;letter-spacing:.2em;
+      color:rgba(255,255,255,.85);position:relative">SPOT UV</span>
+  </div>
+  <div>
+    <h3>5. Black card, one thing catching light</h3>
+    <p class="tech">Spot UV or foil on black · max 25% coverage</p>
+    <p>Matte black stock with <b>the fin outline in clear gloss varnish</b>. You
+    cannot see it straight on. Tilt the card and the part appears. Invisible
+    until it moves, which is a nice thing for a rocket to do.</p>
+    <p>Works on your existing ink palette because clear varnish adds no colour.</p>
+    <span class="cost">Spot UV is cheap. Foil costs a plate.</span>
+  </div>
+</div>
+
+<div class="dir">
+  <div class="swatch" style="background:#B8B8B8">
+    <span style="font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:#1a1a1a">0.5 mm ALUMINIUM</span>
+  </div>
+  <div>
+    <h3>6. Not paper at all</h3>
+    <p class="tech">Thin metal or FR4 · the risky one</p>
+    <p>A thin aluminium or PCB-substrate card. It is the most literal version of
+    the idea and it is <b>the one I would push back on</b>. The research is
+    consistent that novelty materials read as "I bought a gimmick" unless the
+    material is genuinely your material. You work in aerogel and printed
+    polymer, not sheet metal.</p>
+    <p>Listed because you should see the whole range, not because I would print
+    it.</p>
+    <span class="cost">Expensive per unit. High regret risk.</span>
+  </div>
+</div>
+
+<!-- ================================================================== -->
+<h2>What I would actually print <span>if it were mine</span></h2>
+<p class="lede" style="margin-top:20px">
+<b>Direction 1 and 3, together.</b> A die cut fin as the object you hand to
+somebody you want to remember you, and a normal rectangular set of four project
+cards for volume. The fin is the one that gets kept on a desk. The set is the
+one you can hand out fifty of in a day without flinching.
+</p>
+<p class="lede">
+Direction 2, the blind deboss, is the most beautiful and the least necessary.
+Keep it for when someone else is paying.
+</p>
+
+<script>
+fetch("art/fin-2026.svg").then(function (r) { return r.text(); })
+  .then(function (s) {
+    [].forEach.call(document.querySelectorAll("[data-fin]"), function (el) {
+      el.innerHTML = s;
+    });
+  })
+  .catch(function () {
+    [].forEach.call(document.querySelectorAll("[data-fin]"), function (el) {
+      el.textContent = "run make-fin.py";
+      el.style.fontFamily = "var(--mono)";
+      el.style.fontSize = "11px";
+    });
+  });
+</script>
+</div>
+</body>
+</html>
