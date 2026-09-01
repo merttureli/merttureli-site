@@ -1,0 +1,11 @@
+BEGIN:VCARD
+VERSION:3.0
+N:Tureli;Mert;;;
+FN:Mert Tureli
+TITLE:Mechanical Engineer
+EMAIL;TYPE=INTERNET,PREF:merttureli0@gmail.com
+TEL;TYPE=CELL,VOICE:+18382519707
+URL:https://merttureli.com
+URL;TYPE=linkedin:https://www.linkedin.com/in/merttureli
+NOTE:Mechanical engineer. Design, test and build. First place, Battle of the Rockets 2026, Deployable Sensor Payload.
+END:VCARD

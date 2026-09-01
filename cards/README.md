@@ -47,21 +47,21 @@ Being straight about this: for a monochrome card with two typefaces and no logo,
 there are not ten concepts. There are about four, and they differ by what does
 the work.
 
-**A. Specimen** — *scale does the work.* The name at 31 pt filling the width,
+**A. Specimen.** *Scale does the work.* The name at 31 pt filling the width,
 one quiet line at the foot, two thirds of the card left empty. The nerve to
 leave it empty is the design.
 
-**B. Section** — *your own geometry does the work.* The 2026 competition fin,
+**B. Section.** *Your own geometry does the work.* The 2026 competition fin,
 traced by `make-fin.py` out of the DXF that cut the flight hardware, running off
 the right edge at 1:2. Root tab included. Not a shape that resembles a fin, the
 outline that was actually laser cut. An engineer will notice the tab.
 
-**C. Plate** — *a photograph does the work.* CHARGER on pad one, full bleed,
+**C. Plate.** *A photograph does the work.* CHARGER on pad one, full bleed,
 type reversed out of a scrim. The research is blunt that black cards with white
 type and very few elements read as the most premium thing in a stack, and you
 own the photograph.
 
-**D. Datum** — *one gesture does the work.* A single heavy rule crossing the
+**D. Datum.** *One gesture does the work.* A single heavy rule crossing the
 card and bleeding off both edges. Name above, contact below. The hardest of the
 four for a printer to get wrong.
 
@@ -95,8 +95,9 @@ profile crushes the shadows. Ask for a proof.
 ## The QR codes
 
 Your old card had no URL on it at all. Each back here carries a QR to
-`merttureli.com/?r=CODE` so a scan lands in your own dashboard with engaged time
-and scroll depth.
+`merttureli.com/hi/?r=CODE`, so a scan lands on the page built for it and shows
+up in your own dashboard with engaged time and scroll depth. See the content
+section below for why it is not the homepage.
 
 | code | on | means |
 |---|---|---|
@@ -132,3 +133,71 @@ invoke**. If you want a further pass on these, run one yourself:
 ```
 /high-end-visual-design
 ```
+
+---
+
+## The content question, and where the scan lands
+
+**A QR is worth having.** Cards carrying one reportedly generate far more
+follow-ups than plain cards. But the interesting question is not whether to have
+one, it is what it points at, and there are three answers with a real trade-off.
+
+| target | good | bad |
+|---|---|---|
+| **vCard** | saves straight into contacts, works with no signal, no subscription | static forever, and they never see the work |
+| **Homepage** | shows everything | written for someone who found you cold, with both hands free and time to read |
+| **A page built for the scan** | both | you have to build it |
+
+**Built the third one: `/hi/`.** The QR codes now point there instead of the
+homepage.
+
+The reasoning is that these are two different people. Someone who found
+merttureli.com through a search has both hands and five minutes. Someone who
+just scanned your card met you ninety seconds ago, is holding a tote bag, and
+has one thumb and about twenty seconds. The homepage is wrong for the second
+person, so they get a page that is right for them:
+
+- opens with **"We just met"**, because they know that and pretending otherwise
+  is strange
+- **one sentence** on the rocket team win, not a biography
+- **Save my contact** as a full width button, sitting where a thumb lands, which
+  downloads a proper vCard
+- four links, no more: the work, CHARGER, the résumé, LinkedIn
+- verified: **fits one phone screen with no scrolling**, 812px against an 812px
+  viewport
+
+The vCard is RFC compliant with CRLF line endings, which matters because a
+LF only file parses on Android and can silently fail on iOS. That is the bug
+that works on the phone you tested and not on the recruiter's.
+
+**One thing the internal links deliberately do not do.** They carry no `?r=`
+parameter. The QR already banked `card-fair` or `card-desk` when the visitor
+landed, and stamping a fresh code on the onward links would overwrite it in
+localStorage. Every scan would then report as one generic code and you would
+never learn which print run actually worked.
+
+---
+
+## Metallic on black
+
+You asked about shiny metallic on the black card. Foil is the right technique
+for it, because **foil is opaque**, which is exactly why it works on dark stock
+where ink cannot.
+
+| foil | what it does | fits your system |
+|---|---|---|
+| **Black chrome** | shifts between near black and gunmetal, throws steel grey highlights as it tilts, without ever going silver | **yes, and it is the one to use.** Metallic and alive, still monochrome |
+| Silver | cool, bright, high contrast | yes |
+| Gold, copper, rose | warm, expensive looking | **no.** Your design system says it carries no chromatic accent by decision, and gold is a chromatic accent |
+| Holographic | colour shifting on a silver base | no, for the same reason, twice over |
+
+**Black chrome on a black card is the answer to what you were reaching for.**
+Straight on it is nearly invisible. Tilt it and the fin outline appears in
+gunmetal. That is a rocket part behaving like a rocket part, and it does not
+break a single rule the site set for itself.
+
+Costs vary. Some printers charge a setup fee of roughly $130 for the foil die
+plus press setup, and others run digital foil with no die at around $51 per 50.
+Get a quote before committing, and ask for a sample of black chrome on black
+stock specifically, because it is the one finish that photographs badly and has
+to be seen in the hand.

@@ -24,7 +24,11 @@ import qrcode
 import qrcode.image.svg
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-BASE = "https://merttureli.com/"
+# The scan lands on /hi/, not the homepage. The homepage is written for
+# somebody who found him cold and has both hands free. A person scanning a
+# card met him ninety seconds ago and has one thumb and twenty seconds, so
+# they get a page built for that, with the contact save at the top.
+BASE = "https://merttureli.com/hi/"
 
 # One code per print run, so the dashboard can separate them. Register these
 # against the tracker with portfolio-link.py before handing any card out.
