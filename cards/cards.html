@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Business cards · Mert Türeli</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ---------------------------------------------------------------- tokens
+   Lifted from the site's design system so the cards and the site cannot
+   drift apart. Same ink, same paper, same two faces, same tracking. */
+:root{
+  --ink-900:#0A0A0A; --ink-700:#2B2B2B; --ink-500:#6B6B6B;
+  --ink-300:#A8A8A8; --ink-100:#DEDEDE; --paper:#FFFFFF;
+  --ink-a12:rgba(10,10,10,.12); --paper-a45:rgba(255,255,255,.45);
+  --paper-a70:rgba(255,255,255,.70);
+  --font-display:"Space Grotesk","Helvetica Neue",Helvetica,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --ls-caps:.18em; --ls-caps-wide:.32em;
+
+  /* Print geometry. US standard trim, 1/8in bleed, 1/8in safe area. */
+  --trim-w:3.5in; --trim-h:2in;
+  --bleed:.125in; --safe:.125in;
+  --doc-w:3.75in;  /* trim + bleed both sides */
+  --doc-h:2.25in;
+}
+
+/* ------------------------------------------------------------- workspace */
+*{box-sizing:border-box}
+body{margin:0;background:#8A8A8A;font-family:var(--font-display);
+     -webkit-font-smoothing:antialiased;padding:40px 32px 80px}
+h1{font-size:15px;letter-spacing:var(--ls-caps);text-transform:uppercase;
+   font-family:var(--font-mono);font-weight:500;color:#fff;margin:0 0 4px}
+.sub{font-family:var(--font-mono);font-size:11px;color:#DEDEDE;margin:0 0 28px;
+     line-height:1.7;max-width:78ch}
+.sub b{color:#fff}
+.bar{position:sticky;top:0;z-index:9;background:#8A8A8A;padding:10px 0 18px;
+     margin:-10px 0 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.bar button{font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;
+     text-transform:uppercase;padding:7px 13px;border:1px solid #fff;
+     background:transparent;color:#fff;cursor:pointer;border-radius:2px}
+.bar button.on{background:#fff;color:#111}
+.note{font-family:var(--font-mono);font-size:11px;color:#EFEFEE;
+      margin:34px 0 10px;letter-spacing:.06em;text-transform:uppercase}
+.pair{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+
+/* ------------------------------------------------------------ the artboard
+   Every card is a .card at exact document size. The trim rectangle sits
+   inset by the bleed, and the safe rectangle inset again. Content is
+   positioned against the trim box, never the document box. */
+.card{position:relative;width:var(--doc-w);height:var(--doc-h);
+      background:var(--paper);overflow:hidden;
+      box-shadow:0 2px 14px rgba(0,0,0,.28)}
+.card .art{position:absolute;inset:var(--bleed)}         /* the trim area */
+.card .full{position:absolute;inset:0}                    /* runs to bleed */
+.guide{position:absolute;pointer-events:none;display:none}
+.show-guides .guide{display:block}
+.g-trim{inset:var(--bleed);outline:1px dashed #E0004D;outline-offset:0}
+.g-safe{inset:calc(var(--bleed) + var(--safe));outline:1px dashed #00A3E0}
+.tag{position:absolute;left:0;top:calc(100% + 5px);font-family:var(--font-mono);
+     font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#fff;
+     white-space:nowrap}
+
+/* --------------------------------------------------------------- type kit */
+.name{font-family:var(--font-display);font-weight:500;letter-spacing:-.02em;
+      color:var(--ink-900);line-height:.95}
+.meta{font-family:var(--font-mono);font-size:6.5pt;letter-spacing:var(--ls-caps);
+      text-transform:uppercase;color:var(--ink-500)}
+.meta.strong{color:var(--ink-900)}
+.rule{height:1px;background:var(--ink-a12);width:100%}
+.on-dark{color:var(--paper)}
+.on-dark .meta{color:var(--paper-a70)}
+.on-dark .name{color:var(--paper)}
+.on-dark .rule{background:var(--paper-a45)}
+
+/* 1. RULE ---------------------------------------------------------------- */
+.t-rule .art{display:flex;flex-direction:column;justify-content:space-between;
+             padding:var(--safe)}
+.t-rule .top{display:flex;justify-content:space-between;align-items:baseline}
+.t-rule .name{font-size:20pt}
+.t-rule .role{margin-top:.05in}
+
+/* 2. SPEC ---------------------------------------------------------------- */
+.t-spec .art{display:flex;flex-direction:column;justify-content:center;
+             padding:var(--safe);gap:.055in}
+.t-spec .name{font-size:15pt;margin-bottom:.045in}
+.t-spec .row{display:grid;grid-template-columns:.72in 1fr;gap:.06in;
+             align-items:baseline;padding-bottom:.035in;
+             border-bottom:1px solid var(--ink-a12)}
+.t-spec .row:last-child{border-bottom:0}
+.t-spec .k{font-family:var(--font-mono);font-size:5.6pt;
+           letter-spacing:var(--ls-caps);text-transform:uppercase;
+           color:var(--ink-300)}
+.t-spec .v{font-family:var(--font-mono);font-size:7pt;color:var(--ink-900)}
+
+/* 3. INK ----------------------------------------------------------------- */
+.t-ink .full{background:var(--ink-900)}
+.t-ink .art{display:flex;flex-direction:column;justify-content:flex-end;
+            padding:var(--safe)}
+.t-ink .name{font-size:22pt}
+.t-ink .strip{display:flex;justify-content:space-between;align-items:baseline;
+              margin-top:.07in;padding-top:.055in}
+
+/* 4. INDEX --------------------------------------------------------------- */
+.t-index .art{display:grid;grid-template-columns:.62in 1fr;gap:.11in;
+              align-items:center;padding:var(--safe)}
+.t-index .num{font-family:var(--font-display);font-size:40pt;font-weight:500;
+              line-height:.8;letter-spacing:-.04em;color:var(--ink-100)}
+.t-index .name{font-size:16pt}
+.t-index .stack{display:flex;flex-direction:column;gap:.05in}
+
+/* 5. TITLE BLOCK, the creative one --------------------------------------- */
+.t-tb .art{inset:calc(var(--bleed) + var(--safe));
+           border:1px solid var(--ink-900);display:flex;flex-direction:column}
+.t-tb .field{flex:1;position:relative;padding:.075in .085in}
+.t-tb .name{font-size:15pt}
+.t-tb .block{display:grid;grid-template-columns:1.06in .86in 1fr;
+             border-top:1px solid var(--ink-900)}
+.t-tb .cell{border-right:1px solid var(--ink-900);padding:.038in .05in .045in}
+.t-tb .cell:last-child{border-right:0}
+.t-tb .cl{font-family:var(--font-mono);font-size:4.6pt;
+          letter-spacing:var(--ls-caps);text-transform:uppercase;
+          color:var(--ink-500);display:block;margin-bottom:.012in}
+.t-tb .cv{font-family:var(--font-mono);font-size:6.2pt;color:var(--ink-900)}
+/* the dimension line: the card measuring itself */
+.t-tb .dim{position:absolute;left:.085in;right:.085in;top:.28in;height:.06in}
+.t-tb .dim .ln{position:absolute;top:50%;left:0;right:0;height:1px;
+               background:var(--ink-300)}
+.t-tb .dim .ln::before,.t-tb .dim .ln::after{content:"";position:absolute;
+      top:-.024in;width:1px;height:.048in;background:var(--ink-300)}
+.t-tb .dim .ln::before{left:0} .t-tb .dim .ln::after{right:0}
+.t-tb .dim span{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+      background:var(--paper);padding:0 .035in;font-family:var(--font-mono);
+      font-size:4.8pt;color:var(--ink-500);letter-spacing:.06em}
+
+/* backs ------------------------------------------------------------------ */
+.back .art{display:flex;align-items:center;justify-content:space-between;
+           padding:var(--safe)}
+.back .qr{width:.92in;height:.92in;flex:none}
+.back .qr svg{width:100%;height:100%;display:block}
+.back .qr path{fill:var(--ink-900)}
+.on-dark.back .qr{background:var(--paper);padding:.055in}
+.back .side{display:flex;flex-direction:column;gap:.05in;text-align:right;
+            align-items:flex-end}
+.back .url{font-family:var(--font-mono);font-size:7.4pt;color:var(--ink-900);
+           letter-spacing:.02em}
+.on-dark.back .url{color:var(--paper)}
+
+/* ------------------------------------------------------------------ print
+   One card per sheet at document size, no margin, guides suppressed. Set
+   the browser's print dialog to "Default" margins and untick headers. */
+@media print{
+  @page{size:3.75in 2.25in;margin:0}
+  body{background:#fff;padding:0}
+  .bar,h1,.sub,.note,.tag{display:none!important}
+  .pair{display:block}
+  .card{box-shadow:none;break-after:page;page-break-after:always;margin:0}
+  .guide{display:none!important}
+}
+</style>
+</head>
+<body class="show-guides">
+
+<h1>Business cards</h1>
+<p class="sub">
+Five templates, same tokens as the site: <b>#0A0A0A</b> on <b>#FFFFFF</b>,
+Space Grotesk over IBM Plex Mono, 0.18em caps tracking. Shown at true size.
+<b>3.5 × 2 in trim</b> inside a 3.75 × 2.25 in document.
+<span style="color:#FF7DA8">Pink</span> is the trim line, cut happens there.
+<span style="color:#7FD4F5">Blue</span> is the safe area, nothing important
+crosses it. Every back carries a QR pointing at a tracked URL, so a scan lands
+in your own dashboard.
+</p>
+
+<div class="bar">
+  <button id="tg" class="on">Guides on</button>
+  <button onclick="window.print()">Print to PDF</button>
+</div>
+
+<!-- 1 --------------------------------------------------------------------->
+<p class="note">01 &nbsp;Rule &nbsp;/&nbsp; the site's own signature, most on-brand</p>
+<div class="pair">
+  <div class="card t-rule">
+    <div class="art">
+      <div>
+        <div class="top">
+          <span class="meta strong">Mechanical Engineer</span>
+          <span class="meta">01</span>
+        </div>
+        <div class="rule" style="margin-top:.05in"></div>
+      </div>
+      <div>
+        <div class="name">Mert Türeli</div>
+        <div class="meta role">Design &nbsp;/&nbsp; Test &nbsp;/&nbsp; Manufacturing</div>
+      </div>
+      <div class="top">
+        <span class="meta">merttureli.com</span>
+        <span class="meta">838 251 9707</span>
+      </div>
+    </div>
+    <div class="guide g-trim"></div><div class="guide g-safe"></div>
+    <span class="tag">01 front</span>
+  </div>
+
+  <div class="card t-rule back" data-qr="card-general">
+    <div class="art">
+      <div class="qr"></div>
+      <div class="side">
+        <span class="meta strong">Portfolio</span>
+        <span class="url">merttureli.com</span>
+        <span class="meta">merttureli0@gmail.com</span>
+      </div>
+    </div>
+    <div class="guide g-trim"></div><div class="guide g-safe"></div>
+    <span class="tag">01 back</span>
+  </div>
+</div>
+
+<!-- 2 --------------------------------------------------------------------->
+<p class="note">02 &nbsp;Spec sheet &nbsp;/&nbsp; reads like a datasheet, engineer to engineer</p>
+<div class="pair">
+  <div class="card t-spec">
+    <div class="art">
+      <div class="name">Mert Türeli</div>
+      <div class="row"><span class="k">Discipline</span><span class="v">Mechanical engineering</span></div>
+      <div class="row"><span class="k">Focus</span><span class="v">Design, test, manufacturing</span></div>
+      <div class="row"><span class="k">Site</span><span class="v">merttureli.com</span></div>
+      <div class="row"><span class="k">Mail</span><span class="v">merttureli0@gmail.com</span></div>
+      <div class="row"><span class="k">Phone</span><span class="v">838 251 9707</span></div>
+    </div>
+    <div class="guide g-trim"></div><div class="guide g-safe"></div>
+    <span class="tag">02 front</span>
+  </div>
+
+  <div class="card t-spec back" data-qr="card-general">
+    <div class="art">
+      <div class="qr"></div>
+      <div class="side">
+        <span class="meta strong">Case studies</span>
+        <span class="url">merttureli.com</span>
+        <span class="meta">linkedin.com/in/merttureli</span>
+      </div>
+    </div>
+    <div class="guide g-trim"></div><div class="guide g-safe"></div>
+    <span class="tag">02 back</span>
+  </div>
+</div>
+
+<!-- 3 --------------------------------------------------------------------->
+<p class="note">03 &nbsp;Ink &nbsp;/&nbsp; the one that gets picked up off a table</p>
+<div class="pair">
+  <div class="card t-ink on-dark">
+    <div class="full"></div>
+    <div class="art">
+      <div class="name">Mert Türeli</div>
+      <div class="rule" style="margin-top:.07in"></div>
+      <div class="strip">
+        <span class="meta">Mechanical Engineer</span>
+        <span class="meta">merttureli.com</span>
+      </div>
+    </div>
+    <div class="guide g-trim"></div><div class="guide g-safe"></div>
+    <span class="tag">03 front &nbsp;· rich black, see README</span>
+  </div>
+
+  <div class="card t-ink on-dark back" data-qr="card-fair">
+    <div class="full"></div>
+    <div class="art">
+      <div class="qr"></div>
+      <div class="side">
+        <span class="meta">Portfolio</span>
+        <span class="url">merttureli.com</span>
+        <span class="meta">838 251 9707</span>
+      </div>
+    </div>
+    <div class="guide g-trim"></div><div class="guide g-safe"></div>
+    <span class="tag">03 back</span>
+  </div>
+</div>
+
+<!-- 4 --------------------------------------------------------------------->
+<p class="note">04 &nbsp;Index &nbsp;/&nbsp; the numeral treatment from the case study pages</p>
+<div class="pair">
+  <div class="card t-index">
+    <div class="art">
+      <div class="num">01</div>
+      <div class="stack">
+        <div class="name">Mert Türeli</div>
+        <div class="meta strong">Mechanical Engineer</div>
+        <div class="rule"></div>
+        <div class="meta">merttureli.com &nbsp;·&nbsp; 838 251 9707</div>
+      </div>
+    </div>
+    <div class="guide g-trim"></div><div class="guide g-safe"></div>
+    <span class="tag">04 front</span>
+  </div>
+
+  <div class="card t-index back" data-qr="card-desk">
+    <div class="art">
+      <div class="qr"></div>
+      <div class="side">
+        <span class="meta strong">Scan for the work</span>
+        <span class="url">merttureli.com</span>
+        <span class="meta">merttureli0@gmail.com</span>
+      </div>
+    </div>
+    <div class="guide g-trim"></div><div class="guide g-safe"></div>
+    <span class="tag">04 back</span>
+  </div>
+</div>
+
+<!-- 5 --------------------------------------------------------------------->
+<p class="note">05 &nbsp;Title block &nbsp;/&nbsp; the creative one. The card is a drawing sheet, and it dimensions itself</p>
+<div class="pair">
+  <div class="card t-tb">
+    <div class="art">
+      <div class="field">
+        <div class="name">Mert Türeli</div>
+        <div class="dim"><span class="ln"></span><span>85.35</span></div>
+      </div>
+      <div class="block">
+        <div class="cell">
+          <span class="cl">Discipline</span>
+          <span class="cv">Mechanical</span>
+        </div>
+        <div class="cell">
+          <span class="cl">Scale</span>
+          <span class="cv">1 : 1</span>
+        </div>
+        <div class="cell">
+          <span class="cl">Drawing</span>
+          <span class="cv">merttureli.com</span>
+        </div>
+      </div>
+    </div>
+    <div class="guide g-trim"></div><div class="guide g-safe"></div>
+    <span class="tag">05 front</span>
+  </div>
+
+  <div class="card t-tb back" data-qr="card-fair">
+    <div class="art" style="inset:calc(var(--bleed) + var(--safe));border:1px solid var(--ink-900);align-items:center">
+      <div class="qr" style="margin:0 .085in"></div>
+      <div class="side" style="padding-right:.085in">
+        <span class="meta strong">Sheet 2 of 2</span>
+        <span class="url">merttureli.com</span>
+        <span class="meta">838 251 9707</span>
+      </div>
+    </div>
+    <div class="guide g-trim"></div><div class="guide g-safe"></div>
+    <span class="tag">05 back</span>
+  </div>
+</div>
+
+<script>
+/* Guides toggle. Off before printing, on while reviewing. */
+var tg = document.getElementById("tg");
+tg.onclick = function () {
+  var on = document.body.classList.toggle("show-guides");
+  tg.classList.toggle("on", on);
+  tg.textContent = on ? "Guides on" : "Guides off";
+};
+
+/* Inline each QR so the file prints without needing the sibling SVGs
+   resolvable, and so the modules inherit the ink colour. */
+[].forEach.call(document.querySelectorAll(".qr"), function (el) {
+  var code = el.closest("[data-qr]").getAttribute("data-qr");
+  fetch("qr/" + code + ".svg")
+    .then(function (r) { return r.text(); })
+    .then(function (svg) { el.innerHTML = svg; })
+    .catch(function () {
+      el.style.outline = "1px dashed #E0004D";
+      el.textContent = "run make-qr.py";
+    });
+});
+</script>
+</body>
+</html>

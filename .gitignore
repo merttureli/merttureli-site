@@ -3,3 +3,4 @@ Design System/
 
 # local dev server config, not part of the site
 .claude/
+cards/qr/
