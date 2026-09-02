@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Not found · Mert Türeli</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230A0A0A'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='26' font-weight='600' fill='%23FFFFFF'%3EMT%3C/text%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* The not-found page. GitHub Pages serves this file for any path that does not
+   exist, so every reference here is absolute and nothing depends on the page
+   runtime, the design-system bundle or a CDN script. If the visitor got here
+   from a business card or an application form, the link is wrong and the
+   tracker records which one; the page's job is to hand them the work anyway. */
+:root{
+  --ink:#0A0A0A; --paper:#FFF;
+  --p90:rgba(255,255,255,.90); --p70:rgba(255,255,255,.70);
+  --p45:rgba(255,255,255,.45); --p14:rgba(255,255,255,.14);
+  --display:"Space Grotesk","Helvetica Neue",Helvetica,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--ink);color:var(--paper)}
+body{font-family:var(--display);-webkit-font-smoothing:antialiased;
+     padding:max(28px,env(safe-area-inset-top)) 24px
+             max(36px,env(safe-area-inset-bottom));
+     min-height:100svh;display:flex;flex-direction:column}
+.wrap{max-width:34rem;margin:0 auto;width:100%;display:flex;
+      flex-direction:column;gap:28px;flex:1}
+
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;
+         text-transform:uppercase;color:var(--p45);margin:0}
+h1{font-size:clamp(36px,9vw,72px);font-weight:500;letter-spacing:-.035em;
+   line-height:.94;margin:10px 0 0;text-wrap:balance}
+
+.line{font-size:17px;line-height:1.55;color:var(--p90);margin:0;
+      padding:20px 0 0;border-top:1px solid var(--p14)}
+.line a{color:var(--paper);text-decoration:underline;
+        text-decoration-color:var(--p45);text-underline-offset:3px}
+.line a:hover{text-decoration-color:var(--paper)}
+
+/* the address that failed, filled in by script; hidden when script is off */
+.path{display:none;font-family:var(--mono);font-size:12px;letter-spacing:.04em;
+      color:var(--p45);margin:0;word-break:break-all}
+.path b{font-weight:500;color:var(--p70)}
+
+.links{display:flex;flex-direction:column;margin:0}
+.links a{display:flex;align-items:baseline;justify-content:space-between;gap:14px;
+         padding:15px 0;border-bottom:1px solid var(--p14);
+         color:var(--paper);text-decoration:none;font-size:16px;
+         transition:padding-left .24s var(--ease)}
+.links a:first-child{border-top:1px solid var(--p14)}
+.links a:hover{padding-left:8px}
+.links .k{font-family:var(--mono);font-size:11px;letter-spacing:.16em;
+          text-transform:uppercase;color:var(--p45);white-space:nowrap}
+
+.foot{margin-top:auto;padding-top:22px;display:flex;justify-content:space-between;
+      flex-wrap:wrap;gap:12px;font-family:var(--mono);font-size:11px;
+      letter-spacing:.08em;color:var(--p45)}
+.foot a{color:var(--p45);text-decoration:none}
+a:focus-visible{outline:1px solid var(--paper);outline-offset:3px}
+
+@media (prefers-reduced-motion:no-preference){
+  .wrap>*{animation:in .5s var(--ease) backwards}
+  .wrap>*:nth-child(2){animation-delay:.05s}
+  .wrap>*:nth-child(3){animation-delay:.10s}
+  .wrap>*:nth-child(4){animation-delay:.15s}
+  @keyframes in{from{opacity:0;transform:translateY(9px)}}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">404 / Not found</p>
+    <h1>Nothing at this address</h1>
+  </header>
+
+  <p class="line">
+    The page you asked for is not here. The address may have changed, or a link
+    on a card or an application form is wrong. If a link I gave you brought you
+    here, <a href="mailto:merttureli0@gmail.com?subject=Broken%20link%20on%20merttureli.com">email me</a>
+    and I will fix it.
+  </p>
+
+  <p class="path" id="path">Requested <b></b></p>
+
+  <nav class="links" aria-label="Where to go instead">
+    <a href="/">
+      <span>Home</span><span class="k">Mert Türeli</span>
+    </a>
+    <a href="/#work">
+      <span>The work</span><span class="k">6 projects</span>
+    </a>
+    <a href="/projects/charger.html">
+      <span>CHARGER</span><span class="k">Case study</span>
+    </a>
+    <a href="/assets/Mert-Tureli-Resume.pdf">
+      <span>Resume</span><span class="k">PDF</span>
+    </a>
+  </nav>
+
+  <div class="foot">
+    <span>Mert Türeli / Mechanical engineer / Schenectady, New York</span>
+    <a href="/privacy.html">Privacy</a>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var p = document.getElementById("path");
+    var b = p && p.querySelector("b");
+    if (b) {
+      b.textContent = location.pathname + location.search;
+      p.style.display = "block";
+    }
+  })();
+</script>
+<script src="/js/analytics-config.js"></script>
+<script src="/js/track.js"></script>
+</body>
+</html>
