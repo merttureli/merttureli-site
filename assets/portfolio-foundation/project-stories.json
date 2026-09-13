@@ -1,0 +1,132 @@
+{
+  "version": 1,
+  "updated": "2026-09-10",
+  "projects": [
+    {
+      "id": "robo-catcher",
+      "title": "Robo-Catcher",
+      "href": "projects/robo-catcher.html",
+      "question": "How do you catch, index, and return a ball without a hand-off?",
+      "problem": "Close the loop for a solo player: catch the ball, feed it, and return it.",
+      "contribution": "Feeding subsystem co-lead; machine electronics and firmware.",
+      "outcome": {
+        "value": "100%",
+        "label": "Feed indexing on competition day",
+        "scope": "Feeding subsystem, competition day only."
+      },
+      "source": "https://merttureli.com/projects/robo-catcher.html",
+      "nextProject": "charger",
+      "media": [
+        {
+          "id": "capture",
+          "src": "assets/photos/shop-and-machine-photography/machine-field.jpg",
+          "kind": "photo",
+          "alt": "The finished catching and return machine on the field.",
+          "caption": "Field hardware. Photography credit retained in the case-study footer."
+        },
+        {
+          "id": "index",
+          "src": "assets/photos/robo-catcher-photography/indexer-cross-section.jpg",
+          "kind": "cad",
+          "alt": "Cross-section of the dual-chamber indexer.",
+          "caption": "Design view / dual-chamber indexer"
+        },
+        {
+          "id": "return",
+          "src": "assets/photos/robo-catcher-photography/flywheel-full.jpg",
+          "kind": "cad",
+          "alt": "CAD assembly of the return mechanism.",
+          "caption": "Design view / return mechanism"
+        }
+      ],
+      "chapters": [
+        {
+          "id": "catch",
+          "label": "Catch",
+          "title": "Bring the ball into the system.",
+          "summary": "The capture structure collects the incoming ball and feeds it toward the indexer. It is the first stage in a machine designed to close the practice loop.",
+          "decision": "Capture, feeding, and return were separate team subsystems. The hand-off between them had to work as one system.",
+          "contribution": "My scope: feeding, plus the electronics and firmware for the complete machine.",
+          "media": "capture"
+        },
+        {
+          "id": "index",
+          "label": "Index",
+          "title": "Make the next position repeatable.",
+          "summary": "A dual-chamber indexer receives a ball, rotates 180 degrees, and presents it to the return mechanism.",
+          "decision": "I modeled the load before choosing the stepper and driver. The case study reports a 1.8x torque safety factor.",
+          "contribution": "I co-led the feeding subsystem and programmed its indexing and limit-switch logic.",
+          "media": "index"
+        },
+        {
+          "id": "return",
+          "label": "Return",
+          "title": "Complete the loop.",
+          "summary": "The return mechanism sends the ball back to the player. The controller coordinates motor drive, feeder indexing, and the wireless interface.",
+          "decision": "Emergency cut-offs remove motor power independently of the microcontroller.",
+          "contribution": "I owned the machine electronics and firmware, including motor control and safety logic.",
+          "media": "return"
+        }
+      ]
+    },
+    {
+      "id": "charger",
+      "title": "CHARGER",
+      "href": "projects/charger.html",
+      "question": "How does the rocket come apart for field repair?",
+      "problem": "Integrate the airframe and deployable payload into the competition entry.",
+      "contribution": "Captain and chief engineer; airframe and deployable payload.",
+      "outcome": {
+        "value": "First place",
+        "label": "Battle of the Rockets 2026 event",
+        "scope": "As stated in the existing case study; retain the event-specific context."
+      },
+      "source": "https://merttureli.com/projects/charger.html",
+      "nextProject": "rudder-pedals",
+      "media": [],
+      "chapters": []
+    },
+    {
+      "id": "rudder-pedals",
+      "title": "Flight sim rudder pedals",
+      "href": "projects/rudder-pedals.html",
+      "question": "How do three motions become simulator inputs?",
+      "problem": "Create serviceable pedal hardware with independent yaw and toe-brake inputs.",
+      "contribution": "Mechanical design, printed iterations, electronics, and USB controller firmware.",
+      "outcome": {
+        "value": "3 axes",
+        "label": "Yaw and independent toe brakes",
+        "scope": "Physical input channels; no durability or accuracy claim inferred."
+      },
+      "source": "https://merttureli.com/projects/rudder-pedals.html",
+      "nextProject": "therma-shift",
+      "media": [
+        {
+          "id": "hardware",
+          "src": "assets/photos/rudder-pedal-photography/pedals-hero.jpg",
+          "kind": "photo",
+          "alt": "The built rudder pedal assembly.",
+          "caption": "Built hardware"
+        }
+      ],
+      "chapters": []
+    },
+    {
+      "id": "therma-shift",
+      "title": "Therma-Shift",
+      "href": "projects/therma-shift.html",
+      "question": "Where does the heat go?",
+      "problem": "Heat or cool ordinary drinkware using one compact thermal stack.",
+      "contribution": "Thermal stack, bench characterization, and control electronics.",
+      "outcome": {
+        "value": "10.7-12 °C",
+        "label": "Cold face at 12 V, steady state",
+        "scope": "Bare thermal-stack bench test; not beverage temperature or closed-loop accuracy."
+      },
+      "source": "https://merttureli.com/projects/therma-shift.html",
+      "nextProject": "robo-catcher",
+      "media": [],
+      "chapters": []
+    }
+  ]
+}

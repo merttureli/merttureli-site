@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CHARGER | Mert Türeli</title><meta name="description" content="Explore the components inside CHARGER, a rocket designed for field repair.">
+<link rel="preload" href="fonts/SpaceGrotesk-var.ttf" as="font" type="font/ttf" crossorigin><link rel="stylesheet" href="style.css">
+<script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+</head>
+<body>
+<header class="site-header"><a class="wordmark" href="https://merttureli.com/">Mert Türeli<span>Mechanical engineer</span></a><nav aria-label="Main navigation"><a href="https://merttureli.com/#work">Work</a><a href="https://merttureli.com/#beyond">Beyond</a><a href="https://merttureli.com/projects/charger.html">The CHARGER story ↗</a></nav></header>
+<main id="explorer" class="explorer" aria-label="CHARGER interactive assembly">
+<div class="scene-column">
+  <div id="stage" tabindex="0" aria-label="Drag the rocket to rotate, scroll to zoom, or select a labeled component."><div id="loading" role="status"><span class="loading-line"></span><span>Loading CHARGER...</span></div><div id="hotspots" class="hotspots" aria-label="Featured components"></div></div>
+  <div class="scene-top"><span class="meta" id="sceneLabel">01 / CHARGER</span><button id="reset" class="text-button" hidden>Return to rocket ↗</button></div>
+  <div class="scene-bottom"><span>Drag to rotate / Scroll to zoom</span><span id="sceneMode">Assembly</span></div>
+</div>
+<div class="story-column">
+  <section id="overview"><p class="eyebrow">ROCKETRY / DESIGN + BUILD</p><h1>CHARGER<span class="title-period">.</span></h1><p class="lede">Designed to come apart.</p><p class="story-copy">Built to deploy its upper payload at peak altitude, then release the nose cone at 75% of that altitude on the way down. The exposed camera records the ground during descent.</p><button id="exploreMount" class="primary-button">Explore the motor mount <span aria-hidden="true">↗</span></button><p class="quiet">Or choose a component on the model.</p></section>
+  <section id="partStory" class="part-story" aria-label="Selected component" hidden><p class="eyebrow"><span id="partNumber">01</span> / <span id="partCategory">AIRFRAME</span></p><h2 id="selectedName" tabindex="-1"></h2><p id="partSubtitle" class="lede"></p><p id="partDescription" class="story-copy"></p><dl class="part-facts"><div><dt>Role</dt><dd id="partRole"></dd></div><div id="partMaterial" hidden><dt>Material</dt><dd id="material"></dd></div></dl><div class="part-actions"><button id="previous" class="text-button">← Previous</button><button id="next" class="text-button">Next part →</button></div></section>
+  <div class="view-tools"><div class="view-switch" role="group" aria-label="Model display"><button data-mode="solid" aria-pressed="true">Solid</button><button data-mode="hybrid" aria-pressed="false">Edges</button><button data-mode="wire" aria-pressed="false">Wire</button></div><button id="inside" class="text-button" aria-pressed="false">See inside +</button></div>
+</div>
+<footer class="explorer-footer"><div class="component-dock" aria-label="Explore components"><span class="meta">Explore</span><button data-part="0">Nose cone</button><button data-part="14">Camera mount</button><button data-part="18">Motor mount</button><button data-part="19">Screw cap</button><button data-part="26">Recovery mount</button><button id="openParts" class="all-parts" aria-haspopup="dialog">All components <span id="count">28</span> ↗</button></div><div class="footer-secondary"><span>Select a part to explore</span><div><button id="openOptions" aria-haspopup="dialog">View options</button></div></div></footer>
+<div id="announce" class="sr-only" aria-live="polite"></div>
+</main>
+<dialog id="partsDialog" class="drawer"><div class="drawer-head"><h2>Components</h2><button data-close="partsDialog" aria-label="Close components">Close ×</button></div><div id="partList"></div></dialog>
+<dialog id="optionsDialog" class="options-dialog"><div class="drawer-head"><h2>View options</h2><button data-close="optionsDialog" aria-label="Close view options">Close ×</button></div><label class="option-row"><span>Show exterior</span><input id="shell" type="checkbox" checked></label><label class="option-row"><span>Cutaway</span><input id="cutaway" type="checkbox"></label><label for="explode" class="option-row"><span>Separate parts</span><output id="explodeValue">0%</output></label><input id="explode" type="range" min="0" max="100" value="0"><p class="quiet">Parts remain selectable in every view.</p><div class="download-links"><a href="assembly.glb" download>Download 3D assembly ↗</a><a href="cad/charger-hybrid.step" download>Download STEP assembly ↗</a></div></dialog>
+<script type="module" src="app.js"></script>
+</body></html>

@@ -13,6 +13,7 @@
 <meta property="og:url" content="https://merttureli.com/projects/robo-catcher.html">
 <meta property="og:image" content="https://merttureli.com/assets/og-cover.png">
 <script src="../support.js"></script>
+<script type="module" src="../assets/portfolio-foundation/project-walkthrough.js"></script>
 </head>
 <body>
 <x-dc>
@@ -55,6 +56,12 @@
       <div data-reveal="1" style="position: relative; width: 100%; aspect-ratio: 4 / 3">
           <video data-clip="1" poster="../assets/motion/robo-catcher-360-poster.png" autoplay loop muted playsinline preload="metadata" style="width: 100%; height: 100%; object-fit: contain; display: block"><source src="../assets/motion/robo-catcher-360-alpha.webm" type="video/webm"><source src="../assets/motion/robo-catcher-360.mp4" type="video/mp4"></video>
         </div>
+    </div>
+  </section>
+
+  <section id="mechanism-tour" aria-label="Robo-Catcher mechanism walkthrough" style="padding:var(--space-8) var(--page-margin);scroll-margin-top:28px">
+    <div style="max-width:var(--max-width);margin:0 auto">
+      <project-walkthrough project="robo-catcher"><p>Catch. Index. Return. Explore the three stages in the case study below.</p></project-walkthrough>
     </div>
   </section>
 
@@ -124,7 +131,7 @@
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-5)"><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr)); gap: var(--space-4)"><x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="../assets/photos/robo-catcher-photography/working-on-electronics.jpg" alt="The team running the machine on the field" ratio="3 / 2" caption="Running it on the field" index="03" hover-zoom="true" hint-size="100%,300px"></x-import><x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="../assets/photos/robo-catcher-photography/flywheel-full.jpg" alt="Return flywheel assembly" ratio="3 / 2" caption="Return flywheel, 120 W DC motor" index="04" hover-zoom="true" hint-size="100%,300px"></x-import></div></div>
       </div>
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="The result" right="06" hint-size="100%,14px"></x-import>
+        <span id="project-result" style="scroll-margin-top:30px"></span><x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="The result" right="06" hint-size="100%,14px"></x-import>
       </div>
       <div data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: var(--space-8); align-items: start">
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-6)">      <div data-reveal="1"><div style="display: flex; flex-direction: column; max-width: var(--measure)"><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">01</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">100% feed indexing on competition day: every ball delivered, no misses</span></div><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">02</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">Under $700 total build cost against a $700 cap</span></div><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">03</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">55 lb, one person portable, assembles with no tools</span></div><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">04</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">1.5 hours continuous runtime on a single 12 V 20 Ah SLA battery</span></div></div></div></div>

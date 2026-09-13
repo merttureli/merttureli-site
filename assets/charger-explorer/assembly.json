@@ -1,0 +1,840 @@
+{
+  "bytes": 2482932,
+  "parts": [
+    {
+      "id": 0,
+      "label": "Nose cone",
+      "bounds": [
+        [
+          -34,
+          338.692,
+          -34
+        ],
+        [
+          34,
+          570.693,
+          34
+        ]
+      ],
+      "exterior": true,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 0,
+        "count": 7632
+      },
+      "mesh": {
+        "vertexOffset": 30528,
+        "vertexCount": 8226,
+        "indexOffset": 63432,
+        "indexCount": 13326
+      }
+    },
+    {
+      "id": 1,
+      "label": "Upper body tube",
+      "bounds": [
+        [
+          -34,
+          -78.567,
+          -34
+        ],
+        [
+          34,
+          370.693,
+          34
+        ]
+      ],
+      "exterior": true,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 116736,
+        "count": 4272
+      },
+      "mesh": {
+        "vertexOffset": 133824,
+        "vertexCount": 2028,
+        "indexOffset": 141936,
+        "indexCount": 2016
+      }
+    },
+    {
+      "id": 2,
+      "label": "Lower body tube",
+      "bounds": [
+        [
+          -34,
+          -570.693,
+          -34
+        ],
+        [
+          34,
+          -78.567,
+          34
+        ]
+      ],
+      "exterior": true,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 150000,
+        "count": 4272
+      },
+      "mesh": {
+        "vertexOffset": 167088,
+        "vertexCount": 2028,
+        "indexOffset": 175200,
+        "indexCount": 2016
+      }
+    },
+    {
+      "id": 3,
+      "label": "Coupler reference envelope",
+      "bounds": [
+        [
+          -32,
+          -143.568,
+          -32
+        ],
+        [
+          32,
+          -13.568,
+          32
+        ]
+      ],
+      "exterior": false,
+      "referenceOnly": true,
+      "wire": {
+        "offset": 183264,
+        "count": 2910
+      },
+      "mesh": {
+        "vertexOffset": 194904,
+        "vertexCount": 2028,
+        "indexOffset": 203016,
+        "indexCount": 2016
+      }
+    },
+    {
+      "id": 4,
+      "label": "Mount reference envelope",
+      "bounds": [
+        [
+          -32,
+          -588.693,
+          -32
+        ],
+        [
+          32,
+          -463.692,
+          32
+        ]
+      ],
+      "exterior": false,
+      "referenceOnly": true,
+      "wire": {
+        "offset": 211080,
+        "count": 2910
+      },
+      "mesh": {
+        "vertexOffset": 222720,
+        "vertexCount": 2028,
+        "indexOffset": 230832,
+        "indexCount": 2016
+      }
+    },
+    {
+      "id": 5,
+      "label": "Motor reference envelope",
+      "bounds": [
+        [
+          -14.5,
+          -588.693,
+          -14.5
+        ],
+        [
+          14.5,
+          -464.693,
+          14.5
+        ]
+      ],
+      "exterior": false,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 238896,
+        "count": 1308
+      },
+      "mesh": {
+        "vertexOffset": 244128,
+        "vertexCount": 1014,
+        "indexOffset": 248184,
+        "indexCount": 996
+      }
+    },
+    {
+      "id": 6,
+      "label": "Fin 1",
+      "bounds": [
+        [
+          34,
+          -585.693,
+          -1.587
+        ],
+        [
+          89,
+          -500.692,
+          1.587
+        ]
+      ],
+      "exterior": true,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 252168,
+        "count": 174
+      },
+      "mesh": {
+        "vertexOffset": 252864,
+        "vertexCount": 72,
+        "indexOffset": 253152,
+        "indexCount": 36
+      }
+    },
+    {
+      "id": 7,
+      "label": "Fin 2",
+      "bounds": [
+        [
+          -1.587,
+          -585.693,
+          34
+        ],
+        [
+          1.587,
+          -500.692,
+          89
+        ]
+      ],
+      "exterior": true,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 253296,
+        "count": 174
+      },
+      "mesh": {
+        "vertexOffset": 253992,
+        "vertexCount": 72,
+        "indexOffset": 254280,
+        "indexCount": 36
+      }
+    },
+    {
+      "id": 8,
+      "label": "Fin 3",
+      "bounds": [
+        [
+          -89,
+          -585.693,
+          -1.587
+        ],
+        [
+          -34,
+          -500.692,
+          1.587
+        ]
+      ],
+      "exterior": true,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 254424,
+        "count": 174
+      },
+      "mesh": {
+        "vertexOffset": 255120,
+        "vertexCount": 72,
+        "indexOffset": 255408,
+        "indexCount": 36
+      }
+    },
+    {
+      "id": 9,
+      "label": "Fin 4",
+      "bounds": [
+        [
+          -1.587,
+          -585.693,
+          -89
+        ],
+        [
+          1.587,
+          -500.692,
+          -34
+        ]
+      ],
+      "exterior": true,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 255552,
+        "count": 174
+      },
+      "mesh": {
+        "vertexOffset": 256248,
+        "vertexCount": 72,
+        "indexOffset": 256536,
+        "indexCount": 36
+      }
+    },
+    {
+      "id": 10,
+      "label": "Rail button 1",
+      "bounds": [
+        [
+          -43.7,
+          -58.787,
+          -4.85
+        ],
+        [
+          -34,
+          -49.087,
+          4.85
+        ]
+      ],
+      "exterior": true,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 256680,
+        "count": 342
+      },
+      "mesh": {
+        "vertexOffset": 258048,
+        "vertexCount": 1014,
+        "indexOffset": 262104,
+        "indexCount": 996
+      }
+    },
+    {
+      "id": 11,
+      "label": "Rail button 2",
+      "bounds": [
+        [
+          -43.7,
+          -499.48,
+          -4.85
+        ],
+        [
+          -34,
+          -489.78,
+          4.85
+        ]
+      ],
+      "exterior": true,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 266088,
+        "count": 342
+      },
+      "mesh": {
+        "vertexOffset": 267456,
+        "vertexCount": 1014,
+        "indexOffset": 271512,
+        "indexCount": 996
+      }
+    },
+    {
+      "id": 12,
+      "label": "Altimeter",
+      "bounds": [
+        [
+          -2.475,
+          -423.947,
+          11.886
+        ],
+        [
+          18.87,
+          -375.277,
+          30.935
+        ]
+      ],
+      "exterior": false,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 275496,
+        "count": 138
+      },
+      "mesh": {
+        "vertexOffset": 276048,
+        "vertexCount": 72,
+        "indexOffset": 276336,
+        "indexCount": 36
+      }
+    },
+    {
+      "id": 13,
+      "label": "Battery",
+      "bounds": [
+        [
+          -32.369,
+          -64.067,
+          -32.369
+        ],
+        [
+          32.369,
+          -13.568,
+          32.369
+        ]
+      ],
+      "exterior": false,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 276480,
+        "count": 426
+      },
+      "mesh": {
+        "vertexOffset": 278184,
+        "vertexCount": 1020,
+        "indexOffset": 282264,
+        "indexCount": 996
+      }
+    },
+    {
+      "id": 14,
+      "label": "Payload",
+      "bounds": [
+        [
+          -32.416,
+          266.142,
+          -32.416
+        ],
+        [
+          32.416,
+          386.901,
+          32.416
+        ]
+      ],
+      "exterior": false,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 286248,
+        "count": 17694
+      },
+      "mesh": {
+        "vertexOffset": 357024,
+        "vertexCount": 36567,
+        "indexOffset": 503292,
+        "indexCount": 50940
+      }
+    },
+    {
+      "id": 15,
+      "label": "Camera",
+      "bounds": [
+        [
+          -8.771,
+          308.643,
+          -28.284
+        ],
+        [
+          24.589,
+          355.193,
+          0.467
+        ]
+      ],
+      "exterior": false,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 707052,
+        "count": 138
+      },
+      "mesh": {
+        "vertexOffset": 707604,
+        "vertexCount": 72,
+        "indexOffset": 707892,
+        "indexCount": 36
+      }
+    },
+    {
+      "id": 16,
+      "label": "Internal coupler",
+      "bounds": [
+        [
+          -33.291,
+          -143.568,
+          -33.291
+        ],
+        [
+          33.291,
+          -13.568,
+          33.291
+        ]
+      ],
+      "exterior": false,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 708036,
+        "count": 10674
+      },
+      "mesh": {
+        "vertexOffset": 750732,
+        "vertexCount": 21024,
+        "indexOffset": 834828,
+        "indexCount": 25566
+      }
+    },
+    {
+      "id": 17,
+      "label": "Camera holder",
+      "bounds": [
+        [
+          6.787,
+          358.074,
+          -14.571
+        ],
+        [
+          8.812,
+          358.193,
+          -13.028
+        ]
+      ],
+      "exterior": false,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 937092,
+        "count": 1434
+      },
+      "mesh": null
+    },
+    {
+      "id": 18,
+      "label": "Revised motor mount",
+      "bounds": [
+        [
+          -33.404,
+          -594.693,
+          -33.404
+        ],
+        [
+          33.404,
+          -490.693,
+          33.404
+        ]
+      ],
+      "exterior": false,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 942828,
+        "count": 60792
+      },
+      "mesh": {
+        "vertexOffset": 1185996,
+        "vertexCount": 28368,
+        "indexOffset": 1299468,
+        "indexCount": 56928
+      }
+    },
+    {
+      "id": 19,
+      "label": "Motor screw cap",
+      "bounds": [
+        [
+          -21.501,
+          -610.193,
+          -21.501
+        ],
+        [
+          21.502,
+          -572.193,
+          21.499
+        ]
+      ],
+      "exterior": false,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 1527180,
+        "count": 43884
+      },
+      "mesh": {
+        "vertexOffset": 1702716,
+        "vertexCount": 31557,
+        "indexOffset": 1828944,
+        "indexCount": 63114
+      }
+    },
+    {
+      "id": 20,
+      "label": "Antenna",
+      "bounds": [
+        [
+          -17.105,
+          -120.548,
+          5.374
+        ],
+        [
+          1.87,
+          -82.448,
+          24.349
+        ]
+      ],
+      "exterior": false,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 2081400,
+        "count": 1842
+      },
+      "mesh": {
+        "vertexOffset": 2088768,
+        "vertexCount": 9162,
+        "indexOffset": 2125416,
+        "indexCount": 14772
+      }
+    },
+    {
+      "id": 21,
+      "label": "Wooden rod 1",
+      "bounds": [
+        [
+          -27.967,
+          -138.568,
+          0.917
+        ],
+        [
+          -18.726,
+          -13.568,
+          14.13
+        ]
+      ],
+      "exterior": false,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 2184504,
+        "count": 138
+      },
+      "mesh": {
+        "vertexOffset": 2185056,
+        "vertexCount": 72,
+        "indexOffset": 2185344,
+        "indexCount": 36
+      }
+    },
+    {
+      "id": 22,
+      "label": "Antenna holder",
+      "bounds": [
+        [
+          -24.4,
+          -129.568,
+          -24.4
+        ],
+        [
+          24.4,
+          -79.567,
+          24.4
+        ]
+      ],
+      "exterior": false,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 2185488,
+        "count": 2250
+      },
+      "mesh": {
+        "vertexOffset": 2194488,
+        "vertexCount": 2796,
+        "indexOffset": 2205672,
+        "indexCount": 2592
+      }
+    },
+    {
+      "id": 23,
+      "label": "Top PCB holder",
+      "bounds": [
+        [
+          -29.424,
+          296.85,
+          -29.424
+        ],
+        [
+          29.424,
+          302.693,
+          29.424
+        ]
+      ],
+      "exterior": false,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 2216040,
+        "count": 1338
+      },
+      "mesh": {
+        "vertexOffset": 2221392,
+        "vertexCount": 2028,
+        "indexOffset": 2229504,
+        "indexCount": 1968
+      }
+    },
+    {
+      "id": 24,
+      "label": "Middle PCB holder",
+      "bounds": [
+        [
+          -27.088,
+          94.008,
+          -17.121
+        ],
+        [
+          27.088,
+          302.693,
+          17.121
+        ]
+      ],
+      "exterior": false,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 2237376,
+        "count": 426
+      },
+      "mesh": {
+        "vertexOffset": 2239080,
+        "vertexCount": 216,
+        "indexOffset": 2239944,
+        "indexCount": 132
+      }
+    },
+    {
+      "id": 25,
+      "label": "Bottom PCB holder",
+      "bounds": [
+        [
+          -32.366,
+          94.008,
+          -32.449
+        ],
+        [
+          32.366,
+          99.85,
+          32.366
+        ]
+      ],
+      "exterior": false,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 2240472,
+        "count": 1332
+      },
+      "mesh": {
+        "vertexOffset": 2245800,
+        "vertexCount": 2076,
+        "indexOffset": 2254104,
+        "indexCount": 2016
+      }
+    },
+    {
+      "id": 26,
+      "label": "Lower shock-cord mount",
+      "bounds": [
+        [
+          -32.356,
+          -421.688,
+          -32.438
+        ],
+        [
+          32.356,
+          -371.688,
+          32.437
+        ]
+      ],
+      "exterior": false,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 2262168,
+        "count": 8268
+      },
+      "mesh": {
+        "vertexOffset": 2295240,
+        "vertexCount": 20325,
+        "indexOffset": 2376540,
+        "indexCount": 25860
+      }
+    },
+    {
+      "id": 27,
+      "label": "Wooden rod 2",
+      "bounds": [
+        [
+          0.917,
+          -138.568,
+          18.726
+        ],
+        [
+          14.13,
+          -13.568,
+          27.967
+        ]
+      ],
+      "exterior": false,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 2479980,
+        "count": 138
+      },
+      "mesh": {
+        "vertexOffset": 2480532,
+        "vertexCount": 72,
+        "indexOffset": 2480820,
+        "indexCount": 36
+      }
+    },
+    {
+      "id": 28,
+      "label": "Wooden rod 3",
+      "bounds": [
+        [
+          18.726,
+          -138.568,
+          -14.13
+        ],
+        [
+          27.967,
+          -13.568,
+          -0.917
+        ]
+      ],
+      "exterior": false,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 2480964,
+        "count": 138
+      },
+      "mesh": {
+        "vertexOffset": 2481516,
+        "vertexCount": 72,
+        "indexOffset": 2481804,
+        "indexCount": 36
+      }
+    },
+    {
+      "id": 29,
+      "label": "Wooden rod 4",
+      "bounds": [
+        [
+          -14.13,
+          -138.568,
+          -27.967
+        ],
+        [
+          -0.917,
+          -13.568,
+          -18.726
+        ]
+      ],
+      "exterior": false,
+      "referenceOnly": false,
+      "wire": {
+        "offset": 2481948,
+        "count": 138
+      },
+      "mesh": {
+        "vertexOffset": 2482500,
+        "vertexCount": 72,
+        "indexOffset": 2482788,
+        "indexCount": 36
+      }
+    }
+  ]
+}

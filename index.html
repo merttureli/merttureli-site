@@ -14,6 +14,8 @@
 <meta property="og:image" content="https://merttureli.com/assets/og-cover.png">
 
 <script src="./support.js"></script>
+<link rel="stylesheet" href="assets/charger-explorer/launcher.css">
+<script src="assets/charger-explorer/integration.js" defer></script>
 </head>
 <body>
 <x-dc>
@@ -60,12 +62,13 @@
         </div>
       </div>
 
-      <div style="position: relative; width: 100%; aspect-ratio: 16 / 9; animation: kb var(--dur-6) var(--ease-out) both">
+      <a id="charger-launch" class="charger-launch" href="assets/charger-explorer/index.html" aria-label="Explore CHARGER in 3D" aria-haspopup="dialog" aria-controls="charger-explorer" aria-expanded="false" style="position: relative; width: 100%; aspect-ratio: 16 / 9; animation: kb var(--dur-6) var(--ease-out) both">
         <video data-hero-clip="charger" poster="assets/motion/charger-wide-poster.png" autoplay loop muted playsinline preload="auto" style="width: 100%; height: 100%; object-fit: contain; display: block; transform: scale(1.16)">
           <source src="assets/motion/charger-wide-alpha.webm" type="video/webm">
           <source src="assets/motion/charger-wide.mp4" type="video/mp4">
         </video>
-      </div>
+        <span class="charger-launch-cue"><span class="charger-launch-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M9 4H4v5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg></span><span><span class="charger-launch-title">Explore this rocket</span><span class="charger-launch-hint"><span class="charger-pointer-hint">Click</span><span class="charger-touch-hint">Tap</span> to explore in 3D</span></span></span>
+      </a>
     </div>
 
     <div style="position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-6); padding: 0 var(--page-margin) var(--space-7); max-width: var(--max-width); margin: 0 auto; width: 100%">
@@ -144,7 +147,7 @@
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="muted" hint-size="100%,16px">Senior capstone, 2025 / Twelve person team</x-import>
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">An automatic softball catching and return machine. I co-led the feeding subsystem and then took over all the electronics and firmware for the entire robot when the project needed someone to own it. That meant the flywheel drive, the stepper based feed indexing, the limit switch and interlock logic, wireless start and stop, and hardware emergency cutoffs wired independently of the microcontroller.</p>
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">It hit one hundred percent feed indexing reliability on competition day, came in under budget, and fits in a car trunk. The reliability number came from testing the indexing path to failure ahead of time and fixing what jammed, not from luck on the day.</p>
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="outline" trailing="→" href="projects/robo-catcher.html" hint-size="220px,44px">Read the case study</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="outline" trailing="→" href="projects/robo-catcher.html#mechanism-tour" hint-size="220px,44px">Walk through the mechanism</x-import>
         </div>
       </article>
 
@@ -509,6 +512,10 @@
   </footer>
 </div>
 </x-dc>
+<dialog id="charger-explorer" class="charger-dialog" aria-labelledby="charger-dialog-title">
+  <div class="charger-dialog-bar"><h2 id="charger-dialog-title">CHARGER <span>/ Interactive assembly</span></h2><button id="charger-close" type="button" aria-label="Close rocket explorer" autofocus>Close <span aria-hidden="true">×</span></button></div>
+  <div class="charger-dialog-content"><iframe id="charger-frame" data-src="assets/charger-explorer/index.html?embed=1&amp;modal=1" title="Explore the CHARGER rocket and its components" allow="fullscreen"></iframe><p id="charger-launch-status" role="status">Opening CHARGER...</p></div>
+</dialog>
 <script type="text/x-dc" data-dc-script data-props="{&quot;heroClip&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;charger&quot;,&quot;therma-shift&quot;,&quot;robo-catcher&quot;],&quot;default&quot;:&quot;charger&quot;,&quot;tsType&quot;:&quot;\&quot;charger\&quot; | \&quot;therma-shift\&quot; | \&quot;robo-catcher\&quot;&quot;,&quot;section&quot;:&quot;Motion&quot;},&quot;motion&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Motion&quot;}}">
 class Component extends DCLogic {
   renderVals() {
