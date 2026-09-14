@@ -16,8 +16,10 @@
 <script src="./support.js"></script>
 <link rel="stylesheet" href="assets/charger-explorer/launcher.css">
 <script src="assets/charger-explorer/integration.js" defer></script>
+<script src="js/media-playback.js" defer></script>
+<script src="js/depth-motion.js" defer></script>
 </head>
-<body>
+<body class="depth-design">
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/fonts.css">
@@ -31,39 +33,37 @@
 <link rel="stylesheet" href="_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/styles.css">
 <script src="_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/_ds_bundle.js"></script>
 <link rel="stylesheet" href="css/mobile.css">
+<link rel="stylesheet" href="css/depth.css">
 <style>
   html { scroll-behavior: smooth; }
   body { background: var(--paper); }
-  @keyframes up { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
-  @keyframes reveal { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
-  @keyframes kb { from { transform: scale(1.04); } to { transform: scale(1); } }
 </style>
 </helmet>
 
 <div style="background: var(--paper); overflow-x: hidden">
 
-  <section class="on-dark" style="position: relative; min-height: min(940px, 100vh); background: var(--ink-900); overflow: hidden; display: flex; flex-direction: column">
+  <section class="on-dark depth-hero" style="position: relative; min-height: min(940px, 100vh); background: var(--ink-900); overflow: hidden; display: flex; flex-direction: column">
     <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Grain" blend="overlay" strength="normal" hint-size="100%,100%"></x-import>
     <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SiteHeader" items="{{ nav }}" active="index" inverse="true" floating="true" hint-size="100%,88px"></x-import>
     <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SocialRail" items="{{ social }}" inverse="true" fixed="true" hint-size="36px,120px"></x-import>
 
     <div style="position: relative; flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr); align-items: center; gap: var(--space-7); padding: calc(var(--header-h) + var(--space-7)) var(--page-margin) var(--space-6); max-width: var(--max-width); margin: 0 auto; width: 100%">
 
-      <div style="display: flex; flex-direction: column; gap: var(--space-6); animation: up var(--dur-4) var(--ease-out) both">
-        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" wide="true" dc-props="{{ metaOnPhoto }}" hint-size="240px,16px">Mechanical engineer / Schenectady, New York</x-import>
+      <div class="depth-hero-copy" style="display: flex; flex-direction: column; gap: var(--space-6)">
+        <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" wide="true" dc-props="{{ metaOnPhoto }}" hint-size="240px,16px">Mechanical engineer / Schenectady, New York</x-import>
         <div style="display: flex; flex-direction: column">
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="2" as="h1" treatment="inverse" hint-size="100%,120px">Mert</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="2" treatment="inverse" hint-size="100%,120px">Türeli</x-import>
         </div>
-        <p style="max-width: var(--measure-narrow); font-size: var(--fs-body-lg); line-height: var(--lh-body); color: var(--paper-a90)">I design, build, and test hardware end to end, from CAD and drawings through electronics and firmware to the test rig that proves it works.</p>
+        <p style="max-width: var(--measure-narrow); font-size: var(--fs-body-lg); line-height: var(--lh-body); color: var(--paper-a90)">I <span class="depth-verb" style="--verb-index: 0">design</span>, <span class="depth-verb" style="--verb-index: 1">build</span>, and <span class="depth-verb" style="--verb-index: 2">test</span> hardware end to end, from CAD and drawings through electronics and firmware to the test rig that proves it works.</p>
         <div style="display: flex; flex-wrap: wrap; gap: var(--space-4); margin-top: var(--space-2)">
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="glass" trailing="→" href="#work" hint-size="180px,44px">See the work</x-import>
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="link" trailing="→" href="assets/Mert-Tureli-Resume.pdf" dc-props="{{ linkOnDark }}" hint-size="160px,24px">Resume (PDF)</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="glass" variant="glass" trailing="→" href="#work" hint-size="180px,44px">See the work</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="link" variant="link" trailing="→" href="assets/Mert-Tureli-Resume.pdf" dc-props="{{ linkOnDark }}" hint-size="160px,24px">Resume (PDF)</x-import>
         </div>
       </div>
 
-      <a id="charger-launch" class="charger-launch" href="assets/charger-explorer/index.html" aria-label="Explore CHARGER in 3D" aria-haspopup="dialog" aria-controls="charger-explorer" aria-expanded="false" style="position: relative; width: 100%; aspect-ratio: 16 / 9; animation: kb var(--dur-6) var(--ease-out) both">
-        <video data-hero-clip="charger" poster="assets/motion/charger-wide-poster.png" autoplay loop muted playsinline preload="auto" style="width: 100%; height: 100%; object-fit: contain; display: block; transform: scale(1.16)">
+      <a id="charger-launch" class="charger-launch" href="assets/charger-explorer/index.html" aria-label="Explore CHARGER in 3D" aria-haspopup="dialog" aria-controls="charger-explorer" aria-expanded="false" style="position: relative; width: 100%; aspect-ratio: 16 / 9">
+        <video data-hero-clip="charger" poster="assets/motion/charger-wide-poster.png" loop muted playsinline preload="auto" style="width: 100%; height: 100%; object-fit: contain; display: block; transform: scale(1.16)">
           <source src="assets/motion/charger-wide-alpha.webm" type="video/webm">
           <source src="assets/motion/charger-wide.mp4" type="video/mp4">
         </video>
@@ -79,12 +79,12 @@
 
   <section style="padding: var(--section-y) var(--page-margin)">
     <div style="max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-8)">
-      <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="About" right="01" hint-size="100%,14px"></x-import>
+      <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="About" right="01" hint-size="100%,14px"></x-import>
       <div style="display: grid; grid-template-columns: minmax(240px, 1fr) minmax(0, 1.5fr); gap: var(--space-9); align-items: start">
 
         <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-3)">
-          <div style="position: relative; aspect-ratio: 4 / 5; border-radius: var(--radius-md); overflow: hidden; background: var(--ink-900)">
-            <img src="assets/portrait/mert-bridge.jpg" alt="Mert Tureli on a ship's bridge" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%">
+          <div class="depth-portrait" style="position: relative; aspect-ratio: 4 / 5; border-radius: var(--radius-md); overflow: hidden; background: var(--ink-900)">
+            <img loading="lazy" decoding="async" src="assets/portrait/mert-bridge.jpg" alt="Mert Tureli on a ship's bridge" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%">
             <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Grain" blend="overlay" strength="normal" hint-size="100%,100%"></x-import>
           </div>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Caption" index="00" hint-size="220px,16px">Portrait / 2024</x-import>
@@ -104,7 +104,7 @@
     <div style="max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-8)">
       <article data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; padding-top: var(--space-7); border-top: 1px solid var(--line-hairline)">
         <div style="display: flex; flex-direction: column; gap: var(--space-5)">
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="01" hint-size="240px,16px">Thermal / Instrumentation</x-import>
+          <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="01" hint-size="240px,16px">Thermal / Instrumentation</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" hint-size="100%,60px">HOTBOX: thermal test bench</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="muted" hint-size="100%,16px">SunThru, 2026 / Design, electronics, firmware, safety systems</x-import>
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">The company needed to rank glazing samples by insulating performance and had no way to measure it. I designed and built the whole bench: the insulated test chamber, the sensor stack, the electronics, the firmware, and the safety system that lets it run unattended overnight.</p>
@@ -112,13 +112,13 @@
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">It was built for roughly a quarter of what a comparable commercial unit was quoted at, and the same electronics and firmware scale to a larger chamber for full size windows.</p>
         </div>
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-3)">
-          <div style="position: relative; aspect-ratio: 16 / 9">
-            <video data-clip="1" poster="assets/motion/hotbox-blurred-poster.jpg" autoplay loop muted playsinline preload="metadata" disablepictureinpicture controlslist="nodownload noremoteplayback" aria-label="Blurred render, SunThru proprietary hardware" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block"><source src="assets/motion/hotbox-blurred-alpha.webm" type="video/webm"><source src="assets/motion/hotbox-blurred.mp4" type="video/mp4"></video>
+          <div class="depth-stage" style="position: relative; aspect-ratio: 16 / 9">
+            <video data-clip="1" poster="assets/motion/hotbox-blurred-poster.jpg" loop muted playsinline preload="none" disablepictureinpicture controlslist="nodownload noremoteplayback" aria-label="Blurred render, SunThru proprietary hardware" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block"><source data-src="assets/motion/hotbox-blurred-alpha.webm" type="video/webm"><source data-src="assets/motion/hotbox-blurred.mp4" type="video/mp4"></video>
             <div style="position: absolute; inset: auto 0 0 0; display: flex; justify-content: center">
               <span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-display); border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); padding: 5px 12px; white-space: nowrap">IP protected</span>
             </div>
           </div>
-          <div style="position: relative; border-radius: var(--radius-xl); overflow: hidden; background: var(--board); padding: var(--space-7)">
+          <div class="depth-panel" style="position: relative; border-radius: var(--radius-xl); overflow: hidden; background: var(--board); padding: var(--space-7)">
             <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Grain" blend="multiply" strength="subtle" hint-size="100%,100%"></x-import>
             <div style="position: relative; display: flex; flex-direction: column; gap: var(--space-5)">
               <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="strong" wide="true" hint-size="200px,16px">Measurement</x-import>
@@ -130,9 +130,9 @@
 
       <article data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; padding-top: var(--space-7); border-top: 1px solid var(--line-hairline)">
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-3)">
-          <div style="position: relative; aspect-ratio: 16 / 9; overflow: hidden">
-            <video data-clip="1" poster="assets/motion/robo-catcher-360-poster.png" autoplay loop muted playsinline preload="metadata" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain">
-              <source src="assets/motion/robo-catcher-360-alpha.webm" type="video/webm">
+          <div class="depth-stage" style="position: relative; aspect-ratio: 16 / 9; overflow: hidden">
+            <video data-clip="1" poster="assets/motion/robo-catcher-360-poster.png" loop muted playsinline preload="none" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain">
+              <source data-src="assets/motion/robo-catcher-360-alpha.webm" type="video/webm">
             </video>
           </div>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Caption" index="02" hint-size="100%,16px">Full 84 part assembly. Net, ramps, indexer, flywheel thrower</x-import>
@@ -142,24 +142,24 @@
           </div>
         </div>
         <div style="display: flex; flex-direction: column; gap: var(--space-5)">
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="02" hint-size="240px,16px">Mechanism / Electronics / Firmware</x-import>
+          <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="02" hint-size="240px,16px">Mechanism / Electronics / Firmware</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" hint-size="100%,60px">Robo-Catcher</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="muted" hint-size="100%,16px">Senior capstone, 2025 / Twelve person team</x-import>
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">An automatic softball catching and return machine. I co-led the feeding subsystem and then took over all the electronics and firmware for the entire robot when the project needed someone to own it. That meant the flywheel drive, the stepper based feed indexing, the limit switch and interlock logic, wireless start and stop, and hardware emergency cutoffs wired independently of the microcontroller.</p>
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">It hit one hundred percent feed indexing reliability on competition day, came in under budget, and fits in a car trunk. The reliability number came from testing the indexing path to failure ahead of time and fixing what jammed, not from luck on the day.</p>
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="outline" trailing="→" href="projects/robo-catcher.html#mechanism-tour" hint-size="220px,44px">Walk through the mechanism</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="outline" variant="outline" trailing="→" href="projects/robo-catcher.html#mechanism-tour" hint-size="220px,44px">Walk through the mechanism</x-import>
         </div>
       </article>
 
       <article data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; padding-top: var(--space-7); border-top: 1px solid var(--line-hairline)">
         <div style="display: flex; flex-direction: column; gap: var(--space-5)">
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="03" hint-size="240px,16px">Airframe / Payload</x-import>
+          <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="03" hint-size="240px,16px">Airframe / Payload</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" hint-size="100%,60px">Deployable sensor payload</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="muted" hint-size="100%,16px">Union College Rocket Team, 2026 / Captain and chief engineer / First place</x-import>
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">The competition entry that won its event at Battle of the Rockets 2026. I led the design and manufacture of the airframe and the deployable payload, and ran the team through design review, build, and launch day recovery.</p>
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">The win is published by both Union College and the competition organizer.</p>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SpecList" items="{{ chargerSpecs }}" hint-size="100%,140px"></x-import>
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="outline" trailing="→" href="projects/charger.html" hint-size="220px,44px">Read the case study</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="outline" variant="outline" trailing="→" href="projects/charger.html" hint-size="220px,44px">Read the case study</x-import>
         </div>
         <div style="min-width: 0">
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="assets/photos/charger-rocket-photography/charger-pad-tall.jpg" alt="CHARGER on the launch pad" ratio="3 / 4" caption="On the pad" index="03" hover-zoom="true" hint-size="100%,420px"></x-import>
@@ -168,21 +168,21 @@
 
       <article data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; padding-top: var(--space-7); border-top: 1px solid var(--line-hairline)">
         <div style="display: flex; flex-direction: column; gap: var(--space-5)">
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="04" hint-size="240px,16px">Design for manufacture</x-import>
+          <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="04" hint-size="240px,16px">Design for manufacture</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" hint-size="100%,60px">Custom three-point bend fixture and data logger</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="muted" hint-size="100%,16px">SunThru, 2026 / Solo design</x-import>
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Aerogel is too fragile for off the shelf flexural test fixtures, so I designed one. It is fully 3D printable, built from interlocking parts on a shared coordinate system, and sized for the lab's samples with gentle repeatable clamping. It is in use for flexural characterization.</p>
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">A small, clean example of design for manufacture, and of solving a problem by making the tool rather than buying it.</p>
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="outline" trailing="→" href="projects/bend-fixture.html" hint-size="220px,44px">Read the case study</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="outline" variant="outline" trailing="→" href="projects/bend-fixture.html" hint-size="220px,44px">Read the case study</x-import>
         </div>
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-3)">
-          <div style="position: relative; aspect-ratio: 4 / 3">
-            <video data-clip="1" poster="assets/motion/bend-fixture-blurred-poster.jpg" autoplay loop muted playsinline preload="metadata" disablepictureinpicture controlslist="nodownload noremoteplayback" aria-label="Blurred render, SunThru proprietary hardware" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block"><source src="assets/motion/bend-fixture-blurred-alpha.webm" type="video/webm"><source src="assets/motion/bend-fixture-blurred.mp4" type="video/mp4"></video>
+          <div class="depth-stage" style="position: relative; aspect-ratio: 4 / 3">
+            <video data-clip="1" poster="assets/motion/bend-fixture-blurred-poster.jpg" loop muted playsinline preload="none" disablepictureinpicture controlslist="nodownload noremoteplayback" aria-label="Blurred render, SunThru proprietary hardware" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block"><source data-src="assets/motion/bend-fixture-blurred-alpha.webm" type="video/webm"><source data-src="assets/motion/bend-fixture-blurred.mp4" type="video/mp4"></video>
             <div style="position: absolute; inset: auto 0 0 0; display: flex; justify-content: center">
               <span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-display); border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); padding: 5px 12px; white-space: nowrap">IP protected</span>
             </div>
           </div>
-          <div style="position: relative; border-radius: var(--radius-xl); overflow: hidden; background: var(--board); padding: var(--space-7)">
+          <div class="depth-panel" style="position: relative; border-radius: var(--radius-xl); overflow: hidden; background: var(--board); padding: var(--space-7)">
             <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Grain" blend="multiply" strength="subtle" hint-size="100%,100%"></x-import>
             <div style="position: relative; display: flex; flex-direction: column; gap: var(--space-5)">
               <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="strong" wide="true" hint-size="200px,16px">Build</x-import>
@@ -194,35 +194,35 @@
 
       <article data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: var(--space-8); align-items: start; padding-top: var(--space-7); border-top: 1px solid var(--line-hairline)">
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-3)">
-          <div style="position: relative; aspect-ratio: 4 / 3; overflow: hidden">
-            <video data-clip="1" poster="assets/motion/rudder-pedals-working-poster.png" autoplay loop muted playsinline preload="metadata" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover">
-              <source src="assets/motion/rudder-pedals-working-alpha.webm" type="video/webm">
+          <div class="depth-stage" style="position: relative; aspect-ratio: 4 / 3; overflow: hidden">
+            <video data-clip="1" poster="assets/motion/rudder-pedals-working-poster.png" loop muted playsinline preload="none" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover">
+              <source data-src="assets/motion/rudder-pedals-working-alpha.webm" type="video/webm">
             </video>
           </div>
         </div>
         <div style="display: flex; flex-direction: column; gap: var(--space-5)">
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="05" hint-size="240px,16px">Mechanism / Firmware</x-import>
+          <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="05" hint-size="240px,16px">Mechanism / Firmware</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" hint-size="100%,60px">Flight sim rudder pedals</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="muted" hint-size="100%,16px">Personal project, 2026 / Solo</x-import>
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">A three axis fighter style rudder and toe brake set, designed in CAD and 3D printed, using contactless magnetic sensing so there is nothing to wear out. I wrote the USB HID firmware myself, so it is plug and play in any simulator with no drivers, custom calibration, and its own deadzone logic.</p>
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">A solo project that goes all the way from mechanism design to firmware, and it connects to the flying.</p>
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="outline" trailing="→" href="projects/rudder-pedals.html" hint-size="220px,44px">Read the case study</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="outline" variant="outline" trailing="→" href="projects/rudder-pedals.html" hint-size="220px,44px">Read the case study</x-import>
         </div>
       </article>
 
       <article data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; padding-top: var(--space-7); border-top: 1px solid var(--line-hairline)">
         <div style="display: flex; flex-direction: column; gap: var(--space-5)">
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="06" hint-size="240px,16px">Thermal / Control electronics</x-import>
+          <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="06" hint-size="240px,16px">Thermal / Control electronics</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" hint-size="100%,60px">Therma-Shift coaster</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="muted" hint-size="100%,16px">Personal project, 2026 / Solo</x-import>
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">A solid state coaster that actively heats or cools any mug or glass, built for a seed competition. Closed loop temperature control with thermal runaway cutoffs, in an aluminum topped form factor designed to work with drinkware people already own rather than a proprietary cup.</p>
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">I bench validated the thermal core before integrating the control electronics.</p>
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="outline" trailing="→" href="projects/therma-shift.html" hint-size="220px,44px">Read the case study</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="outline" variant="outline" trailing="→" href="projects/therma-shift.html" hint-size="220px,44px">Read the case study</x-import>
         </div>
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-3)">
-          <div style="position: relative; aspect-ratio: 5 / 4; overflow: hidden">
-            <video data-clip="1" poster="assets/motion/therma-shift-360-noflow-poster.png" autoplay loop muted playsinline preload="metadata" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover">
-              <source src="assets/motion/therma-shift-360-noflow-alpha.webm" type="video/webm">
+          <div class="depth-stage" style="position: relative; aspect-ratio: 5 / 4; overflow: hidden">
+            <video data-clip="1" poster="assets/motion/therma-shift-360-noflow-poster.png" loop muted playsinline preload="none" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover">
+              <source data-src="assets/motion/therma-shift-360-noflow-alpha.webm" type="video/webm">
             </video>
           </div>
         </div>
@@ -232,13 +232,13 @@
 
   <section id="experience" style="padding: var(--section-y) var(--page-margin)">
     <div style="max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-8)">
-      <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Experience" right="004" hint-size="100%,14px"></x-import>
+      <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Experience" right="004" hint-size="100%,14px"></x-import>
 
       <div data-reveal="1" style="display: grid; grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr); gap: var(--space-8); align-items: start; padding-top: var(--space-6); border-top: 1px solid var(--line-hairline)">
         <div style="display: flex; flex-direction: column; gap: var(--space-4)">
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" hint-size="100%,50px">Engineering intern</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="strong" hint-size="100%,16px">SunThru</x-import>
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="100%,16px">Schenectady, NY / June 2026 to present</x-import>
+          <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="100%,16px">Schenectady, NY / June 2026 to present</x-import>
         </div>
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-4)">
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">SunThru is a Union College spin-out developing silica aerogel inserts that give double pane windows triple pane performance. I work on the prototype side and the equipment side.</p>
@@ -252,7 +252,7 @@
         <div style="display: flex; flex-direction: column; gap: var(--space-4)">
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" hint-size="100%,50px">Founder and president</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="strong" hint-size="100%,16px">Union College Rocket Team</x-import>
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="100%,16px">Schenectady, NY / August 2023 to June 2026</x-import>
+          <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="100%,16px">Schenectady, NY / August 2023 to June 2026</x-import>
         </div>
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-4)">
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Started the team from nothing and built it to competition standard. Led the twelve person competition team as captain, trained new members through build labs, and owned safety compliance for high power launches. Grew the team budget by seven hundred percent by writing funding proposals, which paid for the airframe.</p>
@@ -264,7 +264,7 @@
         <div style="display: flex; flex-direction: column; gap: var(--space-4)">
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" hint-size="100%,50px">Founder</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="strong" hint-size="100%,16px">ModuFly</x-import>
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="100%,16px">Schenectady, NY / September 2024 to January 2026</x-import>
+          <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="100%,16px">Schenectady, NY / September 2024 to January 2026</x-import>
         </div>
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-4)">
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Co-founded a startup around a modular interlocking rocket system for STEM education. Raised $70,000 in seed funding, starting with a $10,000 prize at the SparkLabs competition and then a further $60,000 from private investors. Led R&D and production, and ran hands-on rocketry workshops teaching design and troubleshooting to more than twenty high school students.</p>
@@ -275,20 +275,20 @@
         <div style="display: flex; flex-direction: column; gap: var(--space-4)">
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" hint-size="100%,50px">Design engineer and materials intern</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="strong" hint-size="100%,16px">TASECS</x-import>
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="100%,16px">Ankara, Turkey / Summer 2024</x-import>
+          <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="100%,16px">Ankara, Turkey / Summer 2024</x-import>
         </div>
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-5)">
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Aerospace thermal management. Designed high efficiency HVAC valve components, ran material stress and fatigue analysis supporting two national fighter and jet trainer programs, and selected aerospace grade materials for printed prototypes, including cooling upgrades for high ambient temperature operation.</p>
           <div style="display: flex; flex-direction: column; gap: var(--space-3)">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4)">
-              <div style="position: relative; aspect-ratio: 16 / 9; overflow: hidden">
-                <video data-clip="1" poster="assets/motion/kaan-360-poster.png" autoplay loop muted playsinline preload="metadata" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain">
-                  <source src="assets/motion/kaan-360-alpha.webm" type="video/webm">
+              <div class="depth-stage" style="position: relative; aspect-ratio: 16 / 9; overflow: hidden">
+                <video data-clip="1" poster="assets/motion/kaan-360-poster.png" loop muted playsinline preload="none" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain">
+                  <source data-src="assets/motion/kaan-360-alpha.webm" type="video/webm">
                 </video>
               </div>
-              <div style="position: relative; aspect-ratio: 16 / 9; overflow: hidden">
-                <video data-clip="1" poster="assets/motion/hurjet-360-poster.png" autoplay loop muted playsinline preload="metadata" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain">
-                  <source src="assets/motion/hurjet-360-alpha.webm" type="video/webm">
+              <div class="depth-stage" style="position: relative; aspect-ratio: 16 / 9; overflow: hidden">
+                <video data-clip="1" poster="assets/motion/hurjet-360-poster.png" loop muted playsinline preload="none" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain">
+                  <source data-src="assets/motion/hurjet-360-alpha.webm" type="video/webm">
                 </video>
               </div>
             </div>
@@ -300,7 +300,7 @@
 
   <section style="padding: 0 var(--page-margin) var(--section-y)">
     <div style="max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-8)">
-      <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="What I work with" right="007" hint-size="100%,14px"></x-import>
+      <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="What I work with" right="007" hint-size="100%,14px"></x-import>
       <div data-reveal="1" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(400px, 100%), 1fr)); gap: var(--space-8) var(--space-7)">
         <div style="display: flex; flex-direction: column; gap: var(--space-4)">
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="01" tone="strong" hint-size="200px,16px">Design and CAD</x-import>
@@ -397,11 +397,11 @@
 
   <section id="beyond" class="on-dark" style="position: relative; background: var(--ink-900)">
     <div style="position: relative; height: min(560px, 62vh); overflow: hidden">
-      <video data-clip="1" poster="assets/motion/balloon-segovia-poster.jpg" autoplay loop muted playsinline preload="metadata" aria-label="Aerial shot of a hot air balloon over open country at sunrise" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block"><source src="assets/motion/balloon-segovia.mp4" type="video/mp4"></video>
+      <video data-clip="1" poster="assets/motion/balloon-segovia-poster.jpg" loop muted playsinline preload="none" aria-label="Aerial shot of a hot air balloon over open country at sunrise" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block"><source data-src="assets/motion/balloon-segovia.mp4" type="video/mp4"></video>
       <span style="position: absolute; inset: 0; background: var(--scrim-hero)"></span>
       <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Grain" blend="overlay" strength="normal" hint-size="100%,100%"></x-import>
       <div style="position: absolute; inset: auto 0 0 0; padding: var(--space-8) var(--page-margin); max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" wide="true" dc-props="{{ metaOnPhoto }}" hint-size="260px,16px">Beyond engineering / 005</x-import>
+        <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" wide="true" dc-props="{{ metaOnPhoto }}" hint-size="260px,16px">Beyond engineering / 005</x-import>
         <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="2" treatment="inverse" hint-size="100%,120px">Beyond engineering</x-import>
       </div>
     </div>
@@ -448,7 +448,7 @@
 
   <section style="padding: var(--section-y) var(--page-margin) 0">
     <div style="max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-8)">
-      <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Recognition" right="004" hint-size="100%,14px"></x-import>
+      <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Recognition" right="004" hint-size="100%,14px"></x-import>
       <div data-reveal="1" style="display: flex; flex-direction: column">
         <div style="display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-6) 0; border-bottom: 1px solid var(--line-hairline)">
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="strong" hint-size="40px,16px">01</x-import>
@@ -477,11 +477,11 @@
         <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="2" hint-size="100%,120px">Get in touch</x-import>
         <p style="font-size: var(--fs-body-lg); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure-narrow)">Open to engineering roles in design, test, manufacturing and controls. The full write-ups, drawings and numbers are in the case studies above.</p>
         <div style="display: flex; flex-wrap: wrap; gap: var(--space-4)">
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="outline" trailing="→" href="https://linkedin.com/in/merttureli" hint-size="160px,44px">LinkedIn</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="outline" variant="outline" trailing="→" href="https://linkedin.com/in/merttureli" hint-size="160px,44px">LinkedIn</x-import>
         </div>
       </div>
       <div style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Elsewhere" hint-size="100%,14px"></x-import>
+        <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Elsewhere" hint-size="100%,14px"></x-import>
       <div style="display: flex; flex-direction: column">
         <a href="assets/Mert-Tureli-Resume.pdf" style="display: grid; grid-template-columns: minmax(64px,110px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-display); text-decoration: none" style-hover="border-bottom-color: var(--line-strong)">
           <span style="color: var(--text-meta)">Resume</span>
@@ -505,7 +505,7 @@
     <div style="max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-6)">
       <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-5)">
         <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Wordmark" name="MERT TÜRELI" size="md" hint-size="220px,20px"></x-import>
-        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="320px,16px">Schenectady, New York / B.S. Mechanical Engineering, Union College, 2026</x-import>
+        <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="320px,16px">Schenectady, New York / B.S. Mechanical Engineering, Union College, 2026</x-import>
       </div>
       <p style="max-width: 96ch; font-family: var(--font-mono); font-size: var(--fs-meta-sm); line-height: 1.5; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-meta)">Photographs of the machine and the team by Paul Buckowski / Union College. CAD animations rendered from the source assemblies. Aircraft models are third-party, illustration only. / <a href="privacy.html" style="color: var(--text-meta); text-decoration: underline; text-underline-offset: 3px">Privacy</a></p>
     </div>
@@ -570,47 +570,9 @@ class Component extends DCLogic {
     };
   }
 
-  componentDidMount() {
-    this.reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    this.seen = this.seen || new WeakSet();
-    this.pending = this.pending || new Set();
-    this.onTick = () => this.tick();
-    window.addEventListener("scroll", this.onTick, { passive: true });
-    window.addEventListener("resize", this.onTick);
-    document.addEventListener("visibilitychange", this.onTick);
-    clearInterval(this.iv);
-    this.iv = setInterval(this.onTick, 1200);
-    this.tick();
-  }
+  componentDidMount() { this.syncClips(); }
 
-  componentDidUpdate() { this.tick(); }
-
-  tick() {
-    const vh = window.innerHeight;
-    document.querySelectorAll("[data-reveal]").forEach((el) => {
-      if (this.seen.has(el)) {
-        if (el.style.opacity === "0") this.pending.add(el);
-        return;
-      }
-      this.seen.add(el);
-      if (this.reduced) return;
-      if (el.getBoundingClientRect().top > vh * 0.9) {
-        el.style.opacity = "0";
-        el.style.transform = "translateY(26px)";
-        this.pending.add(el);
-      }
-    });
-    this.pending.forEach((el) => {
-      if (el.getBoundingClientRect().top < vh * 0.88) {
-        el.style.opacity = "";
-        el.style.transform = "";
-        el.style.animation = "reveal var(--dur-4) var(--ease-out) both";
-        setTimeout(() => { el.style.animation = ""; }, 1200);
-        this.pending.delete(el);
-      }
-    });
-    this.syncClips();
-  }
+  componentDidUpdate() { this.syncClips(); }
 
   syncClips() {
     const play = (this.props || {}).motion !== false;
@@ -630,13 +592,10 @@ class Component extends DCLogic {
       if (src[1]) src[1].src = "assets/motion/" + slug + ".mp4";
       heroEl.load();
     }
-    document.querySelectorAll("video").forEach((v) => {
-      v.muted = true;
-      v.loop = true;
-      v.playsInline = true;
-      if (play) { if (v.paused) v.play().catch(() => {}); }
-      else if (!v.paused) { v.pause(); v.currentTime = 0; }
-    });
+    window.PortfolioDepthSettings = { motion: play };
+    window.PortfolioDepth?.refresh(window.PortfolioDepthSettings);
+    window.PortfolioMediaSettings = { motion: play };
+    window.PortfolioMedia?.refresh(window.PortfolioMediaSettings);
   }
 }
 </script>
