@@ -39,21 +39,21 @@
 
 <div style="background: var(--paper); overflow-x: hidden">
 
-  <section class="on-dark depth-hero" style="position: relative; min-height: min(720px, 88vh); background: var(--ink-900); overflow: hidden; display: flex; flex-direction: column">
+  <section class="on-dark" style="position: relative; min-height: min(720px, 88vh); background: var(--ink-900); overflow: hidden; display: flex; flex-direction: column">
     <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Grain" blend="overlay" strength="normal" hint-size="100%,100%"></x-import>
     <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SiteHeader" items="{{ nav }}" active="work" inverse="true" floating="true" hint-size="100%,88px"></x-import>
     <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SocialRail" items="{{ social }}" inverse="true" fixed="true" hint-size="36px,120px"></x-import>
     <div style="position: relative; flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); align-items: center; gap: var(--space-8); padding: calc(var(--header-h) + var(--space-8)) var(--page-margin) var(--space-8); max-width: var(--max-width); margin: 0 auto; width: 100%">
       <div style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" wide="true" hint-size="300px,16px">Case study / Personal project</x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" wide="true" hint-size="300px,16px">Case study / Personal project</x-import>
         <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="1" treatment="inverse" hint-size="100%,140px">Flight sim rudder pedals</x-import>
         <p style="font-size: var(--fs-body-lg); line-height: var(--lh-body); color: var(--paper-a90); max-width: var(--measure)">I fly ultralights, and consumer sim pedals never felt right: short throw, toy-like centring, and potentiometers that get jittery as they wear. So I built my own, with fighter style geometry, three axes, and sensing that cannot wear out.</p>
         <div style="display: flex; gap: var(--space-4); flex-wrap: wrap; margin-top: var(--space-2)">
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="glass" variant="glass" trailing="→" href="../index.html#work" dc-props="{{ linkOnDark }}" hint-size="150px,44px">All work</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="glass" trailing="→" href="../index.html#work" dc-props="{{ linkOnDark }}" hint-size="150px,44px">All work</x-import>
         </div>
       </div>
-      <div class="depth-stage" data-reveal="1" style="position: relative; width: 100%; aspect-ratio: 16 / 9">
-          <video data-clip="1" poster="../assets/motion/rudder-pedals-working-poster.png" loop muted playsinline preload="metadata" style="width: 100%; height: 100%; object-fit: contain; display: block"><source src="../assets/motion/rudder-pedals-working-alpha.webm" type="video/webm"><source src="../assets/motion/rudder-pedals-working.mp4" type="video/mp4"></video>
+      <div data-reveal="1" style="position: relative; width: 100%; aspect-ratio: 16 / 9">
+          <video data-clip="1" poster="../assets/motion/rudder-pedals-working-poster.png" autoplay loop muted playsinline preload="metadata" style="width: 100%; height: 100%; object-fit: contain; display: block"><source src="../assets/motion/rudder-pedals-working-alpha.webm" type="video/webm"><source src="../assets/motion/rudder-pedals-working.mp4" type="video/mp4"></video>
         </div>
     </div>
   </section>
@@ -61,7 +61,7 @@
   <section style="position: relative; padding: var(--section-y) var(--page-margin) var(--space-9);">
     <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-7)">
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Brief" right="01" hint-size="100%,14px"></x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Brief" right="01" hint-size="100%,14px"></x-import>
       </div>
       <div data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-8); align-items: start">
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-6)"><x-import component-from-global-scope="MertTReliDesignSystem_56763c.SpecList" items="{{ brief }}" columns="minmax(64px,110px) minmax(0,1fr)" hint-size="100%%,260px"></x-import></div>
@@ -86,17 +86,14 @@
   <section style="position: relative; padding: 0 var(--page-margin) var(--section-y);">
     <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-9)">
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="The problem" right="02" hint-size="100%,14px"></x-import>
-      </div>
-      <div data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: var(--space-8); align-items: start">
-        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-6)">      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Potentiometers drift, jitter and eventually wear out, because the measurement depends on a wiper physically touching a track. On a control you stand on, that wear is not hypothetical.</p>
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">I wanted fighter style pedal geometry with sensing that reads the same on day one and day one thousand.</p>
-      </div></div>
-        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-5)"><x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="../assets/photos/rudder-pedal-photography/pedals-hero.jpg" alt="The finished rudder pedals" ratio="16 / 9" caption="The finished pedals" index="01" hover-zoom="true" hint-size="100%,300px"></x-import></div>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="The problem" right="02" hint-size="100%,14px"></x-import>
       </div>
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Constraints" right="03" hint-size="100%,14px"></x-import>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Potentiometers drift, jitter and eventually wear out, because the measurement depends on a wiper physically touching a track. On a control you stand on, that wear is not hypothetical.</p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">I wanted fighter style pedal geometry with sensing that reads the same on day one and day one thousand.</p>
+      </div>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Constraints" right="03" hint-size="100%,14px"></x-import>
       </div>
       <div data-reveal="1" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5)">
         <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">01</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Three independent axes, yaw plus left and right toe brakes, in one mechanism</span></div>
@@ -107,14 +104,11 @@
         <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">06</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Serviceable: a worn part can be reprinted, not replaced as an assembly</span></div>
       </div>
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Mechanism first" right="04" hint-size="100%,14px"></x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Mechanism first" right="04" hint-size="100%,14px"></x-import>
       </div>
-      <div data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: var(--space-8); align-items: start">
-        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-6)"><x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="../assets/photos/rudder-pedal-photography/pedals-profile.jpg" alt="Pedal mechanism in profile" ratio="16 / 9" caption="The footplate rides its pivot arm between the printed side walls" index="02" hover-zoom="true" hint-size="100%,300px"></x-import></div>
-        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-5)">      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
         <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">I designed the three-axis assembly in SolidWorks around fighter style pedal geometry and printed it, iterating on pivot placement and return feel.</p>
         <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Rapid prototyping earns its name here. Pedal feel is subjective, and the fastest way to evaluate a linkage is to stand on it.</p>
-      </div></div>
       </div>
     </div>
   </section>
@@ -133,24 +127,28 @@
   <section style="position: relative; padding: 0 var(--page-margin) var(--section-y);">
     <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-9)">
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Sensing without touching" right="05" hint-size="100%,14px"></x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Sensing without touching" right="05" hint-size="100%,14px"></x-import>
       </div>
       <div data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: var(--space-8); align-items: start">
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-6)">      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
         <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Each axis is measured by an A1301 Hall effect sensor reading a magnet on the moving part. No wiper, no contact, nothing to wear. The output is smooth and continuous, and it is identical after a thousand hours.</p>
         <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">That single component choice removes the entire failure mode that ruins potentiometer based controls.</p>
       </div></div>
-        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-5)"><x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="../assets/photos/rudder-pedal-photography/pedals-sensor.jpg" alt="The sensor lever and magnet holder" ratio="16 / 9" caption="The magnet sweeps past the fixed A1301 as the axis moves" index="03" hover-zoom="true" hint-size="100%,300px"></x-import></div>
+        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-5)"><x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="../assets/renders/rudder-pedals/a1301-hall-sensor.jpg" alt="An A1301 Hall effect sensor in a TO-92 package" ratio="16 / 9" caption="The A1301 reads the magnet through the air gap, so nothing touches" index="01" hover-zoom="true" hint-size="100%,300px"></x-import></div>
       </div>
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Firmware that gets out of the way" right="06" hint-size="100%,14px"></x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Firmware that gets out of the way" right="06" hint-size="100%,14px"></x-import>
+      </div>
+      <div data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: var(--space-8); align-items: start">
+        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-6)"><x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="../assets/renders/rudder-pedals/pro-micro.jpg" alt="An Arduino Pro Micro board" ratio="16 / 9" caption="The Pro Micro that replaced the counterfeit Teensy" index="02" hover-zoom="true" hint-size="100%,300px"></x-import></div>
+        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-5)">      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">The plan was a Teensy 2.0. The board that arrived was counterfeit and came with dead pins, so I swapped to an Arduino Pro Micro: same ATmega32U4, same native USB, and the firmware moved across unchanged.</p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">It reads the three Hall sensors and enumerates as a standard USB HID gamepad, so every simulator sees it the moment it is plugged in. No driver, no mapping utility.</p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">I measured each axis's real travel on the bench, and the firmware maps those endpoints onto the HID range and clamps anything past them. Rudder, left brake and right brake go out as three independent axes at 100 Hz.</p>
+      </div></div>
       </div>
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">A Teensy 2.0 reads the three sensors and presents itself as a standard USB HID game controller, so every simulator sees it the moment it is plugged in.</p>
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">The C++ firmware learns each axis's real minimum, centre and maximum, and applies configurable deadzone logic, so mechanical imperfection never reaches the sim.</p>
-      </div>
-      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="What I learned" right="07" hint-size="100%,14px"></x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="What I learned" right="07" hint-size="100%,14px"></x-import>
       </div>
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
         <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">The pedal feel comes from the linkage, but whether it is usable comes from the firmware. Neither could be finished without the other.</p>
@@ -161,8 +159,8 @@
   <section style="position: relative; padding: var(--space-8) var(--page-margin) var(--space-9);">
     <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-7)">
       <div data-reveal="1" style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-6); flex-wrap: wrap">
-        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="link" variant="link" trailing="→" href="bend-fixture.html" hint-size="240px,24px">Previous: The bend fixture</x-import>
-        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="outline" variant="outline" trailing="→" href="therma-shift.html" hint-size="260px,44px">Next: Therma-Shift</x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="link" trailing="→" href="bend-fixture.html" hint-size="240px,24px">Previous: The bend fixture</x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" variant="outline" trailing="→" href="therma-shift.html" hint-size="260px,44px">Next: Therma-Shift</x-import>
       </div>
     </div>
   </section>
@@ -197,7 +195,7 @@ class Component extends DCLogic {
       brief: [
         { label: "Role", value: "Design, print, wiring and firmware, solo" },
         { label: "Type", value: "Personal project" },
-        { label: "Tools", value: "SolidWorks, FDM printing, Teensy 2.0, A1301 Hall sensors, C++" },
+        { label: "Tools", value: "SolidWorks, FDM printing, Arduino Pro Micro, A1301 Hall sensors, C++" },
         { label: "Timeline", value: "2026" },
         { label: "Status", value: "In daily use at my sim" },
       ],

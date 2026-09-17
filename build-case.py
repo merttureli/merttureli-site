@@ -462,7 +462,10 @@ def build(case, index):
         '<meta property="og:type" content="article">\n'
         '<meta property="og:url" content="https://merttureli.com/projects/%s.html">\n'
         '<meta property="og:image" content="https://merttureli.com/assets/og-cover.png">\n'
-        '<script src="../support.js"></script>\n</head>\n<body>\n<x-dc>\n<helmet>\n%s\n</helmet>\n\n'
+        '<script src="../support.js"></script>\n'
+        '<script src="../js/media-playback.js" defer></script>\n'
+        '<script src="../js/depth-motion.js" defer></script>\n'
+        '</head>\n<body class="depth-design">\n<x-dc>\n<helmet>\n%s\n</helmet>\n\n'
         '<div style="background: var(--paper); overflow-x: hidden">\n\n%s\n%s\n</div>\n</x-dc>\n%s\n'
         '<script src="../js/mobile-nav.js"></script>\n'
         '<script src="../js/analytics-config.js"></script>\n'
@@ -822,7 +825,7 @@ CASES["rudder-pedals"] = {
     "brief": [
         ("Role", "Design, print, wiring and firmware, solo", ""),
         ("Type", "Personal project", ""),
-        ("Tools", "SolidWorks, FDM printing, Teensy 2.0, A1301 Hall sensors, C++", ""),
+        ("Tools", "SolidWorks, FDM printing, Arduino Pro Micro, A1301 Hall sensors, C++", ""),
         ("Timeline", "2026", ""),
         ("Status", "In daily use at my sim", ""),
     ],
@@ -844,8 +847,7 @@ CASES["rudder-pedals"] = {
             "hypothetical.",
             "I wanted fighter style pedal geometry with sensing that reads the same on day one and "
             "day one thousand.",
-        ], "frames": [("F", "assets/photos/rudder-pedal-photography/pedals-hero.jpg",
-                       "The finished rudder pedals", "The finished pedals", "01")]},
+        ]},
         {"label": "Constraints", "cards": [
             "Three independent axes, yaw plus left and right toe brakes, in one mechanism",
             "Every structural part printable on a hobby FDM printer",
@@ -859,9 +861,7 @@ CASES["rudder-pedals"] = {
             "printed it, iterating on pivot placement and return feel.",
             "Rapid prototyping earns its name here. Pedal feel is subjective, and the fastest way to "
             "evaluate a linkage is to stand on it.",
-        ], "frames": [("F", "assets/photos/rudder-pedal-photography/pedals-profile.jpg",
-                       "Pedal mechanism in profile", "The footplate rides its pivot arm between the printed side walls", "02")],
-         "flip": True},
+        ]},
         {"kind": "clip_band", "base": "rudder-pedals-mechanism",
          "caption": "The CAD assembly driven through its real linkage: yaw both ways, each toe brake, "
                     "then differential braking"},
@@ -871,14 +871,23 @@ CASES["rudder-pedals"] = {
             "identical after a thousand hours.",
             "That single component choice removes the entire failure mode that ruins potentiometer "
             "based controls.",
-        ], "frames": [("F", "assets/photos/rudder-pedal-photography/pedals-sensor.jpg",
-                       "The sensor lever and magnet holder", "The magnet sweeps past the fixed A1301 as the axis moves", "03")]},
+        ], "frames": [("F", "assets/renders/rudder-pedals/a1301-hall-sensor.jpg",
+                       "An A1301 Hall effect sensor in a TO-92 package",
+                       "The A1301 reads the magnet through the air gap, so nothing touches", "01")]},
         {"label": "Firmware that gets out of the way", "paras": [
-            "A Teensy 2.0 reads the three sensors and presents itself as a standard USB HID game "
-            "controller, so every simulator sees it the moment it is plugged in.",
-            "The C++ firmware learns each axis's real minimum, centre and maximum, and applies "
-            "configurable deadzone logic, so mechanical imperfection never reaches the sim.",
-        ], "strong": True},
+            "The plan was a Teensy 2.0. The board that arrived was counterfeit and came with dead "
+            "pins, so I swapped to an Arduino Pro Micro: same ATmega32U4, same native USB, and the "
+            "firmware moved across unchanged.",
+            "It reads the three Hall sensors and enumerates as a standard USB HID gamepad, so every "
+            "simulator sees it the moment it is plugged in. No driver, no mapping utility.",
+            "I measured each axis's real travel on the bench, and the firmware maps those endpoints "
+            "onto the HID range and clamps anything past them. Rudder, left brake and right brake "
+            "go out as three independent axes at 100 Hz.",
+        ], "strong": True,
+         "frames": [("F", "assets/renders/rudder-pedals/pro-micro.jpg",
+                     "An Arduino Pro Micro board",
+                     "The Pro Micro that replaced the counterfeit Teensy", "02")],
+         "flip": True},
         {"label": "What I learned", "strong": True, "paras": [
             "The pedal feel comes from the linkage, but whether it is usable comes from the "
             "firmware. Neither could be finished without the other.",
