@@ -207,6 +207,33 @@ def bleed(src, alt, caption):
             '    </div>\n  </section>\n' % (src, alt, caption))
 
 
+def clip_band(base, caption, ratio="16 / 9"):
+    """
+    A wide autoplaying render, centred at page width.
+
+    Unlike the hero clip, these carry their own lighting and floor, so they sit
+    in a framed band rather than floating transparent over the panel, and the
+    poster is a jpg rather than a cutout png.
+    """
+    return ('  <section data-reveal="1" style="position: relative; padding: 0 var(--page-margin) '
+            'var(--section-y)">\n'
+            '    <div style="position: relative; max-width: var(--max-width); margin: 0 auto">\n'
+            '      <div style="position: relative; width: 100%%; aspect-ratio: %s; overflow: hidden; '
+            'border-radius: var(--radius-lg, 14px); background: var(--ink-900)">\n'
+            '        <video data-clip="1" poster="../assets/motion/%s-poster.jpg" autoplay loop muted '
+            'playsinline preload="metadata" style="position: absolute; inset: 0; width: 100%%; '
+            'height: 100%%; object-fit: cover; display: block">'
+            '<source src="../assets/motion/%s.webm" type="video/webm">'
+            '<source src="../assets/motion/%s.mp4" type="video/mp4"></video>\n'
+            '      </div>\n'
+            '      <div style="padding: var(--space-4) 0 0">\n'
+            '        <span style="font-family: var(--font-mono); font-size: var(--fs-meta); '
+            'letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta)">%s'
+            '</span>\n'
+            '      </div>\n'
+            '    </div>\n  </section>\n' % (ratio, base, base, base, caption))
+
+
 def media_col(frames):
     """
     Frames laid out across, not down.
@@ -350,6 +377,12 @@ def build(case, index):
         if kind == "bleed":
             flush()
             body.append(bleed(sec["src"], sec["alt"], sec["caption"]))
+            continue
+
+        if kind == "clip_band":
+            flush()
+            body.append(clip_band(sec["base"], sec["caption"],
+                                  sec.get("ratio", "16 / 9")))
             continue
 
         head = block(rule(sec["label"], right="%02d" % n))
@@ -829,6 +862,9 @@ CASES["rudder-pedals"] = {
         ], "frames": [("F", "assets/photos/rudder-pedal-photography/pedals-profile.jpg",
                        "Pedal mechanism in profile", "The footplate rides its pivot arm between the printed side walls", "02")],
          "flip": True},
+        {"kind": "clip_band", "base": "rudder-pedals-mechanism",
+         "caption": "The CAD assembly driven through its real linkage: yaw both ways, each toe brake, "
+                    "then differential braking"},
         {"label": "Sensing without touching", "paras": [
             "Each axis is measured by an A1301 Hall effect sensor reading a magnet on the moving part. "
             "No wiper, no contact, nothing to wear. The output is smooth and continuous, and it is "
