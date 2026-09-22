@@ -468,6 +468,8 @@ def build(case, index):
         '<script src="../support.js"></script>\n'
         '<script src="../js/media-playback.js" defer></script>\n'
         '<script src="../js/depth-motion.js" defer></script>\n'
+        '<link rel="stylesheet" href="../css/interaction-polish.css">\n'
+        '<script src="../js/interaction-polish.js" defer></script>\n'
         '</head>\n<body class="depth-design">\n<x-dc>\n<helmet>\n%s\n</helmet>\n\n'
         '<div style="background: var(--paper); overflow-x: hidden">\n\n%s\n%s\n</div>\n</x-dc>\n%s\n'
         '<script src="../js/mobile-nav.js"></script>\n'

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mert Tureli · Mechanical Engineer</title>
-<meta name="description" content="Mechanical engineer in Schenectady, NY. I design, build, and test hardware end to end: CAD and drawings, electronics and firmware, and the test rigs that prove it works.">
+<meta name="description" content="Mechanical engineer in Austin, TX. I design, build, and test hardware end to end: CAD and drawings, electronics and firmware, and the test rigs that prove it works.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230A0A0A'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='26' font-weight='600' fill='%23FFFFFF'%3EMT%3C/text%3E%3C/svg%3E">
 <link rel="canonical" href="https://merttureli.com/">
 <meta property="og:title" content="Mert Tureli · Mechanical Engineer">
@@ -18,6 +18,9 @@
 <script src="assets/charger-explorer/integration.js" defer></script>
 <script src="js/media-playback.js" defer></script>
 <script src="js/depth-motion.js" defer></script>
+<link rel="stylesheet" href="css/interaction-polish.css">
+<script src="js/interaction-polish.js" defer></script>
+<script src="js/photography-loader.js" defer></script>
 </head>
 <body class="depth-design">
 <x-dc>
@@ -50,7 +53,7 @@
     <div style="position: relative; flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr); align-items: center; gap: var(--space-7); padding: calc(var(--header-h) + var(--space-7)) var(--page-margin) var(--space-6); max-width: var(--max-width); margin: 0 auto; width: 100%">
 
       <div class="depth-hero-copy" style="display: flex; flex-direction: column; gap: var(--space-6)">
-        <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" wide="true" dc-props="{{ metaOnPhoto }}" hint-size="240px,16px">Mechanical engineer / Schenectady, New York</x-import>
+        <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" wide="true" dc-props="{{ metaOnPhoto }}" hint-size="240px,16px">Mechanical engineer / Austin, Texas</x-import>
         <div style="display: flex; flex-direction: column">
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="2" as="h1" treatment="inverse" hint-size="100%,120px">Mert</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="2" treatment="inverse" hint-size="100%,120px">Tureli</x-import>
@@ -238,12 +241,12 @@
         <div style="display: flex; flex-direction: column; gap: var(--space-4)">
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" hint-size="100%,50px">Engineering intern</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="strong" hint-size="100%,16px">SunThru</x-import>
-          <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="100%,16px">Schenectady, NY / June 2026 to present</x-import>
+          <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="100%,16px">Schenectady, NY / 2026</x-import>
         </div>
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-4)">
-          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">SunThru is a Union College spin-out developing silica aerogel inserts that give double pane windows triple pane performance. I work on the prototype side and the equipment side.</p>
-          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">On the product: building and testing the company's first full in-house prototype units, and leading the validation work on thermal performance and optical clarity. I produce the toleranced drawings that go out to machine shops for quoting, and I manage component sourcing when lead times are tight.</p>
-          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">On the equipment: supporting bring-up of a PLC automation system for production equipment, which means ladder logic, panel wiring, instrumentation, and running structured test procedures on live hardware.</p>
+          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">SunThru is a Union College spin-out developing silica aerogel inserts that give double pane windows triple pane performance. I worked on both prototypes and production equipment.</p>
+          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">On the product: I built and tested the company's first full in-house prototype units and led validation work on thermal performance and optical clarity. I produced toleranced drawings for machine-shop quotes and managed component sourcing under tight lead times.</p>
+          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">On the equipment: I supported bring-up of a PLC automation system, including ladder logic, panel wiring, instrumentation, and structured test procedures on live hardware.</p>
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-muted); max-width: var(--measure)">I also led sourcing for a replacement production blower on a one week deadline, which involved specifying the requirement, working the manufacturer's rep, catching a power spec mismatch against the site's actual supply, and raising material compatibility questions before anyone ordered anything.</p>
         </div>
       </div>
@@ -434,16 +437,7 @@
       </div>
     </div>
 
-    <div data-reveal="1" style="position: relative; padding: 0 var(--page-margin) var(--space-9)">
-      <div style="max-width: var(--max-width); margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: var(--space-5)">
-        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="assets/photos/beyond/moon-pines.jpg" alt="Crescent moon behind pine branches at dusk" ratio="4 / 5" caption="Crescent moon" index="01" hover-zoom="true" hint-size="100%,280px"></x-import>
-        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="assets/photos/beyond/overlook.jpg" alt="Figure looking out over forested hills to the sea" ratio="4 / 5" caption="The overlook" index="02" hover-zoom="true" hint-size="100%,280px"></x-import>
-        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="assets/photos/beyond/lighthouse.jpg" alt="Lighthouse framed by bare branches" ratio="4 / 5" caption="Lighthouse" index="03" hover-zoom="true" hint-size="100%,280px"></x-import>
-        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="assets/photos/beyond/stargazers.jpg" alt="Two people silhouetted under a star field" ratio="4 / 5" caption="Under the stars" index="04" hover-zoom="true" hint-size="100%,280px"></x-import>
-        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="assets/photos/beyond/rosa-rugosa.jpg" alt="Rosa rugosa in bloom above a lake" ratio="4 / 5" caption="Rosa rugosa" index="05" hover-zoom="true" hint-size="100%,280px"></x-import>
-        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="assets/photos/beyond/lake-framed.jpg" alt="Still water and low mountains framed by trees" ratio="4 / 5" caption="Still water" index="06" hover-zoom="true" hint-size="100%,280px"></x-import>
-      </div>
-    </div>
+    <photo-corridor style="display:block;height:clamp(430px,48vw,740px)"></photo-corridor>
   </section>
 
   <section style="padding: var(--section-y) var(--page-margin) 0">
@@ -475,7 +469,7 @@
       <div style="display: flex; flex-direction: column; gap: var(--space-6)">
         <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" wide="true" tone="strong" hint-size="200px,16px">Contact</x-import>
         <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="2" hint-size="100%,120px">Get in touch</x-import>
-        <p style="font-size: var(--fs-body-lg); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure-narrow)">Open to engineering roles in design, test, manufacturing and controls. The full write-ups, drawings and numbers are in the case studies above.</p>
+        <p style="font-size: var(--fs-body-lg); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure-narrow)">Based in Austin, Texas, and currently employed. For a conversation about engineering, photography, or something interesting you are building, get in touch.</p>
         <div style="display: flex; flex-wrap: wrap; gap: var(--space-4)">
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="outline" variant="outline" trailing="→" href="https://linkedin.com/in/merttureli" hint-size="160px,44px">LinkedIn</x-import>
         </div>
@@ -505,7 +499,7 @@
     <div style="max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-6)">
       <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-5)">
         <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Wordmark" name="MERT TURELI" size="md" hint-size="220px,20px"></x-import>
-        <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="320px,16px">Schenectady, New York / B.S. Mechanical Engineering, Union College, 2026</x-import>
+        <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="320px,16px">Austin, Texas / B.S. Mechanical Engineering, Union College, 2026</x-import>
       </div>
       <p style="max-width: 96ch; font-family: var(--font-mono); font-size: var(--fs-meta-sm); line-height: 1.5; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-meta)">Photographs of the machine and the team by Paul Buckowski / Union College. CAD animations rendered from the source assemblies. Aircraft models are third-party, illustration only. / <a href="privacy.html" style="color: var(--text-meta); text-decoration: underline; text-underline-offset: 3px">Privacy</a></p>
     </div>
@@ -533,7 +527,7 @@ class Component extends DCLogic {
       ],
       aboutSpecs: [
         { label: "Title", value: "Mechanical engineer" },
-        { label: "Based", value: "Schenectady, New York" },
+        { label: "Based", value: "Austin, Texas" },
         { label: "From", value: "Izmir, Turkey" },
         { label: "Degree", value: "B.S. Mechanical Engineering", aside: "Union College, 2026" },
       ],

@@ -1,0 +1,14 @@
+/* Native page transitions do not hold navigation while an effect plays. */
+@view-transition{navigation:auto}
+::view-transition-old(root){animation:page-out 180ms ease-out both}
+::view-transition-new(root){animation:page-in 260ms cubic-bezier(.2,.7,.2,1) both}
+@keyframes page-out{to{opacity:0;transform:translateY(-8px)}}
+@keyframes page-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@property --orbit-angle{syntax:'<angle>';initial-value:0deg;inherits:false}
+.depth-design [data-depth-button]:not([data-depth-button="link"]){position:relative;isolation:isolate;transition:transform 180ms ease,box-shadow 240ms ease}
+.depth-design [data-depth-button]:not([data-depth-button="link"])::before{content:"";position:absolute;inset:-1px;padding:1px;border-radius:inherit;pointer-events:none;background:conic-gradient(from var(--orbit-angle),transparent 0deg 235deg,currentColor 300deg,transparent 350deg);mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude;opacity:0}
+.depth-design [data-depth-button]:not([data-depth-button="link"]):is(:hover,:focus-visible)::before{opacity:.8;animation:button-orbit 850ms cubic-bezier(.2,.75,.25,1) both}
+.depth-design [data-depth-button]:not([data-depth-button="link"]):active{transform:translateY(1px) scale(.975)!important;box-shadow:inset 0 0 18px #8883}
+@keyframes button-orbit{from{--orbit-angle:0deg}to{--orbit-angle:360deg}}
+.site-loading{position:fixed;right:24px;bottom:24px;z-index:2147483646;pointer-events:none}
+@media(prefers-reduced-motion:reduce){::view-transition-old(root),::view-transition-new(root){animation:none}.depth-design [data-depth-button]:not([data-depth-button="link"])::before{animation:none!important}.depth-design [data-depth-button]:not([data-depth-button="link"]):active{transform:none!important}}

@@ -1,0 +1,11 @@
+    <section class="corridor" aria-label="Explore photographs">
+      <div class="rails" id="rails"></div>
+      <div class="corridor-label"><span class="meta">THROUGH THE VIEWFINDER</span><button class="text-button" id="enter">Enter the collection <span aria-hidden="true">↗</span></button></div>
+      <div class="corridor-controls"><span class="meta">DRAG TO EXPLORE / CLICK A FRAME</span><button id="pause" aria-pressed="false">Pause motion</button></div>
+    </section>
+  <dialog id="viewer" aria-labelledby="photo-title">
+    <div class="viewer-bar"><span class="meta">MERT TURELI / PHOTOGRAPHY</span><button id="close" aria-label="Close photograph">Close <span aria-hidden="true">×</span></button></div>
+    <div class="image-stage" id="image-stage"><img id="still" alt=""><canvas id="morph" aria-hidden="true"></canvas><p id="load-error" hidden>Could not load this photograph. Try another frame.</p></div>
+    <div class="viewer-bottom"><div class="caption" aria-live="polite"><span id="count" class="meta"></span><h2 id="photo-title"></h2></div><div class="viewer-actions"><label class="effect-toggle"><input type="checkbox" id="dissolve" checked> Soft dissolve</label><button id="previous" aria-label="Previous photograph">←</button><button id="next" aria-label="Next photograph">→</button></div></div>
+    <div id="thumbs" class="thumbs" aria-label="Choose a photograph"></div>
+  </dialog>

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Photography study / Mert Tureli</title>
+  <link rel="stylesheet" href="_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/fonts.css">
+  <link rel="stylesheet" href="css/photography-lab.css">
+  <script type="module" src="js/photography-lab.js"></script>
+</head>
+<body>
+  <header class="masthead"><a href="index.html#beyond">MERT TURELI<span> / BEYOND ENGINEERING</span></a><span class="meta">PHOTOGRAPHY STUDY / 01</span></header>
+  <main>
+    <section class="intro" aria-labelledby="title">
+      <div class="intro-line"><span class="meta">A DIFFERENT WAY OF LOOKING</span><span class="meta">SELECTED PHOTOGRAPHS / 04</span></div>
+      <h1 id="title">Paying<br><span>attention.</span></h1>
+      <p>Light, texture, and the things<br>worth looking at twice.</p>
+    </section>
+    <section class="corridor" aria-label="Explore photographs">
+      <div class="rails" id="rails"></div>
+      <div class="corridor-label"><span class="meta">THROUGH THE VIEWFINDER</span><button class="text-button" id="enter">Enter the collection <span aria-hidden="true">↗</span></button></div>
+      <div class="corridor-controls"><span class="meta">DRAG TO EXPLORE / CLICK A FRAME</span><button id="pause" aria-pressed="false">Pause motion</button></div>
+    </section>
+    <section class="collection" id="collection" aria-labelledby="collection-title">
+      <div class="section-title"><div><span class="meta">THE CONTACT SHEET</span><h2 id="collection-title">A closer look.</h2></div><p>Four frames. No itinerary.</p></div>
+      <div id="grid" class="grid"></div>
+    </section>
+  </main>
+  <footer><span>MERT TURELI</span><span class="meta">PHOTOGRAPHY / PERSONAL COLLECTION</span><a href="index.html#beyond">Back to the portfolio ↗</a></footer>
+  <dialog id="viewer" aria-labelledby="photo-title">
+    <div class="viewer-bar"><span class="meta">MERT TURELI / PHOTOGRAPHY</span><button id="close" aria-label="Close photograph">Close <span aria-hidden="true">×</span></button></div>
+    <div class="image-stage" id="image-stage"><img id="still" alt=""><canvas id="morph" aria-hidden="true"></canvas><p id="load-error" hidden>Could not load this photograph. Try another frame.</p></div>
+    <div class="viewer-bottom"><div class="caption" aria-live="polite"><span id="count" class="meta"></span><h2 id="photo-title"></h2></div><div class="viewer-actions"><label class="effect-toggle"><input type="checkbox" id="dissolve" checked> Soft dissolve</label><button id="previous" aria-label="Previous photograph">←</button><button id="next" aria-label="Next photograph">→</button></div></div>
+    <div id="thumbs" class="thumbs" aria-label="Choose a photograph"></div>
+  </dialog>
+</body>
+</html>
