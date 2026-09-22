@@ -1,4 +1,4 @@
-/* Content stays visible. Only headings and media settle as they arrive. */
+/* One gentle opacity reveal. Text stays at its final position throughout. */
 (() => {
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const seen = new WeakSet(), pending = new Set(), active = new Set();
@@ -12,25 +12,17 @@
       const el = entry.target;
       observer.unobserve(el); pending.delete(el); seen.add(el);
       if (disabled() || document.hidden || !el.animate) continue;
-      const heading = /^H[2-4]$/.test(el.tagName);
-      const label = el.hasAttribute('data-depth-label');
       const rule = el.hasAttribute('data-depth-rule');
       const target = rule ? el.querySelector('span[style*="flex: 1"]') : el;
       if (!target) continue;
-      const frames = rule ? [ { transform: 'scaleX(.15)' }, { transform: 'scaleX(1)' } ] : label ? [
-        { opacity: .65 }, { opacity: 1 }
-      ] : [
-        { opacity: heading ? .65 : .8, transform: `translateY(${heading ? 10 : 12}px)` },
-        { opacity: 1, transform: 'translateY(0)' }
-      ];
+      const frames = [{ opacity: .85 }, { opacity: 1 }];
       const animation = target.animate(frames, {
-        duration: label ? 320 : heading ? 440 : 500,
-        delay: heading ? 60 : 0, easing: 'cubic-bezier(.22,1,.36,1)'
+        duration: 550, delay: 0, easing: 'cubic-bezier(.25,.1,.25,1)'
       });
       active.add(animation);
       animation.finished.catch(() => {}).finally(() => active.delete(animation));
     }
-  }, { rootMargin: '0px 0px -6% 0px', threshold: 0 }) : null;
+  }, { rootMargin: '0px 0px 40px 0px', threshold: 0 }) : null;
 
   function refresh(next) {
     if (next) settings = { ...settings, ...next };

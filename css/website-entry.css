@@ -1,0 +1,11 @@
+/* A small, static invitation. The inquiry assets load on their own page. */
+.website-entry{padding:0 var(--page-margin) var(--section-y);background:var(--paper);color:var(--ink-900)}
+.website-entry-inner{max-width:var(--max-width);margin:auto;border-top:1px solid var(--ink-a12);padding-top:32px;display:grid;grid-template-columns:1.4fr 1fr;gap:64px;align-items:end}
+.website-entry-label{font:10px/1.5 var(--font-mono);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-500);display:block;margin-bottom:28px}
+.website-entry h2{font:500 clamp(40px,5.5vw,82px)/.98 var(--font-display);letter-spacing:-.045em;text-transform:uppercase;margin:0}
+.website-entry h2 span{color:var(--ink-400)}
+.website-entry p{font:16px/1.7 var(--font-body);max-width:37ch;margin:0 0 24px;color:var(--ink-600)}
+.website-entry-link{color:var(--ink-900);border:1px solid var(--ink-a30);border-radius:999px;padding:14px 22px;text-decoration:none;display:inline-flex;align-items:center;gap:38px;font:12px/1.4 var(--font-mono);letter-spacing:.03em}
+.website-entry-link:focus-visible{outline:2px solid currentColor;outline-offset:5px}
+.website-entry-link span{font-size:20px;line-height:1}
+@media(max-width:700px){.website-entry-inner{grid-template-columns:1fr;gap:30px}.website-entry h2{font-size:clamp(38px,9vw,58px)}.website-entry p{font-size:15px}.website-entry-label{margin-bottom:20px}}

@@ -19,6 +19,7 @@
 <script src="js/media-playback.js" defer></script>
 <script src="js/depth-motion.js" defer></script>
 <link rel="stylesheet" href="css/interaction-polish.css">
+<link rel="stylesheet" href="css/website-entry.css">
 <script src="js/interaction-polish.js" defer></script>
 <script src="js/photography-loader.js" defer></script>
 </head>
@@ -464,12 +465,19 @@
     </div>
   </section>
 
+  <section id="websites" class="website-entry" aria-labelledby="website-entry-title">
+    <div class="website-entry-inner">
+      <div><span class="website-entry-label">Websites / Design &amp; development</span><h2 id="website-entry-title">Like what you see?<br><span>Let's build yours.</span></h2></div>
+      <div><p>Your work, your business, your next idea. Let's give it a website people want to explore.</p><a href="websites.html" class="website-entry-link" data-depth-button="outline">A website for you <span aria-hidden="true">↗</span></a></div>
+    </div>
+  </section>
+
   <section id="contact" class="on-dark" style="position: relative; background: var(--ink-900); padding: var(--section-y) var(--page-margin) var(--space-9)">
     <div style="position: relative; z-index: 1; max-width: var(--max-width); margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--space-9); align-items: start">
       <div style="display: flex; flex-direction: column; gap: var(--space-6)">
         <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" wide="true" tone="strong" hint-size="200px,16px">Contact</x-import>
         <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="2" hint-size="100%,120px">Get in touch</x-import>
-        <p style="font-size: var(--fs-body-lg); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure-narrow)">Based in Austin, Texas, and currently employed. For a conversation about engineering, photography, or something interesting you are building, get in touch.</p>
+        <p style="font-size: var(--fs-body-lg); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure-narrow)">Based in Austin, Texas. For a conversation about engineering, photography, or something interesting you are building, get in touch.</p>
         <div style="display: flex; flex-wrap: wrap; gap: var(--space-4)">
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="outline" variant="outline" trailing="→" href="https://linkedin.com/in/merttureli" hint-size="160px,44px">LinkedIn</x-import>
         </div>
@@ -519,6 +527,7 @@ class Component extends DCLogic {
         { id: "work", label: "Work", href: "#work" },
         { id: "experience", label: "Experience", href: "#experience" },
         { id: "beyond", label: "Beyond", href: "#beyond" },
+        { id: "websites", label: "Websites", href: "#websites" },
         { id: "contact", label: "Contact", href: "#contact" },
       ],
       social: [
