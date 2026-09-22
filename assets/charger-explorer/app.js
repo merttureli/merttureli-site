@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import {OrbitControls} from './vendor/OrbitControls.js';
 import {storyFor} from './part-stories.js';
 import {easeInOut,fitDistance,opacityFor} from './focus-motion.js';
+import {createLivery} from './livery.js';
 
 const $=id=>document.getElementById(id),stage=$('stage'),explorer=$('explorer');
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
@@ -44,6 +45,9 @@ function draw(now){
     applyAppearance();controls.update();
     if(t===1){const done=motion.done;motion=null;done?.();}
   }
+  // Keep depth precision at assembly scale without clipping close component views.
+  const near=Math.max(.00005,Math.min(.02,camera.position.distanceTo(controls.target)*.01));
+  if(camera.near!==near){camera.near=near;camera.updateProjectionMatrix();}
   root.updateMatrixWorld(true);placeHotspots();renderer.render(scene,camera);
   if(motion)invalidate();
 }
@@ -68,7 +72,7 @@ function applyAppearance(){
       const transparent=wire||opacity<.999;
       if(obj.material.transparent!==transparent){obj.material.transparent=transparent;obj.material.needsUpdate=true;}
       obj.material.depthWrite=!wire&&!transparent;
-      obj.material.color.setHex(wire?(active?0xffffff:0x999999):(active?0xf1f1ee:(p.exterior?0xc8c8c5:0x9c9c99)));
+      obj.material.color.setHex(wire?(active?0xffffff:0x999999):(obj.userData.liveryColor??(active?0xf1f1ee:(p.exterior?0xc8c8c5:0x9c9c99))));
       obj.material.clippingPlanes=cutting&&p.exterior?[clip]:[];
       obj.renderOrder=active?3:0;
     }
@@ -167,11 +171,13 @@ renderer.domElement.addEventListener('webglcontextlost',event=>{event.preventDef
 try{
   const [meta,buffer]=await Promise.all([fetch('assembly.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Metadata unavailable');return r.json();}),fetch('assembly.bin',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Geometry unavailable');return r.arrayBuffer();})]);
   data=meta;if(buffer.byteLength!==data.bytes)throw Error('Geometry is updating. Reload the page.');
+  await document.fonts.load('700 32px "Space Grotesk"').catch(()=>{});
+  const paintPart=createLivery();
   for(const p of data.parts){
     const g=new THREE.Group();g.userData={part:p,opacity:opacityFor(p,null,options()),bounds:new THREE.Box3()};
     const wireGeometry=new THREE.BufferGeometry();wireGeometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(buffer,p.wire.offset,p.wire.count),3));wireGeometry.computeBoundingBox();
     const wire=new THREE.LineSegments(wireGeometry,new THREE.LineBasicMaterial({transparent:true,depthWrite:false}));wire.userData.part=p;g.add(wire);g.userData.bounds.copy(wireGeometry.boundingBox);
-    if(p.mesh){const m=p.mesh,geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(buffer,m.vertexOffset,m.vertexCount),3));geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(buffer,m.indexOffset,m.indexCount),1));geometry.computeVertexNormals();geometry.computeBoundingBox();g.userData.bounds.union(geometry.boundingBox);const mesh=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({metalness:.22,roughness:.4,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1}));mesh.userData.part=p;g.add(mesh);}
+    if(p.mesh){const m=p.mesh,geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(buffer,m.vertexOffset,m.vertexCount),3));geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(buffer,m.indexOffset,m.indexCount),1));geometry.computeVertexNormals();geometry.computeBoundingBox();g.userData.bounds.union(geometry.boundingBox);const paint=paintPart(p,geometry),{geometry:paintedGeometry,...finish}=paint||{};const mesh=new THREE.Mesh(paintedGeometry||geometry,new THREE.MeshStandardMaterial({metalness:.22,roughness:.4,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1,...finish}));mesh.userData.part=p;if(paint)mesh.userData.liveryColor=paint.color;g.add(mesh);}
     root.add(g);groups.push(g);
   }
   for(const id of [0,14,18]){const label=storyFor(data.parts.find(p=>p.id===id)).label,button=document.createElement('button');button.className='hotspot';button.textContent=label;button.setAttribute('aria-label',`Explore ${label}`);button.onclick=()=>select(id,{keyboard:true});$('hotspots').append(button);hotspots.push({id,button});}

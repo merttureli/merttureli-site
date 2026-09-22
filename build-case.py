@@ -453,11 +453,11 @@ def build(case, index):
     html = (
         '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
-        '<title>%s · Mert Türeli</title>\n'
+        '<title>%s · Mert Tureli</title>\n'
         '<meta name="description" content="%s">\n'
         '<link rel="icon" href="%s">\n'
         '<link rel="canonical" href="https://merttureli.com/projects/%s.html">\n'
-        '<meta property="og:title" content="%s · Mert Türeli">\n'
+        '<meta property="og:title" content="%s · Mert Tureli">\n'
         '<meta property="og:description" content="%s">\n'
         '<meta property="og:type" content="article">\n'
         '<meta property="og:url" content="https://merttureli.com/projects/%s.html">\n'

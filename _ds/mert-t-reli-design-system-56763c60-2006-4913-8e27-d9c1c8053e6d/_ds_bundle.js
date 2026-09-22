@@ -381,7 +381,7 @@ const SIZES = {
   }
 };
 function Wordmark({
-  name = "MERT TÜRELI",
+  name = "MERT TURELI",
   size = "md",
   weight = 500,
   inverse = false,
@@ -1053,7 +1053,7 @@ window.AboutScreen = function AboutScreen({
   }, contact ? "Contact" : "About"), /*#__PURE__*/React.createElement(DisplayHeading, {
     level: 2,
     as: "h1"
-  }, contact ? "Get in touch" : "Mert Türeli"), /*#__PURE__*/React.createElement("p", {
+  }, contact ? "Get in touch" : "Mert Tureli"), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: "var(--fs-title-3)",
       lineHeight: 1.4,

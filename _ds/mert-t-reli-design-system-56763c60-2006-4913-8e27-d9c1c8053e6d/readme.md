@@ -1,6 +1,6 @@
-# Mert Türeli — Design System
+# Mert Tureli — Design System
 
-A personal-portfolio design system for **Mert Türeli**: aerospace engineer, private pilot, photographer. One site, one mixed body of work; the disciplines are noted, not separated. Later additions (travel, cooking) belong in the same index rather than in new sections.
+A personal-portfolio design system for **Mert Tureli**: aerospace engineer, private pilot, photographer. One site, one mixed body of work; the disciplines are noted, not separated. Later additions (travel, cooking) belong in the same index rather than in new sections.
 
 The system is deliberately narrow: a white canvas, two typefaces, no colour, very large spacing steps, film grain, and photography carrying all the visual weight.
 
