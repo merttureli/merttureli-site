@@ -303,6 +303,9 @@ def build(case, index):
                        % frame(case["hero_image"], case["title"], case.get("hero_caption", ""),
                                ratio=case.get("clip_ratio", "4 / 3"), zoom=False, size="100%,420px"))
 
+    if case.get("clip_aria") and clip_markup:
+        from html import escape
+        clip_markup = clip_markup.replace('<video ', '<video aria-label="' + escape(case["clip_aria"], quote=True) + '" ', 1)
     if case.get("clip_note") and clip_markup:
         clip_markup = clip_markup.replace(
             '        </div>',
@@ -908,7 +911,8 @@ CASES["therma-shift"] = {
     "lede": ("A solid state desktop coaster that actively heats or cools any standard mug, glass or "
              "can, with no proprietary drinkware. One Peltier module, closed loop control, and a "
              "safety architecture designed for unattended desk use."),
-    "clip": "therma-shift-360",
+    "clip": "therma-shift-airflow",
+    "clip_aria": "Airflow illustration: air enters all bottom grille slots, passes through the heatsink fins, descends into the blower and exits the oval side vent. Heating and cooling use the same flow direction.",
     "clip_ratio": "4 / 3",
     "brief": [
         ("Role", "Design, thermal validation, firmware, solo", ""),
