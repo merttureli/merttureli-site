@@ -147,7 +147,7 @@
 .weekdays,.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
 .weekdays{font:400 var(--fs-meta) var(--font-mono);color:var(--text-muted);text-align:center;margin-bottom:8px}
 .days button{border:1px solid transparent;border-radius:var(--radius-sm);background:none;min-width:0;height:42px;font:400 14px var(--font-display);color:var(--text-display);transition:background var(--t-hover),color var(--t-hover)}
-.days button:hover:not(:disabled){background:var(--ink-a06)}
+.days button:hover:not(:disabled):not([aria-pressed=true]){background:var(--ink-a06)}
 .days button:disabled{opacity:.32;cursor:not-allowed}
 .days button.today{text-decoration:underline;text-underline-offset:4px}
 .days button[aria-pressed=true]{background:var(--ink-900);border-color:var(--ink-900);color:var(--paper)}
