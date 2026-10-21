@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LAB / 01 / STAGE · Mert Tureli VX</title>
+<meta name="robots" content="noindex">
+<meta name="description" content="Test bench for the vx stage module: the CHARGER flight model rendered live from the published assembly, with its scroll-driven descent, explode schedule and silhouette exposed as controls.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230A0A0A'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='26' font-weight='600' fill='%23FFFFFF'%3EMT%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/lab.css">
+<link rel="stylesheet" href="../css/stage.css">
+<script type="importmap">{"imports":{"three":"../../assets/charger-explorer/vendor/three.module.js"}}</script>
+</head>
+<body class="on-dark">
+<div class="lab st-lab" id="lab">
+  <header class="lab-head" id="head">
+    <h1>LAB / 01 / STAGE</h1>
+    <nav aria-label="Lab navigation"><a href="./">Lab index</a><a href="../">VX</a><a href="/">Production site</a></nav>
+  </header>
+
+  <div class="lab-body st-lab-body" id="track">
+    <section class="lab-stage st-lab-stage st-stage" id="stageBox" aria-label="CHARGER stage">
+      <canvas id="stage" class="st-canvas" role="img" aria-label="CHARGER flight model, rendered live from the published assembly"></canvas>
+      <svg id="sil" class="st-overlay" aria-hidden="true" focusable="false"></svg>
+      <img id="poster" class="st-poster" hidden alt="CHARGER on the pad in its orange livery, painted render" src="../../assets/motion/charger-painted-wide-poster.png">
+      <div class="st-ticks" id="ticks" aria-hidden="true"><i></i></div>
+      <p class="st-flag" id="flag" hidden>No WebGL / poster</p>
+      <p class="st-caption" id="caption"><b>CHARGER</b> / flight model as published in the explorer / <span id="capState">loading geometry</span></p>
+      <div class="st-progress" id="bar" aria-hidden="true"><i id="barFill"></i></div>
+      <div class="lab-readout st-hud" id="readout" aria-live="off">waiting for geometry</div>
+    </section>
+
+    <aside class="lab-panel st-lab-panel" id="panel" aria-label="Stage controls">
+      <h2>Drive</h2>
+      <label class="lab-row">Progress <output id="oProgress">0.000</output><input id="progress" type="range" min="0" max="1" step="0.001" value="0"></label>
+      <label class="lab-row">Scroll drives progress <input id="scrollDrive" type="checkbox" checked></label>
+      <label class="lab-row">Explode override <output id="oExplode">off</output><input id="explode" type="range" min="0" max="1" step="0.01" value="0"></label>
+      <label class="lab-row">Explode on schedule <input id="schedule" type="checkbox" checked></label>
+
+      <h2>Stations / nose to tail</h2>
+      <ol class="st-lab-stations" id="stations"></ol>
+
+      <h2>Render</h2>
+      <div class="st-lab-group" role="group" aria-label="Draw mode">
+        <button class="lab-button" data-mode="solid" aria-pressed="true">Solid</button>
+        <button class="lab-button" data-mode="edges" aria-pressed="false">Edges</button>
+        <button class="lab-button" data-mode="wire" aria-pressed="false">Wire</button>
+      </div>
+      <label class="lab-row">Tier <select id="tier"><option value="auto">Auto</option><option value="3">T3 full</option><option value="2">T2 reduced</option><option value="1">T1 minimal</option><option value="0">T0 static</option></select></label>
+      <label class="lab-row">Pointer parallax <input id="parallax" type="checkbox" checked></label>
+      <label class="lab-row">Silhouette overlay <input id="silhouette" type="checkbox" checked></label>
+
+      <h2>Goto</h2>
+      <label class="lab-row">Part <select id="part"><option value="">loading</option></select></label>
+      <div class="st-lab-group">
+        <button class="lab-button" id="fly">Fly to part</button>
+        <button class="lab-button" id="release">Back to path</button>
+        <button class="lab-button" id="lose">Lose context</button>
+      </div>
+      <p class="st-lab-files"><b>Module</b> / stage / js/stage/stage.js, loader.js, path.js, explode.js, js/data/stations.js, css/stage.css / geometry from assets/charger-explorer/assembly.json and assembly.bin</p>
+    </aside>
+  </div>
+
+</div>
+
+<script type="module">
+import { bus } from '../js/core/bus.js';
+import { governor } from '../js/core/governor.js';
+import { scroll } from '../js/core/scroll.js';
+import { createStage } from '../js/stage/stage.js';
+import { SCHEDULE } from '../js/stage/path.js';
+
+const $ = (id) => document.getElementById(id);
+const canvas = $('stage'), sil = $('sil'), track = $('track'), readout = $('readout');
+const progressInput = $('progress'), scrollDrive = $('scrollDrive'), explodeInput = $('explode'), scheduleBox = $('schedule');
+const tierSelect = $('tier'), parallaxBox = $('parallax'), silBox = $('silhouette'), partSelect = $('part');
+const fmt = (n, d = 2) => Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+const pad2 = (n) => String(n).padStart(2, '0');
+
+// header height drives the sticky offsets of the stage and the panel
+const head = $('head');
+function measureHead() { document.documentElement.style.setProperty('--st-head', `${Math.ceil(head.getBoundingClientRect().height)}px`); }
+measureHead(); addEventListener('resize', measureHead);
+// the readout is a HUD over the stage on wide screens and the first block of the panel on narrow ones
+const narrow = matchMedia('(max-width: 860px)');
+function placeHud() { if (narrow.matches) $('panel').prepend(readout); else $('stageBox').append(readout); }
+placeHud(); narrow.addEventListener('change', placeHud);
+
+const stage = await createStage({ canvas, tier: governor.tier });
+window.stage = stage; // for the browser console
+scroll.track(track, 'range');
+
+if (stage.fallback) {
+  canvas.hidden = true; $('poster').hidden = false; $('flag').hidden = false;
+  $('capState').textContent = 'no WebGL, poster shown';
+}
+
+// ---- governor -> tier --------------------------------------------------
+governor.subscribe(({ tier }) => {
+  stage.setTier(tier);
+  tierSelect.options[0].textContent = `Auto / T${tier}`;
+  $('ticks').dataset.blink = '1'; setTimeout(() => { $('ticks').dataset.blink = '0'; }, 240);
+});
+tierSelect.addEventListener('change', () => { governor.pin(tierSelect.value === 'auto' ? null : Number(tierSelect.value)); });
+
+// ---- progress: scroll or range -----------------------------------------
+function setProgress(p, fromScroll) {
+  stage.setProgress(p);
+  progressInput.value = p.toFixed(3); $('oProgress').value = fmt(p, 3);
+  $('barFill').style.width = `${(p * 100).toFixed(2)}%`;
+  if (!fromScroll) scrollDrive.checked = false;
+}
+bus.on('scroll:frame', () => { if (scrollDrive.checked) setProgress(scroll.progressOf(track), true); });
+progressInput.addEventListener('input', () => setProgress(Number(progressInput.value), false));
+scrollDrive.addEventListener('change', () => { if (scrollDrive.checked) setProgress(scroll.progressOf(track), true); });
+
+// ---- explode override --------------------------------------------------
+function syncExplode() {
+  if (scheduleBox.checked) { stage.setExplode(null); $('oExplode').value = 'off'; }
+  else { stage.setExplode(Number(explodeInput.value)); $('oExplode').value = fmt(explodeInput.value, 2); }
+}
+explodeInput.addEventListener('input', () => { scheduleBox.checked = false; syncExplode(); });
+scheduleBox.addEventListener('change', syncExplode);
+
+// ---- mode, parallax, silhouette ---------------------------------------
+for (const b of document.querySelectorAll('[data-mode]')) b.addEventListener('click', () => {
+  stage.setMode(b.dataset.mode);
+  for (const o of document.querySelectorAll('[data-mode]')) o.setAttribute('aria-pressed', String(o === b));
+});
+const box = $('stageBox');
+box.addEventListener('pointermove', (e) => {
+  if (!parallaxBox.checked) return;
+  const r = canvas.getBoundingClientRect();
+  stage.setPointer((e.clientX - r.left) / r.width * 2 - 1, (e.clientY - r.top) / r.height * 2 - 1);
+});
+box.addEventListener('pointerleave', () => stage.setPointer(0, 0));
+parallaxBox.addEventListener('change', () => { if (!parallaxBox.checked) stage.setPointer(0, 0); });
+silBox.addEventListener('change', () => { if (!silBox.checked) sil.replaceChildren(); else drawSilhouette(); });
+
+// ---- goto, release, context loss --------------------------------------
+$('fly').addEventListener('click', async () => { const id = partSelect.value; if (id === '') return; await stage.goto(Number(id)); });
+$('release').addEventListener('click', () => { stage.release(); });
+$('lose').addEventListener('click', () => {
+  if (stage.fallback) return;
+  const gl = canvas.getContext('webgl2'), ext = gl && gl.getExtension('WEBGL_lose_context');
+  if (!ext) { $('capState').textContent = 'WEBGL_lose_context unavailable'; return; }
+  ext.loseContext(); $('capState').textContent = 'context lost, restoring in 1.5 s';
+  setTimeout(() => { ext.restoreContext(); }, 1500);
+});
+
+// ---- silhouette overlay -----------------------------------------------
+const SVG = 'http://www.w3.org/2000/svg';
+function drawSilhouette() {
+  if (!silBox.checked) return;
+  const shapes = stage.silhouette();
+  const frag = document.createDocumentFragment();
+  for (const s of shapes) {
+    if (s.kind === 'capsule') {
+      const ax = s.x2 - s.x1, ay = s.y2 - s.y1, len = Math.hypot(ax, ay) || 1, nx = -ay / len * s.r, ny = ax / len * s.r;
+      const d = `M ${s.x1 + nx} ${s.y1 + ny} L ${s.x2 + nx} ${s.y2 + ny} A ${s.r} ${s.r} 0 0 1 ${s.x2 - nx} ${s.y2 - ny} L ${s.x1 - nx} ${s.y1 - ny} A ${s.r} ${s.r} 0 0 1 ${s.x1 + nx} ${s.y1 + ny} Z`;
+      const p = document.createElementNS(SVG, 'path'); p.setAttribute('d', d); p.setAttribute('class', 'st-sil'); frag.append(p);
+      const axis = document.createElementNS(SVG, 'line'); axis.setAttribute('x1', s.x1); axis.setAttribute('y1', s.y1); axis.setAttribute('x2', s.x2); axis.setAttribute('y2', s.y2); axis.setAttribute('class', 'st-sil-axis'); frag.append(axis);
+    } else {
+      const r = document.createElementNS(SVG, 'rect');
+      r.setAttribute('x', s.x - s.w / 2); r.setAttribute('y', s.y - s.h / 2); r.setAttribute('width', s.w); r.setAttribute('height', s.h);
+      r.setAttribute('transform', `rotate(${s.deg} ${s.x} ${s.y})`); r.setAttribute('class', 'st-sil'); frag.append(r);
+    }
+  }
+  sil.replaceChildren(frag);
+  return shapes.length;
+}
+
+// ---- readout ------------------------------------------------------------
+let lastReadout = 0, silCount = 0, lastRenders = 0, lastRate = 0, lastRateAt = performance.now();
+function stationName(i) { return i >= 0 ? `${pad2(i + 1)} / ${stage.stations[i].label}` : stage.progress < SCHEDULE.firstStop ? 'pad view' : 'pull-out'; }
+function updateReadout() {
+  const info = stage.info, pose = stage.pose, size = stage.size, s = governor.stats, now = performance.now();
+  if (now - lastRateAt >= 1000) { lastRate = (stage.renders - lastRenders) / ((now - lastRateAt) / 1000); lastRenders = stage.renders; lastRateAt = now; }
+  const si = stage.station;
+  const lines = [
+    `PROGRESS   ${fmt(stage.progress, 3)}`,
+    `STATION    ${stationName(si)}`,
+    `EXPLODE    ${fmt(stage.explode, 2)} / ${stage.explodeOverride == null ? 'schedule' : 'override'}`,
+    `MODE       ${stage.mode}`,
+    `TIER       T${stage.tier} / ${s.pinned ? 'pinned' : 'auto'} / dpr ${fmt(stage.dpr, 2)}`,
+    `CANVAS     ${size.width} x ${size.height} px`,
+    `CAMERA     ${fmt(pose.distance, 3)} m / az ${fmt(pose.azimuthDeg, 1)} deg / el ${fmt(pose.elevationDeg, 1)} deg`,
+    `PAD        yaw ${fmt(pose.yawDeg, 2)} deg / weight ${fmt(pose.padWeight, 2)}`,
+    `RENDER     ${info.calls} calls / ${info.triangles.toLocaleString('en-US')} tris / ${fmt(info.ms, 2)} ms`,
+    `RENDERS    ${stage.renders} / ${fmt(lastRate, 1)} per s / ${stage.lastRender ? stage.lastRender.reason : '-'}`,
+    `SILHOUETTE ${silCount} shapes`,
+    `PARTS      ${stage.parts.filter(p => !p.referenceOnly).length} drawn / ${stage.parts.length} in file`,
+    `GL         ${stage.fallback ? 'none / poster' : stage.contextLost ? 'context lost' : 'webgl2'}`,
+  ];
+  readout.textContent = lines.join('\n');
+}
+bus.on('stage:render', () => {
+  silCount = drawSilhouette() || 0;
+  if (silCount === 0) sil.replaceChildren();
+  const now = performance.now();
+  if (now - lastReadout > 100) { lastReadout = now; updateReadout(); }
+});
+bus.on('stage:station', ({ index, station }) => {
+  for (const li of $('stations').children) li.toggleAttribute('aria-current', Number(li.dataset.index) === index);
+  $('capState').textContent = station ? `station ${pad2(index + 1)} / ${station.label}` : stage.progress < SCHEDULE.firstStop ? 'pad view' : 'pull-out';
+});
+setInterval(updateReadout, 1000);
+
+// ---- geometry ready: parts and stations lists ---------------------------
+await stage.ready;
+const byId = new Map(stage.parts.map(p => [p.id, p]));
+partSelect.replaceChildren(...stage.parts.filter(p => !p.referenceOnly).map(p => { const o = document.createElement('option'); o.value = p.id; o.textContent = `${pad2(p.id)} ${p.label}`; return o; }));
+partSelect.value = '18';
+const list = $('stations');
+list.replaceChildren(...stage.stations.map(s => {
+  const li = document.createElement('li'); li.dataset.index = s.index;
+  const n = document.createElement('span'); n.className = 'st-n'; n.textContent = pad2(s.index + 1);
+  const b = document.createElement('b'); b.textContent = s.label;
+  const yaz = document.createElement('span'); yaz.className = 'st-yaz'; yaz.textContent = `${s.y >= 0 ? '+' : '-'}${fmt(Math.abs(s.y), 3)} m / ${s.azimuth} deg`;
+  const ids = document.createElement('span'); ids.className = 'st-ids'; ids.textContent = s.partIds.map(id => `${pad2(id)} ${byId.get(id)?.label ?? ''}`).join(' / ');
+  li.append(n, b, yaz, ids); return li;
+}));
+// station marks on the progress hairline
+for (const p of (stage.path ? stage.path.stops : [])) { const m = document.createElement('b'); m.style.left = `${(p * 100).toFixed(2)}%`; $('bar').append(m); }
+if (!stage.fallback) $('capState').textContent = 'pad view';
+setProgress(scrollDrive.checked ? scroll.progressOf(track) : 0, true);
+updateReadout();
+</script>
+</body>
+</html>

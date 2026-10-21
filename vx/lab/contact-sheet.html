@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en" class="on-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LAB / 10 / CONTACT SHEET</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/lab.css">
+<link rel="stylesheet" href="../css/contact-sheet.css">
+<style>
+  /* The sheet lives on paper; the lab stage is ink, so the stage holds a sheet of paper. */
+  .lab-stage { display: block; padding: var(--space-5) var(--space-6); overflow: visible; }
+  .cs-paper { background: var(--paper); color: var(--ink-700); padding: var(--space-5); max-width: 1480px; margin: 0 auto; }
+  .cs-paper { --surface-page: var(--paper); --text-display: var(--ink-900); --text-body: var(--ink-700); --text-muted: var(--ink-500); --text-meta: var(--ink-400); --line-hairline: var(--ink-a12); --line-strong: var(--ink-900); }
+  .cs-paper-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2) var(--space-5); flex-wrap: wrap; margin: 0 0 var(--space-5); }
+  .cs-paper-head h2 { font-family: var(--font-display); font-weight: 500; font-size: var(--fs-title-1); line-height: var(--lh-title); letter-spacing: var(--ls-title); color: var(--ink-900); text-transform: uppercase; }
+  .cs-paper-head p { margin: 0; max-width: var(--measure-narrow); font-size: var(--fs-body-sm); color: var(--ink-500); }
+  .lab-panel form { display: contents; }
+  .lab-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .lab-note { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.08em; line-height: 1.6; color: var(--paper-a45); margin: 0; }
+  .lab-readout { white-space: pre-wrap; overflow-wrap: anywhere; }
+  @media (max-width: 860px) { .lab-stage { padding: var(--space-5) var(--page-margin); } }
+  @media (max-width: 560px) {
+    .lab-head { flex-wrap: wrap; gap: var(--space-2) var(--space-4); }
+    .lab-head h1, .lab-head nav a { white-space: nowrap; }
+    .cs-paper { padding: var(--space-4); }
+  }
+</style>
+</head>
+<body class="lab">
+  <header class="lab-head">
+    <h1>LAB / 10 / CONTACT SHEET</h1>
+    <nav aria-label="Lab navigation"><a href="./">Lab index</a><a href="../">VX</a><a href="/">The production site</a></nav>
+  </header>
+  <div class="lab-body">
+    <div class="lab-stage">
+      <section class="cs-paper" aria-labelledby="cs-title">
+        <div class="cs-paper-head">
+          <h2 id="cs-title">Photography</h2>
+          <p>An ongoing thing rather than a project. Thirty-five frames on one sheet; the loupe shows the files at their own pixels and says so.</p>
+        </div>
+        <div id="sheet"></div>
+      </section>
+    </div>
+    <aside class="lab-panel" aria-label="Controls">
+      <h2>Loupe</h2>
+      <form id="form">
+        <label class="lab-row">Force loupe on frame <output id="force-out">02</output><input id="force" type="range" min="1" max="35" step="1" value="2"></label>
+        <label class="lab-row">Forced loupe visible <input id="forced" type="checkbox" checked></label>
+        <label class="lab-row">Sample point u <output id="u-out">0.66</output><input id="u" type="range" min="0" max="1" step="0.01" value="0.66"></label>
+        <label class="lab-row">Sample point v <output id="v-out">0.42</output><input id="v" type="range" min="0" max="1" step="0.01" value="0.42"></label>
+        <label class="lab-row">Zoom, CSS px per file px <output id="zoom-out">2</output><input id="zoom" type="range" min="1" max="4" step="1" value="2"></label>
+        <label class="lab-row">Glass diameter px <output id="size-out">160</output><input id="size" type="range" min="100" max="260" step="10" value="160"></label>
+        <h2>Viewer</h2>
+        <div class="lab-actions">
+          <button class="lab-button" id="open" type="button">Open frame 02</button>
+          <button class="lab-button" id="close" type="button">Close</button>
+        </div>
+        <h2>Marks</h2>
+        <div class="lab-actions">
+          <button class="lab-button" id="mark" type="button">Mark 04 – 09</button>
+          <button class="lab-button" id="clear" type="button">Clear</button>
+          <button class="lab-button" id="export" type="button">Export PNG</button>
+        </div>
+        <h2>Layout</h2>
+        <label class="lab-row">Columns <output id="cols-out">auto</output><input id="cols" type="range" min="0" max="9" step="1" value="0"></label>
+        <h2>Governor</h2>
+        <label class="lab-row">Tier <output id="tier-out">auto</output><select id="tier"><option value="">auto</option><option value="3">3 full</option><option value="2">2 reduced</option><option value="1">1 minimal</option><option value="0">0 static</option></select></label>
+        <h2>Bus</h2>
+        <label class="lab-row">Log sheet:open / close <input id="log" type="checkbox"></label>
+      </form>
+      <p class="lab-note">Keys on the sheet: I and O mark a range from the hovered or focused frame, L pins the loupe on a focused frame and the arrows nudge it, Escape releases it. In the viewer: arrows, Home, End, Escape, swipe. URL: ?loupe=N, ?viewer=N, ?marks=A-B, ?cols=N, ?tier=N.</p>
+    </aside>
+  </div>
+  <pre class="lab-readout" id="readout" aria-live="off">contact-sheet / mounting</pre>
+<script type="module">
+  import { bus } from '../js/core/bus.js';
+  import { governor } from '../js/core/governor.js';
+  import { frames, rolls } from '../js/data/frames.js';
+  import { mountContactSheet } from '../js/contact-sheet.js';
+
+  const $ = (id) => document.getElementById(id);
+  const q = new URLSearchParams(location.search);
+  const sheet = mountContactSheet($('sheet'), { frames, zoom: 2 });
+  window.contactSheet = sheet;      // for the console
+  const readout = $('readout'), log = $('log');
+  const force = $('force'), forced = $('forced'), u = $('u'), v = $('v'), zoom = $('zoom'), size = $('size'), cols = $('cols'), tierSel = $('tier');
+  const pad2 = (n) => String(n).padStart(2, '0');
+  let events = { open: 0, close: 0, last: '--' };
+
+  // loupe controls
+  function applyForced() {
+    $('force-out').value = pad2(force.value); $('u-out').value = (+u.value).toFixed(2); $('v-out').value = (+v.value).toFixed(2);
+    if (forced.checked) sheet.showLoupe(+force.value, +u.value, +v.value); else sheet.hideLoupe();
+  }
+  for (const el of [force, u, v]) el.addEventListener('input', applyForced);
+  forced.addEventListener('change', applyForced);
+  zoom.addEventListener('input', () => { $('zoom-out').value = zoom.value; sheet.setZoom(+zoom.value); });
+  size.addEventListener('input', () => { $('size-out').value = size.value; sheet.setLoupeSize(+size.value); });
+
+  // viewer and marks
+  $('open').addEventListener('click', () => sheet.open(+force.value));
+  $('close').addEventListener('click', () => sheet.close());
+  $('mark').addEventListener('click', () => sheet.mark(4, 9));
+  $('clear').addEventListener('click', () => sheet.clearMarks());
+  $('export').addEventListener('click', () => sheet.export());
+  force.addEventListener('input', () => { $('open').textContent = `Open frame ${pad2(force.value)}`; });
+
+  // layout
+  cols.addEventListener('input', () => { $('cols-out').value = cols.value === '0' ? 'auto' : cols.value; sheet.setColumns(+cols.value); });
+
+  // governor
+  tierSel.addEventListener('change', () => governor.pin(tierSel.value === '' ? null : +tierSel.value));
+  governor.subscribe(({ tier, stats }) => { $('tier-out').value = `${tier}${stats.pinned ? ' pin' : ''}`; render(); });
+
+  // bus
+  bus.on('sheet:open', (d) => { events.open++; events.last = `sheet:open ${JSON.stringify(d)}`; if (log.checked) console.log('sheet:open', d); render(); });
+  bus.on('sheet:close', (d) => { events.close++; events.last = `sheet:close ${JSON.stringify(d)}`; if (log.checked) console.log('sheet:close', d); render(); });
+
+  function render() {
+    const s = sheet.state, l = s.loupe, m = s.marks, c = s.cache, e = s.export;
+    const n = (x, d = 1) => (x === null || x === undefined ? '--' : (+x).toFixed(d));
+    readout.innerHTML =
+      `<b>contact-sheet</b> / ${frames.length} frames in ${rolls.length} rolls  pointer ${s.pointer}  tier ${s.tier}  dpr ${n(devicePixelRatio, 2)}\n` +
+      `loupe    ${l.visible ? `<b>on</b> / ${l.mode}` : 'off'}  frame ${l.index ? pad2(l.index) : '--'}  native ${l.native[0]} × ${l.native[1]} px  mag ${n(l.mag)} ×  zoom ${l.zoom}  glass ${l.size} px  window ${Math.round(l.size / l.zoom)} px  u ${n(l.u, 3)} v ${n(l.v, 3)}  at ${l.x},${l.y}  ${l.pending ? 'decoding' : l.type ? `${l.type} ${(l.bytes / 1024).toFixed(1)} KB decoded in ${n(l.decodeMs)} ms` : '--'}\n` +
+      `current  hovered ${s.hovered ? pad2(s.hovered) : '--'}  focused ${s.focused ? pad2(s.focused) : '--'}  current ${s.current ? pad2(s.current) : '--'}\n` +
+      `viewer   ${s.viewer.open ? `<b>open</b> / frame ${pad2(s.viewer.index)} shown at ${n(s.viewer.scale, 2)} ×` : 'closed'}  events sheet:open x${events.open} sheet:close x${events.close}  last ${events.last}\n` +
+      `marks    in ${m.in === null ? '--' : pad2(m.in)}  out ${m.out === null ? '--' : pad2(m.out)}  count ${pad2(m.count)}\n` +
+      `cache    ${c.residents} / ${c.limit} bitmaps resident  ${(c.bytes / 1024).toFixed(0)} KB  decodes ${c.decodes}  evictions ${c.evictions}  in flight ${c.inflight}\n` +
+      `export   ${e.busy ? 'composing' : e.at ? `${pad2(e.frames)} frames  ${e.width} × ${e.height} px  ${(e.bytes / 1024).toFixed(0)} KB  ${e.ms} ms  ${e.at}` : 'none yet'}`;
+  }
+  sheet.subscribe(render);
+  addEventListener('pagehide', () => sheet.destroy(), { once: true });
+
+  // URL presets
+  if (q.has('tier') && q.get('tier') !== '') { tierSel.value = q.get('tier'); governor.pin(+q.get('tier')); }
+  if (q.has('cols')) { cols.value = q.get('cols'); cols.dispatchEvent(new Event('input')); }
+  if (q.has('loupe')) { const n = +q.get('loupe'); forced.checked = n > 0; if (n > 0) force.value = n; }
+  if (q.has('marks')) { const [a, b] = q.get('marks').split('-').map(Number); if (a) sheet.mark(a, b || a); }
+  if (q.has('viewer')) { const n = +q.get('viewer'); if (n > 0) sheet.open(n); }
+  // the forced loupe needs the thumbs laid out, which needs the fonts; wait for both
+  const ready = Promise.all([document.fonts?.ready, new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))]);
+  ready.then(() => { applyForced(); render(); });
+  render();
+</script>
+</body>
+</html>

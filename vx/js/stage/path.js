@@ -17,9 +17,10 @@ export const FOV_DEG = 36;                 // vertical field of view, as the exp
 export const PAD_VIEW = { distance: 1.9, elevationDeg: 8, azimuthDeg: 0 };
 export const PULL_OUT = { distance: 2.6, elevationDeg: 12, azimuthDeg: 360 };
 export const STATION_ELEVATION_DEG = 10;   // slightly above each stop, looking down the stack
-export const STATION_DISTANCE_M = [0.14, 0.9]; // clamp of the fitted stop distance
-export const STATION_MARGIN = 1.15;        // fit margin around the station's exploded box
-export const PULL_OUT_MARGIN = 1.05;
+export const STATION_DISTANCE_M = [0.2, 0.9]; // clamp of the fitted stop distance (metres)
+export const STATION_MARGIN = 1.3;         // fit margin around the station's exploded box
+export const PAD_MARGIN = 1.08;            // the standing rocket keeps this much air top and bottom
+export const PULL_OUT_MARGIN = 1.06;
 export const SCHEDULE = {
   padHold: 0.03,    // the camera holds the pad pose until here (hero copy reads)
   firstStop: 0.10,  // station 1
@@ -33,15 +34,31 @@ const DEG = Math.PI / 180;
 
 function smoothstep(a, b, x) { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); }
 
-/* Distance at which an axis-aligned box of `size` (metres) fits the view from
-   azimuth `az`, with the given aspect and vertical fov. The seen width of an
-   AABB from a horizontal direction is |sx cos az| + |sz sin az| (exact). */
-export function fitDistance(size, az, aspect, margin = STATION_MARGIN, fovDeg = FOV_DEG) {
+const UP = new THREE.Vector3(0, 1, 0);
+const _D = new THREE.Vector3(), _X = new THREE.Vector3(), _Y = new THREE.Vector3(), _c = new THREE.Vector3(), _q = new THREE.Vector3();
+/* Unit direction from a target to a camera at (azimuth, elevation). */
+export function direction(az, el, out = new THREE.Vector3()) { return out.set(Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el)); }
+
+/* Exact distance at which a world-space box fits the view from (az, el).
+   Dollying the camera along its own axis leaves each corner's camera-space x
+   and y unchanged and only grows its depth, so for every corner the needed
+   distance is  q.D + margin * max(|q.X| / h, |q.Y| / v)  where q is the corner
+   relative to the box centre, D the camera direction, X and Y the camera's
+   right and up (three.js lookAt basis), h and v the half-width and half-height
+   of the view at unit depth. The maximum over the eight corners is the answer. */
+export function fitBox(box, az, el, aspect, margin = STATION_MARGIN, fovDeg = FOV_DEG) {
   const v = Math.tan(fovDeg * DEG / 2), h = v * Math.max(0.1, aspect);
-  const width = size.x * Math.abs(Math.cos(az)) + size.z * Math.abs(Math.sin(az));
-  const depth = size.x * Math.abs(Math.sin(az)) + size.z * Math.abs(Math.cos(az));
-  const fit = Math.max(size.y / (2 * v), width / (2 * h)) * margin;
-  return Math.max(fit, depth / 2 + 0.05);
+  direction(az, el, _D);
+  _X.crossVectors(UP, _D).normalize(); if (_X.lengthSq() < 1e-8) _X.set(1, 0, 0);
+  _Y.crossVectors(_D, _X);
+  box.getCenter(_c);
+  let d = 0;
+  for (let i = 0; i < 8; i++) {
+    _q.set(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : box.min.y, i & 4 ? box.max.z : box.min.z).sub(_c);
+    const need = _q.dot(_D) + margin * Math.max(Math.abs(_q.dot(_X)) / h, Math.abs(_q.dot(_Y)) / v);
+    if (need > d) d = need;
+  }
+  return d;
 }
 
 /* Fritsch-Carlson limited Catmull-Rom tangents on non-uniform knots t. */
@@ -72,7 +89,7 @@ export function buildPath({ parts, stations, aspect = 1.6, explodeOf = explodeAt
   const byId = new Map(parts.map(p => [p.id, p]));
   const CH = 6; // tx ty tz distance azimuth elevation
   const keys = [];
-  const tmpBox = new THREE.Box3(), size = new THREE.Vector3(), centre = new THREE.Vector3();
+  const tmpBox = new THREE.Box3(), centre = new THREE.Vector3();
   const disp = [0, 0, 0];
 
   function exploded(part, e, box) {
@@ -90,7 +107,10 @@ export function buildPath({ parts, stations, aspect = 1.6, explodeOf = explodeAt
   // 0: pad view, the whole rocket standing, unexploded
   const whole = stackBox(0);
   whole.getCenter(centre);
-  keys.push({ p: SCHEDULE.padHold, kind: 'pad', label: 'Pad', v: [centre.x, centre.y, centre.z, PAD_VIEW.distance, PAD_VIEW.azimuthDeg * DEG, PAD_VIEW.elevationDeg * DEG] });
+  const azPad = PAD_VIEW.azimuthDeg * DEG, elPad = PAD_VIEW.elevationDeg * DEG;
+  // 1.9 m, or further when the viewport's vertical fov cannot hold the standing rocket at that distance
+  const dPad = Math.max(PAD_VIEW.distance, fitBox(whole, azPad + frontAngle, elPad, aspect, PAD_MARGIN));
+  keys.push({ p: SCHEDULE.padHold, kind: 'pad', label: 'Pad', v: [centre.x, centre.y, centre.z, dPad, azPad, elPad] });
 
   // 1..8: station stops at their progress, framed on the members as exploded at that progress
   const stops = [];
@@ -101,19 +121,20 @@ export function buildPath({ parts, stations, aspect = 1.6, explodeOf = explodeAt
     const members = s.partIds.map(id => byId.get(id)).filter(m => m && !TUBE_IDS.includes(m.id));
     for (const m of members) box.union(exploded(m, e, tmpBox));
     if (box.isEmpty()) box.setFromCenterAndSize(new THREE.Vector3(0, s.y, 0), new THREE.Vector3(0.07, 0.07, 0.07));
-    box.getCenter(centre); box.getSize(size);
-    const az = s.azimuth * DEG;
-    const d = Math.min(STATION_DISTANCE_M[1], Math.max(STATION_DISTANCE_M[0], fitDistance(size, az + frontAngle, aspect)));
-    keys.push({ p, kind: 'station', index: s.index, label: s.label, v: [centre.x, centre.y, centre.z, d, az, STATION_ELEVATION_DEG * DEG] });
+    box.getCenter(centre);
+    const az = s.azimuth * DEG, el = STATION_ELEVATION_DEG * DEG;
+    const d = Math.min(STATION_DISTANCE_M[1], Math.max(STATION_DISTANCE_M[0], fitBox(box, az + frontAngle, el, aspect, STATION_MARGIN)));
+    keys.push({ p, kind: 'station', index: s.index, label: s.label, v: [centre.x, centre.y, centre.z, d, az, el] });
     stops.push(p);
   }
 
   // 9: pull-out facing the fully exploded stack
   const full = stackBox(explodeOf(SCHEDULE.end));
-  full.getCenter(centre); full.getSize(size);
-  const azEnd = PULL_OUT.azimuthDeg * DEG;
-  const dEnd = Math.max(PULL_OUT.distance, fitDistance(size, azEnd + frontAngle, aspect, PULL_OUT_MARGIN));
-  keys.push({ p: SCHEDULE.end, kind: 'pull-out', label: 'Pull-out', v: [centre.x, centre.y, centre.z, dEnd, azEnd, PULL_OUT.elevationDeg * DEG] });
+  full.getCenter(centre);
+  const azEnd = PULL_OUT.azimuthDeg * DEG, elEnd = PULL_OUT.elevationDeg * DEG;
+  // 2.6 m, or further when the exploded stack (about 2 m tall) needs it to fit
+  const dEnd = Math.max(PULL_OUT.distance, fitBox(full, azEnd + frontAngle, elEnd, aspect, PULL_OUT_MARGIN));
+  keys.push({ p: SCHEDULE.end, kind: 'pull-out', label: 'Pull-out', v: [centre.x, centre.y, centre.z, dEnd, azEnd, elEnd] });
 
   // spline tables
   const t = keys.map(k => k.p);

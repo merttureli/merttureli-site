@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en" class="on-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LAB / 09 / HID</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/lab.css">
+<link rel="stylesheet" href="../css/hid.css">
+<style>
+  .lab-stage { display: grid; place-items: center; padding: var(--space-6) var(--page-margin); }
+  #hid { width: min(100%, 760px); }
+  .lab-panel form { display: contents; }
+  .lab-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .lab-note { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.08em; line-height: 1.6; color: var(--paper-a45); margin: 0; }
+  .lab-row[data-sim] { color: var(--paper-a45); }
+  .lab-row[data-sim] input:disabled { opacity: .35; }
+  .lab-row[data-sim] small { grid-column: 1 / -1; font-size: inherit; letter-spacing: inherit; color: var(--livery); }
+  .lab-readout { white-space: pre-wrap; overflow-wrap: anywhere; }
+  @media (max-width: 860px) { .lab-stage { padding: var(--space-5) var(--page-margin); } }
+  @media (max-width: 560px) {
+    .lab-head { flex-wrap: wrap; gap: var(--space-2) var(--space-4); }
+    .lab-head h1, .lab-head nav a { white-space: nowrap; }
+  }
+</style>
+</head>
+<body class="lab">
+  <header class="lab-head">
+    <h1>LAB / 09 / HID</h1>
+    <nav aria-label="Lab navigation"><a href="./">Lab index</a><a href="../">VX</a><a href="/">The production site</a></nav>
+  </header>
+  <div class="lab-body">
+    <div class="lab-stage">
+      <div id="hid"></div>
+    </div>
+    <aside class="lab-panel" aria-label="Controls">
+      <h2>Device</h2>
+      <p class="lab-note">Plug in a controller and press a button. Chrome and Firefox expose a gamepad to the page only after a press. The bench polls on animation frames while it is on screen and a device is connected; nothing is sent anywhere.</p>
+      <h2>Simulate</h2>
+      <form id="form">
+        <label class="lab-row">Simulate <input id="sim" type="checkbox"></label>
+        <label class="lab-row" data-sim>Rudder <output id="r-out">0.00</output><input id="r" type="range" min="-1" max="1" step="0.01" value="0" disabled><small>simulated / not a device</small></label>
+        <label class="lab-row" data-sim>L brake <output id="l-out">0.00</output><input id="l" type="range" min="0" max="1" step="0.01" value="0" disabled><small>simulated / not a device</small></label>
+        <label class="lab-row" data-sim>R brake <output id="b-out">0.00</output><input id="b" type="range" min="0" max="1" step="0.01" value="0" disabled><small>simulated / not a device</small></label>
+        <div class="lab-actions">
+          <button class="lab-button" id="sweep" type="button" aria-pressed="false" disabled>Sweep</button>
+          <button class="lab-button" id="centre" type="button" disabled>Centre</button>
+        </div>
+        <h2>Governor</h2>
+        <label class="lab-row">Tier <output id="tier-out">auto</output><select id="tier"><option value="">auto</option><option value="3">3 full</option><option value="2">2 reduced</option><option value="1">1 minimal</option><option value="0">0 static</option></select></label>
+        <h2>Layout</h2>
+        <label class="lab-row">Bench width px <output id="width-out">760</output><input id="width" type="range" min="300" max="1100" step="10" value="760"></label>
+        <h2>Bus</h2>
+        <label class="lab-row">Log hid:state <input id="log" type="checkbox"></label>
+      </form>
+      <p class="lab-note">URL: ?sim=1 or ?sim=r,l,b presets the simulation; ?tier=N pins the governor.</p>
+    </aside>
+  </div>
+  <pre class="lab-readout" id="readout" aria-live="off">hid / mounting</pre>
+<script type="module">
+  import { bus } from '../js/core/bus.js';
+  import { governor } from '../js/core/governor.js';
+  import { mountHid } from '../js/hid.js';
+
+  const $ = (id) => document.getElementById(id);
+  const root = $('hid');
+  const bench = mountHid(root);
+  window.hidBench = bench;   // for the console
+  const sliders = { r: $('r'), l: $('l'), b: $('b') };
+  const outs = { r: $('r-out'), l: $('l-out'), b: $('b-out') };
+  const sim = $('sim'), sweep = $('sweep'), centre = $('centre'), readout = $('readout'), log = $('log');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  let sweepRaf = 0, lastEvent = null, events = 0;
+
+  const fmt = (k) => (k === 'r' ? (Math.abs(+sliders.r.value) < 0.005 ? '0.00' : (+sliders.r.value < 0 ? '-' : '+') + Math.abs(+sliders.r.value).toFixed(2)) : (+sliders[k].value).toFixed(2));
+  function push() {
+    for (const k in outs) outs[k].value = fmt(k);
+    if (sim.checked) bench.simulate([+sliders.r.value, +sliders.l.value, +sliders.b.value]);
+  }
+  function setSim(on) {
+    sim.checked = on;
+    for (const k in sliders) sliders[k].disabled = !on;
+    sweep.disabled = centre.disabled = !on;
+    if (!on) stopSweep();
+    if (on) push(); else bench.simulate(null);
+    render();
+  }
+  sim.addEventListener('change', () => setSim(sim.checked));
+  for (const k in sliders) sliders[k].addEventListener('input', () => { stopSweep(); push(); });
+  centre.addEventListener('click', () => { stopSweep(); sliders.r.value = 0; sliders.l.value = 0; sliders.b.value = 0; push(); });
+
+  /* A 4 s deterministic sweep: rudder one sine cycle, brakes two opposed half-sines. Reduced motion jumps to the end pose. */
+  const SWEEP_MS = 4000;
+  function stopSweep() { if (sweepRaf) cancelAnimationFrame(sweepRaf); sweepRaf = 0; sweep.setAttribute('aria-pressed', 'false'); }
+  sweep.addEventListener('click', () => {
+    if (sweepRaf) return stopSweep();
+    const pose = (u) => { sliders.r.value = Math.sin(u * Math.PI * 2).toFixed(2); sliders.l.value = Math.max(0, Math.sin(u * Math.PI)).toFixed(2); sliders.b.value = Math.max(0, Math.sin(u * Math.PI + Math.PI / 2)).toFixed(2); push(); };
+    if (reduced.matches) { pose(0.3); return; }
+    sweep.setAttribute('aria-pressed', 'true');
+    const t0 = performance.now();
+    const step = (now) => { const u = Math.min(1, (now - t0) / SWEEP_MS); pose(u); if (u < 1) sweepRaf = requestAnimationFrame(step); else stopSweep(); };
+    sweepRaf = requestAnimationFrame(step);
+  });
+
+  // governor pin
+  const tierSel = $('tier');
+  tierSel.addEventListener('change', () => { governor.pin(tierSel.value === '' ? null : +tierSel.value); });
+  governor.subscribe(({ tier, stats }) => { $('tier-out').value = `${tier}${stats.pinned ? ' pin' : ''}`; render(); });
+
+  // width
+  const width = $('width');
+  width.addEventListener('input', () => { $('width-out').value = width.value; root.style.width = `min(100%, ${width.value}px)`; });
+
+  // bus
+  bus.on('hid:state', (d) => { events++; lastEvent = d; if (log.checked) console.log('hid:state', d); render(); });
+
+  function render() {
+    const s = bench.state;
+    const n = (v, d = 2) => (v === null || v === undefined ? '--' : (+v).toFixed(d));
+    readout.innerHTML =
+      `<b>hid</b> / mode ${root.dataset.hid}  connected ${s.connected}  simulated ${s.simulated}  visible ${s.visible}  polling ${s.polling}\n` +
+      `device   ${s.connected ? s.id : '--'}  axes ${s.axisCount || '--'}  buttons ${s.buttonCount || '--'}  pressed ${s.pressed}\n` +
+      `raw axes [${s.raw.map((v) => n(v, 3)).join(', ')}]\n` +
+      `gauges   rudder ${n(s.axes[0])}  l brake ${n(s.axes[1])}  r brake ${n(s.axes[2])}\n` +
+      `rate     poll ${s.pollHz && !s.stale ? n(s.pollHz, 1) + ' Hz' : '--'}  report ${s.reportMs ? n(s.reportMs, 2) + ' ms' : '--'}  frame ${s.polling ? n(s.frameMs, 2) + ' ms' : '--'}  raf bound ${s.rafBound}  stale ${s.stale}  reports ${s.reports}\n` +
+      `governor tier ${s.tier}  draw ${s.drawHz} Hz  dpr ${governor.dpr()}\n` +
+      `bus      hid:state x${events}  last ${lastEvent ? JSON.stringify(lastEvent) : '--'}`;
+  }
+  const slow = setInterval(render, 1000);   // once a second for the frame estimate while nothing emits
+  addEventListener('pagehide', () => { clearInterval(slow); stopSweep(); bench.destroy(); }, { once: true });
+
+  // URL presets
+  const q = new URLSearchParams(location.search);
+  if (q.has('tier') && q.get('tier') !== '') { tierSel.value = q.get('tier'); governor.pin(+q.get('tier')); }
+  if (q.has('sim')) {
+    const v = q.get('sim');
+    const parts = v.split(',').map(Number);
+    if (parts.length === 3 && parts.every(Number.isFinite)) { sliders.r.value = parts[0]; sliders.l.value = parts[1]; sliders.b.value = parts[2]; }
+    else if (v !== '0') { sliders.r.value = -0.34; sliders.l.value = 0.62; sliders.b.value = 0.18; }
+    setSim(v !== '0');
+  }
+  render();
+</script>
+</body>
+</html>

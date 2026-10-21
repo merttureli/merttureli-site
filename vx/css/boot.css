@@ -1,0 +1,81 @@
+/* boot — the T-minus overlay. Dark, mono, one accent for the GO state.
+   #boot sits in the HTML before any script so there is no flash; runBoot fills it
+   and removes it after the wipe. Add .bt-embedded to pin it inside a stage. */
+.bt {
+  --line-hairline: var(--paper-a18);
+  --text-meta: var(--paper-a45);
+  position: fixed; inset: 0; z-index: var(--z-boot, 200);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(180px, 36%, 560px);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas: "clock plot" "log plot" "bar plot";
+  column-gap: var(--space-7); row-gap: var(--space-6);
+  padding: var(--space-6) var(--page-margin) var(--space-6);
+  background: var(--ink-900); color: var(--paper);
+  font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: var(--lh-meta);
+  font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1;
+  overflow: hidden; cursor: default; user-select: none; -webkit-user-select: none; color-scheme: dark;
+  will-change: clip-path;
+}
+.bt.bt-embedded { position: absolute; }
+/* the 64 px drafting grid behind everything */
+.bt::before { content: ""; position: absolute; inset: 0; pointer-events: none; background-image: linear-gradient(to right, var(--paper-a08) 1px, transparent 1px), linear-gradient(to bottom, var(--paper-a08) 1px, transparent 1px); background-size: 64px 64px; background-position: var(--page-margin) var(--space-6); mask-image: linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,.18)); -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,.18)); }
+.bt > * { position: relative; }
+
+/* clock */
+.bt-clock { grid-area: clock; display: grid; grid-template-columns: auto 1fr; gap: var(--space-2) var(--space-4); align-items: baseline; align-self: start; }
+.bt-clock-key { grid-area: 1 / 1; color: var(--paper-a45); }
+.bt-clock-state { grid-area: 1 / 2; color: var(--paper-a45); justify-self: end; transition: color var(--dur-2) var(--ease-out); }
+.bt-clock-value { grid-area: 2 / 1 / 3 / 3; font-size: clamp(30px, 4.4vw, 56px); line-height: 1; letter-spacing: -0.01em; text-transform: none; color: var(--paper); }
+.bt[data-state="hold"] .bt-clock-state, .bt[data-state="green"] .bt-clock-state { color: var(--livery); }
+.bt[data-state="go"] .bt-clock-state, .bt[data-state="go"] .bt-clock-value { color: var(--livery); }
+
+/* log */
+.bt-log { grid-area: log; list-style: none; margin: 0; padding: 0; align-self: end; display: grid; align-content: end; gap: var(--space-2); min-width: 0; min-height: 0; overflow: hidden; }
+.bt-line { display: grid; grid-template-columns: 2ch minmax(10ch, auto) minmax(0, 1fr) auto; column-gap: var(--space-4); align-items: baseline; min-width: 0; }
+.bt-line-idx { color: var(--paper-a45); }
+.bt-line-label { color: var(--paper); white-space: nowrap; }
+.bt-line-result { color: var(--paper-a70); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.bt-line-ms { color: var(--paper-a45); text-align: right; white-space: nowrap; }
+.bt-line[data-pending="true"] .bt-line-ms::after { content: "···"; color: var(--paper-a45); }
+.bt-line[data-pending="true"] .bt-line-result:empty::after { content: "···"; }
+.bt-line-warn .bt-line-result { color: var(--livery); }
+.bt-line-final .bt-line-label { color: var(--livery); }
+/* repeat visit or reduced motion: one line, nothing else */
+.bt-fast { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); grid-template-areas: "log"; }
+.bt-fast .bt-clock, .bt-fast .bt-bar, .bt-fast .bt-plot { display: none; }
+
+/* geometry bar: byte-accurate against assembly.json.bytes */
+.bt-bar { grid-area: bar; display: grid; gap: var(--space-2); align-self: end; }
+.bt-bar-head { display: flex; justify-content: space-between; color: var(--paper-a45); }
+.bt-bar-track { position: relative; height: 2px; background: var(--paper-a18); overflow: hidden; }
+.bt-bar-fill { position: absolute; inset: 0; background: var(--paper); transform-origin: 0 50%; transform: scaleX(0); }
+.bt-bar-bytes { color: var(--paper-a70); }
+
+/* plotter: the host svg holds settled chunks, .bt-svg-live the one being plotted (own layer), .bt-pen is HTML */
+.bt-plot { grid-area: plot; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: var(--space-4); min-height: 0; min-width: 0; padding-left: var(--space-6); border-left: 1px solid var(--line-hairline); }
+.bt-plot-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-1) var(--space-4); color: var(--paper-a45); }
+.bt-plot-stage { position: relative; min-height: 0; min-width: 0; }
+.bt-svg { width: 100%; height: 100%; min-height: 0; overflow: visible; display: block; }
+.bt-svg-live { position: absolute; inset: 0; pointer-events: none; will-change: transform; }
+.bt-stroke { fill: none; stroke: var(--paper-a70); stroke-width: var(--bt-sw, 1); stroke-linecap: butt; stroke-linejoin: bevel; }
+.bt-svg-live .bt-stroke { stroke: var(--paper); }
+.bt-pen { position: absolute; top: 0; left: 0; width: 6px; height: 6px; border-radius: 50%; border: 1px solid var(--livery); background: radial-gradient(circle, var(--livery) 0 1px, transparent 1.5px); pointer-events: none; will-change: transform; }
+.bt-plot-readout { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-1) var(--space-4); margin: 0; color: var(--paper-a45); }
+.bt-plot-readout dd { margin: 0; color: var(--paper); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bt-hint { color: var(--paper-a45); }
+
+/* phone */
+@media (max-width: 720px) {
+  .bt { grid-template-columns: minmax(0, 1fr) 44%; column-gap: var(--space-4); row-gap: var(--space-5); padding: var(--space-5) var(--space-4); }
+  .bt-clock-value { font-size: 22px; white-space: nowrap; }
+  .bt-line { grid-template-columns: 2ch minmax(0, 1fr) auto; }
+  .bt-line-result { grid-column: 2 / -1; white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  .bt-plot { padding-left: var(--space-4); }
+  .bt-plot-head { flex-direction: column; gap: var(--space-1); }
+  .bt-plot-readout { grid-template-columns: 1fr; }
+  .bt-plot-readout dd { text-align: left; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bt-clock-state { transition: none; }
+}

@@ -1,0 +1,49 @@
+/* Tunnel module styles. Prefix .tn-. The canvas is a transparent layer over the
+   page's ink-900 ground; the label and note are mono meta; the overlay and shape
+   rules serve the lab's draggable silhouette stand-in. */
+.tn-stage { position: relative; overflow: hidden; background: var(--ink-900); }
+.tn-canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+  touch-action: pan-y; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
+}
+.tn-label, .tn-hint, .tn-note {
+  font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps);
+  text-transform: uppercase; line-height: 1.8; color: var(--paper-a45); pointer-events: none; margin: 0;
+}
+/* the labels sit on a flat ink plate so they stay legible over the field views */
+.tn-label, .tn-hint { background: var(--ink-a80); padding: var(--space-1) var(--space-2); border-radius: var(--radius-xs); }
+.tn-label { position: absolute; left: var(--space-5); bottom: var(--space-4); z-index: 3; }
+.tn-hint { position: absolute; left: var(--space-5); top: var(--space-4); z-index: 3; max-width: 36ch; }
+.tn-hint .tn-coarse { display: none; }
+@media (pointer: coarse) { .tn-hint .tn-fine { display: none; } .tn-hint .tn-coarse { display: inline; } }
+.tn-note {
+  position: absolute; inset: 0; z-index: 3; display: grid; place-content: center; text-align: center;
+  padding: var(--space-5); color: var(--paper-a70);
+}
+.tn-note[hidden] { display: none; }
+.tn-note > span { display: block; background: var(--ink-a80); padding: var(--space-4) var(--space-5); border: 1px solid var(--paper-a18); border-radius: var(--radius-xs); }
+.tn-note b { font-weight: 400; color: var(--paper); }
+
+/* lab overlay: SVG stand-in for stage.silhouette() */
+.tn-overlay { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; overflow: visible; }
+.tn-shape {
+  pointer-events: all; cursor: grab; fill: var(--paper-a08); stroke: var(--paper-a45); stroke-width: 1;
+  vector-effect: non-scaling-stroke; transition: fill var(--dur-2) var(--ease-out), stroke var(--dur-2) var(--ease-out);
+}
+.tn-shape:hover { fill: var(--paper-a18); stroke: var(--paper-a70); }
+.tn-shape.is-dragging { cursor: grabbing; stroke: var(--livery); fill: var(--paper-a18); }
+.tn-stage.is-dragging { cursor: grabbing; }
+.tn-axis { fill: none; stroke: var(--paper-a18); stroke-width: 1; stroke-dasharray: 2 4; vector-effect: non-scaling-stroke; }
+.tn-tick { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.18em; fill: var(--paper-a45); text-transform: uppercase; }
+
+/* lab panel extras */
+.tn-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
+.tn-buttons { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.tn-kbd { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.08em; color: var(--paper-a45); line-height: 1.8; }
+.tn-kbd b { font-weight: 400; color: var(--paper-a70); }
+
+@media (prefers-reduced-motion: reduce) { .tn-shape { transition: none; } }
+@media (forced-colors: active) {
+  .tn-shape { stroke: CanvasText; fill: transparent; }
+  .tn-label, .tn-hint, .tn-note, .tn-tick { color: CanvasText; fill: CanvasText; }
+}

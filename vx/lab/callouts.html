@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LAB / 03 / CALLOUTS</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0A0A0A">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/lab.css">
+  <link rel="stylesheet" href="../css/callouts.css">
+  <!-- for the optional real-stage mode: the stage module imports the bare specifier "three"; nothing loads until the toggle is used -->
+  <script type="importmap">{"imports":{"three":"../../assets/charger-explorer/vendor/three.module.js"}}</script>
+  <style>
+    .real-canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: pan-y; -webkit-touch-callout: none; user-select: none; }
+    .real-canvas[hidden], .bench-canvas[hidden] { display: none; }
+    /* bench-only layout; the module's own styles live in callouts.css */
+    .lab-stage { touch-action: pan-y; }
+    .bench-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+    #leaders, #callouts { z-index: 2; }
+    #sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; }
+    .bench-note { position: absolute; left: var(--space-4); top: var(--space-3); z-index: 1; display: flex; flex-direction: column; gap: 2px; max-width: 60%; color: var(--paper-a45); pointer-events: none; }
+    .bench-note b { font-weight: 400; color: var(--paper-a70); }
+    .bench-ticks { position: absolute; left: 0; right: 0; top: 0; height: 100%; z-index: 0; pointer-events: none;
+      background:
+        linear-gradient(to right, var(--paper-a08) 1px, transparent 1px) 0 0 / 64px 100% no-repeat,
+        linear-gradient(to left, var(--paper-a08) 1px, transparent 1px) 100% 0 / 64px 100% no-repeat; }
+    .bench-centre { position: absolute; top: 0; bottom: 0; left: 50%; width: 0; border-left: 1px dashed var(--paper-a08); z-index: 0; pointer-events: none; }
+    .lab-buttons { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+    .lab-row.is-select select { font: inherit; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.06em; color: var(--paper); background: var(--ink-800); border: 1px solid var(--paper-a18); border-radius: var(--radius-sm); padding: 8px 10px; }
+    .lab-hint { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.06em; line-height: 1.6; color: var(--paper-a45); }
+    .lab-readout { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2px var(--space-6); white-space: normal; }
+    .lab-readout span { display: flex; justify-content: space-between; gap: var(--space-3); border-bottom: 1px solid var(--paper-a08); padding: 2px 0; }
+    @media (max-width: 860px) { .lab-readout { grid-template-columns: 1fr; } .lab-stage { min-height: 74svh; } }
+    @media (max-width: 480px) { .bench-wide { display: none; } }
+  </style>
+</head>
+<body class="lab on-dark">
+  <header class="lab-head">
+    <h1>LAB / 03 / CALLOUTS</h1>
+    <nav aria-label="Lab navigation"><a href="./index.html">Lab index</a><a href="../index.html">The page</a></nav>
+  </header>
+  <div class="lab-body">
+    <section class="lab-stage" id="stage" aria-label="Callout bench">
+      <p class="sr-only">A synthetic stage: 28 anchors laid out from the CHARGER assembly bounds, projected by a simple camera that descends through eight stations as the progress slider moves. The callout engine under test draws leader lines from the anchors to labels on two rails, or into a bottom sheet on small screens.</p>
+      <div class="bench-ticks" aria-hidden="true"></div>
+      <div class="bench-centre" aria-hidden="true"></div>
+      <canvas class="bench-canvas" id="bench" aria-hidden="true"></canvas>
+      <canvas class="real-canvas" id="real" hidden role="img" aria-label="CHARGER flight model, rendered live from the published assembly"></canvas>
+      <svg id="leaders" aria-hidden="true" focusable="false"></svg>
+      <div id="callouts"></div>
+      <div id="sheet" hidden></div>
+      <div class="bench-note meta-sm" aria-hidden="true">
+        <span>Synthetic stage / 28 anchors<span class="bench-wide"> from assembly.json bounds</span></span>
+        <span>Page simulation<span class="bench-wide"> / not flight data</span></span>
+        <span id="hud"><b>Station &#8212; / 08</b></span>
+      </div>
+    </section>
+    <aside class="lab-panel" aria-label="Bench controls">
+      <h2>Stage</h2>
+      <label class="lab-row">Progress <output id="progress-out">0.530</output><input id="progress" type="range" min="0" max="1" step="0.001" value="0.53"></label>
+      <label class="lab-row">Orbit deg/s <output id="orbit-out">4</output><input id="orbit" type="range" min="0" max="30" step="1" value="4"></label>
+      <div class="lab-buttons">
+        <button class="lab-button" id="prev-station" type="button">Prev station</button>
+        <button class="lab-button" id="next-station" type="button">Next station</button>
+      </div>
+      <label class="lab-row">Real stage / three.js / 2.5 MB <input id="real-toggle" type="checkbox"></label>
+      <p class="lab-hint" id="real-flag" hidden></p>
+      <h2>Solver</h2>
+      <label class="lab-row">Spacing px <output id="spacing-out">28</output><input id="spacing" type="range" min="8" max="48" step="1" value="28"></label>
+      <label class="lab-row">Hysteresis px <output id="hysteresis-out">2</output><input id="hysteresis" type="range" min="0" max="6" step="0.5" value="2"></label>
+      <label class="lab-row">Quantum px <output id="quantum-out">0.5</output><input id="quantum" type="range" min="0.25" max="1" step="0.25" value="0.5"></label>
+      <label class="lab-row">Elbow px <output id="elbow-out">24</output><input id="elbow" type="range" min="8" max="48" step="1" value="24"></label>
+      <label class="lab-row">Rail inset px <output id="inset-out">24</output><input id="inset" type="range" min="0" max="120" step="2" value="24"></label>
+      <label class="lab-row">Label width px <output id="labelw-out">220</output><input id="labelw" type="range" min="160" max="300" step="4" value="220"></label>
+      <h2>Layout</h2>
+      <div class="lab-buttons" role="group" aria-label="Layout mode">
+        <button class="lab-button" type="button" data-mode="auto" aria-pressed="true">Auto</button>
+        <button class="lab-button" type="button" data-mode="rail" aria-pressed="false">Rails</button>
+        <button class="lab-button" type="button" data-mode="sheet" aria-pressed="false">Sheet</button>
+      </div>
+      <div class="lab-buttons">
+        <button class="lab-button" id="replay" type="button">Replay draw-on</button>
+      </div>
+      <h2>Lock</h2>
+      <label class="lab-row is-select">Part <span></span><select id="part"></select></label>
+      <div class="lab-buttons">
+        <button class="lab-button" id="lock" type="button">Lock</button>
+        <button class="lab-button" id="unlock" type="button">Unlock</button>
+      </div>
+      <p class="lab-hint">Tab or click a label to lock it. Arrow keys move between labels, Left and Right cross the rails, Escape unlocks.</p>
+    </aside>
+  </div>
+  <div class="lab-readout" id="readout" aria-live="off"></div>
+
+  <script type="module">
+    import { bus } from '../js/core/bus.js';
+    import { governor } from '../js/core/governor.js';
+    import { STATIONS } from '../js/data/stations.js';
+    import { explodeAt, displacement, centreOf, AXIAL } from '../js/stage/explode.js';
+    import { storyFor } from '../../assets/charger-explorer/part-stories.js';
+    import { mountCallouts } from '../js/callouts.js';
+
+    /* ---------- the synthetic stage ----------
+       Bounds are the explorer's assembly.json bounds in millimetres
+       [id, min, max, exterior, referenceOnly]; centres become metres through
+       explode.js so the anchors sit exactly where the real stage puts them. */
+    const BOUNDS = [
+      [0, [-34,338.692,-34], [34,570.693,34], 1, 0],
+      [1, [-34,-78.567,-34], [34,370.693,34], 1, 0],
+      [2, [-34,-570.693,-34], [34,-78.567,34], 1, 0],
+      [3, [-32,-143.568,-32], [32,-13.568,32], 0, 1],
+      [4, [-32,-588.693,-32], [32,-463.692,32], 0, 1],
+      [5, [-14.5,-588.693,-14.5], [14.5,-464.693,14.5], 0, 0],
+      [6, [34,-585.693,-1.587], [89,-500.692,1.587], 1, 0],
+      [7, [-1.587,-585.693,34], [1.587,-500.692,89], 1, 0],
+      [8, [-89,-585.693,-1.587], [-34,-500.692,1.587], 1, 0],
+      [9, [-1.587,-585.693,-89], [1.587,-500.692,-34], 1, 0],
+      [10, [-43.7,-58.787,-4.85], [-34,-49.087,4.85], 1, 0],
+      [11, [-43.7,-499.48,-4.85], [-34,-489.78,4.85], 1, 0],
+      [12, [-2.475,-423.947,11.886], [18.87,-375.277,30.935], 0, 0],
+      [13, [-32.369,-64.067,-32.369], [32.369,-13.568,32.369], 0, 0],
+      [14, [-32.416,266.142,-32.416], [32.416,386.901,32.416], 0, 0],
+      [15, [-8.771,308.643,-28.284], [24.589,355.193,0.467], 0, 0],
+      [16, [-33.291,-143.568,-33.291], [33.291,-13.568,33.291], 0, 0],
+      [17, [6.787,358.074,-14.571], [8.812,358.193,-13.028], 0, 0],
+      [18, [-33.404,-594.693,-33.404], [33.404,-490.693,33.404], 0, 0],
+      [19, [-21.501,-610.193,-21.501], [21.502,-572.193,21.499], 0, 0],
+      [20, [-17.105,-120.548,5.374], [1.87,-82.448,24.349], 0, 0],
+      [21, [-27.967,-138.568,0.917], [-18.726,-13.568,14.13], 0, 0],
+      [22, [-24.4,-129.568,-24.4], [24.4,-79.567,24.4], 0, 0],
+      [23, [-29.424,296.85,-29.424], [29.424,302.693,29.424], 0, 0],
+      [24, [-27.088,94.008,-17.121], [27.088,302.693,17.121], 0, 0],
+      [25, [-32.366,94.008,-32.449], [32.366,99.85,32.366], 0, 0],
+      [26, [-32.356,-421.688,-32.438], [32.356,-371.688,32.437], 0, 0],
+      [27, [0.917,-138.568,18.726], [14.13,-13.568,27.967], 0, 0],
+      [28, [18.726,-138.568,-14.13], [27.967,-13.568,-0.917], 0, 0],
+      [29, [-14.13,-138.568,-27.967], [-0.917,-13.568,-18.726], 0, 0],
+    ];
+    const parts = BOUNDS.map(([id, min, max, exterior, referenceOnly]) => {
+      const part = { id, bounds: [min, max], exterior: !!exterior, referenceOnly: !!referenceOnly };
+      const s = storyFor(part) || {};
+      return { ...part, label: s.label, category: s.category, subtitle: s.subtitle, description: s.description, role: s.role, material: s.material, center: centreOf(part) };
+    });
+
+    const PAD_END = 0.10, DESCENT_END = 0.88;   // the stage contract's progress schedule
+    const DEG = Math.PI / 180;
+    const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const smooth = (t) => { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); };
+
+    /* Camera schedule: pad view, eight stops with a dwell, pull-out. Returns the
+       target y (metres, exploded), distance D (m), yaw and pitch (deg), station index or -1. */
+    function schedule(p) {
+      const e = explodeAt(p);
+      const axial = 1 + AXIAL * e;
+      const n = STATIONS.length;
+      if (p < PAD_END) return { e, yT: -0.02, D: 1.9, yaw: 0, pitch: 8, station: -1 };
+      if (p < DESCENT_END) {
+        const u = (p - PAD_END) / (DESCENT_END - PAD_END) * n;
+        const k = Math.min(n - 1, Math.floor(u));
+        const m = smooth((u - k - 0.55) / 0.45);                 // dwell for 55 % of the stop, then travel
+        const cur = STATIONS[k], next = STATIONS[Math.min(n - 1, k + 1)];
+        return { e, yT: lerp(cur.y, next.y, m) * axial, D: 0.75, yaw: lerp(cur.azimuth, next.azimuth, m), pitch: 4, station: k };
+      }
+      const t = smooth((p - DESCENT_END) / (1 - DESCENT_END));
+      const last = STATIONS[n - 1];
+      return { e, yT: lerp(last.y * axial, -0.1, t), D: lerp(0.75, 2.6, t), yaw: last.azimuth + 30 * t, pitch: lerp(4, 8, t), station: n - 1 };
+    }
+    /* Progress at which station k sits in the middle of its dwell. */
+    const stationProgress = (k) => PAD_END + (k + 0.27) / STATIONS.length * (DESCENT_END - PAD_END);
+
+    const canvas = document.getElementById('bench');
+    const ctx = canvas.getContext('2d');
+    const stageEl = document.getElementById('stage');
+    const hud = document.getElementById('hud');
+    const proj = new Map();
+    let W = 0, H = 0, dpr = 1, progress = 0.53, yaw = 0, orbitSpeed = 4, lastStation = -2, renders = 0, lockedId = null;
+    let realMode = false, real = null, realBusy = false;   // the optional real-stage mode, see setRealMode
+    const tmp = [0, 0, 0];
+
+    const stage = {
+      parts, stations: STATIONS, fallback: false,
+      info: { calls: 0, triangles: 0, ms: 0 },
+      project(id) { return proj.get(id) || null; },
+      setProgress(p) { progress = clamp(p, 0, 1); render(); },
+      render, resize,
+    };
+
+    function resize() {
+      const r = stageEl.getBoundingClientRect();
+      W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height));
+      dpr = governor.dpr();
+      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+      render();
+    }
+    function render() {
+      if (realMode) return;                          // the real stage owns the bus while it is on
+      const t0 = performance.now();
+      const s = schedule(progress);
+      const th = (s.yaw + yaw) * DEG, ph = s.pitch * DEG;
+      const c = Math.cos(th), sn = Math.sin(th), cp = Math.cos(ph), sp = Math.sin(ph);
+      const f = H;                                   // focal length in px: one metre at one metre fills the stage height
+      const cx = W / 2, cy = H / 2;
+      const project = (x, y, z) => {
+        const y0 = y - s.yT;
+        const x1 = x * c + z * sn, z1 = -x * sn + z * c;
+        const y2 = y0 * cp - z1 * sp, z2 = y0 * sp + z1 * cp;
+        const depth = s.D - z2;
+        const k = f / Math.max(0.05, depth);
+        return { x: cx + x1 * k, y: cy - y2 * k, depth };
+      };
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      // the stack axis
+      const axial = 1 + AXIAL * s.e;
+      const a0 = project(0, -0.6102 * axial, 0), a1 = project(0, 0.5707 * axial, 0);
+      ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(a0.x, a0.y); ctx.lineTo(a1.x, a1.y); ctx.stroke();
+      const st = s.station >= 0 ? STATIONS[s.station] : null;
+      const corners = new Array(8);
+      let calls = 0;
+      for (const part of parts) {
+        if (part.referenceOnly) continue;
+        const [dx, dy, dz] = displacement(part, s.e, part.center, tmp);
+        const [mn, mx] = part.bounds;
+        for (let i = 0; i < 8; i++) {
+          corners[i] = project((i & 1 ? mx[0] : mn[0]) * 0.001 + dx, (i & 2 ? mx[1] : mn[1]) * 0.001 + dy, (i & 4 ? mx[2] : mn[2]) * 0.001 + dz);
+        }
+        const centre = project(part.center[0] + dx, part.center[1] + dy, part.center[2] + dz);
+        const inside = centre.depth > 0.05 && centre.x >= 0 && centre.x <= W && centre.y >= 0 && centre.y <= H;
+        proj.set(part.id, { x: centre.x, y: centre.y, visible: inside, depth: centre.depth });
+        const active = st && st.partIds.includes(part.id);
+        ctx.strokeStyle = part.id === lockedId ? '#D63B08' : active ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.14)';
+        ctx.beginPath();
+        for (const [p, q] of EDGES) { ctx.moveTo(corners[p].x, corners[p].y); ctx.lineTo(corners[q].x, corners[q].y); }
+        ctx.stroke(); calls++;
+      }
+      stage.info = { calls, triangles: 0, ms: performance.now() - t0 };
+      renders++;
+      const station = s.station >= 0 ? STATIONS[s.station] : null;
+      if (s.station !== lastStation) {
+        lastStation = s.station;
+        bus.emit('stage:station', { index: s.station, station });
+      }
+      bus.emit('stage:render', { progress, station, explode: s.e, mode: 'solid', info: stage.info });
+    }
+    bus.on('stage:station', ({ index, station }) => {
+      hud.innerHTML = station ? `<b>Station ${pad(index + 1)} / ${pad(STATIONS.length)} ${esc(station.label)}</b>` : `<b>Station &#8212; / ${pad(STATIONS.length)} pad view</b>`;
+    });
+    const EDGES = [[0,1],[2,3],[4,5],[6,7],[0,2],[1,3],[4,6],[5,7],[0,4],[1,5],[2,6],[3,7]];
+    const pad = (n) => String(n).padStart(2, '0');
+    const esc = (t) => String(t).replace(/[&<>]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch]));
+
+    /* idle orbit: a rAF loop only while there is motion to show and the tier
+       allows a free-running stage (tier 1 renders on demand only, tier 0 never) */
+    let raf = 0, lastT = 0, onScreen = true;
+    const shouldLoop = () => !realMode && orbitSpeed > 0 && governor.tier >= 2 && !document.hidden && onScreen;
+    let lastDraw = 0;
+    function loop(now) {
+      raf = 0;
+      if (!shouldLoop()) { lastT = 0; return; }
+      const dt = lastT ? Math.min(100, now - lastT) : 16;
+      lastT = now;
+      yaw = (yaw + orbitSpeed * dt / 1000) % 360;
+      // tier 3 draws every frame; tier 2 draws at 30 Hz (the yaw still advances in real time)
+      if (governor.tier >= 3 || now - lastDraw >= 30) { lastDraw = now; render(); }
+      raf = requestAnimationFrame(loop);
+    }
+    const kick = () => { if (!raf && shouldLoop()) raf = requestAnimationFrame(loop); };
+    governor.subscribe(({ tier }) => { dpr = governor.dpr(); resize(); kick(); if (real) real.setTier(tier); });
+    document.addEventListener('visibilitychange', kick);
+    new IntersectionObserver((entries) => { onScreen = entries[0].isIntersecting; kick(); }).observe(canvas);
+    new ResizeObserver(resize).observe(stageEl);
+
+    /* ---------- mount the engine under test ---------- */
+    const $ = (id) => document.getElementById(id);
+    const labels = $('callouts');
+    const mount = (st) => mountCallouts({ stage: st, svg: $('leaders'), labels, sheet: $('sheet') });
+    let api = mount(stage);
+    bus.on('callouts:lock', ({ partId }) => { lockedId = partId; render(); });
+    bus.on('callouts:unlock', () => { lockedId = null; render(); });
+    bus.on('callouts:station', ({ index, source }) => { if (source === 'sheet' && index >= 0) setProgress(stationProgress(index)); });
+    resize();
+    api.lock(16);   // the station's centre part starts locked so the first frame shows the lock state; Escape or UNLOCK clears it
+
+    /* ---------- real stage (optional): three.js and the 2.48 MB geometry load only when switched on ---------- */
+    async function setRealMode(on) {
+      const flag = $('real-flag'), toggle = $('real-toggle'), canvas = $('real');
+      if (on === realMode || realBusy) { toggle.checked = realMode; return; }
+      realBusy = true; toggle.disabled = true;
+      if (on) {
+        flag.hidden = false; flag.textContent = 'Loading three.js and assembly.bin (2.48 MB)';
+        try {
+          const { createStage } = await import('../js/stage/stage.js');
+          canvas.hidden = false;
+          real = await createStage({ canvas, tier: governor.tier });
+          await real.ready;
+          if (real.fallback) throw new Error('no WebGL');
+          if (real.error) throw new Error('geometry failed');
+          realMode = true;
+          api.destroy(); lockedId = null;
+          api = mount(real); window.callouts = api; applySolverOptions();
+          $('bench').hidden = true;
+          real.setVisible(true); real.setProgress(progress); real.render();
+          flag.textContent = `Real stage / ${real.parts.filter(p => !p.referenceOnly).length} parts drawn / anchors from stage.project()`;
+        } catch (err) {
+          flag.textContent = `Real stage unavailable (${err.message}) / the synthetic stage stays`;
+          canvas.hidden = true;
+          if (real) { real.destroy(); real = null; }
+          toggle.checked = false;
+        }
+      } else {
+        realMode = false;
+        api.destroy(); lockedId = null;
+        real.setVisible(false); real.destroy(); real = null;
+        canvas.hidden = true; $('bench').hidden = false;
+        api = mount(stage); window.callouts = api; applySolverOptions();
+        lastStation = -2; render(); kick();
+        flag.hidden = true; flag.textContent = '';
+      }
+      realBusy = false; toggle.disabled = false; toggle.checked = realMode;
+      scheduleReadout();
+    }
+    $('real-toggle').addEventListener('change', (e) => setRealMode(e.target.checked));
+
+    /* ---------- controls ---------- */
+    function setProgress(p) {
+      progress = clamp(p, 0, 1);
+      $('progress').value = progress; $('progress-out').value = progress.toFixed(3);
+      if (realMode) real.setProgress(progress); else render();
+    }
+    function applySolverOptions() {
+      api.options.spacing = parseFloat($('spacing').value);
+      api.options.hysteresis = parseFloat($('hysteresis').value);
+      api.options.quantum = parseFloat($('quantum').value);
+      api.options.elbow = parseFloat($('elbow').value);
+      api.options.railInset = parseFloat($('inset').value);
+      api.setMode(document.querySelector('[data-mode][aria-pressed="true"]')?.dataset.mode || 'auto');
+    }
+    function bindRange(id, fmt, apply) {
+      const input = $(id), out = $(id + '-out');
+      input.addEventListener('input', () => { const v = parseFloat(input.value); out.value = fmt(v); apply(v); });
+    }
+    bindRange('progress', (v) => v.toFixed(3), (v) => setProgress(v));
+    bindRange('orbit', (v) => String(v), (v) => { orbitSpeed = v; kick(); });
+    bindRange('spacing', (v) => String(v), (v) => { api.options.spacing = v; api.refresh(); });
+    bindRange('hysteresis', (v) => String(v), (v) => { api.options.hysteresis = v; api.refresh(); });
+    bindRange('quantum', (v) => String(v), (v) => { api.options.quantum = v; api.refresh(); });
+    bindRange('elbow', (v) => String(v), (v) => { api.options.elbow = v; api.refresh(); });
+    bindRange('inset', (v) => String(v), (v) => { api.options.railInset = v; api.refresh(); });
+    bindRange('labelw', (v) => String(v), (v) => { labels.style.setProperty('--co-label-w', v + 'px'); api.refresh(); });
+    const stepStation = (d) => {
+      const cur = api.state.station;
+      const k = clamp((cur < 0 ? (d > 0 ? -1 : STATIONS.length) : cur) + d, 0, STATIONS.length - 1);
+      setProgress(stationProgress(k));
+    };
+    $('prev-station').addEventListener('click', () => stepStation(-1));
+    $('next-station').addEventListener('click', () => stepStation(1));
+    for (const b of document.querySelectorAll('[data-mode]')) b.addEventListener('click', () => {
+      for (const o of document.querySelectorAll('[data-mode]')) o.setAttribute('aria-pressed', String(o === b));
+      api.setMode(b.dataset.mode);
+    });
+    $('replay').addEventListener('click', () => { const i = api.state.station; api.setStation(-1); api.setStation(i); });
+    const select = $('part');
+    for (const p of parts) if (!p.referenceOnly) { const o = document.createElement('option'); o.value = p.id; o.textContent = `${pad(p.id)} / ${p.label}`; select.append(o); }
+    select.value = '16';
+    $('lock').addEventListener('click', () => api.lock(+select.value, { focus: true }));
+    $('unlock').addEventListener('click', () => api.unlock());
+    addEventListener('keydown', (e) => {
+      if (e.target.matches('input, select, textarea, button')) return;
+      if (e.key === 'j') stepStation(1); else if (e.key === 'k') stepStation(-1);
+    });
+
+    /* ---------- readout, at most 10 Hz ---------- */
+    const readout = $('readout');
+    let readoutDue = 0, readoutTimer = 0;
+    function cell(k, v) { return `<span>${k}<b>${v}</b></span>`; }
+    function writeReadout() {
+      readoutTimer = 0;
+      const s = api.state, g = governor.stats;
+      const st = s.station >= 0 ? STATIONS[s.station] : null;
+      readout.innerHTML = [
+        cell('MODE', `${s.mode.toUpperCase()} / ${api.options.mode.toUpperCase()} / ${realMode ? 'REAL STAGE' : 'SYNTHETIC'}`),
+        cell('STATION', st ? `${pad(s.station + 1)} / ${pad(STATIONS.length)} ${esc(st.label).toUpperCase()}` : `&#8212; / ${pad(STATIONS.length)} PAD VIEW`),
+        cell('PROGRESS', `${progress.toFixed(3)} / EXPLODE ${(realMode ? real.explode : schedule(progress).e).toFixed(2)}`),
+        cell('RAILS', `L ${s.left} / R ${s.right} / ${s.shown} SHOWN`),
+        cell('HELD', `${s.held} OF ${s.shown} (HYSTERESIS ${api.options.hysteresis} PX)`),
+        cell('GAP', `${s.gap.toFixed(1)} PX USED / ${api.options.spacing} PX SET`),
+        cell('RELAX', `${s.clusters} CLUSTER${s.clusters === 1 ? '' : 'S'} / MAX SHIFT ${s.maxShift.toFixed(1)} PX`),
+        cell('SOLVE', `${s.solveMs.toFixed(2)} MS / ${s.solves} RUNS`),
+        cell('LOCK', s.locked === null ? '&#8212;' : `${pad(s.locked)} ${esc(parts.find(p => p.id === s.locked)?.label || '').toUpperCase()}`),
+        realMode ? cell('RENDERS', `${real.renders} / LAST ${(real.info.ms || 0).toFixed(2)} MS / ${real.info.calls} CALLS / ${real.info.triangles} TRIANGLES`) : cell('RENDERS', `${renders} / LAST ${stage.info.ms.toFixed(2)} MS / ${stage.info.calls} BOXES`),
+        cell('TIER', `${s.tier} / P50 ${g.p50Ms.toFixed(1)} MS / SRC: GOVERNOR`),
+        cell('ORBIT', `${orbitSpeed} DEG/S / YAW ${yaw.toFixed(1)} DEG / SRC: RAF`),
+      ].join('');
+    }
+    function scheduleReadout() {
+      if (readoutTimer) return;
+      const wait = Math.max(0, readoutDue - performance.now());
+      readoutTimer = setTimeout(() => { readoutDue = performance.now() + 100; writeReadout(); }, wait);
+    }
+    bus.on('stage:render', scheduleReadout);
+    bus.on('callouts:lock', scheduleReadout);
+    bus.on('callouts:unlock', scheduleReadout);
+    bus.on('callouts:station', scheduleReadout);
+    writeReadout();
+    window.callouts = api;
+    window.benchStage = stage;
+  </script>
+</body>
+</html>

@@ -145,8 +145,12 @@ export function buildPart(f32, { quantum = QUANTUM_MM, maxCommands = MAX_COMMAND
 /* Byte range of a part's wire data in assembly.bin. */
 export function wireRange(part) { return [part.wire.offset, part.wire.offset + part.wire.count * 4]; }
 
-/* The live plotter. svg: an <svg> element the plotter owns the children of.
-   json: parsed assembly.json. order: part ids in plotting order. */
+/* The live plotter. svg: the host <svg>; it must fill its parent box, because the
+   plotter adds two absolutely positioned siblings over it: a second <svg> that holds
+   only the chunk being plotted (its own compositor layer, so re-dashing one path
+   never repaints the finished drawing) and an HTML pen head moved with a transform.
+   json: parsed assembly.json. order: part ids in plotting order. tier: governor tier
+   (0 draws instantly, 1 drops the pen head, 2 and 3 run everything). */
 export function createPlotter(svg, { json, order = EXTERIOR_IDS, speed = DEFAULT_SPEED, tier = 3, quantum = QUANTUM_MM, maxCommands = MAX_COMMANDS, margin = 30 } = {}) {
   const NS = 'http://www.w3.org/2000/svg';
   const parts = order.map((id) => json.parts.find((p) => p.id === id)).filter((p) => p && p.wire);
@@ -159,38 +163,44 @@ export function createPlotter(svg, { json, order = EXTERIOR_IDS, speed = DEFAULT
   }
   if (!parts.length) { minX = minY = -1; maxX = maxY = 1; }
   const vb = [minX - margin, minY - margin, maxX - minX + margin * 2, maxY - minY + margin * 2];
-  svg.setAttribute('viewBox', vb.map((v) => v.toFixed(2)).join(' '));
-  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-  svg.setAttribute('aria-hidden', 'true');
+  const viewBox = vb.map((v) => v.toFixed(2)).join(' ');
+  for (const a of [['viewBox', viewBox], ['preserveAspectRatio', 'xMidYMid meet'], ['aria-hidden', 'true']]) svg.setAttribute(a[0], a[1]);
+  svg.classList.add('bt-svg-ink');
   while (svg.firstChild) svg.removeChild(svg.firstChild);
-  const ink = el('g', { class: 'bt-ink' });
-  const pen = el('g', { class: 'bt-pen', visibility: 'hidden' });
-  const ring = el('circle', { class: 'bt-pen-ring', r: 3 });
-  const dot = el('circle', { class: 'bt-pen-dot', r: 1 });
-  pen.append(ring, dot);
-  svg.append(ink, pen);
+  const parent = svg.parentNode;
+  if (parent && parent.nodeType === 1 && getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
+  const live = document.createElementNS(NS, 'svg');
+  for (const a of [['viewBox', viewBox], ['preserveAspectRatio', 'xMidYMid meet'], ['aria-hidden', 'true'], ['class', 'bt-svg bt-svg-live']]) live.setAttribute(a[0], a[1]);
+  const pen = document.createElement('div');
+  pen.className = 'bt-pen'; pen.setAttribute('aria-hidden', 'true'); pen.hidden = true;
+  svg.after(live, pen);
 
   const stats = { parts: parts.length, arrived: 0, segments: 0, polylines: 0, chunks: 0, travel: 0, travelUp: 0, drawn: 0, pen: [0, 0], busy: false, done: false, buildMs: 0, raw: 0 };
   const built = new Set();
-  const queue = [];                 // chunks waiting for the pen
-  let active = null;                // { path, chunk, anim, speed0, before }
-  let drawnBefore = 0;              // millimetres plotted by finished chunks
+  const items = [];                 // scheduled chunks in pen order: { path, chunk, part, anim, start, end, settled }
+  let cursor = 0;                   // first item that may still be plotting
+  let penFreeAt = 0;                // timeline time (ms) when the last scheduled chunk ends
+  let settledLength = 0;            // millimetres plotted by settled chunks
   let penEnd = [0, 0];              // where the pen was left, millimetres
-  let raf = 0, visible = true, destroyed = false, scale = 1;
+  let raf = 0, visible = true, destroyed = false;
+  let scale = 1, ox = 0, oy = 0;    // mm -> CSS px mapping of the host svg box
   let speedMm = speed * MM_PER_UNIT;
   let currentTier = tier;
   const instant = () => !Number.isFinite(speedMm) || currentTier <= 0;
+  const timeNow = () => document.timeline?.currentTime ?? performance.now();
 
   function el(name, attrs) { const e = document.createElementNS(NS, name); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; }
 
-  /* Stroke weight in user units so the plotted line stays STROKE_PX wide at any size. */
+  /* Stroke weight in user units so the plotted line stays STROKE_PX wide at any size,
+     and the mm -> px mapping for the pen head (xMidYMid meet: centred, uniform scale). */
   function fit() {
     const r = svg.getBoundingClientRect();
     if (!r.width || !r.height) return;
     scale = Math.min(r.width / vb[2], r.height / vb[3]);   // CSS px per millimetre
-    svg.style.setProperty('--bt-sw', (STROKE_PX / scale).toFixed(4));
-    ring.setAttribute('r', (PEN_RADIUS_PX / scale).toFixed(4));
-    dot.setAttribute('r', (PEN_RADIUS_PX / 3 / scale).toFixed(4));
+    ox = (r.width - vb[2] * scale) / 2; oy = (r.height - vb[3] * scale) / 2;
+    const sw = (STROKE_PX / scale).toFixed(4);
+    svg.style.setProperty('--bt-sw', sw); live.style.setProperty('--bt-sw', sw);
+    pen.style.width = pen.style.height = `${PEN_RADIUS_PX * 2}px`;
   }
   const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(fit) : null;
   ro?.observe(svg);
@@ -213,91 +223,121 @@ export function createPlotter(svg, { json, order = EXTERIOR_IDS, speed = DEFAULT
       penEnd = part.end;
       stats.arrived++; stats.segments += part.segments; stats.polylines += part.polylines; stats.chunks += part.chunks.length;
       stats.travel += part.travel / MM_PER_UNIT; stats.travelUp += part.travelUp / MM_PER_UNIT; stats.raw += part.raw;
-      for (const chunk of part.chunks) {
-        const path = el('path', { class: 'bt-stroke', d: chunk.d, 'data-part': p.id, 'data-state': 'queued' });
-        path.style.strokeDasharray = `${chunk.length}`;
-        path.style.strokeDashoffset = `${chunk.length}`;
-        ink.appendChild(path);
-        queue.push({ path, chunk, part: p });
-      }
+      for (const chunk of part.chunks) enqueue(p, chunk);
     }
-    stats.done = stats.arrived === parts.length && !queue.length && !active;
-    pump();
+    stats.done = stats.arrived === parts.length && cursor >= items.length;
   }
 
+  /* Place a chunk on the document timeline right after the previous one. The start
+     time is set explicitly so there is no play-pending frame between chunks: the pen
+     runs at constant speed across parts, with pen-up moves taking zero time. */
+  function enqueue(part, chunk) {
+    const path = el('path', { class: 'bt-stroke', d: chunk.d, 'data-part': part.id, 'data-state': 'queued' });
+    const item = { path, chunk, part, anim: null, start: 0, end: 0, settled: false };
+    items.push(item);
+    if (instant()) { svg.appendChild(path); settle(item); return; }
+    path.style.strokeDasharray = `${chunk.length}`;
+    path.style.strokeDashoffset = `${chunk.length}`;
+    path.style.visibility = 'hidden';                     // nothing of a queued chunk is painted
+    live.appendChild(path);
+    const now = timeNow();
+    const start = Math.max(now, penFreeAt);
+    const duration = Math.max(1, chunk.length / speedMm * 1000);
+    let anim;
+    try {
+      anim = path.animate([{ strokeDashoffset: chunk.length, visibility: 'visible' }, { strokeDashoffset: 0, visibility: 'visible' }], { duration, easing: 'linear', fill: 'forwards' });
+      anim.startTime = start;
+    } catch { svg.appendChild(path); settle(item); return; }
+    item.anim = anim; item.start = start; item.end = start + duration;
+    penFreeAt = item.end;
+    anim.onfinish = () => { if (!item.settled) { settle(item); advance(); } };
+    stats.busy = true;
+    schedule();
+  }
   function settle(item) {
+    if (item.settled) return;
+    item.settled = true;
     const { path, chunk } = item;
     path.style.strokeDasharray = 'none';
     path.style.strokeDashoffset = '0';
+    path.style.visibility = '';
     path.setAttribute('data-state', 'done');
-    drawnBefore += chunk.length;
-    stats.drawn = drawnBefore / MM_PER_UNIT;
+    if (item.anim) { try { item.anim.cancel(); } catch {} item.anim = null; }
+    if (path.parentNode !== svg) svg.appendChild(path);
+    settledLength += chunk.length;
+    stats.drawn = settledLength / MM_PER_UNIT;
   }
-  function pump() {
-    if (destroyed || active) return;
-    while (queue.length && instant()) settle(queue.shift());
-    if (!queue.length) { stats.busy = false; stats.done = stats.arrived === parts.length; pen.setAttribute('visibility', 'hidden'); return; }
-    const item = queue.shift();
-    const { path, chunk } = item;
-    path.setAttribute('data-state', 'active');
-    const speed0 = speedMm;
-    let anim;
-    try {
-      anim = path.animate([{ strokeDashoffset: chunk.length }, { strokeDashoffset: 0 }], { duration: Math.max(1, chunk.length / speed0 * 1000), easing: 'linear', fill: 'forwards' });
-    } catch { settle(item); pump(); return; }
-    active = { ...item, anim, speed0 };
-    stats.busy = true;
-    anim.onfinish = () => { if (active?.anim !== anim) return; active = null; settle(item); try { anim.cancel(); } catch {} pump(); };
-    if (currentTier >= 2) { pen.setAttribute('visibility', 'visible'); schedule(); }
-    else pen.setAttribute('visibility', 'hidden');
+  function advance() {
+    while (cursor < items.length && items[cursor].settled) cursor++;
+    if (cursor >= items.length) { stats.busy = false; stats.done = stats.arrived === parts.length; pen.hidden = true; stopLoop(); }
   }
 
   /* Pen head: one getPointAtLength per frame on the chunk being plotted. */
   function loop() {
     raf = 0;
-    if (!active || !visible || destroyed) return;
-    const timing = active.anim.effect.getComputedTiming();
-    const progress = timing.progress ?? 1;
-    const dist = progress * active.chunk.length;
-    try {
-      const pt = active.path.getPointAtLength(dist);
-      pen.setAttribute('transform', `translate(${pt.x.toFixed(3)} ${pt.y.toFixed(3)})`);
-      stats.pen[0] = pt.x; stats.pen[1] = pt.y;
-    } catch {}
-    stats.drawn = (drawnBefore + dist) / MM_PER_UNIT;
+    if (!visible || destroyed || currentTier < 2) return;
+    advance();
+    if (cursor >= items.length) return;
+    const it = items[cursor];
+    const now = timeNow();
+    if (now >= it.start) {
+      const progress = Math.min(1, (now - it.start) / (it.end - it.start));
+      const dist = progress * it.chunk.length;
+      try {
+        const pt = it.path.getPointAtLength(dist);
+        pen.style.transform = `translate(${(ox + (pt.x - vb[0]) * scale - PEN_RADIUS_PX).toFixed(2)}px, ${(oy + (pt.y - vb[1]) * scale - PEN_RADIUS_PX).toFixed(2)}px)`;
+        pen.hidden = false;
+        stats.pen[0] = pt.x; stats.pen[1] = pt.y;
+      } catch {}
+      stats.drawn = (settledLength + dist) / MM_PER_UNIT;
+    }
     schedule();
   }
-  function schedule() { if (!raf && active && visible && currentTier >= 2 && !destroyed) raf = requestAnimationFrame(loop); }
+  function schedule() { if (!raf && !destroyed && visible && currentTier >= 2 && cursor < items.length) raf = requestAnimationFrame(loop); }
   function stopLoop() { if (raf) cancelAnimationFrame(raf); raf = 0; }
 
+  /* Re-time every unsettled chunk from the current moment at the new speed; the
+     active chunk keeps its progress, the rest follow back to back. */
+  function retime() {
+    const now = timeNow();
+    let t = now;
+    for (let i = cursor; i < items.length; i++) {
+      const it = items[i];
+      if (it.settled || !it.anim) continue;
+      const duration = Math.max(1, it.chunk.length / speedMm * 1000);
+      let start = Math.max(t, it.start);
+      if (now > it.start && now < it.end) start = now - (now - it.start) / (it.end - it.start) * duration;   // preserve progress
+      try { it.anim.effect.updateTiming({ duration }); it.anim.startTime = start; } catch {}
+      it.start = start; it.end = start + duration;
+      t = it.end;
+    }
+    penFreeAt = Math.max(t, now);
+  }
   function setSpeed(unitsPerSecond) {
     speedMm = unitsPerSecond * MM_PER_UNIT;
-    if (active) {
-      if (!Number.isFinite(speedMm)) { finish(); return; }
-      active.anim.playbackRate = speedMm / active.speed0;
-    }
+    if (instant()) { finish(); return; }
+    retime();
   }
   function setTier(t) {
     currentTier = t | 0;
     if (currentTier <= 0) { finish(); return; }
-    if (active) { if (currentTier >= 2) { pen.setAttribute('visibility', 'visible'); schedule(); } else { pen.setAttribute('visibility', 'hidden'); stopLoop(); } }
+    if (currentTier >= 2) schedule(); else { stopLoop(); pen.hidden = true; }
   }
   /* Draw everything that has arrived immediately. */
   function finish() {
-    if (active) { const a = active; active = null; try { a.anim.cancel(); } catch {} settle(a); }
-    while (queue.length) settle(queue.shift());
-    stopLoop();
-    pen.setAttribute('visibility', 'hidden');
-    stats.busy = false; stats.done = stats.arrived === parts.length;
+    for (let i = cursor; i < items.length; i++) settle(items[i]);
+    penFreeAt = 0;
+    advance();
   }
   function destroy() {
     if (destroyed) return;
     destroyed = true;
-    if (active) { try { active.anim.cancel(); } catch {} active = null; }
-    queue.length = 0;
+    for (const it of items) if (it.anim) { try { it.anim.cancel(); } catch {} it.anim = null; }
+    items.length = 0;
     stopLoop();
     ro?.disconnect(); io?.disconnect();
-    ink.remove(); pen.remove();
+    live.remove(); pen.remove();
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
   }
-  return { feed, setSpeed, setTier, finish, fit, destroy, stats, parts, viewBox: vb, get scale() { return scale; } };
+  return { feed, setSpeed, setTier, finish, fit, destroy, stats, parts, viewBox: vb, get scale() { return scale; }, get queued() { return items.length - cursor; } };
 }

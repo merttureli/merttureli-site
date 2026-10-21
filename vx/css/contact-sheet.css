@@ -1,0 +1,133 @@
+/* contact-sheet.css — prefix .cs-. A board-grey sheet on paper, black film
+   rebates with paper edge print, one accent: the grease pencil (livery) on
+   marked frames. The loupe is a fixed, pointer-events-free instrument and the
+   viewer is a native dialog; both are appended to <body> by the module. No
+   grain anywhere here: this module is about the files as they are.
+   Column count follows the sheet's own width (container queries), with viewport
+   media queries as the fallback for engines without them. */
+.cs { --cs-gap: 12px; --cs-rebate: 17px; position: relative; min-width: 0; container-type: inline-size; font-family: var(--font-body); color: var(--text-body); }
+
+/* the sheet */
+.cs-sheet { background: var(--board); padding: clamp(14px, 1.8vw, 24px); border: 1px solid var(--line-hairline); }
+.cs-head { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--space-2) var(--space-5); flex-wrap: wrap; margin: 0 0 clamp(12px, 1.6vw, 20px); }
+.cs-head p { margin: 0; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: var(--lh-meta); color: var(--ink-600); }
+.cs-head-l { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); align-items: baseline; }
+.cs-head-title { font-size: var(--fs-meta); letter-spacing: var(--ls-caps-wide); color: var(--ink-900); }
+.cs-head-r { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); justify-content: flex-end; }
+.cs-head-roll { white-space: nowrap; }
+.cs-gridwrap { position: relative; }
+.cs-grid { --cs-cols: 6; display: grid; grid-template-columns: repeat(var(--cs-cols), minmax(0, 1fr)); gap: var(--cs-gap); list-style: none; margin: 0; padding: 0; }
+.cs-ticks { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.cs-ticks path { fill: none; stroke: var(--ink-900); stroke-opacity: .5; stroke-width: 1; }
+
+/* cells: a 6:5 cell holds a 3:2 frame plus two rows of edge print on black */
+.cs-cell { position: relative; aspect-ratio: 6 / 5; min-width: 0; background: var(--ink-900); color: var(--paper); }
+.cs-cell[data-roll-start]::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--paper-a70); pointer-events: none; }
+.cs-frame { position: absolute; inset: 0; width: 100%; height: 100%; display: block; padding: var(--cs-rebate) 7px; cursor: crosshair; -webkit-tap-highlight-color: transparent; touch-action: pan-y; -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; }
+.cs-frame:focus-visible { outline: 1px solid var(--paper); outline-offset: -4px; }
+.cs-img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; -webkit-user-drag: none; }
+.cs-edge, .cs-foot { position: absolute; left: 8px; right: 8px; display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); font-family: var(--font-mono); font-size: 10px; line-height: 1; letter-spacing: .1em; text-transform: uppercase; pointer-events: none; white-space: nowrap; }
+.cs-edge { top: 5px; color: var(--paper-a70); }
+.cs-foot { bottom: 5px; color: var(--paper-a45); letter-spacing: .06em; }
+.cs-numwrap { display: inline-flex; gap: 6px; align-items: baseline; flex: none; }
+.cs-num { color: var(--paper); }
+.cs-io { color: var(--livery); margin-left: 12px; }   /* clears the pencil circle around the number */
+.cs-io:empty { display: none; }
+.cs-dims { flex: none; font-variant-numeric: tabular-nums; }
+.cs-title { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.cs-tag { flex: none; }
+.cs-cell[data-roll-start] .cs-tag { color: var(--paper-a70); }
+
+/* the leader cell carries the roll legend */
+.cs-leader { display: flex; flex-direction: column; justify-content: flex-end; padding: 22px 8px 8px; font-family: var(--font-mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--paper-a70); background: var(--ink-800); background-image: repeating-linear-gradient(135deg, transparent 0 6px, var(--paper-a08) 6px 7px); }
+.cs-legend { margin: 0; display: grid; gap: 4px; }
+.cs-legend > div { display: grid; grid-template-columns: 3.2em minmax(0, 1fr) auto; gap: 0 6px; }
+.cs-legend dt { color: var(--paper); }
+.cs-legend dd { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cs-legend > .cs-legend-sum { grid-template-columns: auto minmax(0, 1fr); border-top: 1px solid var(--paper-a18); padding-top: 5px; margin-top: 2px; }
+.cs-legend-sum dt { color: var(--paper-a70); }
+.cs-legend-sum dd { text-align: right; }
+
+/* per-cell MARK: takes the roll tag's place at the bottom-right on hover, focus and while marked */
+.cs-mark { position: absolute; bottom: 0; right: 0; padding: 6px 8px 5px; font-family: var(--font-mono); font-size: 10px; line-height: 1; letter-spacing: .1em; text-transform: uppercase; color: var(--paper); background: var(--ink-900); opacity: 0; }
+.cs-cell:hover .cs-mark, .cs-cell:focus-within .cs-mark, .cs-cell[data-marked] .cs-mark { opacity: 1; }
+.cs-cell:hover .cs-tag, .cs-cell:focus-within .cs-tag, .cs-cell[data-marked] .cs-tag { visibility: hidden; }
+.cs-mark[aria-pressed="true"] { color: var(--livery); }
+.cs-mark:focus-visible { outline: 1px solid var(--paper); outline-offset: -3px; }
+
+/* the grease pencil around the frame number */
+.cs-pencil { position: absolute; left: 1px; top: -2px; width: 44px; height: 28px; display: none; pointer-events: none; overflow: visible; }
+.cs-pencil path { fill: none; stroke: var(--livery); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; opacity: .92; }
+.cs-cell[data-marked] .cs-pencil { display: block; }
+
+/* toolbar under the sheet */
+.cs-bar { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3) var(--space-5); flex-wrap: wrap; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline); }
+.cs-bar-l { display: grid; gap: var(--space-1); min-width: 0; }
+.cs-marks { margin: 0; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: var(--lh-meta); color: var(--text-display); font-variant-numeric: tabular-nums; }
+.cs-hint { margin: 0; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: .08em; text-transform: uppercase; line-height: var(--lh-meta); color: var(--text-meta); }
+.cs-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.cs-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; padding: 0 var(--space-4); border: 1px solid var(--ink-a30); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-display); background: transparent; }
+.cs-btn:hover { border-color: var(--ink-900); }
+.cs-btn-primary { background: var(--ink-900); color: var(--paper); border-color: var(--ink-900); }
+.cs-btn-primary:hover { background: var(--ink-700); }
+.cs-btn-dark { color: var(--paper); border-color: var(--paper-a45); min-height: 44px; }
+.cs-btn-dark:hover { border-color: var(--paper); }
+
+/* the loupe: a fixed glass with a mono plate under it, as wide as the plate, glass centred; pointer-events off */
+.cs-loupe { --cs-loupe: 160px; position: fixed; left: 0; top: 0; z-index: var(--z-overlay); display: grid; grid-template-columns: max-content; justify-items: center; gap: 6px; width: max-content; max-width: calc(100vw - 16px); pointer-events: none; will-change: transform; }
+.cs-loupe[hidden] { display: none; }
+.cs-loupe-glass { width: var(--cs-loupe); height: var(--cs-loupe); border-radius: 50%; background: var(--ink-900); box-shadow: 0 0 0 1px var(--paper-a70), 0 0 0 2px var(--ink-a30), 0 14px 36px rgba(10, 10, 10, .38); image-rendering: pixelated; }
+.cs-loupe-read { margin: 0; display: grid; gap: 3px; padding: 7px 9px 8px; background: var(--ink-900); color: var(--paper); font-family: var(--font-mono); font-size: 10px; line-height: 1.2; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.cs-loupe-read span { color: var(--paper-a70); }
+.cs-loupe-read span:first-child { color: var(--paper); }
+.cs-loupe[data-mode="hold"] .cs-loupe-read { order: -1; }
+
+/* the viewer: a native dialog on ink */
+.cs-viewer { border: 0; padding: 0; margin: 0; width: 100vw; width: 100dvw; height: 100svh; max-width: none; max-height: none; background: var(--ink-900); color: var(--paper); overscroll-behavior: contain; }
+.cs-viewer::backdrop { background: rgba(10, 10, 10, .94); }
+.cs-viewer[open] { display: grid; grid-template-rows: minmax(0, 1fr) auto; }
+.cs-viewer-stage { display: grid; place-items: center; min-height: 0; padding: var(--space-5); touch-action: pan-y; }
+/* the picture fills the stage but never goes past 2 × its native size; --w / --h are set per frame by the module */
+.cs-viewer-img { width: 100%; height: 100%; max-width: calc(var(--w, 1280) * 2px); max-height: calc(var(--h, 1600) * 2px); object-fit: contain; -webkit-user-drag: none; user-select: none; }
+.cs-viewer-bar { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3) var(--space-5); flex-wrap: wrap; padding: var(--space-3) var(--page-margin) calc(var(--space-3) + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--paper-a18); }
+.cs-viewer-cap { margin: 0; display: grid; gap: 3px; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: var(--lh-meta); color: var(--paper-a45); min-width: 0; }
+.cs-viewer-line { font-size: var(--fs-meta); color: var(--paper); font-variant-numeric: tabular-nums; }
+.cs-viewer-nav { display: flex; gap: var(--space-2); }
+
+/* motion: only hover reveals and buttons transition, and not under reduced motion */
+@media (prefers-reduced-motion: no-preference) {
+  .cs-mark, .cs-btn { transition: opacity var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out), background var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out); }
+}
+
+/* widths, by the sheet's own width: 6 columns from 1000 px, 4 from 560 px, 3 below */
+@container (max-width: 999px) { .cs-grid { --cs-cols: 4; } }
+@container (max-width: 559px) {
+  .cs-grid { --cs-cols: 3; --cs-gap: 10px; }
+  .cs-frame { padding: 15px 6px; }
+  .cs-edge { font-size: 9px; letter-spacing: .08em; left: 6px; right: 6px; top: 4px; }
+  .cs-foot, .cs-dims { display: none; }
+  .cs-mark { top: 0; bottom: auto; opacity: 1; padding: 3px 6px 5px; font-size: 9px; }
+  .cs-pencil { width: 40px; height: 25px; left: 0; top: -3px; }
+  .cs-leader { grid-column: 1 / -1; aspect-ratio: auto; padding: 20px 8px 8px; }
+  .cs-legend { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 12px; }
+  .cs-legend-sum { grid-column: 1 / -1; }
+  .cs-head-r { justify-content: flex-start; }
+  .cs-actions { width: 100%; }
+  .cs-actions .cs-btn { flex: 1 1 0; }
+}
+@supports not (container-type: inline-size) {
+  @media (max-width: 1100px) { .cs-grid { --cs-cols: 4; } }
+  @media (max-width: 700px) {
+    .cs-grid { --cs-cols: 3; --cs-gap: 10px; }
+    .cs-frame { padding: 15px 6px; }
+    .cs-foot, .cs-dims { display: none; }
+    .cs-mark { top: 0; bottom: auto; opacity: 1; }
+    .cs-leader { grid-column: 1 / -1; aspect-ratio: auto; }
+  }
+}
+@media (pointer: coarse) { .cs-mark { opacity: 1; color: var(--paper-a70); } .cs-mark[aria-pressed="true"] { color: var(--livery); } .cs-cell .cs-tag { visibility: hidden; } .cs-frame { cursor: default; } }
+@media (forced-colors: active) {
+  .cs-sheet, .cs-bar, .cs-btn, .cs-viewer-bar { border-color: CanvasText; }
+  .cs-ticks path { stroke: CanvasText; }
+  .cs-pencil path { stroke: Highlight; }
+}
