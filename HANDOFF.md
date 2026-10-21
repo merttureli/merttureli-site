@@ -7,7 +7,8 @@ From `a6d3ea8` (all approved batches merged, pages pre-rendered). Three steps, o
 | `d49bfd2` | A. Pending handoffs b2a, b2c, b2d, b2e, b3, b5, b6, robots.txt, `_headers` |
 | `829b9b3` | B. Batch 2b: headings and landmarks (zero visual diff) |
 | `9da5d16` | C. Batch 8: layout and motion polish (intended visual changes) |
-| (this file) | HANDOFF.md |
+| `1ae8d02` | Poster preloads removed after measuring (see "Performance"); first version of this file |
+| last | HANDOFF.md |
 
 Evidence lives under
 `/tmp/claude-0/-home-user-merttureli-site/fe356c8b-023d-52dd-b7f6-84e925c9294d/scratchpad/opt/integrate/`
@@ -23,13 +24,14 @@ Already done before this branch (verified, skipped): the palette script first in
 (b5), `<html lang>` (b1), websites.html og:image alt (b5).
 
 **b2c media (G5: posters only for transparent clips)**
-- `src/index.html`: WebP hero poster, `preload="metadata"`, and a `<link rel="preload" as="image"
-  ... fetchpriority="high">` for it. Card and Beyond posters are `data-poster` (WebP), so nothing below
+- `src/index.html`: WebP hero poster and `preload="metadata"`. I added the `<link rel="preload"
+  as="image" fetchpriority="high">` for the poster in step A and removed it in `1ae8d02`, because
+  measurement showed it made things slower (see "Performance"). Card and Beyond posters are `data-poster` (WebP), so nothing below
   the fold downloads at t=0. robo, rudder, therma-noflow, kaan and hurjet sources carry
   `data-src-md`/`data-src-sm`. The hero swap code (template only; the static build drops it) uses the
   WebP posters and the 1280/960 variants.
-- `build-case.py`: `MOTION_VARIANTS`, `OPAQUE_CLIPS`, `webm_source()`. Case hero clips: eager WebP poster,
-  preloaded in `<head>` with `fetchpriority="high"`, lazy `data-src` sources, `preload="none"`. The
+- `build-case.py`: `MOTION_VARIANTS`, `OPAQUE_CLIPS`, `webm_source()`. Case hero clips: eager WebP poster
+  (also no preload, see "Performance"), lazy `data-src` sources, `preload="none"`. The
   mechanism band: `data-poster`, lazy sources with its 1280/960 webm, mp4 kept.
 - mp4 removed from every transparent clip (index hero, every case hero except bend-fixture). Kept for
   hotbox, bend-fixture, the mechanism band and the balloon, as b2c listed.
@@ -149,7 +151,7 @@ Not done in step C:
 
 - `python3 tools/build.py --check`: exit 0. `python3 check-writing.py`: 0 flagged across 9 files.
 - **Harness against a6d3ea8**, all 11 pages x 390/860/1440/1920 x original/slate, corridor masked
-  (`EV/regress-final/`): 48/88 differ, all on index and the 5 case pages, all accounted for above (A:
+  (`EV/regress-final/`, run on `9da5d16`; `1ae8d02` only removes the preload `<link>`s): 48/88 differ, all on index and the 5 case pages, all accounted for above (A:
   posters, caption, explore paragraph; C: the table). websites, privacy, 404, hi and photography-lab are
   identical. Gate changes: only the case-page h1 0 to 1. Candidate: 0 external hosts, 0 console errors,
   0 page errors on every page.
@@ -163,10 +165,34 @@ Not done in step C:
     Motion switch flips `html[data-motion]`, and the case page at 390 switches from the menu.
   - Explorer: it opens with a 778x667 canvas, Back closes it and stays on index (`explorer-open-1440.png`).
   - Websites inquiry at 390 with Formspree route-mocked: one POST, completion panel shown, no errors.
-- Throttled mobile (Pixel 5, CDP 150 ms RTT, 1.6 Mbps, CPU 4x, cache off, median of 5,
-  `EV/final/perf.json`, b1's script):
+- Throttled mobile: see "Performance" below.
 
-PERF_TABLE
+## Performance
+
+Pixel 5, CDP 150 ms RTT, 1.6 Mbps down, CPU 4x, cache off, median of 5. The script is b1's, with a page
+list option (`EV/patches/perf.js`). Final run: `EV/final/perf.json`. a6d3ea8 was measured in the same
+session, because the absolute numbers drift between sessions by about 70 ms.
+
+| page | batch 1 report | a6d3ea8 today | opt/integrate | LCP element now |
+| --- | --- | --- | --- | --- |
+| index FCP | 1400 ms | 1356 ms | 1440 ms | |
+| index LCP | **3948 ms** | 4092 ms | **1544 ms** | hero poster, WebP (was the 350 KB PNG) |
+| charger FCP | 1176 ms | 1224 ms | 1244 ms | |
+| charger LCP | **1176 ms** | 1224 ms | **1244 ms** | the lede paragraph (unchanged) |
+
+- Index LCP drops by about 2.5 s: the hero poster is a 15 KB WebP instead of a 350 KB PNG, and the card
+  posters no longer download at t=0.
+- Index FCP is +84 ms against today's a6d3ea8 run. a6d3ea8 itself measured 1432 ms in an earlier run
+  this session, so this is within the session-to-session spread. Charger is +20 ms, which is noise.
+- **Deviation from the brief:** the hero poster preload with `fetchpriority="high"` made both metrics
+  worse, so it is not shipped. Same session, same server:
+  - index with the preload: FCP = LCP 1608 ms.
+  - index without it: FCP 1444, LCP 1516.
+  - index with the preload minus fetchpriority: FCP 1412, LCP 1744.
+  - charger with the preload: 1304. Without it: 1248.
+
+  The static HTML already names the poster early, and at 1.6 Mbps a high-priority image competes with
+  the stylesheets and fonts. To restore it, it is one `<link>` in `src/index.html`'s head.
 
 ## Copy touched (all from the handoffs or findings in scope)
 
