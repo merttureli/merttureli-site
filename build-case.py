@@ -404,8 +404,10 @@ def build(case, index, out_dir=OUT_DIR):
     clip_markup = ""
     # The hero clip carries no autoplay attribute and lazy sources:
     # js/media-playback.js loads and starts it when it is on screen and leaves it
-    # paused under reduced motion. Its poster is eager (and preloaded in <head>)
-    # because it is the first thing on the page.
+    # paused under reduced motion. Its poster is eager because it is the first
+    # thing on the page. It is not preloaded: the case LCP is the lede, and a
+    # high-priority poster preload measured 60 ms slower FCP/LCP on throttled
+    # mobile by competing with the stylesheets.
     aria = (' aria-label="%s"' % escape(case["clip_aria"], quote=True)) if case.get("clip_aria") else ''
     if hero_clip:
         clip_markup = (
@@ -585,8 +587,6 @@ def build(case, index, out_dir=OUT_DIR):
 
     # The case title is the page's h1; CHARGER's <title> also names the rocket.
     page_title = case.get("seo_title", case["title"])
-    poster_preload = ('<link rel="preload" as="image" href="../assets/motion/%s-poster.webp" '
-                      'type="image/webp" fetchpriority="high">\n' % hero_clip) if hero_clip else ""
     head_modules = "".join('<script type="module" src="%s"></script>\n' % m
                            for m in ([WALKTHROUGH_JS] if case.get("walkthrough") else []))
     html = (
@@ -610,7 +610,6 @@ def build(case, index, out_dir=OUT_DIR):
         '<meta property="og:image:height" content="630">\n'
         '<meta property="og:image:alt" content="%s">\n'
         '<meta name="twitter:card" content="summary_large_image">\n'
-        '%s'
         '<script src="../support.js"></script>\n'
         '%s'
         '<script src="../js/media-playback.js" defer></script>\n'
@@ -626,7 +625,7 @@ def build(case, index, out_dir=OUT_DIR):
         '<script src="../js/clarity.js"></script>\n</body>\n</html>\n'
         % (PALETTE_JS, page_title, escape(case["description"], quote=True), case["slug"], page_title,
            escape(case["description"], quote=True), case["slug"], case["slug"],
-           escape(case["og_alt"], quote=True), poster_preload, head_modules, helmet_block(index),
+           escape(case["og_alt"], quote=True), head_modules, helmet_block(index),
            site_header, "\n".join(body),
            footer_block(index), runtime_script(index, "\n".join(vals))))
 
