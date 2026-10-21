@@ -22,16 +22,20 @@
    as skipped) then one write phase (attributes on existing groups; groups are
    attached or detached as targets enter and leave). It recomputes on
    scroll:frame (inside the scroll sampler's own rAF, so the lines never lag the
-   content), on a ResizeObserver covering the document element and every target,
-   on window resize and on refresh(). At tier 1 a full recompute happens at most
-   every 100 ms while scrolling and at tier 0 only when the scroll comes to rest;
-   in between the overlay is translated by the scroll delta (one attribute write,
-   no layout read). There is no free-running loop: the only rAF this file ever
-   requests is the one that coalesces resize and refresh into the next frame.
+   content), on a ResizeObserver covering the document element and every target
+   (computed inside the observer's callback, which runs after layout in the same
+   frame), on window resize and on refresh(). At tier 1 a full recompute happens
+   at most every 100 ms while scrolling and at tier 0 only when the scroll comes
+   to rest; in between the overlay is translated by the scroll delta (one
+   attribute write, no layout read). There is no free-running loop: the only rAF
+   this file ever requests is the one that coalesces a window resize into the
+   next frame.
 
-   Colour: lines 0.5 px at 60 % ink on paper, 60 % paper where the nearest
-   .on-dark (or data-theme="dark") ancestor says the section is dark. Lettering
-   is full ink or paper with a halo so it stays legible over photographs.
+   Colour: lines one device pixel wide (1 / devicePixelRatio CSS px, snapped to
+   device-pixel centres; the module writes --dim-dpx on the overlay) at 60 % ink
+   on paper, 60 % paper where the nearest .on-dark (or data-theme="dark")
+   ancestor says the section is dark. Lettering is full ink or paper with a halo
+   so it stays legible over photographs.
 
    Placement: the width goes above the element unless the element sits at the
    very top of the document, then below. The height goes to the right when the
@@ -40,13 +44,18 @@
    Features narrower than 24 px get their arrowheads outside the extension lines.
 
    Touch: a 500 ms long-press on any data-dim element dimensions that one element
-   for 3 s even while the overlay is disabled. solo(el, ms) does the same from
-   code. Decorative motion: a 240 ms extension-line draw when a group appears,
-   turned off by prefers-reduced-motion and at tiers 0 and 1 (CSS, no JS branch).
+   for 3 s even while the overlay is disabled. While a finger (or pen) is down on
+   a target the element carries data-dim-pressing (CSS turns text selection off)
+   and the browser's own long-press, the context menu or word selection, is
+   suppressed on that element, so the hold reaches the module on iOS and Android
+   alike. solo(el, ms) does the same from code. Decorative motion: a 240 ms
+   extension-line draw when a group appears, turned off by prefers-reduced-motion
+   and at tiers 0 and 1 (CSS, no JS branch).
 
    mountDimensions(svg, options) returns
      { enable, disable, toggle, refresh, solo, setLimit, state, destroy }
-   and emits dim:state { enabled, count, skipped, targets, solo }. */
+   and emits dim:state { enabled, count, skipped, targets, solo }. After
+   destroy() every method is inert. */
 import { bus } from './core/bus.js';
 import { governor } from './core/governor.js';
 import './core/scroll.js';   // the scroll sampler that emits scroll:frame and scroll:idle
@@ -79,7 +88,8 @@ const MIN_GAP_MS = { 3: 0, 2: 0, 1: 100, 0: Infinity };   // per tier: minimum m
 
 /* ---- formatting ---- */
 const f = (n) => String(Math.round(n * 100) / 100);                     // short attribute numbers
-const snap = (v) => Math.round((v - 0.25) * 2) / 2 + 0.25;              // centres a 0.5 px stroke on one device pixel at DPR 1 and 2
+let dpr = 0;                                                             // devicePixelRatio, read at the start of every compute (0 until the first)
+const snap = (v) => (Math.round(v * dpr - 0.5) + 0.5) / dpr;             // centres a one-device-pixel stroke on a device pixel at any DPR
 const pad2 = (n) => String(n).padStart(2, '0');
 const groupInt = (n) => Math.trunc(Math.abs(n)).toLocaleString('en-US');
 function fmt1(v) {                       // "1,120.4", one decimal always
@@ -132,7 +142,7 @@ export function mountDimensions(svg, { root = document, max = MAX_LIVE, noteInse
   const note = make('text', 'dim-note');
   svg.append(layer, note);
 
-  let enabled = false, limit = Math.max(1, Math.min(MAX_LIVE, max | 0));
+  let enabled = false, dead = false, limit = Math.max(1, Math.min(MAX_LIVE, max | 0));
   let targets = [];                       // every [data-dim] element in document order, from the last scan
   const records = new Map();              // element → { el, g, w, h, attached, last }
   let attached = new Set();               // records whose <g> is in the overlay right now
@@ -299,9 +309,12 @@ export function mountDimensions(svg, { root = document, max = MAX_LIVE, noteInse
 
   /* ---- the frame: read everything, then write everything ---- */
   function compute(now = performance.now()) {
+    if (dead) return;
     if (raf) { cancelAnimationFrame(raf); raf = 0; }
     const t0 = performance.now();
     const vw = innerWidth, vh = innerHeight, sy = scrollY;
+    const d = devicePixelRatio || 1;
+    if (d !== dpr) { dpr = d; svg.style.setProperty('--dim-dpx', `${(1 / d).toFixed(4)}px`); }   // one device pixel, for the CSS stroke width
     const list = soloEl ? [soloEl] : targets;
     const live = [];
     let skipped = 0;
@@ -363,11 +376,11 @@ export function mountDimensions(svg, { root = document, max = MAX_LIVE, noteInse
   const offIdle = bus.on('scroll:idle', onScrollIdle);
   const onResize = () => schedule();
   addEventListener('resize', onResize);
-  const ro = 'ResizeObserver' in window ? new ResizeObserver(() => schedule()) : null;
+  const ro = 'ResizeObserver' in window ? new ResizeObserver(() => { if (active()) compute(); }) : null;   // after layout, same frame
 
   /* ---- touch: long-press dimensions one element for 3 s, enabled or not ---- */
   function solo(el, ms = SOLO_MS) {
-    if (!(el instanceof Element)) return;
+    if (dead || !(el instanceof Element)) return;
     clearTimeout(soloTimer);
     soloEl = el; soloAt = performance.now();
     show();
@@ -380,18 +393,25 @@ export function mountDimensions(svg, { root = document, max = MAX_LIVE, noteInse
     if (enabled) compute(); else { clearAll(); hide(); }
     emitState();
   }
-  function cancelPress() { if (press) { clearTimeout(press.timer); press = null; } }
+  function cancelPress() {
+    if (!press) return;
+    clearTimeout(press.timer);
+    press.el.removeAttribute('data-dim-pressing');
+    press = null;
+  }
   function onPointerDown(e) {
     if (e.pointerType === 'mouse' || !e.isPrimary) return;
     const el = e.target instanceof Element ? e.target.closest('[data-dim]') : null;
     if (!el) return;
     cancelPress();
-    press = { id: e.pointerId, x: e.clientX, y: e.clientY, timer: setTimeout(() => { press = null; solo(el); }, LONG_PRESS_MS) };
+    el.setAttribute('data-dim-pressing', '');     // CSS: no text selection while the finger is down
+    press = { id: e.pointerId, x: e.clientX, y: e.clientY, el, fired: false, timer: setTimeout(() => { if (press) press.fired = true; solo(el); }, LONG_PRESS_MS) };
   }
-  function onPointerMove(e) { if (press && e.pointerId === press.id && Math.hypot(e.clientX - press.x, e.clientY - press.y) > SLOP_PX) cancelPress(); }
+  function onPointerMove(e) { if (press && !press.fired && e.pointerId === press.id && Math.hypot(e.clientX - press.x, e.clientY - press.y) > SLOP_PX) cancelPress(); }
   function onPointerEnd(e) { if (press && e.pointerId === press.id) cancelPress(); }
-  function onContextMenu(e) {   // a long-press that just fired should not also open the browser's menu
-    if (performance.now() - soloAt < LONG_PRESS_MS + 300 && e.target instanceof Element && e.target.closest('[data-dim]')) e.preventDefault();
+  function onContextMenu(e) {   // the browser's own long-press (menu, word selection) must neither race the hold nor follow it
+    if (!(e.target instanceof Element) || !e.target.closest('[data-dim]')) return;
+    if (press || performance.now() - soloAt < LONG_PRESS_MS + 300) e.preventDefault();
   }
   document.addEventListener('pointerdown', onPointerDown, { passive: true });
   document.addEventListener('pointermove', onPointerMove, { passive: true });
@@ -400,10 +420,10 @@ export function mountDimensions(svg, { root = document, max = MAX_LIVE, noteInse
   document.addEventListener('contextmenu', onContextMenu);
 
   /* ---- API ---- */
-  function enable() { if (enabled) return; enabled = true; scan(); show(); compute(); emitState(); }
+  function enable() { if (dead || enabled) return; enabled = true; scan(); show(); compute(); emitState(); }
   function disable() { if (!enabled) return; enabled = false; if (!soloEl) { clearAll(); hide(); } emitState(); }
   function toggle(force) { const next = force === undefined ? !enabled : !!force; if (next) enable(); else disable(); return enabled; }
-  function refresh() { scan(); if (active()) compute(); else emitState(); }
+  function refresh() { if (dead) return; scan(); if (active()) compute(); else emitState(); }
   function setLimit(n) { limit = Math.max(1, Math.min(MAX_LIVE, n | 0)); if (active()) compute(); return limit; }
   function destroy() {
     cancelAnimationFrame(raf); raf = 0;
@@ -416,15 +436,15 @@ export function mountDimensions(svg, { root = document, max = MAX_LIVE, noteInse
     document.removeEventListener('pointerup', onPointerEnd);
     document.removeEventListener('pointercancel', onPointerEnd);
     document.removeEventListener('contextmenu', onContextMenu);
-    clearAll(); records.clear(); targets = []; soloEl = null; enabled = false;
+    clearAll(); records.clear(); targets = []; soloEl = null; enabled = false; dead = true;
     layer.remove(); note.remove();
-    hide(); svg.classList.remove('dim-overlay');
+    hide(); svg.classList.remove('dim-overlay'); svg.style.removeProperty('--dim-dpx');
   }
   scan();
   return {
     enable, disable, toggle, refresh, solo, setLimit, destroy,
     get state() {
-      return { enabled, count: stats.count, skipped: stats.skipped, targets: targets.length, solo: !!soloEl, limit, reads: stats.reads, passes: stats.passes, lastMs: stats.lastMs, tier: governor.tier, carried: translated };
+      return { enabled, count: stats.count, skipped: stats.skipped, targets: targets.length, solo: !!soloEl, limit, reads: stats.reads, passes: stats.passes, lastMs: stats.lastMs, tier: governor.tier, carried: translated, dpr: dpr || (devicePixelRatio || 1) };
     },
   };
 }

@@ -1,10 +1,13 @@
 /* frames.js — the asset manifest for the contact sheet.
    Every dimension below was read from the file with ImageMagick
-   (`identify -format '%f %w %h'`) on 2026-10-21; none of the files carries an
-   EXIF orientation, so the stored size is the displayed size. The alt text was
-   written from looking at each frame. Paths are relative to THIS file and are
-   resolved against import.meta.url so the manifest works from vx/, vx/lab/ or
-   anywhere else the module is mounted. */
+   (`identify -format '%f %w %h'`) on 2026-10-21 and re-verified against stat
+   and identify the same day during review (35 of 35 match, byte sizes 11.9 KB
+   to 330.7 KB); none of the files carries an EXIF orientation, so the stored
+   size is the displayed size. The loupe still trusts the decoded bitmap over
+   this table and warns once if they ever disagree. The alt text was written
+   from looking at each frame. Paths are relative to THIS file and are resolved
+   against import.meta.url so the manifest works from vx/, vx/lab/ or anywhere
+   else the module is mounted. */
 
 const PHOTOS = '../../../assets/photos/';
 const resolve = (rel) => new URL(PHOTOS + rel, import.meta.url).href;
@@ -66,6 +69,13 @@ const PAD = [
   ['charger-pad-close.jpg', 520, 693, 'CHARGER standing on pad one in a green field between sponsor banners, a number 1 pad marker beside it.'],
   ['charger-pad-band.jpg', 1920, 823, 'CHARGER vertical on pad one at Battle of the Rockets, Culpeper, Virginia, the CHARGER / UCRC / 2026 lettering readable, banners either side.'],
 ];
+
+/* The roll counts the sheet prints are the lists' real lengths, so a frame added or removed above can never leave a stale "26 FRAMES". */
+const LISTS = { ACADIA, BEYOND, PAD };
+for (const r of rolls) {
+  if (r.count !== LISTS[r.id].length) console.warn(`[frames] roll ${r.id} declares ${r.count} frames, the list has ${LISTS[r.id].length}`);
+  r.count = LISTS[r.id].length;
+}
 
 function build(roll, list) {
   return list.map(([file, w, h, alt, thumbFile, tw, th], i) => ({

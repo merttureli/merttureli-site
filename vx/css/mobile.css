@@ -1,0 +1,89 @@
+/* mobile.css — under 860 px: a 56 px instrument strip instead of the rail, the
+   telemetry ticker under the header, the callouts in the bottom sheet, a shorter
+   track, the hero copy in the lower half of the first viewport, safe-area insets. */
+@media (max-width: 859.98px) {
+  :root { --header-h: 56px; --bar-h: 40px; --rail-w: 0px; --strip-h: calc(56px + env(safe-area-inset-bottom, 0px)); --ticker-h: 44px; --chrome-top: calc(var(--header-h) + var(--ticker-h)); }
+  .js main, .js .vx-footer { padding-right: 0; }
+  .js .vx-header { right: 0; }
+  .js .vx-footer { padding-bottom: calc(var(--space-8) + var(--strip-h)); }
+  .vx-header { gap: var(--space-4); padding: 0 var(--space-4); }
+  .vx-nav { display: none; }
+  .vx-tools { gap: var(--space-4); }
+  .tool-site span { display: none; }
+  .tool-site { font-size: 9px; }
+  .vx-tools a.tool[href="lab/"] { display: none; }
+
+  /* the ticker: a fixed one-line bar under the header */
+  .tel-dock { top: var(--header-h); left: 0; right: 0; width: auto; z-index: var(--z-header); display: block; }
+  .tel-dock-toggle { display: none; }
+  .tel-dock.is-collapsed #telemetry { display: block; }
+  #telemetry { --tel-w: none; background: var(--ink-900); color: var(--paper); }
+  #telemetry .tel-ticker { min-height: var(--ticker-h); }
+  #telemetry .tel-wall { backdrop-filter: none; -webkit-backdrop-filter: none; }
+
+  /* the range: a shorter track, the rocket in the top half, the copy under it */
+  .range { height: calc(100svh + 400vh); }
+  .range-anchor { top: 40vh; }
+  .scene { top: var(--chrome-top); bottom: auto; height: 50svh; transform: none; }
+  .scene .tn-canvas { left: 0; width: 100%; }
+  .pad-copy { left: var(--space-4); right: var(--space-4); bottom: calc(var(--bar-h) + var(--strip-h) + var(--space-4)); max-width: none; gap: var(--space-3); }
+  .pad-title { font-size: clamp(52px, 15.5vw, 64px); }
+  .pad-thesis { font-size: var(--fs-body-sm); max-width: none; }
+  .pad-ctas { gap: var(--space-4); }
+  .btn { min-height: 40px; padding: 0 var(--space-4); }
+  .pad-caption { display: none; }
+  .stage-bar { bottom: var(--strip-h); height: var(--bar-h); grid-template-columns: minmax(0, 1fr); gap: var(--space-3); padding: 0 var(--space-4); }
+  .stage-bar-sim, .stage-bar-links { display: none; }
+  .stage-bar-ranges { gap: var(--space-4); }
+  .range-control { gap: var(--space-2); }
+  .range-control span { font-size: 9px; }
+  .range-control output { min-width: 4ch; }
+  .range-static { top: 100svh; padding: var(--space-7) var(--space-4); }
+  .stations { grid-template-columns: 1fr; }
+
+  /* the callout sheet sits above the bar and the strip */
+  .sheet-root { bottom: calc(var(--strip-h) + var(--bar-h)); }
+  #callouts { --co-label-w: 160px; }
+  .load3d { top: 60%; }
+
+  /* sections */
+  .section { padding: var(--space-9) var(--space-4); }
+  .sec-head { margin-bottom: var(--space-6); padding-bottom: var(--space-5); }
+  .display-2 { font-size: clamp(40px, 11vw, 64px); }
+  .display-3 { font-size: clamp(30px, 8vw, 44px); }
+  .ladder-grid, .weekend-grid, .decisions-grid, .sheet-grid, .sheet-grid-wide, .websites-inner, .contact-grid, .beyond-grid, .about { grid-template-columns: minmax(0, 1fr); gap: var(--space-7); }
+  .photo-row, .photo-row.three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .photo-row.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .figures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .margin-probe { top: var(--space-9); }
+  .sheet .inner { padding: var(--space-5) var(--space-4) var(--space-7); }
+  .zone-ticks { margin: calc(-1 * var(--space-5)) calc(-1 * var(--space-4)) var(--space-4); padding: 6px var(--space-3); }
+  .zone-ticks i:nth-child(n+5) { display: none; }
+  .title-block { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tb-title { grid-column: 1 / -1; border-bottom: 1px solid var(--line-hairline); }
+  .tb-role { grid-column: 1 / -1; border-top: 1px solid var(--line-hairline); border-right: 0; }
+  .tb-cell:nth-child(3) { border-right: 0; }
+  .crew-entry { grid-template-columns: minmax(0, 1fr); gap: var(--space-5); padding: var(--space-6) 0; }
+  .beyond-plate { height: min(480px, 60svh); }
+  .beyond-plate-copy { padding: var(--space-6) var(--space-4); }
+  .beyond-body { padding: var(--space-8) var(--space-4) var(--space-9); gap: var(--space-8); }
+  .about { grid-template-columns: minmax(0, 1fr); }
+  .cutout { max-width: 180px; }
+  .recognition li { grid-template-columns: 40px minmax(0, 1fr); padding: var(--space-5) 0; }
+  .recognition p { font-size: 18px; }
+  .websites-inner { align-items: start; }
+  .keys { width: calc(100% - 24px); padding: var(--space-4); }
+  .keys-list > div { grid-template-columns: 72px minmax(0, 1fr); }
+  .vx-footer { padding: var(--space-7) var(--space-4) var(--space-8); }
+  .vx-footer a { display: inline-block; margin: 4px var(--space-3) 0 0; }
+
+  /* reading mode on a phone: the same list, no chrome offsets */
+  .reader .scene { top: auto; height: min(50svh, 420px); }
+  .reader .pad-copy { padding: var(--space-6) var(--space-4); }
+  .reader .stage-bar { bottom: auto; }
+  .reader .vx-footer { padding-bottom: var(--space-8); }
+}
+@media (max-width: 859.98px) and (max-height: 700px) {
+  .scene { height: 42svh; }
+  .pad-title { font-size: clamp(44px, 12vw, 56px); }
+}

@@ -1,6 +1,6 @@
 /* Layout for the lab pages: one engine, its controls, its readout. */
 .lab { min-height: 100svh; display: grid; grid-template-rows: auto 1fr auto; background: var(--ink-900); color: var(--paper); }
-.lab-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-5); padding: var(--space-5) var(--page-margin); border-bottom: 1px solid var(--paper-a18); }
+.lab-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-3) var(--space-5); padding: var(--space-5) var(--page-margin); border-bottom: 1px solid var(--paper-a18); }
 .lab-head h1 { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps-wide); text-transform: uppercase; font-weight: 400; color: var(--paper); }
 .lab-head nav { display: flex; gap: var(--space-5); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; }
 .lab-head nav a { color: var(--paper-a70); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out); }

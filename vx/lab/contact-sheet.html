@@ -123,7 +123,7 @@
     const n = (x, d = 1) => (x === null || x === undefined ? '--' : (+x).toFixed(d));
     readout.innerHTML =
       `<b>contact-sheet</b> / ${frames.length} frames in ${rolls.length} rolls  pointer ${s.pointer}  tier ${s.tier}  dpr ${n(devicePixelRatio, 2)}\n` +
-      `loupe    ${l.visible ? `<b>on</b> / ${l.mode}` : 'off'}  frame ${l.index ? pad2(l.index) : '--'}  native ${l.native[0]} × ${l.native[1]} px  mag ${n(l.mag)} ×  zoom ${l.zoom}  glass ${l.size} px  window ${Math.round(l.size / l.zoom)} px  u ${n(l.u, 3)} v ${n(l.v, 3)}  at ${l.x},${l.y}  ${l.pending ? 'decoding' : l.type ? `${l.type} ${(l.bytes / 1024).toFixed(1)} KB decoded in ${n(l.decodeMs)} ms` : '--'}\n` +
+      `loupe    ${l.visible ? `<b>on</b> / ${l.mode}` : l.offscreen ? `off / ${l.mode} frame off screen` : 'off'}  frame ${l.index ? pad2(l.index) : '--'}  native ${l.native[0]} × ${l.native[1]} px  mag ${n(l.mag)} ×  zoom ${l.zoom}  glass ${l.size} px  window ${Math.round(l.size / l.zoom)} px  u ${n(l.u, 3)} v ${n(l.v, 3)}  at ${l.x},${l.y}  ${l.pending ? 'decoding' : l.type ? `${l.type} ${(l.bytes / 1024).toFixed(1)} KB decoded in ${n(l.decodeMs)} ms` : '--'}\n` +
       `current  hovered ${s.hovered ? pad2(s.hovered) : '--'}  focused ${s.focused ? pad2(s.focused) : '--'}  current ${s.current ? pad2(s.current) : '--'}\n` +
       `viewer   ${s.viewer.open ? `<b>open</b> / frame ${pad2(s.viewer.index)} shown at ${n(s.viewer.scale, 2)} ×` : 'closed'}  events sheet:open x${events.open} sheet:close x${events.close}  last ${events.last}\n` +
       `marks    in ${m.in === null ? '--' : pad2(m.in)}  out ${m.out === null ? '--' : pad2(m.out)}  count ${pad2(m.count)}\n` +
@@ -136,7 +136,7 @@
   // URL presets
   if (q.has('tier') && q.get('tier') !== '') { tierSel.value = q.get('tier'); governor.pin(+q.get('tier')); }
   if (q.has('cols')) { cols.value = q.get('cols'); cols.dispatchEvent(new Event('input')); }
-  if (q.has('loupe')) { const n = +q.get('loupe'); forced.checked = n > 0; if (n > 0) force.value = n; }
+  if (q.has('loupe')) { const n = +q.get('loupe'); forced.checked = n > 0; if (n > 0) { force.value = n; force.dispatchEvent(new Event('input')); } }
   if (q.has('marks')) { const [a, b] = q.get('marks').split('-').map(Number); if (a) sheet.mark(a, b || a); }
   if (q.has('viewer')) { const n = +q.get('viewer'); if (n > 0) sheet.open(n); }
   // the forced loupe needs the thumbs laid out, which needs the fonts; wait for both

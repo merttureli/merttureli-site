@@ -16,7 +16,7 @@
   .lab-stage { overflow: visible; background: var(--board); padding: var(--space-8) var(--page-margin) var(--space-10); }
   .dlab-sheet {
     --surface-page: var(--paper); --surface-sunken: var(--ink-050);
-    --text-display: var(--ink-900); --text-body: var(--ink-700); --text-muted: var(--ink-500); --text-meta: var(--ink-400);
+    --text-display: var(--ink-900); --text-body: var(--ink-700); --text-muted: var(--ink-500); --text-meta: var(--ink-500);   /* 10 px mono on paper at ink-500, readable */
     --line-hairline: var(--ink-a12); --line-strong: var(--ink-900);
     display: grid; grid-template-columns: var(--page-margin) minmax(0, 1fr); grid-template-rows: auto 1fr auto;
     width: var(--dlab-w, 100%); max-width: 100%; margin: 0 auto;
@@ -42,7 +42,7 @@
   .dlab-para { max-width: var(--measure); font-size: var(--fs-body-lg); }
   .dlab-frame { width: min(100%, 360px); margin: 0; display: grid; gap: var(--space-3); }
   .dlab-frame img { width: 100%; height: auto; }
-  .dlab-dark { justify-self: stretch; display: grid; gap: var(--space-7); justify-items: start; padding: var(--space-7); background: var(--ink-900); color: var(--paper); }
+  .dlab-dark { --text-meta: var(--paper-a70); justify-self: stretch; display: grid; gap: var(--space-7); justify-items: start; padding: var(--space-7); background: var(--ink-900); color: var(--paper); }
   .dlab-dark p:not(.eyebrow) { max-width: var(--measure-narrow); color: var(--paper-a70); }
   .dlab-row { display: flex; flex-wrap: wrap; gap: var(--space-9) var(--space-11); align-items: center; }
   .dlab-cue { width: 12px; height: 48px; border: 1px solid var(--ink-900); }
@@ -51,16 +51,17 @@
   .dlab-foot { grid-column: 1 / -1; grid-row: 3; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--line-strong); }
   .dlab-foot div { padding: var(--space-3) var(--space-4); border-right: 1px solid var(--line-hairline); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--ink-900); line-height: 1.6; }
   .dlab-foot div:last-child { border-right: 0; }
-  .dlab-foot small { display: block; font-size: 9px; letter-spacing: var(--ls-caps-wide); color: var(--text-meta); }
+  .dlab-foot small { display: block; font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps-wide); color: var(--text-meta); }
   .lab-row.dlab-seg { grid-template-columns: repeat(2, 1fr); }
   .lab-row.dlab-seg .lab-button { min-height: 32px; padding: 0 var(--space-2); }
-  .dlab-note { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: .04em; line-height: 1.6; color: var(--paper-a45); }
+  .dlab-note { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: .04em; line-height: 1.6; color: var(--paper-a70); }
+  .lab-panel h2 { color: var(--paper-a70); }   /* 10 px mono on ink: paper-a70 or stronger */
   .lab-panel .lab-readout { padding: var(--space-3) 0 0; border-top: 1px solid var(--paper-a18); margin-top: var(--space-2); }
   @media (max-width: 860px) {
     .lab-head { flex-direction: column; align-items: flex-start; gap: var(--space-3); }
     .lab-panel { position: static; max-height: none; order: -1; border-top: 0; border-bottom: 1px solid var(--paper-a18); }
     .lab-stage { padding: var(--space-8) var(--space-4) var(--space-9); }
-    .dlab-head { padding: 0 var(--space-4) 0 var(--space-5); }
+    .dlab-head { flex-direction: column; align-items: flex-start; justify-content: center; gap: var(--space-1); padding: 0 64px 0 var(--space-5); }   /* stacked, and the right 64 px stay clear for the inside-placed height dimension */
     .dlab-margin span { display: none; }
     .dlab-content { padding: var(--space-8) var(--space-4) var(--space-8) var(--space-5); gap: var(--space-8); }
     .dlab-dark { padding: var(--space-5); }
@@ -83,7 +84,7 @@
     </nav>
   </header>
   <div class="lab-body">
-    <main class="lab-stage" id="stage" aria-label="Sample layout measured by the dimension overlay">
+    <main class="lab-stage on-paper" id="stage" aria-label="Sample layout measured by the dimension overlay">
       <article class="dlab-sheet" id="sheet" data-theme="light">
         <div class="dlab-margin" data-dim="PAGE MARGIN" data-dim-side="width" data-dim-basic="88px" aria-hidden="true"><span>Page margin / clamp(24px, 5vw, 88px)</span></div>
         <div class="dlab-head" data-dim="HEADER" data-dim-side="height" data-dim-basic="88px">
@@ -105,13 +106,13 @@
               <h3 class="display-3" data-dim="DARK PLATE">Launch weekend</h3>
               <p data-dim="DARK PARAGRAPH">Every number on this page is measured from this page in your browser. Nothing is sent anywhere.</p>
             </section>
-            <div class="dlab-row" aria-label="Small features">
+            <div class="dlab-row" role="group" aria-label="Small features">
               <a class="dlab-pill" href="../../assets/Mert-Tureli-Resume.pdf" data-dim="PILL">Resume (PDF)</a>
-              <div class="dlab-tick" data-dim="TICK">+</div>
-              <div class="dlab-cue" data-dim="SCROLL CUE" title="12 × 48 px, the one hard-cornered element"></div>
+              <div class="dlab-tick" data-dim="TICK" aria-hidden="true">+</div>
+              <div class="dlab-cue" data-dim="SCROLL CUE" role="img" aria-label="Scroll cue, 12 by 48 pixels, the one hard-cornered element"></div>
             </div>
         </div>
-        <footer class="dlab-foot" aria-label="Title block">
+        <footer class="dlab-foot" role="group" aria-label="Title block">
           <div><small>Title</small>Lab sample</div>
           <div><small>Dwg no</small>MT-VX-LAB-10</div>
           <div><small>Sheet</small>01 of 01</div>
@@ -217,7 +218,8 @@
     }
   }
   print();
-  setInterval(print, 250);
+  let ticker = setInterval(print, 250);   // 4 Hz, paused while the tab is hidden
+  document.addEventListener('visibilitychange', () => { clearInterval(ticker); ticker = 0; if (!document.hidden) { print(); ticker = setInterval(print, 250); } });
 </script>
 </body>
 </html>

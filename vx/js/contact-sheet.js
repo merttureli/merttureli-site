@@ -10,10 +10,15 @@
        pointers, press-and-hold on coarse ones, L on a focused frame for keyboards;
      - a native <dialog> viewer with prev / next, arrow keys, swipe and Escape;
      - I / O range marks (grease-pencil circles in the livery) and EXPORT, which
-       composes the marked frames into a 2400 px wide PNG on a hidden canvas.
+       composes the marked frames into a 2400 px wide PNG on a hidden canvas and
+       downloads it as contact-sheet-<in>-<out>.png.
    Decoding goes through createImageBitmap behind an LRU of 12 resident bitmaps.
    No WebGL anywhere. No free-running rAF: the loupe draws once per pointer frame
    and nothing animates while idle. Emits sheet:open / sheet:close on the bus.
+   Screen readers: the loupe is aria-hidden (its facts are on the frame buttons
+   as text); two sr-only polite regions (one on the sheet, one inside the modal
+   viewer) carry the marks line, export progress and the viewer caption, gated
+   so that between them they never update faster than once per second.
    Returns { open, close, destroy, ... } — see the API object at the bottom. */
 import { bus } from './core/bus.js';
 import { governor } from './core/governor.js';
@@ -27,6 +32,8 @@ const LOUPE_OFFSET_PX = 22;       // loupe box offset from a fine pointer
 const LOUPE_LIFT_PX = 90;         // loupe bottom edge above the finger on touch
 const EXPORT_W = 2400;            // PNG width in px
 const NUDGE_FILE_PX = 10;         // arrow-key step for a pinned loupe, in file px
+const LIVE_MS = 1000;             // the polite live regions never update faster than this
+const REVOKE_MS = 10000;          // how long an export's blob URL stays valid after the click
 
 const pad2 = (n) => String(n).padStart(2, '0');
 const isEditable = (el) => !!el && (el.closest('input, textarea, select, [contenteditable=""], [contenteditable="true"]') !== null);
@@ -112,7 +119,7 @@ export function mountContactSheet(root, { frames, columns = 0, loupeSize = 160, 
     pointer: coarse ? 'coarse' : 'fine',
     tier: governor.tier,
     hovered: 0, focused: 0, current: 0,
-    loupe: { visible: false, mode: 'off', index: 0, u: 0.5, v: 0.5, x: 0, y: 0, native: [0, 0], mag: 0, zoom, size: loupeSize, dpr: 1, pending: false, decodeMs: 0, bytes: 0, type: '' },
+    loupe: { visible: false, offscreen: false, mode: 'off', index: 0, u: 0.5, v: 0.5, x: 0, y: 0, native: [0, 0], mag: 0, zoom, size: loupeSize, dpr: 1, pending: false, decodeMs: 0, bytes: 0, type: '' },
     viewer: { open: false, index: 0, scale: 0 },
     marks: { in: null, out: null, count: 0 },
     cache: loader.stats,
@@ -123,6 +130,10 @@ export function mountContactSheet(root, { frames, columns = 0, loupeSize = 160, 
   /* ---------- DOM ---------- */
   root.classList.add('cs');
   const rollLegend = rolls.map((r) => `<span class="cs-head-roll">ROLL ${pad2(r.number)} / ${r.label} / ${pad2(r.count)} FRAMES</span>`).join('');
+  const NO_MARKS = coarse ? 'No marks / MARK sets in, then out' : 'No marks / I sets in / O sets out';
+  const HINT = coarse
+    ? 'Press and hold for the loupe / tap opens the viewer / MARK sets in, then out / export writes the marked frames as a PNG'
+    : 'Hover for the loupe / click opens the viewer / L pins the loupe on a focused frame / export writes the marked frames as a PNG';
   root.innerHTML = `
     <div class="cs-sheet">
       <header class="cs-head">
@@ -145,8 +156,9 @@ export function mountContactSheet(root, { frames, columns = 0, loupeSize = 160, 
     </div>
     <div class="cs-bar">
       <div class="cs-bar-l">
-        <p class="cs-marks" aria-live="polite">No marks / I sets in / O sets out</p>
-        <p class="cs-hint">Hover for the loupe${coarse ? ' (press and hold on touch)' : ''} / click opens the viewer / L pins the loupe on a focused frame / export writes the marked frames as a PNG</p>
+        <p class="cs-marks">${NO_MARKS}</p>
+        <p class="cs-hint">${HINT}</p>
+        <p class="cs-live sr-only" aria-live="polite"></p>
       </div>
       <div class="cs-actions">
         <button class="cs-btn" type="button" data-act="clear">Clear</button>
@@ -171,6 +183,7 @@ export function mountContactSheet(root, { frames, columns = 0, loupeSize = 160, 
           <button class="cs-btn cs-btn-dark" type="button" data-nav="1" aria-label="Next frame">Next</button>
           <button class="cs-btn cs-btn-dark" type="button" data-nav="close">Close</button>
         </div>
+        <p class="cs-viewer-live sr-only" aria-live="polite"></p>
       </div>`;
   document.body.append(loupe, dialog);
 
@@ -194,8 +207,9 @@ export function mountContactSheet(root, { frames, columns = 0, loupeSize = 160, 
   const grid = $('.cs-grid'), ticks = $('.cs-ticks path'), ticksSvg = $('.cs-ticks');
   const glass = loupe.querySelector('.cs-loupe-glass'), readSpans = [...loupe.querySelectorAll('.cs-loupe-read span')];
   const viewerImg = dialog.querySelector('.cs-viewer-img'), viewerRoll = dialog.querySelector('.cs-viewer-roll'), viewerLine = dialog.querySelector('.cs-viewer-line'), viewerStage = dialog.querySelector('.cs-viewer-stage');
-  const marksOut = $('.cs-marks');
+  const marksOut = $('.cs-marks'), liveSheet = $('.cs-live'), liveViewer = dialog.querySelector('.cs-viewer-live');
   const ctx = glass.getContext('2d', { alpha: false });
+  let destroyed = false;
   if (columns) grid.style.setProperty('--cs-cols', String(columns));
   const cells = new Map();
   for (const li of grid.querySelectorAll('.cs-cell[data-roll]')) {
@@ -206,9 +220,27 @@ export function mountContactSheet(root, { frames, columns = 0, loupeSize = 160, 
   /* ---------- notifications (coalesced to one per frame) ---------- */
   let notifyRaf = 0;
   function notify() {
-    if (notifyRaf || !subscribers.size) return;
+    if (notifyRaf || !subscribers.size || destroyed) return;
     notifyRaf = requestAnimationFrame(() => { notifyRaf = 0; for (const fn of subscribers) { try { fn(state); } catch (err) { console.error('[contact-sheet] subscriber threw', err); } } });
   }
+
+  /* ---------- announcements: two polite regions (the sheet's, and one inside the modal viewer, since the
+     sheet is inert while the dialog is open); between them never more than one write per second ---------- */
+  let liveAt = -Infinity, liveTimer = 0, livePending = null;
+  function flushLive() {
+    liveTimer = 0;
+    if (livePending === null || destroyed) return;
+    const target = dialog.open ? liveViewer : liveSheet;
+    liveAt = performance.now();
+    target.textContent = livePending; livePending = null;
+  }
+  function liveWrite(text) {
+    livePending = text;
+    const wait = LIVE_MS - (performance.now() - liveAt);
+    if (wait > 0) { if (!liveTimer) liveTimer = setTimeout(flushLive, wait); } else flushLive();
+  }
+  /* The marks line: visible at once, announced through the gate. */
+  function setMarksText(text) { marksOut.textContent = text; liveWrite(text); }
 
   /* ---------- + ticks at every grid intersection ---------- */
   let ticksRaf = 0;
@@ -245,11 +277,12 @@ export function mountContactSheet(root, { frames, columns = 0, loupeSize = 160, 
   document.fonts?.ready?.then(scheduleTicks);
 
   /* ---------- geometry: where the file's pixels sit on screen ---------- */
-  function drawnRect(index) {
+  function drawnRect(index, w, h) {
     const f = byIndex.get(index), c = cells.get(index);
+    w = w || f.w; h = h || f.h;                                // the decoded size once the file is resident, else the manifest's
     const r = c.img.getBoundingClientRect();                   // the <img> box; object-fit: contain inside it
-    const s = Math.min(r.width / f.w, r.height / f.h);         // CSS px per file px (thumb and file share an aspect)
-    const dw = f.w * s, dh = f.h * s;
+    const s = Math.min(r.width / w, r.height / h);             // CSS px per file px (thumb and file share an aspect)
+    const dw = w * s, dh = h * s;
     return { left: r.left + (r.width - dw) / 2, top: r.top + (r.height - dh) / 2, width: dw, height: dh, scale: s };
   }
 
@@ -258,13 +291,15 @@ export function mountContactSheet(root, { frames, columns = 0, loupeSize = 160, 
   let hover = null;      // { index, x, y } while a pointer or a held finger is over a frame
   let pinned = null;     // { index, u, v } from the L key
   let forced = null;     // { index, u, v } from the API (the lab's screenshot toggle)
-  let loupeRaf = 0, pendingDraw = null;
+  let loupeRaf = 0;
+  const warned = new Set();   // frames whose decoded size disagreed with the manifest (warned once each)
 
   function activeTarget() { return hover ? { ...hover, mode: hover.hold ? 'hold' : 'pointer' } : pinned ? { ...pinned, mode: 'pinned' } : forced ? { ...forced, mode: 'forced' } : null; }
-  function requestLoupe() { if (!loupeRaf) loupeRaf = requestAnimationFrame(paintLoupe); }
-  function hideLoupe() {
+  function requestLoupe() { if (!loupeRaf && !destroyed) loupeRaf = requestAnimationFrame(paintLoupe); }
+  /* Hides the box. A pinned or forced target that is merely off screen keeps its mode and is flagged, so it comes back on scroll. */
+  function hideLoupe(mode = 'off', offscreen = false) {
     loupe.hidden = true; loupe.dataset.mode = 'off';
-    lp.visible = false; lp.mode = 'off';
+    lp.visible = false; lp.mode = offscreen ? mode : 'off'; lp.offscreen = offscreen;
     notify();
   }
   /* One pass per animation frame: resolve the sample point, position the box, draw the glass, print the readout. */
@@ -274,7 +309,19 @@ export function mountContactSheet(root, { frames, columns = 0, loupeSize = 160, 
     if (!t) { hideLoupe(); return; }
     const f = byIndex.get(t.index);
     if (!f) { hideLoupe(); return; }
-    const rect = drawnRect(t.index);
+
+    // The file: resident or decoding
+    let entry = loader.peek(f);
+    if (!entry) {
+      lp.pending = true;
+      loader.get(f).then(() => { if (activeTarget()?.index === f.index) requestLoupe(); }).catch(() => {});
+    } else lp.pending = false;
+    // The truth about the file's size is the decoded bitmap's; the manifest is only trusted until the file is resident
+    const nw = entry ? entry.w : f.w, nh = entry ? entry.h : f.h;
+    if (entry && (nw !== f.w || nh !== f.h) && !warned.has(f.index)) { warned.add(f.index); console.warn(`[contact-sheet] frame ${pad2(f.index)} ${f.file}: the manifest says ${f.w} × ${f.h} px, the file decodes at ${nw} × ${nh} px`); }
+
+    const rect = drawnRect(t.index, nw, nh);
+    if (!(rect.width > 0 && rect.height > 0) || !Number.isFinite(rect.scale)) { hideLoupe(t.mode, true); return; }   // the sheet is hidden, or too narrow to carry a picture
     let x, y, u, v;
     if (t.mode === 'pointer' || t.mode === 'hold') {
       x = t.x; y = t.y;
@@ -282,6 +329,7 @@ export function mountContactSheet(root, { frames, columns = 0, loupeSize = 160, 
     } else {
       u = t.u; v = t.v;
       x = rect.left + u * rect.width; y = rect.top + v * rect.height;
+      if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) { hideLoupe(t.mode, true); return; }   // the pinned frame has scrolled off screen; the glass goes with it
     }
     u = Math.min(1, Math.max(0, u)); v = Math.min(1, Math.max(0, v));
     const size = lp.size, zoom = lp.zoom;
@@ -290,21 +338,14 @@ export function mountContactSheet(root, { frames, columns = 0, loupeSize = 160, 
     if (glass.width !== W || glass.height !== W) { glass.width = W; glass.height = W; }
     glass.style.width = glass.style.height = `${size}px`;
 
-    // The file: resident or decoding
-    let entry = loader.peek(f);
-    if (!entry) {
-      lp.pending = true;
-      loader.get(f).then(() => { if (activeTarget()?.index === f.index) requestLoupe(); }).catch(() => {});
-    } else lp.pending = false;
-
     // Glass: 1 file px = `zoom` CSS px = zoom × dpr device px, nearest-neighbour, window = size / zoom file px
     ctx.imageSmoothingEnabled = false;
     ctx.fillStyle = '#0A0A0A'; ctx.fillRect(0, 0, W, W);
     const win = size / zoom;
-    const fx = u * f.w, fy = v * f.h;
+    const fx = u * nw, fy = v * nh;
     const sx = Math.round(fx - win / 2), sy = Math.round(fy - win / 2);     // integer file px so every block is the same size
     if (entry) {
-      const cx0 = Math.max(0, sx), cy0 = Math.max(0, sy), cx1 = Math.min(f.w, sx + win), cy1 = Math.min(f.h, sy + win);
+      const cx0 = Math.max(0, sx), cy0 = Math.max(0, sy), cx1 = Math.min(nw, sx + win), cy1 = Math.min(nh, sy + win);
       if (cx1 > cx0 && cy1 > cy0) {
         const k = W / win;                                                   // device px per file px
         try { ctx.drawImage(entry.source, cx0, cy0, cx1 - cx0, cy1 - cy0, (cx0 - sx) * k, (cy0 - sy) * k, (cx1 - cx0) * k, (cy1 - cy0) * k); }
@@ -323,7 +364,7 @@ export function mountContactSheet(root, { frames, columns = 0, loupeSize = 160, 
 
     // Readout: the truth about the file
     const mag = zoom / rect.scale;                                           // loupe CSS px per sheet CSS px
-    readSpans[0].textContent = `NATIVE ${f.w} × ${f.h} PX / ${mag.toFixed(1)} ×`;
+    readSpans[0].textContent = `NATIVE ${nw} × ${nh} PX / ${mag.toFixed(1)} ×`;
     readSpans[1].textContent = entry ? `FRAME ${pad2(f.index)} / ${mediaType(entry.type)} / ${kb(entry.bytes)} KB` : `FRAME ${pad2(f.index)} / DECODING`;
     readSpans[2].textContent = `1 FILE PX : ${zoom} CSS PX / WINDOW ${Math.round(win)} PX`;
 
@@ -344,7 +385,7 @@ export function mountContactSheet(root, { frames, columns = 0, loupeSize = 160, 
     top = Math.max(8, top);
     loupe.style.transform = `translate3d(${Math.round(left)}px, ${Math.round(top)}px, 0)`;
 
-    Object.assign(lp, { visible: true, mode: t.mode, index: f.index, u, v, x: Math.round(x), y: Math.round(y), native: [f.w, f.h], mag: +mag.toFixed(2), dpr, decodeMs: entry ? +entry.decodeMs.toFixed(1) : 0, bytes: entry ? entry.bytes : 0, type: entry ? mediaType(entry.type) : '' });
+    Object.assign(lp, { visible: true, offscreen: false, mode: t.mode, index: f.index, u, v, x: Math.round(x), y: Math.round(y), native: [nw, nh], mag: +mag.toFixed(2), dpr, decodeMs: entry ? +entry.decodeMs.toFixed(1) : 0, bytes: entry ? entry.bytes : 0, type: entry ? mediaType(entry.type) : '' });
     notify();
   }
 
@@ -354,7 +395,7 @@ export function mountContactSheet(root, { frames, columns = 0, loupeSize = 160, 
   function onPointerMove(e) {
     if (e.pointerType === 'touch') return;
     const index = cellFromEvent(e);
-    if (!index) { if (hover) { hover = null; requestLoupe(); } return; }
+    if (!index) { if (hover) { hover = null; state.hovered = 0; requestLoupe(); } return; }   // a gutter between cells
     hover = { index, x: e.clientX, y: e.clientY };
     if (state.hovered !== index) { state.hovered = index; state.current = index; if (state.tier >= 1) loader.get(byIndex.get(index)).catch(() => {}); }
     requestLoupe();
@@ -394,6 +435,8 @@ export function mountContactSheet(root, { frames, columns = 0, loupeSize = 160, 
   function cellFromPoint(x, y) { const el = document.elementFromPoint(x, y); const li = el?.closest?.('.cs-cell[data-roll]'); return li && grid.contains(li) ? +li.dataset.index : 0; }
   function onContextMenu(e) { if (holding || holdStart) e.preventDefault(); }
   function onScroll() { if (hover && !holding) { hover = null; state.hovered = 0; requestLoupe(); } else if (pinned || forced) requestLoupe(); }
+  /* A resize moves every cell: a hovered pointer is stale, a pinned or forced loupe is simply repainted where its frame went. */
+  function onResize() { if (hover && !holding) { hover = null; state.hovered = 0; } requestLoupe(); }
 
   grid.addEventListener('pointermove', onPointerMove);
   grid.addEventListener('pointerleave', onPointerLeave);
@@ -403,8 +446,8 @@ export function mountContactSheet(root, { frames, columns = 0, loupeSize = 160, 
   grid.addEventListener('touchmove', onTouchMove, { passive: false });
   grid.addEventListener('touchend', endHold);
   grid.addEventListener('contextmenu', onContextMenu);
-  addEventListener('scroll', onScroll, { passive: true });
-  addEventListener('resize', hideLoupe);
+  addEventListener('scroll', onScroll, { passive: true, capture: true });   // capture: any scrolling ancestor, not only the window
+  addEventListener('resize', onResize);
 
   /* ---------- clicks: open the viewer, mark a frame, toolbar ---------- */
   function onClick(e) {
@@ -435,7 +478,7 @@ export function mountContactSheet(root, { frames, columns = 0, loupeSize = 160, 
       c.io.textContent = label;
       c.mark.setAttribute('aria-pressed', String(inRange));
     }
-    marksOut.textContent = lo === null ? 'No marks / I sets in / O sets out' : `Marked ${pad2(lo)} – ${pad2(hi)} / ${pad2(mk.count)} frame${mk.count === 1 ? '' : 's'}${mk.out === null ? ' / O sets out' : ''}`;
+    setMarksText(lo === null ? NO_MARKS : `Marked ${pad2(lo)} – ${pad2(hi)} / ${pad2(mk.count)} frame${mk.count === 1 ? '' : 's'}${mk.out === null ? (coarse ? ' / MARK sets out' : ' / O sets out') : ''}`);
     notify();
   }
   function setIn(i) { if (!byIndex.has(i)) return; mk.in = i; if (mk.out !== null && mk.out < i) mk.out = null; paintMarks(); }
@@ -488,9 +531,9 @@ export function mountContactSheet(root, { frames, columns = 0, loupeSize = 160, 
     viewerImg.src = f.src; viewerImg.width = f.w; viewerImg.height = f.h; viewerImg.alt = f.alt;
     viewerImg.style.setProperty('--w', String(f.w)); viewerImg.style.setProperty('--h', String(f.h));   // the CSS caps the display at 2 × native
     viewerRoll.textContent = `ROLL ${pad2(f.rollNumber)} / ${f.rollLabel}`;
-    viewerLine.textContent = `${pad2(f.rollIndex)} / ${pad2(f.rollCount)} / ${f.title.toUpperCase()} / ${f.w} × ${f.h} PX`;
+    viewerLine.textContent = `${pad2(f.rollIndex)} / ${pad2(f.rollCount)} / ${f.title.toUpperCase()} / ${f.w} × ${f.h} PX`;   // the size never breaks across lines
     viewerLine.setAttribute('aria-label', `${f.rollIndex} of ${f.rollCount}, ${f.title}, ${f.w} by ${f.h} pixels`);
-    for (const d of [-1, 1]) { const n = byIndex.get(wrap(vw.index + d)); if (n) { const im = new Image(); im.src = n.src; } }   // warm the neighbours
+    if (state.tier >= 1) for (const d of [-1, 1]) { const n = byIndex.get(wrap(vw.index + d)); if (n) { const im = new Image(); im.src = n.src; } }   // warm the neighbours (not at tier 0)
     if (!viewerRaf) viewerRaf = requestAnimationFrame(viewerScale);
   }
   /* The caption says at what scale the file is on screen: the box is object-fit: contain, so the picture's scale is the smaller ratio. */
@@ -501,7 +544,7 @@ export function mountContactSheet(root, { frames, columns = 0, loupeSize = 160, 
     const r = viewerImg.getBoundingClientRect();
     if (!r.width || !r.height) return;
     const s = Math.min(r.width / f.w, r.height / f.h);
-    viewerRoll.textContent = `ROLL ${pad2(f.rollNumber)} / ${f.rollLabel} / SHOWN AT ${s.toFixed(2)} ×`;
+    viewerRoll.textContent = `ROLL ${pad2(f.rollNumber)} / ${f.rollLabel} / SHOWN AT ${s.toFixed(2)} ×`;
     vw.scale = +s.toFixed(3);
     notify();
   }
@@ -518,6 +561,8 @@ export function mountContactSheet(root, { frames, columns = 0, loupeSize = 160, 
       vw.open = true;
       dialog.querySelector('[data-nav="1"]').focus();
     }
+    const f = byIndex.get(i);
+    liveWrite(`Roll ${f.rollNumber}, ${f.rollIndex} of ${f.rollCount}, ${f.title}`);   // focus stays on the arrow, so the caption is announced here
     state.events.open++;
     bus.emit('sheet:open', { index: i });
     notify();
@@ -525,6 +570,7 @@ export function mountContactSheet(root, { frames, columns = 0, loupeSize = 160, 
   function close() { if (dialog.open) dialog.close(); }
   function onDialogClose() {
     vw.open = false; state.events.close++;
+    if (liveTimer) { clearTimeout(liveTimer); liveTimer = 0; livePending = null; }   // a caption still waiting on the gate is not announced onto the sheet
     bus.emit('sheet:close', { index: vw.index });
     if (opener && opener.isConnected && typeof opener.focus === 'function') opener.focus();
     opener = null;
@@ -556,6 +602,7 @@ export function mountContactSheet(root, { frames, columns = 0, loupeSize = 160, 
 
   /* ---------- export: the marked frames (or all of them) as a 2400 px PNG ---------- */
   const ex = state.export;
+  const revokes = new Map();                                     // blob URL -> timer; revoked after REVOKE_MS, or at once on destroy
   async function exportPng() {
     if (ex.busy) return;
     const lo = mk.in === null ? 1 : Math.min(mk.in, mk.out ?? mk.in);
@@ -563,21 +610,22 @@ export function mountContactSheet(root, { frames, columns = 0, loupeSize = 160, 
     const picked = frames.filter((f) => f.index >= lo && f.index <= hi);
     ex.busy = true; ex.frames = picked.length; ex.bytes = 0; ex.ms = 0;
     const t0 = performance.now();
-    marksOut.textContent = `Export / decoding 00 / ${pad2(picked.length)}`;
+    setMarksText(`Export / decoding 00 / ${pad2(picked.length)}`);
     notify();
     try {
       await document.fonts?.load?.('400 16px "IBM Plex Mono"').catch(() => {});
-      const blob = await composeSheet(picked, lo, hi, (n) => { marksOut.textContent = `Export / decoding ${pad2(n)} / ${pad2(picked.length)}`; });
+      const blob = await composeSheet(picked, lo, hi, (n) => { setMarksText(`Export / decoding ${pad2(n)} / ${pad2(picked.length)}`); });
+      if (destroyed) return;
       ex.bytes = blob.size; ex.ms = Math.round(performance.now() - t0); ex.at = new Date().toISOString();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = 'contact-sheet.png'; a.rel = 'noopener';
+      a.href = url; a.download = `contact-sheet-${pad2(lo)}-${pad2(hi)}.png`; a.rel = 'noopener';
       document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
-      marksOut.textContent = `Exported ${pad2(picked.length)} frames / ${ex.width} × ${ex.height} px / ${kb(blob.size)} KB / ${ex.ms} ms`;
+      revokes.set(url, setTimeout(() => { revokes.delete(url); URL.revokeObjectURL(url); }, REVOKE_MS));
+      setMarksText(`Exported ${pad2(picked.length)} frames / ${ex.width} × ${ex.height} px / ${kb(blob.size)} KB / ${ex.ms} ms`);
     } catch (err) {
       console.error('[contact-sheet] export failed', err);
-      marksOut.textContent = 'Export failed / see the console';
+      if (!destroyed) setMarksText('Export failed / see the console');
     } finally { ex.busy = false; notify(); }
   }
   /* Lays the picked frames out roll by roll, six to a row, on a board-grey sheet with the same edge print as the screen. */
@@ -624,7 +672,7 @@ export function mountContactSheet(root, { frames, columns = 0, loupeSize = 160, 
         if ('letterSpacing' in c) c.letterSpacing = '0.12em';
         c.font = mono(13); c.fillStyle = 'rgba(255,255,255,.78)';
         c.fillText(pad2(f.index), x0 + 10, y0 + 7);
-        c.textAlign = 'right'; c.fillText(`R${pad2(f.rollNumber)} · ${pad2(f.rollIndex)}`, x0 + CW - 10, y0 + 7);
+        c.textAlign = 'right'; c.fillText(`R${pad2(f.rollNumber)} / ${pad2(f.rollIndex)}`, x0 + CW - 10, y0 + 7);
         c.fillStyle = 'rgba(255,255,255,.5)'; c.fillText(`${f.w} × ${f.h} PX`, x0 + CW - 10, y0 + CH - 19);
         c.textAlign = 'left'; c.fillText(f.title.toUpperCase(), x0 + 10, y0 + CH - 19);
         if (f.index >= lo && f.index <= hi && mk.in !== null) {       // the grease pencil, as on screen
@@ -667,12 +715,17 @@ export function mountContactSheet(root, { frames, columns = 0, loupeSize = 160, 
     refresh() { scheduleTicks(); requestLoupe(); },
     subscribe(fn) { subscribers.add(fn); return () => subscribers.delete(fn); },
     destroy() {
+      destroyed = true;
+      hover = pinned = forced = null; holdStart = null; holding = false;
       offTier();
       document.removeEventListener('keydown', onKey);
-      removeEventListener('scroll', onScroll); removeEventListener('resize', hideLoupe); removeEventListener('resize', scheduleTicks);
+      removeEventListener('scroll', onScroll, { capture: true }); removeEventListener('resize', onResize); removeEventListener('resize', scheduleTicks);
       ro?.disconnect(); viewerRo?.disconnect();
       cancelAnimationFrame(loupeRaf); cancelAnimationFrame(ticksRaf); cancelAnimationFrame(notifyRaf); cancelAnimationFrame(viewerRaf);
-      clearTimeout(holdTimer);
+      loupeRaf = ticksRaf = notifyRaf = viewerRaf = 0;
+      clearTimeout(holdTimer); clearTimeout(liveTimer); liveTimer = 0; livePending = null;
+      for (const [url, timer] of revokes) { clearTimeout(timer); URL.revokeObjectURL(url); }
+      revokes.clear();
       grid.removeEventListener('pointermove', onPointerMove); grid.removeEventListener('pointerleave', onPointerLeave);
       grid.removeEventListener('pointerdown', onPointerDown); grid.removeEventListener('pointerup', endHold); grid.removeEventListener('pointercancel', endHold);
       grid.removeEventListener('touchmove', onTouchMove); grid.removeEventListener('touchend', endHold); grid.removeEventListener('contextmenu', onContextMenu);
