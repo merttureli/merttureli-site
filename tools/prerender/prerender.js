@@ -77,8 +77,11 @@ const ALLOWED_SCRIPTS = new Set(["/support.js", "/" + DS + "_ds_bundle.js",
 // Appended to the design-system bundle for the render only. Each wrapper adds
 // data attributes through the component's own ...rest spread; the DOM is
 // otherwise exactly what the component renders. data-ds-hover lists the
-// hover changes the component would make that its style prop does not
-// override (the style prop is spread last, so it wins over the hover skin).
+// hover changes the component visibly makes. The style prop is spread last, so
+// it pins a property only when it sets the same key the hover skin changes:
+// a longhand override such as borderBottomColor does not survive, because on
+// hover React re-applies the changed shorthand (borderBottom) and leaves the
+// unchanged longhand alone. The index hero's "Resume (PDF)" link is that case.
 const BUNDLE_PATCH = `
 ;(function () {
   var ns = window.MertTReliDesignSystem_56763c;
@@ -94,9 +97,9 @@ const BUNDLE_PATCH = `
   wrap("Button", function (p) {
     var v = p.variant || "solid", s = p.style, fx = [];
     if (p.disabled) return { "data-ds-button": v };
-    if (/^(solid|outline|ghost|glass)$/.test(v) && !has(s, ["background", "backgroundColor"])) fx.push("bg");
+    if (/^(solid|outline|ghost|glass)$/.test(v) && !has(s, ["background"])) fx.push("bg");
     if (v === "outline" && !has(s, ["color"])) fx.push("color");
-    if (v === "link" && !has(s, ["border", "borderBottom", "borderBottomColor", "borderColor"])) fx.push("border");
+    if (v === "link" && !has(s, ["borderBottom"])) fx.push("border");
     if (p.trailing) fx.push("trail");
     return { "data-ds-button": v, "data-ds-hover": fx.join(" ") };
   });
@@ -220,6 +223,31 @@ async function render(browser, origin, pagePath, icons) {
     }
     const logic = document.querySelector("script[data-dc-script]") || fail("no page-logic script");
     drop(logic);
+    // Rules the runtime added with insertRule (style-hover="..." becomes a
+    // generated .scpN:hover class) live only in the CSSOM, not in the element's
+    // text, so write them out. A sheet whose text and rules disagree any other
+    // way is a case this script does not know how to keep.
+    for (const st of document.querySelectorAll("style")) {
+      const rules = [...st.sheet.cssRules].map(r => r.cssText);
+      if (!st.textContent.trim()) { if (rules.length) st.textContent = rules.join("\n"); continue; }
+      const parsed = new CSSStyleSheet();
+      parsed.replaceSync(st.textContent);
+      if (parsed.cssRules.length !== rules.length) fail("a <style> has rules its text does not show");
+    }
+    // A var() shorthand followed by one of its longhands (React applying
+    // borderBottom then borderBottomColor) serialises the other longhands as
+    // "border-bottom-width: ;", which would be dropped on reparse. Write the
+    // value the browser resolved for them; only widths and styles, whose
+    // resolved value does not depend on the palette, are accepted.
+    for (const el of document.querySelectorAll("[style*=': ;']")) {
+      let css = el.getAttribute("style");
+      const cs = getComputedStyle(el);
+      css = css.replace(/(^|;\s*)([a-z-]+): ;/g, (m, pre, prop) => {
+        if (!/^border-(top|right|bottom|left)-(width|style)$/.test(prop)) fail("empty inline " + prop + " on " + el.outerHTML.slice(0, 120));
+        return pre + prop + ": " + cs.getPropertyValue(prop) + ";";
+      });
+      el.setAttribute("style", css);
+    }
     // the runtime's "hide the raw template" rule and empty helmet placeholders
     for (const st of document.querySelectorAll("style"))
       if (st.textContent === "x-dc{display:none!important}" || !st.textContent.trim()) st.remove();
