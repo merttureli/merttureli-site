@@ -7,7 +7,7 @@
   // The Display setting (js/site-palette.js) defaults to reduced motion and can be overridden by the visitor.
   const motionOff = () => window.PortfolioDisplay ? !window.PortfolioDisplay.motion() : reduced.matches;
   const disabled = () => motionOff() || settings.motion === false;
-  const selector = '[data-reveal] h2, [data-reveal] h3, [data-reveal] h4, [data-depth-label], [data-depth-rule], .depth-portrait, .depth-stage, figure > div:first-child';
+  const selector = '[data-reveal] :is(h2, h3, h4):not([data-depth-rule] > *), [data-depth-label], [data-depth-rule], .depth-portrait, .depth-stage, figure > div:first-child';
   const observer = 'IntersectionObserver' in window ? new IntersectionObserver(entries => {
     for (const entry of entries) {
       if (!entry.isIntersecting) continue;

@@ -130,15 +130,21 @@ def meta(text, index_no=None, tone=None, wide=False, size="240px,16px"):
 
 
 def rule(label, right=None, anchor=None):
-    """A section rule. `anchor` adds a scroll target just above it for deep links."""
+    """
+    A section rule whose label is the section's h2 (data-heading: the static
+    render turns the label into the heading). `anchor` adds a scroll target just
+    above it for deep links.
+    """
     r = ' right="%s"' % right if right else ''
     a = ('<span id="%s" style="scroll-margin-top:30px"></span>' % anchor) if anchor else ''
-    return ('%s<x-import data-depth-rule="true" component-from-global-scope="%s.Rule" label="%s"%s '
-            'hint-size="100%%,14px"></x-import>' % (a, NS, label, r))
+    return ('%s<x-import data-depth-rule="true" data-heading="2" component-from-global-scope="%s.Rule" '
+            'label="%s"%s hint-size="100%%,14px"></x-import>' % (a, NS, label, r))
 
 
-def heading(text, level=2, treatment=None, size="100%,90px"):
+def heading(text, level=2, treatment=None, size="100%,90px", tag=None):
+    """DisplayHeading. `level` sets the size only; `tag` is the element (h2 by default)."""
     t = ' treatment="%s"' % treatment if treatment else ''
+    t += ' as="%s"' % tag if tag else ''
     return ('<x-import component-from-global-scope="%s.DisplayHeading" level="%d"%s hint-size="%s">%s</x-import>'
             % (NS, level, t, size, text))
 
@@ -418,8 +424,6 @@ def build(case, index, out_dir=OUT_DIR):
         '  <section class="on-dark depth-hero" style="position: relative; min-height: min(720px, 88vh); '
         'background: var(--ink-900); overflow: hidden; display: flex; flex-direction: column">\n'
         '    %s\n'
-        '    <x-import component-from-global-scope="%s.SiteHeader" items="{{ nav }}" active="work" '
-        'inverse="true" floating="true" hint-size="100%%,88px"></x-import>\n'
         '    <x-import component-from-global-scope="%s.SocialRail" items="{{ social }}" inverse="true" '
         'fixed="true" hint-size="36px,120px"></x-import>\n'
         '    <div style="position: relative; flex: 1; display: grid; grid-template-columns: '
@@ -434,13 +438,17 @@ def build(case, index, out_dir=OUT_DIR):
         '      %s\n'
         '    </div>\n'
         '  </section>\n'
-        % (grain(), NS, NS,
+        % (grain(), NS,
            meta(case["eyebrow"], wide=True, size="300px,16px"),
-           heading(case["title"], level=1, treatment="inverse", size="100%,140px"),
+           heading(case["title"], level=1, treatment="inverse", size="100%,140px", tag="h1"),
            para_dark(case["lede"], big=True),
            button("All work", "../index.html#work", variant="glass", dark=True, size="150px,44px"),
            clip_markup))
 
+    # The banner sits outside <main>, before the hero it floats over, as on the
+    # home page.
+    site_header = ('  <x-import component-from-global-scope="%s.SiteHeader" items="{{ nav }}" active="work" '
+                   'inverse="true" floating="true" hint-size="100%%,88px"></x-import>\n' % NS)
     body = [hero]
     if case.get("walkthrough"):
         body.append(walkthrough(case["walkthrough"]))
@@ -583,8 +591,10 @@ def build(case, index, out_dir=OUT_DIR):
         '<script src="../js/depth-motion.js" defer></script>\n'
         '<link rel="stylesheet" href="../css/interaction-polish.css">\n'
         '<script src="../js/interaction-polish.js" defer></script>\n'
-        '</head>\n<body class="depth-design">\n<x-dc>\n<helmet>\n%s\n</helmet>\n\n'
-        '<div style="background: var(--paper); overflow-x: hidden">\n\n%s\n%s\n</div>\n</x-dc>\n%s\n'
+        '</head>\n<body class="depth-design">\n'
+        '<a class="skip-link" href="#main">Skip to content</a>\n<x-dc>\n<helmet>\n%s\n</helmet>\n\n'
+        '<div style="background: var(--paper); overflow-x: hidden">\n\n%s\n  <main id="main">\n%s  </main>\n%s\n'
+        '</div>\n</x-dc>\n%s\n'
         '<script src="../js/mobile-nav.js"></script>\n'
         '<script src="../js/analytics-config.js"></script>\n'
         '<script src="../js/track.js"></script>\n'
@@ -592,7 +602,7 @@ def build(case, index, out_dir=OUT_DIR):
         % (PALETTE_JS, page_title, escape(case["description"], quote=True), case["slug"], page_title,
            escape(case["description"], quote=True), case["slug"], case["slug"],
            escape(case["og_alt"], quote=True), poster_preload, head_modules, helmet_block(index),
-           "\n".join(body),
+           site_header, "\n".join(body),
            footer_block(index), runtime_script(index, "\n".join(vals))))
 
     out = os.path.join(out_dir, case["slug"] + ".html")

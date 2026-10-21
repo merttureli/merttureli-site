@@ -149,13 +149,13 @@
 }
 .depth-design [data-depth-button="link"]:is(:hover, :focus-visible)::after { transform: scaleX(1); }
 .depth-design [data-depth-label],
-.depth-design [data-depth-rule] > span { color: var(--text-meta) !important; }
+.depth-design [data-depth-rule] > :is(span, h2, h3) { color: var(--text-meta) !important; }
 .depth-design .on-dark [data-depth-label],
-.depth-design .on-dark [data-depth-rule] > span { color: var(--paper-a70) !important; }
+.depth-design .on-dark [data-depth-rule] > :is(span, h2, h3) { color: var(--paper-a70) !important; }
 /* Contact labels sit over the animated smoke. Lift the type rather than
    darken the scrim, so the effect keeps its strength. */
 #contact.on-dark { --text-meta: var(--paper-a90); }
-.depth-design #contact [data-depth-rule] > span { color: var(--paper-a90) !important; }
+.depth-design #contact [data-depth-rule] > :is(span, h2, h3) { color: var(--paper-a90) !important; }
 .depth-design [data-depth-rule] > span[style*="flex: 1"] { transform-origin: left; }
 @media (hover: hover) and (pointer: fine) {
   .depth-portrait:hover > img, .depth-design figure > div:first-child:hover > img { transform: scale(1.015) !important; }
