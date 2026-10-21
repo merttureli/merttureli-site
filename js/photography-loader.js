@@ -19,7 +19,7 @@ customElements.define('photo-corridor',class extends HTMLElement {
       ]);
       const root=this.attachShadow({mode:'open'});
       root.innerHTML=`<style>${css}
-        :host{display:block;--bg:#0a0a0a;--paper:#eeeae4;--muted:#a39f99;--line:#ffffff26;--accent:#c67650;color:var(--paper);font-family:var(--font-body,Arial,sans-serif)}
+        :host{display:block;--bg:var(--corridor-bg,#0a0a0a);--paper:var(--corridor-paper,#eeeae4);--muted:var(--corridor-muted,#a39f99);--line:#ffffff26;--accent:#c67650;color:var(--paper);font-family:var(--font-body,Arial,sans-serif)}
         .corridor{margin-top:0;height:clamp(430px,48vw,740px)}
         @media(max-width:650px){.corridor{height:430px}}
       </style>${html}`;

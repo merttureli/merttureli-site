@@ -4,7 +4,9 @@
   const seen = new WeakSet(), pending = new Set(), active = new Set();
   let settings = { motion: true, ...window.PortfolioDepthSettings };
   let ready = false, scheduled = false;
-  const disabled = () => reduced.matches || settings.motion === false;
+  // The Display setting (js/site-palette.js) defaults to reduced motion and can be overridden by the visitor.
+  const motionOff = () => window.PortfolioDisplay ? !window.PortfolioDisplay.motion() : reduced.matches;
+  const disabled = () => motionOff() || settings.motion === false;
   const selector = '[data-reveal] h2, [data-reveal] h3, [data-reveal] h4, [data-depth-label], [data-depth-rule], .depth-portrait, .depth-stage, figure > div:first-child';
   const observer = 'IntersectionObserver' in window ? new IntersectionObserver(entries => {
     for (const entry of entries) {
@@ -53,6 +55,7 @@
     ready = true;
     new MutationObserver(queueRefresh).observe(document.body, { childList: true, subtree: true });
     reduced.addEventListener('change', () => refresh());
+    document.addEventListener('portfolio:motion', () => refresh());
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) { for (const animation of active) animation.cancel(); active.clear(); }
     });

@@ -91,6 +91,8 @@
   header {
     position: fixed !important;
     background: rgba(10, 10, 10, .88) !important;
+    /* Follows the palette; Original resolves to the same rgba as above. */
+    background: color-mix(in srgb, var(--ink-900) 88%, transparent) !important;
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
   }

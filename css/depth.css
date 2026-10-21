@@ -1,4 +1,12 @@
 /* One light direction, three surfaces: paper, mounted photographs, inset hardware. */
+/* Inset surfaces as tokens so the palettes in css/site-palette.css can retint them. */
+:root {
+  --depth-stage-hi: #fff;
+  --depth-stage-mid: #eff0f0;
+  --depth-stage-lo: #e3e5e6;
+  --depth-panel-a: #eeefee;
+  --depth-panel-b: #dedfdf;
+}
 .depth-design {
   --depth-ease: cubic-bezier(.22, 1, .36, 1);
   --depth-shadow: 0 2px 3px #0a0a0a0a, 0 14px 26px -12px #0a0a0a26, 0 36px 58px -30px #0a0a0a40;
@@ -96,7 +104,7 @@
 .depth-stage {
   isolation: isolate;
   border-radius: 14px;
-  background: radial-gradient(ellipse at 40% 10%, #fff, #eff0f0 60%, #e3e5e6);
+  background: radial-gradient(ellipse at 40% 10%, var(--depth-stage-hi), var(--depth-stage-mid) 60%, var(--depth-stage-lo));
   box-shadow: inset 0 1px 3px #0a0a0a16, inset 0 -1px #fff, 0 1px 0 #fff;
 }
 .depth-stage::after {
@@ -117,7 +125,7 @@
   pointer-events: none;
 }
 .depth-panel {
-  background: linear-gradient(145deg, #eeefee, #dedfdf) !important;
+  background: linear-gradient(145deg, var(--depth-panel-a), var(--depth-panel-b)) !important;
   border-radius: 20px !important;
   box-shadow: inset 0 1px 0 #fff, inset 1px 0 0 #ffffffa6, 0 1px 2px #00000012, 0 12px 24px -18px #00000038;
   outline: 1px solid #00000009;
@@ -141,9 +149,13 @@
 }
 .depth-design [data-depth-button="link"]:is(:hover, :focus-visible)::after { transform: scaleX(1); }
 .depth-design [data-depth-label],
-.depth-design [data-depth-rule] > span { color: #65676a !important; }
+.depth-design [data-depth-rule] > span { color: var(--text-meta) !important; }
 .depth-design .on-dark [data-depth-label],
-.depth-design .on-dark [data-depth-rule] > span { color: #bdc0c2 !important; }
+.depth-design .on-dark [data-depth-rule] > span { color: var(--paper-a70) !important; }
+/* Contact labels sit over the animated smoke. Lift the type rather than
+   darken the scrim, so the effect keeps its strength. */
+#contact.on-dark { --text-meta: var(--paper-a90); }
+.depth-design #contact [data-depth-rule] > span { color: var(--paper-a90) !important; }
 .depth-design [data-depth-rule] > span[style*="flex: 1"] { transform-origin: left; }
 @media (hover: hover) and (pointer: fine) {
   .depth-portrait:hover > img, .depth-design figure > div:first-child:hover > img { transform: scale(1.015) !important; }

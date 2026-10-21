@@ -8,6 +8,8 @@ const photos = [
 ].map(p => ({...p, src:`assets/photos/beyond/gallery/${p.file}-view.webp`, thumb:`assets/photos/beyond/gallery/${p.file}-thumb.webp`}));
 const $ = s => root.querySelector(s);
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+// The site Display setting (js/site-palette.js) when present, else the OS preference.
+const motionOff = () => window.PortfolioDisplay ? !window.PortfolioDisplay.motion() : reduced.matches;
 const narrow = matchMedia('(max-width:650px)');
 const animations = [];
 const corridor = $('.corridor'), viewer = $('#viewer'), still = $('#still');
@@ -22,12 +24,13 @@ function load(i) {
   return cached.get(i);
 }
 function syncMotion() {
-  const stop = paused || hovered || focused || drag || !visible || document.hidden || viewer.open || reduced.matches;
+  const off = motionOff();
+  const stop = paused || hovered || focused || drag || !visible || document.hidden || viewer.open || off;
   corridor.dataset.motion=stop?'paused':'running';
   animations.forEach(a => stop ? a.pause() : a.play());
-  $('#pause').textContent = paused || reduced.matches ? 'Resume motion' : 'Pause motion';
-  $('#pause').setAttribute('aria-pressed',String(paused || reduced.matches));
-  $('#pause').disabled = reduced.matches;
+  $('#pause').textContent = off ? 'Motion off' : paused ? 'Resume motion' : 'Pause motion';
+  $('#pause').setAttribute('aria-pressed',String(paused || off));
+  $('#pause').disabled = off;
 }
 function buildCorridor() {
   animations.forEach(a=>a.cancel()); animations.length=0; $('#rails').replaceChildren();
@@ -64,7 +67,7 @@ async function show(index, immediate=false){
   try {
     const incoming=await load(next); if(token!==transitionToken||!viewer.open)return;
     still.src=incoming.src; still.alt=photos[next].alt;
-    if(!immediate&&next!==previous&&!reduced.matches&&$('#dissolve').checked){
+    if(!immediate&&next!==previous&&!motionOff()&&$('#dissolve').checked){
       const outgoing=await load(previous); if(token!==transitionToken||!viewer.open)return;
       try {const {createDissolve}=await import('./photography-dissolve.js'); if(token!==transitionToken||!viewer.open)return; renderer??=createDissolve($('#morph'),()=>{stopTransition();renderer=undefined;}); renderer.prepare(outgoing,incoming); $('#morph').classList.add('active'); const start=performance.now();
         const frame=now=>{if(token!==transitionToken||!viewer.open)return; const t=Math.min(1,(now-start)/1050), eased=t*t*(3-2*t); renderer.draw(eased); if(t<1)transitionFrame=requestAnimationFrame(frame); else $('#morph').classList.remove('active');}; frame(start);
@@ -88,7 +91,7 @@ corridor.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-d
 window.addEventListener('pointerup',()=>{if(!drag)return;drag=null;syncMotion();setTimeout(()=>{dragged=false;},0);}); window.addEventListener('pointercancel',()=>{drag=null;syncMotion();});
 new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;syncMotion();}).observe(corridor);
 document.addEventListener('visibilitychange',()=>{syncMotion();if(document.hidden)stopTransition();});
-reduced.addEventListener('change',()=>{syncMotion();stopTransition();}); narrow.addEventListener('change',buildCorridor);
+reduced.addEventListener('change',()=>{syncMotion();stopTransition();}); document.addEventListener('portfolio:motion',()=>{syncMotion();stopTransition();}); narrow.addEventListener('change',buildCorridor);
 $('#dissolve').onchange=stopTransition;
 window.addEventListener('resize',stopTransition);
 buildCorridor();
