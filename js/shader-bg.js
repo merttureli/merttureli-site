@@ -38,6 +38,29 @@
     0.918, 0.976, 1.000
   ];
   var COLOR_COUNT = 4.0;
+
+  // The blue above belongs to the Original palette. The other palettes in
+  // css/site-palette.css publish their own four stops as --smoke-0..3 on
+  // <html>; when those are present the shader uses them instead.
+  function themeColors() {
+    var cs = getComputedStyle(document.documentElement);
+    var out = [];
+    for (var i = 0; i < 4; i++) {
+      var m = /^#([0-9a-f]{6})$/i.exec(cs.getPropertyValue("--smoke-" + i).trim());
+      if (!m) return COLORS;
+      var n = parseInt(m[1], 16);
+      out.push(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
+    }
+    for (var j = 4; j < 8; j++) out.push(out[9], out[10], out[11]);
+    return out;
+  }
+
+  // Motion follows the site's Display setting (js/site-palette.js), which
+  // itself defaults to prefers-reduced-motion. Without it, the media query.
+  function motionOff(mq) {
+    var d = window.PortfolioDisplay;
+    return d && d.motion ? !d.motion() : mq.matches;
+  }
   var TIME_SCALE = 0.97;
 
   var SHAPE     = [1.72, 0.60, 0.50, 0.00];   // scale, intensity, paramA, warp
@@ -470,7 +493,7 @@
       water: gl.getUniformLocation(prog, "u_water")
     };
 
-    gl.uniform3fv(loc.colors, new Float32Array(COLORS));
+    gl.uniform3fv(loc.colors, new Float32Array(themeColors()));
     gl.uniform4f(loc.shape, SHAPE[0], SHAPE[1], SHAPE[2], SHAPE[3]);
     gl.uniform4f(loc.surface, SURFACE[0], SURFACE[1], SURFACE[2], SURFACE[3]);
     gl.uniform4f(loc.finish, FINISH[0], FINISH[1], FINISH[2], FINISH[3]);
@@ -565,9 +588,11 @@
     var scrim = document.createElement("span");
     scrim.className = "shader-bg-scrim";
     scrim.setAttribute("aria-hidden", "true");
+    // ink-900 at SCRIM_ALPHA: rgba(10,10,10,.58) on Original, the palette's
+    // own ink elsewhere.
     scrim.style.cssText =
-      "position:absolute;inset:0;z-index:0;pointer-events:none;background:rgba(10,10,10," +
-      SCRIM_ALPHA + ")";
+      "position:absolute;inset:0;z-index:0;pointer-events:none;" +
+      "background:var(--ink-900,#0a0a0a);opacity:" + SCRIM_ALPHA;
     section.insertBefore(scrim, canvas.nextSibling);
 
     var reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
@@ -627,7 +652,7 @@
     }
 
     function sync() {
-      if (reduceMotion.matches) {
+      if (motionOff(reduceMotion)) {
         stop();
         resize();
         draw();          // one still frame keeps the look without the motion
@@ -740,6 +765,15 @@
     }
 
     document.addEventListener("visibilitychange", sync);
+    document.addEventListener("portfolio:motion", sync);
+    // Palette switches re-upload the ramp and repaint a parked frame.
+    if (window.MutationObserver) {
+      new MutationObserver(function () {
+        gl.useProgram(prog);
+        gl.uniform3fv(loc.colors, new Float32Array(themeColors()));
+        if (!running) { resize(); draw(); }
+      }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-card-theme"] });
+    }
     if (reduceMotion.addEventListener) reduceMotion.addEventListener("change", sync);
     canvas.addEventListener("webglcontextlost", function (e) {
       e.preventDefault();

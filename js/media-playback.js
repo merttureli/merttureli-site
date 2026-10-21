@@ -9,7 +9,9 @@
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const phone = matchMedia('(max-width: 720px)');
   let settings = { motion: true, ...window.PortfolioMediaSettings }, scheduled = false, ready = false;
-  const blocked = () => document.hidden || reduced.matches || settings.motion === false || !!document.querySelector('dialog[open]');
+  // The Display setting (js/site-palette.js) defaults to reduced motion and can be overridden by the visitor.
+  const motionOff = () => window.PortfolioDisplay ? !window.PortfolioDisplay.motion() : reduced.matches;
+  const blocked = () => document.hidden || motionOff() || settings.motion === false || !!document.querySelector('dialog[open]');
 
   function pick(source) {
     const d = source.dataset;
@@ -91,6 +93,7 @@
     new MutationObserver(queueRefresh).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['open'] });
     document.addEventListener('visibilitychange', () => refresh());
     reduced.addEventListener('change', () => refresh());
+    document.addEventListener('portfolio:motion', () => refresh());
     refresh();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
