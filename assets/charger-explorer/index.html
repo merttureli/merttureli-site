@@ -10,13 +10,13 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="fonts/SpaceGrotesk-var.ttf" as="font" type="font/ttf" crossorigin><link rel="stylesheet" href="style.css">
 <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
-<link rel="modulepreload" href="app.js"><link rel="modulepreload" href="vendor/three.module.js"><link rel="modulepreload" href="vendor/three.core.js"><link rel="modulepreload" href="vendor/OrbitControls.js"><link rel="modulepreload" href="part-stories.js"><link rel="modulepreload" href="focus-motion.js"><link rel="modulepreload" href="livery.js">
 <script>
 // Start the geometry requests alongside the module graph instead of after it. app.js awaits this.
 // no-cache revalidates by ETag (a 304 when unchanged), so a model update still shows immediately.
 window.__chargerGeometry=Promise.all([fetch('assembly.json',{cache:'no-cache'}),fetch('assembly.bin',{cache:'no-cache'})]);
 window.__chargerGeometry.catch(()=>{});
 </script>
+<link rel="modulepreload" href="app.js"><link rel="modulepreload" href="vendor/three.module.js"><link rel="modulepreload" href="vendor/three.core.js"><link rel="modulepreload" href="vendor/OrbitControls.js"><link rel="modulepreload" href="part-stories.js"><link rel="modulepreload" href="focus-motion.js"><link rel="modulepreload" href="livery.js">
 </head>
 <body>
 <header class="site-header"><a class="wordmark" href="https://merttureli.com/">Mert Tureli<span>Mechanical engineer</span></a><nav aria-label="Main navigation"><a href="https://merttureli.com/#work">Work</a><a href="https://merttureli.com/#beyond">Beyond</a><a href="https://merttureli.com/projects/charger.html">The CHARGER story ↗</a></nav></header>
