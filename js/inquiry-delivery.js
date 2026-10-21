@@ -20,12 +20,12 @@ export async function sendInquiry(endpoint, details, {fetchImpl = fetch, timeout
     }
     const result = await response.json().catch(() => null);
     if (!result || (result.ok !== true && result.success !== true) || result.errors?.length) {
-      throw new Error('We could not confirm your request was sent. Your details are still here. Please use the email link below if this continues.');
+      throw new Error('I could not confirm your request was sent. Your details are still here. Please use the email link below if this continues.');
     }
     return result;
   } catch (error) {
     if (controller.signal.aborted || error instanceof TypeError) {
-      throw new Error('We could not confirm delivery. Check your connection before trying again. Your details are still here.');
+      throw new Error('I could not confirm delivery. Check your connection before trying again. Your details are still here.');
     }
     throw error;
   } finally {
