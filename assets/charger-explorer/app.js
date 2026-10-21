@@ -29,6 +29,7 @@ catch(error){$('loading').textContent='3D graphics are unavailable in this brows
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.setClearColor(0x0a0a0a,0);
 renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.localClippingEnabled=true;stage.prepend(renderer.domElement);
 const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=false;controls.minDistance=.006;controls.maxDistance=6;
+controls.listenToKeyEvents(stage);
 controls.addEventListener('change',invalidate);
 controls.addEventListener('start',()=>{if(motion)motion.interrupted=true;});
 scene.add(new THREE.HemisphereLight(0xffffff,0x777777,2.6));
@@ -169,7 +170,9 @@ renderer.domElement.addEventListener('pointerup',e=>{
 renderer.domElement.addEventListener('webglcontextlost',event=>{event.preventDefault();$('announce').textContent='3D graphics paused. Reload to restore the model.';});
 
 try{
-  const [meta,buffer]=await Promise.all([fetch('assembly.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Metadata unavailable');return r.json();}),fetch('assembly.bin',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Geometry unavailable');return r.arrayBuffer();})]);
+  const [metaResponse,binResponse]=await (window.__chargerGeometry||Promise.all([fetch('assembly.json',{cache:'no-cache'}),fetch('assembly.bin',{cache:'no-cache'})]));
+  if(!metaResponse.ok)throw Error('Metadata unavailable');if(!binResponse.ok)throw Error('Geometry unavailable');
+  const [meta,buffer]=await Promise.all([metaResponse.json(),binResponse.arrayBuffer()]);
   data=meta;if(buffer.byteLength!==data.bytes)throw Error('Geometry is updating. Reload the page.');
   await document.fonts.load('700 32px "Space Grotesk"').catch(()=>{});
   const paintPart=createLivery();
