@@ -13,12 +13,22 @@ Paths are rewritten for one directory down, since the pages live in projects/.
 
     python build-case.py            # rebuild every case page
     python build-case.py robo-catcher
+    python build-case.py --check    # build to a temp dir, diff against projects/,
+                                    # exit 1 on any difference
+
+Depth hooks (depth-hero, depth-stage, data-depth-*) are emitted by the helpers
+below so css/depth.css and js/depth-motion.js see the same markup as on the home
+page. Do not hand edit projects/*.html: run --check after any change here.
 """
 
+import difflib
+from html import escape
 import io
 import os
 import re
+import shutil
 import sys
+import tempfile
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 INDEX = os.path.join(ROOT, "index.html")
@@ -84,14 +94,16 @@ def meta(text, index_no=None, tone=None, wide=False, size="240px,16px"):
     if index_no: a += ' index="%s"' % index_no
     if tone: a += ' tone="%s"' % tone
     if wide: a += ' wide="true"'
-    return ('<x-import component-from-global-scope="%s.Meta"%s hint-size="%s">%s</x-import>'
+    return ('<x-import data-depth-label="true" component-from-global-scope="%s.Meta"%s hint-size="%s">%s</x-import>'
             % (NS, a, size, text))
 
 
-def rule(label, right=None):
+def rule(label, right=None, anchor=None):
+    """A section rule. `anchor` adds a scroll target just above it for deep links."""
     r = ' right="%s"' % right if right else ''
-    return ('<x-import component-from-global-scope="%s.Rule" label="%s"%s hint-size="100%%,14px"></x-import>'
-            % (NS, label, r))
+    a = ('<span id="%s" style="scroll-margin-top:30px"></span>' % anchor) if anchor else ''
+    return ('%s<x-import data-depth-rule="true" component-from-global-scope="%s.Rule" label="%s"%s '
+            'hint-size="100%%,14px"></x-import>' % (a, NS, label, r))
 
 
 def heading(text, level=2, treatment=None, size="100%,90px"):
@@ -123,8 +135,9 @@ def frame(src, alt, caption, ratio="3 / 2", idx=None, zoom=True, size="100%,300p
 
 def button(text, href, variant="outline", dark=False, size="220px,44px"):
     dp = ' dc-props="{{ linkOnDark }}"' if dark else ''
-    return ('<x-import component-from-global-scope="%s.Button" variant="%s" trailing="→" '
-            'href="%s"%s hint-size="%s">%s</x-import>' % (NS, variant, href, dp, size, text))
+    return ('<x-import component-from-global-scope="%s.Button" data-depth-button="%s" variant="%s" '
+            'trailing="→" href="%s"%s hint-size="%s">%s</x-import>'
+            % (NS, variant, variant, href, dp, size, text))
 
 
 def spec_list(name, cols="minmax(64px,110px) minmax(0,1fr)", size="100%,220px"):
@@ -192,19 +205,23 @@ def cards(items):
             '        %s\n      </div>' % "\n        ".join(out))
 
 
+# below-the-fold <img> tags never block first paint
+LAZY_IMG = 'loading="lazy" decoding="async" '
+
+
 def bleed(src, alt, caption):
     """A full width image band, to break the column rhythm once per page."""
     return ('  <section data-reveal="1" style="position: relative; padding: 0 0 var(--section-y)">\n'
             '    <div style="position: relative; width: 100%%; aspect-ratio: 21 / 9; overflow: hidden; '
             'background: var(--ink-900)">\n'
-            '      <img src="../%s" alt="%s" style="position: absolute; inset: 0; width: 100%%; '
+            '      <img %ssrc="../%s" alt="%s" style="position: absolute; inset: 0; width: 100%%; '
             'height: 100%%; object-fit: cover; display: block">\n'
             '    </div>\n'
             '    <div style="max-width: var(--max-width); margin: 0 auto; padding: var(--space-4) '
             'var(--page-margin) 0">\n'
             '      <span style="font-family: var(--font-mono); font-size: var(--fs-meta); '
             'letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta)">%s</span>\n'
-            '    </div>\n  </section>\n' % (src, alt, caption))
+            '    </div>\n  </section>\n' % (LAZY_IMG, src, alt, caption))
 
 
 def clip_band(base, caption, ratio="16 / 9"):
@@ -284,28 +301,57 @@ def gallery(frames, min_col="220px"):
             % (min_col, "\n        ".join(frames)))
 
 
+def walkthrough(w):
+    """
+    An interactive <project-walkthrough> band straight after the hero. The
+    custom element is defined by WALKTHROUGH_JS, which build() adds to <head>
+    whenever a case declares one.
+    """
+    return ('  <section id="%s" aria-label="%s" style="padding:var(--space-8) var(--page-margin);'
+            'scroll-margin-top:28px">\n'
+            '    <div style="max-width:var(--max-width);margin:0 auto">\n'
+            '      <project-walkthrough project="%s"><p>%s</p></project-walkthrough>\n'
+            '    </div>\n  </section>\n' % (w["id"], w["label"], w["project"], w["fallback"]))
+
+
 # ---------------------------------------------------------------- page builder
 
-def build(case, index):
+# Everything a case page loads beyond the lifted helmet. site-palette.js runs
+# first, before any paint, so the chosen palette applies without a flash.
+PALETTE_JS = "../js/site-palette.js"
+WALKTHROUGH_JS = "../assets/portfolio-foundation/project-walkthrough.js"
+
+# The header nav, in the home page's order. Case pages link back to the home
+# page's sections, except Websites, which has its own page.
+NAV = [
+    ("work", "Work", "../index.html#work"),
+    ("experience", "Experience", "../index.html#experience"),
+    ("beyond", "Beyond", "../index.html#beyond"),
+    ("websites", "Websites", "../websites.html"),
+    ("contact", "Contact", "../index.html#contact"),
+]
+
+
+def build(case, index, out_dir=OUT_DIR):
     hero_clip = case.get("clip")
     clip_markup = ""
+    # The hero clip carries no autoplay attribute: js/media-playback.js starts
+    # it when it is on screen and leaves it paused under reduced motion.
+    aria = (' aria-label="%s"' % escape(case["clip_aria"], quote=True)) if case.get("clip_aria") else ''
     if hero_clip:
         clip_markup = (
-            '<div data-reveal="1" style="position: relative; width: 100%%; aspect-ratio: %s">\n'
-            '          <video data-clip="1" poster="../assets/motion/%s-poster.%s" autoplay loop muted '
+            '<div class="depth-stage" data-reveal="1" style="position: relative; width: 100%%; aspect-ratio: %s">\n'
+            '          <video data-clip="1"%s poster="../assets/motion/%s-poster.%s" loop muted '
             'playsinline preload="metadata" style="width: 100%%; height: 100%%; object-fit: contain; display: block">'
             '<source src="../assets/motion/%s-alpha.webm" type="video/webm">'
             '<source src="../assets/motion/%s.mp4" type="video/mp4"></video>\n        </div>'
-            % (case.get("clip_ratio", "4 / 3"), hero_clip, case.get("poster_ext", "png"),
+            % (case.get("clip_ratio", "4 / 3"), aria, hero_clip, case.get("poster_ext", "png"),
                hero_clip, hero_clip))
     elif case.get("hero_image"):
         clip_markup = ('<div data-reveal="1">%s</div>'
                        % frame(case["hero_image"], case["title"], case.get("hero_caption", ""),
                                ratio=case.get("clip_ratio", "4 / 3"), zoom=False, size="100%,420px"))
 
-    if case.get("clip_aria") and clip_markup:
-        from html import escape
-        clip_markup = clip_markup.replace('<video ', '<video aria-label="' + escape(case["clip_aria"], quote=True) + '" ', 1)
     if case.get("clip_note") and clip_markup:
         clip_markup = clip_markup.replace(
             '        </div>',
@@ -318,7 +364,7 @@ def build(case, index):
             '          </div>\n        </div>')
 
     hero = (
-        '  <section class="on-dark" style="position: relative; min-height: min(720px, 88vh); '
+        '  <section class="on-dark depth-hero" style="position: relative; min-height: min(720px, 88vh); '
         'background: var(--ink-900); overflow: hidden; display: flex; flex-direction: column">\n'
         '    %s\n'
         '    <x-import component-from-global-scope="%s.SiteHeader" items="{{ nav }}" active="work" '
@@ -345,6 +391,8 @@ def build(case, index):
            clip_markup))
 
     body = [hero]
+    if case.get("walkthrough"):
+        body.append(walkthrough(case["walkthrough"]))
 
     # brief
     body.append(section(
@@ -388,7 +436,7 @@ def build(case, index):
                                   sec.get("ratio", "16 / 9")))
             continue
 
-        head = block(rule(sec["label"], right="%02d" % n))
+        head = block(rule(sec["label"], right="%02d" % n, anchor=sec.get("anchor")))
         n += 1
 
         text = []
@@ -434,12 +482,9 @@ def build(case, index):
         % "\n        ".join(nav_btns or [button("All work", "../index.html#work")]),
         pad="var(--space-8) var(--page-margin) var(--space-9)"))
 
-    vals = ["      nav: [",
-            '        { id: "work", label: "Work", href: "../index.html#work" },',
-            '        { id: "experience", label: "Experience", href: "../index.html#experience" },',
-            '        { id: "beyond", label: "Beyond", href: "../index.html#beyond" },',
-            '        { id: "contact", label: "Contact", href: "../index.html#contact" },',
-            "      ],",
+    vals = ["      nav: ["]
+    vals += ['        { id: "%s", label: "%s", href: "%s" },' % item for item in NAV]
+    vals += ["      ],",
             "      social: [",
             '        { name: "LinkedIn", icon: "linkedin", href: "https://linkedin.com/in/merttureli" },',
             '        { name: "Mail", icon: "mail", href: "../index.html#contact" },',
@@ -453,8 +498,12 @@ def build(case, index):
         vals.append(row + " },")
     vals.append("      ],")
 
+    head_modules = "".join('<script type="module" src="%s"></script>\n' % m
+                           for m in ([WALKTHROUGH_JS] if case.get("walkthrough") else []))
     html = (
-        '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
+        '<!DOCTYPE html>\n<html lang="en">\n<head>\n'
+        '<script src="%s"></script>\n'
+        '<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         '<title>%s · Mert Tureli</title>\n'
         '<meta name="description" content="%s">\n'
@@ -466,6 +515,7 @@ def build(case, index):
         '<meta property="og:url" content="https://merttureli.com/projects/%s.html">\n'
         '<meta property="og:image" content="https://merttureli.com/assets/og-cover.png">\n'
         '<script src="../support.js"></script>\n'
+        '%s'
         '<script src="../js/media-playback.js" defer></script>\n'
         '<script src="../js/depth-motion.js" defer></script>\n'
         '<link rel="stylesheet" href="../css/interaction-polish.css">\n'
@@ -476,11 +526,11 @@ def build(case, index):
         '<script src="../js/analytics-config.js"></script>\n'
         '<script src="../js/track.js"></script>\n'
         '<script src="../js/clarity.js"></script>\n</body>\n</html>\n'
-        % (case["title"], case["description"], FAVICON, case["slug"], case["title"],
-           case["description"], case["slug"], helmet_block(index), "\n".join(body),
+        % (PALETTE_JS, case["title"], case["description"], FAVICON, case["slug"], case["title"],
+           case["description"], case["slug"], head_modules, helmet_block(index), "\n".join(body),
            footer_block(index), runtime_script(index, "\n".join(vals))))
 
-    out = os.path.join(OUT_DIR, case["slug"] + ".html")
+    out = os.path.join(out_dir, case["slug"] + ".html")
     io.open(out, "w", encoding="utf-8", newline="\n").write(html)
     return out, len(html)
 
@@ -501,6 +551,13 @@ CASES["robo-catcher"] = {
              "subsystem and owned all of the machine's electronics and firmware."),
     "clip": "robo-catcher-360",
     "clip_ratio": "4 / 3",
+    # index.html's Robo-Catcher card deep-links to #mechanism-tour
+    "walkthrough": {
+        "id": "mechanism-tour",
+        "label": "Robo-Catcher mechanism walkthrough",
+        "project": "robo-catcher",
+        "fallback": "Catch. Index. Return. Explore the three stages in the case study below.",
+    },
     "brief": [
         ("Role", "Feeding subsystem co-lead, all electronics and firmware", ""),
         ("Team", "12 across capture, feeding and return", ""),
@@ -557,7 +614,8 @@ CASES["robo-catcher"] = {
                        "The team running the machine on the field", "Running it on the field", "03"),
                       ("F", "assets/photos/robo-catcher-photography/flywheel-full.jpg",
                        "Return flywheel assembly", "Return flywheel, 120 W DC motor", "04")]},
-        {"label": "The result", "list": [
+        # the walkthrough's last stage links to #project-result
+        {"label": "The result", "anchor": "project-result", "list": [
             "100% feed indexing on competition day: every ball delivered, no misses",
             "Under $700 total build cost against a $700 cap",
             "55 lb, one person portable, assembles with no tools",
@@ -978,29 +1036,68 @@ CASES["therma-shift"] = {
     "next": ("Robo-Catcher", "robo-catcher.html"),
 }
 
+
+def expand_frames(case):
+    """Expand the frame tuples now that the helpers exist. Idempotent."""
+    for sec in case["sections"]:
+        if sec.get("frames") and isinstance(sec["frames"][0], tuple):
+            # a single frame beside prose gets a wide crop so it does not
+            # tower over a short paragraph; pairs and galleries keep 3:2.
+            # A section can override both, which portrait sources need: a
+            # 16:9 crop of a vertical rocket keeps the middle of the tube
+            # and throws away the nose and the fins.
+            beside_text = bool(sec.get("paras") or sec.get("list")) and not sec.get("cards")
+            ratio = sec.get("ratio") or (
+                "16 / 9" if (beside_text and len(sec["frames"]) == 1) else "3 / 2")
+            sec["frames"] = [frame(src, alt, cap, ratio=ratio, idx=i)
+                             for (_tag, src, alt, cap, i) in sec["frames"]]
+
+
+def check(index, wanted):
+    """Build into a temp dir and diff against the committed pages. Returns 0 or 1."""
+    tmp = tempfile.mkdtemp(prefix="build-case-check-")
+    dirty = 0
+    try:
+        for slug in wanted:
+            expand_frames(CASES[slug])
+            out, _ = build(CASES[slug], index, out_dir=tmp)
+            committed = os.path.join(OUT_DIR, slug + ".html")
+            new = io.open(out, encoding="utf-8").read().splitlines(True)
+            old = (io.open(committed, encoding="utf-8").read().splitlines(True)
+                   if os.path.exists(committed) else [])
+            diff = list(difflib.unified_diff(old, new, "projects/%s.html" % slug,
+                                             "build-case.py → %s.html" % slug))
+            if diff:
+                dirty = 1
+                sys.stdout.writelines(diff)
+                print("DIFFERS: projects/%s.html" % slug)
+            else:
+                print("ok: projects/%s.html" % slug)
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    if dirty:
+        print("build-case.py output does not match projects/. Regenerate, or port the "
+              "hand edit into build-case.py.")
+    return dirty
+
+
 def main():
+    args = sys.argv[1:]
+    checking = "--check" in args
+    args = [a for a in args if a != "--check"]
     index = read_index()
+    wanted = args or list(CASES)
+    unknown = [slug for slug in wanted if slug not in CASES]
+    for slug in unknown:
+        print("no such case:", slug)
+    wanted = [slug for slug in wanted if slug in CASES]
+    if checking:
+        sys.exit(check(index, wanted) or (1 if unknown else 0))
     if not os.path.isdir(OUT_DIR):
         os.makedirs(OUT_DIR)
-    wanted = sys.argv[1:] or list(CASES)
     for slug in wanted:
-        if slug not in CASES:
-            print("no such case:", slug)
-            continue
         case = CASES[slug]
-        # expand the frame tuples now that the helpers exist
-        for sec in case["sections"]:
-            if sec.get("frames") and isinstance(sec["frames"][0], tuple):
-                # a single frame beside prose gets a wide crop so it does not
-                # tower over a short paragraph; pairs and galleries keep 3:2.
-                # A section can override both, which portrait sources need: a
-                # 16:9 crop of a vertical rocket keeps the middle of the tube
-                # and throws away the nose and the fins.
-                beside_text = bool(sec.get("paras") or sec.get("list")) and not sec.get("cards")
-                ratio = sec.get("ratio") or (
-                    "16 / 9" if (beside_text and len(sec["frames"]) == 1) else "3 / 2")
-                sec["frames"] = [frame(src, alt, cap, ratio=ratio, idx=i)
-                                 for (_tag, src, alt, cap, i) in sec["frames"]]
+        expand_frames(case)
         out, size = build(case, index)
         print("built %s (%.1f KB)" % (os.path.relpath(out, ROOT), size / 1024))
 
