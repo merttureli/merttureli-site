@@ -207,6 +207,9 @@ async function render(browser, origin, pagePath, icons) {
       const name = img.getAttribute("src").slice(LUCIDE.length).replace(/\.svg$/, "");
       img.setAttribute("src", icons[name] || fail("no vendored lucide icon: " + name));
     }
+    // SiteHeader hard-wires its wordmark to href="#". On the home page that is
+    // the top of the page; on a case page it has to go home.
+    if (prefix) for (const a of document.querySelectorAll("header[data-ds-header] > a[href='#']")) a.setAttribute("href", prefix + "index.html");
     // React sets `muted` as a property only; keep the template's attribute
     for (const v of document.querySelectorAll("video")) if (v.muted && !v.hasAttribute("muted")) v.setAttribute("muted", "");
 

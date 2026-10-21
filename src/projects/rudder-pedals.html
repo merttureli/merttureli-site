@@ -5,14 +5,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Flight sim rudder pedals · Mert Tureli</title>
-<meta name="description" content="Three-axis flight sim rudder pedals with fighter style geometry, contactless Hall effect sensing and C++ USB HID firmware. Designed, printed, wired and programmed solo.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230A0A0A'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='26' font-weight='600' fill='%23FFFFFF'%3EMT%3C/text%3E%3C/svg%3E">
+<meta name="description" content="Three-axis flight sim rudder pedals with fighter style geometry, Hall effect sensing and C++ USB HID firmware. Designed, printed, wired and programmed solo.">
+<link rel="icon" href="/assets/icons/favicon.ico" sizes="32x32">
+<link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
 <link rel="canonical" href="https://merttureli.com/projects/rudder-pedals.html">
 <meta property="og:title" content="Flight sim rudder pedals · Mert Tureli">
-<meta property="og:description" content="Three-axis flight sim rudder pedals with fighter style geometry, contactless Hall effect sensing and C++ USB HID firmware. Designed, printed, wired and programmed solo.">
+<meta property="og:description" content="Three-axis flight sim rudder pedals with fighter style geometry, Hall effect sensing and C++ USB HID firmware. Designed, printed, wired and programmed solo.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://merttureli.com/projects/rudder-pedals.html">
-<meta property="og:image" content="https://merttureli.com/assets/og-cover.png">
+<meta property="og:site_name" content="Mert Tureli">
+<meta property="og:image" content="https://merttureli.com/assets/og/case-rudder-pedals-v1.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Render of the flight sim rudder pedal mechanism.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preload" as="image" href="../assets/motion/rudder-pedals-working-poster.webp" type="image/webp" fetchpriority="high">
 <script src="../support.js"></script>
 <script src="../js/media-playback.js" defer></script>
 <script src="../js/depth-motion.js" defer></script>
@@ -57,12 +65,12 @@
         </div>
       </div>
       <div class="depth-stage" data-reveal="1" style="position: relative; width: 100%; aspect-ratio: 16 / 9">
-          <video data-clip="1" poster="../assets/motion/rudder-pedals-working-poster.png" loop muted playsinline preload="metadata" style="width: 100%; height: 100%; object-fit: contain; display: block"><source src="../assets/motion/rudder-pedals-working-alpha.webm" type="video/webm"><source src="../assets/motion/rudder-pedals-working.mp4" type="video/mp4"></video>
+          <video data-clip="1" poster="../assets/motion/rudder-pedals-working-poster.webp" loop muted playsinline preload="none" style="width: 100%; height: 100%; object-fit: contain; display: block"><source data-src="../assets/motion/rudder-pedals-working-alpha.webm" data-src-md="../assets/motion/rudder-pedals-working-1280-alpha.webm" data-src-sm="../assets/motion/rudder-pedals-working-960-alpha.webm" type="video/webm"></video>
         </div>
     </div>
   </section>
 
-  <section style="position: relative; padding: var(--section-y) var(--page-margin) var(--space-9);">
+  <section data-track="brief" style="position: relative; padding: var(--section-y) var(--page-margin) var(--space-9);">
     <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-7)">
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
         <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Brief" right="01" hint-size="100%,14px"></x-import>
@@ -76,7 +84,7 @@
     </div>
   </section>
 
-  <section class="on-dark" style="position: relative; background: var(--ink-900); padding: var(--space-9) var(--page-margin);">
+  <section class="on-dark" data-track="results" style="position: relative; background: var(--ink-900); padding: var(--space-9) var(--page-margin);">
     <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-7)">
       <div data-reveal="1" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr)); gap: var(--space-7) var(--space-6)">
         <div style="display: flex; flex-direction: column; gap: var(--space-3)"><span style="font-family: var(--font-display); font-size: clamp(2.2rem, 4.4vw, 3.6rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.02em; color: var(--paper)">3</span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70)">Independent axes</span></div>
@@ -89,6 +97,7 @@
 
   <section style="position: relative; padding: 0 var(--page-margin) var(--section-y);">
     <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-9)">
+      <div data-track="the-problem" style="display: flex; flex-direction: column; gap: var(--space-9)">
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
         <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="The problem" right="02" hint-size="100%,14px"></x-import>
       </div>
@@ -96,6 +105,8 @@
         <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Potentiometers drift, jitter and eventually wear out, because the measurement depends on a wiper physically touching a track. On a control you stand on, that wear is not hypothetical.</p>
         <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">I wanted fighter style pedal geometry with sensing that reads the same on day one and day one thousand.</p>
       </div>
+      </div>
+      <div data-track="constraints" style="display: flex; flex-direction: column; gap: var(--space-9)">
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
         <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Constraints" right="03" hint-size="100%,14px"></x-import>
       </div>
@@ -107,6 +118,8 @@
         <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">05</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Pedal geometry close to an F-15 or F-18 layout</span></div>
         <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">06</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Serviceable: a worn part can be reprinted, not replaced as an assembly</span></div>
       </div>
+      </div>
+      <div data-track="mechanism-first" style="display: flex; flex-direction: column; gap: var(--space-9)">
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
         <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Mechanism first" right="04" hint-size="100%,14px"></x-import>
       </div>
@@ -114,13 +127,14 @@
         <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">I designed the three-axis assembly in SolidWorks around fighter style pedal geometry and printed it, iterating on pivot placement and return feel.</p>
         <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Rapid prototyping earns its name here. Pedal feel is subjective, and the fastest way to evaluate a linkage is to stand on it.</p>
       </div>
+      </div>
     </div>
   </section>
 
   <section data-reveal="1" style="position: relative; padding: 0 var(--page-margin) var(--section-y)">
     <div style="position: relative; max-width: var(--max-width); margin: 0 auto">
       <div style="position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border-radius: var(--radius-lg, 14px); background: var(--ink-900)">
-        <video data-clip="1" poster="../assets/motion/rudder-pedals-mechanism-poster.jpg" autoplay loop muted playsinline preload="metadata" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block"><source src="../assets/motion/rudder-pedals-mechanism.webm" type="video/webm"><source src="../assets/motion/rudder-pedals-mechanism.mp4" type="video/mp4"></video>
+        <video data-clip="1" data-poster="../assets/motion/rudder-pedals-mechanism-poster.webp" loop muted playsinline preload="none" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block"><source data-src="../assets/motion/rudder-pedals-mechanism.webm" data-src-md="../assets/motion/rudder-pedals-mechanism-1280.webm" data-src-sm="../assets/motion/rudder-pedals-mechanism-960.webm" type="video/webm"><source data-src="../assets/motion/rudder-pedals-mechanism.mp4" type="video/mp4"></video>
       </div>
       <div style="padding: var(--space-4) 0 0">
         <span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta)">The CAD assembly driven through its real linkage: yaw both ways, each toe brake, then differential braking</span>
@@ -130,6 +144,7 @@
 
   <section style="position: relative; padding: 0 var(--page-margin) var(--section-y);">
     <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-9)">
+      <div data-track="sensing-without-touching" style="display: flex; flex-direction: column; gap: var(--space-9)">
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
         <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Sensing without touching" right="05" hint-size="100%,14px"></x-import>
       </div>
@@ -140,6 +155,8 @@
       </div></div>
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-5)"><x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="../assets/renders/rudder-pedals/a1301-hall-sensor.jpg" alt="An A1301 Hall effect sensor in a TO-92 package" ratio="16 / 9" caption="The A1301 reads the magnet through the air gap, so nothing touches" index="01" hover-zoom="true" hint-size="100%,300px"></x-import></div>
       </div>
+      </div>
+      <div data-track="firmware-that-gets-out-of-the-way" style="display: flex; flex-direction: column; gap: var(--space-9)">
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
         <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Firmware that gets out of the way" right="06" hint-size="100%,14px"></x-import>
       </div>
@@ -151,11 +168,14 @@
         <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">I measured each axis's real travel on the bench, and the firmware maps those endpoints onto the HID range and clamps anything past them. Rudder, left brake and right brake go out as three independent axes at 100 Hz.</p>
       </div></div>
       </div>
+      </div>
+      <div data-track="what-i-learned" style="display: flex; flex-direction: column; gap: var(--space-9)">
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
         <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="What I learned" right="07" hint-size="100%,14px"></x-import>
       </div>
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
         <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">The pedal feel comes from the linkage, but whether it is usable comes from the firmware. Neither could be finished without the other.</p>
+      </div>
       </div>
     </div>
   </section>
@@ -223,10 +243,11 @@ class Component extends DCLogic {
     if (heroEl && heroEl.getAttribute("data-hero-clip") !== hero) {
       const slug = CLIPS[hero] || CLIPS.charger;
       heroEl.setAttribute("data-hero-clip", hero);
-      heroEl.poster = "assets/motion/" + slug + "-poster.png";
+      const w = slug === "charger-painted-wide" ? "" : (matchMedia("(max-width: 720px)").matches ? "-960" : "-1280");
+      heroEl.poster = "assets/motion/" + slug + "-poster.webp";
       const src = heroEl.querySelectorAll("source");
-      if (src[0]) src[0].src = "assets/motion/" + slug + "-alpha.webm";
-      if (src[1]) src[1].src = "assets/motion/" + slug + ".mp4";
+      if (src[0]) src[0].src = "assets/motion/" + slug + w + "-alpha.webm";
+      if (src[1]) src[1].remove();
       heroEl.load();
     }
     window.PortfolioDepthSettings = { motion: play };

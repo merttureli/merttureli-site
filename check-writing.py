@@ -13,7 +13,7 @@ rather than theory. The rule underneath all of them:
     State what was done and what resulted. Delete any sentence whose only job
     is to tell the reader how to feel about the previous sentence.
 
-    python check-writing.py                 check every built page
+    python check-writing.py                 check every built page, websites, hi/ and 404
     python check-writing.py projects/x.html check one
 """
 import io
@@ -107,7 +107,8 @@ def check(path):
 
 
 def main():
-    targets = sys.argv[1:] or sorted(glob.glob("projects/*.html")) + ["index.html"]
+    targets = sys.argv[1:] or (sorted(glob.glob("projects/*.html"))
+                               + ["index.html", "websites.html", "hi/index.html", "404.html"])
     total = 0
     for path in targets:
         if not os.path.exists(path):

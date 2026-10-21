@@ -56,7 +56,8 @@ same data in machine-readable form.
 3. It waits for network idle again. Every `<img>`, including those in open
    shadow roots, is switched to eager loading and awaited (8 s cap). Every
    `<video>` is paused, loses `autoplay` and is reset with `load()`, so it
-   shows its poster and not whatever frame it reached. Then it takes a
+   shows its poster and not whatever frame it reached. A lazy poster
+   (`data-poster`) is applied first and awaited, like a lazy image. Then it takes a
    full-page screenshot with CSS animations disabled and the `--mask`
    selectors painted over.
 

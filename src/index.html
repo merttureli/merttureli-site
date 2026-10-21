@@ -5,14 +5,25 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mert Tureli · Mechanical Engineer</title>
-<meta name="description" content="Mechanical engineer in Austin, TX. I design, build, and test hardware end to end: CAD and drawings, electronics and firmware, and the test rigs that prove it works.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230A0A0A'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='26' font-weight='600' fill='%23FFFFFF'%3EMT%3C/text%3E%3C/svg%3E">
+<meta name="description" content="Mechanical engineer in Austin, TX. I design, build, and test hardware end to end: CAD and drawings, electronics and firmware, and the rigs that prove it works.">
+<link rel="icon" href="/assets/icons/favicon.ico" sizes="32x32">
+<link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
 <link rel="canonical" href="https://merttureli.com/">
 <meta property="og:title" content="Mert Tureli · Mechanical Engineer">
 <meta property="og:description" content="Design, build, test: hardware end to end. CAD, electronics, firmware, and the test rigs that prove it works.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://merttureli.com/">
-<meta property="og:image" content="https://merttureli.com/assets/og-cover.png">
+<meta property="og:site_name" content="Mert Tureli">
+<meta property="og:image" content="https://merttureli.com/assets/og/cover-v1.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Mert Tureli, mechanical engineer in Austin, Texas, beside a render of the CHARGER rocket.">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"ProfilePage","mainEntity":{"@type":"Person","name":"Mert Tureli","alternateName":"Mert Türeli","jobTitle":"Mechanical Engineer","url":"https://merttureli.com/","address":{"@type":"PostalAddress","addressLocality":"Austin","addressRegion":"TX","addressCountry":"US"},"alumniOf":{"@type":"CollegeOrUniversity","name":"Union College"},"sameAs":["https://www.linkedin.com/in/merttureli"]}}
+</script>
+<link rel="preload" as="image" href="assets/motion/charger-painted-wide-poster.webp" type="image/webp" fetchpriority="high">
 
 <script src="./support.js"></script>
 <link rel="stylesheet" href="assets/charger-explorer/launcher.css">
@@ -69,16 +80,15 @@
       </div>
 
       <a id="charger-launch" class="charger-launch" href="assets/charger-explorer/index.html" aria-label="Explore CHARGER in 3D" aria-haspopup="dialog" aria-controls="charger-explorer" aria-expanded="false" style="position: relative; width: 100%; aspect-ratio: 16 / 9">
-        <video data-hero-clip="charger" poster="assets/motion/charger-painted-wide-poster.png" loop muted playsinline preload="auto" style="width: 100%; height: 100%; object-fit: contain; display: block; transform: scale(1.16)">
+        <video data-hero-clip="charger" poster="assets/motion/charger-painted-wide-poster.webp" loop muted playsinline preload="metadata" style="width: 100%; height: 100%; object-fit: contain; display: block; transform: scale(1.16)">
           <source src="assets/motion/charger-painted-wide-alpha.webm" type="video/webm">
-          <source src="assets/motion/charger-painted-wide.mp4" type="video/mp4">
         </video>
         <span class="charger-launch-cue"><span class="charger-launch-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M9 4H4v5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg></span><span><span class="charger-launch-title">Explore this rocket</span><span class="charger-launch-hint"><span class="charger-pointer-hint">Click</span><span class="charger-touch-hint">Tap</span> to explore in 3D</span></span></span>
       </a>
     </div>
 
     <div style="position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-6); padding: 0 var(--page-margin) var(--space-7); max-width: var(--max-width); margin: 0 auto; width: 100%">
-      <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Caption" index="01" dc-props="{{ heroCaption }}" hint-size="380px,16px">CHARGER / rendered from the flight model, thirty internal components at their true stations</x-import>
+      <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Caption" index="01" dc-props="{{ heroCaption }}" hint-size="380px,16px">CHARGER / rendered from the flight model, 28 components at their true stations</x-import>
       <x-import component-from-global-scope="MertTReliDesignSystem_56763c.ScrollCue" inverse="true" shape="square" hint-size="72px,72px"></x-import>
     </div>
   </section>
@@ -119,7 +129,7 @@
         </div>
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-3)">
           <div class="depth-stage" style="position: relative; aspect-ratio: 16 / 9">
-            <video data-clip="1" poster="assets/motion/hotbox-blurred-poster.jpg" loop muted playsinline preload="none" disablepictureinpicture controlslist="nodownload noremoteplayback" aria-label="Blurred render, SunThru proprietary hardware" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block"><source data-src="assets/motion/hotbox-blurred-alpha.webm" type="video/webm"><source data-src="assets/motion/hotbox-blurred.mp4" type="video/mp4"></video>
+            <video data-clip="1" data-poster="assets/motion/hotbox-blurred-poster.webp" loop muted playsinline preload="none" disablepictureinpicture controlslist="nodownload noremoteplayback" aria-label="Blurred render, SunThru proprietary hardware" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block"><source data-src="assets/motion/hotbox-blurred-alpha.webm" type="video/webm"><source data-src="assets/motion/hotbox-blurred.mp4" type="video/mp4"></video>
             <div style="position: absolute; inset: auto 0 0 0; display: flex; justify-content: center">
               <span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-display); border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); padding: 5px 12px; white-space: nowrap">IP protected</span>
             </div>
@@ -137,8 +147,8 @@
       <article data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; padding-top: var(--space-7); border-top: 1px solid var(--line-hairline)">
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-3)">
           <div class="depth-stage" style="position: relative; aspect-ratio: 16 / 9; overflow: hidden">
-            <video data-clip="1" poster="assets/motion/robo-catcher-360-poster.png" loop muted playsinline preload="none" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain">
-              <source data-src="assets/motion/robo-catcher-360-alpha.webm" type="video/webm">
+            <video data-clip="1" data-poster="assets/motion/robo-catcher-360-poster.webp" loop muted playsinline preload="none" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain">
+              <source data-src="assets/motion/robo-catcher-360-alpha.webm" data-src-md="assets/motion/robo-catcher-360-1280-alpha.webm" data-src-sm="assets/motion/robo-catcher-360-960-alpha.webm" type="video/webm">
             </video>
           </div>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Caption" index="02" hint-size="100%,16px">Full 84 part assembly. Net, ramps, indexer, flywheel thrower</x-import>
@@ -183,7 +193,7 @@
         </div>
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-3)">
           <div class="depth-stage" style="position: relative; aspect-ratio: 4 / 3">
-            <video data-clip="1" poster="assets/motion/bend-fixture-blurred-poster.jpg" loop muted playsinline preload="none" disablepictureinpicture controlslist="nodownload noremoteplayback" aria-label="Blurred render, SunThru proprietary hardware" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block"><source data-src="assets/motion/bend-fixture-blurred-alpha.webm" type="video/webm"><source data-src="assets/motion/bend-fixture-blurred.mp4" type="video/mp4"></video>
+            <video data-clip="1" data-poster="assets/motion/bend-fixture-blurred-poster.webp" loop muted playsinline preload="none" disablepictureinpicture controlslist="nodownload noremoteplayback" aria-label="Blurred render, SunThru proprietary hardware" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block"><source data-src="assets/motion/bend-fixture-blurred-alpha.webm" type="video/webm"><source data-src="assets/motion/bend-fixture-blurred.mp4" type="video/mp4"></video>
             <div style="position: absolute; inset: auto 0 0 0; display: flex; justify-content: center">
               <span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-display); border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); padding: 5px 12px; white-space: nowrap">IP protected</span>
             </div>
@@ -201,8 +211,8 @@
       <article data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: var(--space-8); align-items: start; padding-top: var(--space-7); border-top: 1px solid var(--line-hairline)">
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-3)">
           <div class="depth-stage" style="position: relative; aspect-ratio: 4 / 3; overflow: hidden">
-            <video data-clip="1" poster="assets/motion/rudder-pedals-working-poster.png" loop muted playsinline preload="none" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover">
-              <source data-src="assets/motion/rudder-pedals-working-alpha.webm" type="video/webm">
+            <video data-clip="1" data-poster="assets/motion/rudder-pedals-working-poster.webp" loop muted playsinline preload="none" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover">
+              <source data-src="assets/motion/rudder-pedals-working-alpha.webm" data-src-md="assets/motion/rudder-pedals-working-1280-alpha.webm" data-src-sm="assets/motion/rudder-pedals-working-960-alpha.webm" type="video/webm">
             </video>
           </div>
         </div>
@@ -227,8 +237,8 @@
         </div>
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-3)">
           <div class="depth-stage" style="position: relative; aspect-ratio: 5 / 4; overflow: hidden">
-            <video data-clip="1" poster="assets/motion/therma-shift-360-noflow-poster.png" loop muted playsinline preload="none" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover">
-              <source data-src="assets/motion/therma-shift-360-noflow-alpha.webm" type="video/webm">
+            <video data-clip="1" data-poster="assets/motion/therma-shift-360-noflow-poster.webp" loop muted playsinline preload="none" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover">
+              <source data-src="assets/motion/therma-shift-360-noflow-alpha.webm" data-src-md="assets/motion/therma-shift-360-noflow-1280-alpha.webm" data-src-sm="assets/motion/therma-shift-360-noflow-960-alpha.webm" type="video/webm">
             </video>
           </div>
         </div>
@@ -288,13 +298,13 @@
           <div style="display: flex; flex-direction: column; gap: var(--space-3)">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4)">
               <div class="depth-stage" style="position: relative; aspect-ratio: 16 / 9; overflow: hidden">
-                <video data-clip="1" poster="assets/motion/kaan-360-poster.png" loop muted playsinline preload="none" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain">
-                  <source data-src="assets/motion/kaan-360-alpha.webm" type="video/webm">
+                <video data-clip="1" data-poster="assets/motion/kaan-360-poster.webp" loop muted playsinline preload="none" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain">
+                  <source data-src="assets/motion/kaan-360-alpha.webm" data-src-md="assets/motion/kaan-360-1280-alpha.webm" data-src-sm="assets/motion/kaan-360-960-alpha.webm" type="video/webm">
                 </video>
               </div>
               <div class="depth-stage" style="position: relative; aspect-ratio: 16 / 9; overflow: hidden">
-                <video data-clip="1" poster="assets/motion/hurjet-360-poster.png" loop muted playsinline preload="none" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain">
-                  <source data-src="assets/motion/hurjet-360-alpha.webm" type="video/webm">
+                <video data-clip="1" data-poster="assets/motion/hurjet-360-poster.webp" loop muted playsinline preload="none" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain">
+                  <source data-src="assets/motion/hurjet-360-alpha.webm" data-src-md="assets/motion/hurjet-360-1280-alpha.webm" data-src-sm="assets/motion/hurjet-360-960-alpha.webm" type="video/webm">
                 </video>
               </div>
             </div>
@@ -403,7 +413,7 @@
 
   <section id="beyond" class="on-dark" style="position: relative; background: var(--ink-900)">
     <div style="position: relative; height: min(560px, 62vh); overflow: hidden">
-      <video data-clip="1" poster="assets/motion/balloon-segovia-poster.jpg" loop muted playsinline preload="none" aria-label="Aerial shot of a hot air balloon over open country at sunrise" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block"><source data-src="assets/motion/balloon-segovia.mp4" type="video/mp4"></video>
+      <video data-clip="1" data-poster="assets/motion/balloon-segovia-poster.webp" loop muted playsinline preload="none" aria-label="Aerial shot of a hot air balloon over open country at sunrise" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block"><source data-src="assets/motion/balloon-segovia.mp4" type="video/mp4"></video>
       <span style="position: absolute; inset: 0; background: var(--scrim-hero)"></span>
       <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Grain" blend="overlay" strength="normal" hint-size="100%,100%"></x-import>
       <div style="position: absolute; inset: auto 0 0 0; padding: var(--space-8) var(--page-margin); max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-5)">
@@ -440,7 +450,7 @@
       </div>
     </div>
 
-    <photo-corridor style="display:block;height:clamp(430px,48vw,740px)"></photo-corridor>
+    <photo-corridor style="display:block;height:clamp(430px,48vw,740px)"><a href="photography-lab.html" style="display:grid;place-items:center;gap:var(--space-4);height:100%;color:var(--paper);font-family:var(--font-mono);font-size:var(--fs-meta);letter-spacing:var(--ls-caps);text-transform:uppercase;text-decoration:none"><img src="assets/photos/beyond/gallery/lighthouse-thumb.webp" alt="" loading="lazy" decoding="async" style="max-height:60%;width:auto">Explore photography</a></photo-corridor>
   </section>
 
   <section style="padding: var(--section-y) var(--page-margin) 0">
@@ -591,10 +601,11 @@ class Component extends DCLogic {
     if (heroEl && heroEl.getAttribute("data-hero-clip") !== hero) {
       const slug = CLIPS[hero] || CLIPS.charger;
       heroEl.setAttribute("data-hero-clip", hero);
-      heroEl.poster = "assets/motion/" + slug + "-poster.png";
+      const w = slug === "charger-painted-wide" ? "" : (matchMedia("(max-width: 720px)").matches ? "-960" : "-1280");
+      heroEl.poster = "assets/motion/" + slug + "-poster.webp";
       const src = heroEl.querySelectorAll("source");
-      if (src[0]) src[0].src = "assets/motion/" + slug + "-alpha.webm";
-      if (src[1]) src[1].src = "assets/motion/" + slug + ".mp4";
+      if (src[0]) src[0].src = "assets/motion/" + slug + w + "-alpha.webm";
+      if (src[1]) src[1].remove();
       heroEl.load();
     }
     window.PortfolioDepthSettings = { motion: play };

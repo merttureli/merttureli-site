@@ -6,14 +6,25 @@
 <link rel="preload" href="assets/fonts/space-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin="">
 <link rel="preload" href="assets/fonts/ibm-plex-mono-400-latin.woff2" as="font" type="font/woff2" crossorigin="">
 <title>Mert Tureli · Mechanical Engineer</title>
-<meta name="description" content="Mechanical engineer in Austin, TX. I design, build, and test hardware end to end: CAD and drawings, electronics and firmware, and the test rigs that prove it works.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230A0A0A'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='26' font-weight='600' fill='%23FFFFFF'%3EMT%3C/text%3E%3C/svg%3E">
+<meta name="description" content="Mechanical engineer in Austin, TX. I design, build, and test hardware end to end: CAD and drawings, electronics and firmware, and the rigs that prove it works.">
+<link rel="icon" href="/assets/icons/favicon.ico" sizes="32x32">
+<link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
 <link rel="canonical" href="https://merttureli.com/">
 <meta property="og:title" content="Mert Tureli · Mechanical Engineer">
 <meta property="og:description" content="Design, build, test: hardware end to end. CAD, electronics, firmware, and the test rigs that prove it works.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://merttureli.com/">
-<meta property="og:image" content="https://merttureli.com/assets/og-cover.png">
+<meta property="og:site_name" content="Mert Tureli">
+<meta property="og:image" content="https://merttureli.com/assets/og/cover-v1.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Mert Tureli, mechanical engineer in Austin, Texas, beside a render of the CHARGER rocket.">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"ProfilePage","mainEntity":{"@type":"Person","name":"Mert Tureli","alternateName":"Mert Türeli","jobTitle":"Mechanical Engineer","url":"https://merttureli.com/","address":{"@type":"PostalAddress","addressLocality":"Austin","addressRegion":"TX","addressCountry":"US"},"alumniOf":{"@type":"CollegeOrUniversity","name":"Union College"},"sameAs":["https://www.linkedin.com/in/merttureli"]}}
+</script>
+<link rel="preload" as="image" href="assets/motion/charger-painted-wide-poster.webp" type="image/webp" fetchpriority="high">
 <style>
     .sc-placeholder{background:color-mix(in srgb,currentColor 8%,transparent);
       border:1px solid color-mix(in srgb,currentColor 50%,transparent);
@@ -97,16 +108,15 @@
       </div>
 
       <a id="charger-launch" class="charger-launch" href="assets/charger-explorer/index.html" aria-label="Explore CHARGER in 3D" aria-haspopup="dialog" aria-controls="charger-explorer" aria-expanded="false" style="position: relative; width: 100%; aspect-ratio: 16 / 9;">
-        <video data-hero-clip="charger" poster="assets/motion/charger-painted-wide-poster.png" playsinline="" preload="auto" style="width: 100%; height: 100%; object-fit: contain; display: block; transform: scale(1.16);">
+        <video data-hero-clip="charger" poster="assets/motion/charger-painted-wide-poster.webp" playsinline="" preload="metadata" style="width: 100%; height: 100%; object-fit: contain; display: block; transform: scale(1.16);">
           <source src="assets/motion/charger-painted-wide-alpha.webm" type="video/webm">
-          <source src="assets/motion/charger-painted-wide.mp4" type="video/mp4">
         </video>
         <span class="charger-launch-cue"><span class="charger-launch-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M9 4H4v5M15 4h5v5M20 15v5h-5M9 20H4v-5"></path></svg></span><span><span class="charger-launch-title">Explore this rocket</span><span class="charger-launch-hint"><span class="charger-pointer-hint">Click</span><span class="charger-touch-hint">Tap</span> to explore in 3D</span></span></span>
       </a>
     </div>
 
     <div style="position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-6); padding: 0 var(--page-margin) var(--space-7); max-width: var(--max-width); margin: 0px auto; width: 100%;">
-      <div class="sc-host-x" style="display: contents;"><p style="display: flex; gap: var(--space-4); justify-content: flex-start; font-family: var(--font-mono); font-size: var(--fs-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a45); max-width: 46ch;"><span style="color: var(--text-display);">01</span><span>CHARGER / rendered from the flight model, thirty internal components at their true stations</span></p></div>
+      <div class="sc-host-x" style="display: contents;"><p style="display: flex; gap: var(--space-4); justify-content: flex-start; font-family: var(--font-mono); font-size: var(--fs-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a45); max-width: 46ch;"><span style="color: var(--text-display);">01</span><span>CHARGER / rendered from the flight model, 28 components at their true stations</span></p></div>
       <div class="sc-host-x" style="display: contents;"><button aria-label="Scroll down" data-ds-scrollcue="" style="display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-2); width: 72px; height: 72px; padding: 0px; cursor: pointer; background: var(--paper-a08); border: 1px solid var(--paper-a45); border-radius: 0px; backdrop-filter: var(--blur-glass); transition: background var(--t-hover);"><span style="transform: none; transition: transform var(--dur-3) var(--ease-out);"><img src="data:image/svg+xml,%3C!--%20%40license%20lucide-static%20v0.544.0%20-%20ISC%20--%3E%0A%3Csvg%0A%20%20class%3D%22lucide%20lucide-arrow-down%22%0A%20%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%0A%20%20width%3D%2224%22%0A%20%20height%3D%2224%22%0A%20%20viewBox%3D%220%200%2024%2024%22%0A%20%20fill%3D%22none%22%0A%20%20stroke%3D%22currentColor%22%0A%20%20stroke-width%3D%222%22%0A%20%20stroke-linecap%3D%22round%22%0A%20%20stroke-linejoin%3D%22round%22%0A%3E%0A%20%20%3Cpath%20d%3D%22M12%205v14%22%20%2F%3E%0A%20%20%3Cpath%20d%3D%22m19%2012-7%207-7-7%22%20%2F%3E%0A%3C%2Fsvg%3E%0A" alt="" aria-hidden="true" draggable="false" style="width: 18px; height: 18px; display: block; opacity: 1; filter: invert(1);"></span></button></div>
     </div>
   </section>
@@ -147,7 +157,7 @@
         </div>
         <div style="min-width: 0px; display: flex; flex-direction: column; gap: var(--space-3);">
           <div class="depth-stage" style="position: relative; aspect-ratio: 16 / 9;">
-            <video data-clip="1" poster="assets/motion/hotbox-blurred-poster.jpg" playsinline="" preload="none" disablepictureinpicture="" controlslist="nodownload noremoteplayback" aria-label="Blurred render, SunThru proprietary hardware" style="position: absolute; inset: 0px; width: 100%; height: 100%; object-fit: contain; display: block;"><source data-src="assets/motion/hotbox-blurred-alpha.webm" type="video/webm"><source data-src="assets/motion/hotbox-blurred.mp4" type="video/mp4"></video>
+            <video data-clip="1" data-poster="assets/motion/hotbox-blurred-poster.webp" playsinline="" preload="none" disablepictureinpicture="" controlslist="nodownload noremoteplayback" aria-label="Blurred render, SunThru proprietary hardware" style="position: absolute; inset: 0px; width: 100%; height: 100%; object-fit: contain; display: block;"><source data-src="assets/motion/hotbox-blurred-alpha.webm" type="video/webm"><source data-src="assets/motion/hotbox-blurred.mp4" type="video/mp4"></video>
             <div style="position: absolute; inset: auto 0px 0px; display: flex; justify-content: center;">
               <span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-display); border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); padding: 5px 12px; white-space: nowrap;">IP protected</span>
             </div>
@@ -165,8 +175,8 @@
       <article data-reveal="1" style="display: grid; grid-template-columns: minmax(0px, 1.35fr) minmax(0px, 1fr); gap: var(--space-8); align-items: start; padding-top: var(--space-7); border-top: 1px solid var(--line-hairline);">
         <div style="min-width: 0px; display: flex; flex-direction: column; gap: var(--space-3);">
           <div class="depth-stage" style="position: relative; aspect-ratio: 16 / 9; overflow: hidden;">
-            <video data-clip="1" poster="assets/motion/robo-catcher-360-poster.png" playsinline="" preload="none" style="position: absolute; inset: 0px; width: 100%; height: 100%; object-fit: contain;">
-              <source data-src="assets/motion/robo-catcher-360-alpha.webm" type="video/webm">
+            <video data-clip="1" data-poster="assets/motion/robo-catcher-360-poster.webp" playsinline="" preload="none" style="position: absolute; inset: 0px; width: 100%; height: 100%; object-fit: contain;">
+              <source data-src="assets/motion/robo-catcher-360-alpha.webm" data-src-md="assets/motion/robo-catcher-360-1280-alpha.webm" data-src-sm="assets/motion/robo-catcher-360-960-alpha.webm" type="video/webm">
             </video>
           </div>
           <div class="sc-host-x" style="display: contents;"><p style="display: flex; gap: var(--space-4); justify-content: flex-start; font-family: var(--font-mono); font-size: var(--fs-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta);"><span style="color: var(--text-display);">02</span><span>Full 84 part assembly. Net, ramps, indexer, flywheel thrower</span></p></div>
@@ -211,7 +221,7 @@
         </div>
         <div style="min-width: 0px; display: flex; flex-direction: column; gap: var(--space-3);">
           <div class="depth-stage" style="position: relative; aspect-ratio: 4 / 3;">
-            <video data-clip="1" poster="assets/motion/bend-fixture-blurred-poster.jpg" playsinline="" preload="none" disablepictureinpicture="" controlslist="nodownload noremoteplayback" aria-label="Blurred render, SunThru proprietary hardware" style="position: absolute; inset: 0px; width: 100%; height: 100%; object-fit: contain; display: block;"><source data-src="assets/motion/bend-fixture-blurred-alpha.webm" type="video/webm"><source data-src="assets/motion/bend-fixture-blurred.mp4" type="video/mp4"></video>
+            <video data-clip="1" data-poster="assets/motion/bend-fixture-blurred-poster.webp" playsinline="" preload="none" disablepictureinpicture="" controlslist="nodownload noremoteplayback" aria-label="Blurred render, SunThru proprietary hardware" style="position: absolute; inset: 0px; width: 100%; height: 100%; object-fit: contain; display: block;"><source data-src="assets/motion/bend-fixture-blurred-alpha.webm" type="video/webm"><source data-src="assets/motion/bend-fixture-blurred.mp4" type="video/mp4"></video>
             <div style="position: absolute; inset: auto 0px 0px; display: flex; justify-content: center;">
               <span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-display); border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); padding: 5px 12px; white-space: nowrap;">IP protected</span>
             </div>
@@ -229,8 +239,8 @@
       <article data-reveal="1" style="display: grid; grid-template-columns: minmax(0px, 1fr) minmax(0px, 1.4fr); gap: var(--space-8); align-items: start; padding-top: var(--space-7); border-top: 1px solid var(--line-hairline);">
         <div style="min-width: 0px; display: flex; flex-direction: column; gap: var(--space-3);">
           <div class="depth-stage" style="position: relative; aspect-ratio: 4 / 3; overflow: hidden;">
-            <video data-clip="1" poster="assets/motion/rudder-pedals-working-poster.png" playsinline="" preload="none" style="position: absolute; inset: 0px; width: 100%; height: 100%; object-fit: cover;">
-              <source data-src="assets/motion/rudder-pedals-working-alpha.webm" type="video/webm">
+            <video data-clip="1" data-poster="assets/motion/rudder-pedals-working-poster.webp" playsinline="" preload="none" style="position: absolute; inset: 0px; width: 100%; height: 100%; object-fit: cover;">
+              <source data-src="assets/motion/rudder-pedals-working-alpha.webm" data-src-md="assets/motion/rudder-pedals-working-1280-alpha.webm" data-src-sm="assets/motion/rudder-pedals-working-960-alpha.webm" type="video/webm">
             </video>
           </div>
         </div>
@@ -255,8 +265,8 @@
         </div>
         <div style="min-width: 0px; display: flex; flex-direction: column; gap: var(--space-3);">
           <div class="depth-stage" style="position: relative; aspect-ratio: 5 / 4; overflow: hidden;">
-            <video data-clip="1" poster="assets/motion/therma-shift-360-noflow-poster.png" playsinline="" preload="none" style="position: absolute; inset: 0px; width: 100%; height: 100%; object-fit: cover;">
-              <source data-src="assets/motion/therma-shift-360-noflow-alpha.webm" type="video/webm">
+            <video data-clip="1" data-poster="assets/motion/therma-shift-360-noflow-poster.webp" playsinline="" preload="none" style="position: absolute; inset: 0px; width: 100%; height: 100%; object-fit: cover;">
+              <source data-src="assets/motion/therma-shift-360-noflow-alpha.webm" data-src-md="assets/motion/therma-shift-360-noflow-1280-alpha.webm" data-src-sm="assets/motion/therma-shift-360-noflow-960-alpha.webm" type="video/webm">
             </video>
           </div>
         </div>
@@ -316,13 +326,13 @@
           <div style="display: flex; flex-direction: column; gap: var(--space-3);">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
               <div class="depth-stage" style="position: relative; aspect-ratio: 16 / 9; overflow: hidden;">
-                <video data-clip="1" poster="assets/motion/kaan-360-poster.png" playsinline="" preload="none" style="position: absolute; inset: 0px; width: 100%; height: 100%; object-fit: contain;">
-                  <source data-src="assets/motion/kaan-360-alpha.webm" type="video/webm">
+                <video data-clip="1" data-poster="assets/motion/kaan-360-poster.webp" playsinline="" preload="none" style="position: absolute; inset: 0px; width: 100%; height: 100%; object-fit: contain;">
+                  <source data-src="assets/motion/kaan-360-alpha.webm" data-src-md="assets/motion/kaan-360-1280-alpha.webm" data-src-sm="assets/motion/kaan-360-960-alpha.webm" type="video/webm">
                 </video>
               </div>
               <div class="depth-stage" style="position: relative; aspect-ratio: 16 / 9; overflow: hidden;">
-                <video data-clip="1" poster="assets/motion/hurjet-360-poster.png" playsinline="" preload="none" style="position: absolute; inset: 0px; width: 100%; height: 100%; object-fit: contain;">
-                  <source data-src="assets/motion/hurjet-360-alpha.webm" type="video/webm">
+                <video data-clip="1" data-poster="assets/motion/hurjet-360-poster.webp" playsinline="" preload="none" style="position: absolute; inset: 0px; width: 100%; height: 100%; object-fit: contain;">
+                  <source data-src="assets/motion/hurjet-360-alpha.webm" data-src-md="assets/motion/hurjet-360-1280-alpha.webm" data-src-sm="assets/motion/hurjet-360-960-alpha.webm" type="video/webm">
                 </video>
               </div>
             </div>
@@ -431,7 +441,7 @@
 
   <section id="beyond" class="on-dark" style="position: relative; background: var(--ink-900);">
     <div style="position: relative; height: min(560px, 62vh); overflow: hidden;">
-      <video data-clip="1" poster="assets/motion/balloon-segovia-poster.jpg" playsinline="" preload="none" aria-label="Aerial shot of a hot air balloon over open country at sunrise" style="position: absolute; inset: 0px; width: 100%; height: 100%; object-fit: cover; display: block;"><source data-src="assets/motion/balloon-segovia.mp4" type="video/mp4"></video>
+      <video data-clip="1" data-poster="assets/motion/balloon-segovia-poster.webp" playsinline="" preload="none" aria-label="Aerial shot of a hot air balloon over open country at sunrise" style="position: absolute; inset: 0px; width: 100%; height: 100%; object-fit: cover; display: block;"><source data-src="assets/motion/balloon-segovia.mp4" type="video/mp4"></video>
       <span style="position: absolute; inset: 0px; background: var(--scrim-hero);"></span>
       <div class="sc-host-x" style="display: contents;"><span aria-hidden="true" style="position: absolute; inset: 0px; pointer-events: none; background-image: var(--grain-url); background-size: 220px 220px; mix-blend-mode: overlay; opacity: var(--grain-opacity);"></span></div>
       <div style="position: absolute; inset: auto 0px 0px; padding: var(--space-8) var(--page-margin); max-width: var(--max-width); margin: 0px auto; display: flex; flex-direction: column; gap: var(--space-5);">
@@ -468,7 +478,7 @@
       </div>
     </div>
 
-    <photo-corridor style="display: block; height: clamp(430px, 48vw, 740px);"></photo-corridor>
+    <photo-corridor style="display: block; height: clamp(430px, 48vw, 740px);"><a href="photography-lab.html" style="display: grid; place-items: center; gap: var(--space-4); height: 100%; color: var(--paper); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; text-decoration: none;"><img src="assets/photos/beyond/gallery/lighthouse-thumb.webp" alt="" loading="lazy" decoding="async" style="max-height: 60%; width: auto;">Explore photography</a></photo-corridor>
   </section>
 
   <section style="padding: var(--section-y) var(--page-margin) 0;">

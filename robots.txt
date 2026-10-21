@@ -1,6 +1,7 @@
 User-agent: *
 Allow: /
 Disallow: /cards/
+Disallow: /src/
 Disallow: /tools/
 Disallow: /photography-gallery.html
 # Keep the design-system notes out of the index, but leave its CSS, fonts and

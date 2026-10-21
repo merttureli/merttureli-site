@@ -192,12 +192,22 @@ async function settle(page) {
     // motion, before media-playback.js pauses it) shows whichever frame it
     // reached, which differs run to run. Put every video back on its poster:
     // load() with no autoplay resets the element and re-shows the poster.
+    // Lazy posters (data-poster, applied by js/media-playback.js when a video
+    // comes near) get the same treatment as lazy images: force them, and wait
+    // until the poster file has loaded and decoded.
+    const posters = [];
     for (const v of all("video")) {
       v.pause();
       v.removeAttribute("autoplay");
       v.autoplay = false;
+      if (v.dataset.poster) { v.poster = v.dataset.poster; v.removeAttribute("data-poster"); }
+      if (v.poster) posters.push(v.poster);
       if (v.readyState > 0 || v.currentTime > 0) v.load();
     }
+    await Promise.race([
+      Promise.all(posters.map(src => { const im = new Image(); im.src = src; return im.decode().catch(() => {}); })),
+      pause(8000),
+    ]);
     await pause(300);
     await document.fonts.ready;
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));

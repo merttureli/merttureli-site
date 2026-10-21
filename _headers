@@ -1,0 +1,4 @@
+# Cloudflare Pages response headers. GitHub Pages ignores this file.
+# Preview deployments on *.pages.dev must not be indexed; the custom domain is unaffected.
+https://:project.pages.dev/*
+  X-Robots-Tag: noindex

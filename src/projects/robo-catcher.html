@@ -5,14 +5,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Robo-Catcher · Mert Tureli</title>
-<meta name="description" content="A softball machine that catches an incoming throw and returns it, built by a 12 person capstone team for under $700. I co-led the feeding subsystem and owned all of the electronics and firmware.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230A0A0A'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='26' font-weight='600' fill='%23FFFFFF'%3EMT%3C/text%3E%3C/svg%3E">
+<meta name="description" content="A softball machine that catches an incoming throw and returns it, built by a 12 person capstone team for under $700. I owned the electronics and firmware.">
+<link rel="icon" href="/assets/icons/favicon.ico" sizes="32x32">
+<link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
 <link rel="canonical" href="https://merttureli.com/projects/robo-catcher.html">
 <meta property="og:title" content="Robo-Catcher · Mert Tureli">
-<meta property="og:description" content="A softball machine that catches an incoming throw and returns it, built by a 12 person capstone team for under $700. I co-led the feeding subsystem and owned all of the electronics and firmware.">
+<meta property="og:description" content="A softball machine that catches an incoming throw and returns it, built by a 12 person capstone team for under $700. I owned the electronics and firmware.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://merttureli.com/projects/robo-catcher.html">
-<meta property="og:image" content="https://merttureli.com/assets/og-cover.png">
+<meta property="og:site_name" content="Mert Tureli">
+<meta property="og:image" content="https://merttureli.com/assets/og/case-robo-catcher-v1.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Render of the Robo-Catcher softball catch and return machine.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preload" as="image" href="../assets/motion/robo-catcher-360-poster.webp" type="image/webp" fetchpriority="high">
 <script src="../support.js"></script>
 <script type="module" src="../assets/portfolio-foundation/project-walkthrough.js"></script>
 <script src="../js/media-playback.js" defer></script>
@@ -58,7 +66,7 @@
         </div>
       </div>
       <div class="depth-stage" data-reveal="1" style="position: relative; width: 100%; aspect-ratio: 4 / 3">
-          <video data-clip="1" poster="../assets/motion/robo-catcher-360-poster.png" loop muted playsinline preload="metadata" style="width: 100%; height: 100%; object-fit: contain; display: block"><source src="../assets/motion/robo-catcher-360-alpha.webm" type="video/webm"><source src="../assets/motion/robo-catcher-360.mp4" type="video/mp4"></video>
+          <video data-clip="1" poster="../assets/motion/robo-catcher-360-poster.webp" loop muted playsinline preload="none" style="width: 100%; height: 100%; object-fit: contain; display: block"><source data-src="../assets/motion/robo-catcher-360-alpha.webm" data-src-md="../assets/motion/robo-catcher-360-1280-alpha.webm" data-src-sm="../assets/motion/robo-catcher-360-960-alpha.webm" type="video/webm"></video>
         </div>
     </div>
   </section>
@@ -69,7 +77,7 @@
     </div>
   </section>
 
-  <section style="position: relative; padding: var(--section-y) var(--page-margin) var(--space-9);">
+  <section data-track="brief" style="position: relative; padding: var(--section-y) var(--page-margin) var(--space-9);">
     <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-7)">
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
         <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Brief" right="01" hint-size="100%,14px"></x-import>
@@ -83,7 +91,7 @@
     </div>
   </section>
 
-  <section class="on-dark" style="position: relative; background: var(--ink-900); padding: var(--space-9) var(--page-margin);">
+  <section class="on-dark" data-track="results" style="position: relative; background: var(--ink-900); padding: var(--space-9) var(--page-margin);">
     <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-7)">
       <div data-reveal="1" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr)); gap: var(--space-7) var(--space-6)">
         <div style="display: flex; flex-direction: column; gap: var(--space-3)"><span style="font-family: var(--font-display); font-size: clamp(2.2rem, 4.4vw, 3.6rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.02em; color: var(--paper)">100%</span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70)">Feed indexing, competition day</span></div>
@@ -96,6 +104,7 @@
 
   <section style="position: relative; padding: 0 var(--page-margin) var(--section-y);">
     <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-9)">
+      <div data-track="the-problem" style="display: flex; flex-direction: column; gap: var(--space-9)">
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
         <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="The problem" right="02" hint-size="100%,14px"></x-import>
       </div>
@@ -103,6 +112,8 @@
         <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">A solo player can buy a machine that pitches, but someone still has to walk every ball back. We set out to close the loop: a machine that catches an incoming throw, feeds it internally and returns it, with nobody in the middle.</p>
         <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Nothing off the shelf does this at any price, and ours had to come in under a $700 cap.</p>
       </div>
+      </div>
+      <div data-track="constraints" style="display: flex; flex-direction: column; gap: var(--space-9)">
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
         <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Constraints" right="03" hint-size="100%,14px"></x-import>
       </div>
@@ -114,6 +125,8 @@
         <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">05</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Safe around players: wireless emergency stop plus hardware cut-offs</span></div>
         <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">06</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Catch, index and return without a human touching the ball</span></div>
       </div>
+      </div>
+      <div data-track="sizing-the-feeder-before-cutting-anything" style="display: flex; flex-direction: column; gap: var(--space-9)">
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
         <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Sizing the feeder before cutting anything" right="04" hint-size="100%,14px"></x-import>
       </div>
@@ -124,6 +137,8 @@
         <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">So before any parts were made I modelled the load case in MATLAB, a 0.19 kg ball lifted through 180 degrees of rotation, and sized the NEMA 17 stepper and TB6600 driver to a 1.8x torque safety factor.</p>
       </div></div>
       </div>
+      </div>
+      <div data-track="electronics-and-firmware" style="display: flex; flex-direction: column; gap: var(--space-9)">
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
         <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Electronics and firmware" right="05" hint-size="100%,14px"></x-import>
       </div>
@@ -134,6 +149,8 @@
       </div></div>
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-5)"><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr)); gap: var(--space-4)"><x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="../assets/photos/robo-catcher-photography/working-on-electronics.jpg" alt="The team running the machine on the field" ratio="3 / 2" caption="Running it on the field" index="03" hover-zoom="true" hint-size="100%,300px"></x-import><x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="../assets/photos/robo-catcher-photography/flywheel-full.jpg" alt="Return flywheel assembly" ratio="3 / 2" caption="Return flywheel, 120 W DC motor" index="04" hover-zoom="true" hint-size="100%,300px"></x-import></div></div>
       </div>
+      </div>
+      <div data-track="project-result" style="display: flex; flex-direction: column; gap: var(--space-9)">
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
         <span id="project-result" style="scroll-margin-top:30px"></span><x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="The result" right="06" hint-size="100%,14px"></x-import>
       </div>
@@ -141,12 +158,15 @@
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-6)">      <div data-reveal="1"><div style="display: flex; flex-direction: column; max-width: var(--measure)"><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">01</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">100% feed indexing on competition day: every ball delivered, no misses</span></div><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">02</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">Under $700 total build cost against a $700 cap</span></div><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">03</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">55 lb, one person portable, assembles with no tools</span></div><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">04</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">1.5 hours continuous runtime on a single 12 V 20 Ah SLA battery</span></div></div></div></div>
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-5)"><x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="../assets/photos/shop-and-machine-photography/machine-field.jpg" alt="The finished machine on the field" ratio="16 / 9" caption="The finished machine, on the field" index="05" hover-zoom="true" hint-size="100%,300px"></x-import></div>
       </div>
+      </div>
+      <div data-track="what-i-learned" style="display: flex; flex-direction: column; gap: var(--space-9)">
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
         <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="What I learned" right="07" hint-size="100%,14px"></x-import>
       </div>
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
         <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">The MATLAB torque study felt slow while teammates were already printing parts, and then the feeder ran a full competition day without a single missed index. Analysis before fabrication is cheaper than iteration after it.</p>
         <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">If I built it again I would close the loop on flywheel RPM, so return speed holds steady as the battery sags.</p>
+      </div>
       </div>
     </div>
   </section>
@@ -213,10 +233,11 @@ class Component extends DCLogic {
     if (heroEl && heroEl.getAttribute("data-hero-clip") !== hero) {
       const slug = CLIPS[hero] || CLIPS.charger;
       heroEl.setAttribute("data-hero-clip", hero);
-      heroEl.poster = "assets/motion/" + slug + "-poster.png";
+      const w = slug === "charger-painted-wide" ? "" : (matchMedia("(max-width: 720px)").matches ? "-960" : "-1280");
+      heroEl.poster = "assets/motion/" + slug + "-poster.webp";
       const src = heroEl.querySelectorAll("source");
-      if (src[0]) src[0].src = "assets/motion/" + slug + "-alpha.webm";
-      if (src[1]) src[1].src = "assets/motion/" + slug + ".mp4";
+      if (src[0]) src[0].src = "assets/motion/" + slug + w + "-alpha.webm";
+      if (src[1]) src[1].remove();
       heroEl.load();
     }
     window.PortfolioDepthSettings = { motion: play };
