@@ -11,6 +11,36 @@ import {sendInquiry} from './inquiry-delivery.js';
   let selection = '', preferred = 'Flexible', step = 1, trigger, savedOverflow = '', sending = false;
   const iso = d => `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
   const date = str => new Date(`${str}T12:00:00Z`);
+  // Email fallback. Carries whatever has been typed so far, so switching to
+  // email after a failed send loses nothing. Mail clients and browsers cap
+  // mailto URLs at around 2,000 characters, so the body is shortened from the
+  // end (the message is last) on a word boundary, and says that it was.
+  const MAILTO_ADDRESS = 'merttureli0@gmail.com', MAILTO_LIMIT = 1900;
+  const MAILTO_NOTE = '\n\n[Shortened to fit an email link. The rest of the message did not fit.]';
+  function mailtoHref(){
+    const value=id=>$(`#${id}`).value.trim();
+    const lines=[];
+    if(value('name'))lines.push(`Name: ${value('name')}`);
+    if(value('email'))lines.push(`Email: ${value('email')}`);
+    if(value('company'))lines.push(`Company or website: ${value('company')}`);
+    if(selection)lines.push(`Preferred day: ${dateLabel.format(date(selection))}, ${preferred}, ${$('#timezone').selectedOptions[0]?.textContent||$('#timezone').value}`);
+    if(value('message'))lines.push('',value('message'));
+    const head=`mailto:${MAILTO_ADDRESS}?subject=${encodeURIComponent('Website inquiry')}`;
+    const build=text=>text?`${head}&body=${encodeURIComponent(text)}`:head;
+    const body=lines.join('\n');
+    if(build(body).length<=MAILTO_LIMIT)return build(body);
+    // Code points, not UTF-16 units: cutting a surrogate pair would make
+    // encodeURIComponent throw.
+    const chars=Array.from(body);
+    const cut=n=>{let text=chars.slice(0,n).join('');const space=text.search(/\s\S*$/);if(space>n*0.8)text=text.slice(0,space);return text.trimEnd()+' [...]'+MAILTO_NOTE;};
+    let low=0,high=chars.length;
+    while(low<high){const mid=Math.ceil((low+high)/2);if(build(cut(mid)).length<=MAILTO_LIMIT)low=mid;else high=mid-1;}
+    return build(low?cut(low):'');
+  }
+  function refreshMailto(){
+    const href=mailtoHref();
+    document.querySelectorAll('[data-mailto-details]').forEach(a=>{a.href=href;});
+  }
   function today(){
     const parts = new Intl.DateTimeFormat('en-CA',{timeZone:$('#timezone').value,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
     const p = Object.fromEntries(parts.map(x=>[x.type,x.value]));
@@ -48,6 +78,7 @@ import {sendInquiry} from './inquiry-delivery.js';
     selection=key;$('#continue').disabled=false;$('#time-block').hidden=false;
     $('#chosen-date').textContent=shortDate.format(date(key));
     $('#days').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.date===key)));
+    refreshMailto();
   }
   function go(next,focus=true){
     step=next;panels.forEach((p,i)=>{$(`#${p}-panel`).hidden=i!==next-1;});
@@ -62,6 +93,7 @@ import {sendInquiry} from './inquiry-delivery.js';
     if(selection && selection <= today()){
       selection='';$('#continue').disabled=true;$('#time-block').hidden=true;
       $('#chosen-date').textContent='Choose a day to begin.';
+      refreshMailto();
     }
     const {start,end}=bounds();
     if(month<start || month>=end)month=start;
@@ -74,6 +106,7 @@ import {sendInquiry} from './inquiry-delivery.js';
       $('#chosen-date').textContent='Choose a day to begin.';
       $('#send-status').textContent='';$('#send-status').classList.remove('is-error');
       document.querySelectorAll('[data-time]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.time==='Flexible')));
+      refreshMailto();
     }
     trigger=button;resetPastDate();calendar();
     savedOverflow=document.body.style.overflow;document.body.style.overflow='hidden';
@@ -101,9 +134,9 @@ import {sendInquiry} from './inquiry-delivery.js';
   $('#prev-month').onclick=()=>{month.setUTCMonth(month.getUTCMonth()-1);calendar();};
   $('#next-month').onclick=()=>{month.setUTCMonth(month.getUTCMonth()+1);calendar();};
   $('#timezone').onchange=()=>{
-    resetPastDate();calendar();
+    resetPastDate();calendar();refreshMailto();
   };
-  document.querySelectorAll('[data-time]').forEach(b=>b.onclick=()=>{preferred=b.dataset.time;document.querySelectorAll('[data-time]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));});
+  document.querySelectorAll('[data-time]').forEach(b=>b.onclick=()=>{preferred=b.dataset.time;document.querySelectorAll('[data-time]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));refreshMailto();});
   $('#continue').onclick=()=>{resetPastDate();if(selection)go(2);else calendar();};
   document.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>{if(!sending)go(Number(b.dataset.back));});
   $('#details-panel').addEventListener('submit',e=>{
@@ -118,6 +151,9 @@ import {sendInquiry} from './inquiry-delivery.js';
     $('#send-status').textContent='';$('#send-status').classList.remove('is-error');go(3);
   });
   for(const id of ['name','message'])$(`#${id}`).addEventListener('input',e=>e.target.setCustomValidity(''));
+  $('#details-panel').addEventListener('input',refreshMailto);
+  // Rebuilt at click time too, so the link can never carry stale details.
+  document.addEventListener('click',e=>{const link=e.target.closest?.('[data-mailto-details]');if(link)link.href=mailtoHref();},true);
   $('#send-request').onclick=async()=>{
     if(sending)return;
     if(!selection||selection<=today()){resetPastDate();calendar();go(1);return;}
@@ -136,7 +172,12 @@ import {sendInquiry} from './inquiry-delivery.js';
       await sendInquiry(INQUIRY_ENDPOINT,details);
       $('#complete-copy').textContent=`Thank you, ${details.name}. Your request for ${shortDate.format(date(selection))} has been sent.`;
       status.textContent='';go(4,dialog.open);
-    }catch(error){status.textContent=error.message;status.classList.add('is-error');}
+    }catch(error){
+      status.textContent=error.message;status.classList.add('is-error');
+      const fallback=document.createElement('a');fallback.className='status-fallback';fallback.dataset.mailtoDetails='';
+      fallback.href=mailtoHref();fallback.textContent='Email these details instead';
+      status.append(document.createElement('br'),fallback);
+    }
     finally{sending=false;$('#send-request').disabled=false;$('#review-panel [data-back]').disabled=false;$('#review-panel').removeAttribute('aria-busy');}
   };
   // Small, user-triggered transitions. No animation loop or embedded prototype.
@@ -155,6 +196,16 @@ import {sendInquiry} from './inquiry-delivery.js';
     option.textContent=localZone.replaceAll('_',' ');$('#timezone').prepend(option);
   }
   if(localZone)$('#timezone').value=localZone;
+  // Phone menu. A native modal dialog, so focus stays inside and Escape closes it.
+  const menu=$('#site-menu'),menuButton=$('#open-menu');
+  if(menu&&menuButton&&typeof menu.showModal==='function'){
+    let menuOverflow='';
+    menuButton.onclick=()=>{if(menu.open)return;menuOverflow=document.body.style.overflow;document.body.style.overflow='hidden';menu.showModal();menuButton.setAttribute('aria-expanded','true');};
+    $('#close-menu').onclick=()=>menu.close();
+    menu.addEventListener('close',()=>{document.body.style.overflow=menuOverflow;menuButton.setAttribute('aria-expanded','false');menuButton.focus({preventScroll:true});});
+    menu.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>menu.close()));
+    matchMedia('(min-width: 861px)').addEventListener('change',e=>{if(e.matches&&menu.open)menu.close();});
+  }
   resetPastDate();calendar();
   if(location.hash==='#inquiry')open(document.querySelector('[data-open-inquiry]'));
 })();
