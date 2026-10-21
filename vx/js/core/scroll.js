@@ -12,6 +12,7 @@ import { bus } from './bus.js';
 const ALPHA = 0.22;        // low-pass weight per frame for velocity, about 150 ms time constant at 60 Hz
 const IDLE_MS = 200;       // stop sampling this long after the last scroll event
 const PEAK_HOLD_MS = 1500; // the peak-hold value the VSI shows
+const MIN_DT = 1;          // ms; samples closer than this count as the same instant and do not advance the velocity filter
 
 const state = { t: 0, y: 0, vy: 0, vyPeak: 0, max: 0, progress: 0, vh: 0, dh: 0, direction: 0, moving: false };
 const sections = [];
@@ -38,14 +39,22 @@ function sectionFor(y) {
 function sample(now) {
   if (!measured) measure();
   const y = scrollY;
-  const dt = lastT ? Math.min(100, now - lastT) : 16.7;
-  const raw = lastT ? (y - lastY) / dt * 1000 : 0;
-  state.vy = state.vy + ALPHA * (raw - state.vy);
-  if (Math.abs(state.vy) < 0.5) state.vy = 0;
+  /* The velocity filter only advances across a real timestep. Two samples can share a stamp (refresh()
+     called twice in one task, or a rAF stamp that predates the performance.now() of a refresh() just
+     before it); dt = 0 would divide 0 / 0 and the filter would hold NaN for good, which also stops
+     scroll:idle (the loop waits for vy === 0). A sample inside MIN_DT of the last one re-reads the
+     position and leaves the filter's reference point alone. */
+  const dt = lastT ? now - lastT : 0;
+  if (!lastT || dt >= MIN_DT) {
+    const raw = lastT ? (y - lastY) / Math.min(100, dt) * 1000 : 0;
+    state.vy = state.vy + ALPHA * (raw - state.vy);
+    state.direction = raw > 0 ? 1 : raw < 0 ? -1 : state.direction;
+    lastY = y; lastT = now;
+  }
+  if (!Number.isFinite(state.vy) || Math.abs(state.vy) < 0.5) state.vy = 0;
+  if (!Number.isFinite(state.vyPeak)) state.vyPeak = 0;
   if (Math.abs(state.vy) >= Math.abs(state.vyPeak) || now - peakAt > PEAK_HOLD_MS) { state.vyPeak = state.vy; peakAt = now; }
-  state.direction = raw > 0 ? 1 : raw < 0 ? -1 : state.direction;
   state.t = now; state.y = y; state.progress = state.max ? Math.min(1, Math.max(0, y / state.max)) : 0;
-  lastY = y; lastT = now;
   bus.emit('scroll:frame', state);
   const s = sectionFor(y);
   if (s && s !== current) { current = s; bus.emit('scroll:section', { id: s.id, el: s.el, index: sections.indexOf(s), top: s.top, height: s.height, progress: progressOf(s.el) }); }

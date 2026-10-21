@@ -13,6 +13,12 @@
   --co-accent-text: var(--livery);
   --co-accent-text: color-mix(in srgb, var(--livery) 72%, var(--paper));
   --co-label-w: 220px;                      /* label column width; the solver reads this */
+  /* --co-list-max (read by .co-sheet-list, default 36svh): the host's cap for the sheet's scrolling list.
+     A host whose sheet sits under a stage sets it on the sheet root from the free space, e.g.
+     calc(100svh - <chrome above> - <stage height> - <chrome below> - 115px), where 115 px is the sheet's
+     own head, nav and padding (107 px measured; 95 px under 700 px tall) plus an 8 px gap. A host that
+     fixes the root's height (top and bottom together) needs nothing: the list shrinks to what the head
+     and nav leave. */
 }
 
 /* overlays: same box as the stage canvas, no pointer capture except the labels */
@@ -67,28 +73,45 @@
 @keyframes co-pop { from { transform: scale(0); } to { transform: scale(1); } }
 
 /* sheet: coarse pointers and narrow viewports. The host positions the root; this styles its inside. */
-.co-sheet { color: var(--co-ink); background: var(--ink-900); border-top: 1px solid var(--co-ink-18); padding: var(--space-3) var(--space-4) calc(var(--space-3) + env(safe-area-inset-bottom, 0px)); }
+.co-sheet { display: flex; flex-direction: column; color: var(--co-ink); background: var(--ink-900); border-top: 1px solid var(--co-ink-18); padding: var(--space-3) var(--space-4) calc(var(--space-3) + env(safe-area-inset-bottom, 0px)); }
 .co-sheet[hidden] { display: none; }
-.co-sheet-head { display: flex; align-items: baseline; gap: var(--space-3); padding-bottom: var(--space-2); border-bottom: 1px solid var(--co-ink-18); }
+.co-sheet-head { flex: 0 0 auto; display: flex; align-items: baseline; gap: var(--space-3); padding-bottom: var(--space-2); border-bottom: 1px solid var(--co-ink-18); }
 .co-sheet-index { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); color: var(--co-ink-70); font-variant-numeric: tabular-nums; }
 .co-sheet-station { flex: 1; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--co-ink); }
 .co-sheet-count { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--co-ink-70); font-variant-numeric: tabular-nums; }
-.co-sheet-list { max-height: 36svh; overflow: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+/* the list is the only part that scrolls: capped by the host's --co-list-max (36svh when the host says nothing)
+   and, when the host fixes the sheet's height, shrunk to whatever the head and nav leave */
+.co-sheet-list { flex: 1 1 auto; min-height: 0; max-height: var(--co-list-max, 36svh); overflow: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
 .co-sheet .co-item { position: static; width: auto; transform: none; text-align: left; will-change: auto; border-bottom: 1px solid var(--co-ink-18); }
 .co-sheet .co-item:last-child { border-bottom: 0; }
 .co-sheet .co-label { padding: 10px 0; min-height: 44px; }
 .co-sheet .co-sub { white-space: normal; }
 .co-sheet .co-desc-text { padding-top: 0; }
 .co-sheet .co-item.is-locked .co-desc-inner { padding-bottom: 12px; }
-.co-sheet-nav { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding-top: var(--space-2); border-top: 1px solid var(--co-ink-18); }
-.co-sheet-btn { min-height: 44px; min-width: 72px; padding: 0 var(--space-2); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--co-ink); border-radius: var(--radius-pill); }
+.co-sheet-nav { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding-top: var(--space-2); border-top: 1px solid var(--co-ink-18); }
+.co-sheet-btn { flex: 0 0 auto; min-height: 44px; min-width: 0; padding: 0 var(--space-2); white-space: nowrap; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--co-ink); border-radius: var(--radius-pill); }
 .co-sheet-btn:disabled { color: var(--co-ink-45); cursor: default; }
 .co-sheet-btn:hover:not(:disabled) { color: var(--co-accent); }
-.co-strip { display: flex; margin: 0; padding: 0; list-style: none; }
-.co-strip-dot { display: grid; place-items: center; width: 24px; height: 36px; }
+/* the strip takes the room between PREV and NEXT and centres its dots; when the row is short the dots give
+   way first (each li starts at its dot's width, 24 px here or whatever the host sets, and shrinks to 16 px;
+   the dot follows its li) so the row never runs past the sheet's edge */
+.co-strip { display: flex; flex: 1 1 auto; min-width: 0; justify-content: center; margin: 0; padding: 0; list-style: none; }
+.co-strip > li { flex: 0 1 auto; min-width: 16px; }
+.co-strip-dot { display: grid; place-items: center; width: 24px; max-width: 100%; height: 36px; }
 .co-strip-dot::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--co-ink-45); transition: background var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out); }
 .co-strip-dot[aria-current="step"]::before { background: var(--co-accent); transform: scale(1.33); }
 .co-strip-dot:hover::before { background: var(--co-ink); }
+
+/* short viewports (a phone in landscape): tighter sheet chrome, 95 px instead of 107, so a host that
+   places the sheet beside the stage keeps room for the list; the list itself follows --co-list-max */
+@media (max-height: 700px) {
+  .co-sheet { padding-top: var(--space-2); padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom, 0px)); }
+  .co-sheet-head { padding-bottom: 6px; }
+  .co-sheet-nav { padding-top: 6px; }
+  .co-sheet-btn { min-height: 40px; }
+  .co-strip-dot { height: 32px; }
+  .co-sheet .co-label { padding: 8px 0; min-height: 40px; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .co-item, .co-leader, .co-dot, .co-leader-group, .co-desc, .co-eyebrow, .co-strip-dot::before { animation: none !important; transition: none !important; }

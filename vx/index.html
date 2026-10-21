@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mert Tureli · VX</title>
-<meta name="description" content="The experimental build of merttureli.com: the CHARGER flight model rendered live from the published assembly inside a page wind-tunnel simulation, with every number measured from this page in your browser.">
+<meta name="description" content="The experimental build of merttureli.com: the CHARGER flight model rendered live from the published assembly inside a page wind-tunnel simulation, with every live number measured from this page in your browser.">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#0A0A0A">
 <link rel="canonical" href="https://merttureli.com/vx/">
@@ -76,13 +76,13 @@
   <div id="telemetry"></div>
 </div>
 
-<main id="main">
+<main id="main" tabindex="-1">
 
   <section id="range" class="range on-dark" data-station="CHARGER" data-index="01" aria-label="CHARGER on the pad and the stack walk">
     <div class="range-sticky" id="range-sticky">
       <div class="scene" id="scene">
         <canvas id="tunnel" class="tn-canvas" aria-hidden="true"></canvas>
-        <img id="poster" class="st-poster" src="../assets/motion/charger-painted-wide-poster.png" width="1280" height="720" alt="CHARGER on the pad in its orange livery with dark red bands, painted render of the flight model" fetchpriority="high" decoding="async">
+        <img id="poster" class="st-poster" src="../assets/motion/charger-painted-wide-poster.png" width="1280" height="720" alt="Painted render of CHARGER: orange livery with dark red bands and the CHARGER / UCRC / 2026 lettering, on a plain background" fetchpriority="high" decoding="async">
         <canvas id="stage" class="st-canvas" role="img" aria-label="CHARGER flight model, rendered live from the published assembly, station by station as the page scrolls"></canvas>
         <svg id="leaders" class="st-overlay" aria-hidden="true" focusable="false"></svg>
         <div id="callouts"></div>
@@ -91,7 +91,7 @@
         <button id="load3d" class="load3d" type="button" hidden>Load 3D / 2.5 MB</button>
       </div>
 
-      <i class="margin-probe" data-dim="PAGE MARGIN" data-dim-side="width" data-dim-basic="88px" aria-hidden="true"></i>
+      <i class="margin-probe" data-dim="PAGE MARGIN" data-dim-side="width" aria-hidden="true"></i>
       <div id="pad" class="pad-copy">
         <p class="eyebrow pad-eyebrow">Mechanical engineer / Austin, Texas</p>
         <h1 class="display-1 pad-title" data-dim="DISPLAY HEADING"><span>Mert</span> <span>Tureli</span></h1>
@@ -102,19 +102,19 @@
         </div>
       </div>
 
-      <p class="st-caption pad-caption" id="stage-caption"><b>01</b> / CHARGER / rendered from the flight model, thirty internal components at their true stations / <span id="stage-state">pad view</span></p>
+      <p class="st-caption pad-caption" id="stage-caption"><b>CHARGER</b> / rendered from the flight model, thirty internal components at their true stations / <span id="stage-state">pad view</span></p>
 
       <p class="tunnel-label meta-sm"><b>Tunnel</b> / page simulation / not flight data / <span id="tunnel-readout">off</span></p>
       <div class="stage-bar" id="stage-bar" data-dim-more="STAGE BAR" data-dim-basic="56px" data-dim-side="height">
         <div class="stage-bar-ranges">
           <label class="range-control"><span>Progress</span><input id="progress-range" type="range" min="0" max="1" step="0.001" value="0" aria-describedby="progress-out"><output id="progress-out">0.000</output></label>
-          <label class="range-control"><span>Explode</span><input id="explode-range" type="range" min="0" max="1" step="0.01" value="0"><output id="explode-out">0.00</output></label>
+          <label class="range-control range-explode"><span>Explode</span><input id="explode-range" type="range" min="0" max="1" step="0.01" value="0"><output id="explode-out">0.00</output></label>
           <button id="explode-auto" class="chip" type="button" aria-pressed="true">Auto</button>
         </div>
         <div class="stage-bar-links">
-          <a href="../assets/charger-explorer/cad/charger-hybrid.step" download>Download STEP (3.1 MB)</a>
-          <a href="../assets/charger-explorer/assembly.glb" download>Download GLB (2.0 MB)</a>
-          <a href="../assets/charger-explorer/index.html">Open the explorer <span aria-hidden="true">→</span></a>
+          <a href="../assets/charger-explorer/cad/charger-hybrid.step" download><span class="bar-verb">Download </span>STEP (3.1 MB)</a>
+          <a href="../assets/charger-explorer/assembly.glb" download><span class="bar-verb">Download </span>GLB (2.0 MB)</a>
+          <a href="../assets/charger-explorer/index.html"><span class="bar-verb">Open the </span>explorer <span aria-hidden="true">→</span></a>
         </div>
       </div>
     </div>
@@ -166,7 +166,7 @@
             <li><b>$716</b><span>Total hardware cost</span></li>
           </ul>
           <figure class="plate photo">
-            <img loading="lazy" decoding="async" src="../assets/photos/video/nose-cone-ejection-test.jpg" width="520" height="293" alt="Nose cone ejection test: the nose cone separating from the upper body tube on the bench, a video still">
+            <img loading="lazy" decoding="async" src="../assets/photos/video/nose-cone-ejection-test.jpg" width="520" height="293" alt="Ejection charge test on a field: the rocket lying on the grass between orange cones, the charge's smoke at the nose, a video still">
             <figcaption class="meta-sm">Nose cone ejection test / video still</figcaption>
           </figure>
           <p><a class="btn btn-outline" href="../projects/charger.html">Read the case study <span aria-hidden="true">→</span></a></p>
@@ -193,7 +193,7 @@
         </div>
         <div class="decisions-media">
           <figure class="plate photo">
-            <img loading="lazy" decoding="async" src="../assets/photos/3d-model-renders/shockcord-beauty-render.jpg" width="520" height="650" alt="Render of the shock cord attachment: the lower shock-cord mount with its M3 screw, in the body tube">
+            <img loading="lazy" decoding="async" src="../assets/photos/3d-model-renders/shockcord-beauty-render.jpg" width="520" height="650" alt="Render of the lower shock-cord mount: a flat plate with five holes, on black">
             <figcaption class="meta-sm">Shock cord attachment / render</figcaption>
           </figure>
           <figure class="plate photo">
@@ -217,8 +217,8 @@
           <p class="body strong">We got two clean flights away on the first day while the weather held, then put up the qualifying flight before noon on the second. One team member stands at the launch control officer's position as mission control and nothing leaves the pad until they say it does.</p>
           <div class="photo-row">
             <figure class="plate photo">
-              <img loading="lazy" decoding="async" src="../assets/photos/video/rocket-launch.jpg" width="520" height="292" alt="CHARGER leaving the launch rail under motor thrust, a video still from launch day">
-              <figcaption class="meta-sm">Launch / video still</figcaption>
+              <img loading="lazy" decoding="async" src="../assets/photos/video/rocket-launch.jpg" width="520" height="292" alt="An ignition flash at night on snow, lighting the bare trees, a video still">
+              <figcaption class="meta-sm">Ignition / video still / not the competition flight</figcaption>
             </figure>
             <figure class="plate photo">
               <img loading="lazy" decoding="async" src="../assets/photos/charger-rocket-photography/charger-pad-tall.jpg" width="520" height="693" alt="CHARGER on the launch rail before a flight">
@@ -249,7 +249,7 @@
       <div class="zone-ticks" aria-hidden="true"><i>A</i><i>B</i><i>C</i><i>D</i><i>E</i><i>F</i><i>G</i><i>H</i></div>
       <div class="title-block" data-dim-more="TITLE BLOCK" data-dim-side="height">
         <div class="tb-cell tb-title"><span class="tb-k">Title</span><span class="tb-v">HOTBOX: thermal test bench</span></div>
-        <div class="tb-cell"><span class="tb-k">Sheet</span><span class="tb-v">1 of 5</span></div>
+        <div class="tb-cell"><span class="tb-k">Sheet</span><span class="tb-v">01 of 05</span></div>
         <div class="tb-cell"><span class="tb-k">Org / year</span><span class="tb-v">SunThru / 2026</span></div>
         <div class="tb-cell tb-role"><span class="tb-k">Role</span><span class="tb-v">Design, electronics, firmware, safety systems</span></div>
         <div class="tb-cell"><span class="tb-k">Rev</span><span class="tb-v">A</span></div>
@@ -295,7 +295,7 @@
       <div class="zone-ticks" aria-hidden="true"><i>A</i><i>B</i><i>C</i><i>D</i><i>E</i><i>F</i><i>G</i><i>H</i></div>
       <div class="title-block">
         <div class="tb-cell tb-title"><span class="tb-k">Title</span><span class="tb-v">Robo-Catcher</span></div>
-        <div class="tb-cell"><span class="tb-k">Sheet</span><span class="tb-v">2 of 5</span></div>
+        <div class="tb-cell"><span class="tb-k">Sheet</span><span class="tb-v">02 of 05</span></div>
         <div class="tb-cell"><span class="tb-k">Org / year</span><span class="tb-v">Senior capstone / 2025</span></div>
         <div class="tb-cell tb-role"><span class="tb-k">Role</span><span class="tb-v">Twelve person team / feeding co-lead, all electronics and firmware</span></div>
         <div class="tb-cell"><span class="tb-k">Rev</span><span class="tb-v">B</span></div>
@@ -324,14 +324,18 @@
               <figcaption class="meta-sm">Indexer / cross section</figcaption>
             </figure>
             <figure class="plate photo">
-              <img loading="lazy" decoding="async" src="../assets/photos/robo-catcher-photography/working-on-electronics.jpg" width="520" height="599" alt="Mert working on the Robo-Catcher electronics, wiring the control panel at the bench">
-              <figcaption class="meta-sm">Electronics / at the bench</figcaption>
+              <img loading="lazy" decoding="async" src="../assets/photos/robo-catcher-photography/working-on-electronics.jpg" width="520" height="599" alt="Two team members crouched over the Robo-Catcher's electronics box on the field, the rest of the team behind">
+              <figcaption class="meta-sm">Running it on the field</figcaption>
             </figure>
             <figure class="plate photo">
               <img loading="lazy" decoding="async" src="../assets/photos/shop-and-machine-photography/machine-field.jpg" width="520" height="650" alt="Robo-Catcher on the field">
               <figcaption class="meta-sm">On the field / Photograph Paul Buckowski / Union College</figcaption>
             </figure>
           </div>
+          <figure class="plate photo crew-photo">
+            <img loading="lazy" decoding="async" src="../assets/photos/shop-and-machine-photography/uc-team.jpg" width="520" height="346" alt="The Robo-Catcher capstone team around the net frame and ramps on the Union College field">
+            <figcaption class="meta-sm">The capstone team / Photograph Paul Buckowski / Union College</figcaption>
+          </figure>
         </div>
       </div>
     </div>
@@ -342,7 +346,7 @@
       <div class="zone-ticks" aria-hidden="true"><i>A</i><i>B</i><i>C</i><i>D</i><i>E</i><i>F</i><i>G</i><i>H</i></div>
       <div class="title-block">
         <div class="tb-cell tb-title"><span class="tb-k">Title</span><span class="tb-v">Custom three-point bend fixture and data logger</span></div>
-        <div class="tb-cell"><span class="tb-k">Sheet</span><span class="tb-v">3 of 5</span></div>
+        <div class="tb-cell"><span class="tb-k">Sheet</span><span class="tb-v">03 of 05</span></div>
         <div class="tb-cell"><span class="tb-k">Org / year</span><span class="tb-v">SunThru / 2026</span></div>
         <div class="tb-cell tb-role"><span class="tb-k">Role</span><span class="tb-v">Solo design</span></div>
         <div class="tb-cell"><span class="tb-k">Rev</span><span class="tb-v">C</span></div>
@@ -387,7 +391,7 @@
       <div class="zone-ticks" aria-hidden="true"><i>A</i><i>B</i><i>C</i><i>D</i><i>E</i><i>F</i><i>G</i><i>H</i></div>
       <div class="title-block">
         <div class="tb-cell tb-title"><span class="tb-k">Title</span><span class="tb-v">Flight sim rudder pedals</span></div>
-        <div class="tb-cell"><span class="tb-k">Sheet</span><span class="tb-v">4 of 5</span></div>
+        <div class="tb-cell"><span class="tb-k">Sheet</span><span class="tb-v">04 of 05</span></div>
         <div class="tb-cell"><span class="tb-k">Org / year</span><span class="tb-v">Personal project / 2026</span></div>
         <div class="tb-cell tb-role"><span class="tb-k">Role</span><span class="tb-v">Solo / mechanism design to USB HID firmware</span></div>
         <div class="tb-cell"><span class="tb-k">Rev</span><span class="tb-v">D</span></div>
@@ -405,7 +409,7 @@
           </ol>
           <div class="photo-row two">
             <figure class="plate photo">
-              <img loading="lazy" decoding="async" src="../assets/renders/rudder-pedals/a1301-hall-sensor.jpg" width="1600" height="900" alt="Render of the A1301 Hall-effect sensor on its board, the contactless sensing element of the pedals">
+              <img loading="lazy" decoding="async" src="../assets/renders/rudder-pedals/a1301-hall-sensor.jpg" width="1600" height="900" alt="Render of the A1301 Hall effect sensor in a TO-92 package, the contactless sensing element of the pedals">
               <figcaption class="meta-sm">A1301 Hall-effect sensor / render</figcaption>
             </figure>
             <figure class="plate photo">
@@ -420,8 +424,8 @@
             <video data-stream poster="../assets/motion/rudder-pedals-working-poster.png" width="1920" height="1080" muted loop playsinline preload="none" aria-label="The rudder pedals working: the rudder bar and both toe brakes moving, CAD animation"><source data-src="../assets/motion/rudder-pedals-working-alpha.webm" type="video/webm"><source data-src="../assets/motion/rudder-pedals-working.mp4" type="video/mp4"></video>
           </div>
           <figure class="plate photo">
-            <img loading="lazy" decoding="async" src="../assets/photos/rudder-pedal-photography/pedals-hero.jpg" width="520" height="346" alt="The built rudder pedals: two 3D printed pedals with toe brakes on a desk, the only photograph of the finished set">
-            <figcaption class="meta-sm">The built pedals / photograph</figcaption>
+            <img loading="lazy" decoding="async" src="../assets/photos/rudder-pedal-photography/pedals-hero.jpg" width="520" height="346" alt="The built rudder pedal assembly, one pedal unit with its toe brake">
+            <figcaption class="meta-sm">Built hardware</figcaption>
           </figure>
         </div>
       </div>
@@ -432,12 +436,12 @@
     </div>
   </section>
 
-  <section id="06-therma-shift" class="section sheet on-paper" data-station="THERMA" data-index="09" aria-labelledby="t-therma">
+  <section id="06-therma-shift" class="section sheet on-paper" data-station="COASTER" data-index="09" aria-labelledby="t-therma">
     <div class="inner">
       <div class="zone-ticks" aria-hidden="true"><i>A</i><i>B</i><i>C</i><i>D</i><i>E</i><i>F</i><i>G</i><i>H</i></div>
       <div class="title-block">
         <div class="tb-cell tb-title"><span class="tb-k">Title</span><span class="tb-v">Therma-Shift coaster</span></div>
-        <div class="tb-cell"><span class="tb-k">Sheet</span><span class="tb-v">5 of 5</span></div>
+        <div class="tb-cell"><span class="tb-k">Sheet</span><span class="tb-v">05 of 05</span></div>
         <div class="tb-cell"><span class="tb-k">Org / year</span><span class="tb-v">Personal project / 2026</span></div>
         <div class="tb-cell tb-role"><span class="tb-k">Role</span><span class="tb-v">Solo / thermal core, control electronics</span></div>
         <div class="tb-cell"><span class="tb-k">Rev</span><span class="tb-v">E</span></div>
@@ -467,7 +471,7 @@
   <section id="experience" class="section on-dark" data-station="CREW" data-index="10">
     <div class="inner">
       <header class="sec-head">
-        <p class="eyebrow">Crew log / Rev A–D / 004</p>
+        <p class="eyebrow">Crew log / Rev A – D / 10</p>
         <h2 class="display-2">Experience</h2>
       </header>
       <div class="crew">
@@ -495,10 +499,6 @@
           <div class="crew-body">
             <p class="body">Started the team from nothing and built it to competition standard. Led the twelve person competition team as captain, trained new members through build labs, and owned safety compliance for high power launches. Grew the team budget by seven hundred percent by writing funding proposals, which paid for the airframe.</p>
             <p class="body strong">The team won first place at Battle of the Rockets 2026 in the Deployable Sensor Payload event, and was chartered as an official section of the National Association of Rocketry.</p>
-            <figure class="plate photo crew-photo">
-              <img loading="lazy" decoding="async" src="../assets/photos/shop-and-machine-photography/uc-team.jpg" width="520" height="346" alt="The twelve-person Union College team around the machine on the field">
-              <figcaption class="meta-sm">The twelve person team / Photograph Paul Buckowski / Union College</figcaption>
-            </figure>
           </div>
         </article>
         <article class="crew-entry">
@@ -539,7 +539,7 @@
   <section id="skills" class="section on-paper" data-station="SKILLS" data-index="11">
     <div class="inner">
       <header class="sec-head">
-        <p class="eyebrow">What I work with / 007</p>
+        <p class="eyebrow">What I work with / 11</p>
         <h2 class="display-2">What I work with</h2>
       </header>
       <div class="skills">
@@ -578,8 +578,8 @@
         </div>
         <div class="beyond-col about">
           <figure class="cutout">
-            <img loading="lazy" decoding="async" src="../assets/portrait/mert-cutout.png" width="616" height="768" alt="Mert Tureli, cut-out portrait, standing">
-            <figcaption class="meta-sm">Portrait / 2024</figcaption>
+            <img loading="lazy" decoding="async" src="../assets/portrait/mert-cutout.png" width="616" height="768" alt="Mert Tureli, head-and-shoulders cut-out portrait">
+            <figcaption class="meta-sm">Portrait</figcaption>
           </figure>
           <div class="about-copy">
             <p class="body-lg">I grew up in Izmir and came to New York for the degree. Outside of engineering I fly, make short films, shoot photography, cook, and travel as much as I can get away with.</p>
@@ -607,10 +607,10 @@
     </div>
   </section>
 
-  <section id="recognition" class="section on-paper" data-station="RECOG" data-index="13">
+  <section id="recognition" class="section on-paper" data-station="AWARDS" data-index="13">
     <div class="inner">
       <header class="sec-head">
-        <p class="eyebrow">Recognition / 004</p>
+        <p class="eyebrow">Recognition / 13</p>
         <h2 class="display-2">Recognition</h2>
       </header>
       <ol class="recognition">
@@ -670,7 +670,7 @@
   <div class="inner">
     <p class="facts meta-sm"><b>Mert Tureli</b> / Mechanical engineer / Austin, Texas / B.S. Mechanical Engineering, Union College, 2026 <a href="../assets/Mert-Tureli-Resume.pdf">Resume (PDF)</a> <a href="mailto:merttureli0@gmail.com">Email</a> <a href="https://linkedin.com/in/merttureli">LinkedIn</a> <a href="../hi/mert-tureli.vcf">Save contact (VCF)</a></p>
     <p class="credit meta-sm">Photographs of the machine and the team by Paul Buckowski / Union College. CAD animations rendered from the source assemblies. Aircraft models are third-party, illustration only. / <a href="../privacy.html">Privacy</a></p>
-    <p class="measured meta-sm">Every number on this page is measured from this page in your browser. Nothing is sent anywhere.</p>
+    <p class="measured meta-sm">Every live number on this page is measured from this page in your browser. Nothing is sent anywhere.</p>
     <p class="footer-links meta-sm"><a href="/">The production site <span aria-hidden="true">→</span></a> <a href="lab/">Lab <span aria-hidden="true">→</span></a> <a href="../privacy.html">Privacy</a></p>
   </div>
 </footer>
