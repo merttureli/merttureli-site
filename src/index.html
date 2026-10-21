@@ -29,7 +29,6 @@
 <link rel="stylesheet" href="assets/charger-explorer/launcher.css">
 <script src="assets/charger-explorer/integration.js" defer></script>
 <script src="js/media-playback.js" defer></script>
-<script src="js/depth-motion.js" defer></script>
 <link rel="stylesheet" href="css/interaction-polish.css">
 <link rel="stylesheet" href="css/website-entry.css">
 <script src="js/interaction-polish.js" defer></script>
@@ -64,14 +63,14 @@
 
 <div style="background: var(--paper); overflow-x: hidden">
 
-  <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SiteHeader" items="{{ nav }}" active="index" inverse="true" floating="true" hint-size="100%,88px"></x-import>
+  <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SiteHeader" items="{{ nav }}" active="index" inverse="true" floating="true" dc-props="{{ headerRow }}" hint-size="100%,88px"></x-import>
 
   <main id="main">
   <section class="on-dark depth-hero" style="position: relative; min-height: min(940px, 100vh); background: var(--ink-900); overflow: hidden; display: flex; flex-direction: column">
     <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Grain" blend="overlay" strength="normal" hint-size="100%,100%"></x-import>
     <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SocialRail" items="{{ social }}" inverse="true" fixed="true" hint-size="36px,120px"></x-import>
 
-    <div style="position: relative; flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr); align-items: center; gap: var(--space-7); padding: calc(var(--header-h) + var(--space-7)) var(--page-margin) var(--space-6); max-width: var(--max-width); margin: 0 auto; width: 100%">
+    <div style="position: relative; flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr); align-items: center; gap: var(--space-7); padding: calc(var(--header-h) + var(--space-7)) var(--page-margin) var(--space-6); max-width: calc(var(--max-width) + 2 * var(--page-margin)); margin: 0 auto; width: 100%">
 
       <div class="depth-hero-copy" style="display: flex; flex-direction: column; gap: var(--space-6)">
         <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" wide="true" dc-props="{{ metaOnPhoto }}" hint-size="240px,16px">Mechanical engineer / Austin, Texas</x-import>
@@ -93,7 +92,7 @@
       </a>
     </div>
 
-    <div style="position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-6); padding: 0 var(--page-margin) var(--space-7); max-width: var(--max-width); margin: 0 auto; width: 100%">
+    <div style="position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-6); padding: 0 var(--page-margin) var(--space-7); max-width: calc(var(--max-width) + 2 * var(--page-margin)); margin: 0 auto; width: 100%">
       <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Caption" index="01" dc-props="{{ heroCaption }}" hint-size="380px,16px">CHARGER / rendered from the flight model, 28 components at their true stations</x-import>
       <x-import component-from-global-scope="MertTReliDesignSystem_56763c.ScrollCue" inverse="true" shape="square" hint-size="72px,72px"></x-import>
     </div>
@@ -253,15 +252,15 @@
     </div>
   </section>
 
-  <section id="experience" style="padding: var(--section-y) var(--page-margin)">
+  <section id="experience" style="padding: 0 var(--page-margin) var(--section-y)">
     <div style="max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-8)">
       <x-import data-depth-rule="true" data-heading="2" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Experience" right="004" hint-size="100%,14px"></x-import>
 
-      <div data-reveal="1" style="display: grid; grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr); gap: var(--space-8); align-items: start; padding-top: var(--space-6); border-top: 1px solid var(--line-hairline)">
+      <div data-reveal="1" style="display: grid; grid-template-columns: minmax(220px, 1.2fr) minmax(0, 2fr); gap: var(--space-8); align-items: start; padding-top: var(--space-6); border-top: 1px solid var(--line-hairline)">
         <div style="display: flex; flex-direction: column; gap: var(--space-4)">
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" as="h3" hint-size="100%,50px">Engineering intern</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="strong" hint-size="100%,16px">SunThru</x-import>
-          <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="100%,16px">Schenectady, NY / June 2026 to September 2026</x-import>
+          <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="100%,16px">Schenectady, NY / June to September&nbsp;2026</x-import>
         </div>
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-4)">
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">SunThru is a Union College spin-out developing silica aerogel inserts that give double pane windows triple pane performance. I worked on both prototypes and production equipment.</p>
@@ -271,11 +270,11 @@
         </div>
       </div>
 
-      <div data-reveal="1" style="display: grid; grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr); gap: var(--space-8); align-items: start; padding-top: var(--space-6); border-top: 1px solid var(--line-hairline)">
+      <div data-reveal="1" style="display: grid; grid-template-columns: minmax(220px, 1.2fr) minmax(0, 2fr); gap: var(--space-8); align-items: start; padding-top: var(--space-6); border-top: 1px solid var(--line-hairline)">
         <div style="display: flex; flex-direction: column; gap: var(--space-4)">
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" as="h3" hint-size="100%,50px">Founder and president</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="strong" hint-size="100%,16px">Union College Rocket Team</x-import>
-          <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="100%,16px">Schenectady, NY / August 2023 to June 2026</x-import>
+          <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="100%,16px">Schenectady, NY / August&nbsp;2023 to June&nbsp;2026</x-import>
         </div>
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-4)">
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Started the team from nothing and built it to competition standard. Led the twelve person competition team as captain, trained new members through build labs, and owned safety compliance for high power launches. Grew the team budget by seven hundred percent by writing funding proposals, which paid for the airframe.</p>
@@ -283,22 +282,22 @@
         </div>
       </div>
 
-      <div data-reveal="1" style="display: grid; grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr); gap: var(--space-8); align-items: start; padding-top: var(--space-6); border-top: 1px solid var(--line-hairline)">
+      <div data-reveal="1" style="display: grid; grid-template-columns: minmax(220px, 1.2fr) minmax(0, 2fr); gap: var(--space-8); align-items: start; padding-top: var(--space-6); border-top: 1px solid var(--line-hairline)">
         <div style="display: flex; flex-direction: column; gap: var(--space-4)">
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" as="h3" hint-size="100%,50px">Founder</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="strong" hint-size="100%,16px">ModuFly</x-import>
-          <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="100%,16px">Schenectady, NY / September 2024 to January 2026</x-import>
+          <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="100%,16px">Schenectady, NY / September&nbsp;2024 to January&nbsp;2026</x-import>
         </div>
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-4)">
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Co-founded a startup around a modular interlocking rocket system for STEM education. Raised $70,000 in seed funding, starting with a $10,000 prize at the SparkLabs competition and then a further $60,000 from private investors. Led R&D and production, and ran hands-on rocketry workshops teaching design and troubleshooting to more than twenty high school students.</p>
         </div>
       </div>
 
-      <div data-reveal="1" style="display: grid; grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr); gap: var(--space-8); align-items: start; padding-top: var(--space-6); border-top: 1px solid var(--line-hairline)">
+      <div data-reveal="1" style="display: grid; grid-template-columns: minmax(220px, 1.2fr) minmax(0, 2fr); gap: var(--space-8); align-items: start; padding-top: var(--space-6); border-top: 1px solid var(--line-hairline)">
         <div style="display: flex; flex-direction: column; gap: var(--space-4)">
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" as="h3" hint-size="100%,50px">Design engineer and materials intern</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="strong" hint-size="100%,16px">TASECS</x-import>
-          <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="100%,16px">Ankara, Turkey / Summer 2024</x-import>
+          <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="100%,16px">Ankara, Turkey / Summer&nbsp;2024</x-import>
         </div>
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-5)">
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Aerospace thermal management. Designed high efficiency HVAC valve components, ran material stress and fatigue analysis supporting two national fighter and jet trainer programs, and selected aerospace grade materials for printed prototypes, including cooling upgrades for high ambient temperature operation.</p>
@@ -423,7 +422,7 @@
       <video data-clip="1" data-poster="assets/motion/balloon-segovia-poster.webp" loop muted playsinline preload="none" aria-label="Aerial shot of a hot air balloon over open country at sunrise" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block"><source data-src="assets/motion/balloon-segovia.mp4" type="video/mp4"></video>
       <span style="position: absolute; inset: 0; background: var(--scrim-hero)"></span>
       <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Grain" blend="overlay" strength="normal" hint-size="100%,100%"></x-import>
-      <div style="position: absolute; inset: auto 0 0 0; padding: var(--space-8) var(--page-margin); max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-5)">
+      <div style="position: absolute; inset: auto 0 0 0; padding: var(--space-8) var(--page-margin); max-width: calc(var(--max-width) + 2 * var(--page-margin)); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-5)">
         <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" wide="true" dc-props="{{ metaOnPhoto }}" hint-size="260px,16px">Beyond engineering / 005</x-import>
         <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="2" treatment="inverse" hint-size="100%,120px">Beyond engineering</x-import>
       </div>
@@ -460,7 +459,7 @@
     <photo-corridor style="display:block;height:clamp(430px,48vw,740px)"><a href="photography-lab.html" style="display:grid;place-items:center;gap:var(--space-4);height:100%;color:var(--paper);font-family:var(--font-mono);font-size:var(--fs-meta);letter-spacing:var(--ls-caps);text-transform:uppercase;text-decoration:none"><img src="assets/photos/beyond/gallery/lighthouse-thumb.webp" alt="" loading="lazy" decoding="async" style="max-height:60%;width:auto">Explore photography</a></photo-corridor>
   </section>
 
-  <section style="padding: var(--section-y) var(--page-margin) 0">
+  <section style="padding: var(--section-y) var(--page-margin)">
     <div style="max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-8)">
       <x-import data-depth-rule="true" data-heading="2" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Recognition" right="004" hint-size="100%,14px"></x-import>
       <div data-reveal="1" style="display: flex; flex-direction: column">
@@ -588,6 +587,7 @@ class Component extends DCLogic {
         { label: "Spanish", value: "Beginner" },
       ],
       metaOnPhoto: { style: { color: "var(--paper-a70)" } },
+      headerRow: { style: { padding: "0 max(var(--page-margin), calc((100% - var(--max-width)) / 2))" } },
       heroCaption: { style: { color: "var(--paper-a45)", maxWidth: "46ch" } },
       linkOnDark: { style: { color: "var(--paper)", borderBottomColor: "var(--paper-a45)" } },
     };
@@ -616,8 +616,6 @@ class Component extends DCLogic {
       if (src[1]) src[1].remove();
       heroEl.load();
     }
-    window.PortfolioDepthSettings = { motion: play };
-    window.PortfolioDepth?.refresh(window.PortfolioDepthSettings);
     window.PortfolioMediaSettings = { motion: play };
     window.PortfolioMedia?.refresh(window.PortfolioMediaSettings);
   }

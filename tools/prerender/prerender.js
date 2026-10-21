@@ -20,7 +20,7 @@
  *     stops it re-fetching the page).
  *   - Every script except support.js, the design-system bundle and React is
  *     answered with an empty body. Those are the islands (site-palette.js,
- *     mobile-nav.js, media-playback.js, depth-motion.js, shader-bg.js, the
+ *     mobile-nav.js, media-playback.js, shader-bg.js, the
  *     photography loader, interaction-polish.js, the CHARGER launcher, the
  *     walkthrough, track.js, clarity.js, ...). Their script tags stay in the
  *     page, in order and with their attributes, and run on the static page

@@ -25,7 +25,7 @@ Normally run python3 tools/build.py instead, which runs this and then the
 static render.
 
 Depth hooks (depth-hero, depth-stage, data-depth-*) are emitted by the helpers
-below so css/depth.css and js/depth-motion.js see the same markup as on the home
+below so css/depth.css sees the same markup as on the home
 page. Do not hand edit src/projects/*.html or projects/*.html: run
 tools/build.py --check after any change here.
 """
@@ -170,11 +170,12 @@ def frame(src, alt, caption, ratio="3 / 2", idx=None, zoom=True, size="100%,300p
             % (NS, src, alt, ratio, caption, a, z, size))
 
 
-def button(text, href, variant="outline", dark=False, size="220px,44px"):
+def button(text, href, variant="outline", dark=False, size="220px,44px", trailing="→"):
     dp = ' dc-props="{{ linkOnDark }}"' if dark else ''
-    return ('<x-import component-from-global-scope="%s.Button" data-depth-button="%s" variant="%s" '
-            'trailing="→" href="%s"%s hint-size="%s">%s</x-import>'
-            % (NS, variant, variant, href, dp, size, text))
+    tr = ' trailing="%s"' % trailing if trailing else ''
+    return ('<x-import component-from-global-scope="%s.Button" data-depth-button="%s" variant="%s"'
+            '%s href="%s"%s hint-size="%s">%s</x-import>'
+            % (NS, variant, variant, tr, href, dp, size, text))
 
 
 def spec_list(name, cols="minmax(64px,110px) minmax(0,1fr)", size="100%,220px"):
@@ -387,6 +388,17 @@ NAV = [
 ]
 
 
+def title_level(title):
+    """
+    Display size for a case title. At --fs-display-1 the copy column holds about
+    nine capitals, so a longer word ran under the clip (CHARGER's DEPLOYABLE at
+    1440 reached 360px past its column). Such titles use --fs-display-2.
+    Hyphenated words can break at the hyphen, so they count by their parts.
+    """
+    longest = max(len(w) for w in re.split(r"[\s-]+", title) if w)
+    return 2 if longest >= 10 else 1
+
+
 def build(case, index, out_dir=OUT_DIR):
     hero_clip = case.get("clip")
     clip_markup = ""
@@ -429,7 +441,7 @@ def build(case, index, out_dir=OUT_DIR):
         '    <div style="position: relative; flex: 1; display: grid; grid-template-columns: '
         'minmax(0, 1fr) minmax(0, 1.15fr); align-items: center; gap: var(--space-8); '
         'padding: calc(var(--header-h) + var(--space-8)) var(--page-margin) var(--space-8); '
-        'max-width: var(--max-width); margin: 0 auto; width: 100%%">\n'
+        'max-width: calc(var(--max-width) + 2 * var(--page-margin)); margin: 0 auto; width: 100%%">\n'
         '      <div style="display: flex; flex-direction: column; gap: var(--space-5)">\n'
         '        %s\n        %s\n        %s\n'
         '        <div style="display: flex; gap: var(--space-4); flex-wrap: wrap; margin-top: var(--space-2)">\n'
@@ -440,7 +452,8 @@ def build(case, index, out_dir=OUT_DIR):
         '  </section>\n'
         % (grain(), NS,
            meta(case["eyebrow"], wide=True, size="300px,16px"),
-           heading(case["title"], level=1, treatment="inverse", size="100%,140px", tag="h1"),
+           heading(case["title"], level=title_level(case["title"]), treatment="inverse",
+                   size="100%,140px", tag="h1"),
            para_dark(case["lede"], big=True),
            button("All work", "../index.html#work", variant="glass", dark=True, size="150px,44px"),
            clip_markup))
@@ -448,7 +461,8 @@ def build(case, index, out_dir=OUT_DIR):
     # The banner sits outside <main>, before the hero it floats over, as on the
     # home page.
     site_header = ('  <x-import component-from-global-scope="%s.SiteHeader" items="{{ nav }}" active="work" '
-                   'inverse="true" floating="true" hint-size="100%%,88px"></x-import>\n' % NS)
+                   'inverse="true" floating="true" dc-props="{{ headerRow }}" hint-size="100%%,88px">'
+                   '</x-import>\n' % NS)
     body = [hero]
     if case.get("walkthrough"):
         body.append(walkthrough(case["walkthrough"]))
@@ -467,13 +481,19 @@ def build(case, index, out_dir=OUT_DIR):
     # the page length roughly in half.
     n = 2
     run = []
+    # A light run normally continues the light section above it, so it has no
+    # top padding. After a dark plate or a stats band it starts a new light
+    # section and needs the full section spacing, or its Rule sits on the plate.
+    after_dark = [False]
 
     def flush():
         if run:
+            top = "var(--section-y)" if after_dark[0] else "0"
             body.append(section("\n".join(run),
-                                pad="0 var(--page-margin) var(--section-y)",
+                                pad="%s var(--page-margin) var(--section-y)" % top,
                                 gap=RUN_GAP))
             del run[:]
+            after_dark[0] = False
 
     for sec in case["sections"]:
         kind = sec.get("kind")
@@ -482,17 +502,20 @@ def build(case, index, out_dir=OUT_DIR):
             flush()
             body.append(section(stats_band(sec["stats"]), dark=True,
                                 pad="var(--space-9) var(--page-margin)", track="results"))
+            after_dark[0] = True
             continue
 
         if kind == "bleed":
             flush()
             body.append(bleed(sec["src"], sec["alt"], sec["caption"]))
+            after_dark[0] = False
             continue
 
         if kind == "clip_band":
             flush()
             body.append(clip_band(sec["base"], sec["caption"],
                                   sec.get("ratio", "16 / 9")))
+            after_dark[0] = False
             continue
 
         head = block(rule(sec["label"], right="%02d" % n, anchor=sec.get("anchor")))
@@ -525,6 +548,7 @@ def build(case, index, out_dir=OUT_DIR):
         if sec.get("dark"):
             flush()
             body.append(section(piece, dark=True, track=track_id(sec)))
+            after_dark[0] = True
         else:
             run.append(tracked_part(track_id(sec), piece))
     flush()
@@ -532,7 +556,8 @@ def build(case, index, out_dir=OUT_DIR):
     # next / prev
     nav_btns = []
     if case.get("prev"):
-        nav_btns.append(button("Previous: " + case["prev"][0], case["prev"][1], variant="link", size="240px,24px"))
+        nav_btns.append(button("← Previous: " + case["prev"][0], case["prev"][1], variant="outline",
+                               size="260px,44px", trailing=""))
     if case.get("next"):
         nav_btns.append(button("Next: " + case["next"][0], case["next"][1], variant="outline", size="260px,44px"))
     body.append(section(
@@ -549,6 +574,7 @@ def build(case, index, out_dir=OUT_DIR):
             '        { name: "Mail", icon: "mail", href: "../index.html#contact" },',
             "      ],",
             '      linkOnDark: { tone: "inverse" },',
+            '      headerRow: { style: { padding: "0 max(var(--page-margin), calc((100% - var(--max-width)) / 2))" } },',
             "      brief: ["]
     for label, value, aside in case["brief"]:
         row = '        { label: "%s", value: "%s"' % (label, value)
@@ -588,7 +614,6 @@ def build(case, index, out_dir=OUT_DIR):
         '<script src="../support.js"></script>\n'
         '%s'
         '<script src="../js/media-playback.js" defer></script>\n'
-        '<script src="../js/depth-motion.js" defer></script>\n'
         '<link rel="stylesheet" href="../css/interaction-polish.css">\n'
         '<script src="../js/interaction-polish.js" defer></script>\n'
         '</head>\n<body class="depth-design">\n'

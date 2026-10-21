@@ -121,7 +121,7 @@
     overflow-y: auto;
     opacity: 0;
     pointer-events: none;
-    transition: opacity .22s ease;
+    transition: opacity var(--dur-2) var(--ease-out);
   }
   @media (prefers-reduced-motion: reduce) { #mt-menu { transition: none; } }
   #mt-menu[hidden] { display: none; }

@@ -1,6 +1,6 @@
 /* A small, static invitation. The inquiry assets load on their own page. */
 .website-entry{padding:0 var(--page-margin) var(--section-y);background:var(--paper);color:var(--ink-900)}
-.website-entry-inner{max-width:var(--max-width);margin:auto;border-top:1px solid var(--ink-a12);padding-top:32px;display:grid;grid-template-columns:1.4fr 1fr;gap:64px;align-items:end}
+.website-entry-inner{max-width:var(--max-width);margin:auto;border-top:1px solid var(--line-hairline);padding-top:32px;display:grid;grid-template-columns:1.4fr 1fr;gap:64px;align-items:end}
 .website-entry-label{font:var(--fs-meta)/var(--lh-meta) var(--font-mono);letter-spacing:var(--ls-caps);text-transform:uppercase;color:var(--ink-500);display:block;margin-bottom:28px}
 .website-entry h2{font:500 clamp(40px,5.5vw,82px)/var(--lh-display) var(--font-display);letter-spacing:var(--ls-display);text-transform:uppercase;margin:0}
 .website-entry h2 span{color:var(--ink-400)}

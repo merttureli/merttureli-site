@@ -23,7 +23,6 @@
 <link rel="preload" as="image" href="../assets/motion/bend-fixture-blurred-poster.webp" type="image/webp" fetchpriority="high">
 <script src="../support.js"></script>
 <script src="../js/media-playback.js" defer></script>
-<script src="../js/depth-motion.js" defer></script>
 <link rel="stylesheet" href="../css/interaction-polish.css">
 <script src="../js/interaction-polish.js" defer></script>
 </head>
@@ -56,13 +55,13 @@
 
 <div style="background: var(--paper); overflow-x: hidden">
 
-  <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SiteHeader" items="{{ nav }}" active="work" inverse="true" floating="true" hint-size="100%,88px"></x-import>
+  <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SiteHeader" items="{{ nav }}" active="work" inverse="true" floating="true" dc-props="{{ headerRow }}" hint-size="100%,88px"></x-import>
 
   <main id="main">
   <section class="on-dark depth-hero" style="position: relative; min-height: min(720px, 88vh); background: var(--ink-900); overflow: hidden; display: flex; flex-direction: column">
     <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Grain" blend="overlay" strength="normal" hint-size="100%,100%"></x-import>
     <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SocialRail" items="{{ social }}" inverse="true" fixed="true" hint-size="36px,120px"></x-import>
-    <div style="position: relative; flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); align-items: center; gap: var(--space-8); padding: calc(var(--header-h) + var(--space-8)) var(--page-margin) var(--space-8); max-width: var(--max-width); margin: 0 auto; width: 100%">
+    <div style="position: relative; flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); align-items: center; gap: var(--space-8); padding: calc(var(--header-h) + var(--space-8)) var(--page-margin) var(--space-8); max-width: calc(var(--max-width) + 2 * var(--page-margin)); margin: 0 auto; width: 100%">
       <div style="display: flex; flex-direction: column; gap: var(--space-5)">
         <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" wide="true" hint-size="300px,16px">Case study / SunThru</x-import>
         <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="1" treatment="inverse" as="h1" hint-size="100%,140px">Custom three-point bend fixture</x-import>
@@ -105,7 +104,7 @@
     </div>
   </section>
 
-  <section style="position: relative; padding: 0 var(--page-margin) var(--section-y);">
+  <section style="position: relative; padding: var(--section-y) var(--page-margin) var(--section-y);">
     <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-9)">
       <div data-track="the-problem" style="display: flex; flex-direction: column; gap: var(--space-9)">
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
@@ -162,7 +161,7 @@
   <section style="position: relative; padding: var(--space-8) var(--page-margin) var(--space-9);">
     <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-7)">
       <div data-reveal="1" style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-6); flex-wrap: wrap">
-        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="link" variant="link" trailing="→" href="charger.html" hint-size="240px,24px">Previous: CHARGER</x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="outline" variant="outline" href="charger.html" hint-size="260px,44px">← Previous: CHARGER</x-import>
         <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="outline" variant="outline" trailing="→" href="rudder-pedals.html" hint-size="260px,44px">Next: Rudder pedals</x-import>
       </div>
     </div>
@@ -196,6 +195,7 @@ class Component extends DCLogic {
         { name: "Mail", icon: "mail", href: "../index.html#contact" },
       ],
       linkOnDark: { tone: "inverse" },
+      headerRow: { style: { padding: "0 max(var(--page-margin), calc((100% - var(--max-width)) / 2))" } },
       brief: [
         { label: "Role", value: "Design engineer, solo" },
         { label: "For", value: "SunThru, early stage hardware R&amp;D" },
@@ -229,8 +229,6 @@ class Component extends DCLogic {
       if (src[1]) src[1].remove();
       heroEl.load();
     }
-    window.PortfolioDepthSettings = { motion: play };
-    window.PortfolioDepth?.refresh(window.PortfolioDepthSettings);
     window.PortfolioMediaSettings = { motion: play };
     window.PortfolioMedia?.refresh(window.PortfolioMediaSettings);
   }
