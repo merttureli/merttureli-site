@@ -6,6 +6,10 @@
    paper at .55 alpha is 6.28:1 on ink-900 (the token's .45 was 4.48:1). */
 html:not([data-card-theme]),
 html[data-card-theme="original"] { --text-meta: #666666; --paper-a45: rgba(255,255,255,.55); }
+/* The depth panel runs down to #DEDFDF under a multiply grain; meta there
+   needs one step more to hold 4.5:1 at the darkest corner. */
+html:not([data-card-theme]) .depth-panel,
+html[data-card-theme="original"] .depth-panel { --text-meta: #5c5c5c; }
 
 /* Each theme sets a full ramp. Text steps 600/500/400 are distinct, and 400
    (meta) holds at least 4.75:1 on paper, ink-050 and the darkest panel stop. */
@@ -14,7 +18,7 @@ html[data-card-theme="green"] {
  --ink-a80:rgba(28,37,32,.8);--ink-a55:rgba(28,37,32,.65);--ink-a30:rgba(28,37,32,.3);--ink-a12:rgba(28,37,32,.16);--ink-a06:rgba(28,37,32,.06);
  --paper-a90:rgba(228,232,220,.95);--paper-a70:rgba(228,232,220,.8);--paper-a45:rgba(228,232,220,.68);--paper-a18:rgba(228,232,220,.2);--paper-a08:rgba(228,232,220,.08);--accent:#344b3a;--accent-contrast:#e4e8dc;
  --depth-stage-hi:#f2f4ee;--depth-stage-mid:#dfe3d7;--depth-stage-lo:#d4d9cd;--depth-panel-a:#dde1d5;--depth-panel-b:#d2d8cc;
- --smoke-0:#0b120e;--smoke-1:#2c4636;--smoke-2:#8aa890;--smoke-3:#e6eee2;
+ --smoke-0:#0b120e;--smoke-1:#2a4233;--smoke-2:#6f8b75;--smoke-3:#b4c4b0;
  --corridor-bg:#1c2520;--corridor-paper:#e4e8dc;--corridor-muted:#a4aaa0;
 }
 html[data-card-theme="green"] .on-dark{--accent:#e4e8dc;--accent-contrast:#1c2520}
@@ -29,7 +33,7 @@ html[data-card-theme="slate"] {
  --ink-a80:rgba(32,42,52,.8);--ink-a55:rgba(32,42,52,.7);--ink-a30:rgba(32,42,52,.3);--ink-a12:rgba(32,42,52,.16);--ink-a06:rgba(32,42,52,.06);
  --paper-a90:rgba(227,233,236,.95);--paper-a70:rgba(227,233,236,.8);--paper-a45:rgba(227,233,236,.7);--paper-a18:rgba(227,233,236,.2);--paper-a08:rgba(227,233,236,.08);--accent:#354858;--accent-contrast:#e3e9ec;
  --depth-stage-hi:#f1f4f6;--depth-stage-mid:#dee4e8;--depth-stage-lo:#d3dbdf;--depth-panel-a:#dce3e6;--depth-panel-b:#d2d9dd;
- --smoke-0:#0b1118;--smoke-1:#2a4660;--smoke-2:#8aaac2;--smoke-3:#e6eef4;
+ --smoke-0:#0b1118;--smoke-1:#284259;--smoke-2:#6a879e;--smoke-3:#afc0cc;
  --corridor-bg:#202a34;--corridor-paper:#e3e9ec;--corridor-muted:#a5acb1;
 }
 html[data-card-theme="slate"] .on-dark{--accent:#e3e9ec;--accent-contrast:#202a34}
@@ -42,7 +46,7 @@ html[data-card-theme="warm"] {
  --ink-a80:rgba(48,40,32,.8);--ink-a55:rgba(48,40,32,.7);--ink-a30:rgba(48,40,32,.3);--ink-a12:rgba(48,40,32,.16);--ink-a06:rgba(48,40,32,.06);
  --paper-a90:rgba(238,229,215,.95);--paper-a70:rgba(238,229,215,.8);--paper-a45:rgba(238,229,215,.7);--paper-a18:rgba(238,229,215,.2);--paper-a08:rgba(238,229,215,.08);--accent:#584736;--accent-contrast:#eee5d7;
  --depth-stage-hi:#f6f2eb;--depth-stage-mid:#e9e0d2;--depth-stage-lo:#e0d7c9;--depth-panel-a:#e8dfd1;--depth-panel-b:#dfd5c7;
- --smoke-0:#140e09;--smoke-1:#5b432c;--smoke-2:#c3a27e;--smoke-3:#f4ece0;
+ --smoke-0:#140e09;--smoke-1:#523d29;--smoke-2:#9c8166;--smoke-3:#cbbba5;
  --corridor-bg:#302820;--corridor-paper:#eee5d7;--corridor-muted:#b1a99c;
 }
 html[data-card-theme="warm"] .on-dark{--accent:#eee5d7;--accent-contrast:#302820}
@@ -54,8 +58,8 @@ html[data-card-theme="warm"] .depth-design .charger-launch-cue{background:#30282
 .site-display {
  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-6);
  padding-top: var(--space-5); border-top: 1px solid var(--line-hairline);
- font-family: var(--font-mono); font-size: var(--fs-meta); line-height: 1.4;
- letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-display);
+ font-family: var(--font-mono); font-size: var(--fs-meta, 12px); line-height: 1.4;
+ letter-spacing: var(--ls-caps, .18em); text-transform: uppercase; color: var(--text-display);
 }
 .site-display-title, .site-display-label { color: var(--text-meta); }
 .site-display-title { color: var(--text-display); }
@@ -64,10 +68,10 @@ html[data-card-theme="warm"] .depth-design .charger-launch-cue{background:#30282
 .site-display button {
  display: inline-flex; align-items: center; gap: var(--space-2);
  min-height: 36px; padding: 0 var(--space-3); margin: 0;
- border: 1px solid var(--line-hairline); border-radius: var(--radius-pill);
+ border: 1px solid var(--line-hairline); border-radius: var(--radius-pill, 999px);
  background: transparent; color: inherit; cursor: pointer;
  font: inherit; letter-spacing: inherit; text-transform: inherit;
- transition: border-color var(--t-hover), background-color var(--t-hover);
+ transition: border-color var(--t-hover, 240ms ease), background-color var(--t-hover, 240ms ease);
 }
 .site-display button:hover { border-color: var(--text-meta); }
 .site-display button[aria-pressed="true"] { border-color: var(--text-display); }
@@ -82,12 +86,12 @@ html[data-card-theme="warm"] .depth-design .charger-launch-cue{background:#30282
 }
 .site-display-switch > span::after {
  content: ""; position: absolute; top: 2px; left: 2px; width: 8px; height: 8px;
- border-radius: 50%; background: currentColor; transition: transform var(--t-hover);
+ border-radius: 50%; background: currentColor; transition: transform var(--t-hover, 240ms ease);
 }
 .site-display-switch[aria-checked="true"] > span::after { transform: translateX(12px); }
 .site-display-switch b { font-weight: inherit; min-width: 3ch; }
 .site-display-note {
- flex-basis: 100%; margin: 0; font-size: var(--fs-meta-sm); letter-spacing: 0.1em; color: var(--text-meta);
+ flex-basis: 100%; margin: 0; font-size: var(--fs-meta-sm, 10px); letter-spacing: 0.1em; color: var(--text-meta);
 }
 #mt-menu .site-display {
  margin-top: var(--space-6); flex-direction: column; align-items: flex-start; gap: var(--space-4);
@@ -97,5 +101,10 @@ html[data-card-theme="warm"] .depth-design .charger-launch-cue{background:#30282
 #mt-menu .site-display-note { flex-basis: auto; }
 /* The menu is taller with the control in it; let it scroll on short phones. */
 #mt-menu:has(.site-display) { overflow-y: auto; justify-content: safe center; padding-block: 72px 32px; }
+#mt-menu:has(.site-display) > * { flex-shrink: 0; }
+#mt-menu:has(.site-display) #mt-menu-close { position: fixed; }
+/* websites.html: its footer is a single flex row; give the control its own line. */
+.website-footer:has(> .site-display) { flex-wrap: wrap; }
+.website-footer > .site-display { flex-basis: 100%; }
 @media (max-width: 860px) { .site-display button { min-height: 44px; } }
 @media print { .site-display { display: none; } }

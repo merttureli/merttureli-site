@@ -20,7 +20,7 @@
   const swatches = {
     original: split('#ffffff', '#0a0a0a'), green: split('#e4e8dc', '#1c2520'),
     slate: split('#e3e9ec', '#202a34'), warm: split('#eee5d7', '#302820'),
-    daily: 'conic-gradient(#0a0a0a 0 25%,#1c2520 0 50%,#202a34 0 75%,#302820 0)'
+    daily: 'conic-gradient(#ffffff 0 25%,#1c2520 0 50%,#e3e9ec 0 75%,#302820 0)'
   };
   const reduce = matchMedia('(prefers-reduced-motion: reduce)');
   const read = key => { try { return localStorage.getItem(key); } catch { return null; } };
