@@ -56,7 +56,8 @@ same data in machine-readable form.
 3. It waits for network idle again. Every `<img>`, including those in open
    shadow roots, is switched to eager loading and awaited (8 s cap). Every
    `<video>` is paused, loses `autoplay` and is reset with `load()`, so it
-   shows its poster and not whatever frame it reached. Then it takes a
+   shows its poster and not whatever frame it reached. A lazy poster
+   (`data-poster`) is applied first and awaited, like a lazy image. Then it takes a
    full-page screenshot with CSS animations disabled and the `--mask`
    selectors painted over.
 
@@ -84,7 +85,8 @@ header, the hero or further down the page.
 
 Because every video is reset to its poster, adding or removing `autoplay`
 cannot show up as a pixel difference. Check that in the HTML diff instead.
-Under reduced motion, `js/media-playback.js` and `js/depth-motion.js` do
-nothing. Changes that only add motion hooks therefore do not show up here.
+Under reduced motion, `js/media-playback.js` plays nothing and the Display
+control sets `html[data-motion="off"]`, which stops CSS transitions and
+animations. Changes that only add motion hooks therefore do not show up here.
 CSS-only effects keyed on those hooks, such as `.depth-hero::before`, still
 show.

@@ -81,11 +81,12 @@
   // turn if the effect wants to be stronger (lower) or the text safer (higher).
   var SCRIM_ALPHA = 0.58;
 
-  // Every pixel runs five 5-octave fBm evaluations, and this section is several
-  // thousand CSS pixels tall. At a straight 2x device ratio that is tens of
-  // millions of shaded pixels per frame and the whole page stutters. Smoke is
-  // low-frequency enough that resolving it below 1:1 is invisible, so the
-  // drawing buffer is held to a fixed pixel budget and CSS scales it back up.
+  // Every pixel runs five 5-octave fBm evaluations. The smoke sits on the
+  // closing contact plate (about 1440x570 CSS pixels on a laptop), but on a
+  // large or high-density screen the plate still reaches millions of device
+  // pixels. Smoke is low-frequency enough that resolving it below 1:1 is
+  // invisible, so the drawing buffer is held to a fixed pixel budget and CSS
+  // scales it back up.
   var PIXEL_BUDGET = 2200000;
 
   // Ripples are a real height field, not a radial wobble faked in screen space.
@@ -93,6 +94,12 @@
   // injects impulses, and the main shader refracts the smoke through the
   // resulting surface. SIM_C2 must stay under 0.5 or the integration explodes.
   var SIM_SIZE = 512;
+  // The wave equation is integrated in fixed steps at this rate, whatever the
+  // display refresh rate, so ripples travel at the same speed at 30, 60 or
+  // 120 Hz. A slow frame runs at most SIM_MAX_STEPS steps and drops the rest
+  // rather than spiralling.
+  var SIM_HZ = 60;
+  var SIM_MAX_STEPS = 2;
   var SIM_C2 = 0.28;      // wave speed squared, stability bound 0.5
   var SIM_DAMP = 0.9965;  // per-step decay, so a ripple dies out on its own
   var IMPULSE_RADIUS = 0.028;
@@ -601,6 +608,7 @@
     var raf = 0;
     var seconds = 0;
     var lastFrame = 0;
+    var simDebt = 0;          // seconds of wave simulation not yet stepped
 
     function resize() {
       var w = section.clientWidth;
@@ -636,10 +644,16 @@
     function frame(now) {
       // lastFrame is cleared whenever the loop stops, so a pause never shows up
       // later as a jump in the smoke.
-      if (lastFrame) seconds += (now - lastFrame) / 1000;
+      var dt = lastFrame ? (now - lastFrame) / 1000 : 0;
+      seconds += dt;
       lastFrame = now;
       resize();
-      stepWater();
+      simDebt += dt;
+      for (var steps = 0; simDebt >= 1 / SIM_HZ && steps < SIM_MAX_STEPS; steps++) {
+        stepWater();
+        simDebt -= 1 / SIM_HZ;
+      }
+      if (simDebt >= 1 / SIM_HZ) simDebt = 0;
       draw();
       raf = requestAnimationFrame(frame);
     }
@@ -649,6 +663,7 @@
       raf = 0;
       running = false;
       lastFrame = 0;
+      simDebt = 0;
     }
 
     function sync() {

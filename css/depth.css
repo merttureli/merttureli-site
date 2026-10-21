@@ -1,4 +1,7 @@
-/* One light direction, three surfaces: paper, mounted photographs, inset hardware. */
+/* One light direction, three surfaces: paper, mounted photographs, inset hardware.
+   Durations and easings come from the design-system motion tokens (--t-hover,
+   --dur-*, --ease-out). The deliberate exceptions live elsewhere: the 42 s
+   photography corridor drift and its 1050 ms dissolve. */
 /* Inset surfaces as tokens so the palettes in css/site-palette.css can retint them. */
 :root {
   --depth-stage-hi: #fff;
@@ -8,7 +11,6 @@
   --depth-panel-b: #dedfdf;
 }
 .depth-design {
-  --depth-ease: cubic-bezier(.22, 1, .36, 1);
   --depth-shadow: 0 2px 3px #0a0a0a0a, 0 14px 26px -12px #0a0a0a26, 0 36px 58px -30px #0a0a0a40;
 }
 .depth-hero {
@@ -34,8 +36,8 @@
   height: 1px;
   background: #ffffff94;
   transform-origin: left;
-  animation: depth-underline 640ms var(--depth-ease) both;
-  animation-delay: calc(320ms + var(--verb-index, 0) * 70ms);
+  animation: depth-underline var(--dur-4) var(--ease-out) both;
+  animation-delay: calc(var(--dur-2) + var(--verb-index, 0) * var(--stagger));
 }
 @keyframes depth-underline { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
@@ -71,7 +73,7 @@
   border-radius: 12px;
   background: linear-gradient(135deg, #363a3deb, #161819f5);
   box-shadow: inset 0 1px #ffffff0a, 0 8px 20px #0005, 0 1px 2px #0006;
-  transition: transform 180ms var(--depth-ease);
+  transition: transform var(--t-hover);
 }
 .depth-design .charger-launch-icon { border-color: #ffffff38; border-radius: 6px; background: #ffffff08; }
 .depth-design .charger-launch:is(:hover, :focus-visible) .charger-launch-cue { transform: translateY(-3px); }
@@ -98,7 +100,7 @@
 .depth-design figure > div:first-child > img {
   display: block;
   transform: scale(1) !important;
-  transition: transform 650ms var(--depth-ease) !important;
+  transition: transform var(--t-enter) !important;
 }
 .depth-design .on-dark figure > div:first-child { outline-color: #ffffff30; box-shadow: 0 16px 36px -16px #000b; }
 .depth-stage {
@@ -132,7 +134,7 @@
 }
 .depth-design [data-depth-button] {
   position: relative;
-  transition: transform 180ms var(--depth-ease), background 180ms ease, color 180ms ease, border-color 180ms ease !important;
+  transition: transform var(--t-hover), background var(--t-hover), color var(--t-hover), border-color var(--t-hover) !important;
 }
 .depth-design [data-depth-button="glass"] {
   background-image: linear-gradient(150deg, #ffffff16, transparent) !important;
@@ -141,22 +143,20 @@
 .depth-design [data-depth-button="outline"] { box-shadow: inset 0 1px #ffffff70, 0 3px 4px -3px #0003; }
 .depth-design [data-depth-button]:focus-visible { outline: 2px solid currentColor; outline-offset: 5px; }
 .depth-design [data-depth-button]:focus-visible > span:last-child { transform: translateX(3px) !important; }
-.depth-design [data-depth-button]:active { transform: translateY(1px); }
 .depth-design [data-depth-button="link"]::after {
   content: ""; position: absolute; inset: auto 0 -1px; height: 1px;
   background: currentColor; transform: scaleX(0); transform-origin: left;
-  transition: transform 180ms var(--depth-ease);
+  transition: transform var(--t-hover);
 }
 .depth-design [data-depth-button="link"]:is(:hover, :focus-visible)::after { transform: scaleX(1); }
 .depth-design [data-depth-label],
-.depth-design [data-depth-rule] > span { color: var(--text-meta) !important; }
+.depth-design [data-depth-rule] > :is(span, h2, h3) { color: var(--text-meta) !important; }
 .depth-design .on-dark [data-depth-label],
-.depth-design .on-dark [data-depth-rule] > span { color: var(--paper-a70) !important; }
+.depth-design .on-dark [data-depth-rule] > :is(span, h2, h3) { color: var(--paper-a70) !important; }
 /* Contact labels sit over the animated smoke. Lift the type rather than
    darken the scrim, so the effect keeps its strength. */
 #contact.on-dark { --text-meta: var(--paper-a90); }
-.depth-design #contact [data-depth-rule] > span { color: var(--paper-a90) !important; }
-.depth-design [data-depth-rule] > span[style*="flex: 1"] { transform-origin: left; }
+.depth-design #contact [data-depth-rule] > :is(span, h2, h3) { color: var(--paper-a90) !important; }
 @media (hover: hover) and (pointer: fine) {
   .depth-portrait:hover > img, .depth-design figure > div:first-child:hover > img { transform: scale(1.015) !important; }
   .depth-design [data-depth-button]:not([data-depth-button="link"]):hover { transform: translateY(-2px); }
@@ -174,9 +174,9 @@
   .depth-portrait:hover > img, .depth-design figure > div:first-child:hover > img { transform: none !important; }
   .depth-design .charger-launch-cue, .depth-design [data-depth-button]:hover { transform: none !important; }
 }
-html[data-depth-motion="off"] .depth-design *,
-html[data-depth-motion="off"] .depth-design *::before,
-html[data-depth-motion="off"] .depth-design *::after { animation: none !important; transition: none !important; }
-html[data-depth-motion="off"] .depth-design img,
-html[data-depth-motion="off"] .charger-launch-cue,
-html[data-depth-motion="off"] .depth-design [data-depth-button] { transform: none !important; }
+html[data-motion="off"] .depth-design *,
+html[data-motion="off"] .depth-design *::before,
+html[data-motion="off"] .depth-design *::after { animation: none !important; transition: none !important; }
+html[data-motion="off"] .depth-design img,
+html[data-motion="off"] .charger-launch-cue,
+html[data-motion="off"] .depth-design [data-depth-button] { transform: none !important; }

@@ -25,7 +25,7 @@ Normally run python3 tools/build.py instead, which runs this and then the
 static render.
 
 Depth hooks (depth-hero, depth-stage, data-depth-*) are emitted by the helpers
-below so css/depth.css and js/depth-motion.js see the same markup as on the home
+below so css/depth.css sees the same markup as on the home
 page. Do not hand edit src/projects/*.html or projects/*.html: run
 tools/build.py --check after any change here.
 """
@@ -46,10 +46,31 @@ OUT_DIR = os.path.join(SRC, "projects")
 DS = "mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d"
 NS = "MertTReliDesignSystem_56763c"
 
-FAVICON = ("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E"
-           "%3Crect width='64' height='64' rx='12' fill='%230A0A0A'/%3E"
-           "%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='26' "
-           "font-weight='600' fill='%23FFFFFF'%3EMT%3C/text%3E%3C/svg%3E")
+# Smaller VP9-alpha encodes of the turntable clips. js/media-playback.js picks
+# <base>-<md>-alpha.webm above the phone breakpoint and <base>-<sm>-alpha.webm
+# at phone widths; the full size <base>-alpha.webm stays as data-src.
+MOTION_VARIANTS = {
+    "robo-catcher-360": (1280, 960),
+    "rudder-pedals-working": (1280, 960),
+    "charger-square": (1080, 720),
+    "therma-shift-airflow": (1200, 800),
+}
+# Clips whose opaque .mp4 is the intended look (the blurred IP renders are white
+# tiles by design). Every other turntable is a transparent cutout whose mp4 has
+# a baked background that clashes with the palettes, so it ships webm only: a
+# browser without VP9 alpha keeps the WebP poster, which has alpha.
+OPAQUE_CLIPS = {"bend-fixture-blurred"}
+
+
+def webm_source(base, alpha=True):
+    """A lazy <source> for js/media-playback.js, with the size variants when they exist."""
+    suffix = "-alpha" if alpha else ""
+    attrs = 'data-src="../assets/motion/%s%s.webm"' % (base, suffix)
+    if base in MOTION_VARIANTS:
+        md, sm = MOTION_VARIANTS[base]
+        attrs += (' data-src-md="../assets/motion/%s-%d-alpha.webm" '
+                  'data-src-sm="../assets/motion/%s-%d-alpha.webm"' % (base, md, base, sm))
+    return '<source %s type="video/webm">' % attrs
 
 
 # --------------------------------------------------------------- theme lifting
@@ -109,15 +130,21 @@ def meta(text, index_no=None, tone=None, wide=False, size="240px,16px"):
 
 
 def rule(label, right=None, anchor=None):
-    """A section rule. `anchor` adds a scroll target just above it for deep links."""
+    """
+    A section rule whose label is the section's h2 (data-heading: the static
+    render turns the label into the heading). `anchor` adds a scroll target just
+    above it for deep links.
+    """
     r = ' right="%s"' % right if right else ''
     a = ('<span id="%s" style="scroll-margin-top:30px"></span>' % anchor) if anchor else ''
-    return ('%s<x-import data-depth-rule="true" component-from-global-scope="%s.Rule" label="%s"%s '
-            'hint-size="100%%,14px"></x-import>' % (a, NS, label, r))
+    return ('%s<x-import data-depth-rule="true" data-heading="2" component-from-global-scope="%s.Rule" '
+            'label="%s"%s hint-size="100%%,14px"></x-import>' % (a, NS, label, r))
 
 
-def heading(text, level=2, treatment=None, size="100%,90px"):
+def heading(text, level=2, treatment=None, size="100%,90px", tag=None):
+    """DisplayHeading. `level` sets the size only; `tag` is the element (h2 by default)."""
     t = ' treatment="%s"' % treatment if treatment else ''
+    t += ' as="%s"' % tag if tag else ''
     return ('<x-import component-from-global-scope="%s.DisplayHeading" level="%d"%s hint-size="%s">%s</x-import>'
             % (NS, level, t, size, text))
 
@@ -143,11 +170,12 @@ def frame(src, alt, caption, ratio="3 / 2", idx=None, zoom=True, size="100%,300p
             % (NS, src, alt, ratio, caption, a, z, size))
 
 
-def button(text, href, variant="outline", dark=False, size="220px,44px"):
+def button(text, href, variant="outline", dark=False, size="220px,44px", trailing="→"):
     dp = ' dc-props="{{ linkOnDark }}"' if dark else ''
-    return ('<x-import component-from-global-scope="%s.Button" data-depth-button="%s" variant="%s" '
-            'trailing="→" href="%s"%s hint-size="%s">%s</x-import>'
-            % (NS, variant, variant, href, dp, size, text))
+    tr = ' trailing="%s"' % trailing if trailing else ''
+    return ('<x-import component-from-global-scope="%s.Button" data-depth-button="%s" variant="%s"'
+            '%s href="%s"%s hint-size="%s">%s</x-import>'
+            % (NS, variant, variant, tr, href, dp, size, text))
 
 
 def spec_list(name, cols="minmax(64px,110px) minmax(0,1fr)", size="100%,220px"):
@@ -239,26 +267,27 @@ def clip_band(base, caption, ratio="16 / 9"):
     A wide autoplaying render, centred at page width.
 
     Unlike the hero clip, these carry their own lighting and floor, so they sit
-    in a framed band rather than floating transparent over the panel, and the
-    poster is a jpg rather than a cutout png.
+    in a framed band rather than floating transparent over the panel, and keep
+    their opaque mp4. Below the fold, so the poster waits for data-poster.
     """
     return ('  <section data-reveal="1" style="position: relative; padding: 0 var(--page-margin) '
             'var(--section-y)">\n'
             '    <div style="position: relative; max-width: var(--max-width); margin: 0 auto">\n'
             '      <div style="position: relative; width: 100%%; aspect-ratio: %s; overflow: hidden; '
             'border-radius: var(--radius-lg, 14px); background: var(--ink-900)">\n'
-            '        <video data-clip="1" poster="../assets/motion/%s-poster.jpg" autoplay loop muted '
-            'playsinline preload="metadata" style="position: absolute; inset: 0; width: 100%%; '
+            '        <video data-clip="1" data-poster="../assets/motion/%s-poster.webp" loop muted '
+            'playsinline preload="none" style="position: absolute; inset: 0; width: 100%%; '
             'height: 100%%; object-fit: cover; display: block">'
-            '<source src="../assets/motion/%s.webm" type="video/webm">'
-            '<source src="../assets/motion/%s.mp4" type="video/mp4"></video>\n'
+            '<source data-src="../assets/motion/%s.webm" data-src-md="../assets/motion/%s-1280.webm" '
+            'data-src-sm="../assets/motion/%s-960.webm" type="video/webm">'
+            '<source data-src="../assets/motion/%s.mp4" type="video/mp4"></video>\n'
             '      </div>\n'
             '      <div style="padding: var(--space-4) 0 0">\n'
             '        <span style="font-family: var(--font-mono); font-size: var(--fs-meta); '
             'letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta)">%s'
             '</span>\n'
             '      </div>\n'
-            '    </div>\n  </section>\n' % (ratio, base, base, base, caption))
+            '    </div>\n  </section>\n' % (ratio, base, base, base, base, base, caption))
 
 
 def media_col(frames):
@@ -277,13 +306,30 @@ def media_col(frames):
 
 
 def section(inner, dark=False, pad="var(--section-y) var(--page-margin)", extra="",
-            gap="var(--space-7)"):
+            gap="var(--space-7)", track=None):
     cls = ' class="on-dark"' if dark else ''
+    cls += ' data-track="%s"' % track if track else ''
     bg = ' background: var(--ink-900);' if dark else ''
     return ('  <section%s style="position: relative;%s padding: %s;%s">\n'
             '    <div style="position: relative; max-width: var(--max-width); margin: 0 auto; '
             'display: flex; flex-direction: column; gap: %s">\n%s\n    </div>\n'
             '  </section>\n' % (cls, bg, pad, extra, gap, inner))
+
+
+def track_id(sec):
+    """The name js/track.js reports for a section: its anchor, or its label as a slug."""
+    return sec.get("anchor") or re.sub(r"[^a-z0-9]+", "-", sec["label"].lower()).strip("-")
+
+
+# A labelled part inside a run of light sections. The wrapper repeats the run's
+# own column and gap, so the layout is the same as without it; it exists so
+# js/track.js can time each part (data-track) separately.
+RUN_GAP = "var(--space-9)"
+
+
+def tracked_part(name, piece):
+    return ('      <div data-track="%s" style="display: flex; flex-direction: column; gap: %s">\n'
+            '%s\n      </div>' % (name, RUN_GAP, piece))
 
 
 def block(*parts, **kw):
@@ -342,21 +388,36 @@ NAV = [
 ]
 
 
+def title_level(title):
+    """
+    Display size for a case title. At --fs-display-1 the copy column holds about
+    nine capitals, so a longer word ran under the clip (CHARGER's DEPLOYABLE at
+    1440 reached 360px past its column). Such titles use --fs-display-2.
+    Hyphenated words can break at the hyphen, so they count by their parts.
+    """
+    longest = max(len(w) for w in re.split(r"[\s-]+", title) if w)
+    return 2 if longest >= 10 else 1
+
+
 def build(case, index, out_dir=OUT_DIR):
     hero_clip = case.get("clip")
     clip_markup = ""
-    # The hero clip carries no autoplay attribute: js/media-playback.js starts
-    # it when it is on screen and leaves it paused under reduced motion.
+    # The hero clip carries no autoplay attribute and lazy sources:
+    # js/media-playback.js loads and starts it when it is on screen and leaves it
+    # paused under reduced motion. Its poster is eager because it is the first
+    # thing on the page. It is not preloaded: the case LCP is the lede, and a
+    # high-priority poster preload measured 60 ms slower FCP/LCP on throttled
+    # mobile by competing with the stylesheets.
     aria = (' aria-label="%s"' % escape(case["clip_aria"], quote=True)) if case.get("clip_aria") else ''
     if hero_clip:
         clip_markup = (
             '<div class="depth-stage" data-reveal="1" style="position: relative; width: 100%%; aspect-ratio: %s">\n'
-            '          <video data-clip="1"%s poster="../assets/motion/%s-poster.%s" loop muted '
-            'playsinline preload="metadata" style="width: 100%%; height: 100%%; object-fit: contain; display: block">'
-            '<source src="../assets/motion/%s-alpha.webm" type="video/webm">'
-            '<source src="../assets/motion/%s.mp4" type="video/mp4"></video>\n        </div>'
-            % (case.get("clip_ratio", "4 / 3"), aria, hero_clip, case.get("poster_ext", "png"),
-               hero_clip, hero_clip))
+            '          <video data-clip="1"%s poster="../assets/motion/%s-poster.webp" loop muted '
+            'playsinline preload="none" style="width: 100%%; height: 100%%; object-fit: contain; display: block">'
+            '%s%s</video>\n        </div>'
+            % (case.get("clip_ratio", "4 / 3"), aria, hero_clip, webm_source(hero_clip),
+               ('<source data-src="../assets/motion/%s.mp4" type="video/mp4">' % hero_clip)
+               if hero_clip in OPAQUE_CLIPS else ""))
     elif case.get("hero_image"):
         clip_markup = ('<div data-reveal="1">%s</div>'
                        % frame(case["hero_image"], case["title"], case.get("hero_caption", ""),
@@ -377,14 +438,12 @@ def build(case, index, out_dir=OUT_DIR):
         '  <section class="on-dark depth-hero" style="position: relative; min-height: min(720px, 88vh); '
         'background: var(--ink-900); overflow: hidden; display: flex; flex-direction: column">\n'
         '    %s\n'
-        '    <x-import component-from-global-scope="%s.SiteHeader" items="{{ nav }}" active="work" '
-        'inverse="true" floating="true" hint-size="100%%,88px"></x-import>\n'
         '    <x-import component-from-global-scope="%s.SocialRail" items="{{ social }}" inverse="true" '
         'fixed="true" hint-size="36px,120px"></x-import>\n'
         '    <div style="position: relative; flex: 1; display: grid; grid-template-columns: '
         'minmax(0, 1fr) minmax(0, 1.15fr); align-items: center; gap: var(--space-8); '
         'padding: calc(var(--header-h) + var(--space-8)) var(--page-margin) var(--space-8); '
-        'max-width: var(--max-width); margin: 0 auto; width: 100%%">\n'
+        'max-width: calc(var(--max-width) + 2 * var(--page-margin)); margin: 0 auto; width: 100%%">\n'
         '      <div style="display: flex; flex-direction: column; gap: var(--space-5)">\n'
         '        %s\n        %s\n        %s\n'
         '        <div style="display: flex; gap: var(--space-4); flex-wrap: wrap; margin-top: var(--space-2)">\n'
@@ -393,13 +452,19 @@ def build(case, index, out_dir=OUT_DIR):
         '      %s\n'
         '    </div>\n'
         '  </section>\n'
-        % (grain(), NS, NS,
+        % (grain(), NS,
            meta(case["eyebrow"], wide=True, size="300px,16px"),
-           heading(case["title"], level=1, treatment="inverse", size="100%,140px"),
+           heading(case["title"], level=title_level(case["title"]), treatment="inverse",
+                   size="100%,140px", tag="h1"),
            para_dark(case["lede"], big=True),
            button("All work", "../index.html#work", variant="glass", dark=True, size="150px,44px"),
            clip_markup))
 
+    # The banner sits outside <main>, before the hero it floats over, as on the
+    # home page.
+    site_header = ('  <x-import component-from-global-scope="%s.SiteHeader" items="{{ nav }}" active="work" '
+                   'inverse="true" floating="true" dc-props="{{ headerRow }}" hint-size="100%%,88px">'
+                   '</x-import>\n' % NS)
     body = [hero]
     if case.get("walkthrough"):
         body.append(walkthrough(case["walkthrough"]))
@@ -410,7 +475,7 @@ def build(case, index, out_dir=OUT_DIR):
         two_col(spec_list("brief", size="100%%,260px"),
                 block(*[para(p) for p in case["brief_note"]]) if case.get("brief_note") else "",
                 cols="minmax(0, 1fr) minmax(0, 1fr)"),
-        pad="var(--section-y) var(--page-margin) var(--space-9)"))
+        pad="var(--section-y) var(--page-margin) var(--space-9)", track="brief"))
 
     # Consecutive light sections share one <section> so the article reads as
     # continuous prose. Text and media sit side by side rather than stacking,
@@ -418,13 +483,19 @@ def build(case, index, out_dir=OUT_DIR):
     # the page length roughly in half.
     n = 2
     run = []
+    # A light run normally continues the light section above it, so it has no
+    # top padding. After a dark plate or a stats band it starts a new light
+    # section and needs the full section spacing, or its Rule sits on the plate.
+    after_dark = [False]
 
     def flush():
         if run:
+            top = "var(--section-y)" if after_dark[0] else "0"
             body.append(section("\n".join(run),
-                                pad="0 var(--page-margin) var(--section-y)",
-                                gap="var(--space-9)"))
+                                pad="%s var(--page-margin) var(--section-y)" % top,
+                                gap=RUN_GAP))
             del run[:]
+            after_dark[0] = False
 
     for sec in case["sections"]:
         kind = sec.get("kind")
@@ -432,18 +503,21 @@ def build(case, index, out_dir=OUT_DIR):
         if kind == "stats":
             flush()
             body.append(section(stats_band(sec["stats"]), dark=True,
-                                pad="var(--space-9) var(--page-margin)"))
+                                pad="var(--space-9) var(--page-margin)", track="results"))
+            after_dark[0] = True
             continue
 
         if kind == "bleed":
             flush()
             body.append(bleed(sec["src"], sec["alt"], sec["caption"]))
+            after_dark[0] = False
             continue
 
         if kind == "clip_band":
             flush()
             body.append(clip_band(sec["base"], sec["caption"],
                                   sec.get("ratio", "16 / 9")))
+            after_dark[0] = False
             continue
 
         head = block(rule(sec["label"], right="%02d" % n, anchor=sec.get("anchor")))
@@ -475,15 +549,17 @@ def build(case, index, out_dir=OUT_DIR):
 
         if sec.get("dark"):
             flush()
-            body.append(section(piece, dark=True))
+            body.append(section(piece, dark=True, track=track_id(sec)))
+            after_dark[0] = True
         else:
-            run.append(piece)
+            run.append(tracked_part(track_id(sec), piece))
     flush()
 
     # next / prev
     nav_btns = []
     if case.get("prev"):
-        nav_btns.append(button("Previous: " + case["prev"][0], case["prev"][1], variant="link", size="240px,24px"))
+        nav_btns.append(button("← Previous: " + case["prev"][0], case["prev"][1], variant="outline",
+                               size="260px,44px", trailing=""))
     if case.get("next"):
         nav_btns.append(button("Next: " + case["next"][0], case["next"][1], variant="outline", size="260px,44px"))
     body.append(section(
@@ -500,6 +576,7 @@ def build(case, index, out_dir=OUT_DIR):
             '        { name: "Mail", icon: "mail", href: "../index.html#contact" },',
             "      ],",
             '      linkOnDark: { tone: "inverse" },',
+            '      headerRow: { style: { padding: "0 max(var(--page-margin), calc((100% - var(--max-width)) / 2))" } },',
             "      brief: ["]
     for label, value, aside in case["brief"]:
         row = '        { label: "%s", value: "%s"' % (label, value)
@@ -508,6 +585,8 @@ def build(case, index, out_dir=OUT_DIR):
         vals.append(row + " },")
     vals.append("      ],")
 
+    # The case title is the page's h1; CHARGER's <title> also names the rocket.
+    page_title = case.get("seo_title", case["title"])
     head_modules = "".join('<script type="module" src="%s"></script>\n' % m
                            for m in ([WALKTHROUGH_JS] if case.get("walkthrough") else []))
     html = (
@@ -517,27 +596,37 @@ def build(case, index, out_dir=OUT_DIR):
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         '<title>%s · Mert Tureli</title>\n'
         '<meta name="description" content="%s">\n'
-        '<link rel="icon" href="%s">\n'
+        '<link rel="icon" href="/assets/icons/favicon.ico" sizes="32x32">\n'
+        '<link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml">\n'
+        '<link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">\n'
         '<link rel="canonical" href="https://merttureli.com/projects/%s.html">\n'
         '<meta property="og:title" content="%s · Mert Tureli">\n'
         '<meta property="og:description" content="%s">\n'
         '<meta property="og:type" content="article">\n'
         '<meta property="og:url" content="https://merttureli.com/projects/%s.html">\n'
-        '<meta property="og:image" content="https://merttureli.com/assets/og-cover.png">\n'
+        '<meta property="og:site_name" content="Mert Tureli">\n'
+        '<meta property="og:image" content="https://merttureli.com/assets/og/case-%s-v1.png">\n'
+        '<meta property="og:image:width" content="1200">\n'
+        '<meta property="og:image:height" content="630">\n'
+        '<meta property="og:image:alt" content="%s">\n'
+        '<meta name="twitter:card" content="summary_large_image">\n'
         '<script src="../support.js"></script>\n'
         '%s'
         '<script src="../js/media-playback.js" defer></script>\n'
-        '<script src="../js/depth-motion.js" defer></script>\n'
         '<link rel="stylesheet" href="../css/interaction-polish.css">\n'
         '<script src="../js/interaction-polish.js" defer></script>\n'
-        '</head>\n<body class="depth-design">\n<x-dc>\n<helmet>\n%s\n</helmet>\n\n'
-        '<div style="background: var(--paper); overflow-x: hidden">\n\n%s\n%s\n</div>\n</x-dc>\n%s\n'
+        '</head>\n<body class="depth-design">\n'
+        '<a class="skip-link" href="#main">Skip to content</a>\n<x-dc>\n<helmet>\n%s\n</helmet>\n\n'
+        '<div style="background: var(--paper); overflow-x: hidden">\n\n%s\n  <main id="main">\n%s  </main>\n%s\n'
+        '</div>\n</x-dc>\n%s\n'
         '<script src="../js/mobile-nav.js"></script>\n'
         '<script src="../js/analytics-config.js"></script>\n'
         '<script src="../js/track.js"></script>\n'
         '<script src="../js/clarity.js"></script>\n</body>\n</html>\n'
-        % (PALETTE_JS, case["title"], case["description"], FAVICON, case["slug"], case["title"],
-           case["description"], case["slug"], head_modules, helmet_block(index), "\n".join(body),
+        % (PALETTE_JS, page_title, escape(case["description"], quote=True), case["slug"], page_title,
+           escape(case["description"], quote=True), case["slug"], case["slug"],
+           escape(case["og_alt"], quote=True), head_modules, helmet_block(index),
+           site_header, "\n".join(body),
            footer_block(index), runtime_script(index, "\n".join(vals))))
 
     out = os.path.join(out_dir, case["slug"] + ".html")
@@ -553,9 +642,9 @@ CASES["robo-catcher"] = {
     "slug": "robo-catcher",
     "eyebrow": "Case study / Senior capstone",
     "title": "Robo-Catcher",
-    "description": ("A softball machine that catches an incoming throw and returns it, built by a "
-                    "12 person capstone team for under $700. I co-led the feeding subsystem and owned "
-                    "all of the electronics and firmware."),
+    "description": ("A softball machine that catches an incoming throw and returns it, built by a 12 "
+                    "person capstone team for under $700. I owned the electronics and firmware."),
+    "og_alt": "Render of the Robo-Catcher softball catch and return machine.",
     "lede": ("Pitching machines are everywhere. Machines that catch the ball and return it do not "
              "exist at any price, so our capstone team built one for under $700. I co-led the feeding "
              "subsystem and owned all of the machine's electronics and firmware."),
@@ -648,9 +737,10 @@ CASES["charger"] = {
     "slug": "charger",
     "eyebrow": "Case study / Union College Rocket Team",
     "title": "Deployable sensor payload",
-    "description": ("CHARGER, the rocket that won the Deployable Sensor Payload event at Battle "
-                    "of the Rockets 2026. Custom payload electronics, five live telemetry "
-                    "channels, and a team that did not exist three years earlier."),
+    "seo_title": "CHARGER · Deployable sensor payload",
+    "description": ("CHARGER won the Deployable Sensor Payload event at Battle of the Rockets 2026, with "
+                    "custom payload electronics and five live telemetry channels."),
+    "og_alt": "Render of the CHARGER rocket.",
     "lede": ("The event asks for a rocket that puts a custom built sensor payload into a five "
              "hundred foot window, drops it at apogee, sheds its nose cone partway down, and "
              "streams five channels of telemetry to a handheld ground station until it lands. "
@@ -730,6 +820,10 @@ CASES["charger"] = {
             "put a conductive shell around a 2.4 GHz antenna. Cardboard is "
             "transparent at that frequency, so the radio set the airframe "
             "material.",
+            '<a href="../assets/charger-explorer/index.html" style="color: inherit; '
+            'text-decoration: underline; text-underline-offset: 3px; '
+            'text-decoration-color: var(--line-hairline)">Explore in 3D</a>'
+            " to see all 28 components at their true stations.",
         ], "ratio": "3 / 4", "cols": "minmax(0, 1fr) minmax(0, 1fr)", "frames": [
             ("F", "assets/photos/charger-rocket-photography/charger-pad-tall.jpg",
              "CHARGER on the launch rail before a flight", "On the rail", "01"),
@@ -812,14 +906,13 @@ CASES["bend-fixture"] = {
     "slug": "bend-fixture",
     "eyebrow": "Case study / SunThru",
     "title": "Custom three-point bend fixture",
-    "description": ("A fully 3D printable 12 part three-point bend fixture, designed in SolidWorks "
-                    "2025 around specimens too delicate for commercial fixtures, with the rebuilds "
-                    "automated in VBA."),
+    "description": ("A 3D printable 12 part three-point bend fixture, designed in SolidWorks 2025 for "
+                    "specimens too delicate for commercial fixtures, with rebuilds automated in VBA."),
+    "og_alt": "Blurred render of the three-point bend fixture.",
     "lede": ("Commercial bend fixtures are built for metals and plastics and will damage a fragile "
              "specimen before the test begins. SunThru needed one matched to its own samples, so I "
              "designed a fully printable 12 part fixture built around gentle handling."),
     "clip": "bend-fixture-blurred",
-    "poster_ext": "jpg",
     "clip_ratio": "16 / 9",
     "clip_note": "IP protected",
     "brief": [
@@ -887,9 +980,9 @@ CASES["rudder-pedals"] = {
     "slug": "rudder-pedals",
     "eyebrow": "Case study / Personal project",
     "title": "Flight sim rudder pedals",
-    "description": ("Three-axis flight sim rudder pedals with fighter style geometry, contactless "
-                    "Hall effect sensing and C++ USB HID firmware. Designed, printed, wired and "
-                    "programmed solo."),
+    "description": ("Three-axis flight sim rudder pedals with fighter style geometry, Hall effect sensing "
+                    "and C++ USB HID firmware. Designed, printed, wired and programmed solo."),
+    "og_alt": "Render of the flight sim rudder pedal mechanism.",
     "lede": ("I fly ultralights, and consumer sim pedals never felt right: short throw, toy-like "
              "centring, and potentiometers that get jittery as they wear. So I built my own, with "
              "fighter style geometry, three axes, and sensing that cannot wear out."),
@@ -975,9 +1068,9 @@ CASES["therma-shift"] = {
     "slug": "therma-shift",
     "eyebrow": "Case study / Personal project",
     "title": "Therma-Shift coaster",
-    "description": ("A dual mode thermoelectric coaster that heats or cools any mug or glass. "
-                    "Peltier stack bench validated to 11 C on the cold face at 12 V, with layered "
-                    "thermal runaway protection."),
+    "description": ("A dual mode thermoelectric coaster that heats or cools any mug or glass. Bench "
+                    "validated to 11 C on the cold face at 12 V, with thermal runaway protection."),
+    "og_alt": "Airflow illustration of the Therma-Shift coaster heat sink.",
     "lede": ("A solid state desktop coaster that actively heats or cools any standard mug, glass or "
              "can, with no proprietary drinkware. One Peltier module, closed loop control, and a "
              "safety architecture designed for unattended desk use."),

@@ -20,7 +20,7 @@
  *     stops it re-fetching the page).
  *   - Every script except support.js, the design-system bundle and React is
  *     answered with an empty body. Those are the islands (site-palette.js,
- *     mobile-nav.js, media-playback.js, depth-motion.js, shader-bg.js, the
+ *     mobile-nav.js, media-playback.js, shader-bg.js, the
  *     photography loader, interaction-polish.js, the CHARGER launcher, the
  *     walkthrough, track.js, clarity.js, ...). Their script tags stay in the
  *     page, in order and with their attributes, and run on the static page
@@ -206,6 +206,25 @@ async function render(browser, origin, pagePath, icons) {
     for (const img of document.querySelectorAll("img[src^='" + LUCIDE + "']")) {
       const name = img.getAttribute("src").slice(LUCIDE.length).replace(/\.svg$/, "");
       img.setAttribute("src", icons[name] || fail("no vendored lucide icon: " + name));
+    }
+    // SiteHeader hard-wires its wordmark to href="#". On the home page that is
+    // the top of the page; on a case page it has to go home.
+    if (prefix) for (const a of document.querySelectorAll("header[data-ds-header] > a[href='#']")) a.setAttribute("href", prefix + "index.html");
+    // The header's nav is the page's main navigation.
+    for (const nav of document.querySelectorAll("header[data-ds-header] > nav")) nav.setAttribute("aria-label", "Main");
+    // A Rule marked data-heading="N" is a section title: its label span becomes
+    // an <hN>. The inline style it had is kept, and the heading element's own
+    // defaults (base.css sets weight 500 and the title line height on h1-h4) are
+    // reset so the label looks exactly as before.
+    for (const rule of document.querySelectorAll("[data-heading]")) {
+      const level = rule.getAttribute("data-heading");
+      const label = rule.firstElementChild;
+      if (!/^[2-6]$/.test(level) || !label || label.tagName !== "SPAN" || !label.textContent.trim()) fail("data-heading on something that is not a labelled Rule: " + rule.outerHTML.slice(0, 160));
+      const h = document.createElement("h" + level);
+      h.setAttribute("style", label.getAttribute("style") + " margin: 0px; font-weight: inherit; line-height: inherit;");
+      h.append(...label.childNodes);
+      label.replaceWith(h);
+      rule.removeAttribute("data-heading");
     }
     // React sets `muted` as a property only; keep the template's attribute
     for (const v of document.querySelectorAll("video")) if (v.muted && !v.hasAttribute("muted")) v.setAttribute("muted", "");
