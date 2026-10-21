@@ -14,25 +14,27 @@
   .lab-panel { position: sticky; top: 0; align-self: start; max-height: 100svh; }
   .lab-stage { display: grid; align-content: start; gap: var(--space-6); padding: var(--space-5) var(--page-margin) var(--space-7); overflow: visible; }
   .tlab-row { display: grid; gap: var(--space-3); }
-  .tlab-row > .meta { color: var(--paper-a45); }
+  .tlab-row > .meta { color: var(--paper-a70); }
+  /* the ticker row stays pinned to the top of the stage, so SCROLL V and the velocity strip (through the sheet) read live while the runway scrolls */
+  .tlab-ticker-row { position: sticky; top: 0; z-index: 2; margin: 0 calc(-1 * var(--space-3)); padding: var(--space-3) var(--space-3) var(--space-4); background: var(--ink-900); border-bottom: 1px solid var(--paper-a18); }
   .tlab-wall-row { grid-template-columns: minmax(0, 440px) minmax(0, 1fr); gap: var(--space-5) var(--space-7); align-items: start; }
   .tlab-wall-row > .meta { grid-column: 1 / -1; }
   .tlab-aside { display: grid; gap: var(--space-3); max-width: var(--measure-narrow); color: var(--paper-a70); font-size: var(--fs-body-sm); }
-  .tlab-aside h2 { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps-wide); text-transform: uppercase; font-weight: 400; color: var(--paper-a45); }
+  .tlab-aside h2 { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps-wide); text-transform: uppercase; font-weight: 400; color: var(--paper-a70); }
   .tlab-aside dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--space-1) var(--space-4); margin: 0; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.06em; line-height: 1.6; }
   .tlab-aside dt { color: var(--paper); text-transform: uppercase; letter-spacing: var(--ls-caps); }
   .tlab-aside dd { margin: 0; color: var(--paper-a70); }
   #ticker { border: 1px solid var(--paper-a18); border-radius: var(--radius-md); overflow: hidden; }
   #ticker .tel-ticker { border-bottom: 0; }
   .tlab-runway { display: grid; border-top: 1px solid var(--paper-a18); }
-  .tlab-band { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-4); height: 240px; padding: var(--space-4) 0; border-bottom: 1px solid var(--paper-a18); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a45); }
+  .tlab-band { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-4); height: 240px; padding: var(--space-4) 0; border-bottom: 1px solid var(--paper-a18); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); }
   .tlab-band b { font-weight: 400; color: var(--paper-a18); font-family: var(--font-display); font-size: var(--fs-display-3); letter-spacing: var(--ls-display); line-height: 1; }
   .lab-row.tlab-seg { grid-template-columns: repeat(3, 1fr); }
   .lab-row.tlab-seg .lab-button { min-height: 32px; padding: 0 var(--space-2); }
   .lab-row.tlab-act { grid-template-columns: 1fr 1fr; }
-  .tlab-note { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.04em; line-height: 1.6; color: var(--paper-a45); }
+  .tlab-note { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.04em; line-height: 1.6; color: var(--paper-a70); }
   .lab-stage .lab-readout { min-height: 160px; padding: var(--space-4); border: 1px solid var(--paper-a18); border-radius: var(--radius-md); }
-  .lab-readout i { font-style: normal; color: var(--paper-a45); }
+  .lab-readout i { font-style: normal; color: var(--paper-a70); }
   @media (max-width: 860px) {
     .lab-panel { position: static; max-height: none; order: -1; border-top: 0; border-bottom: 1px solid var(--paper-a18); }
     .tlab-wall-row { grid-template-columns: 1fr; }
@@ -64,7 +66,7 @@
           <dl>
             <dt>Frame</dt><dd>governor.stats p50 and p95, requestAnimationFrame intervals in this tab; the bar runs 0 to 33.3 ms with the 16.7 ms budget mark at its middle.</dd>
             <dt>Long tasks</dt><dd>PerformanceObserver longtask, buffered; the BUSY button adds one.</dd>
-            <dt>Scroll v</dt><dd>scroll.state.vy, signed, px/s; the runway below gives it room.</dd>
+            <dt>Scroll v</dt><dd>scroll.state.vy, signed, px/s; the runway below gives it room and the ticker row stays pinned while you scroll it.</dd>
             <dt>Net</dt><dd>transferSize summed over Resource Timing entries; cached and cross-origin entries report 0 B and are counted.</dd>
             <dt>GL</dt><dd>bus.state stage:render; a dash on this page because no stage is mounted.</dd>
             <dt>Input</dt><dd>pointer media query, last pointer:move emitted by this page.</dd>
@@ -73,8 +75,8 @@
           <p>Strips draw at the tier's rate: every frame at T3, 30 Hz at T2, 10 Hz at T1; at T0 the rings fill from governor:stats at 4 Hz and the canvas repaints when the scroll stops. The loop runs only while the canvas is on screen.</p>
         </div>
       </section>
-      <section class="tlab-row" aria-label="Ticker layout">
-        <p class="meta">Ticker layout / phones / the button opens the wall as a sheet</p>
+      <section class="tlab-row tlab-ticker-row" aria-label="Ticker layout">
+        <p class="meta">Ticker layout / phones / the button opens the wall as a sheet / pinned while the runway scrolls</p>
         <div id="ticker"></div>
       </section>
       <section class="tlab-row" aria-label="Readout">
@@ -104,7 +106,7 @@
       </div>
       <h2>Parameters</h2>
       <label class="lab-row">Budget, ms <input id="budget" type="range" min="8" max="33.3" step="0.1" value="16.7"> <output for="budget">16.7</output></label>
-      <label class="lab-row">Text rate, Hz <input id="hz" type="range" min="1" max="8" step="1" value="4"> <output for="hz">4</output></label>
+      <label class="lab-row">Text rate, Hz <input id="hz" type="range" min="1" max="10" step="1" value="4"> <output for="hz">4</output></label>
       <label class="lab-row">Strip samples <input id="samples" type="range" min="60" max="240" step="10" value="120"> <output for="samples">120</output></label>
       <label class="lab-row">Strip charts <input id="strips" type="checkbox" checked></label>
       <label class="lab-row">Emit pointer:move from this page <input id="pointer" type="checkbox" checked></label>

@@ -61,14 +61,14 @@ export const MILESTONES = [
     source: `${CHARGER}: "There was no rocket team at Union College when I started. I founded it, ran it as captain and chief engineer…"; dated by ${INDEX}: "Union College Rocket Team / Schenectady, NY / August 2023 to June 2026"`,
   },
   {
-    id: 'pdr', label: 'Preliminary design review', date: '2025-12',
+    id: 'pdr', label: 'Preliminary review', date: '2025-12',
     derived: true,
     derivation: 'The page gives the month. The year follows from the April 2026 launch the review precedes.',
     sentence: 'The rules do not accept a friction fit motor mount. There was no retention design at the preliminary review, so I drew a screw-on cap.',
     source: `${REVIEWS} Sentence: "${CHARGER}: The rules do not accept a friction fit motor mount. There was no retention design at the preliminary review, so I drew a screw-on cap."`,
   },
   {
-    id: 'cdr', label: 'Critical design review', date: '2026-03',
+    id: 'cdr', label: 'Critical review', date: '2026-03',
     derived: true,
     derivation: 'The page gives the month. The year follows from the April 2026 launch the review precedes.',
     sentence: 'Radio and antenna trades, a power budget, a software state list, flight simulations, mass with the motor installed. The judges expect all of it written down months before anything flies, and they score it twice.',
@@ -128,8 +128,8 @@ export const WEEKEND = {
         },
         {
           id: 'd2-close', label: 'Range closes', timed: true, at: 16,
-          sentence: 'One team member stands at the launch control officer\'s position as mission control and nothing leaves the pad until they say it does.',
-          source: `${RANGE_CLOSES} Sentence: "${CHARGER}: One team member stands at the launch control officer's position as mission control and nothing leaves the pad until they say it does."`,
+          sentence: 'Three attempts per team, and the range closes at four in the afternoon.',
+          source: `${RANGE_CLOSES} The closing time is a rule of the event and applies to both days; the second day is published as "put up the qualifying flight before noon on the second".`,
         },
       ],
     },
@@ -178,7 +178,7 @@ export const LADDER = {
       source: WINDOW,
     },
     {
-      id: 'release', ft: Math.round(APOGEE_FT * RELEASE_FRACTION), label: 'Nose cone release', detail: '75 % of peak / nose cone lands under 15 ft/s on its own',
+      id: 'release', ft: Math.round(APOGEE_FT * RELEASE_FRACTION), label: 'Nose cone release', detail: '75 % of peak / must land under 15 ft/s on its own',
       derived: true,
       derivation: `${RELEASE_FRACTION} × ${APOGEE_FT.toLocaleString('en-US')} ft = ${(APOGEE_FT * RELEASE_FRACTION).toFixed(2)} ft, printed as ${Math.round(APOGEE_FT * RELEASE_FRACTION)} ft. The event is published; the altitude is arithmetic on the simulated apogee.`,
       sentence: 'The rocket flies a commercial G motor to between seven hundred and twelve hundred feet, drops the payload at apogee, and at seventy five percent of peak altitude the payload releases the nose cone, which has to reach the ground under fifteen feet per second on its own.',

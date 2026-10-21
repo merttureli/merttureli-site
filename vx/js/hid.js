@@ -13,12 +13,18 @@
    - the report rate is measured from gamepad.timestamp changes, so it can never
      read higher than the frame rate; when it is pinned to the frame rate the
      readout says so (RAF BOUND) instead of pretending it is the device's rate;
-   - no smoothing anywhere: the needle is the value, the value is the device.
+   - no smoothing anywhere: the needle is the value, the value is the device;
+   - a non-finite axis value (NaN, Infinity) reads as "axis not reported";
+   - every canvas is role=img with an aria-label refreshed at most once per
+     second (a trailing refresh guarantees the last state is never missed); the
+     numeric readouts are plain text, explicitly not live regions;
+   - under forced colours the canvases draw in the forced text colour.
    Simulation (lab only): simulate([r, l, b]) draws the gauges from given values,
    labelled SIMULATED, and stops polling until simulate(null).
 
    Emits hid:state { connected, id, axes: [r, l, b], pollHz, simulated } at most
-   every EMIT_MS while polling, and at once on every connection change. */
+   every EMIT_MS while polling, and at once on every connection change. While
+   simulating, connected is false and id is 'SIMULATED'. */
 import { bus } from './core/bus.js';
 import { governor } from './core/governor.js';
 
@@ -32,6 +38,7 @@ const STALE_MS = 1000;                            // no new report for this long
 const RATE_WINDOW = 32;                           // report intervals averaged for the Hz readout
 const RAF_BOUND_RATIO = 1.15;                     // mean report interval within 15 % of the frame interval: rate is frame bound
 const FRAME_ALPHA = 0.1;                          // one-pole weight for the frame interval estimate (about 10 frames)
+const MINUS = '−';                           // a real minus sign for negative readouts and tick labels
 
 /* Gauge geometry as fractions of the canvas CSS width w (so every size is the
    same drawing). The canvas keeps a 25:16 aspect (h = 0.64 w) from the CSS. */
@@ -48,7 +55,7 @@ const HUB_PX = 4;            // hub radius in CSS px
 const TICK_GAP_PX = 2;       // gap between the band and the ticks in CSS px
 
 const GAUGES = [
-  { key: 'rudder', label: 'Rudder', axis: 0, centred: true, ticks: ['-1', '-.5', '0', '.5', '1'] },
+  { key: 'rudder', label: 'Rudder', axis: 0, centred: true, ticks: [MINUS + '1', MINUS + '.5', '0', '.5', '1'] },
   { key: 'lbrake', label: 'L brake', axis: 1, centred: false, ticks: ['0', '.25', '.5', '.75', '1'] },
   { key: 'rbrake', label: 'R brake', axis: 2, centred: false, ticks: ['0', '.25', '.5', '.75', '1'] },
 ];
@@ -66,10 +73,12 @@ function readPads() {
   try { return navigator.getGamepads ? Array.from(navigator.getGamepads()) : []; } catch { return []; }
 }
 function formatValue(g, v) {
-  if (v === null) return '--';
-  if (g.centred) return Math.abs(v) < 0.005 ? '0.00' : (v < 0 ? '-' : '+') + Math.abs(v).toFixed(2);
+  if (v === null || !Number.isFinite(v)) return '--';
+  if (g.centred) return Math.abs(v) < 0.005 ? '0.00' : (v < 0 ? MINUS : '+') + Math.abs(v).toFixed(2);
   return v.toFixed(2);
 }
+/* A reported axis value, or null when the device sent nothing usable (missing, NaN, Infinity). */
+const finiteAt = (arr, i) => (i < arr.length && typeof arr[i] === 'number' && Number.isFinite(arr[i]) ? arr[i] : null);
 
 export function mountHid(root) {
   const apiOk = typeof navigator !== 'undefined' && typeof navigator.getGamepads === 'function';
@@ -86,7 +95,7 @@ export function mountHid(root) {
       <div class="hid-gauges">${GAUGES.map((g) => `
         <figure class="hid-gauge" data-gauge="${g.key}">
           <canvas role="img" aria-label="${g.label} gauge, no device"></canvas>
-          <figcaption class="hid-gauge-row"><span class="hid-gauge-label">${g.label}</span><output class="hid-value">${formatValue(g, 0)}</output></figcaption>
+          <figcaption class="hid-gauge-row"><span class="hid-gauge-label">${g.label}</span><output class="hid-value" aria-live="off">${formatValue(g, 0)}</output></figcaption>
         </figure>`).join('')}
       </div>
       <div class="hid-flag" data-role="flag"><div class="hid-flag-box"><b data-role="flag-title">No HID device</b><span data-role="flag-text">Connect a controller and press a button</span></div></div>
@@ -97,7 +106,7 @@ export function mountHid(root) {
       <div><dt>Buttons</dt><dd data-role="buttons">--</dd></div>
       <div><dt>Poll</dt><dd><span data-role="hz">--</span> <span class="hid-note" data-role="note"></span></dd></div>
     </dl>
-    <p class="hid-src">SRC: Gamepad API / your device / nothing leaves the browser</p>`;
+    <p class="hid-src">SRC: Gamepad API / your device / brakes read (axis + 1) / 2 / nothing leaves the browser</p>`;
 
   const el = {
     chip: root.querySelector('[data-role="chip"]'),
@@ -130,29 +139,41 @@ export function mountHid(root) {
   let raf = 0;                      // the poll loop's frame handle
   let simRaf = 0;                   // one pending on-demand draw while simulating
   let simAxes = null;               // [r, l, b] while simulating, else null
-  let lastTs = null, lastTsAt = 0, lastFrame = 0, lastDraw = 0, lastEmit = 0, lastAria = 0;
+  let lastTs = null, lastTsAt = 0, lastSig = '', lastFrame = 0, lastDraw = 0, lastEmit = 0, lastAria = -ARIA_MS;
+  let ariaTimer = 0;                // trailing aria-label refresh when a draw lands inside the 1 Hz window
   const intervals = new Float32Array(RATE_WINDOW);
   let intervalHead = 0, intervalCount = 0;
   let destroyed = false;
+  const forcedMq = typeof matchMedia === 'function' ? matchMedia('(forced-colors: active)') : null;
 
   function readColors() {
     const cs = getComputedStyle(root);
     const get = (name, fallback) => cs.getPropertyValue(name).trim() || fallback;
+    const font = get('--font-mono', 'monospace');
+    if (forcedMq?.matches) {
+      /* Forced colours override the tokens on the page but not inside a canvas:
+         draw everything in the forced text colour so the gauges stay visible. */
+      const text = cs.color || '#000';
+      colors = { ink: text, muted: text, meta: text, line: cs.borderTopColor || text, live: text, font };
+      return;
+    }
     colors = {
       ink: get('--text-display', '#0A0A0A'),
-      meta: get('--text-meta', '#8C8C8C'),
+      muted: get('--text-muted', '#6B6B6B'),    // tick labels carry information: 70 % paper on ink, ink-500 on paper
+      meta: get('--text-meta', '#8C8C8C'),      // minor ticks and the resting needle
       line: get('--line-hairline', 'rgba(10,10,10,.12)'),
       live: get('--livery', '#D63B08'),
-      font: get('--font-mono', 'monospace'),
+      font,
     };
   }
   function resize() {
-    dpr = governor.dpr();
+    const d = governor.dpr();
+    dpr = Number.isFinite(d) && d > 0 ? d : 1;
     for (const g of gauges) {
       const r = g.canvas.getBoundingClientRect();
-      g.w = Math.max(1, Math.round(r.width));
-      g.h = Math.max(1, Math.round(r.height));
-      const bw = Math.round(g.w * dpr), bh = Math.round(g.h * dpr);
+      g.w = Math.max(1, r.width);      // CSS px, unrounded: the backing store is the exact DPR multiple
+      g.h = Math.max(1, r.height);
+      const bw = Math.max(1, Math.round(g.w * dpr)), bh = Math.max(1, Math.round(g.h * dpr));
       if (g.canvas.width !== bw || g.canvas.height !== bh) { g.canvas.width = bw; g.canvas.height = bh; }
     }
   }
@@ -188,7 +209,7 @@ export function mountHid(root) {
       ctx.beginPath(); ctx.moveTo(cx + ca * inner, cy + sa * inner); ctx.lineTo(cx + ca * (inner + len), cy + sa * (inner + len)); ctx.stroke();
     }
     const px = clamp(Math.round(w * 0.046), 8, 10);   // tick label size: 9 px at a 200 px gauge
-    ctx.font = `400 ${px}px ${colors.font}`; ctx.fillStyle = colors.meta; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = `400 ${px}px ${colors.font}`; ctx.fillStyle = colors.muted; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     const lr = r + w * LABEL_R;
     g.ticks.forEach((t, k) => {
       const a = angleAt(k / 4);
@@ -203,6 +224,17 @@ export function mountHid(root) {
     ctx.fillStyle = active ? colors.ink : colors.meta;
     ctx.beginPath(); ctx.arc(cx, cy, HUB_PX, 0, Math.PI * 2); ctx.fill();
   }
+  /* The canvases' aria-labels: at most once per second, and always once more
+     after the last draw so a final state (disconnect, simulate) is never missed. */
+  function updateAria(now) {
+    lastAria = now;
+    if (ariaTimer) { clearTimeout(ariaTimer); ariaTimer = 0; }
+    const active = state.connected || state.simulated;
+    gauges.forEach((g, i) => {
+      const label = `${g.label} gauge, ${!active ? 'no device' : state.axes[i] === null ? 'axis not reported' : formatValue(g, state.axes[i])}${state.simulated ? ', simulated' : ''}`;
+      if (label !== g.aria) { g.aria = label; g.canvas.setAttribute('aria-label', label); }
+    });
+  }
   function drawAll(now = performance.now()) {
     const active = state.connected || state.simulated;
     gauges.forEach((g, i) => {
@@ -211,13 +243,9 @@ export function mountHid(root) {
       const text = formatValue(g, v);
       if (text !== g.text) { g.text = text; g.out.value = text; }
     });
-    if (now - lastAria >= ARIA_MS) {
-      lastAria = now;
-      gauges.forEach((g, i) => {
-        const label = `${g.label} gauge, ${!active ? 'no device' : state.axes[i] === null ? 'axis not reported' : formatValue(g, state.axes[i])}${state.simulated ? ', simulated' : ''}`;
-        if (label !== g.aria) { g.aria = label; g.canvas.setAttribute('aria-label', label); }
-      });
-    }
+    const wait = ARIA_MS - (now - lastAria);
+    if (wait <= 0) updateAria(now);
+    else if (!ariaTimer) ariaTimer = setTimeout(() => { ariaTimer = 0; if (!destroyed) updateAria(performance.now()); }, wait);
     lastDraw = now;
   }
 
@@ -253,7 +281,8 @@ export function mountHid(root) {
   }
   function emit() {
     state.emits++;
-    bus.emit('hid:state', { connected: state.connected, id: state.connected ? state.id : state.simulated ? 'SIMULATED' : '', axes: state.axes.slice(), pollHz: state.stale ? 0 : state.pollHz, simulated: state.simulated });
+    const sim = state.simulated;    // while simulating the bus never claims the real device
+    bus.emit('hid:state', { connected: state.connected && !sim, id: sim ? 'SIMULATED' : state.connected ? state.id : '', axes: state.axes.slice(), pollHz: sim || state.stale ? 0 : state.pollHz, simulated: sim });
   }
 
   /* Report rate from gamepad.timestamp changes. */
@@ -276,12 +305,13 @@ export function mountHid(root) {
   /* The device we follow, else the first connected one. Pure: connect() owns state.index. */
   function pickPad() {
     const list = readPads();
-    if (state.index !== null && list[state.index]) return list[state.index];
-    return list.find(Boolean) || null;
+    const usable = (p) => p && p.connected !== false;
+    if (state.index !== null && usable(list[state.index])) return list[state.index];
+    return list.find(usable) || null;
   }
   function connect(pad) {
     state.connected = true; state.index = pad.index; state.id = String(pad.id || 'unknown device');
-    state.axisCount = pad.axes.length; state.buttonCount = pad.buttons.length; state.pressed = 0;
+    state.axisCount = (pad.axes || []).length; state.buttonCount = (pad.buttons || []).length; state.pressed = 0; lastSig = '';
     resetRate();
     if (!state.simulated) { setMode('live'); setMeta(); drawAll(); emit(); }
     schedule();
@@ -307,15 +337,23 @@ export function mountHid(root) {
     const pad = pickPad();
     if (!pad) { disconnect(); return; }
     if (pad.index !== state.index) { connect(pad); return; }   // our device vanished without an event; follow the next one
-    noteTimestamp(pad.timestamp, now);
+    const a = pad.axes || [], buttons = pad.buttons || [];
+    let pressed = 0; for (const b of buttons) if (b && b.pressed) pressed++;
+    const ts = pad.timestamp;
+    if (typeof ts === 'number' && Number.isFinite(ts) && ts > 0) noteTimestamp(ts, now);
+    else {
+      /* No usable timestamp from this browser: a changed report is the only evidence of a report. */
+      const sig = a.join(',') + '/' + pressed;
+      if (sig !== lastSig) noteTimestamp(now, now);
+      lastSig = sig;
+    }
     state.stale = lastTsAt > 0 && now - lastTsAt > STALE_MS;
-    const a = pad.axes;
     state.raw = Array.from(a);
-    state.axes[0] = a.length > 0 ? clamp(a[0], -1, 1) : null;
-    state.axes[1] = a.length > 1 ? toUnit(a[1]) : null;
-    state.axes[2] = a.length > 2 ? toUnit(a[2]) : null;
-    let pressed = 0; for (const b of pad.buttons) if (b.pressed) pressed++;
-    state.pressed = pressed; state.axisCount = a.length; state.buttonCount = pad.buttons.length;
+    const r = finiteAt(a, 0), l = finiteAt(a, 1), b = finiteAt(a, 2);
+    state.axes[0] = r === null ? null : clamp(r, -1, 1);
+    state.axes[1] = l === null ? null : toUnit(l);
+    state.axes[2] = b === null ? null : toUnit(b);
+    state.pressed = pressed; state.axisCount = a.length; state.buttonCount = buttons.length;
     const interval = state.drawHz >= 60 ? 0 : 1000 / state.drawHz;
     if (now - lastDraw >= interval - 1) { drawAll(now); setMeta(); }
     if (now - lastEmit >= EMIT_MS) { lastEmit = now; emit(); }
@@ -350,11 +388,13 @@ export function mountHid(root) {
     if (other) connect(other); else disconnect();
   };
   const onVisibility = () => { if (document.hidden) stopLoop(); else schedule(); };
+  const onForced = () => { if (!destroyed) { readColors(); drawAll(); } };
   if (apiOk) {
     addEventListener('gamepadconnected', onConnect);
     addEventListener('gamepaddisconnected', onDisconnect);
   }
   document.addEventListener('visibilitychange', onVisibility);
+  forcedMq?.addEventListener?.('change', onForced);
   const io = 'IntersectionObserver' in window ? new IntersectionObserver((entries) => {
     state.visible = entries[entries.length - 1].isIntersecting;
     if (state.visible) schedule(); else stopLoop();
@@ -381,9 +421,11 @@ export function mountHid(root) {
       destroyed = true;
       stopLoop();
       if (simRaf) cancelAnimationFrame(simRaf);
+      if (ariaTimer) { clearTimeout(ariaTimer); ariaTimer = 0; }
       io?.disconnect(); ro?.disconnect(); offTier();
       if (apiOk) { removeEventListener('gamepadconnected', onConnect); removeEventListener('gamepaddisconnected', onDisconnect); }
       document.removeEventListener('visibilitychange', onVisibility);
+      forcedMq?.removeEventListener?.('change', onForced);
       root.innerHTML = '';
       root.classList.remove('hid');
       delete root.dataset.hid;

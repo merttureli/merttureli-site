@@ -9,7 +9,8 @@
      curl, vorticity confinement (eps 0.06 per step, see params)
      pointer splats (velocity and dye)
      divergence, damped Jacobi pressure (24 at tier 3, 16 at tier 2) around a
-     two-level correction on a grid four times coarser, gradient subtraction
+     two-level correction on a grid four times coarser (120 / 64 sweeps there,
+     a sixteenth of a fine sweep each), gradient subtraction
      dye advection at 2x the velocity grid, rake injection, composite.
 
    Units: velocity in grid cells per second on a staggered (MAC) lattice, DT =
@@ -28,12 +29,15 @@ import { governor } from '../core/governor.js';
 import { createGL } from './gl.js';
 import * as S from './shaders.js';
 
-/* Section 7.7 budgets. `width` is the cell count along the canvas's long side. */
+/* Section 7.7 budgets. `width` is the cell count along the canvas's long side.
+   `coarse` is the sweep count on the W/4 correction level (each one sixteenth
+   of a fine sweep): information crosses that level one cell per sweep, so the
+   80-wide coarse grid of tier 3 needs more of them than the 48-wide one. */
 export const TIERS = {
-  3: { width: 320, jacobi: 24, maccormack: true, run: true, label: 'full' },
-  2: { width: 192, jacobi: 16, maccormack: false, run: true, label: 'reduced' },
-  1: { width: 192, jacobi: 16, maccormack: false, run: false, frozen: true, label: 'frozen' },
-  0: { width: 0, jacobi: 0, maccormack: false, run: false, off: true, label: 'off' },
+  3: { width: 320, jacobi: 24, coarse: 120, maccormack: true, run: true, label: 'full' },
+  2: { width: 192, jacobi: 16, coarse: 64, maccormack: false, run: true, label: 'reduced' },
+  1: { width: 192, jacobi: 16, coarse: 64, maccormack: false, run: false, frozen: true, label: 'frozen' },
+  0: { width: 0, jacobi: 0, coarse: 0, maccormack: false, run: false, off: true, label: 'off' },
 };
 export const FIELDS = ['smoke', 'velocity', 'pressure', 'vorticity'];
 
@@ -87,11 +91,11 @@ export function createTunnel(canvas, options = {}) {
      stream laminar and the wake crisp; 0.18 (the concept's figure, which came
      from splat-art presets) amplifies grid-scale noise into turbulence
      everywhere downstream, see the lab's eps slider. */
-  const params = { uInf: 1, eps: 0.06, jacobi: 24, coarse: 60, rake: 7, dyeDecay: 0.996, velDecay: 0.998, field: 'smoke', grid: [0, 0] };
+  const params = { uInf: 1, eps: 0.06, jacobi: 24, coarse: 120, rake: 7, dyeDecay: 0.996, velDecay: 0.998, field: 'smoke', grid: [0, 0] };
   const stats = {
     steps: 0, stepMs: 0, frames: 0, fps: 0, drawsPerStep: 0, tier: 0, path: 'OFF', renderer: '',
     grid: [0, 0], dyeGrid: [0, 0], uInfCells: 0, cfl: 0, jacobi: 0, maccormack: false,
-    running: false, visible: true, hidden: !!document.hidden, lost: false, frozen: false, divRms: null, preroll: 0, coarse: 60,
+    running: false, visible: true, hidden: !!document.hidden, lost: false, frozen: false, divRms: null, preroll: 0, coarse: 120,
   };
 
   let tier = clampTier(options.tier ?? governor.tier);
@@ -211,10 +215,17 @@ export function createTunnel(canvas, options = {}) {
     stats.grid = [w, h]; stats.dyeGrid = [w * 2, h * 2];
     maskDirty = true;
   }
-  /* The budget width goes on the long side; the short side follows the aspect. */
+  /* The budget width goes on the long side; the short side follows the aspect.
+     Both counts are multiples of 4 so every coarse cell covers a whole 4 x 4
+     block: a partial block along a wall makes the coarse kernel attribute a
+     full cell's area to a half cell, its correction there overshoots by two,
+     and the warm-started pressure grows along that wall step after step. The
+     aspect error this leaves is under 2 cells; the composite and the obstacle
+     are mapped by the canvas, so nothing on screen shifts. */
   function gridDims(width) {
-    if (cssW >= cssH) return [width, Math.max(MIN_CELLS, Math.round(cssH * width / cssW))];
-    return [Math.max(MIN_CELLS, Math.round(cssW * width / cssH)), width];
+    const snap = (n) => Math.max(MIN_CELLS, 4 * Math.round(n / 4));
+    if (cssW >= cssH) return [snap(width), snap(cssH * width / cssW)];
+    return [snap(cssW * width / cssH), snap(width)];
   }
   function ensureFields() {
     const spec = TIERS[tier];
@@ -263,7 +274,7 @@ export function createTunnel(canvas, options = {}) {
     params.uInf = clamp(+params.uInf || 0, 0, 2);
     params.eps = clamp(+params.eps || 0, 0, 1);
     params.jacobi = clamp(Math.round(+params.jacobi || 1), 1, 64);
-    params.coarse = clamp(Math.round(+params.coarse || 0), 0, 200);
+    params.coarse = clamp(Math.round(+params.coarse || 0), 0, 240);
     params.rake = clamp(Math.round(+params.rake || 0), 0, 9);
     params.dyeDecay = clamp(+params.dyeDecay || 0, 0.9, 1);
     params.velDecay = clamp(+params.velDecay || 0, 0.9, 1);
@@ -379,8 +390,8 @@ export function createTunnel(canvas, options = {}) {
       fill(P.fillS, F.presC.read, 0); draws++;
       sweeps(params.coarse, F.presC, F.resC, F.maskC, F.wc, F.hc, 16);
       u = G.use(P.prolongate);
-      G.tex(0, F.pres.read.tex); G.tex(1, F.presC.read.tex); G.tex(2, F.mask.tex);
-      gl.uniform1i(u.u_p, 0); gl.uniform1i(u.u_e, 1); gl.uniform1i(u.u_mask, 2); gl.uniform2f(u.u_coarseSize, F.wc, F.hc);
+      G.tex(0, F.pres.read.tex); G.tex(1, F.presC.read.tex); G.tex(2, F.mask.tex); G.tex(3, F.maskC.tex);
+      gl.uniform1i(u.u_p, 0); gl.uniform1i(u.u_e, 1); gl.uniform1i(u.u_mask, 2); gl.uniform1i(u.u_maskC, 3); gl.uniform2f(u.u_coarseSize, F.wc, F.hc);
       D(F.pres.write); F.pres.swap();
       sweeps(params.jacobi - pre, F.pres, F.div, F.mask, W, H, 1);
     }
@@ -430,7 +441,7 @@ export function createTunnel(canvas, options = {}) {
 
   /* ---------- composite ---------- */
   function draw() {
-    if (!F || lost || !G) return;
+    if (!F || lost || !G || TIERS[tier].off) return;       /* tier 0 draws nothing, whoever asks */
     const gl = G.gl;
     const field = FIELDS.indexOf(params.field);
     if (field === 3) {
@@ -490,11 +501,13 @@ export function createTunnel(canvas, options = {}) {
     raf = 0; running = false; stats.running = false;
   }
   function stopWarmup() { if (warmRaf) cancelAnimationFrame(warmRaf); warmRaf = 0; }
-  /* Settle the field off screen in chunks of WARMUP_CHUNK steps per animation
-     frame until `target` steps exist, with the free stream already at its
-     setpoint, then call `then`. Tier 1 uses it for its one still frame; the
-     `preroll` option uses it so a page can start with a developed wake. */
-  function warmup(target, then) {
+  /* Settle the field in chunks of WARMUP_CHUNK steps per animation frame
+     until `target` steps exist, with the free stream already at its setpoint,
+     then call `then`. Tier 1 uses it off screen for its one still frame; the
+     `preroll` option uses it so a page can start with a developed wake, and
+     draws after every chunk (`show`) so the canvas is never blank or stale
+     while a slow GPU is still settling: the flow visibly fills in, fast. */
+  function warmup(target, then, show = false) {
     stop(); stopWarmup();
     if (!F) return;
     if (!ramp.started) { ramp.started = true; ramp.from = params.uInf; ramp.to = params.uInf; ramp.t0 = 0; }
@@ -503,7 +516,7 @@ export function createTunnel(canvas, options = {}) {
       if (destroyed || lost || !F) return;
       const n = Math.min(WARMUP_CHUNK, target - stats.steps);
       for (let i = 0; i < n; i++) step();
-      if (stats.steps < target) warmRaf = requestAnimationFrame(chunk);
+      if (stats.steps < target) { if (show) draw(); warmRaf = requestAnimationFrame(chunk); }
       else then();
     };
     chunk();
@@ -515,7 +528,7 @@ export function createTunnel(canvas, options = {}) {
     if (spec.off) return;
     if (!visible || document.hidden) return;
     if (spec.frozen || frozen) { if (stats.steps < FROZEN_STEPS && !frozen) warmup(FROZEN_STEPS, draw); else draw(); return; }
-    if (stats.steps < preroll) { warmup(preroll, () => { draw(); start(); }); return; }
+    if (stats.steps < preroll) { warmup(preroll, () => { draw(); start(); }, true); return; }
     start();
   }
 
@@ -682,6 +695,7 @@ export function createTunnel(canvas, options = {}) {
       stop(); stopWarmup();
       if (spec.off) { if (G) G.clearCanvas(); return; }
       params.jacobi = spec.jacobi;
+      params.coarse = spec.coarse;
       maccormack = spec.maccormack;
       resize();
       resume();
@@ -734,6 +748,7 @@ export function createTunnel(canvas, options = {}) {
   stats.tier = tier;
   stats.preroll = preroll;
   stats.jacobi = params.jacobi = TIERS[tier].jacobi || params.jacobi;
+  stats.coarse = params.coarse = TIERS[tier].coarse || params.coarse;
   resize();
   resume();
   return tunnel;

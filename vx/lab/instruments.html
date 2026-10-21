@@ -21,18 +21,19 @@
   .lab-stage { overflow: visible; }
   .ilab-station { position: relative; height: 750px; padding: var(--space-6) var(--page-margin); border-bottom: 1px solid var(--paper-a18); display: grid; align-content: start; gap: var(--space-3); }
   .ilab-station .display-2 { color: var(--paper-a18); font-weight: 400; }
-  .ilab-station .meta { color: var(--paper-a45); }
+  .ilab-station .meta { color: var(--paper-a70); }
   .ilab-station p { max-width: var(--measure-narrow); color: var(--paper-a70); font-size: var(--fs-body-sm); }
   .ilab-tick { position: absolute; left: 0; top: 0; width: 100%; height: 1px; }
   .lab-row.ilab-seg { grid-template-columns: repeat(3, 1fr); }
   .lab-row.ilab-seg .lab-button { min-height: 32px; padding: 0 var(--space-2); }
-  .ilab-note { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.04em; line-height: 1.6; color: var(--paper-a45); }
+  .ilab-note { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.04em; line-height: 1.6; color: var(--paper-a70); }
   .lab-panel .lab-readout { padding: var(--space-3) 0 0; border-top: 1px solid var(--paper-a18); margin-top: var(--space-2); }
-  @media (max-width: 860px) {
+  @media (max-width: 859.98px) {   /* the module's own breakpoint, so 860 px exactly keeps the rail clearance */
     .lab-body { padding-right: 0; padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px)); }
     .lab-panel { position: static; max-height: none; order: -1; border-top: 0; border-bottom: 1px solid var(--paper-a18); }
     .ilab-station { height: 600px; }
   }
+  @media (max-width: 479.98px) { .lab-head { flex-wrap: wrap; } }   /* h1 + nav min-content is 366 px side by side; wrapped, 320 px phones get no horizontal scroll */
   @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 </style>
 </head>

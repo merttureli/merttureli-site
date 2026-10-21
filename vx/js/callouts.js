@@ -29,6 +29,11 @@
      reach = max(elbow, |ly - ay|): a 45 degree diagonal when the label is
      displaced by more than the elbow reach (24 px), flatter inside it, clamped
      so the knee never passes the label.
+   An anchor that projects at or beyond its rail's label edge (a fin under the
+   right column on a narrow stage) gets no horizontal run: the label is asked to
+   sit one elbow above the part and the leader drops from the dot to the label's
+   nearer horizontal edge, so the note hugs the part instead of being crossed by
+   its own leader.
 
    Modes: rails on fine pointers at 860 px and wider; on coarse pointers or
    narrower viewports the labels move into the host's sheet root, one station
@@ -63,7 +68,7 @@ export const DEFAULTS = {
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const pad2 = (n) => String(n).padStart(2, '0');
-const quant = (v, q) => Math.round(v / q) * q;
+const quant = (v, q) => (q > 0 && Number.isFinite(q)) ? Math.round(v / q) * q : v;   // a zero or broken quantum never yields NaN
 
 /* Pure rail solver. `items` carry {want (anchor y), h (label height)} and get
    `y` (label centre) written back. Returns {gap, clusters, maxShift}.
@@ -135,14 +140,20 @@ export function mountCallouts({ stage, svg, labels, sheet = null, ...overrides }
 
   svg.classList.add('co-leaders');
   labels.classList.add('co-labels');
-  if (!labels.hasAttribute('aria-label')) labels.setAttribute('aria-label', 'Part callouts');
+  // attributes the module adds are remembered so destroy() can take them away again
+  const added = [];
+  const ensure = (node, name, value) => { if (!node.hasAttribute(name)) { node.setAttribute(name, value); added.push([node, name]); } };
+  ensure(svg, 'aria-hidden', 'true');        // the leaders are decorative; the labels carry every word
+  ensure(labels, 'role', 'group');           // a role, or the aria-label below is never announced
+  ensure(labels, 'aria-label', 'Part callouts');
   const mq = matchMedia(opt.sheetQuery);
 
   /* ---------- sheet scaffolding (built once, filled per station) ---------- */
   let sheetUI = null;
   if (sheet) {
     sheet.classList.add('co-sheet');
-    if (!sheet.hasAttribute('aria-label')) sheet.setAttribute('aria-label', 'Part callouts, one station at a time');
+    ensure(sheet, 'role', 'group');
+    ensure(sheet, 'aria-label', 'Part callouts, one station at a time');
     sheet.innerHTML = '';
     const head = el('div', 'co-sheet-head');
     const index = el('span', 'co-sheet-index');
@@ -187,9 +198,10 @@ export function mountCallouts({ stage, svg, labels, sheet = null, ...overrides }
       if (part.referenceOnly) continue;
       const st = stationOfPart(part.id);
       const id = part.id;
-      const item = { id, part, station: st ? st.index : -1, on: false, shown: false, side: null, h: 0, bh: 0, cur: NaN, want: 0, y: 0, ax: 0, ay: 0, depth: 0, tf: '', d: '', i: -1 };
+      const item = { id, part, station: st ? st.index : -1, on: false, shown: false, side: null, inColumn: false, h: 0, bh: 0, cur: NaN, want: 0, y: 0, ax: 0, ay: 0, depth: 0, tf: '', d: '', i: -1 };
 
-      const wrap = el('div', 'co-item', { 'data-part': id, hidden: '' });
+      // is-off until a solve places it: an unplaced label must never sit at the overlay's origin
+      const wrap = el('div', 'co-item is-off', { 'data-part': id, hidden: '' });
       const btn = el('button', 'co-label', { type: 'button', id: `co-label-${id}`, 'aria-expanded': 'false', 'aria-controls': `co-desc-${id}` });
       const eyebrow = el('span', 'co-eyebrow');
       eyebrow.textContent = `${pad2(id)} / ${part.category || 'Part'}`;
@@ -198,7 +210,7 @@ export function mountCallouts({ stage, svg, labels, sheet = null, ...overrides }
       const sub = el('span', 'co-sub');
       sub.textContent = part.subtitle || '';
       btn.append(eyebrow, name, sub);
-      const desc = el('div', 'co-desc', { id: `co-desc-${id}` });
+      const desc = el('div', 'co-desc', { id: `co-desc-${id}`, 'aria-hidden': 'true' });   // exposed to AT only while locked open
       const inner = el('div', 'co-desc-inner');
       const p = el('p', 'co-desc-text');
       p.textContent = part.description || '';
@@ -243,11 +255,12 @@ export function mountCallouts({ stage, svg, labels, sheet = null, ...overrides }
     for (const it of items.values()) {
       it.on = ids.includes(it.id);
       it.el.hidden = !it.on;
-      if (!it.on) { it.g.style.display = 'none'; it.shown = false; it.cur = NaN; it.side = null; }
+      markOff(it); it.side = null;        // every item waits for the solve to place it (rails) or sits in flow (sheet)
     }
     if (mode === 'sheet' && sheetUI) {
-      // keep the sheet's list in station order
-      for (const id of ids) { const it = items.get(id); if (it) sheetUI.list.append(it.el); }
+      // keep the sheet's list in station order, scrolled back to its top
+      for (const id of ids) { const it = items.get(id); if (it) { sheetUI.list.append(it.el); it.el.classList.remove('is-off'); } }
+      sheetUI.list.scrollTop = 0;
     }
     state.station = idx; state.stationLabel = st ? st.label : '';
     enterPending = animate && tier > 0;
@@ -287,7 +300,12 @@ export function mountCallouts({ stage, svg, labels, sheet = null, ...overrides }
       const dx = p.x - cx;
       if (it.side === null) it.side = dx >= 0 ? 'right' : 'left';
       else if (it.side === 'right' ? dx < -opt.sideHysteresis : dx > opt.sideHysteresis) it.side = dx >= 0 ? 'right' : 'left';
-      it.ax = p.x; it.ay = p.y; it.depth = p.depth || 0; it.want = p.y;
+      it.ax = p.x; it.ay = p.y; it.depth = p.depth || 0;
+      // an anchor at or beyond its rail's label edge gets no horizontal run (see apply): the label is
+      // asked to sit one elbow above the part; a 12 px band of hysteresis keeps the choice from flapping
+      const room = it.side === 'right' ? (W - opt.railInset - labelW - opt.labelGap) - p.x : p.x - (opt.railInset + labelW + opt.labelGap);
+      it.inColumn = room < opt.labelGap + (it.inColumn ? opt.sideHysteresis : 0);
+      it.want = it.inColumn ? p.y - opt.elbow - it.bh + it.h / 2 : p.y;
       (it.side === 'left' ? left : right).push(it);
     }
     const bounds = { top: opt.margin, bottom: H - opt.margin, gap: opt.spacing, minGap: opt.minGap };
@@ -304,12 +322,10 @@ export function mountCallouts({ stage, svg, labels, sheet = null, ...overrides }
     state.gap = Math.min(sL.gap, sR.gap); state.clusters = sL.clusters + sR.clusters; state.maxShift = Math.max(sL.maxShift, sR.maxShift);
     state.solveMs = performance.now() - t0;
   }
-  function hide(it) {
-    if (!it.shown) return;
-    it.shown = false; it.cur = NaN;
-    it.el.classList.add('is-off');
-    it.g.style.display = 'none';
-  }
+  /* Off: not placed. The class keeps an unplaced label invisible (visibility, so it is also out of
+     the tab order) and the leader group out of the paint. Idempotent, so it is safe on fresh items. */
+  function markOff(it) { it.shown = false; it.cur = NaN; it.el.classList.add('is-off'); it.g.style.display = 'none'; }
+  function hide(it) { if (it.shown) markOff(it); }
   function apply(it, Lx, Rx, i) {
     const q = opt.quantum;
     let y = quant(it.y, q), held = 0;
@@ -325,11 +341,23 @@ export function mountCallouts({ stage, svg, labels, sheet = null, ...overrides }
     // leader: dot -> knee -> label edge, meeting the label at the centre of its name block
     const ly = quant(y - it.h / 2 + (it.bh || it.h) / 2, q);
     const edgeX = right ? Rx - opt.labelGap : Lx + opt.labelGap;
-    const room = right ? edgeX - ax : ax - edgeX;
-    let reach = Math.max(opt.elbow, Math.abs(ly - ay));
-    reach = Math.max(4, Math.min(reach, room - 4));
-    const kx = quant(right ? ax + reach : ax - reach, q);
-    const d = `M${ax} ${ay}L${kx} ${ly}L${edgeX} ${ly}`;
+    let d;
+    if (it.inColumn) {
+      // the part projects under the label column: the leader meets the label's nearer horizontal edge
+      // (its bottom when the label sits above the part, its top when below) at the anchor's x kept inside
+      // the column; a label the solver had to leave across the anchor's y gets a plain stub to its edge
+      const bTop = quant(y - it.h / 2, q), bBot = quant(bTop + (it.bh || it.h), q);
+      const lx = quant(Math.min(Math.max(ax, x + 4), x + labelW - 4), q);
+      if (bBot + opt.labelGap <= ay) d = `M${ax} ${ay}L${lx} ${quant(bBot + opt.labelGap, q)}`;
+      else if (bTop - opt.labelGap >= ay) d = `M${ax} ${ay}L${lx} ${quant(bTop - opt.labelGap, q)}`;
+      else d = `M${ax} ${ay}L${edgeX} ${ly}`;
+    } else {
+      const room = right ? edgeX - ax : ax - edgeX;
+      let reach = Math.max(opt.elbow, Math.abs(ly - ay));
+      reach = Math.max(4, Math.min(reach, room - 4));
+      const kx = quant(right ? ax + reach : ax - reach, q);
+      d = `M${ax} ${ay}L${kx} ${ly}L${edgeX} ${ly}`;
+    }
     if (it.d !== d) { it.d = d; it.path.setAttribute('d', d); it.under.setAttribute('d', d); it.dot.setAttribute('cx', ax); it.dot.setAttribute('cy', ay); }
     if (!it.shown) {
       it.shown = true;
@@ -393,7 +421,7 @@ export function mountCallouts({ stage, svg, labels, sheet = null, ...overrides }
       svg.classList.add('co-hidden'); labels.classList.add('co-hidden');
       sheet.hidden = false;
     } else {
-      for (const it of items.values()) { labels.append(it.el); it.el.classList.remove('is-enter'); }
+      for (const it of items.values()) { labels.append(it.el); it.el.classList.remove('is-enter'); markOff(it); }
       svg.classList.remove('co-hidden'); labels.classList.remove('co-hidden');
       if (sheet) sheet.hidden = true;
       measureBox(); measureHeights();
@@ -407,21 +435,31 @@ export function mountCallouts({ stage, svg, labels, sheet = null, ...overrides }
     const it = items.get(+partId);
     if (!it) return false;
     if (it.station !== station && it.station >= 0) setStation(it.station, { animate: false, source: 'lock' });
+    if (!it.on) return false;               // a part no station lists cannot be shown, so it cannot be locked
     if (lockedId !== it.id) {
       if (lockedId !== null) clearLock();
       lockedId = it.id; state.locked = it.id;
       it.el.classList.add('is-locked'); it.g.classList.add('is-locked');
-      it.btn.setAttribute('aria-expanded', 'true');
+      it.btn.setAttribute('aria-expanded', 'true'); it.desc.removeAttribute('aria-hidden');
       labels.dataset.locked = it.id; svg.dataset.locked = it.id; if (sheet) sheet.dataset.locked = it.id;
       measureHeights(); solve();
+      if (mode === 'sheet') revealInSheet(it);
       bus.emit('callouts:lock', { partId: it.id, station: it.station });
     }
-    if (focus) it.btn.focus({ preventScroll: true });
+    if (focus) { it.btn.focus({ preventScroll: true }); if (mode === 'sheet') revealInSheet(it); }
     return true;
+  }
+  /* Scroll the sheet's own list (never the page) so the item, with its description open, is in view. */
+  function revealInSheet(it) {
+    if (!sheetUI) return;
+    const list = sheetUI.list, lr = list.getBoundingClientRect(), r = it.el.getBoundingClientRect();
+    const bottom = r.top + it.btn.offsetHeight + (it.id === lockedId ? it.inner.scrollHeight : 0);
+    if (r.top < lr.top) list.scrollTop += r.top - lr.top;
+    else if (bottom > lr.bottom) list.scrollTop += Math.min(bottom - lr.bottom, r.top - lr.top);
   }
   function clearLock() {
     const it = items.get(lockedId);
-    if (it) { it.el.classList.remove('is-locked'); it.g.classList.remove('is-locked'); it.btn.setAttribute('aria-expanded', 'false'); }
+    if (it) { it.el.classList.remove('is-locked'); it.g.classList.remove('is-locked'); it.btn.setAttribute('aria-expanded', 'false'); it.desc.setAttribute('aria-hidden', 'true'); }
     lockedId = null; state.locked = null;
     delete labels.dataset.locked; delete svg.dataset.locked; if (sheet) delete sheet.dataset.locked;
   }
@@ -534,7 +572,17 @@ export function mountCallouts({ stage, svg, labels, sheet = null, ...overrides }
   }
   offs.push(bus.on('stage:render', onRender));
   offs.push(bus.on('stage:station', onStation));
-  offs.push(bus.on('stage:ready', () => { build(); if (bus.state['stage:render']) onRender(bus.state['stage:render']); }));
+  offs.push(bus.on('stage:ready', () => {
+    // Rebuild the items (parts may have arrived; another stage instance may have announced itself), then
+    // put the displayed station and the lock back: a rebuild must never leave a station selected with
+    // nothing shown.
+    const s = station, l = lockedId;
+    build();
+    clearLock(); station = -1;
+    if (s >= 0) setStation(s, { animate: false });
+    if (l !== null) lock(l);
+    if (bus.state['stage:render']) onRender(bus.state['stage:render']);
+  }));
   offs.push(governor.subscribe(({ tier: t }) => { tier = t; state.tier = t; }));
   mq.addEventListener('change', onModeChange);
   const ro = 'ResizeObserver' in window ? new ResizeObserver(schedule) : null;
@@ -571,7 +619,10 @@ export function mountCallouts({ stage, svg, labels, sheet = null, ...overrides }
     for (const it of items.values()) { it.el.remove(); it.g.remove(); }
     items.clear();
     delete labels.dataset.locked; delete svg.dataset.locked;
-    svg.classList.remove('co-hidden'); labels.classList.remove('co-hidden');
+    svg.classList.remove('co-hidden', 'co-leaders'); labels.classList.remove('co-hidden', 'co-labels');
+    if (sheet) sheet.classList.remove('co-sheet');
+    svg.removeAttribute('viewBox');
+    for (const [node, name] of added) node.removeAttribute(name);
   }
 
   return {

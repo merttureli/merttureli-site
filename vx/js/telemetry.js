@@ -29,7 +29,12 @@
                   At tier 0 there is no loop: samples come from governor:stats
                   (4 Hz, the governor's own loop) and the canvas repaints on
                   scroll:idle, resize, tier change and mount only.
-     sr summary   one visually hidden sentence refreshed at most once per second.
+     sr summary   one visually hidden sentence refreshed at most once per second;
+                  it rides inside the sheet while the sheet is open (a modal makes
+                  the rest of the page inert) and returns to the root on close.
+     resize       window and visualViewport events collapse to one rAF; the
+                  ResizeObserver on the strips owns the canvas size, a window
+                  resize only re-sizes it when the DPR changed (browser zoom).
 
    mountTelemetry(root, { layout: 'wall' | 'ticker' | 'auto', budgetMs, textHz, samples })
    returns { snapshot, setLayout, set, refresh, state, destroy }. */
@@ -76,6 +81,8 @@ function fmtClockWords(ms) {
   return m ? `${m} minute${m === 1 ? '' : 's'} ${s} second${s === 1 ? '' : 's'}` : `${s} second${s === 1 ? '' : 's'}`;
 }
 const ms1 = (v) => (v > 0 ? v.toFixed(1) : DASH);
+/* Non-finite readings (a NaN velocity from a zero-length scroll sample, an Infinity passed to set()) never reach a cell or the canvas. */
+const fin = (v, d = 0) => (Number.isFinite(v) ? v : d);
 
 /* ---------- a fixed-length ring of Float32 samples ---------- */
 class Ring {
@@ -138,7 +145,8 @@ export function mountTelemetry(root, { layout = 'wall', budgetMs = BUDGET_MS, te
   const wall = el('div', 'tel-wall');
   wall.setAttribute('aria-hidden', 'true');
   const head = el('div', 'tel-head');
-  const headSrc = el('span', 'tel-head-src', `10 ch / ${opt.textHz} Hz / src: this page`);
+  const headSrc = el('span', 'tel-head-src', `10 cells / ${opt.textHz} Hz`);
+  headSrc.append(el('span', 'tel-head-page', ' / src: this page'));   // dropped by the CSS on a narrow wall; the foot line still says LIVE / THIS PAGE
   head.append(el('span', 'tel-head-title', 'Telemetry'), headSrc);
   const grid = el('div', 'tel-grid');
   const cells = {
@@ -185,11 +193,12 @@ export function mountTelemetry(root, { layout = 'wall', budgetMs = BUDGET_MS, te
   expand.append(el('span', 'tel-expand-text', 'Wall'));   // narrow containers keep only the "+" mark; the aria-label carries the name
   expand.type = 'button';
   expand.setAttribute('aria-label', 'Open the telemetry wall');
+  expand.setAttribute('aria-haspopup', 'dialog');
   expand.setAttribute('aria-expanded', 'false');
   ticker.append(line, expand);
   const sheet = document.createElement('dialog');
   sheet.className = 'tel-sheet on-dark';
-  sheet.setAttribute('aria-label', 'Page telemetry');
+  sheet.setAttribute('aria-label', 'Telemetry wall');
   const sheetHead = el('div', 'tel-sheet-head');
   const close = el('button', 'tel-close', 'Close');
   close.type = 'button';
@@ -215,6 +224,7 @@ export function mountTelemetry(root, { layout = 'wall', budgetMs = BUDGET_MS, te
   let netBytes = 0, netCount = 0, netZero = 0, resObs = null;
   let vw = innerWidth, vh = innerHeight, vScale = 1;
   let pointerKind = 'fine';
+  let modal = false;                              // whether the open sheet is a real showModal() (the browser then owns Escape and focus)
   let destroyed = false;
 
   /* ---- observers: long tasks and resource timing ---- */
@@ -244,20 +254,35 @@ export function mountTelemetry(root, { layout = 'wall', budgetMs = BUDGET_MS, te
   coarseMq.addEventListener('change', readPointer);
   noneMq.addEventListener('change', readPointer);
 
-  /* ---- viewport cache: read on resize events, never inside the tick ---- */
+  /* ---- viewport cache: read on resize events, never inside the tick. A resize storm (a drag of the window edge, a pinch) collapses
+     to one read per frame; the canvas is resized by the ResizeObserver on the strips, so a window resize only touches it when the
+     DPR changed (browser zoom) or there is no observer to do it. ---- */
   const vv = window.visualViewport || null;
-  function readViewport() { vw = innerWidth; vh = innerHeight; vScale = vv ? vv.scale : 1; }
-  function onResize() { readViewport(); resize(); }
+  let resizeRaf = 0, resizeCanvas = false;
+  function readViewport() { vw = innerWidth; vh = innerHeight; vScale = vv ? fin(vv.scale, 1) : 1; }
+  function scheduleResize(canvasToo) {
+    resizeCanvas = resizeCanvas || canvasToo;
+    if (!resizeRaf && !destroyed) resizeRaf = requestAnimationFrame(resizeFrame);
+  }
+  function resizeFrame() {
+    resizeRaf = 0;
+    const canvasToo = resizeCanvas; resizeCanvas = false;
+    readViewport();
+    if (canvasToo && (!ro || governor.dpr() !== dpr)) resize();
+  }
+  function onResize() { scheduleResize(true); }
+  function onViewport() { scheduleResize(false); }
   addEventListener('resize', onResize);
-  vv?.addEventListener('resize', readViewport);
-  vv?.addEventListener('scroll', readViewport);
+  vv?.addEventListener('resize', onViewport);
+  vv?.addEventListener('scroll', onViewport);
 
   /* ---- theme from the tokens, so the canvas matches the surface it sits on ---- */
   function readTheme() {
     const cs = getComputedStyle(wall);
     const v = (name, fb) => (cs.getPropertyValue(name) || '').trim() || fb;
     return {
-      ink: v('--text-display', '#FFFFFF'), dim: v('--text-meta', 'rgba(255,255,255,.45)'), line: v('--line-hairline', 'rgba(255,255,255,.18)'),
+      /* the strip labels carry information at 10 px, so they use the muted step (paper-a70 on ink, ink-500 on paper), not the meta step */
+      ink: v('--text-display', '#FFFFFF'), dim: v('--text-muted', 'rgba(255,255,255,.70)'), line: v('--line-hairline', 'rgba(255,255,255,.18)'),
       livery: v('--livery', '#D63B08'), mono: v('--font-mono', '"IBM Plex Mono", ui-monospace, monospace'),
     };
   }
@@ -275,6 +300,7 @@ export function mountTelemetry(root, { layout = 'wall', budgetMs = BUDGET_MS, te
         canvas.height = Math.max(1, Math.round(h * dpr));
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       }
+      syncLoop();
     }
     draw(performance.now(), true);
   }
@@ -294,7 +320,8 @@ export function mountTelemetry(root, { layout = 'wall', budgetMs = BUDGET_MS, te
   document.addEventListener('visibilitychange', onVisibility);
 
   /* ---- the strip loop ---- */
-  function loopWanted() { return !destroyed && opt.strips && !!ctx && tier >= 1 && canvasVisible && !hidden; }
+  /* w and h guard a zero-size strip: a zero-area canvas still counts as intersecting, and a loop that draws nothing is a loop nobody wants */
+  function loopWanted() { return !destroyed && opt.strips && !!ctx && tier >= 1 && canvasVisible && !hidden && w > 0 && h > 0; }
   function syncLoop() {
     if (loopWanted()) { if (!raf) { lastTick = 0; raf = requestAnimationFrame(tick); } }
     else if (raf) { cancelAnimationFrame(raf); raf = 0; lastTick = 0; }
@@ -306,7 +333,7 @@ export function mountTelemetry(root, { layout = 'wall', budgetMs = BUDGET_MS, te
       if (dt < 1000) { frameRing.push(dt); frames++; }   // a gap over a second is a throttled tab, not a frame
     }
     lastTick = now;
-    vyRing.push(scroll.state.vy);
+    vyRing.push(fin(scroll.state.vy));
     if (now - lastDraw >= DRAW_GAP_MS[tier]) draw(now);
   }
 
@@ -317,29 +344,35 @@ export function mountTelemetry(root, { layout = 'wall', budgetMs = BUDGET_MS, te
     const t0 = performance.now();
     const c = ctx;
     c.clearRect(0, 0, w, h);
-    c.font = `9px ${theme.mono}`;
+    c.font = `10px ${theme.mono}`;
     c.textBaseline = 'alphabetic';
+    /* the scale labels live in a right-hand gutter, so the newest samples (which enter from the right) never run under them;
+       the gutter is sized for the widest label the velocity pane can show, so the trace area does not jump when the scale changes */
     const padX = 6, paneH = h / 2, n = frameRing.n;
-    const x0 = padX, x1 = w - padX, step = n > 1 ? (x1 - x0) / (n - 1) : 0;
+    const gutter = Math.ceil(c.measureText(`±${fmtInt(NICE_VY[NICE_VY.length - 1])}`).width) + 8;
+    const x0 = padX, xr = w - padX, x1 = Math.max(x0 + 1, xr - gutter);
+    const step = n > 1 ? (x1 - x0) / (n - 1) : 0;
+    const labels = h >= 40 && xr - x0 >= gutter + 24;   // a 2 px tall or 20 px wide strip keeps its lines and loses its text
 
     /* divider between the panes */
     c.strokeStyle = theme.line; c.lineWidth = 1;
     c.beginPath(); c.moveTo(0, Math.round(paneH) + 0.5); c.lineTo(w, Math.round(paneH) + 0.5); c.stroke();
 
     /* frame pane: 0 at the bottom, FRAME_SCALE_MS at the top, budget line at opt.budgetMs */
-    const fTop = 12, fBot = paneH - 4, fH = fBot - fTop;
-    const yMs = (v) => fBot - Math.min(1, v / FRAME_SCALE_MS) * fH;
+    const fTop = 13, fBot = paneH - 4, fH = Math.max(0, fBot - fTop);
+    const yMs = (v) => fBot - Math.min(1, Math.max(0, fin(v) / FRAME_SCALE_MS)) * fH;
     const yBudget = Math.round(yMs(opt.budgetMs)) + 0.5;
     const budgetLabel = opt.budgetMs.toFixed(1);
-    const budgetLabelW = c.measureText(budgetLabel).width + 4;   // the dashed line stops short of its own label
     c.strokeStyle = theme.dim; c.setLineDash([2, 3]);
-    c.beginPath(); c.moveTo(x0, yBudget); c.lineTo(x1 - budgetLabelW, yBudget); c.stroke();
+    c.beginPath(); c.moveTo(x0, yBudget); c.lineTo(x1, yBudget); c.stroke();
     c.setLineDash([]);
-    c.fillStyle = theme.dim; c.textAlign = 'left';
-    c.fillText('FRAME MS', x0, 9);
-    c.textAlign = 'right';
-    c.fillText(`${FRAME_SCALE_MS}`, x1, 9);
-    c.fillText(budgetLabel, x1, yBudget - 3);
+    if (labels) {
+      c.fillStyle = theme.dim; c.textAlign = 'left';
+      c.fillText('FRAME MS', x0, 10);
+      c.textAlign = 'right';
+      if (yBudget > fTop + 12) c.fillText(`${FRAME_SCALE_MS}`, xr, 10);   // the top-of-scale label yields to a budget label drawn near the top
+      c.fillText(budgetLabel, xr, yBudget + 3.5);
+    }
     if (frameRing.filled > 1) {
       const start = n - frameRing.filled;             // right-align the trace so new samples enter from the right
       c.strokeStyle = theme.ink; c.lineWidth = 1; c.lineJoin = 'round';
@@ -362,19 +395,21 @@ export function mountTelemetry(root, { layout = 'wall', budgetMs = BUDGET_MS, te
     }
 
     /* velocity pane: zero line in the middle, scale picked from the window, positive (down the page) below the line */
-    const vTop = paneH + 12, vBot = h - 4, vMid = (vTop + vBot) / 2, vHalf = (vBot - vTop) / 2;
+    const vTop = paneH + 13, vBot = h - 4, vMid = (vTop + vBot) / 2, vHalf = Math.max(0, (vBot - vTop) / 2);
     const peak = vyRing.maxAbs();
     const scale = NICE_VY.find((s) => s >= Math.max(VY_FLOOR, peak)) || NICE_VY[NICE_VY.length - 1];
-    const yVy = (v) => vMid + Math.max(-1, Math.min(1, v / scale)) * vHalf;
+    const yVy = (v) => vMid + Math.max(-1, Math.min(1, fin(v) / scale)) * vHalf;
     const yZero = Math.round(vMid) + 0.5;
     c.strokeStyle = theme.dim; c.setLineDash([2, 3]);
     c.beginPath(); c.moveTo(x0, yZero); c.lineTo(x1, yZero); c.stroke();
     c.setLineDash([]);
-    c.fillStyle = theme.dim; c.textAlign = 'left';
-    c.fillText('SCROLL PX/S', x0, paneH + 9);
-    c.textAlign = 'right';
-    c.fillText(`±${fmtInt(scale)}`, x1, paneH + 9);
-    c.fillText('DN', x1, vBot);
+    if (labels) {
+      c.fillStyle = theme.dim; c.textAlign = 'left';
+      c.fillText('SCROLL PX/S', x0, paneH + 10);
+      c.textAlign = 'right';
+      c.fillText(`±${fmtInt(scale)}`, xr, paneH + 10);
+      c.fillText('DN', xr, vBot);
+    }
     if (vyRing.filled > 1) {
       const start = n - vyRing.filled;
       c.strokeStyle = theme.ink; c.lineWidth = 1;
@@ -393,13 +428,13 @@ export function mountTelemetry(root, { layout = 'wall', budgetMs = BUDGET_MS, te
     tier = t; reason = r || reason;
     root.dataset.tier = String(tier);
     syncLoop(); syncText();
-    draw(performance.now(), true);
+    resize();   // the tier sets the DPR (governor.dpr()), so the backing store may change size; resize() redraws either way
   });
   /* tier 0: the governor's 4 Hz stats feed the rings; the canvas repaints when the scroll stops */
   const offStats = bus.on('governor:stats', (s) => {
     if (tier !== 0) return;
     if (s.p50Ms > 0) frameRing.push(s.p50Ms);
-    vyRing.push(scroll.state.vy);
+    vyRing.push(fin(scroll.state.vy));
   });
   const offIdle = bus.on('scroll:idle', () => { if (tier === 0) draw(performance.now(), true); });
 
@@ -412,7 +447,7 @@ export function mountTelemetry(root, { layout = 'wall', budgetMs = BUDGET_MS, te
     if (textTimer && textRate === rate) return;
     if (textTimer) clearInterval(textTimer);
     textRate = rate; textTimer = setInterval(textTick, rate);
-    headSrc.textContent = `10 ch / ${Math.round(1000 / rate)} Hz / src: this page`;   // the head states the rate the cells really update at
+    headSrc.firstChild.textContent = `10 cells / ${Math.round(1000 / rate)} Hz`;   // the head states the rate the cells really update at
     textTick();
   }
   function readings() {
@@ -422,31 +457,33 @@ export function mountTelemetry(root, { layout = 'wall', budgetMs = BUDGET_MS, te
     const mem = performance.memory ? performance.memory.usedJSHeapSize / 1048576 : null;
     const now = performance.now();
     return {
-      p50: g.p50Ms, p95: g.p95Ms, budget: opt.budgetMs,
-      longCount, longLast, longOk: !!longObs,
-      vy: scroll.state.vy, vyPeak: scroll.state.vyPeak,
-      vw, vh, dpr: devicePixelRatio || 1, vScale,
+      p50: fin(g.p50Ms), p95: fin(g.p95Ms), budget: opt.budgetMs,
+      longCount, longLast: fin(longLast), longOk: !!longObs,
+      vy: fin(scroll.state.vy), vyPeak: fin(scroll.state.vyPeak),
+      vw: fin(vw), vh: fin(vh), dpr: fin(devicePixelRatio, 1) || 1, vScale: fin(vScale, 1),
       netBytes, netCount, netZero, netOk: !!resObs,
       tplus: now,
-      gl: render && render.info ? { calls: render.info.calls, triangles: render.info.triangles, ms: render.info.ms } : null,
+      gl: render && render.info ? { calls: fin(render.info.calls), triangles: fin(render.info.triangles), ms: fin(render.info.ms) } : null,
       tier, reason, ceiling: governor.ceiling, pinned: !!g.pinned,
       pointerKind, pointer: ptr && Number.isFinite(ptr.x) ? { x: Math.round(ptr.x), y: Math.round(ptr.y) } : null,
       mem,
     };
   }
-  /* Each cell as [value, unit] strings. Units are sentence-cased here; the CSS sets them in caps. */
+  /* Each cell as [value, unit] strings. Units are sentence-cased here; the CSS sets them in caps. Every unit line ends with the
+     reading's source (the honesty rule); GOV's source is the governor the label names, and its reason text needs the room. The
+     lines are kept under about 50 characters so they fit the two clamped lines of a 390 px sheet. */
   function rows(r) {
     return {
-      frame: [`${ms1(r.p50)} / ${ms1(r.p95)}`, `ms p50 / p95 / budget ${r.budget.toFixed(1)}`],
+      frame: [`${ms1(r.p50)} / ${ms1(r.p95)}`, `ms p50 / p95 / budget ${r.budget.toFixed(1)} / src: raf`],
       longtasks: r.longOk ? [`${r.longCount} / ${r.longLast ? Math.round(r.longLast) : DASH}`, 'count / last ms / src: longtask'] : [DASH, 'longtask not supported here'],
       scroll: [fmtSigned(r.vy), `px/s / peak ${fmtSigned(r.vyPeak)} / src: scroll`],
-      viewport: [`${r.vw}${TIMES}${r.vh}`, `px / dpr ${+r.dpr.toFixed(2)} / scale ${r.vScale.toFixed(2)}`],
-      net: r.netOk ? [fmtBytes(r.netBytes), `${r.netCount} req${r.netZero ? ` / ${r.netZero} cached or opaque` : ''} / src: resource timing`] : [DASH, 'resource timing not supported here'],
-      tplus: [fmtClock(r.tplus), 'mm:ss.t / since time origin'],
+      viewport: [`${r.vw}${TIMES}${r.vh}`, `px / dpr ${+r.dpr.toFixed(2)} / scale ${r.vScale.toFixed(2)} / src: window`],
+      net: r.netOk ? [fmtBytes(r.netBytes), `${r.netCount} req${r.netZero ? ` / ${r.netZero} at 0 B` : ''} / src: resource timing`] : [DASH, 'resource timing not supported here'],
+      tplus: [fmtClock(r.tplus), 'mm:ss.t since navigation / src: performance.now'],
       gl: r.gl ? [`${fmtInt(r.gl.calls)} / ${fmtCompact(r.gl.triangles)}`, `calls / triangles / ${r.gl.ms.toFixed(1)} ms / src: renderer.info`] : [DASH, 'calls / triangles / no stage yet'],
       gov: [`T${r.tier}`, `${r.reason}${r.pinned && !/pinned/i.test(r.reason) ? ' / pinned' : ''} / ceiling T${r.ceiling}`],
       input: [r.pointerKind.toUpperCase(), r.pointer ? `pointer ${r.pointer.x}, ${r.pointer.y} / src: pointermove` : 'pointer / no event yet'],
-      mem: [r.mem === null ? DASH : r.mem.toFixed(1), 'MB JS heap / Chrome only'],
+      mem: r.mem === null ? [DASH, 'MB JS heap / no performance.memory here'] : [r.mem.toFixed(1), 'MB JS heap / src: performance.memory'],
     };
   }
   function textTick() {
@@ -512,30 +549,36 @@ export function mountTelemetry(root, { layout = 'wall', budgetMs = BUDGET_MS, te
   mq.addEventListener('change', onMq);
 
   function openSheet() {
-    if (sheet.open) return;
-    try { sheet.showModal(); } catch { sheet.setAttribute('open', ''); }
+    if (destroyed || sheet.open) return;
+    try { sheet.showModal(); modal = true; } catch { sheet.setAttribute('open', ''); modal = false; }
     expand.setAttribute('aria-expanded', 'true');
+    sheet.append(sr);   // a modal makes the rest of the page inert, so the summary sentence rides inside it while it is open
     resize(); syncText();
     close.focus();
   }
   function closeSheet() { if (sheet.open) sheet.close(); }
   function onSheetClose() {
     expand.setAttribute('aria-expanded', 'false');
+    modal = false;
+    if (!destroyed && sr.parentNode === sheet) root.append(sr);
     syncLoop(); syncText();
     if (document.contains(expand)) expand.focus();
   }
   function onSheetClick(e) { if (e.target === sheet) closeSheet(); }   // the backdrop is the dialog's own box outside its children
+  function onSheetKey(e) { if (e.key === 'Escape' && sheet.open && !modal) { e.preventDefault(); closeSheet(); } }   // the browser owns Escape for a real modal
   expand.addEventListener('click', openSheet);
   close.addEventListener('click', closeSheet);
   sheet.addEventListener('close', onSheetClose);
   sheet.addEventListener('click', onSheetClick);
+  sheet.addEventListener('keydown', onSheetKey);
 
   /* ---- public ---- */
   const api = {
     snapshot,
-    setLayout(l) { mode = l === 'ticker' || l === 'auto' ? l : 'wall'; applyLayout(); },
+    setLayout(l) { if (destroyed) return; mode = l === 'ticker' || l === 'auto' ? l : 'wall'; applyLayout(); },
     /* live options: budgetMs, textHz, samples, strips */
     set(o = {}) {
+      if (destroyed) return api;
       if (o.budgetMs !== undefined) opt.budgetMs = clampNum(o.budgetMs, 4, 100, BUDGET_MS);
       if (o.textHz !== undefined) opt.textHz = clampNum(o.textHz, 1, 10, 4);
       if (o.samples !== undefined) { const n = Math.round(clampNum(o.samples, 30, 600, 120)); if (n !== opt.samples) { opt.samples = n; frameRing.resize(n); vyRing.resize(n); } }
@@ -544,7 +587,7 @@ export function mountTelemetry(root, { layout = 'wall', budgetMs = BUDGET_MS, te
       draw(performance.now(), true);
       return api;
     },
-    refresh() { readViewport(); resize(); if (textTimer) textTick(); },
+    refresh() { if (destroyed) return; readViewport(); resize(); if (textTimer) textTick(); },
     open: openSheet,
     close: closeSheet,
     get state() {
@@ -559,14 +602,15 @@ export function mountTelemetry(root, { layout = 'wall', budgetMs = BUDGET_MS, te
       if (destroyed) return;
       destroyed = true;
       cancelAnimationFrame(raf); raf = 0;
+      cancelAnimationFrame(resizeRaf); resizeRaf = 0;
       clearInterval(textTimer); textTimer = 0;
       offTier(); offStats(); offIdle();
       io?.disconnect(); ro?.disconnect();
       longObs?.disconnect(); resObs?.disconnect();
       document.removeEventListener('visibilitychange', onVisibility);
       removeEventListener('resize', onResize);
-      vv?.removeEventListener('resize', readViewport);
-      vv?.removeEventListener('scroll', readViewport);
+      vv?.removeEventListener('resize', onViewport);
+      vv?.removeEventListener('scroll', onViewport);
       coarseMq.removeEventListener('change', readPointer);
       noneMq.removeEventListener('change', readPointer);
       mq.removeEventListener('change', onMq);
@@ -574,10 +618,12 @@ export function mountTelemetry(root, { layout = 'wall', budgetMs = BUDGET_MS, te
       close.removeEventListener('click', closeSheet);
       sheet.removeEventListener('close', onSheetClose);
       sheet.removeEventListener('click', onSheetClick);
+      sheet.removeEventListener('keydown', onSheetKey);
       if (sheet.open) sheet.close();
       if (ctx) { canvas.width = canvas.height = 1; }
       root.replaceChildren();
       root.classList.remove('tel');
+      if (!root.className) root.removeAttribute('class');   // classList.remove leaves class="" behind
       delete root.dataset.layout; delete root.dataset.tier;
       root.removeAttribute('role'); root.removeAttribute('aria-label');
     },

@@ -467,7 +467,10 @@ void main() {
   if (solid(p) || p.x == sz.x - 1) r = 0.0;
   OUT_S(r);
 }`;
-/* Coarse cell = mean of its fluid fine cells (4 x 4 block). */
+/* Coarse cell = the block mean of its fine residual (4 x 4, solids and the
+   cells beyond the grid contribute nothing): full weighting, so a block that is
+   mostly body carries a correspondingly small correction and the fine
+   smoother, not the coarse level, resolves the surface. */
 export const RESTRICT = `
 uniform sampler2D u_src;
 uniform sampler2D u_mask;
@@ -478,12 +481,17 @@ void main() {
   float s = 0.0, n = 0.0;
   for (int dy = 0; dy < 4; dy++) for (int dx = 0; dx < 4; dx++) {
     ivec2 q = c + ivec2(dx, dy);
-    if (q.x >= fine.x || q.y >= fine.y || fetchS(u_mask, q) < 0.0) continue;
-    s += fetchS(u_src, q); n += 1.0;
+    if (q.x >= fine.x || q.y >= fine.y) continue;
+    n += 1.0;
+    if (fetchS(u_mask, q) < 0.0) continue;
+    s += fetchS(u_src, q);
   }
   OUT_S(n > 0.0 ? s / n : 0.0);
 }`;
-/* Coarse mask: solid when at least half of the block is solid. */
+/* Coarse mask: solid only when the whole block is body. A block with any
+   fluid in it stays a fluid cell of the coarse problem, so the thin body
+   (six cells at tier 2) never cuts the coarse domain in two and the
+   correction stays smooth across it; the fine sweeps apply the wall. */
 export const COARSE_MASK = `
 uniform sampler2D u_mask;
 uniform vec2 u_fineSize;
@@ -496,19 +504,36 @@ void main() {
     if (q.x >= fine.x || q.y >= fine.y) continue;
     n += 1.0; if (fetchS(u_mask, q) < 0.0) solidCount += 1.0;
   }
-  OUT_S(solidCount * 2.0 >= n && n > 0.0 ? -1.0 : 1.0);
+  OUT_S(n > 0.0 && solidCount >= n ? -1.0 : 1.0);
 }`;
-/* p += bilinear(coarse correction); solids stay at zero. */
+/* p += e interpolated from the coarse FLUID cells only. A coarse solid cell
+   holds no correction (the kernel zeroes it), and plain bilinear sampling
+   would pull the interpolant toward that zero along the body: a Dirichlet
+   condition where the fine kernel is Neumann, which pumps a spurious normal
+   pressure gradient into the surface cells every step. Weights of solid
+   neighbours are dropped and the rest renormalised; fine solids stay at zero. */
 export const PROLONGATE = `
 uniform sampler2D u_p;
 uniform sampler2D u_e;
 uniform sampler2D u_mask;
+uniform sampler2D u_maskC;
 uniform vec2 u_coarseSize;
 void main() {
   ivec2 p = ivec2(gl_FragCoord.xy);
   if (fetchS(u_mask, p) < 0.0) { OUT_S(0.0); return; }
-  float e = sampleS(u_e, gl_FragCoord.xy / 4.0, u_coarseSize);
-  OUT_S(fetchS(u_p, p) + e);
+  vec2 q = clamp(gl_FragCoord.xy / 4.0 - 0.5, vec2(0.0), u_coarseSize - 1.0);
+  vec2 f = fract(q);
+  ivec2 i = ivec2(floor(q));
+  ivec2 m = ivec2(u_coarseSize) - 1;
+  ivec2 c[4];
+  c[0] = min(i, m); c[1] = min(i + ivec2(1, 0), m); c[2] = min(i + ivec2(0, 1), m); c[3] = min(i + ivec2(1, 1), m);
+  vec4 w = vec4((1.0 - f.x) * (1.0 - f.y), f.x * (1.0 - f.y), (1.0 - f.x) * f.y, f.x * f.y);
+  float e = 0.0, wsum = 0.0;
+  for (int k = 0; k < 4; k++) {
+    if (fetchS(u_maskC, c[k]) < 0.0) continue;
+    e += w[k] * fetchS(u_e, c[k]); wsum += w[k];
+  }
+  OUT_S(fetchS(u_p, p) + (wsum > 0.0 ? e / wsum : 0.0));
 }`;
 
 /* 8. Projection: each face loses the pressure difference across it, closed

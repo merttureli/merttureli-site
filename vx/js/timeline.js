@@ -4,14 +4,16 @@
      1. a month axis, Aug 2023 → Sep 2026 at 14 px per month (532 px). Role
         bands sit in lanes packed first-fit by their label extent; rocket
         milestones are vertical event lines with a + mark and a zero-padded
-        index. When the axis does not fit the column it wraps into rows of
-        equal month count (two rows on a phone).
+        index. When the axis does not fit the column (566 px at 14 px per
+        month, so any column under 600 px) it wraps into rows of equal month
+        count, each row no wider than the column (two rows on a phone).
      2. an hour track for the two launch days, 08:00–16:00 each. Events sit only
         where the case study gives a time (16:00, the range closing) or a bound
         (before noon); an untimed event is a dashed span across its day.
    Beside the axes, the log: one <button> per event in chronological order; it
    expands the sentence the event came from, with its source file and, where a
-   value was computed, the derivation under a DERIVED tag. Marks on the axes are
+   value was computed, the derivation under a DERIVED tag (the row carries the
+   tag too, and the mark on the axis is dashed). Marks on the axes are
    pointer-only hit areas that toggle the same rows, so the keyboard path is the
    log and nothing is announced twice.
 
@@ -125,7 +127,7 @@ export function mountTimeline(root, { pxPerMonth = PX_PER_MONTH, progress = null
     const button = html('button', { type: 'button', class: 'tl-row', 'aria-expanded': 'false', 'aria-controls': noteId, 'data-id': e.id, 'data-kind': e.kind },
       html('span', { class: 'tl-idx' }, e.index),
       html('span', { class: 'tl-when' }, e.when),
-      html('span', { class: 'tl-label' }, e.label),
+      html('span', { class: 'tl-label' }, e.label, e.derived ? html('span', { class: 'tl-derived tl-row-derived' }, 'Derived') : null),
       glyph);
     const body = html('div', { class: 'tl-note-body' }, html('p', { class: 'tl-sentence' }, e.sentence));
     if (e.id === 'published') {
@@ -187,7 +189,10 @@ export function mountTimeline(root, { pxPerMonth = PX_PER_MONTH, progress = null
     marks.clear(); bands.length = 0;
     const avail = Math.max(240, width);
     const axisPx = TOTAL_MONTHS * ppm;
-    const nRows = Math.max(1, Math.ceil(axisPx / Math.max(1, avail - LEFT_PAD - RIGHT_PAD)));
+    /* rows: as many months per row as the column holds, then balanced so every row
+       carries the same count; ceil(TOTAL / rows) never exceeds the fitted count */
+    const fitMonths = Math.max(1, Math.floor((avail - LEFT_PAD - RIGHT_PAD) / ppm));
+    const nRows = Math.max(1, Math.ceil(TOTAL_MONTHS / fitMonths));
     const monthsPerRow = Math.ceil(TOTAL_MONTHS / nRows);
     const rowPx = monthsPerRow * ppm;
 

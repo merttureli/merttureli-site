@@ -195,15 +195,20 @@ function updateReadout() {
   ];
   readout.textContent = lines.join('\n');
 }
-bus.on('stage:render', () => {
+bus.on('stage:render', ({ station }) => {
   silCount = drawSilhouette() || 0;
   if (silCount === 0) sil.replaceChildren();
+  // a jump from the pad straight to the pull-out keeps index -1, so no stage:station fires: refresh the band text here
+  if (!station) { const t = stateText(-1, null); if ($('capState').textContent !== t) $('capState').textContent = t; }
   const now = performance.now();
   if (now - lastReadout > 100) { lastReadout = now; updateReadout(); }
 });
+// caption state: the station, or the pad view / pull-out band read from progress (both have index -1)
+function stateText(index, station) { return station ? `station ${pad2(index + 1)} / ${station.label}` : stage.progress < SCHEDULE.firstStop ? 'pad view' : 'pull-out'; }
 bus.on('stage:station', ({ index, station }) => {
-  for (const li of $('stations').children) li.toggleAttribute('aria-current', Number(li.dataset.index) === index);
-  $('capState').textContent = station ? `station ${pad2(index + 1)} / ${station.label}` : stage.progress < SCHEDULE.firstStop ? 'pad view' : 'pull-out';
+  // aria-current="true" (toggleAttribute would write an empty value, which the styles and ARIA read as none)
+  for (const li of $('stations').children) { if (Number(li.dataset.index) === index) li.setAttribute('aria-current', 'true'); else li.removeAttribute('aria-current'); }
+  $('capState').textContent = stateText(index, station);
 });
 setInterval(updateReadout, 1000);
 

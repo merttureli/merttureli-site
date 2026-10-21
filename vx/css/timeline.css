@@ -3,7 +3,7 @@
    Hooks for the integrator:
      .tl-root / .ld-root        the mount elements (the modules add the classes)
      --tl-log-col               the log column beside the axes (minmax(260px, 0.6fr))
-     --ld-cols                  the ladder's columns at full width (auto minmax(0,1fr) minmax(0,1.1fr))
+     --ld-cols                  the ladder's columns at full width (auto minmax(0,1fr) minmax(0,1.1fr)); the scale SVG is at most 460 px wide
      [data-tier="0"]            set by the modules; every note is open, nothing transitions
    Both roots are size containers: the layouts respond to the column they are
    given, not to the viewport. The one hue is the livery: the scroll cursor and
@@ -61,7 +61,7 @@
 .tl-log { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line-hairline); container-type: inline-size; }
 .tl-item { border-bottom: 1px solid var(--line-hairline); }
 .tl-row {
-  display: grid; grid-template-columns: 2.4em minmax(9ch, 20ch) minmax(0, 1fr) 1.2em; gap: var(--space-3);
+  display: grid; grid-template-columns: 2.4em minmax(9ch, 15em) minmax(0, 1fr) 1.2em; gap: var(--space-3);   /* 15em holds a 19-glyph date range with its 0.18em tracking */
   align-items: baseline; width: 100%; min-height: 44px; padding: var(--space-3) 0; text-align: left;
   font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: var(--lh-meta);
   color: var(--text-body); transition: color var(--dur-2) var(--ease-out);
@@ -86,6 +86,7 @@
   font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--livery); line-height: 1.4;
 }
 .tl-derivation, .ld-derivation { flex-basis: 100%; text-transform: none; letter-spacing: 0.04em; color: var(--text-muted); }
+.tl-row-derived { margin-left: var(--space-2); vertical-align: 1px; }
 
 /* tier 0: nothing transitions, every note is already open (the module opens them) */
 .tl-root[data-tier="0"] .tl-note, .tl-root[data-tier="0"] .tl-band-rect, .tl-root[data-tier="0"] .tl-ms-line, .tl-root[data-tier="0"] .tl-row { transition: none; }
@@ -114,7 +115,7 @@
   color: var(--text-meta); letter-spacing: var(--ls-caps);
 }
 .ld-body { display: grid; grid-template-columns: var(--ld-cols); gap: var(--space-7) var(--space-8); align-items: start; }
-.ld-scale { min-width: 0; width: 100%; max-width: 440px; }
+.ld-scale { min-width: 0; width: 100%; max-width: 460px; }
 .ld-svg { display: block; overflow: visible; max-width: 100%; }
 .ld-svg text { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.18em; fill: var(--text-meta); }
 .ld-axis { stroke: var(--text-display); stroke-width: 1; }

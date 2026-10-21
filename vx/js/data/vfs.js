@@ -275,10 +275,14 @@ export function totals(node) {
   walk(node, (n) => { if (n === node) return; if (n.type === 'dir') dirs++; else { files++; bytes += n.size; } });
   return { files, dirs, bytes };
 }
-/* Bytes formatted the way the site writes sizes: "2.48 MB", "484 KB", "351 B". */
+/* Bytes formatted the way the site writes sizes, in decimal units (1 MB =
+   1,000,000 B) so the console agrees with the published numbers: assembly.bin
+   2,482,932 B reads "2.48 MB", charger-painted-wide-alpha.webm 483,670 B reads
+   "484 KB", 351 B reads "351 B". A value that would round to 1000 KB is shown
+   in MB instead. */
 export function formatSize(bytes) {
-  if (bytes >= 1048576) return (bytes / 1048576).toFixed(2) + ' MB';
-  if (bytes >= 1024) return Math.round(bytes / 1024) + ' KB';
+  if (bytes >= 1e6 || Math.round(bytes / 1e3) >= 1000) return (bytes / 1e6).toFixed(2) + ' MB';
+  if (bytes >= 1e3) return Math.round(bytes / 1e3) + ' KB';
   return bytes + ' B';
 }
 /* Project folder by index ("03"), slug ("charger") or folder name ("03-charger"). */

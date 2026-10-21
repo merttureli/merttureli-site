@@ -2,8 +2,9 @@
    A bottom-anchored native <dialog> in ink with paper mono text; the same
    component carries .con--inline when the lab renders it inside a container.
    The one accent is the livery: the prompt mark, the echoed command's ">",
-   the selected suggestion and calendar marks. Warnings use the deep livery as
-   a bar beside the line, never as text on ink. */
+   the selected suggestion and calendar marks. Status lines carry it as a bar
+   beside the line (deep livery for errors), never as body text on ink: 13 px
+   livery on ink-900 measures 4.23:1, under the 4.5:1 AA threshold. */
 .con {
   --con-h: min(62svh, 620px);
   --con-kb: 0px;                       /* software keyboard height, set from visualViewport */
@@ -45,7 +46,7 @@
 .con-line--cmd::before { content: "> "; color: var(--livery); }
 .con-line--err { color: var(--paper); border-left: 2px solid var(--livery-deep); padding-left: var(--space-2); }
 .con-line--dim { color: var(--paper-a45); }
-.con-line--ok { color: var(--livery); }
+.con-line--ok { color: var(--paper); border-left: 2px solid var(--livery); padding-left: var(--space-2); }
 .con-line--table, .con-line--block { white-space: normal; margin: 2px 0; }
 .con-table { display: grid; grid-template-columns: var(--con-cols, max-content minmax(0, 1fr)); column-gap: var(--space-4); row-gap: 1px; max-width: 100%; }
 .con-table [role="row"] { display: contents; }
@@ -88,7 +89,8 @@
 .con-cal-month { display: grid; gap: var(--space-1); align-content: start; }
 .con-cal-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); padding-bottom: 2px; border-bottom: 1px solid var(--paper-a18); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a45); }
 .con-cal-head b { font-weight: 400; color: var(--paper); }
-.con-cal-month[data-active="true"] .con-cal-head span { color: var(--livery); }
+.con-cal-month[data-active="true"] .con-cal-head { border-bottom-color: var(--livery); }
+.con-cal-month[data-active="true"] .con-cal-head span { color: var(--paper); }
 .con-cal-grid { display: grid; grid-template-columns: repeat(7, 3ch); font-size: 12px; line-height: 1.6; white-space: pre; }
 .con-cal-dow { color: var(--paper-a45); font-size: var(--fs-meta-sm); line-height: 2; }
 .con-cal-day { color: var(--paper-a45); }
@@ -102,6 +104,7 @@
   .con { --con-h: min(70svh, 620px); width: 100%; border-radius: 0; border-left: 0; border-right: 0; }
   .con-head { gap: var(--space-3); }
   .con-src { display: none; }
+  .con-close { margin-left: auto; }
   .con-log { padding: var(--space-3); }
   .con-prompt { padding-left: var(--space-3); padding-right: var(--space-3); }
   .con-input { height: 44px; }

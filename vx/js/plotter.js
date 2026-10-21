@@ -235,7 +235,7 @@ export function createPlotter(svg, { json, order = EXTERIOR_IDS, speed = DEFAULT
     const path = el('path', { class: 'bt-stroke', d: chunk.d, 'data-part': part.id, 'data-state': 'queued' });
     const item = { path, chunk, part, anim: null, start: 0, end: 0, settled: false };
     items.push(item);
-    if (instant()) { svg.appendChild(path); settle(item); return; }
+    if (instant()) { svg.appendChild(path); settle(item); advance(); return; }   // advance here: no rAF runs in instant mode
     path.style.strokeDasharray = `${chunk.length}`;
     path.style.strokeDashoffset = `${chunk.length}`;
     path.style.visibility = 'hidden';                     // nothing of a queued chunk is painted
@@ -247,7 +247,7 @@ export function createPlotter(svg, { json, order = EXTERIOR_IDS, speed = DEFAULT
     try {
       anim = path.animate([{ strokeDashoffset: chunk.length, visibility: 'visible' }, { strokeDashoffset: 0, visibility: 'visible' }], { duration, easing: 'linear', fill: 'forwards' });
       anim.startTime = start;
-    } catch { svg.appendChild(path); settle(item); return; }
+    } catch { svg.appendChild(path); settle(item); advance(); return; }
     item.anim = anim; item.start = start; item.end = start + duration;
     penFreeAt = item.end;
     anim.onfinish = () => { if (!item.settled) { settle(item); advance(); } };
@@ -296,22 +296,25 @@ export function createPlotter(svg, { json, order = EXTERIOR_IDS, speed = DEFAULT
   function schedule() { if (!raf && !destroyed && visible && currentTier >= 2 && cursor < items.length) raf = requestAnimationFrame(loop); }
   function stopLoop() { if (raf) cancelAnimationFrame(raf); raf = 0; }
 
-  /* Re-time every unsettled chunk from the current moment at the new speed; the
-     active chunk keeps its progress, the rest follow back to back. */
+  /* Re-time every unsettled chunk from the current moment at the new speed: the
+     active chunk keeps its progress and the rest are re-packed back to back after
+     it (never left on their old schedule, so a speed increase has no idle gap). */
   function retime() {
     const now = timeNow();
     let t = now;
     for (let i = cursor; i < items.length; i++) {
       const it = items[i];
       if (it.settled || !it.anim) continue;
+      if (now >= it.end) { settle(it); continue; }         // finished, onfinish not yet delivered
       const duration = Math.max(1, it.chunk.length / speedMm * 1000);
-      let start = Math.max(t, it.start);
+      let start = t;
       if (now > it.start && now < it.end) start = now - (now - it.start) / (it.end - it.start) * duration;   // preserve progress
       try { it.anim.effect.updateTiming({ duration }); it.anim.startTime = start; } catch {}
       it.start = start; it.end = start + duration;
       t = it.end;
     }
     penFreeAt = Math.max(t, now);
+    advance();
   }
   function setSpeed(unitsPerSecond) {
     speedMm = unitsPerSecond * MM_PER_UNIT;

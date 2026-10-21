@@ -51,7 +51,7 @@
     <label class="lab-row">U∞ <output id="uInf-out">1.00</output><input type="range" id="uInf" min="0" max="2" step="0.05" value="1"></label>
     <label class="lab-row">ε vorticity <output id="eps-out">0.06</output><input type="range" id="eps" min="0" max="0.6" step="0.01" value="0.06"></label>
     <label class="lab-row">Jacobi iterations <output id="jacobi-out">24</output><input type="range" id="jacobi" min="4" max="48" step="1" value="24"></label>
-    <label class="lab-row">Coarse sweeps (W/4) <output id="coarse-out">60</output><input type="range" id="coarse" min="0" max="120" step="4" value="60"></label>
+    <label class="lab-row">Coarse sweeps (W/4) <output id="coarse-out">120</output><input type="range" id="coarse" min="0" max="240" step="4" value="120"></label>
     <label class="lab-row">Rake ports <output id="rake-out">7</output><input type="range" id="rake" min="0" max="9" step="1" value="7"></label>
     <label class="lab-row">Dye decay / step <output id="dyeDecay-out">0.996</output><input type="range" id="dyeDecay" min="0.980" max="0.999" step="0.001" value="0.996"></label>
     <label class="lab-row">Perturbation decay / step <output id="velDecay-out">0.998</output><input type="range" id="velDecay" min="0.980" max="1.000" step="0.001" value="0.998"></label>
@@ -101,6 +101,7 @@ const NS = 'http://www.w3.org/2000/svg';
 
 /* ---------- mount ---------- */
 const startTier = query.has('tier') ? Number(query.get('tier')) : governor.tier;
+/* 240 settled steps before the first frame (the tier 1 figure, 4 s of flow at U∞ = 1); the module itself defaults to 0 and the page starts on the ramp */
 const preroll = query.has('preroll') ? Number(query.get('preroll')) : 240;
 const tunnel = createTunnel(canvas, { tier: startTier, forcePacked: query.get('enc') === '1', preroll });
 window.tunnel = tunnel;
@@ -248,7 +249,7 @@ bindRange('coarse', 0, (v) => { tunnel.params.coarse = v; });
 bindRange('rake', 0, (v) => { tunnel.params.rake = v; });
 bindRange('dyeDecay', 3, (v) => { tunnel.params.dyeDecay = v; });
 bindRange('velDecay', 3, (v) => { tunnel.params.velDecay = v; });
-bindRange('tier', 0, (v) => { tunnel.setTier(v); sync('jacobi', tunnel.params.jacobi, 0); updateNote(); });
+bindRange('tier', 0, (v) => { tunnel.setTier(v); sync('jacobi', tunnel.params.jacobi, 0); sync('coarse', tunnel.params.coarse, 0); updateNote(); });
 bindRange('ox', 2, (v) => { model.cx = v; pushObstacle(); });
 bindRange('oy', 2, (v) => { model.cy = v; pushObstacle(); });
 bindRange('alpha', 'deg', (v) => { model.alpha = v; pushObstacle(); });
@@ -358,6 +359,7 @@ measureStage();
 pushObstacle();
 sync('tier', tunnel.tier, 0);
 sync('jacobi', tunnel.params.jacobi, 0);
+sync('coarse', tunnel.params.coarse, 0);
 sync('uInf', tunnel.params.uInf, 2);
 setField(tunnel.params.field);
 updateNote();

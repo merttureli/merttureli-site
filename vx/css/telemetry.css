@@ -6,7 +6,10 @@
      --tel-strips-h  height of the strip chart canvas (104px)
    The module sets data-layout="wall" | "ticker" and data-tier="0..3" on the root.
    Colours come from the tokens, so the wall reads paper on ink inside .on-dark
-   and ink on paper elsewhere; the sheet is always on dark. */
+   and ink on paper elsewhere; the sheet is always on dark. Every 10 px line that
+   carries information (labels, units, the head and foot lines, the ticker's label
+   words) sits on --text-muted (paper-a70 / ink-500); --text-meta is kept for
+   separators and marks only. */
 .tel {
   --tel-w: 440px;
   --tel-bg: transparent;
@@ -26,6 +29,7 @@
   border-radius: var(--radius-md);
   background: var(--tel-bg);
   overflow: hidden;
+  container-type: inline-size;   /* the unit lines reserve a third line when the wall is narrow (see below) */
 }
 .tel-head, .tel-foot {
   display: flex;
@@ -37,7 +41,7 @@
   letter-spacing: var(--ls-caps);
   text-transform: uppercase;
   line-height: var(--lh-meta);
-  color: var(--text-meta);
+  color: var(--text-muted);
 }
 .tel-head { border-bottom: 1px solid var(--line-hairline); }
 .tel-head-title { color: var(--text-display); }
@@ -64,7 +68,7 @@
   letter-spacing: var(--ls-caps);
   text-transform: uppercase;
   line-height: var(--lh-meta);
-  color: var(--text-meta);
+  color: var(--text-muted);
 }
 .tel-value {
   margin-top: 6px;
@@ -83,12 +87,18 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   line-height: var(--lh-meta);
-  color: var(--text-meta);
+  color: var(--text-muted);
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
   min-height: calc(var(--fs-meta-sm) * var(--lh-meta) * 2);   /* two lines reserved so the grid never reflows on a longer reason */
+}
+/* a wall under 360 px (a 390 px phone in wall layout, or a narrow --tel-w) has cells of about 21 characters a line,
+   so the unit lines get a third line instead of an ellipsis; the 390 px sheet is wider than this and keeps two */
+@container (max-width: 360px) {
+  .tel-unit { -webkit-line-clamp: 3; min-height: calc(var(--fs-meta-sm) * var(--lh-meta) * 3); }
+  .tel-head-page { display: none; }   /* the head keeps to one line; the foot still reads LIVE / THIS PAGE */
 }
 
 /* the FRAME budget bar: a hairline track, 0 at the left, the budget mark at the middle, twice the budget at the right.
@@ -116,7 +126,8 @@
   transition: transform var(--dur-2) var(--ease-out);
 }
 .tel-bar-fill { background: var(--text-display); transform: scaleX(var(--fill)); }
-.tel-bar-over { left: 50%; background: var(--livery); transform: scaleX(calc(var(--over) * 2)); }
+/* the overrun span is the right half of the track: --over runs 0..0.5, so scaleX(--over × 2) reaches the right edge at exactly twice the budget */
+.tel-bar-over { left: 50%; width: 50%; background: var(--livery); transform: scaleX(calc(var(--over) * 2)); }
 .tel-bar-mark {
   position: absolute;
   left: 50%; bottom: 0;
@@ -127,7 +138,7 @@
   position: absolute;
   left: 0; bottom: 0;
   width: 100%; height: 5px;
-  border-left: 1px solid var(--text-meta);
+  border-left: 1px solid var(--text-muted);
   transform: translateX(calc(var(--p95) * 100%));
   transition: transform var(--dur-2) var(--ease-out);
 }
@@ -148,7 +159,7 @@
 .tel-strips[data-fallback] .tel-canvas { display: none; }
 .tel-strips[data-fallback] .tel-strips-legend {
   position: static; width: auto; height: auto; margin: 0; clip: auto; white-space: normal; overflow: hidden;
-  padding: 10px 14px; font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta);
+  padding: 10px 14px; font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-muted);
 }
 
 /* ---- the ticker ---- */
@@ -173,7 +184,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.tel-seg-k, .tel-sep { color: var(--text-meta); }
+.tel-seg-k { color: var(--text-muted); }
+.tel-sep { color: var(--text-meta); }
 /* narrow containers (a 390 px phone): the units name the values, so the label words go, and the button keeps only its mark */
 @container (max-width: 480px) {
   .tel-seg-k { display: none; }
@@ -200,6 +212,11 @@
 .tel-expand::before { content: "+"; margin-right: 0.6em; color: var(--text-meta); }
 .tel-expand:hover, .tel-close:hover, .tel-expand[aria-expanded="true"] { border-color: var(--text-display); background: var(--text-display); color: var(--surface-page); }
 .tel-expand:hover::before, .tel-expand[aria-expanded="true"]::before { color: inherit; }
+/* touch: a 44 px bar and 36 px buttons; the focus ring (3 px offset) still clears the bar's edges */
+@media (pointer: coarse) {
+  .tel-ticker { min-height: 44px; }
+  .tel-expand, .tel-close { min-height: 36px; }
+}
 
 /* ---- the sheet: the wall, full width, anchored to the bottom edge ---- */
 .tel-sheet {
@@ -228,7 +245,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: 10px 14px calc(10px + 0px);
+  padding: 10px 14px;
   border-bottom: 1px solid var(--paper-a18);
   font-size: var(--fs-meta-sm);
   letter-spacing: var(--ls-caps);

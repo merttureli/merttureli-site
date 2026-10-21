@@ -1,14 +1,12 @@
 /* instruments.css — the fixed instrument rail (desktop) and bottom strip (mobile).
-   Hooks for the integrator:
+   Hooks for the integrator, read with fallbacks so they can be set on the rail
+   element, on any ancestor or on :root:
      --in-rail-w     rail width (64px)
-     --in-rail-top   top offset of the rail, e.g. the header height (0)
+     --in-rail-top   top offset of the rail, e.g. var(--header-h) (0px)
      --in-strip-h    strip height before the safe-area inset (56px)
    The rail is ink-900 in both page themes; symbology is drawn by the canvases.
    The module sets data-layout="rail" | "strip" on the element it mounts into. */
 .in-rail {
-  --in-rail-w: 64px;
-  --in-rail-top: 0px;
-  --in-strip-h: 56px;
   position: fixed;
   z-index: var(--z-rail, 40);
   display: flex;
@@ -21,10 +19,11 @@
   user-select: none;
 }
 .in-rail[data-layout="rail"] {
-  top: var(--in-rail-top);
+  top: var(--in-rail-top, 0px);
   right: 0;
   bottom: 0;
-  width: var(--in-rail-w);
+  width: var(--in-rail-w, 64px);
+  overflow: hidden;              /* a very short viewport clips the tape instead of spilling the dials */
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-3) 0;
@@ -34,7 +33,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  height: calc(var(--in-strip-h) + env(safe-area-inset-bottom, 0px));
+  height: calc(var(--in-strip-h, 56px) + env(safe-area-inset-bottom, 0px));
   padding-bottom: env(safe-area-inset-bottom, 0px);
   flex-direction: row;
   align-items: stretch;
@@ -58,14 +57,15 @@
 .in-rail[data-layout="rail"] .in-vsi { height: 132px; }
 .in-rail[data-layout="rail"] .in-eng { height: 104px; }
 /* strip: three cells side by side, the tape wider than the dials */
-.in-rail[data-layout="strip"] .in-instrument { flex: 1 1 0; height: var(--in-strip-h); }
+.in-rail[data-layout="strip"] .in-instrument { flex: 1 1 0; height: var(--in-strip-h, 56px); }
 .in-rail[data-layout="strip"] .in-alt { flex: 1.5 1 0; border-right: 1px solid var(--paper-a18); }
 .in-rail[data-layout="strip"] .in-vsi { border-right: 1px solid var(--paper-a18); }
 /* the rail has no room under 860 px; the strip is the mobile layout */
 @media (max-width: 859.98px) {
   .in-rail[data-layout="rail"] { display: none; }
 }
-/* no 2D context: show the text readout in place of the canvas */
+/* no 2D context: show the text readout in place of the canvas (the module also moves the
+   accessible name from the canvas to the figcaption in this state) */
 .in-instrument[data-fallback] .in-canvas { display: none; }
 .in-instrument[data-fallback] .in-sr,
 .in-rail[data-layout="strip"] .in-instrument[data-fallback] .in-sr {

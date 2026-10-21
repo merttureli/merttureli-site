@@ -13,10 +13,12 @@
   #hid { width: min(100%, 760px); }
   .lab-panel form { display: contents; }
   .lab-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-  .lab-note { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.08em; line-height: 1.6; color: var(--paper-a45); margin: 0; }
-  .lab-row[data-sim] { color: var(--paper-a45); }
+  .lab-note { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.08em; line-height: 1.6; color: var(--paper-a70); margin: 0; }
+  .lab-panel h2 { color: var(--paper-a70); }
   .lab-row[data-sim] input:disabled { opacity: .35; }
+  .lab-row[data-sim] input:disabled + small { display: none; }
   .lab-row[data-sim] small { grid-column: 1 / -1; font-size: inherit; letter-spacing: inherit; color: var(--livery); }
+  .lab-row select { font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--paper); background: var(--ink-800); border: 1px solid var(--paper-a45); border-radius: var(--radius-xs); padding: 6px var(--space-2); }
   .lab-readout { white-space: pre-wrap; overflow-wrap: anywhere; }
   @media (max-width: 860px) { .lab-stage { padding: var(--space-5) var(--page-margin); } }
   @media (max-width: 560px) {
@@ -40,17 +42,17 @@
       <h2>Simulate</h2>
       <form id="form">
         <label class="lab-row">Simulate <input id="sim" type="checkbox"></label>
-        <label class="lab-row" data-sim>Rudder <output id="r-out">0.00</output><input id="r" type="range" min="-1" max="1" step="0.01" value="0" disabled><small>simulated / not a device</small></label>
-        <label class="lab-row" data-sim>L brake <output id="l-out">0.00</output><input id="l" type="range" min="0" max="1" step="0.01" value="0" disabled><small>simulated / not a device</small></label>
-        <label class="lab-row" data-sim>R brake <output id="b-out">0.00</output><input id="b" type="range" min="0" max="1" step="0.01" value="0" disabled><small>simulated / not a device</small></label>
+        <label class="lab-row" data-sim>Rudder <output id="r-out" aria-live="off">0.00</output><input id="r" type="range" min="-1" max="1" step="0.01" value="0" disabled><small>simulated / not a device</small></label>
+        <label class="lab-row" data-sim>L brake <output id="l-out" aria-live="off">0.00</output><input id="l" type="range" min="0" max="1" step="0.01" value="0" disabled><small>simulated / not a device</small></label>
+        <label class="lab-row" data-sim>R brake <output id="b-out" aria-live="off">0.00</output><input id="b" type="range" min="0" max="1" step="0.01" value="0" disabled><small>simulated / not a device</small></label>
         <div class="lab-actions">
           <button class="lab-button" id="sweep" type="button" aria-pressed="false" disabled>Sweep</button>
           <button class="lab-button" id="centre" type="button" disabled>Centre</button>
         </div>
         <h2>Governor</h2>
-        <label class="lab-row">Tier <output id="tier-out">auto</output><select id="tier"><option value="">auto</option><option value="3">3 full</option><option value="2">2 reduced</option><option value="1">1 minimal</option><option value="0">0 static</option></select></label>
+        <label class="lab-row">Tier <output id="tier-out" aria-live="off">auto</output><select id="tier"><option value="">auto</option><option value="3">3 full</option><option value="2">2 reduced</option><option value="1">1 minimal</option><option value="0">0 static</option></select></label>
         <h2>Layout</h2>
-        <label class="lab-row">Bench width px <output id="width-out">760</output><input id="width" type="range" min="300" max="1100" step="10" value="760"></label>
+        <label class="lab-row">Bench width px <output id="width-out" aria-live="off">760</output><input id="width" type="range" min="300" max="1100" step="10" value="760"></label>
         <h2>Bus</h2>
         <label class="lab-row">Log hid:state <input id="log" type="checkbox"></label>
       </form>
@@ -70,10 +72,9 @@
   const sliders = { r: $('r'), l: $('l'), b: $('b') };
   const outs = { r: $('r-out'), l: $('l-out'), b: $('b-out') };
   const sim = $('sim'), sweep = $('sweep'), centre = $('centre'), readout = $('readout'), log = $('log');
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   let sweepRaf = 0, lastEvent = null, events = 0;
 
-  const fmt = (k) => (k === 'r' ? (Math.abs(+sliders.r.value) < 0.005 ? '0.00' : (+sliders.r.value < 0 ? '-' : '+') + Math.abs(+sliders.r.value).toFixed(2)) : (+sliders[k].value).toFixed(2));
+  const fmt = (k) => (k === 'r' ? (Math.abs(+sliders.r.value) < 0.005 ? '0.00' : (+sliders.r.value < 0 ? '−' : '+') + Math.abs(+sliders.r.value).toFixed(2)) : (+sliders[k].value).toFixed(2));
   function push() {
     for (const k in outs) outs[k].value = fmt(k);
     if (sim.checked) bench.simulate([+sliders.r.value, +sliders.l.value, +sliders.b.value]);
@@ -90,13 +91,14 @@
   for (const k in sliders) sliders[k].addEventListener('input', () => { stopSweep(); push(); });
   centre.addEventListener('click', () => { stopSweep(); sliders.r.value = 0; sliders.l.value = 0; sliders.b.value = 0; push(); });
 
-  /* A 4 s deterministic sweep: rudder one sine cycle, brakes two opposed half-sines. Reduced motion jumps to the end pose. */
+  /* A 4 s deterministic sweep: rudder one sine cycle, brakes two opposed half-sines.
+     Tier 0 (reduced motion, or a governor pinned static) jumps to one pose instead of animating. */
   const SWEEP_MS = 4000;
   function stopSweep() { if (sweepRaf) cancelAnimationFrame(sweepRaf); sweepRaf = 0; sweep.setAttribute('aria-pressed', 'false'); }
   sweep.addEventListener('click', () => {
     if (sweepRaf) return stopSweep();
     const pose = (u) => { sliders.r.value = Math.sin(u * Math.PI * 2).toFixed(2); sliders.l.value = Math.max(0, Math.sin(u * Math.PI)).toFixed(2); sliders.b.value = Math.max(0, Math.sin(u * Math.PI + Math.PI / 2)).toFixed(2); push(); };
-    if (reduced.matches) { pose(0.3); return; }
+    if (governor.tier === 0) { pose(0.3); return; }
     sweep.setAttribute('aria-pressed', 'true');
     const t0 = performance.now();
     const step = (now) => { const u = Math.min(1, (now - t0) / SWEEP_MS); pose(u); if (u < 1) sweepRaf = requestAnimationFrame(step); else stopSweep(); };

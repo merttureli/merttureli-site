@@ -96,7 +96,7 @@ export function mountConsole({
   let rendered = { start: 0, end: 0 };
   let rowH = 20;                      // measured px per entry, used for the virtual spacers
   let follow = true;                  // the log sticks to its bottom until the reader scrolls up
-  let dirty = false, renderRaf = 0, suppressScroll = false;
+  let dirty = false, renderHandle = 0, renderKind = null, suppressScroll = false;   // renderKind 'raf' | 'timer': cancelRender uses the matching canceller
   let cwd = VFS_ROOT;
   let history = loadHistory(), histIndex = history.length, draft = '', walking = false;   // walking: Up/Down keep moving through history until the reader types
   let sug = { items: [], index: 0 };
@@ -173,10 +173,21 @@ export function mountConsole({
     }
     return line;
   }
+  /* One batched render per frame, or a 0 ms timeout while the tab is hidden
+     (rAF does not fire there). The scheduler kind is remembered so that
+     cancelRender() always calls the matching canceller, whatever
+     document.hidden says by the time flush() or destroy() runs. */
   function scheduleRender() {
     dirty = true;
-    if (renderRaf) return;
-    renderRaf = (document.hidden ? (fn) => setTimeout(fn, 0) : requestAnimationFrame)(() => { renderRaf = 0; if (dirty) render(); });
+    if (renderHandle) return;
+    const tick = () => { renderHandle = 0; renderKind = null; if (dirty) render(); };
+    if (document.hidden) { renderKind = 'timer'; renderHandle = setTimeout(tick, 0); }
+    else { renderKind = 'raf'; renderHandle = requestAnimationFrame(tick); }
+  }
+  function cancelRender() {
+    if (!renderHandle) return;
+    (renderKind === 'timer' ? clearTimeout : cancelAnimationFrame)(renderHandle);
+    renderHandle = 0; renderKind = null;
   }
   function render({ anchor = null } = {}) {
     dirty = false;
@@ -227,7 +238,7 @@ export function mountConsole({
     if (entries.length > MAX_ENTRIES) { entries.splice(0, entries.length - MAX_ENTRIES); rendered = { start: 0, end: 0 }; linesEl.replaceChildren(); }
     scheduleRender();
   }
-  function flush() { if (renderRaf) { (document.hidden ? clearTimeout : cancelAnimationFrame)(renderRaf); renderRaf = 0; } if (dirty) render(); }
+  function flush() { cancelRender(); if (dirty) render(); }
 
   /* --- io given to commands; everything printed is also captured for console:run --- */
   function makeIo(captured) {
@@ -332,9 +343,17 @@ export function mountConsole({
   }
 
   /* --- open / close --- */
+  /* Remember where focus goes back to on close: the element focused before
+     the console opened, never anything inside the console itself (in inline
+     mode the prompt's own focus opens it, so activeElement is already the
+     input by then; the focus listener passes relatedTarget instead). */
+  function rememberOpener(candidate) {
+    if (opener) return;
+    if (candidate instanceof HTMLElement && candidate !== document.body && candidate.isConnected && !el.contains(candidate)) opener = candidate;
+  }
   function open() {
     if (isOpen) { input.focus({ preventScroll: true }); return; }
-    if (!opener) opener = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;
+    rememberOpener(document.activeElement);
     isOpen = true;
     if (!inline && !el.open) { try { el.showModal(); } catch { el.setAttribute('open', ''); } }
     el.dataset.open = '';
@@ -347,12 +366,12 @@ export function mountConsole({
   function close() {
     if (!isOpen) return;
     isOpen = false;
+    const o = opener; opener = null;          // taken before the blur below, whose focusout would otherwise forget it
     delete el.dataset.open;
     if (!inline && el.open) el.close();
     else if (inline && document.activeElement && el.contains(document.activeElement)) document.activeElement.blur();
     bus.emit('console:close', {});
-    const o = opener; opener = null;
-    if (o && o.isConnected) o.focus({ preventScroll: true });
+    if (o && o.isConnected && !el.contains(o)) o.focus({ preventScroll: true });
   }
   function printBanner() {
     const t = totals(VFS_ROOT);
@@ -464,8 +483,9 @@ export function mountConsole({
       const active = roles.filter((r) => r.from <= key && key <= r.to);
       const offset = (new Date(Date.UTC(year, m, 1)).getUTCDay() + 6) % 7;      // Monday-first column of the 1st
       const days = new Date(Date.UTC(year, m + 1, 0)).getUTCDate();
-      const month = document.createElement('section');
+      const month = document.createElement('div');                               // role=group keeps the label without adding a region landmark per month
       month.className = 'con-cal-month';
+      month.setAttribute('role', 'group');
       month.dataset.active = active.length ? 'true' : 'false';
       const orgs = active.map((r) => r.org).join(', ');
       month.setAttribute('aria-label', `${MONTHS[m]} ${year}: ${days} days${active.length ? `, every day marked, ${orgs}` : ', no role'}`);
@@ -685,7 +705,14 @@ export function mountConsole({
   document.addEventListener('click', onClick);
   input.addEventListener('keydown', onInputKey);
   input.addEventListener('input', () => { walking = false; refreshSuggestions(); });
-  input.addEventListener('focus', () => { if (inline && !isOpen) open(); });
+  input.addEventListener('focus', (e) => { if (inline && !isOpen) { rememberOpener(e.relatedTarget); open(); } });
+  if (inline) {
+    /* Inline, the prompt's focus opens the console, but Tab from the page lands
+       on the close button and the log first, so the opener is the element focus
+       came from when it entered the console; leaving again while closed forgets it. */
+    el.addEventListener('focusin', (e) => { if (!isOpen) rememberOpener(e.relatedTarget); });
+    el.addEventListener('focusout', (e) => { if (!isOpen && !(e.relatedTarget instanceof Node && el.contains(e.relatedTarget))) opener = null; });
+  }
   form.addEventListener('submit', onSubmit);
   log.addEventListener('scroll', onLogScroll, { passive: true });
   closeBtn.addEventListener('click', close);
@@ -713,7 +740,7 @@ export function mountConsole({
       document.removeEventListener('click', onClick);
       vv?.removeEventListener('resize', onViewport); vv?.removeEventListener('scroll', onViewport);
       unsubTier();
-      if (renderRaf) { (document.hidden ? clearTimeout : cancelAnimationFrame)(renderRaf); renderRaf = 0; }
+      cancelRender();
       if (!inline && el.open) { isOpen = false; el.close(); }
       el.remove();
       registry.clear(); entries.length = 0;

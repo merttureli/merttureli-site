@@ -1,14 +1,17 @@
 /* hid.css — the Gamepad API bench. Prefix .hid-. Colours come from the semantic
-   tokens so the bench reads on paper and, inside .on-dark, on ink. The one
-   accent is the livery: live needles, bands and values. The SIMULATED chip uses
-   the deep livery as a warning fill with paper text. */
+   tokens so the bench reads on paper and, inside .on-dark, on ink. Every 10 px
+   label that carries information (eyebrow, gauge names, device line, poll note,
+   source line, flag copy) uses --text-muted (70 % paper on ink, ink-500 on
+   paper); --text-meta is kept for the resting needle and minor ticks only. The
+   one accent is the livery: live needles, bands and values. The SIMULATED chip
+   uses the deep livery as a warning fill with paper text. */
 .hid { position: relative; display: grid; gap: var(--space-5); padding: var(--space-5); border: 1px solid var(--line-hairline); font-family: var(--font-mono); color: var(--text-body); background: var(--surface-page); min-width: 0; }
 .hid-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2) var(--space-4); flex-wrap: wrap; }
-.hid-eyebrow, .hid-chip, .hid-gauge-label, .hid-meta dt, .hid-src, .hid-note, .hid-flag span { font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: var(--lh-meta); }
-.hid-eyebrow { letter-spacing: var(--ls-caps-wide); color: var(--text-meta); }
+.hid-eyebrow, .hid-chip, .hid-gauge-label, .hid-meta dt, .hid-src, .hid-note, .hid-flag span { font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: var(--lh-meta); color: var(--text-muted); }
+.hid-eyebrow { letter-spacing: var(--ls-caps-wide); }
 
 /* status chip: a dot and a word */
-.hid-chip { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--text-meta); white-space: nowrap; }
+.hid-chip { display: inline-flex; align-items: center; gap: var(--space-2); white-space: nowrap; }
 .hid-chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
 .hid[data-hid="live"] .hid-chip { color: var(--livery); }
 .hid[data-hid="simulated"] .hid-chip { color: var(--paper); background: var(--livery-deep); padding: 2px var(--space-2) 2px var(--space-2); border-radius: var(--radius-pill); }
@@ -19,7 +22,7 @@
 .hid-gauge { margin: 0; display: grid; gap: var(--space-2); min-width: 0; }
 .hid-gauge canvas { width: 100%; aspect-ratio: 25 / 16; }
 .hid[data-hid="idle"] .hid-gauge canvas, .hid[data-hid="unavailable"] .hid-gauge canvas { opacity: .45; }
-.hid-gauge-row { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); border-top: 1px solid var(--line-hairline); padding-top: var(--space-2); color: var(--text-meta); }
+.hid-gauge-row { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); border-top: 1px solid var(--line-hairline); padding-top: var(--space-2); }
 .hid-value { font-size: var(--fs-meta); color: var(--text-display); font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
 .hid[data-hid="live"] .hid-value, .hid[data-hid="simulated"] .hid-value { color: var(--livery); }
 
@@ -28,16 +31,13 @@
 .hid-flag[hidden] { display: none; }
 .hid-flag-box { display: grid; gap: var(--space-1); justify-items: center; text-align: center; max-width: 100%; padding: var(--space-3) var(--space-4); border: 1px solid var(--line-strong); background: var(--surface-page); }
 .hid-flag b { font-weight: 400; font-size: var(--fs-meta); letter-spacing: var(--ls-caps-wide); text-transform: uppercase; color: var(--text-display); }
-.hid-flag span { color: var(--text-meta); }
 
 /* device line */
 .hid-meta { display: grid; grid-template-columns: minmax(0, 2.2fr) repeat(3, minmax(0, 1fr)); gap: var(--space-2) var(--space-4); margin: 0; border-top: 1px solid var(--line-hairline); padding-top: var(--space-3); }
 .hid-meta > div { min-width: 0; display: grid; gap: 2px; }
-.hid-meta dt { color: var(--text-meta); }
 .hid-meta dd { margin: 0; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--text-display); overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
-.hid-note { color: var(--text-meta); }
 .hid-note:empty { display: none; }
-.hid-src { margin: 0; color: var(--text-meta); }
+.hid-src { margin: 0; }
 
 @media (max-width: 560px) {
   .hid { padding: var(--space-4); gap: var(--space-4); }
@@ -53,5 +53,6 @@
 }
 @media (forced-colors: active) {
   .hid, .hid-gauge-row, .hid-meta, .hid-flag-box { border-color: CanvasText; }
+  .hid[data-hid="idle"] .hid-gauge canvas, .hid[data-hid="unavailable"] .hid-gauge canvas { opacity: 1; }
   .hid[data-hid="simulated"] .hid-chip { forced-color-adjust: none; background: Highlight; color: HighlightText; }
 }

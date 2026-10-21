@@ -3,10 +3,13 @@
    One SVG altitude scale, 0 to 1,300 ft, ticks every 100 ft and labels every
    500 ft, drawn from data/mission.js. Event marks are horizontal hairlines at
    their altitude; the two spans (descent, camera) are thin vertical brackets
-   beside the scale. Every mark and span owns a three-line mono label block
-   (value / name / detail) in a column to the right. Blocks are stacked top to
-   bottom so none overlap, and a block pushed off its altitude gets an elbow
-   leader back to its mark, the drawing-plate way. Published values are solid;
+   beside the scale. Every mark and span owns a mono label block (value / name /
+   detail, the detail wrapping at its " / " clauses onto a second line when the
+   column is narrow) to the right. Blocks are stacked top to bottom so none
+   overlap, then relaxed upward so the stack stays inside the scale, and a
+   block pushed off its altitude gets an elbow leader back to its mark, the
+   drawing-plate way. The left margin is measured from the widest tick label,
+   so "1,000" never leaves the drawing. Published values are solid;
    a derived value (the nose cone release at 75 % of the simulated apogee, the
    camera span that starts there) is dashed and tagged DERIVED. No altitude-time
    curve is drawn, because none is published.
@@ -31,26 +34,42 @@ const FONT = 10;                   // mono label size, px
 const TRACK = 0.18;                // mono tracking, em
 const LINE = 12;                   // line pitch inside a three-line label block, px
 const PAD_Y = 22;                  // room above the top tick and below the bottom tick
-const X_LABEL = 32;                // right edge of the altitude tick labels
-const X_AXIS = 52;                 // the scale line
-const X_WINDOW = 58;               // the window band (floor to ceiling)
-const WINDOW_W = 6;
-const X_SPAN0 = 74;                // first bracket (descent); the next sits SPAN_GAP further right
-const SPAN_GAP = 12;
-const X_MARK_END = 108;            // event hairlines run from the axis to here
-const X_TEXT = 118;                // label blocks start here
-const BLOCK_H = LINE * 3;          // value / name / detail
+const WINDOW_W = 6;                // the window band (floor to ceiling)
+const SPAN_GAP = 12;               // between the two brackets
+const MAX_DETAIL_LINES = 3;        // a detail wraps onto at most this many lines
 const BLOCK_GAP = 8;               // minimum clearance between stacked label blocks
-const MIN_W = 300, MAX_W = 440;    // the SVG's natural width range; a narrower column scales it with the viewBox
+const MIN_W = 300, MAX_W = 460;    // the SVG's natural width range; a narrower column scales it with the viewBox
 
 function clampPpf(v) { return Math.max(0.25, Math.min(0.8, +v || PX_PER_FT)); }
 function sourceFile(src) { const m = /^([\w./-]+\.html)/.exec(src || ''); return m ? m[1] : 'projects/charger.html'; }
-/* Keep a detail line inside the text column: drop trailing clauses after " / " until it fits, then clip. */
-function fitLine(text, maxPx) {
-  let t = text;
-  while (textWidth(t, FONT, TRACK) > maxPx && t.includes(' / ')) t = t.slice(0, t.lastIndexOf(' / '));
-  if (textWidth(t, FONT, TRACK) > maxPx) t = t.slice(0, Math.max(3, Math.floor(maxPx / (FONT * (0.6 + TRACK))) - 1)) + '…';
-  return t;
+const fits = (t, maxPx) => textWidth(t, FONT, TRACK) <= maxPx;
+/* Clip one line to the column with an ellipsis (the last resort; nothing in mission.js needs it above 150 px). */
+function clip(text, maxPx) {
+  if (fits(text, maxPx)) return text;
+  const n = Math.max(3, Math.floor(maxPx / (FONT * (0.6 + TRACK))) - 1);
+  return text.slice(0, n) + '…';
+}
+/* Wrap a detail into at most MAX_DETAIL_LINES lines. Clauses split at " / " are
+   packed greedily; a clause wider than the column breaks at a space. The lines
+   never overlap the text column. */
+function wrapDetail(text, maxPx) {
+  const lines = [];
+  let cur = '';
+  for (const clause of text.split(' / ')) {
+    const joined = cur ? `${cur} / ${clause}` : clause;
+    if (fits(joined, maxPx)) { cur = joined; continue; }
+    if (cur) lines.push(cur);
+    cur = clause;
+    while (!fits(cur, maxPx)) {
+      let cut = cur.lastIndexOf(' ');
+      while (cut > 0 && !fits(cur.slice(0, cut), maxPx)) cut = cur.lastIndexOf(' ', cut - 1);
+      if (cut <= 0) break;
+      lines.push(cur.slice(0, cut)); cur = cur.slice(cut + 1);
+    }
+  }
+  if (cur) lines.push(cur);
+  if (lines.length > MAX_DETAIL_LINES) { lines.length = MAX_DETAIL_LINES; lines[MAX_DETAIL_LINES - 1] += ' …'; }
+  return lines.map(l => clip(l, maxPx));
 }
 
 export function mountLadder(root, { pxPerFt = PX_PER_FT, progress = null } = {}) {
@@ -79,15 +98,23 @@ export function mountLadder(root, { pxPerFt = PX_PER_FT, progress = null } = {})
   const groups = new Map();   // id → SVG group, for the passed / live state
   let geometry = null;        // { Y(ft), W, H, ind }
 
+  /* Horizontal plan: the tick labels set the left margin, everything else follows the scale line. */
+  const tickLabels = []; for (let ft = minFt; ft <= maxFt; ft += labelFt) tickLabels.push(fmtInt(ft));
+  const X_LABEL = 4 + Math.ceil(Math.max(...tickLabels.map(t => textWidth(t, FONT, TRACK))));   // right edge of the tick labels
+  const X_AXIS = X_LABEL + 20;         // the scale line
+  const X_WINDOW = X_AXIS + 6;         // the window band
+  const X_SPAN0 = X_AXIS + 22;         // first bracket (descent); the next sits SPAN_GAP further right
+  const X_MARK_END = X_AXIS + 56;      // event hairlines run from the axis to here
+  const X_TEXT = X_MARK_END + 10;      // label blocks start here
+
   function renderScale() {
     scaleWrap.replaceChildren();
     groups.clear();
     const colW = Math.round(scaleWrap.getBoundingClientRect().width) || MAX_W;
     const W = Math.max(MIN_W, Math.min(MAX_W, colW));
-    const H = Math.round((maxFt - minFt) * ppf + PAD_Y * 2);
+    let H = Math.round((maxFt - minFt) * ppf + PAD_Y * 2);
     const Y = (ft) => PAD_Y + (maxFt - ft) * ppf;    // altitude → y, up is up
-    const s = svg('svg', { class: 'ld-svg', width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `Altitude scale ${minFt} to ${fmtInt(maxFt)} feet with ${LADDER.marks.length} event marks and ${LADDER.spans.length} spans` });
-    if (colW < W) { s.setAttribute('width', colW); s.setAttribute('height', Math.round(H * colW / W)); }
+    const s = svg('svg', { class: 'ld-svg', role: 'img', 'aria-label': `Altitude scale ${minFt} to ${fmtInt(maxFt)} feet with ${LADDER.marks.length} event marks and ${LADDER.spans.length} spans` });
 
     /* the window: floor to ceiling as a faint band so the target reads at a glance */
     const { floor, ceiling } = LADDER.windowFt;
@@ -101,19 +128,30 @@ export function mountLadder(root, { pxPerFt = PX_PER_FT, progress = null } = {})
     }
     s.append(svg('text', { class: 'ld-t', x: X_LABEL, y: Y(maxFt) - 8, 'text-anchor': 'end' }, 'FT'));
 
-    /* label blocks: marks at their altitude, spans at their midpoint; stacked top to bottom */
+    /* label blocks: marks at their altitude, spans at their midpoint, the value line on the anchor.
+       Wrapped first so every block knows its height, stacked top to bottom so none overlap, then
+       relaxed upward from the bottom edge so the stack stays on the drawing. */
+    const maxText = W - X_TEXT - 6;
     const items = [
       ...LADDER.marks.map(m => ({ kind: 'mark', m, ft: m.ft, anchorFt: m.ft, value: `${fmtInt(m.ft)} FT`, name: m.label, detail: m.detail, derived: !!m.derived })),
       ...LADDER.spans.map((sp, i) => ({ kind: 'span', m: sp, i, ft: (sp.fromFt + sp.toFt) / 2, anchorFt: (sp.fromFt + sp.toFt) / 2, value: `${fmtInt(sp.fromFt)} → ${fmtInt(sp.toFt)} FT`, name: sp.label, detail: sp.detail, derived: !!sp.derived })),
     ].sort((a, b) => b.ft - a.ft);   // top of the scale first
-    let prevBottom = -Infinity;
     for (const it of items) {
-      let top = Y(it.anchorFt) - BLOCK_H / 2;
-      if (top < prevBottom + BLOCK_GAP) top = prevBottom + BLOCK_GAP;   // push below the block above
-      top = Math.max(2, Math.min(H - BLOCK_H - 2, top));
-      it.top = top; prevBottom = top + BLOCK_H;
+      it.nameLine = clip(it.name.toUpperCase(), maxText);
+      it.detailLines = wrapDetail(it.detail.toUpperCase(), maxText);
+      it.h = LINE * (2 + it.detailLines.length);
+      it.top = Y(it.anchorFt) - FONT / 2 - 1;   // the value line sits on the anchor
     }
-    const maxText = W - X_TEXT - 6;
+    let prevBottom = -Infinity;
+    for (const it of items) { if (it.top < prevBottom + BLOCK_GAP) it.top = prevBottom + BLOCK_GAP; prevBottom = it.top + it.h; }
+    let nextTop = H - 2;
+    for (let i = items.length - 1; i >= 0; i--) { const it = items[i]; if (it.top > nextTop - it.h) it.top = nextTop - it.h; nextTop = it.top - BLOCK_GAP; }
+    let minTop = 2;
+    for (const it of items) { if (it.top < minTop) it.top = minTop; minTop = it.top + it.h + BLOCK_GAP; }
+    H = Math.max(H, Math.ceil(minTop - BLOCK_GAP + 2));   // a stack taller than the scale extends the drawing, never overlaps
+    s.setAttribute('width', W); s.setAttribute('height', H); s.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    if (colW < W) { s.setAttribute('width', colW); s.setAttribute('height', Math.round(H * colW / W)); }
+    const anchorY = (it) => it.top + FONT / 2 + 1;   // where a leader meets the block: its value line
 
     /* spans: thin vertical brackets beside the window */
     for (const it of items.filter(i => i.kind === 'span')) {
@@ -122,20 +160,20 @@ export function mountLadder(root, { pxPerFt = PX_PER_FT, progress = null } = {})
       g.append(svg('line', { class: 'ld-span-line', x1: x, y1, x2: x, y2, 'stroke-dasharray': sp.derived ? '3 3' : null }));
       g.append(svg('line', { class: 'ld-span-cap', x1: x - 3, y1, x2: x + 3, y2: y1 }));
       g.append(svg('line', { class: 'ld-span-cap', x1: x - 3, y1: y2, x2: x + 3, y2: y2 }));
-      const ym = (y1 + y2) / 2, ty = it.top + BLOCK_H / 2;
+      const ym = (y1 + y2) / 2, ty = anchorY(it);
       g.append(svg('path', { class: 'ld-lead', d: `M${x + 3} ${ym} H${X_MARK_END}${Math.abs(ty - ym) > 0.5 ? ` H${X_TEXT - 4} V${ty}` : ''}` }));
-      appendBlock(g, it, maxText);
+      appendBlock(g, it);
       s.append(g);
       groups.set(sp.id, g);
     }
     /* marks: hairline from the axis, dot on the scale, elbow leader when displaced */
     for (const it of items.filter(i => i.kind === 'mark')) {
-      const m = it.m, y = Y(m.ft), ty = it.top + BLOCK_H / 2;
+      const m = it.m, y = Y(m.ft), ty = anchorY(it);
       const g = svg('g', { class: 'ld-mark', 'data-id': m.id, 'data-derived': m.derived ? '' : null });
       g.append(svg('line', { class: 'ld-mark-line', x1: X_AXIS, y1: y, x2: X_MARK_END, y2: y, 'stroke-dasharray': m.derived ? '3 3' : null }));
       g.append(svg('circle', { class: 'ld-mark-dot', cx: X_AXIS, cy: y, r: 2.5 }));
       if (Math.abs(ty - y) > 0.5) g.append(svg('path', { class: 'ld-lead', d: `M${X_MARK_END} ${y} H${X_TEXT - 4} V${ty}` }));
-      appendBlock(g, it, maxText);
+      appendBlock(g, it);
       s.append(g);
       groups.set(m.id, g);
     }
@@ -148,13 +186,12 @@ export function mountLadder(root, { pxPerFt = PX_PER_FT, progress = null } = {})
     scaleWrap.append(s);
     geometry = { Y, W, H, ind };
   }
-  /* value / name / detail, with the DERIVED tag after the value */
-  function appendBlock(g, it, maxText) {
-    const value = it.value, name = fitLine(it.name.toUpperCase(), maxText), detail = fitLine(it.detail.toUpperCase(), maxText);
-    g.append(svg('text', { class: 'ld-t ld-t-value', x: X_TEXT, y: it.top + FONT }, value));
-    if (it.derived) g.append(svg('text', { class: 'ld-t ld-t-derived', x: X_TEXT + textWidth(value, FONT, TRACK) + 8, y: it.top + FONT }, 'DERIVED'));
-    g.append(svg('text', { class: 'ld-t ld-t-name', x: X_TEXT, y: it.top + FONT + LINE }, name));
-    g.append(svg('text', { class: 'ld-t', x: X_TEXT, y: it.top + FONT + LINE * 2 }, detail));
+  /* value (with the DERIVED tag after it) / name / detail lines */
+  function appendBlock(g, it) {
+    g.append(svg('text', { class: 'ld-t ld-t-value', x: X_TEXT, y: it.top + FONT }, it.value));
+    if (it.derived) g.append(svg('text', { class: 'ld-t ld-t-derived', x: X_TEXT + textWidth(it.value, FONT, TRACK) + 8, y: it.top + FONT }, 'DERIVED'));
+    g.append(svg('text', { class: 'ld-t ld-t-name', x: X_TEXT, y: it.top + FONT + LINE }, it.nameLine));
+    it.detailLines.forEach((line, i) => g.append(svg('text', { class: 'ld-t', x: X_TEXT, y: it.top + FONT + LINE * (2 + i) }, line)));
   }
 
   /* ---- points ladder ----------------------------------------------------- */

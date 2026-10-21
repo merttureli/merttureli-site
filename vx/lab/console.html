@@ -148,13 +148,17 @@
     $('cwd-out').textContent = s.cwd;
     const out = last ? last.output.split('\n') : [];
     const head = out.slice(0, 6).join('\n') + (out.length > 6 ? `\n… ${out.length - 6} more lines` : '');
-    readout.innerHTML =
-      `<b>console</b> / ${s.inline ? 'inline' : 'dialog'}  open ${s.open}  cwd ${s.cwd}  tier ${s.tier ?? '--'}  hotkeys ${s.hotkeys}  navigate ${s.navigate}\n` +
+    // Text nodes only: cwd, suggestion labels, args and output are reader input and must never reach innerHTML.
+    const text =
+      ` / ${s.inline ? 'inline' : 'dialog'}  open ${s.open}  cwd ${s.cwd}  tier ${s.tier ?? '--'}  hotkeys ${s.hotkeys}  navigate ${s.navigate}\n` +
       `log      entries ${s.entries}  rendered ${s.rendered[0]}..${s.rendered[1]}  virtual ${s.virtual} (from ${s.virtualFrom})  follow ${s.follow}  row ${s.rowH} px\n` +
       `matcher  suggestions ${s.suggestMax} max  shown [${s.suggestions.join(', ')}]  index ${s.suggestionIndex}  history ${s.history}  runs ${s.runs}\n` +
       `bus      console:open x${opens}  console:close x${closes}  console:run x${events}\n` +
       `last     ${last ? `${last.name} [${last.args.map((a) => JSON.stringify(a)).join(', ')}]` : '--'}\n` +
-      (last ? head.replace(/</g, '&lt;') : '');
+      (last ? head : '');
+    const b = document.createElement('b');
+    b.textContent = 'console';
+    readout.replaceChildren(b, document.createTextNode(text));
   }
   addEventListener('pagehide', () => api?.destroy(), { once: true });
 
