@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+<html lang="en"><head>
 <script src="../js/site-palette.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preload" href="../assets/fonts/space-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin="">
+<link rel="preload" href="../assets/fonts/ibm-plex-mono-400-latin.woff2" as="font" type="font/woff2" crossorigin="">
 <title>Custom three-point bend fixture · Mert Tureli</title>
 <meta name="description" content="A fully 3D printable 12 part three-point bend fixture, designed in SolidWorks 2025 around specimens too delicate for commercial fixtures, with the rebuilds automated in VBA.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230A0A0A'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='26' font-weight='600' fill='%23FFFFFF'%3EMT%3C/text%3E%3C/svg%3E">
@@ -13,206 +14,175 @@
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://merttureli.com/projects/bend-fixture.html">
 <meta property="og:image" content="https://merttureli.com/assets/og-cover.png">
-<script src="../support.js"></script>
-<script src="../js/media-playback.js" defer></script>
-<script src="../js/depth-motion.js" defer></script>
-<link rel="stylesheet" href="../css/interaction-polish.css">
-<script src="../js/interaction-polish.js" defer></script>
-</head>
-<body class="depth-design">
-<x-dc>
-<helmet>
-<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/fonts.css">
-<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/colors.css">
-<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/typography.css">
-<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/spacing.css">
-<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/layout.css">
-<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/effects.css">
-<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/motion.css">
-<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/base.css">
-<link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/styles.css">
-<script src="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/_ds_bundle.js"></script>
-<link rel="stylesheet" href="../css/mobile.css">
-<link rel="stylesheet" href="../css/depth.css">
+<script src="../js/media-playback.js" defer=""></script>
+<script src="../js/depth-motion.js" defer=""></script>
 <style>
+    .sc-placeholder{background:color-mix(in srgb,currentColor 8%,transparent);
+      border:1px solid color-mix(in srgb,currentColor 50%,transparent);
+      border-radius:2px;box-sizing:border-box;overflow:hidden}
+    @keyframes sc-shine{0%{background-position:100% 50%}100%{background-position:0% 50%}}
+    html.sc-dc-streaming .sc-placeholder,
+    html.sc-dc-streaming .sc-interp.sc-missing{position:relative;
+      background:color-mix(in srgb,currentColor 5%,transparent);
+      border-color:transparent}
+    html.sc-dc-streaming .sc-placeholder::before,
+    html.sc-dc-streaming .sc-interp.sc-missing::before{content:'';
+      position:absolute;inset:0;pointer-events:none;
+      background:linear-gradient(90deg,rgba(217,119,87,0) 25%,rgba(247,225,211,.95) 37%,rgba(217,119,87,0) 63%);
+      background-size:400% 100%;animation:sc-shine 1.4s ease infinite}
+    html.sc-dc-streaming .sc-placeholder:nth-child(n+9 of .sc-placeholder)::before,
+    html.sc-dc-streaming .sc-interp.sc-missing:nth-child(n+9 of .sc-interp.sc-missing)::before{animation:none;
+      background:color-mix(in srgb,currentColor 8%,transparent)}
+    .sc-placeholder-error{padding:4px 8px;font:11px/1.4 ui-monospace,monospace;
+      color:color-mix(in srgb,currentColor 70%,transparent);word-break:break-word}
+    .sc-interp.sc-missing{display:inline-block;width:2em;height:1em;overflow:hidden;
+      vertical-align:text-bottom;background:rgba(255,255,255,.3);border:1px solid rgba(0,0,0,.5);
+      border-radius:2px;box-sizing:border-box;color:transparent;
+      user-select:none}
+    .sc-interp.sc-unresolved{font-family:ui-monospace,monospace;font-size:.85em;
+      color:color-mix(in srgb,currentColor 50%,transparent);
+      background:color-mix(in srgb,currentColor 10%,transparent);border-radius:3px;
+      padding:0 3px}
+    .sc-host.sc-has-error{position:relative}
+    .sc-logic-error{position:absolute;top:8px;left:8px;z-index:2147483647;max-width:60ch;
+      padding:6px 10px;background:#b00020;color:#fff;font:12px/1.4 ui-monospace,monospace;
+      border-radius:4px;white-space:pre-wrap;pointer-events:none}
+    /* Mirrors PRINT_BASELINE_CSS in apps/web deck-stage-export.ts — keep both
+       in sync until dc-runtime regains a build step. */
+    @media print {
+      @page { margin: 0.5cm; }
+      figure, table { break-inside: avoid; }
+      #dc-root, #dc-root > .sc-host { height: auto; }
+      *, *::before, *::after {
+        print-color-adjust: exact; -webkit-print-color-adjust: exact;
+        backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+        animation-delay: -99s !important; animation-duration: .001s !important;
+        animation-iteration-count: 1 !important; animation-fill-mode: both !important;
+        animation-play-state: running !important; transition-duration: 0s !important;
+      }
+    }
+  </style>
+<link rel="stylesheet" href="../css/interaction-polish.css">
+<script src="../js/interaction-polish.js" defer=""></script>
+<style>html,body{height:100%;margin:0}#dc-root,#dc-root>.sc-host{height:100%}</style><link rel="stylesheet" href="../css/fonts.css"><link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/colors.css"><link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/typography.css"><link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/spacing.css"><link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/layout.css"><link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/effects.css"><link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/motion.css"><link rel="stylesheet" href="../_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/base.css"><link rel="stylesheet" href="../css/mobile.css"><link rel="stylesheet" href="../css/depth.css"><style>
   html { scroll-behavior: smooth; }
   body { background: var(--paper); }
-</style>
-<link rel="stylesheet" href="../css/site-palette.css">
-</helmet>
+</style><link rel="stylesheet" href="../css/site-palette.css"><link rel="stylesheet" href="../css/static-interactions.css">
+</head>
+<body class="depth-design">
+<div id="dc-root"><div class="sc-host" data-sc-name="bend-fixture"><div style="background: var(--paper); overflow-x: hidden;">
 
-<div style="background: var(--paper); overflow-x: hidden">
-
-  <section class="on-dark depth-hero" style="position: relative; min-height: min(720px, 88vh); background: var(--ink-900); overflow: hidden; display: flex; flex-direction: column">
-    <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Grain" blend="overlay" strength="normal" hint-size="100%,100%"></x-import>
-    <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SiteHeader" items="{{ nav }}" active="work" inverse="true" floating="true" hint-size="100%,88px"></x-import>
-    <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SocialRail" items="{{ social }}" inverse="true" fixed="true" hint-size="36px,120px"></x-import>
-    <div style="position: relative; flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); align-items: center; gap: var(--space-8); padding: calc(var(--header-h) + var(--space-8)) var(--page-margin) var(--space-8); max-width: var(--max-width); margin: 0 auto; width: 100%">
-      <div style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" wide="true" hint-size="300px,16px">Case study / SunThru</x-import>
-        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="1" treatment="inverse" hint-size="100%,140px">Custom three-point bend fixture</x-import>
-        <p style="font-size: var(--fs-body-lg); line-height: var(--lh-body); color: var(--paper-a90); max-width: var(--measure)">Commercial bend fixtures are built for metals and plastics and will damage a fragile specimen before the test begins. SunThru needed one matched to its own samples, so I designed a fully printable 12 part fixture built around gentle handling.</p>
-        <div style="display: flex; gap: var(--space-4); flex-wrap: wrap; margin-top: var(--space-2)">
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="glass" variant="glass" trailing="→" href="../index.html#work" dc-props="{{ linkOnDark }}" hint-size="150px,44px">All work</x-import>
+  <section class="on-dark depth-hero" style="position: relative; min-height: min(720px, 88vh); background: var(--ink-900); overflow: hidden; display: flex; flex-direction: column;">
+    <div class="sc-host-x" style="display: contents;"><span aria-hidden="true" style="position: absolute; inset: 0px; pointer-events: none; background-image: var(--grain-url); background-size: 220px 220px; mix-blend-mode: overlay; opacity: var(--grain-opacity);"></span></div>
+    <div class="sc-host-x" style="display: contents;"><header data-ds-header="inverse" style="position: absolute; top: 0px; left: 0px; right: 0px; z-index: var(--z-header); height: var(--header-h); display: flex; align-items: center; justify-content: space-between; gap: var(--space-8); padding: 0 var(--page-margin); border-bottom: none;"><a href="#" style="font-family: var(--font-display); font-size: 12px; font-weight: 500; letter-spacing: 0.32em; line-height: 1; text-transform: uppercase; color: var(--paper); display: inline-block; white-space: nowrap; text-decoration: none; border: none;">MERT TURELI</a><nav style="display: flex; align-items: center; gap: var(--space-7);"><a href="../index.html#work" style="position: relative; display: inline-block; padding: 2px 0px 6px; font-family: var(--font-display); font-size: var(--fs-meta); font-weight: 500; letter-spacing: var(--ls-nav); text-transform: uppercase; text-decoration: none; border: none; color: var(--paper); transition: color var(--t-hover);">Work<span aria-hidden="true" style="position: absolute; left: 0px; bottom: 0px; height: 1px; width: 100%; background: var(--paper); transition: width var(--dur-3) var(--ease-out);"></span></a><a href="../index.html#experience" style="position: relative; display: inline-block; padding: 2px 0px 6px; font-family: var(--font-display); font-size: var(--fs-meta); font-weight: 500; letter-spacing: var(--ls-nav); text-transform: uppercase; text-decoration: none; border: none; color: var(--paper-a70); transition: color var(--t-hover);">Experience<span aria-hidden="true" style="position: absolute; left: 0px; bottom: 0px; height: 1px; width: 0%; background: var(--paper); transition: width var(--dur-3) var(--ease-out);"></span></a><a href="../index.html#beyond" style="position: relative; display: inline-block; padding: 2px 0px 6px; font-family: var(--font-display); font-size: var(--fs-meta); font-weight: 500; letter-spacing: var(--ls-nav); text-transform: uppercase; text-decoration: none; border: none; color: var(--paper-a70); transition: color var(--t-hover);">Beyond<span aria-hidden="true" style="position: absolute; left: 0px; bottom: 0px; height: 1px; width: 0%; background: var(--paper); transition: width var(--dur-3) var(--ease-out);"></span></a><a href="../websites.html" style="position: relative; display: inline-block; padding: 2px 0px 6px; font-family: var(--font-display); font-size: var(--fs-meta); font-weight: 500; letter-spacing: var(--ls-nav); text-transform: uppercase; text-decoration: none; border: none; color: var(--paper-a70); transition: color var(--t-hover);">Websites<span aria-hidden="true" style="position: absolute; left: 0px; bottom: 0px; height: 1px; width: 0%; background: var(--paper); transition: width var(--dur-3) var(--ease-out);"></span></a><a href="../index.html#contact" style="position: relative; display: inline-block; padding: 2px 0px 6px; font-family: var(--font-display); font-size: var(--fs-meta); font-weight: 500; letter-spacing: var(--ls-nav); text-transform: uppercase; text-decoration: none; border: none; color: var(--paper-a70); transition: color var(--t-hover);">Contact<span aria-hidden="true" style="position: absolute; left: 0px; bottom: 0px; height: 1px; width: 0%; background: var(--paper); transition: width var(--dur-3) var(--ease-out);"></span></a><button aria-label="Menu" style="display: grid; place-items: center; width: 32px; height: 32px; background: transparent; border: none; cursor: pointer; padding: 0px; margin-left: var(--space-2);"><img src="data:image/svg+xml,%3C!--%20%40license%20lucide-static%20v0.544.0%20-%20ISC%20--%3E%0A%3Csvg%0A%20%20class%3D%22lucide%20lucide-menu%22%0A%20%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%0A%20%20width%3D%2224%22%0A%20%20height%3D%2224%22%0A%20%20viewBox%3D%220%200%2024%2024%22%0A%20%20fill%3D%22none%22%0A%20%20stroke%3D%22currentColor%22%0A%20%20stroke-width%3D%222%22%0A%20%20stroke-linecap%3D%22round%22%0A%20%20stroke-linejoin%3D%22round%22%0A%3E%0A%20%20%3Cpath%20d%3D%22M4%205h16%22%20%2F%3E%0A%20%20%3Cpath%20d%3D%22M4%2012h16%22%20%2F%3E%0A%20%20%3Cpath%20d%3D%22M4%2019h16%22%20%2F%3E%0A%3C%2Fsvg%3E%0A" alt="" aria-hidden="true" draggable="false" style="width: 20px; height: 20px; display: block; opacity: 1; filter: invert(1);"></button></nav></header></div>
+    <div class="sc-host-x" style="display: contents;"><div data-ds-rail="inverse" style="position: absolute; z-index: var(--z-rail); top: 50%; transform: translateY(-50%); right: var(--space-5); display: flex; flex-direction: column; gap: var(--space-3);"><a href="https://linkedin.com/in/merttureli" aria-label="LinkedIn" style="width: 36px; height: 36px; display: grid; place-items: center; border-radius: var(--radius-pill); border: 1px solid var(--paper-a18); background: var(--paper-a08); backdrop-filter: var(--blur-glass); transition: background var(--t-hover), border-color var(--t-hover);"><img src="data:image/svg+xml,%3C!--%20%40license%20lucide-static%20v0.544.0%20-%20ISC%20--%3E%0A%3Csvg%0A%20%20class%3D%22lucide%20lucide-linkedin%22%0A%20%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%0A%20%20width%3D%2224%22%0A%20%20height%3D%2224%22%0A%20%20viewBox%3D%220%200%2024%2024%22%0A%20%20fill%3D%22none%22%0A%20%20stroke%3D%22currentColor%22%0A%20%20stroke-width%3D%222%22%0A%20%20stroke-linecap%3D%22round%22%0A%20%20stroke-linejoin%3D%22round%22%0A%3E%0A%20%20%3Cpath%20d%3D%22M16%208a6%206%200%200%201%206%206v7h-4v-7a2%202%200%200%200-2-2%202%202%200%200%200-2%202v7h-4v-7a6%206%200%200%201%206-6z%22%20%2F%3E%0A%20%20%3Crect%20width%3D%224%22%20height%3D%2212%22%20x%3D%222%22%20y%3D%229%22%20%2F%3E%0A%20%20%3Ccircle%20cx%3D%224%22%20cy%3D%224%22%20r%3D%222%22%20%2F%3E%0A%3C%2Fsvg%3E%0A" alt="" aria-hidden="true" draggable="false" style="width: 15px; height: 15px; display: block; opacity: 1; filter: invert(1);"></a><a href="../index.html#contact" aria-label="Mail" style="width: 36px; height: 36px; display: grid; place-items: center; border-radius: var(--radius-pill); border: 1px solid var(--paper-a18); background: var(--paper-a08); backdrop-filter: var(--blur-glass); transition: background var(--t-hover), border-color var(--t-hover);"><img src="data:image/svg+xml,%3C!--%20%40license%20lucide-static%20v0.544.0%20-%20ISC%20--%3E%0A%3Csvg%0A%20%20class%3D%22lucide%20lucide-mail%22%0A%20%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%0A%20%20width%3D%2224%22%0A%20%20height%3D%2224%22%0A%20%20viewBox%3D%220%200%2024%2024%22%0A%20%20fill%3D%22none%22%0A%20%20stroke%3D%22currentColor%22%0A%20%20stroke-width%3D%222%22%0A%20%20stroke-linecap%3D%22round%22%0A%20%20stroke-linejoin%3D%22round%22%0A%3E%0A%20%20%3Cpath%20d%3D%22m22%207-8.991%205.727a2%202%200%200%201-2.009%200L2%207%22%20%2F%3E%0A%20%20%3Crect%20x%3D%222%22%20y%3D%224%22%20width%3D%2220%22%20height%3D%2216%22%20rx%3D%222%22%20%2F%3E%0A%3C%2Fsvg%3E%0A" alt="" aria-hidden="true" draggable="false" style="width: 15px; height: 15px; display: block; opacity: 1; filter: invert(1);"></a></div></div>
+    <div style="position: relative; flex: 1 1 0%; display: grid; grid-template-columns: minmax(0px, 1fr) minmax(0px, 1.15fr); align-items: center; gap: var(--space-8); padding: calc(var(--header-h) + var(--space-8)) var(--page-margin) var(--space-8); max-width: var(--max-width); margin: 0px auto; width: 100%;">
+      <div style="display: flex; flex-direction: column; gap: var(--space-5);">
+        <div class="sc-host-x" style="display: contents;"><span data-depth-label="true" style="font-family: var(--font-mono); font-size: var(--fs-meta); font-weight: 400; line-height: var(--lh-meta); letter-spacing: var(--ls-caps-wide); text-transform: uppercase; color: var(--text-meta); display: inline-flex; align-items: baseline; gap: var(--space-3);">Case study / SunThru</span></div>
+        <div class="sc-host-x" style="display: contents;"><h2 style="font-family: var(--font-display); font-size: var(--fs-display-1); font-weight: 500; line-height: var(--lh-display); letter-spacing: var(--ls-display); text-transform: uppercase; margin: 0px; color: var(--paper); text-wrap: balance;">Custom three-point bend fixture</h2></div>
+        <p style="font-size: var(--fs-body-lg); line-height: var(--lh-body); color: var(--paper-a90); max-width: var(--measure);">Commercial bend fixtures are built for metals and plastics and will damage a fragile specimen before the test begins. SunThru needed one matched to its own samples, so I designed a fully printable 12 part fixture built around gentle handling.</p>
+        <div style="display: flex; gap: var(--space-4); flex-wrap: wrap; margin-top: var(--space-2);">
+          <div class="sc-host-x" style="display: contents;"><a data-depth-button="glass" tone="inverse" data-ds-button="glass" data-ds-hover="bg trail" href="../index.html#work" style="font-family: var(--font-mono); font-size: 12px; letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: 1; display: inline-flex; align-items: center; gap: var(--space-3); padding: 14px 26px; border-radius: var(--radius-pill); cursor: pointer; opacity: 1; text-decoration: none; white-space: nowrap; transition: background var(--t-hover), color var(--t-hover), border-color var(--t-hover), opacity var(--t-hover); background: var(--paper-a08); color: var(--paper); border: 1px solid var(--paper-a45); backdrop-filter: var(--blur-glass);">All work<span style="display: inline-flex; transform: none; transition: transform var(--t-hover);">→</span></a></div>
         </div>
       </div>
-      <div class="depth-stage" data-reveal="1" style="position: relative; width: 100%; aspect-ratio: 16 / 9">
-          <video data-clip="1" poster="../assets/motion/bend-fixture-blurred-poster.jpg" loop muted playsinline preload="metadata" style="width: 100%; height: 100%; object-fit: contain; display: block"><source src="../assets/motion/bend-fixture-blurred-alpha.webm" type="video/webm"><source src="../assets/motion/bend-fixture-blurred.mp4" type="video/mp4"></video>
-          <div style="position: absolute; inset: auto 0 0 0; display: flex; justify-content: center">
-            <span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper); border: 1px solid var(--paper-a45); border-radius: var(--radius-pill); padding: 5px 12px">IP protected</span>
+      <div class="depth-stage" data-reveal="1" style="position: relative; width: 100%; aspect-ratio: 16 / 9;">
+          <video data-clip="1" poster="../assets/motion/bend-fixture-blurred-poster.jpg" playsinline="" preload="metadata" style="width: 100%; height: 100%; object-fit: contain; display: block;"><source src="../assets/motion/bend-fixture-blurred-alpha.webm" type="video/webm"><source src="../assets/motion/bend-fixture-blurred.mp4" type="video/mp4"></video>
+          <div style="position: absolute; inset: auto 0px 0px; display: flex; justify-content: center;">
+            <span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper); border: 1px solid var(--paper-a45); border-radius: var(--radius-pill); padding: 5px 12px;">IP protected</span>
           </div>
         </div>
     </div>
   </section>
 
   <section style="position: relative; padding: var(--section-y) var(--page-margin) var(--space-9);">
-    <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-7)">
-      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Brief" right="01" hint-size="100%,14px"></x-import>
+    <div style="position: relative; max-width: var(--max-width); margin: 0px auto; display: flex; flex-direction: column; gap: var(--space-7);">
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5);">
+        <div class="sc-host-x" style="display: contents;"><div data-depth-rule="true" style="display: flex; align-items: center; gap: var(--space-5); width: 100%;"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta); white-space: nowrap;">Brief</span><span style="flex: 1 1 0%; height: 1px; background: var(--line-hairline);"></span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta); white-space: nowrap;">01</span></div></div>
       </div>
-      <div data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-8); align-items: start">
-        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-6)"><x-import component-from-global-scope="MertTReliDesignSystem_56763c.SpecList" items="{{ brief }}" columns="minmax(64px,110px) minmax(0,1fr)" hint-size="100%%,260px"></x-import></div>
-        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-5)">      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Renders are blurred here because the fixture is SunThru hardware. The engineering worth describing is the parametric structure and the design for printing, neither of which needs the geometry shown.</p>
+      <div data-reveal="1" style="display: grid; grid-template-columns: minmax(0px, 1fr) minmax(0px, 1fr); gap: var(--space-8); align-items: start;">
+        <div style="min-width: 0px; display: flex; flex-direction: column; gap: var(--space-6);"><div class="sc-host-x" style="display: contents;"><dl style="margin: 0px; display: flex; flex-direction: column; gap: var(--space-3);"><div style="display: grid; grid-template-columns: minmax(64px, 110px) minmax(0px, 1fr); gap: var(--space-5); align-items: baseline; padding-bottom: var(--space-3); border-bottom: 1px solid var(--line-hairline);"><dt style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: var(--lh-meta); color: var(--text-meta);">Role</dt><dd style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: var(--lh-meta); color: var(--text-display); margin: 0px;">Design engineer, solo</dd></div><div style="display: grid; grid-template-columns: minmax(64px, 110px) minmax(0px, 1fr); gap: var(--space-5); align-items: baseline; padding-bottom: var(--space-3); border-bottom: 1px solid var(--line-hairline);"><dt style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: var(--lh-meta); color: var(--text-meta);">For</dt><dd style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: var(--lh-meta); color: var(--text-display); margin: 0px;">SunThru, early stage hardware R&amp;amp;D</dd></div><div style="display: grid; grid-template-columns: minmax(64px, 110px) minmax(0px, 1fr); gap: var(--space-5); align-items: baseline; padding-bottom: var(--space-3); border-bottom: 1px solid var(--line-hairline);"><dt style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: var(--lh-meta); color: var(--text-meta);">Tools</dt><dd style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: var(--lh-meta); color: var(--text-display); margin: 0px;">SolidWorks 2025, VBA macro automation, FDM printing</dd></div><div style="display: grid; grid-template-columns: minmax(64px, 110px) minmax(0px, 1fr); gap: var(--space-5); align-items: baseline; padding-bottom: var(--space-3); border-bottom: 1px solid var(--line-hairline);"><dt style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: var(--lh-meta); color: var(--text-meta);">Timeline</dt><dd style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: var(--lh-meta); color: var(--text-display); margin: 0px;">2026</dd></div><div style="display: grid; grid-template-columns: minmax(64px, 110px) minmax(0px, 1fr); gap: var(--space-5); align-items: baseline; padding-bottom: var(--space-3); border-bottom: 1px solid var(--line-hairline);"><dt style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: var(--lh-meta); color: var(--text-meta);">Status</dt><dd style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: var(--lh-meta); color: var(--text-display); margin: 0px;">Base plate and gauge plate printed and in lab use</dd></div></dl></div></div>
+        <div style="min-width: 0px; display: flex; flex-direction: column; gap: var(--space-5);">      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5);">
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure);">Renders are blurred here because the fixture is SunThru hardware. The engineering worth describing is the parametric structure and the design for printing, neither of which needs the geometry shown.</p>
       </div></div>
       </div>
     </div>
   </section>
 
   <section class="on-dark" style="position: relative; background: var(--ink-900); padding: var(--space-9) var(--page-margin);">
-    <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-7)">
-      <div data-reveal="1" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr)); gap: var(--space-7) var(--space-6)">
-        <div style="display: flex; flex-direction: column; gap: var(--space-3)"><span style="font-family: var(--font-display); font-size: clamp(2.2rem, 4.4vw, 3.6rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.02em; color: var(--paper)">12</span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70)">Interlocking parts</span></div>
-        <div style="display: flex; flex-direction: column; gap: var(--space-3)"><span style="font-family: var(--font-display); font-size: clamp(2.2rem, 4.4vw, 3.6rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.02em; color: var(--paper)">100%</span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70)">FDM printable, no machining</span></div>
-        <div style="display: flex; flex-direction: column; gap: var(--space-3)"><span style="font-family: var(--font-display); font-size: clamp(2.2rem, 4.4vw, 3.6rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.02em; color: var(--paper)">M3</span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70)">One hardware size throughout</span></div>
-        <div style="display: flex; flex-direction: column; gap: var(--space-3)"><span style="font-family: var(--font-display); font-size: clamp(2.2rem, 4.4vw, 3.6rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.02em; color: var(--paper)">VBA</span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70)">Automated rebuilds</span></div>
+    <div style="position: relative; max-width: var(--max-width); margin: 0px auto; display: flex; flex-direction: column; gap: var(--space-7);">
+      <div data-reveal="1" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr)); gap: var(--space-7) var(--space-6);">
+        <div style="display: flex; flex-direction: column; gap: var(--space-3);"><span style="font-family: var(--font-display); font-size: clamp(2.2rem, 4.4vw, 3.6rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.02em; color: var(--paper);">12</span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70);">Interlocking parts</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-3);"><span style="font-family: var(--font-display); font-size: clamp(2.2rem, 4.4vw, 3.6rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.02em; color: var(--paper);">100%</span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70);">FDM printable, no machining</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-3);"><span style="font-family: var(--font-display); font-size: clamp(2.2rem, 4.4vw, 3.6rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.02em; color: var(--paper);">M3</span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70);">One hardware size throughout</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-3);"><span style="font-family: var(--font-display); font-size: clamp(2.2rem, 4.4vw, 3.6rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.02em; color: var(--paper);">VBA</span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70);">Automated rebuilds</span></div>
       </div>
     </div>
   </section>
 
   <section style="position: relative; padding: 0 var(--page-margin) var(--section-y);">
-    <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-9)">
-      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="The problem" right="02" hint-size="100%,14px"></x-import>
+    <div style="position: relative; max-width: var(--max-width); margin: 0px auto; display: flex; flex-direction: column; gap: var(--space-9);">
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5);">
+        <div class="sc-host-x" style="display: contents;"><div data-depth-rule="true" style="display: flex; align-items: center; gap: var(--space-5); width: 100%;"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta); white-space: nowrap;">The problem</span><span style="flex: 1 1 0%; height: 1px; background: var(--line-hairline);"></span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta); white-space: nowrap;">02</span></div></div>
       </div>
-      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Three-point bend testing is a standard way to measure flexural strength, but commercial fixtures assume a specimen that can take being clamped. When the sample cannot, the fixture itself becomes the thing that breaks it.</p>
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">SunThru needed a fixture sized to its own samples, gentle enough not to pre-damage them, and cheap enough to iterate on, which meant printing it in house.</p>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5);">
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure);">Three-point bend testing is a standard way to measure flexural strength, but commercial fixtures assume a specimen that can take being clamped. When the sample cannot, the fixture itself becomes the thing that breaks it.</p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure);">SunThru needed a fixture sized to its own samples, gentle enough not to pre-damage them, and cheap enough to iterate on, which meant printing it in house.</p>
       </div>
-      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Constraints" right="03" hint-size="100%,14px"></x-import>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5);">
+        <div class="sc-host-x" style="display: contents;"><div data-depth-rule="true" style="display: flex; align-items: center; gap: var(--space-5); width: 100%;"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta); white-space: nowrap;">Constraints</span><span style="flex: 1 1 0%; height: 1px; background: var(--line-hairline);"></span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta); white-space: nowrap;">03</span></div></div>
       </div>
-      <div data-reveal="1" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5)">
-        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">01</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Every part printable on the lab's FDM printer, no machined components</span></div>
-        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">02</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">12 interlocking parts on one coordinate system, so dimension changes ripple predictably</span></div>
-        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">03</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Standard M3 hardware throughout, with printable cross-hole channels</span></div>
-        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">04</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Compliant contact geometry at the load nose and both supports</span></div>
-        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">05</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Cheap enough to reprint a part rather than rework it</span></div>
-        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">06</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Sized to the lab's own specimens rather than a standard</span></div>
+      <div data-reveal="1" style="display: grid; grid-template-columns: repeat(3, minmax(0px, 1fr)); gap: var(--space-5);">
+        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px;"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta);">01</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display);">Every part printable on the lab's FDM printer, no machined components</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px;"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta);">02</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display);">12 interlocking parts on one coordinate system, so dimension changes ripple predictably</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px;"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta);">03</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display);">Standard M3 hardware throughout, with printable cross-hole channels</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px;"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta);">04</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display);">Compliant contact geometry at the load nose and both supports</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px;"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta);">05</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display);">Cheap enough to reprint a part rather than rework it</span></div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px;"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta);">06</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display);">Sized to the lab's own specimens rather than a standard</span></div>
       </div>
-      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Parametric part design" right="04" hint-size="100%,14px"></x-import>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5);">
+        <div class="sc-host-x" style="display: contents;"><div data-depth-rule="true" style="display: flex; align-items: center; gap: var(--space-5); width: 100%;"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta); white-space: nowrap;">Parametric part design</span><span style="flex: 1 1 0%; height: 1px; background: var(--line-hairline);"></span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta); white-space: nowrap;">04</span></div></div>
       </div>
-      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">A 12 part fixture with interlocked dimensions is a maintenance problem: change one dimension by hand and eleven other parts silently stop fitting. Every part sits on a shared coordinate system, and I automated the rebuilds with SolidWorks VBA so a dimension change regenerates the affected parts consistently.</p>
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Each part's geometry is checked against its expected volume before it is accepted, which catches a rebuild that succeeded but produced the wrong solid.</p>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5);">
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure);">A 12 part fixture with interlocked dimensions is a maintenance problem: change one dimension by hand and eleven other parts silently stop fitting. Every part sits on a shared coordinate system, and I automated the rebuilds with SolidWorks VBA so a dimension change regenerates the affected parts consistently.</p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure);">Each part's geometry is checked against its expected volume before it is accepted, which catches a rebuild that succeeded but produced the wrong solid.</p>
       </div>
-      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Designed for the printer, not around it" right="05" hint-size="100%,14px"></x-import>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5);">
+        <div class="sc-host-x" style="display: contents;"><div data-depth-rule="true" style="display: flex; align-items: center; gap: var(--space-5); width: 100%;"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta); white-space: nowrap;">Designed for the printer, not around it</span><span style="flex: 1 1 0%; height: 1px; background: var(--line-hairline);"></span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta); white-space: nowrap;">05</span></div></div>
       </div>
-      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">The parts are shaped the way the machine builds them: additive layer friendly geometry throughout, and horizontal M3 cross-holes drawn as printable channels so nothing needs support material or post-drilling.</p>
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">One hardware size across the whole fixture means one driver, one drill, and no chance of an assembly step needing something that is not on the bench.</p>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5);">
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure);">The parts are shaped the way the machine builds them: additive layer friendly geometry throughout, and horizontal M3 cross-holes drawn as printable channels so nothing needs support material or post-drilling.</p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure);">One hardware size across the whole fixture means one driver, one drill, and no chance of an assembly step needing something that is not on the bench.</p>
       </div>
-      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import data-depth-rule="true" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="What I learned" right="06" hint-size="100%,14px"></x-import>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5);">
+        <div class="sc-host-x" style="display: contents;"><div data-depth-rule="true" style="display: flex; align-items: center; gap: var(--space-5); width: 100%;"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta); white-space: nowrap;">What I learned</span><span style="flex: 1 1 0%; height: 1px; background: var(--line-hairline);"></span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta); white-space: nowrap;">06</span></div></div>
       </div>
-      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">The decisions that held up were the ones that thought like the manufacturing process. Geometry built up in layers the way the printer builds it, holes shaped for printability instead of for drills, hardware chosen from one standard size.</p>
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">Designing for the process beat designing around it.</p>
+      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5);">
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure);">The decisions that held up were the ones that thought like the manufacturing process. Geometry built up in layers the way the printer builds it, holes shaped for printability instead of for drills, hardware chosen from one standard size.</p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure);">Designing for the process beat designing around it.</p>
       </div>
     </div>
   </section>
 
   <section style="position: relative; padding: var(--space-8) var(--page-margin) var(--space-9);">
-    <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-7)">
-      <div data-reveal="1" style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-6); flex-wrap: wrap">
-        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="link" variant="link" trailing="→" href="charger.html" hint-size="240px,24px">Previous: CHARGER</x-import>
-        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="outline" variant="outline" trailing="→" href="rudder-pedals.html" hint-size="260px,44px">Next: Rudder pedals</x-import>
+    <div style="position: relative; max-width: var(--max-width); margin: 0px auto; display: flex; flex-direction: column; gap: var(--space-7);">
+      <div data-reveal="1" style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-6); flex-wrap: wrap;">
+        <div class="sc-host-x" style="display: contents;"><a data-depth-button="link" data-ds-button="link" data-ds-hover="border trail" href="charger.html" style="font-family: var(--font-mono); font-size: 12px; letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: 1; display: inline-flex; align-items: center; gap: var(--space-3); padding: 0px 0px 6px; border-radius: 0px; cursor: pointer; opacity: 1; text-decoration: none; white-space: nowrap; transition: background var(--t-hover), color var(--t-hover), border-color var(--t-hover), opacity var(--t-hover); background: transparent; color: var(--text-display); border-top: none; border-right: none; border-bottom: 1px solid var(--line-hairline); border-left: none; border-image: initial;">Previous: CHARGER<span style="display: inline-flex; transform: none; transition: transform var(--t-hover);">→</span></a></div>
+        <div class="sc-host-x" style="display: contents;"><a data-depth-button="outline" data-ds-button="outline" data-ds-hover="bg color trail" href="rudder-pedals.html" style="font-family: var(--font-mono); font-size: 12px; letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: 1; display: inline-flex; align-items: center; gap: var(--space-3); padding: 14px 26px; border-radius: var(--radius-pill); cursor: pointer; opacity: 1; text-decoration: none; white-space: nowrap; transition: background var(--t-hover), color var(--t-hover), border-color var(--t-hover), opacity var(--t-hover); background: transparent; color: var(--text-display); border: 1px solid var(--line-strong);">Next: Rudder pedals<span style="display: inline-flex; transform: none; transition: transform var(--t-hover);">→</span></a></div>
       </div>
     </div>
-  </section>
-
-<footer class="on-dark" style="background: var(--ink-900); padding: var(--space-7) var(--page-margin) var(--space-8); border-top: 1px solid var(--line-hairline)">
-    <div style="max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-6)">
-      <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-5)">
-        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Wordmark" name="MERT TURELI" size="md" hint-size="220px,20px"></x-import>
-        <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="320px,16px">Austin, Texas / B.S. Mechanical Engineering, Union College, 2026</x-import>
+  </section><footer class="on-dark" style="background: var(--ink-900); padding: var(--space-7) var(--page-margin) var(--space-8); border-top: 1px solid var(--line-hairline);">
+    <div style="max-width: var(--max-width); margin: 0px auto; display: flex; flex-direction: column; gap: var(--space-6);">
+      <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-5);">
+        <div class="sc-host-x" style="display: contents;"><span style="font-family: var(--font-display); font-size: 16px; font-weight: 500; letter-spacing: 0.32em; line-height: 1; text-transform: uppercase; color: var(--text-display); display: inline-block; white-space: nowrap;">MERT TURELI</span></div>
+        <div class="sc-host-x" style="display: contents;"><span data-depth-label="true" style="font-family: var(--font-mono); font-size: var(--fs-meta); font-weight: 400; line-height: var(--lh-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta); display: inline-flex; align-items: baseline; gap: var(--space-3);">Austin, Texas / B.S. Mechanical Engineering, Union College, 2026</span></div>
       </div>
-      <p style="max-width: 96ch; font-family: var(--font-mono); font-size: var(--fs-meta-sm); line-height: 1.5; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-meta)">Photographs of the machine and the team by Paul Buckowski / Union College. CAD animations rendered from the source assemblies. Aircraft models are third-party, illustration only. / <a href="../privacy.html" style="color: var(--text-meta); text-decoration: underline; text-underline-offset: 3px">Privacy</a></p>
+      <p style="max-width: 96ch; font-family: var(--font-mono); font-size: var(--fs-meta-sm); line-height: 1.5; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-meta);">Photographs of the machine and the team by Paul Buckowski / Union College. CAD animations rendered from the source assemblies. Aircraft models are third-party, illustration only. / <a href="../privacy.html" style="color: var(--text-meta); text-decoration: underline; text-underline-offset: 3px;">Privacy</a></p>
     </div>
-  </footer>
-</div>
-</x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;heroClip&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;charger&quot;,&quot;therma-shift&quot;,&quot;robo-catcher&quot;],&quot;default&quot;:&quot;charger&quot;,&quot;tsType&quot;:&quot;\&quot;charger\&quot; | \&quot;therma-shift\&quot; | \&quot;robo-catcher\&quot;&quot;,&quot;section&quot;:&quot;Motion&quot;},&quot;motion&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Motion&quot;}}">
-class Component extends DCLogic {
-  renderVals() {
-    const p = this.props || {};
-    return {
-      nav: [
-        { id: "work", label: "Work", href: "../index.html#work" },
-        { id: "experience", label: "Experience", href: "../index.html#experience" },
-        { id: "beyond", label: "Beyond", href: "../index.html#beyond" },
-        { id: "websites", label: "Websites", href: "../websites.html" },
-        { id: "contact", label: "Contact", href: "../index.html#contact" },
-      ],
-      social: [
-        { name: "LinkedIn", icon: "linkedin", href: "https://linkedin.com/in/merttureli" },
-        { name: "Mail", icon: "mail", href: "../index.html#contact" },
-      ],
-      linkOnDark: { tone: "inverse" },
-      brief: [
-        { label: "Role", value: "Design engineer, solo" },
-        { label: "For", value: "SunThru, early stage hardware R&amp;D" },
-        { label: "Tools", value: "SolidWorks 2025, VBA macro automation, FDM printing" },
-        { label: "Timeline", value: "2026" },
-        { label: "Status", value: "Base plate and gauge plate printed and in lab use" },
-      ],
-    };
-  }
-
-  componentDidMount() { this.syncClips(); }
-
-  componentDidUpdate() { this.syncClips(); }
-
-  syncClips() {
-    const play = (this.props || {}).motion !== false;
-    const hero = (this.props || {}).heroClip || "charger";
-    const CLIPS = {
-      charger: "charger-painted-wide",
-      "therma-shift": "therma-shift-360-noflow",
-      "robo-catcher": "robo-catcher-360",
-    };
-    const heroEl = document.querySelector("[data-hero-clip]");
-    if (heroEl && heroEl.getAttribute("data-hero-clip") !== hero) {
-      const slug = CLIPS[hero] || CLIPS.charger;
-      heroEl.setAttribute("data-hero-clip", hero);
-      heroEl.poster = "assets/motion/" + slug + "-poster.png";
-      const src = heroEl.querySelectorAll("source");
-      if (src[0]) src[0].src = "assets/motion/" + slug + "-alpha.webm";
-      if (src[1]) src[1].src = "assets/motion/" + slug + ".mp4";
-      heroEl.load();
-    }
-    window.PortfolioDepthSettings = { motion: play };
-    window.PortfolioDepth?.refresh(window.PortfolioDepthSettings);
-    window.PortfolioMediaSettings = { motion: play };
-    window.PortfolioMedia?.refresh(window.PortfolioMediaSettings);
-  }
-}
-</script>
+  </footer></div></div></div>
 <script src="../js/mobile-nav.js"></script>
 <script src="../js/analytics-config.js"></script>
 <script src="../js/track.js"></script>
 <script src="../js/clarity.js"></script>
-</body>
-</html>
+
+
+</body></html>
