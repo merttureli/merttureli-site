@@ -3,6 +3,11 @@ import {sendInquiry} from './inquiry-delivery.js';
 
 (() => {
   const $ = s => document.querySelector(s);
+  // Funnel events go through track.js and carry a fixed name only, never what
+  // anyone typed. Each step is reported once per visit.
+  const reportedSteps = new Set();
+  const track = name => { try { window.mtTrack && window.mtTrack(name); } catch (e) {} };
+  const stepEvents = {2:'inquiry-step:details',3:'inquiry-step:review'};
   const dialog = $('#inquiry');
   const panels = ['date','details','review','complete'];
   const months = new Intl.DateTimeFormat('en-US',{month:'long',year:'numeric',timeZone:'UTC'});
@@ -50,6 +55,7 @@ import {sendInquiry} from './inquiry-delivery.js';
     $('#days').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.date===key)));
   }
   function go(next,focus=true){
+    if(stepEvents[next]&&!reportedSteps.has(next)){reportedSteps.add(next);track(stepEvents[next]);}
     step=next;panels.forEach((p,i)=>{$(`#${p}-panel`).hidden=i!==next-1;});
     document.querySelectorAll('[data-step]').forEach(s=>{s.classList.toggle('active',Number(s.dataset.step)<=next);if(Number(s.dataset.step)===next)s.setAttribute('aria-current','step');else s.removeAttribute('aria-current');});
     $('#step-count').textContent=next===4?'REQUEST SENT':`${String(next).padStart(2,'0')} / 03`;
@@ -75,6 +81,7 @@ import {sendInquiry} from './inquiry-delivery.js';
       $('#send-status').textContent='';$('#send-status').classList.remove('is-error');
       document.querySelectorAll('[data-time]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.time==='Flexible')));
     }
+    track('inquiry-open');
     trigger=button;resetPastDate();calendar();
     savedOverflow=document.body.style.overflow;document.body.style.overflow='hidden';
     go(!selection ? 1 : step,false);
@@ -134,9 +141,10 @@ import {sendInquiry} from './inquiry-delivery.js';
     const status=$('#send-status');status.classList.remove('is-error');status.textContent='Sending your request...';
     try{
       await sendInquiry(INQUIRY_ENDPOINT,details);
+      track('inquiry-submitted');
       $('#complete-copy').textContent=`Thank you, ${details.name}. Your request for ${shortDate.format(date(selection))} has been sent.`;
       status.textContent='';go(4,dialog.open);
-    }catch(error){status.textContent=error.message;status.classList.add('is-error');}
+    }catch(error){track('inquiry-error');status.textContent=error.message;status.classList.add('is-error');}
     finally{sending=false;$('#send-request').disabled=false;$('#review-panel [data-back]').disabled=false;$('#review-panel').removeAttribute('aria-busy');}
   };
   // Small, user-triggered transitions. No animation loop or embedded prototype.
