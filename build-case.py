@@ -812,7 +812,7 @@ CASES["charger"] = {
             "down months before anything flies, and they score it twice.",
         ]},
         {"label": "The airframe", "paras": [
-            "Thirty seven inches, single stage, 2.63 inches across, three "
+            "Thirty seven inches, single stage, 2.63 inches across, four "
             "trapezoidal balsa fins on a cardboard body tube. Centre of gravity "
             "at 22 inches, stability margin 1.80 calibres.",
             "The body tube is cardboard because the payload transmits "
@@ -838,7 +838,7 @@ CASES["charger"] = {
             "of 15.",
         ], "list": [
             "Length 37 in, maximum diameter 2.63 in, single stage",
-            "Three trapezoidal fins, root chord 2.76 in, height 2.36 in, sweep 2.17 in",
+            "Four trapezoidal fins, root chord 2.76 in, height 2.36 in, sweep 2.17 in",
             "Stability margin 1.80 cal, centre of gravity at 22 in",
             "Aerotech G77R-7, thrust to weight 8.17, burn 1.25 s",
             "Simulated apogee 1,033 ft, descent 13.8 ft/s on a 48 in parachute",
