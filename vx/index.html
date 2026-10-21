@@ -64,15 +64,15 @@
     <a href="#contact">Comms</a>
   </nav>
   <div class="vx-tools">
+    <button id="tel-toggle" class="tool tool-tel" type="button" aria-expanded="true" aria-controls="telemetry">Telemetry</button>
     <button id="reader-toggle" class="tool" type="button" aria-pressed="false">Reading mode</button>
     <button class="tool tool-console" type="button" data-console-open aria-label="Open the console (slash or Ctrl K)">&gt;_</button>
     <a class="tool" href="lab/">Lab</a>
-    <a class="tool tool-site" href="/">The production site <span aria-hidden="true">→</span></a>
+    <a class="tool tool-site" href="/"><span class="tool-site-long">The production site</span><span class="tool-site-short" aria-hidden="true">Site</span> <span aria-hidden="true">→</span></a>
   </div>
 </header>
 
-<div id="telemetry-dock" class="tel-dock">
-  <button id="tel-toggle" class="tel-dock-toggle" type="button" aria-expanded="true" aria-controls="telemetry">Telemetry</button>
+<div id="telemetry-dock" class="tel-dock on-dark">
   <div id="telemetry"></div>
 </div>
 
@@ -91,6 +91,7 @@
         <button id="load3d" class="load3d" type="button" hidden>Load 3D / 2.5 MB</button>
       </div>
 
+      <i class="margin-probe" data-dim="PAGE MARGIN" data-dim-side="width" data-dim-basic="88px" aria-hidden="true"></i>
       <div id="pad" class="pad-copy">
         <p class="eyebrow pad-eyebrow">Mechanical engineer / Austin, Texas</p>
         <h1 class="display-1 pad-title" data-dim="DISPLAY HEADING"><span>Mert</span> <span>Tureli</span></h1>
@@ -103,11 +104,11 @@
 
       <p class="st-caption pad-caption" id="stage-caption"><b>01</b> / CHARGER / rendered from the flight model, thirty internal components at their true stations / <span id="stage-state">pad view</span></p>
 
+      <p class="tunnel-label meta-sm"><b>Tunnel</b> / page simulation / not flight data / <span id="tunnel-readout">off</span></p>
       <div class="stage-bar" id="stage-bar" data-dim-more="STAGE BAR" data-dim-basic="56px" data-dim-side="height">
-        <p class="stage-bar-sim meta-sm"><b>Wind tunnel</b> / page simulation / not flight data / <span id="tunnel-readout">off</span></p>
         <div class="stage-bar-ranges">
           <label class="range-control"><span>Progress</span><input id="progress-range" type="range" min="0" max="1" step="0.001" value="0" aria-describedby="progress-out"><output id="progress-out">0.000</output></label>
-          <label class="range-control"><span>Explode</span><input id="explode-range" type="range" min="0" max="1" step="0.01" value="0"><output id="explode-out">auto</output></label>
+          <label class="range-control"><span>Explode</span><input id="explode-range" type="range" min="0" max="1" step="0.01" value="0"><output id="explode-out">0.00</output></label>
           <button id="explode-auto" class="chip" type="button" aria-pressed="true">Auto</button>
         </div>
         <div class="stage-bar-links">
@@ -148,7 +149,6 @@
   </section>
 
   <section id="ladder" class="section on-paper" data-station="EVENTS" data-index="02">
-    <i class="margin-probe" data-dim="PAGE MARGIN" data-dim-side="width" data-dim-basic="88px" aria-hidden="true"></i>
     <div class="inner">
       <header class="sec-head">
         <p class="eyebrow">03 / CHARGER / flight events / 02</p>
