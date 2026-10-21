@@ -1,4 +1,4 @@
-.charger-launch{display:block;color:#fff;text-decoration:none;cursor:pointer;isolation:isolate;-webkit-tap-highlight-color:transparent}
+.charger-launch{display:block;color:#fff;text-decoration:none;border-bottom:0;cursor:pointer;isolation:isolate;-webkit-tap-highlight-color:transparent}
 .charger-launch video{pointer-events:none;transition:filter .35s ease}
 .charger-launch-cue{position:absolute;right:0;bottom:8px;display:flex;align-items:center;gap:14px;min-height:56px;padding:8px 0;background:#0a0a0acc;color:#fff}
 .charger-launch-icon{display:grid;place-items:center;width:44px;height:44px;border:1px solid #ffffff70;transition:background .25s,color .25s,transform .35s}
