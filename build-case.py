@@ -5,20 +5,29 @@ Build a case study page in the site's own theme.
 The point of generating rather than hand writing these is theme parity. The
 head, the helmet block (design tokens, the design-system bundle, the mobile
 stylesheet, the keyframes), the reveal/clip runtime and the footer colophon are
-all lifted straight out of index.html at build time, so a case page cannot drift
-from the home page when the home page changes. Only the content is authored
-here, as data.
+all lifted straight out of src/index.html at build time, so a case page cannot
+drift from the home page when the home page changes. Only the content is
+authored here, as data.
 
-Paths are rewritten for one directory down, since the pages live in projects/.
+This writes the runtime templates, src/projects/*.html. They are not served:
+tools/build.py renders them in a browser and writes the static pages that are
+served, /index.html and /projects/*.html. src/ mirrors the served tree, so a
+template is written for its served location: src/index.html links "_ds/...",
+src/projects/x.html links "../_ds/...", exactly as the static pages do. Paths
+are rewritten for one directory down, since the case pages live in projects/.
 
-    python build-case.py            # rebuild every case page
+    python build-case.py            # rebuild every case template
     python build-case.py robo-catcher
-    python build-case.py --check    # build to a temp dir, diff against projects/,
-                                    # exit 1 on any difference
+    python build-case.py --check    # build to a temp dir, diff against
+                                    # src/projects/, exit 1 on any difference
+
+Normally run python3 tools/build.py instead, which runs this and then the
+static render.
 
 Depth hooks (depth-hero, depth-stage, data-depth-*) are emitted by the helpers
 below so css/depth.css and js/depth-motion.js see the same markup as on the home
-page. Do not hand edit projects/*.html: run --check after any change here.
+page. Do not hand edit src/projects/*.html or projects/*.html: run
+tools/build.py --check after any change here.
 """
 
 import difflib
@@ -31,8 +40,9 @@ import sys
 import tempfile
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-INDEX = os.path.join(ROOT, "index.html")
-OUT_DIR = os.path.join(ROOT, "projects")
+SRC = os.path.join(ROOT, "src")
+INDEX = os.path.join(SRC, "index.html")
+OUT_DIR = os.path.join(SRC, "projects")
 DS = "mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d"
 NS = "MertTReliDesignSystem_56763c"
 
@@ -1065,18 +1075,18 @@ def check(index, wanted):
             new = io.open(out, encoding="utf-8").read().splitlines(True)
             old = (io.open(committed, encoding="utf-8").read().splitlines(True)
                    if os.path.exists(committed) else [])
-            diff = list(difflib.unified_diff(old, new, "projects/%s.html" % slug,
+            diff = list(difflib.unified_diff(old, new, "src/projects/%s.html" % slug,
                                              "build-case.py → %s.html" % slug))
             if diff:
                 dirty = 1
                 sys.stdout.writelines(diff)
-                print("DIFFERS: projects/%s.html" % slug)
+                print("DIFFERS: src/projects/%s.html" % slug)
             else:
-                print("ok: projects/%s.html" % slug)
+                print("ok: src/projects/%s.html" % slug)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
     if dirty:
-        print("build-case.py output does not match projects/. Regenerate, or port the "
+        print("build-case.py output does not match src/projects/. Regenerate, or port the "
               "hand edit into build-case.py.")
     return dirty
 

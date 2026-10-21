@@ -1,0 +1,9 @@
+{
+  "name": "prerender",
+  "private": true,
+  "description": "Renders src/*.html runtime templates to the static pages that are served. Run through python3 tools/build.py.",
+  "main": "prerender.js",
+  "dependencies": {
+    "playwright": "1.56.1"
+  }
+}
