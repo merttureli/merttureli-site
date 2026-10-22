@@ -91,7 +91,7 @@ async function createThermaShift(ctx) {
     const center = new THREE.Vector3();
     if (mesh.geometry) { mesh.geometry.computeBoundingSphere(); center.copy(mesh.geometry.boundingSphere.center); }
     const axis = new THREE.Vector3(Math.sin(i * 2.1 + 1), Math.cos(i * 1.7), Math.sin(i * 3.3 + 2)).normalize();
-    return { name: p.name, mesh, wrap, dir, center, axis, spin: (i % 2 ? -1 : 1) * (.7 + (i * .37) % .6), delay: ((i * .618) % 1) * .32, f: 1, f0: 1 };
+    return { name: p.name, mesh, wrap, dir, center, axis, explode: p.explode, ex0: p.explode ? p.explode.clone() : null, spin: (i % 2 ? -1 : 1) * (.7 + (i * .37) % .6), delay: ((i * .618) % 1) * .32, f: 1, f0: 1 };
   });
 
   const ST = {
@@ -99,7 +99,7 @@ async function createThermaShift(ctx) {
   };
   const v = { p: 0, mugY: 1, canY: 1, temp: 22, steam: 0, cond: 0, wet: 0, fan: 0, shadow: 0 }; // live values
   const a0 = { ...v };                                                        // captured at abort
-  let dist = 2, drop = .5, lastTemp = NaN, lastFan = -1;
+  let dist = 2, drop = .5, lift = 0, lastTemp = NaN, lastFan = -1;
   const q = new THREE.Quaternion(), tmp = new THREE.Vector3(), piv = new THREE.Vector3();
 
   // Framing: measure the assembled coaster + can on screen, size it to the
@@ -129,11 +129,26 @@ async function createThermaShift(ctx) {
     stage.position.set((ox / w * 2 - 1) * halfW, (1 - oy / h * 2) * halfH, 0);
     dist = Math.hypot(halfW, halfH) * 1.3 / S;              // local units to be well off screen
     drop = ((oy / h) * 2 * halfH + .12) / (S * .9) + .02;   // lifts props clear of the top edge
+    // The exploded stack is taller than the assembled coaster: compress the
+    // explode offsets to fit the free height and centre the stack while open.
+    for (const P of parts) if (P.explode) P.explode.copy(P.ex0);
+    lift = 0;
+    for (const P of parts) P.f = 0;
+    v.p = 0; apply();
+    const e0 = screenExtents([coaster.group], stage, camera, w, h);
+    let bottom = free.b;  // stop above the caption word if it sits under the stack
+    for (const a of avoid) if (a.l < ox + e0.r && a.r > ox - e0.l && a.t > oy) bottom = Math.min(bottom, a.t);
+    const span = e0.u + e0.d, room = (bottom - free.t) * .96;
+    if (span > room) { const c = room / span; for (const P of parts) if (P.explode) P.explode.multiplyScalar(c); e0.u *= c; e0.d *= c; }
+    const centre = oy + (e0.d - e0.u) / 2, want = (free.t + bottom) / 2;
+    lift = -((want - centre) / h * 2 * halfH) / S;
+    parts.forEach((P, i) => { P.f = keep[i]; }); v.p = kp;
     apply();
   }
 
   function apply() {
     coaster.setProgress(v.p);
+    view.position.y = lift * (1 - v.p);
     let any = false;
     for (let i = 0; i < parts.length; i++) {
       const P = parts[i], f = P.f;
