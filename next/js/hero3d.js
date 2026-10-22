@@ -1,7 +1,10 @@
 // CHARGER hero object: the real flight-model exterior, rendered live.
 // Loaded only after the page is idle. The poster <img> stays underneath, so
 // a missing or slow WebGL simply leaves the identical still in place.
+// The rocket is one actor in the shared showreel scene (showreel/engine.js
+// owns the renderer, camera and lights; showreel/index.js the sequence).
 import * as THREE from './three.module.min.js';
+import { createEngine } from './showreel/engine.js';
 
 const BODY_TOP = .370693, BODY_BOTTOM = -.570693, FRONT_ANGLE = Math.atan2(1, 2.8);
 
@@ -80,74 +83,47 @@ async function loadModel(base) {
   return group;
 }
 
-export async function createHero({ canvas, layout = 'land', base = 'assets/3d/', preserve = false, pixelRatio }) {
+// The rocket actor: framing, sway, pointer parallax and the scroll roll/lift,
+// plus `fly` (offset along the airframe axis, + is nose first) and `spin`
+// (extra roll) for the showreel to fly it out and back.
+export async function createRocket({ layout = 'land', base = 'assets/3d/' } = {}) {
   await document.fonts.load('800 40px Archivo').catch(() => {});
   const L = { ...LAYOUTS[layout] };
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: preserve, powerPreference: 'low-power' });
-  renderer.setPixelRatio(pixelRatio || Math.min(devicePixelRatio || 1, 1.75));
-  renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.setClearColor(0x000000, 0);
-  const scene = new THREE.Scene();
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x7d828c, 1.35));
-  const key = new THREE.DirectionalLight(0xfff8f0, 3.8); key.position.set(-2.5, 4, 5); scene.add(key);
-  const fill = new THREE.DirectionalLight(0xdfe6ff, 1.1); fill.position.set(4, -1, 3); scene.add(fill);
-  const rim = new THREE.DirectionalLight(0xffffff, 2.4); rim.position.set(3, 3, -4); scene.add(rim);
-
-  const camera = new THREE.PerspectiveCamera(L.fov, L.aspect, .05, 30);
-  camera.position.set(0, 0, L.dist);
   const outer = new THREE.Group(), tilt = new THREE.Group(), roll = new THREE.Group();
-  outer.add(tilt); tilt.add(roll); scene.add(outer);
-  const model = await loadModel(base);
-  roll.add(model);
+  outer.add(tilt); tilt.add(roll);
+  roll.add(await loadModel(base));
   tilt.rotation.z = L.tiltZ; tilt.rotation.x = L.tiltX;
-
-  const state = { scroll: 0, px: 0, py: 0, sx: 0, sy: 0, t: 0 };
+  const state = { scroll: 0, px: 0, py: 0, sx: 0, sy: 0, fly: 0, spin: 0 };
+  const axis = { x: 0, y: 1 };
   function pose(time) {
     state.sx += (state.px - state.sx) * .06; state.sy += (state.py - state.sy) * .06;
     const sway = Math.sin(time * .00032) * .32;
-    roll.rotation.y = -FRONT_ANGLE + L.roll + sway + state.scroll * 1.6;
+    roll.rotation.y = -FRONT_ANGLE + L.roll + sway + state.scroll * 1.6 + state.spin;
     outer.rotation.y = state.sx * .16; outer.rotation.x = -state.sy * .1;
     // lift along the airframe axis as the page scrolls
-    const a = L.tiltZ + Math.PI / 2, lift = state.scroll * .55;
-    outer.position.set(Math.cos(a) * lift + L.shiftX, Math.sin(a) * lift + L.shiftY + Math.sin(time * .0007) * .012, 0);
+    const a = L.tiltZ + Math.PI / 2, lift = state.scroll * .55 + state.fly;
+    axis.x = Math.cos(a); axis.y = Math.sin(a);
+    outer.position.set(axis.x * lift + L.shiftX, axis.y * lift + L.shiftY + Math.sin(time * .0007) * .012, 0);
   }
-  function setLayout(name) { const n = LAYOUTS[name]; Object.assign(L, n); tilt.rotation.z = n.tiltZ; tilt.rotation.x = n.tiltX; camera.fov = n.fov; camera.position.z = n.dist; camera.updateProjectionMatrix(); }
-  function size(w, h) { renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
-  function render(time = 0) { pose(time); renderer.render(scene, camera); }
-  return { renderer, size, render, state, setLayout, still(time = 0) { state.sx = state.px; state.sy = state.py; pose(time); renderer.render(scene, camera); } };
+  function setLayout(name) { Object.assign(L, LAYOUTS[name]); tilt.rotation.z = L.tiltZ; tilt.rotation.x = L.tiltX; }
+  function settle(time = 0) { state.sx = state.px; state.sy = state.py; pose(time); }
+  pose(0);
+  return { group: outer, state, layout: L, axis, pose, setLayout, settle };
 }
 
-// Page integration: fade in over the poster, run only while visible, and give
-// up gracefully if frames are slow (software GL, old phones).
-export async function mountHero(box) {
-  const canvas = box.querySelector('canvas');
-  const layout = () => (box.clientWidth / box.clientHeight < 1 ? 'port' : 'land');
-  let current = layout();
-  const hero = await createHero({ canvas, layout: current });
-  const resize = () => hero.size(box.clientWidth, box.clientHeight);
-  resize();
-  hero.still(0);
-  box.classList.add('is-live');
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (reduced) return hero;
+export function applyCamera(camera, L) { camera.fov = L.fov; camera.position.set(0, 0, L.dist); camera.updateProjectionMatrix(); }
 
-  let visible = true, raf = 0, slow = false, samples = [], last = 0;
-  const t0 = performance.now();
-  const loop = now => {
-    raf = 0;
-    if (!visible || document.hidden) return;
-    if (last) { samples.push(now - last); if (samples.length === 40) { const avg = samples.reduce((a, b) => a + b) / 40; if (avg > 38) slow = true; } }
-    last = now;
-    hero.render(now - t0);
-    if (!slow) raf = requestAnimationFrame(loop);
-  };
-  const kick = () => { if (!raf) { last = 0; raf = requestAnimationFrame(loop); } };
-  new IntersectionObserver(e => { visible = e[0].isIntersecting; if (visible) kick(); }, { threshold: 0 }).observe(box);
-  document.addEventListener('visibilitychange', kick);
-  new ResizeObserver(() => { if (layout() !== current) { current = layout(); hero.setLayout(current); } resize(); if (slow) hero.still(performance.now() - t0); }).observe(box);
-  // When slow, still respond to scroll with single frames instead of a loop.
-  window.addEventListener('studio:scroll', e => { hero.state.scroll = e.detail; if (slow) requestAnimationFrame(t => hero.still(t - t0)); }, { passive: true });
-  window.addEventListener('pointermove', e => { hero.state.px = e.clientX / innerWidth * 2 - 1; hero.state.py = e.clientY / innerHeight * 2 - 1; }, { passive: true });
-  kick();
-  return hero;
+// Standalone still/loop of the rocket alone (poster renders, other studies).
+export async function createHero({ canvas, layout = 'land', base = 'assets/3d/', preserve = false, pixelRatio }) {
+  const engine = createEngine({ canvas, preserve, pixelRatio });
+  const rocket = await createRocket({ layout, base });
+  engine.scene.add(rocket.group);
+  applyCamera(engine.camera, rocket.layout);
+  const { renderer, scene, camera } = engine;
+  function setLayout(name) { rocket.setLayout(name); applyCamera(camera, rocket.layout); }
+  function render(time = 0) { rocket.pose(time); renderer.render(scene, camera); }
+  return { renderer, size: engine.size, render, state: rocket.state, setLayout, still(time = 0) { rocket.settle(time); renderer.render(scene, camera); } };
 }
+
+// Page integration lives in showreel/index.js; kept as an alias.
+export function mountHero(box, opts = {}) { return import('./showreel/index.js').then(m => m.mountShowreel({ box, ...opts })); }
