@@ -115,7 +115,7 @@ async function createThermaShift(ctx) {
     const ext = screenExtents([coaster.group, can.group], stage, camera, w, h);
     parts.forEach((P, i) => { P.f = keep[i]; }); v.p = kp; v.canY = kc; v.mugY = km;
     const fw = free.r - free.l, fh = free.b - free.t;
-    const k0 = Math.min(fh * (narrow ? .5 : .78) / (ext.u + ext.d), fw * (narrow ? .8 : .4) / (ext.l + ext.r));
+    const k0 = Math.min(fh * (narrow ? .56 : .84) / (ext.u + ext.d), fw * (narrow ? .8 : .4) / (ext.l + ext.r));
     const prefer = { x: free.l + fw * (narrow ? .5 : .54), y: free.t + fh * .5 };
     let spot = null, k = k0;
     for (let i = 0; i < 5 && !spot; i++, k *= .9) {
@@ -170,9 +170,9 @@ async function createThermaShift(ctx) {
     }
     const n = parts.length || 1;
     v.p = ease.inOutSine(win(T, A.t0 - .25, A.t1)) * (1 - outPop);
-    const mugIn = ease.land(win(T, M.t0, M.t1)), mugOut = ease.inOutCubic(win(T, X.t0, X.t0 + 1.5));
+    const mugIn = ease.land(win(T, M.t0 - .45, M.t1)), mugOut = ease.inOutCubic(win(T, X.t0, X.t0 + 1.5));
     v.mugY = (1 - mugIn) + mugOut;
-    const canIn = ease.land(win(T, X.t0 + 1.0, X.t1)), canOut = ease.inCubic(win(T, B.t0 + .1, B.t0 + 1.3));
+    const canIn = ease.land(win(T, X.t0 + .8, X.t1)), canOut = ease.inCubic(win(T, B.t0 + .1, B.t0 + 1.3));
     v.canY = (1 - canIn) + canOut;
     const warm = ease.inOutSine(win(T, W.t0 + .2, W.t1 - .3)), chill = ease.outCubic(win(T, C.t0 + .2, C.t1 - .6));
     v.temp = T < C.t0 ? lerp(22, 55, warm) - 2 * win(T, X.t0, X.t1) : lerp(53, 11, chill);
@@ -271,7 +271,8 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
   let flags = parseFlags(), speed = flags.fast ? 3 : 1;
   let mode = 'rest', T = 0, A = 0, idle = 0, loops = 0, timeline = null, guest = null, guestP = null, stateName = 'REST';
   let exitDist = 3, abortFrom = { fly: 0, spin: 0, wrap: false }, scrollP = 0, scrollSeen = false;
-  let visible = true, raf = 0, slow = false, nSamples = 0, sumSamples = 0, last = 0, paused = false;
+  let visible = true, raf = 0, slow = false, nSamples = 0, last = 0, paused = false, busy = false;
+  const samples = new Float32Array(60);
   const t0 = performance.now();
   const stats = { frames: 0, tick: 0, render: 0, max: 0, reset() { this.frames = this.tick = this.render = this.max = 0; } };
 
@@ -330,14 +331,16 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
   function prepare() {
     if (preparing) return preparing;
     const p = projects[loops % projects.length];
+    busy = true; nSamples = 0;
     preparing = p.actor({ engine, quality }).then(async actor => {
       guest = actor; guestP = p;
       engine.scene.add(actor.group);
       resize();
       timeline = createTimeline([[EXIT, 2.1], ...actor.sequence, [RETURN, 2.6]]);
       await actor.prewarm(engine.renderer, engine.camera, engine.scene);
+      busy = false; nSamples = 0;
       return actor;
-    }).catch(err => { console.warn('[reel] guest unavailable', err); preparing = null; guest = null; throw err; });
+    }).catch(err => { console.warn('[reel] guest unavailable', err); busy = false; preparing = null; guest = null; throw err; });
     return preparing;
   }
 
@@ -377,10 +380,10 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
     focus(null);
     setState('RETURNING');
   }
-  const ABORT = 1.9;
+  const ABORT = 2.2;
   function sampleAbort(A) {
     guest.sampleAbort(clamp01(A / 1.5));
-    const k = abortFrom.wrap ? ease.outQuint(win(A, .3, ABORT)) : ease.inOutCubic(win(A, 0, 1.3));
+    const k = abortFrom.wrap ? ease.outQuint(win(A, .55, ABORT)) : ease.inOutCubic(win(A, 0, 1.3));
     rocket.state.fly = abortFrom.fly * (1 - k);
     rocket.state.spin = abortFrom.spin * (1 - k);
   }
@@ -424,10 +427,11 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
     raf = 0;
     if (!visible || document.hidden || paused) { last = 0; return; }
     const dt = last ? Math.min(.064, (now - last) / 1000) : 1 / 60;
-    // slow devices: in REST give up the loop and draw single frames on scroll
-    if (last && mode === 'rest' && !flags.now && !slow) {
-      sumSamples += now - last;
-      if (++nSamples === 40) { if (sumSamples / 40 > 38) slow = true; nSamples = 0; sumSamples = 0; }
+    // slow devices: in REST give up the loop and draw single frames on scroll.
+    // Judged on the median of 60 frames after load has settled.
+    if (last && mode === 'rest' && !flags.now && !slow && !busy && now - t0 > 2500 && !window.__reelNoSlowGuard) {
+      samples[nSamples++] = now - last;
+      if (nSamples === samples.length) { samples.sort(); if (samples[30] > 38) slow = true; nSamples = 0; }
     }
     last = now;
     const a = performance.now();
@@ -487,6 +491,8 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
     prepare, start() { flags.now = true; startReel(); }, abort: beginAbort,
     pause() { paused = true; if (raf) { cancelAnimationFrame(raf); raf = 0; } },
     resume() { paused = false; kick(); },
+    // advance the live state machine by dt seconds and draw (capture, tests)
+    advance(dt, time = performance.now() - t0) { tick(dt, time); engine.render(); return mode + ':' + stateName; },
     // jump to reel time t (seconds) and draw one frame synchronously
     async seek(t, time = performance.now() - t0) {
       await prepare();

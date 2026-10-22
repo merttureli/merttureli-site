@@ -89,6 +89,12 @@ export function createEngine({ canvas, pixelRatio, preserve = false, envGain = .
   // rocket is never adopted, so its look is untouched.
   function adopt(root) {
     if (!envMap) envMap = createStudioEnvironment(renderer);
+    // A material drawn by both an InstancedMesh and a plain Mesh makes three.js
+    // switch programs (and rebuild their parameters) on every frame; give the
+    // instanced user its own copy.
+    const plain = new Set();
+    root.traverse(o => { if (o.isMesh && !o.isInstancedMesh) for (const m of [].concat(o.material)) plain.add(m); });
+    root.traverse(o => { if (o.isInstancedMesh && !Array.isArray(o.material) && plain.has(o.material)) o.material = o.material.clone(); });
     root.traverse(o => {
       const mats = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : [];
       for (const m of mats) {
