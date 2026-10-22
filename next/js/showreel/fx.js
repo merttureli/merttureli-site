@@ -114,10 +114,10 @@ void main() {
   tg = dot(tg, tg) > 1e-14 ? normalize(tg) : vec2(0.0, 1.0);
   vec2 nr = vec2(-tg.y, tg.x);
   float sc = length(modelViewMatrix[0].xyz);
-  float w = mix(0.0015, 0.0105, pow(s, 1.1)) * mix(0.8, 1.25, aSeed.y) * (1.0 + wide * 1.5) * uWidth;
+  float w = mix(0.0019, 0.0105, pow(s, 1.0)) * mix(0.8, 1.25, aSeed.y) * (1.0 + wide * 1.5) * uWidth;
   m0.xy += nr * side * w * sc;
   gl_Position = projectionMatrix * m0;
-  float life = smoothstep(0.0, 0.3, ph) * (1.0 - smoothstep(0.55, 1.0, ph));
+  float life = smoothstep(0.0, 0.22, ph) * (1.0 - smoothstep(0.68, 1.0, ph));
   float vis = smoothstep(aSeed.z - 0.12, aSeed.z + 0.06, uIntensity * 1.05);
   vFade = life * vis * smoothstep(0.0, 0.1, s) * (1.0 - smoothstep(0.4, 1.0, s)) * mix(1.0, 0.42, wide) * mix(1.0, 0.72, s);
   vSide = side; vS = s * len; vSeed = aSeed.w; vWide = wide;
@@ -131,7 +131,11 @@ varying float vSide, vS, vFade, vSeed, vWide, vLit;
 void main() {
   float a = 1.0 - vSide * vSide;
   vec2 uv = vec2(vSide * mix(0.1, 0.04, vWide) + vSeed * 13.7, (vS - uTime * uRise) * 6.0);
+  #ifdef STEAM_LQ
+  float n = texture2D(uNoise, uv).r;
+  #else
   float n = texture2D(uNoise, uv).r * 0.62 + texture2D(uNoise, uv * vec2(1.7, 2.9) + 0.37).r * 0.38;
+  #endif
   float br = smoothstep(0.26, 0.66, n);
   float alpha = a * br * vFade * uAlpha;
   if (alpha < 0.003) discard;
@@ -162,10 +166,10 @@ export function createSteam({ radius = 0.036, height = 0.19, quality = 'high', c
     uRise: { value: 0.04 }, uWidth: { value: 1 }, uDrift: { value: new THREE.Vector2(0.006, -0.003) },
     uLightDir: { value: new THREE.Vector2(-0.45, 0.89) },
     uNoise: { value: getNoise() }, uAlpha: { value: 0 },
-    uLit: { value: srgb(0xffffff) }, uEdge: { value: srgb(0x8c919a) },
+    uLit: { value: srgb(0xffffff) }, uEdge: { value: srgb(0x7f858f) },
   };
   const mat = new THREE.ShaderMaterial({
-    uniforms, vertexShader: STEAM_VS, fragmentShader: STEAM_FS,
+    uniforms, vertexShader: STEAM_VS, fragmentShader: STEAM_FS, defines: quality === 'low' ? { STEAM_LQ: '' } : {},
     transparent: true, depthWrite: false, side: THREE.DoubleSide,
   });
   const mesh = new THREE.InstancedMesh(geo, mat, N);
@@ -182,7 +186,7 @@ export function createSteam({ radius = 0.036, height = 0.19, quality = 'high', c
     setIntensity(v) {
       intensity = Math.max(0, Math.min(1, v));
       uniforms.uIntensity.value = intensity;
-      uniforms.uAlpha.value = 0.95 * Math.min(1, intensity * 1.6);
+      uniforms.uAlpha.value = Math.min(1, intensity * 1.6);
       mesh.visible = intensity > 0.002;
     },
     setProgress(p) { this.setIntensity(p); },
@@ -234,7 +238,7 @@ void cLayer(vec2 uvm, float cs, float N, float A, float t0, float t1, float rMax
     float g = clamp((A - th) / (1.0 - th), 0.0, 1.0);
     if (g <= 0.0) continue;
     float hr = cH1(id + seed + 3.1);
-    float r = rMax * (0.3 + 0.7 * hr * hr) * sqrt(g);
+    float r = rMax * (0.32 + 0.68 * hr * hr) * sqrt(g);
     vec2 ctr = c + 0.1 + 0.8 * cH2(id + seed + 9.7);
     vec2 d = fp - ctr;
     d.y *= d.y < 0.0 ? 0.86 : 1.14;           // gravity: drops sag, heavier at the bottom
@@ -263,14 +267,14 @@ if (uCondAmount > 0.001) {
   vec4 bS = vec4(0.0, 0.0, 9.0, 0.0), bL = vec4(0.0, 0.0, 9.0, 0.0);
   vec2 cS = vec2(0.0), cL = vec2(0.0);
   float nS = floor(circ / 0.00125), nL = floor(circ / 0.0034);
-  cLayer(uvm, circ / nS, nS, A, 0.03, 0.62, 0.46, uCondY.w, bS, cS);
+  cLayer(uvm, circ / nS, nS, A, 0.03, 0.6, 0.5, uCondY.w, bS, cS);
   cLayer(uvm, circ / nL, nL, A, 0.36, 1.05, 0.40, uCondY.w + 31.0, bL, cL);
   // drips: a few columns run down once the can is wet, wiping a clear wet track
   float dc = 0.0062, nD = floor(circ / dc); dc = circ / nD;
   float colx = uvm.x / dc, ic = mod(floor(colx), nD);
   vec2 hd = cH2(vec2(ic, 5.3 + uCondY.w));
   float dStart = 0.66 + hd.y * 0.36;
-  float dg = clamp((uCondAmount - dStart) / (1.0 - dStart + 0.04), 0.0, 1.0) * step(hd.x, 0.26);
+  float dg = clamp((uCondAmount - dStart) / (1.0 - dStart + 0.04), 0.0, 1.0) * step(hd.x, 0.2);
   vec4 bD = vec4(0.0, 0.0, 9.0, 0.0); vec2 cDc = vec2(0.0);
   if (dg > 0.0) {
     float y0 = uCondY.z - 0.008 - cH1(vec2(ic, 2.2)) * span * 0.45;
@@ -313,7 +317,7 @@ if (uCondAmount > 0.001) {
   }
   // albedo
   vec3 base = diffuseColor.rgb;
-  vec3 misted = base + (uCondMistColor - base) * (0.065 * cMist + 0.12 * cGrain);
+  vec3 misted = base + (uCondMistColor - base) * (0.045 * cMist + 0.1 * cGrain);
   // a drop is a small lens: it shows the scene upside down (dark table at its top, bright sky at its
   // bottom), a thin dark rim where light is totally reflected, and a bright caustic near the bottom
   float ring = mix(1.0, 0.55, smoothstep(0.72, 1.0, cQ) * cDetail);
@@ -323,12 +327,12 @@ if (uCondAmount > 0.001) {
   vec3 dropCol = base * ring * mix(1.0, 0.72, topDark * cDetail);
   dropCol += (uCondMistColor * 0.55 + base * 0.45) * (0.16 * lowGlow + 0.35 * caustic) * cDetail;
   dropCol = mix(base + (uCondMistColor - base) * 0.05, dropCol, cDetail);
-  vec3 col = mix(misted, base * 0.95, cTrail);
+  vec3 col = mix(misted, base * 0.97, cTrail);
   diffuseColor.rgb = mix(col, dropCol, cCov);
 }`;
 const COND_ROUGH = /* glsl */`
 if (uCondAmount > 0.001) {
-  roughnessFactor = mix(roughnessFactor, 0.64, cMist * 0.85);
+  roughnessFactor = mix(roughnessFactor, 0.6, cMist * 0.85);
   roughnessFactor = mix(roughnessFactor, 0.25, cGrain);
   roughnessFactor = mix(roughnessFactor, 0.2, cTrail);
   roughnessFactor = mix(roughnessFactor, mix(0.32, 0.09, cDetail), cCov);
