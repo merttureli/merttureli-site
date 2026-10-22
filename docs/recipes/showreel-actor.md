@@ -61,11 +61,20 @@ Rules: units meters, +Y up, origin at the footprint center. Never add lights, fo
 
 ## 4. Register it
 
-After the showreel branch is merged (do not edit `next/js/showreel/index.js` while another session owns it). Add one line under the Therma-Shift `registerProject(...)` call:
+When the lab is green, one command adds the actor to the hero rotation (it keeps your edited files and only registers):
+
+```sh
+python3 tools/new.py actor robo-catcher --register --dry-run   # shows what it would do
+python3 tools/new.py actor robo-catcher --register
+```
+
+It inserts this line just above the "More guests" comment in `next/js/showreel/index.js` (by hand works too):
 
 ```js
 registerProject({ key: 'robo-catcher', word: 'Robo-Catcher', actor: ctx => import('./robo-catcher.js').then(m => m.createActor(ctx)) });
 ```
+
+Running it again is a no-op. It refuses a word that is not in the `.drift` markup (pass `--word` or `--force`). To take an actor out of the rotation, delete its line.
 
 It loads lazily, so a broken actor logs a warning and the hero keeps working. The `word` must match a `.drift` `<i>` in `next/index.html`; add one there if it is missing.
 

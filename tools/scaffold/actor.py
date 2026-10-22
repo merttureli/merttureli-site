@@ -3,8 +3,11 @@
 Writes
   next/js/showreel/<name>.js   model (placeholder parts) + accent + reel actor
   next/lab/<name>.html         plays the actor like the hero does, checks the interface
-and prints the registration checklist. Never edits next/js/showreel/index.js.
+and prints the registration checklist. With --register it also adds the one
+registerProject(...) line to next/js/showreel/index.js, just above the marker
+comment there (an actor that already exists on disk is kept, only registered).
 """
+import os
 import argparse
 import html
 import re
@@ -39,8 +42,28 @@ def registered_keys(root):
     return set(re.findall(r"registerProject\(\{\s*key:\s*'([^']+)'", src))
 
 
+MARKER = '// More guests: `python3 tools/new.py actor'
+
+
+def add_registration(root, line, dry_run):
+    """Insert `line` just above the marker comment in next/js/showreel/index.js."""
+    path = os.path.join(root, 'next', 'js', 'showreel', 'index.js')
+    src = read_repo_file(root, 'next/js/showreel/index.js')
+    at = src.find(MARKER)
+    if at < 0:
+        raise ScaffoldError('no "More guests" marker in next/js/showreel/index.js: paste the line from step 4 '
+                            'under the last registerProject(...) call by hand')
+    print(f'  {"would register" if dry_run else "register":<16} next/js/showreel/index.js')
+    if not dry_run:
+        with open(path, 'w', encoding='utf-8', newline='\n') as f:
+            f.write(src[:at] + line + '\n' + src[at:])
+
+
 def add_arguments(p):
     p.add_argument('name', help='kebab-case key, e.g. robo-catcher (file names and registerProject key)')
+    p.add_argument('--register', action='store_true',
+                   help='also register it in next/js/showreel/index.js (it joins the hero rotation). '
+                        'Run it again once the actor is ready: existing files are kept')
     p.add_argument('--word', help='drift word that represents it in the hero (default: the drift word in '
                                   'next/index.html that matches the name, e.g. "Robo-Catcher")')
 
@@ -50,6 +73,9 @@ def run(args):
     if key in RESERVED:
         raise ScaffoldError(f'"{key}" is an existing showreel module name, pick another')
     root = resolve_root(args.root)
+    if getattr(args, 'register', False) and key in registered_keys(root):
+        print(f'"{key}" is already registered in next/js/showreel/index.js: nothing to do')
+        return 0
     if key in registered_keys(root) and not args.force:
         raise ScaffoldError(f'"{key}" is already registered in next/js/showreel/index.js (use --force to scaffold anyway)')
 
@@ -79,7 +105,21 @@ def run(args):
         (f'next/lab/{key}.html', render('actor/lab.html.tmpl', values)),
     ]
     print(f'actor {key} (word "{word}") in {root}')
-    write_files(root, files, force=args.force, dry_run=args.dry_run)
+    register = getattr(args, 'register', False)
+    if register:
+        if not match and not args.force:
+            raise ScaffoldError(f'"{word}" is not a .drift word in next/index.html: add it there first, '
+                                'pass --word, or --force')
+        kept = [f for f in files if os.path.exists(os.path.join(root, f[0]))]
+        for rel, _ in kept:
+            print(f'  {"keep":<16} {rel}  (exists; only registering)')
+        files = [f for f in files if f not in kept]
+    if files:
+        write_files(root, files, force=args.force, dry_run=args.dry_run)
+    line = (f"registerProject({{ key: '{key}', word: '{word}', "
+            f"actor: ctx => import('./{key}.js').then(m => m.createActor(ctx)) }});")
+    if register:
+        add_registration(root, line, args.dry_run)
 
     word_line = (f'found in next/index.html (slot {slot[1]} at {slot[2]}, {slot[3]})' if match else
                  'NOT in next/index.html: add <i>' + html.escape(word) + '</i> to a .drift slot, or pass --word')
@@ -90,8 +130,9 @@ Next steps (docs/recipes/showreel-actor.md):
   2. Make it real in next/js/showreel/{key}.js: PARTS (or the CAD import, docs/design/3d.md),
      ACCENT, SEQUENCE timings, the motion in sample(). Keep the lab green while you go.
   3. Drift word "{word}": {word_line}.
-  4. Register: in next/js/showreel/index.js, under registerProject({{ key: 'therma-shift', ... }}), add
-       registerProject({{ key: '{key}', word: '{word}', actor: ctx => import('./{key}.js').then(m => m.createActor(ctx)) }});
+  4. Register{" (done)" if register else ""}: python3 tools/new.py actor {key} --register
+     adds this line to next/js/showreel/index.js, above the "More guests" comment:
+       {line}
      Projects take turns, one per reel: open /next/#reel-fast and press c after each reel to reach it.
   5. Prove nothing broke: python3 tools/check.py''')
     return 0
