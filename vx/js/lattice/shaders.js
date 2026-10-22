@@ -98,6 +98,14 @@ void main() {
    Hermite moment (Latt and Chopard 2006, STD): f_neq,i = 4.5 w_i Q_iab Pi_ab with
    Q_iab = e_ia e_ib - delta_ab / 3, which drops the ghost modes that blow up as
    tau approaches 0.5. Off unless the stability gate needs it.
+   Absorbing layer (uSpongeW > 0): within uSpongeW cells of an outer edge tau
+   rises quadratically to uSpongeTau, which damps the waves and the shear layer
+   an edge condition throws back into the domain (EST).
+   Positivity (uPositive = 1): the relaxation factor is limited so that every
+   post-collision population stays non-negative, f* = f_eq + k n with |k| cut to
+   min f_eq,i / |n_i| over the offending directions (the positivity rule of
+   Brownlee, Gorban and Levesley 2007, STD). Acts only where a population would
+   go negative, which is where an instability starts.
    Local speed floor (uMachK > 0): tau >= 0.5 + K max(0, |u| - U), a viscosity
    that rises only where the local lattice Mach number |u| / c_s passes U / c_s,
    which happens at a sharp nose or fin tip at incidence. Conserves mass and
@@ -105,7 +113,8 @@ void main() {
    Outer edges: a cell on an edge where the freestream enters is set to the
    equilibrium at rho 1 and u_in; any other edge cell takes the velocity and the
    non-equilibrium part of its inward neighbour (zero-gradient outflow, the
-   extrapolation of Guo, Zheng and Shi 2002, STD) with the density held at 1.
+   extrapolation of Guo, Zheng and Shi 2002, STD) with the density held at 1
+   and any inward (backflow) normal velocity removed.
    A plain copy of the neighbour let mass pile up once a lifting section's
    vortices crossed the outflow edges (domain rho - 1 reached 0.2 within 10,000
    steps with the rocket at 4 degrees); holding rho there anchors the pressure.
@@ -165,6 +174,9 @@ uniform float uAccum;      /* 1: add this step's link forces to the stored sum; 
 uniform float uReg;        /* 1: regularised collision */
 uniform float uMachU;      /* local speed above which the viscosity floor rises, lattice units */
 uniform float uMachK;      /* slope of that floor, tau per lattice unit of speed (0: off) */
+uniform float uSpongeW;    /* width of the absorbing layer along the outer edges, cells (0: off) */
+uniform float uSpongeTau;  /* relaxation time at the edge itself */
+uniform float uPositive;   /* 1: limit the relaxation so no population goes negative */
 layout(location = 0) out vec4 o0;
 layout(location = 1) out vec4 o1;
 layout(location = 2) out vec4 o2;
@@ -188,16 +200,22 @@ void main() {
     bool inflow = (x0 && uU.x > EDGE_EPS) || (x1 && uU.x < -EDGE_EPS) || (y0 && uU.y > EDGE_EPS) || (y1 && uU.y < -EDGE_EPS);
     if (inflow) { writeEq(uU); return; }
     /* outflow: velocity and non-equilibrium part from the inward neighbour
-       (zero gradient), density held at the freestream value 1 */
-    ivec2 q = p + ivec2(x0 ? 1 : x1 ? -1 : 0, y0 ? 1 : y1 ? -1 : 0);
+       (zero gradient), density held at the freestream value 1; a velocity that
+       points back into the domain loses its inward normal part (backflow
+       through an open edge is what blows such edges up) */
+    ivec2 inward = ivec2(x0 ? 1 : x1 ? -1 : 0, y0 ? 1 : y1 ? -1 : 0);
+    ivec2 q = p + inward;
     vec4 b0 = texelFetch(tF0, q, 0) + REST0;
     vec4 b1 = texelFetch(tF1, q, 0) + REST1;
     float b8 = texelFetch(tF2, q, 0).x + REST8;
     float rn = b0.x + b0.y + b0.z + b0.w + b1.x + b1.y + b1.z + b1.w + b8;
     vec2 un = vec2(b0.y - b0.w + b1.y - b1.z - b1.w + b8, b0.z - b1.x + b1.y + b1.z - b1.w - b8) / rn;
-    o0 = b0 + vec4(feq(0, 1.0, un) - feq(0, rn, un), feq(1, 1.0, un) - feq(1, rn, un), feq(2, 1.0, un) - feq(2, rn, un), feq(3, 1.0, un) - feq(3, rn, un)) - REST0;
-    o1 = b1 + vec4(feq(4, 1.0, un) - feq(4, rn, un), feq(5, 1.0, un) - feq(5, rn, un), feq(6, 1.0, un) - feq(6, rn, un), feq(7, 1.0, un) - feq(7, rn, un)) - REST1;
-    o2 = vec4(b8 + feq(8, 1.0, un) - feq(8, rn, un) - REST8, 0.0, 0.0, 0.0);
+    vec2 ue = un;
+    if (inward.x != 0 && un.x * float(inward.x) > 0.0) ue.x = 0.0;
+    if (inward.y != 0 && un.y * float(inward.y) > 0.0) ue.y = 0.0;
+    o0 = vec4(feq(0, 1.0, ue), feq(1, 1.0, ue), feq(2, 1.0, ue), feq(3, 1.0, ue)) + b0 - vec4(feq(0, rn, un), feq(1, rn, un), feq(2, rn, un), feq(3, rn, un)) - REST0;
+    o1 = vec4(feq(4, 1.0, ue), feq(5, 1.0, ue), feq(6, 1.0, ue), feq(7, 1.0, ue)) + b1 - vec4(feq(4, rn, un), feq(5, rn, un), feq(6, rn, un), feq(7, rn, un)) - REST1;
+    o2 = vec4(feq(8, 1.0, ue) + b8 - feq(8, rn, un) - REST8, 0.0, 0.0, 0.0);
     return;
   }
   vec4 cell = texelFetch(tCell, p, 0);
@@ -226,9 +244,19 @@ ${neq}
   float Q = sqrt(2.0 * (pxx * pxx + pyy * pyy + 2.0 * pxy * pxy));
   float tau = 0.5 * (uTau0 + sqrt(uTau0 * uTau0 + 18.0 * uC2 * Q / rho));
   tau = max(tau, 0.5 + uMachK * max(0.0, length(u) - uMachU));
+  if (uSpongeW > 0.0) {
+    float d = min(min(float(p.x), float(size.x - 1 - p.x)), min(float(p.y), float(size.y - 1 - p.y)));
+    float sp = max(0.0, 1.0 - d / uSpongeW);
+    tau = max(tau, 0.5 + (uSpongeTau - 0.5) * sp * sp);
+  }
   float keep = 1.0 - 1.0 / tau;
   if (uReg > 0.5) {
 ${reg}
+  }
+  if (uPositive > 0.5) {
+    float lim = abs(keep);
+${ks.map((k) => `    if (keep * n${k} < -q${k}) lim = min(lim, max(q${k}, 0.0) / abs(n${k}));`).join('\n')}
+    keep = sign(keep) * lim;
   }
   o0 = vec4(q0 + keep * n0, q1 + keep * n1, q2 + keep * n2, q3 + keep * n3) - REST0;
   o1 = vec4(q4 + keep * n4, q5 + keep * n5, q6 + keep * n6, q7 + keep * n7) - REST1;

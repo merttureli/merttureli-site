@@ -11,7 +11,7 @@
 import * as THREE from 'three';
 import { bus } from '../core/bus.js';
 import { governor } from '../core/governor.js';
-import { createLattice, TIERS, VIEWS, RE_TARGET, U_REF, SMAGORINSKY_C } from './lattice.js';
+import { createLattice, TIERS, VIEWS, RE_TARGET, U_REF, SMAGORINSKY_C, MACH_FLOOR } from './lattice.js';
 
 const DEG = Math.PI / 180;
 
@@ -168,6 +168,7 @@ export async function validateCylinder(renderer, { steps = 20000, chunk = 50, on
   const probe = await lat.check();
   const result = {
     case: 'cylinder', grid: [cols, rows], dCells: D, centre: [cx, cy], uIn: u, re, tau0: +lat.stats.tau0.toFixed(5), smagorinsky,
+    regularised: lat.stats.regularised, positivity: lat.stats.positive, absorbingEdges: lat.stats.sponge, machFloor: lat.stats.machK,
     precision: lat.stats.precision, steps, sampleWindowSteps: chunk,
     perturbation: `alpha ${KICK_DEG} deg for the first ${KICK_STEPS} steps`,
     cd: +cd.toFixed(4), cdStd: +cdStd.toFixed(4), cdWindow: [avgFrom, steps],
@@ -182,7 +183,7 @@ export async function validateCylinder(renderer, { steps = 20000, chunk = 50, on
 }
 
 /* Stability gate: the rocket stand-in at the tier 3 grid. */
-export async function validateStability(renderer, { steps = 20000, re = RE_TARGET, uIn = U_REF, alphaDeg = 15, reg = true, machK = null, tier = 3, chunk = 100, checkEvery = 1000, onProgress, onFrame } = {}) {
+export async function validateStability(renderer, { steps = 20000, re = RE_TARGET, uIn = U_REF, alphaDeg = 15, reg = true, machK = null, positive = true, sponge = true, tier = 3, chunk = 100, checkEvery = 1000, onProgress, onFrame } = {}) {
   const lat = createLattice(renderer, { tier, autoResetOnNaN: false });
   await lat.ready;
   if (lat.fallback) { lat.destroy(); return { case: 'stability', error: lat.fallback }; }
@@ -190,6 +191,7 @@ export async function validateStability(renderer, { steps = 20000, re = RE_TARGE
   lat.setViscosity({ re, uRef: U_REF });
   lat.setRegularised(reg);
   if (machK !== null && Number.isFinite(machK)) lat.setMachFloor(machK);
+  lat.setStabilisers({ positive, sponge });
   lat.setInflow(uIn, alphaDeg * DEG);
   lat.reset();
   const t0 = performance.now();
@@ -212,7 +214,7 @@ export async function validateStability(renderer, { steps = 20000, re = RE_TARGE
   const g = lat.stats;
   const result = {
     case: 'stability', grid: g.grid, tier, shape: 'rocket stand-in', dCells: +g.dCells.toFixed(2), alphaDeg, uIn, re: +g.re.toFixed(0), tau0: +g.tau0.toFixed(5),
-    smagorinsky: g.smagorinsky, regularised: reg, machFloor: g.machK, precision: g.precision, stepsRequested: steps, stepsRun: last.step || 0,
+    smagorinsky: g.smagorinsky, regularised: reg, machFloor: g.machK, positivity: g.positive, absorbingEdges: g.sponge, precision: g.precision, stepsRequested: steps, stepsRun: last.step || 0,
     nanFree: failedAt === null && last.bad === 0, failedAt, checks, wallSeconds: +wall.toFixed(1), stepsPerSecond: Math.round((last.step || 0) / wall),
     force: lat.force ? { cn: +lat.force.cn.toFixed(4), cm: +lat.force.cm.toFixed(4), cd: +lat.force.cd.toFixed(4), xcpCells: lat.force.xcpCells === null ? null : +lat.force.xcpCells.toFixed(1), cgCell: +(0.12 * g.grid[0] + ROCKET.cgL * 0.66 * g.grid[0]).toFixed(1) } : null,
   };
@@ -220,9 +222,12 @@ export async function validateStability(renderer, { steps = 20000, re = RE_TARGE
   return result;
 }
 
-/* Step rate per tier: frame() driven for a fixed wall time, then a synchronised
-   count (step(n) and an awaited readback). Software GL is not representative. */
-export async function validateBench(renderer, { seconds = 4, onProgress } = {}) {
+/* Step rate per tier, two ways. Throughput: step(n) then lattice.sync() (a
+   fenced readback), doubling n until one batch takes 2 s. Frame loop: frame()
+   plus a draw of lattice.texture to the canvas every animation frame for a
+   fixed wall time, then a sync so queued work is counted. Software GL is not
+   representative of a GPU. */
+export async function validateBench(renderer, { seconds = 4, onProgress, draw } = {}) {
   const rows = [];
   for (const tier of [3, 2, 1]) {
     const lat = createLattice(renderer, { tier, autoResetOnNaN: false });
@@ -231,27 +236,32 @@ export async function validateBench(renderer, { seconds = 4, onProgress } = {}) 
     lat.setSection(rocketSection);
     lat.setInflow(0.08, 8 * DEG);
     lat.reset();
-    for (let i = 0; i < 3; i++) { lat.frame(1 / 60); await nextFrame(); }
-    await lat.sampleForce();
-    const s0 = lat.stats.steps, t0 = performance.now();
+    lat.step(4); await lat.sync();
+    let n = 8, sps = 0;
+    for (;;) {
+      const t0 = performance.now();
+      lat.step(n);
+      await lat.sync();
+      const dt = performance.now() - t0;
+      sps = n * 1000 / dt;
+      if (dt > 2000 || n > 20000) break;
+      n *= 2;
+    }
+    const s0 = lat.stats.steps, f0 = performance.now();
     let frames = 0;
-    while (performance.now() - t0 < seconds * 1000) { lat.frame(1 / 60); frames++; await nextFrame(); }
-    await lat.sampleForce();
-    const t1 = performance.now();
-    const n = TIERS[tier].steps * 4;
-    lat.step(n);
-    await lat.sampleForce();
-    const t2 = performance.now();
+    while (performance.now() - f0 < seconds * 1000) { lat.frame(1 / 60); draw?.(lat); frames++; await nextFrame(); }
+    await lat.sync();
+    const f1 = performance.now();
     rows.push({
-      tier, grid: lat.stats.grid, stepsPerFrame: TIERS[tier].steps, frames, msPerFrame: +((t1 - t0) / frames).toFixed(1),
-      stepsPerSecondFrames: Math.round((lat.stats.steps - s0 - n) * 1000 / (t1 - t0)), stepsPerSecondSync: Math.round(n * 1000 / (t2 - t1)),
-      shed: lat.stats.shed, precision: lat.stats.precision,
+      tier, grid: lat.stats.grid, stepsPerFrameTier: TIERS[tier].steps, throughputStepsPerSecond: Math.round(sps), throughputBatch: n,
+      loopFrames: frames, loopMsPerFrame: +((f1 - f0) / frames).toFixed(1), loopStepsPerSecond: Math.round((lat.stats.steps - s0) * 1000 / (f1 - f0)),
+      shedInLoop: lat.stats.shed, precision: lat.stats.precision,
     });
     onProgress?.(rows.length, 3);
     lat.destroy();
   }
-  const dbg = renderer.getContext().getExtension('WEBGL_debug_renderer_info');
-  return { case: 'bench', renderer: dbg ? renderer.getContext().getParameter(dbg.UNMASKED_RENDERER_WEBGL) : 'unknown', note: 'software GL (SwiftShader) is not representative of a GPU', tiers: rows };
+  const ctx = renderer.getContext(), dbg = ctx.getExtension('WEBGL_debug_renderer_info');
+  return { case: 'bench', renderer: dbg ? ctx.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : 'unknown', note: 'software GL (SwiftShader) is not representative of a GPU', tiers: rows };
 }
 
 /* destroy(): resources the lattice holds and what three reports before and after. */
@@ -306,7 +316,7 @@ export function mountLab(doc = document) {
     tierMode: query.has('tier') ? String(query.get('tier')) : 'auto', spf: 0, running: !reduced, reg: query.get('reg') !== '0', smag: true,
   };
   const startTier = state.tierMode === 'auto' ? (reduced ? 1 : Math.max(1, governor.tier)) : Number(state.tierMode);
-  const lattice = createLattice(renderer, { tier: startTier });
+  const lattice = createLattice(renderer, { tier: startTier, precision: query.get('precision') === 'half' ? 'half' : undefined });
   window.lattice = lattice;
   const builder = ({ cols, rows }) => (state.shape === 'plate' ? plateSection({ cols, rows, incidenceDeg: state.incidence })
     : state.shape === 'cylinder' ? cylinderSection({ cols, rows }) : rocketSection({ cols, rows }));
@@ -460,8 +470,9 @@ export function mountLab(doc = document) {
     const xcpCal = f && f.xcpCells !== null && current ? (f.xcpCells - current.xNose) / d : null;
     const lines = [
       `ENGINE    D2Q9 / ONE PULL PASS / MRT x3 / ${s.precision.toUpperCase()}`,
-      `MODEL     BGK + SMAGORINSKY C ${s.smagorinsky.toFixed(2)} (STD HOU 1996)${s.regularised ? ' / REGULARISED (STD LATT 2006)' : ''}${s.machK > 0 ? ' / TAU FLOOR ABOVE |U| 0.15 (EST)' : ''}`,
-      `GRID      ${g.cols} x ${g.rows} CELLS / DYE ${s.dye[0]} x ${s.dye[1]} / TIER ${lattice.tier} / ${s.stepsPerFrame} STEPS PER FRAME${lattice.stepsPerFrame ? ' (SET)' : ''}`,
+      `MODEL     BGK + SMAGORINSKY C ${s.smagorinsky.toFixed(2)} (STD HOU 1996)${s.regularised ? ' / REGULARISED (STD LATT 2006)' : ''}`,
+      `STABILISE ${[s.positive ? 'POSITIVITY (STD BROWNLEE 2007)' : '', s.machK > 0 ? 'TAU FLOOR ABOVE |U| 0.15 (EST)' : '', s.sponge ? 'ABSORBING EDGES (EST)' : ''].filter(Boolean).join(' / ') || 'OFF'}`,
+      `GRID      ${g.cols} x ${g.rows} CELLS / DYE ${s.dye[0]} x ${s.dye[1]} / TIER ${lattice.tier} / ${lattice.stepsPerFrame || (TIERS[lattice.tier] || TIERS[0]).steps} STEPS PER FRAME${lattice.stepsPerFrame ? ' (SET)' : ''}`,
       `RATE      ${s.stepsPerSecond} STEPS/S / ${fmt(s.msPerFrame, 1)} MS PER FRAME / ${fmt(s.issueMs, 2)} MS ISSUE / ${s.shed} SHED (SIM)`,
       `FLOW      U_IN ${fmt(s.uIn)} LU${Math.abs(s.uNow - s.uIn) > 5e-4 ? ` (RAMPING, ${fmt(s.uNow)})` : ''} / ALPHA ${fmt(s.alphaDeg, 1)} DEG / TAU0 ${fmt(s.tau0, 5)}${s.tauNow > s.tau0 + 1e-5 ? ` (START-UP ${fmt(s.tauNow, 3)})` : ''} / NU ${fmt(s.nu, 5)} / RE ${fmt(s.re, 0)} (SIM)`,
       `SECTION   ${current ? current.label : '–'} / D ${fmt(d, 1)} CELLS / ${lattice.stats.dCells ? '' : 'NO SOLID / '}CG ${current ? fmt(current.cgCell[0], 1) : '–'} CELLS${state.shape === 'rocket' ? ' (PAGE 22 IN ON THE CAD LENGTH)' : ''}`,
@@ -471,6 +482,12 @@ export function mountLab(doc = document) {
         : 'COEFF     –',
       `STATE     STEP ${s.steps} / ${state.running ? 'RUNNING' : 'PAUSED'} / VIEW ${state.view.toUpperCase()} / NAN RESETS ${s.nanResets}${s.lost ? ' / CONTEXT LOST' : ''}${lattice.fallback ? ` / FALLBACK ${lattice.fallback.toUpperCase()}` : ''}`,
     ];
+    if (lattice.fallback) {
+      lines.splice(3, lines.length - 3,
+        `GRID      – / LATTICE OFF (${lattice.fallback.toUpperCase()})`,
+        `REQUESTED ${current ? current.label : '–'} / ALPHA ${fmt(state.alphaDeg, 1)} DEG / U_IN ${fmt(state.uIn)} LU / RE ${fmt(state.re, 0)} AT U_IN 0.10 / VIEW ${state.view.toUpperCase()}`,
+        'FORCE     – (NO LATTICE)');
+    }
     readout.textContent = lines.join('\n');
     if (now - lastAria > 2000) {
       lastAria = now;
@@ -496,7 +513,7 @@ export function mountLab(doc = document) {
     else if (!html && reduced && !state.running) line = `Reduced motion / no autoplay / a still frame after ${lattice.stats.steps} steps / Play or Step runs the bench`;
     if (status.textContent !== line) status.textContent = line;
     if (html === noteHtml) return;
-    noteHtml = html; note.hidden = !html; note.innerHTML = html;
+    noteHtml = html; note.hidden = !html; note.innerHTML = html ? `<span>${html}</span>` : '';
   }
 
   /* ---------- loop ---------- */
@@ -549,6 +566,9 @@ export function mountLab(doc = document) {
   $('reg').checked = state.reg;
   $('reg').addEventListener('change', (e) => { state.reg = e.target.checked; lattice.setRegularised(state.reg); });
   $('smag').addEventListener('change', (e) => { state.smag = e.target.checked; lattice.setSmagorinsky(state.smag ? SMAGORINSKY_C : 0); });
+  $('positive').addEventListener('change', (e) => lattice.setStabilisers({ positive: e.target.checked }));
+  $('sponge').addEventListener('change', (e) => lattice.setStabilisers({ sponge: e.target.checked }));
+  $('mach').addEventListener('change', (e) => lattice.setMachFloor(e.target.checked ? MACH_FLOOR : 0));
 
   const shapeButtons = [...doc.querySelectorAll('[data-shape]')];
   function setShape(name) {
@@ -666,8 +686,8 @@ export function mountLab(doc = document) {
     let result;
     try {
       if (kind === 'cylinder') result = await validateCylinder(renderer, { steps: num('steps', 20000), onProgress: progress, onFrame: stageDraw, smagorinsky: num('c', SMAGORINSKY_C) });
-      else if (kind === 'stability') result = await validateStability(renderer, { steps: num('steps', 20000), re: num('re', RE_TARGET), uIn: num('u', U_REF), alphaDeg: num('alpha', 15), reg: query.get('reg') !== '0', machK: query.has('mach') ? num('mach', 0) : null, tier: num('tier', 3), onProgress: progress, onFrame: stageDraw });
-      else if (kind === 'bench') result = await validateBench(renderer, { seconds: num('seconds', 4), onProgress: progress });
+      else if (kind === 'stability') result = await validateStability(renderer, { steps: num('steps', 20000), re: num('re', RE_TARGET), uIn: num('u', U_REF), alphaDeg: num('alpha', 15), reg: query.get('reg') !== '0', machK: query.has('mach') ? num('mach', 0) : null, positive: query.get('pos') !== '0', sponge: query.get('sponge') !== '0', tier: num('tier', 3), onProgress: progress, onFrame: stageDraw });
+      else if (kind === 'bench') result = await validateBench(renderer, { seconds: num('seconds', 4), onProgress: progress, draw: stageDraw });
       else if (kind === 'destroy') result = await validateDestroy(renderer);
       else result = { case: kind, error: 'unknown validation; use cylinder, stability, bench or destroy' };
     } catch (err) {

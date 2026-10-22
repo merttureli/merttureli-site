@@ -103,8 +103,13 @@
     <label class="lt-row">U_in, lattice units <output id="uin-out">0.080</output><input type="range" id="uin" min="0.01" max="0.12" step="0.005" value="0.08"><small>Page range 0.03 to 0.10</small></label>
     <label class="lt-row">Re at u_in 0.10 <output id="re-out">3000</output><input type="range" id="re" min="100" max="6000" step="50" value="3000"><small>Sets tau0; Re follows u_in</small></label>
     <label class="lt-row">Body rate, rad per step <output id="rate-out">0</output><input type="range" id="rate" min="-3" max="3" step="0.1" value="0"><small>Positive raises theta (flight sign)</small></label>
+
+    <h2>Model</h2>
     <label class="lt-row">Smagorinsky C 0.12 <input type="checkbox" id="smag" checked></label>
-    <label class="lt-row">Regularised collision <input type="checkbox" id="reg" checked><small>Latt and Chopard 2006; plain BGK is unstable at tau0 near 0.504</small></label>
+    <label class="lt-row">Regularised collision <input type="checkbox" id="reg" checked></label>
+    <label class="lt-row">Positivity limiter <input type="checkbox" id="positive" checked></label>
+    <label class="lt-row">Speed floor on tau <input type="checkbox" id="mach" checked></label>
+    <label class="lt-row">Absorbing edges <input type="checkbox" id="sponge" checked><small>Plain BGK + Smagorinsky does not pass the alpha 15 gate at tau0 near 0.504; these keep it running (Latt and Chopard 2006, Brownlee et al. 2007, EST)</small></label>
 
     <h2>View</h2>
     <div class="lt-group" role="group" aria-label="View">

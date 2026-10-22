@@ -63,6 +63,7 @@ export const SMAGORINSKY_C = 0.12;   /* STD, Hou et al. 1996 (contract value) */
 export const RE_TARGET = 3000;       /* lattice Reynolds number at U_REF (contract) */
 export const U_REF = 0.10;           /* lattice units, top of the inflow range (contract) */
 export const ALPHA_MAX = 35 * Math.PI / 180;   /* rad, edge treatment holds to here (contract) */
+export const MACH_FLOOR = 2;         /* default slope of the local speed floor, tau per lattice unit (see MACH_K) */
 
 const FRAME_BUDGET_MS = 48;   /* ms; CPU issue time per frame before steps are shed (contract), also the frame
                                  interval above which the step count backs off (a GPU that cannot keep up) */
@@ -86,12 +87,21 @@ const STARTUP_STEPS = 2000;   /* steps over which it eases back to tau0 (EST). A
                                  which at tau0 = 0.504 would otherwise grow. Starting from still air instead sends a
                                  plane wave of rho - 1 = u / c_s (0.17 at u 0.10) through the domain. */
 const MACH_U = 0.15;          /* lattice units (local Mach 0.26): above this local speed the viscosity floor rises */
-const MACH_K = 2;             /* tau per lattice unit of speed above MACH_U (EST): at |u| 0.30, tau >= 0.80.
-                                 The stability gate (rocket stand-in, tier 3, alpha 15 deg, u_in 0.10) blows up
-                                 near 2,000 to 4,500 steps with plain BGK + Smagorinsky at Re 3000, 2000, 1000 and
-                                 500, and with the regularised collision at Re 3000: the sharp nose at incidence
-                                 drives the local speed past 0.4 (Mach 0.7). With this floor it runs; it acts only
-                                 where |u| > 0.15, so the cylinder gate (|u| < 0.08) is untouched. */
+const MACH_K = MACH_FLOOR;    /* tau per lattice unit of speed above MACH_U (EST): at |u| 0.30, tau >= 0.80. */
+/* Stability gate history (rocket stand-in, tier 3 grid, alpha 15 deg, u_in 0.10, SwiftShader, SIM):
+     plain BGK + Smagorinsky, contract edges (copy outflow): blew up at Re 3000, 2000, 1000 and 500
+       within 2,000 to 4,500 steps; regularised alone at Re 3000: 2,500 steps;
+     with the final edges and no stabiliser: Re 3000, 1500, 750 and 375 all blew up within 8,000 steps;
+     regularised + speed floor: 5,000 steps clean, then the copy outflow let mass pile up (rho - 1
+       reached 0.2), so outflow edges hold rho at 1;
+     + positivity + absorbing edges: 14,000 steps, then backflow through the top outflow edge;
+     + backflow removal: 20,000 steps clean, max |u| 0.355, max |rho - 1| 0.159.
+   The cylinder gate (Re 100, tau0 0.536, |u| < 0.07) runs with every stabiliser on: the regularised
+   collision touches only the non-hydrodynamic modes, the speed floor never engages below |u| 0.15,
+   and the 10-cell absorbing edges start 73 cells or more from the cylinder. */
+const SPONGE_FRAC = 0.05;     /* absorbing layer width as a fraction of the rows (16 cells at tier 3), EST */
+const SPONGE_MIN = 8;         /* cells, the narrowest layer */
+const SPONGE_TAU = 0.9;       /* relaxation time at the edge itself (nu 0.13), EST */
 const SELFTEST_TOL = 2e-3;    /* tolerance on f0 after one step of uniform flow (half float carries 1e-3) */
 
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -125,6 +135,7 @@ export function createLattice(renderer, options = {}) {
     grid: [0, 0], dye: [0, 0], tier, stepsPerFrame: 0, stepsPerSecond: 0, msPerFrame: 0, issueMs: 0,
     precision: 'none', re: 0, tau0: 0, tauNow: 0, nu: 0, uIn: 0.05, uNow: 0, alpha: 0, alphaDeg: 0, dCells: 0,
     steps: 0, shed: 0, stepScale: 1, nanResets: 0, view: 'smoke', smagorinsky: SMAGORINSKY_C, regularised: options.regularised !== false, machK: Number.isFinite(options.machK) ? options.machK : MACH_K,
+    sponge: options.sponge !== false, positive: options.positive !== false,
     fallback: null, lost: false, forceReadback: true,
   };
   const api = {
@@ -132,8 +143,8 @@ export function createLattice(renderer, options = {}) {
     get tier() { return tier; },
     get grid() { return { cols: grid.cols, rows: grid.rows, dyeScale: grid.dyeScale }; },
     get fields() { return fieldsView(); },
-    setSection, setInflow, setBodyRate, setView, setTier, frame, step, render, reset, sampleForce, check,
-    setViscosity, setSmagorinsky, setRegularised, setMachFloor, resources, destroy,
+    setSection, setInflow, setBodyRate, setView, setTier, frame, step, render, reset, sampleForce, check, sync,
+    setViscosity, setSmagorinsky, setRegularised, setMachFloor, setStabilisers, resources, destroy,
   };
   const noop = () => {};
   const grid = { cols: 0, rows: 0, dyeScale: 2, rake: 28 };
@@ -154,16 +165,17 @@ export function createLattice(renderer, options = {}) {
   function fail(reason) {
     api.fallback = reason; stats.fallback = reason;
     api.ready = Promise.resolve({ fallback: reason, precision: 'none' });
-    for (const k of ['setSection', 'setInflow', 'setBodyRate', 'setView', 'setTier', 'frame', 'step', 'render', 'reset', 'setViscosity', 'setSmagorinsky', 'setRegularised', 'setMachFloor']) api[k] = noop;
+    for (const k of ['setSection', 'setInflow', 'setBodyRate', 'setView', 'setTier', 'frame', 'step', 'render', 'reset', 'setViscosity', 'setSmagorinsky', 'setRegularised', 'setMachFloor', 'setStabilisers']) api[k] = noop;
     api.sampleForce = () => Promise.resolve(null);
     api.check = () => Promise.resolve(null);
+    api.sync = () => Promise.resolve(false);
     api.resources = () => ({ targets: 0, materials: 0, textures: 0, geometries: 0 });
     api.destroy = () => { destroyed = true; };
     return api;
   }
 
   /* ---------------------------------------------------------- GL objects */
-  let half = !hasF32;                 /* float16 deviation path */
+  let half = !hasF32 || options.precision === 'half';   /* float16 deviation path (the option forces it, for testing) */
   const quad = new THREE.BufferGeometry();
   quad.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, -1, 0, 3, -1, 0, -1, 3, 0]), 3));
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -192,7 +204,7 @@ export function createLattice(renderer, options = {}) {
       step: material(S.STEP_FRAG, {
         tF0: u(null), tF1: u(null), tF2: u(null), tCell: u(null), uU: u(new THREE.Vector2()),
         uTau0: u(0.51), uC2: u(SMAGORINSKY_C * SMAGORINSKY_C), uOmega: u(0), uCg: u(new THREE.Vector2()), uAccum: u(0), uReg: u(0),
-        uMachU: u(MACH_U), uMachK: u(0),
+        uMachU: u(MACH_U), uMachK: u(0), uSpongeW: u(0), uSpongeTau: u(SPONGE_TAU), uPositive: u(1),
       }),
       macro: material(S.MACRO_FRAG, { tF0: u(null), tF1: u(null), tF2: u(null), tCell: u(null), uOmega: u(0), uCg: u(new THREE.Vector2()) }),
       dye: material(S.DYE_FRAG, {
@@ -321,7 +333,7 @@ export function createLattice(renderer, options = {}) {
 
   /* ---------------------------------------------------------- parameters */
   const flow = { uIn: 0.05, alpha: 0, omega: 0, view: 0 };
-  const visc = { mode: 're', re: RE_TARGET, uRef: U_REF, tau0: 0.51, c: SMAGORINSKY_C, reg: options.regularised !== false, machK: Number.isFinite(options.machK) ? options.machK : MACH_K };
+  const visc = { mode: 're', re: RE_TARGET, uRef: U_REF, tau0: 0.51, c: SMAGORINSKY_C, reg: options.regularised !== false, machK: Number.isFinite(options.machK) ? options.machK : MACH_K, sponge: options.sponge !== false, positive: options.positive !== false };
   function updateViscosity() {
     const d = section.dCells > 0 ? section.dCells : 24;
     if (visc.mode === 're') visc.tau0 = tauFor(visc.re, visc.uRef, d);
@@ -380,6 +392,8 @@ export function createLattice(renderer, options = {}) {
     setVec(m.uU, inflow.x, inflow.y);
     m.uTau0.value = tauNow(); m.uC2.value = visc.c * visc.c; m.uReg.value = visc.reg ? 1 : 0;
     m.uMachK.value = visc.machK; m.uMachU.value = MACH_U;
+    m.uSpongeW.value = visc.sponge ? Math.max(SPONGE_MIN, Math.round(SPONGE_FRAC * grid.rows)) : 0;
+    m.uPositive.value = visc.positive ? 1 : 0;
     m.uOmega.value = -flow.omega;                 /* flight rate (clockwise in the grid) to counter-clockwise */
     setVec(m.uCg, section.cgX, section.cgY);
     m.uAccum.value = (!half && !accumReset) ? 1 : 0;
@@ -481,6 +495,13 @@ export function createLattice(renderer, options = {}) {
     end();
     const step = stats.steps;
     return readTarget(last).then(([bad, cells, maxSpeed, maxDrho]) => ({ bad, cells, maxSpeed, maxDrho, step }), () => null);
+  }
+
+  /* Resolves once the GPU has finished every lattice command issued so far
+     (an async one-texel readback behind a fence). For benches and gates. */
+  function sync() {
+    if (!live || lost || destroyed || tier === 0) return Promise.resolve(false);
+    return readTarget(fA, 0, 0, 0).then(() => true, () => false);
   }
 
   /* ------------------------------------------------------------ lifecycle */
@@ -597,6 +618,12 @@ export function createLattice(renderer, options = {}) {
   function setRegularised(on) { visc.reg = !!on; stats.regularised = visc.reg; }
   /* Local speed floor on tau (see shaders.js): k in tau per lattice unit above MACH_U, 0 turns it off. */
   function setMachFloor(k) { visc.machK = Math.max(0, Number(k) || 0); stats.machK = visc.machK; }
+  /* Stabiliser switches for the lab and the gates: { sponge, positive } booleans. */
+  function setStabilisers(o = {}) {
+    if ('sponge' in o) visc.sponge = !!o.sponge;
+    if ('positive' in o) visc.positive = !!o.positive;
+    stats.sponge = visc.sponge; stats.positive = visc.positive;
+  }
 
   function step(n = 1) {
     if (!live || destroyed || lost || tier === 0) return 0;
@@ -671,7 +698,7 @@ export function createLattice(renderer, options = {}) {
     };
   }
   function resources() {
-    return { targets: targets.size, materials: materials.length, textures: cellTex ? 1 : 0, geometries: quad ? 1 : 0 };
+    return { targets: targets.size, materials: materials.length, textures: cellTex ? 1 : 0, geometries: destroyed ? 0 : 1 };
   }
 
   /* context loss: stop, then rebuild the state when the browser restores it */
