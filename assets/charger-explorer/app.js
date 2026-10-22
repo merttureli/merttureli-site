@@ -320,5 +320,6 @@ try{
   for(const id of [0,14,18]){const label=storyFor(data.parts.find(p=>p.id===id)).label,button=document.createElement('button');button.className='hotspot';button.textContent=label;button.setAttribute('aria-label',`Explore ${label}`);button.onclick=()=>select(id,{keyboard:true});$('hotspots').append(button);hotspots.push({id,button});}
   $('count').textContent=data.parts.filter(p=>!p.referenceOnly).length;$('loading').remove();renderList();syncDock();applyAppearance();resize();
   const initial=new URLSearchParams(location.search).get('part');if(initial!==null&&data.parts.some(p=>p.id===Number(initial)))select(Number(initial));
-  renderer.compile(scene,camera);readyResolve();
+  if(renderer.extensions.has('KHR_parallel_shader_compile'))await renderer.compileAsync(scene,camera);else renderer.compile(scene,camera);
+  readyResolve();
 }catch(error){const loading=$('loading');if(loading)loading.textContent='The model could not load. Refresh the page to try again.';console.error(error);}

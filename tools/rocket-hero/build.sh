@@ -9,3 +9,6 @@ set -e
 "${ESBUILD:-esbuild}" tools/rocket-hero/src/live.js --bundle --format=esm --minify --target=es2020 \
   --alias:three=./assets/charger-explorer/vendor/three.module.js \
   --legal-comments=none --outfile=assets/rocket/rocket-live.js
+# The explorer imports a minified copy of the same vendored three.js (half the bytes, a third to parse).
+"${ESBUILD:-esbuild}" assets/charger-explorer/vendor/three.module.js --bundle --format=esm --minify \
+  --legal-comments=inline --outfile=assets/charger-explorer/vendor/three.module.min.js

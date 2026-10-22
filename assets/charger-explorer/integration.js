@@ -180,6 +180,7 @@
     state = 'closed';
     afterClose(); // not left to the async close event, so a quick reopen cannot slip in before the cleanup
     const f = flight();
+    f?.dialogClosed();
     seat.classList.add('shadow-in'); seat.classList.remove('is-expanded');
     setTimeout(() => seat.classList.remove('shadow-in'), 450);
     if (to === 'hero') f?.hideHero(false);
@@ -245,6 +246,8 @@
   window.ChargerExplorerHost = {
     load,
     get ready() { return !!api; },
+    // While the dialog is open the body is pinned and scrollY reads 0; the flight should hold still.
+    get busy() { return state !== 'closed'; },
     // The rocket has landed: show the explorer in its place. False until the explorer is ready.
     seat(pose, fade) {
       wantSeat = { pose, fade };

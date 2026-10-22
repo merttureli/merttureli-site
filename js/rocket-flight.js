@@ -34,18 +34,20 @@
   let restTilt = 61, seatTilt = 24, heroBoxH = 1, seatBoxH = 1;
   let live = null, canvas = null, canvasBox = null, lastRoll = NaN, liveLoading = false;
   let heroPose = null, seatPose = null, seated = false, handed = false, pinned = false, loadRequested = false;
-  let ticking = false;
+  let ticking = false, relayoutAfterClose = false;
 
   /* ---------- poster: sharper copies once they are decoded ---------- */
   const glow = heroBox.querySelector('.rocket-glow'), line = heroBox.querySelector('.rocket-line');
-  if (glow && line && !glow.getAttribute('src')) glow.src = line.src;
+  // The glow only rides the build front; skip it when this script runs after the build is under way.
+  const buildStarted = () => heroBox.getAnimations?.().some(a => a.animationName === 'rocket-build' && a.currentTime > 200);
+  if (glow && line && !buildStarted()) glow.src = line.src; else glow?.remove();
   function swapHi() {
     heroBox.querySelectorAll('img[data-hi]').forEach(img => {
       const im = new Image();
       im.src = img.dataset.hi;
       (im.decode ? im.decode() : Promise.resolve()).then(() => {
         img.src = im.src;
-        if (img === line && glow) glow.src = im.src;
+        if (img === line && glow?.isConnected && !heroBox.classList.contains('is-built')) glow.src = im.src;
       }).catch(() => {});
     });
   }
@@ -150,9 +152,17 @@
 
   /* ---------- the frame ---------- */
   function frame() {
-    ticking = false; stats.frames++;
+    ticking = false;
+    if (host()?.busy) return;
+    stats.frames++;
     const y = scrollY;
-    if (!loadRequested && y > seatY - vh * 2.6) { loadRequested = true; host()?.load(); }
+    // The explorer loads on the way down: once the hero is behind and the seat is within four
+    // screens, when the page is idle, so it is ready before the rocket glides in.
+    if (!loadRequested && y > Math.max(liftEnd, seatY - vh * 4)) {
+      loadRequested = true;
+      const go = () => host()?.load();
+      if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 1500 }); else setTimeout(go, 200);
+    }
     if (still) {
       hero.classList.remove('is-flying');
       heroBox.style.transform = ''; heroShadow.style.opacity = '';
@@ -196,6 +206,7 @@
   function relayout() {
     cancelAnimationFrame(resizeRaf);
     resizeRaf = requestAnimationFrame(() => {
+      if (host()?.busy) { relayoutAfterClose = true; return; }
       measure(); lastRoll = NaN; frame();
       if (handed) host()?.reseat(seatPoseNow());
     });
@@ -232,6 +243,8 @@
     // The explorer is drawing the hero rocket (grown into the dialog from the hero); hide ours meanwhile.
     hideHero(on) { hero.classList.toggle('is-lent', !!on); },
     explorerReady() { trySeat(); },
+    // The dialog closed: catch up on a resize that happened while it was open.
+    dialogClosed() { if (relayoutAfterClose) { relayoutAfterClose = false; relayout(); } else request(); },
     pin() { pinned = true; request(); },
     get still() { return still; }
   };
