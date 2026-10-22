@@ -32,7 +32,7 @@ A case page's `<title>` is `seo_title` if set, else `title`, plus ` · Mert Ture
 | Per page | `<meta name="robots" content="noindex">` | Every page not in the sitemap: `privacy`, `404`, `hi/`, `photography-lab`, Studio, studies. |
 | Preview hosts | `_headers` | `noindex` for Cloudflare `*.pages.dev` previews. GitHub Pages ignores it. |
 
-A new public page needs: a `<url>` in `sitemap.xml`, a canonical link, an `og:image`, and no `noindex`. A new private page needs `noindex` and no sitemap entry. `python3 tools/new.py page <name>` writes the head for you ([new-page.md](new-page.md)).
+A new public page needs: a `<url>` in `sitemap.xml`, a canonical link, an `og:image`, and no `noindex`. A new private page needs `noindex` and no sitemap entry. `python3 tools/new.py page <name>` writes the head for you, `noindex` by default; add `--index` for a public page ([new-page.md](new-page.md)).
 
 ## Icons
 
