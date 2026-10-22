@@ -78,11 +78,13 @@
 <script src="js/interaction-polish.js" defer=""></script>
 <script src="js/photography-loader.js" defer=""></script>
 <style>
-  /* The home page's one h1 is the name: Archivo Name (wdth 116, wght 600, see
-     css/fonts.css). DisplayHeading sets its family inline, hence !important.
+  /* The home page's one h1 is the name, set in Archivo Name (wdth 116, wght 600,
+     see css/fonts.css). DisplayHeading's inline style reads the two tokens,
+     so the h1 redefines them for itself; the size keeps a larger floor on
+     phones than the other display headings, which need theirs to fit long words.
      It sits in the head, not in the helmet block, on purpose: build-case.py
      copies the helmet block to the case pages, whose h1 is the case title. */
-  h1 { font-family: var(--font-name) !important; }
+  h1 { --font-display: var(--font-name); --fs-display-2: clamp(52px, 6.7vw, 108px); }
 </style>
 <style>.scp0:hover { border-bottom-color: var(--line-strong) !important; }</style><style>html,body{height:100%;margin:0}#dc-root,#dc-root>.sc-host{height:100%}</style><link rel="stylesheet" href="css/fonts.css"><link rel="stylesheet" href="_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/colors.css"><link rel="stylesheet" href="_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/typography.css"><link rel="stylesheet" href="_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/spacing.css"><link rel="stylesheet" href="_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/layout.css"><link rel="stylesheet" href="_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/effects.css"><link rel="stylesheet" href="_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/motion.css"><link rel="stylesheet" href="_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/base.css"><link rel="stylesheet" href="css/mobile.css"><link rel="stylesheet" href="css/depth.css"><style>
   html { scroll-behavior: smooth; }
