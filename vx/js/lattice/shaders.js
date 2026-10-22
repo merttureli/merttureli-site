@@ -110,10 +110,19 @@ void main() {
    that rises only where the local lattice Mach number |u| / c_s passes U / c_s,
    which happens at a sharp nose or fin tip at incidence. Conserves mass and
    momentum (it only changes the relaxation rate); EST, see lattice.js.
-   Outer edges: a cell on an edge where the freestream enters is set to the
-   equilibrium at rho 1 and u_in; any other edge cell takes the velocity and the
-   non-equilibrium part of its inward neighbour (zero-gradient outflow, the
-   extrapolation of Guo, Zheng and Shi 2002, STD) with the density held at 1
+   Outer edges: the far-field velocity at an edge cell is the freestream plus the
+   velocity induced by a point vortex that carries the section's circulation,
+   Gamma = -L / (rho u_in) from the measured lift (Kutta-Joukowski), placed at the
+   measured centre of pressure: the vortex-corrected far field of Thomas and Salas
+   (1986, STD). A 2D lifting section's disturbance decays only as 1 / r, so without
+   it an edge that imposes the plain freestream acts as a tunnel wall: the windward
+   half of the domain pressurised above stagnation (C_p 1.6 at 10 degrees one cell
+   inside the edge, 512 x 160) and the lift was inflated. Where that far-field
+   velocity enters the domain the cell takes it with the density and the
+   non-equilibrium part of its inward neighbour (Guo, Zheng and Shi 2002, STD); an
+   equilibrium at rho 1 there put a one-cell density jump on the edge. Any other
+   edge cell takes the velocity and the non-equilibrium part of its inward
+   neighbour (zero-gradient outflow, same extrapolation) with the density held at 1
    and any inward (backflow) normal velocity removed.
    A plain copy of the neighbour let mass pile up once a lifting section's
    vortices crossed the outflow edges (domain rho - 1 reached 0.2 within 10,000
@@ -177,6 +186,7 @@ uniform float uMachK;      /* slope of that floor, tau per lattice unit of speed
 uniform float uSpongeW;    /* width of the absorbing layer along the outer edges, cells (0: off) */
 uniform float uSpongeTau;  /* relaxation time at the edge itself */
 uniform float uPositive;   /* 1: limit the relaxation so no population goes negative */
+uniform vec3 uVortex;      /* far-field vortex: centre (cells) and counter-clockwise circulation (lattice units); z = 0: off */
 layout(location = 0) out vec4 o0;
 layout(location = 1) out vec4 o1;
 layout(location = 2) out vec4 o2;
@@ -197,25 +207,37 @@ void main() {
   ivec2 p = ivec2(gl_FragCoord.xy);
   bool x0 = p.x == 0, x1 = p.x == size.x - 1, y0 = p.y == 0, y1 = p.y == size.y - 1;
   if (x0 || x1 || y0 || y1) {
-    bool inflow = (x0 && uU.x > EDGE_EPS) || (x1 && uU.x < -EDGE_EPS) || (y0 && uU.y > EDGE_EPS) || (y1 && uU.y < -EDGE_EPS);
-    if (inflow) { writeEq(uU); return; }
-    /* outflow: velocity and non-equilibrium part from the inward neighbour
-       (zero gradient), density held at the freestream value 1; a velocity that
-       points back into the domain loses its inward normal part (backflow
-       through an open edge is what blows such edges up) */
+    /* far-field velocity at this edge cell: the freestream plus the velocity a point
+       vortex carrying the section's measured circulation induces here */
+    vec2 ub = uU;
+    if (uVortex.z != 0.0) {
+      vec2 r = vec2(p) + 0.5 - uVortex.xy;
+      ub += uVortex.z / (6.28318531 * max(dot(r, r), 1.0)) * vec2(-r.y, r.x);
+    }
+    bool inflow = (x0 && ub.x > EDGE_EPS) || (x1 && ub.x < -EDGE_EPS) || (y0 && ub.y > EDGE_EPS) || (y1 && ub.y < -EDGE_EPS);
+    /* density, velocity and non-equilibrium part of the inward neighbour */
     ivec2 inward = ivec2(x0 ? 1 : x1 ? -1 : 0, y0 ? 1 : y1 ? -1 : 0);
-    ivec2 q = p + inward;
+    ivec2 q = clamp(p + inward, ivec2(0), size - 1);
     vec4 b0 = texelFetch(tF0, q, 0) + REST0;
     vec4 b1 = texelFetch(tF1, q, 0) + REST1;
     float b8 = texelFetch(tF2, q, 0).x + REST8;
     float rn = b0.x + b0.y + b0.z + b0.w + b1.x + b1.y + b1.z + b1.w + b8;
     vec2 un = vec2(b0.y - b0.w + b1.y - b1.z - b1.w + b8, b0.z - b1.x + b1.y + b1.z - b1.w - b8) / rn;
     vec2 ue = un;
-    if (inward.x != 0 && un.x * float(inward.x) > 0.0) ue.x = 0.0;
-    if (inward.y != 0 && un.y * float(inward.y) > 0.0) ue.y = 0.0;
-    o0 = vec4(feq(0, 1.0, ue), feq(1, 1.0, ue), feq(2, 1.0, ue), feq(3, 1.0, ue)) + b0 - vec4(feq(0, rn, un), feq(1, rn, un), feq(2, rn, un), feq(3, rn, un)) - REST0;
-    o1 = vec4(feq(4, 1.0, ue), feq(5, 1.0, ue), feq(6, 1.0, ue), feq(7, 1.0, ue)) + b1 - vec4(feq(4, rn, un), feq(5, rn, un), feq(6, rn, un), feq(7, rn, un)) - REST1;
-    o2 = vec4(feq(8, 1.0, ue) + b8 - feq(8, rn, un) - REST8, 0.0, 0.0, 0.0);
+    float re = 1.0;
+    if (inflow) {
+      /* inflow: the far-field velocity with the neighbour's density (Guo, Zheng and Shi 2002) */
+      ue = ub; re = rn;
+    } else {
+      /* outflow: the neighbour's velocity (zero gradient) at the freestream density 1; a
+         velocity that points back into the domain loses its inward normal part (backflow
+         through an open edge is what blows such edges up) */
+      if (inward.x != 0 && un.x * float(inward.x) > 0.0) ue.x = 0.0;
+      if (inward.y != 0 && un.y * float(inward.y) > 0.0) ue.y = 0.0;
+    }
+    o0 = vec4(feq(0, re, ue), feq(1, re, ue), feq(2, re, ue), feq(3, re, ue)) + b0 - vec4(feq(0, rn, un), feq(1, rn, un), feq(2, rn, un), feq(3, rn, un)) - REST0;
+    o1 = vec4(feq(4, re, ue), feq(5, re, ue), feq(6, re, ue), feq(7, re, ue)) + b1 - vec4(feq(4, rn, un), feq(5, rn, un), feq(6, rn, un), feq(7, rn, un)) - REST1;
+    o2 = vec4(feq(8, re, ue) + b8 - feq(8, rn, un) - REST8, 0.0, 0.0, 0.0);
     return;
   }
   vec4 cell = texelFetch(tCell, p, 0);
@@ -417,10 +439,15 @@ void main() {
 /* ------------------------------------------------------------- reduction */
 /* Level 0: per 2 x 2 block of cells, (Fx, Fy, Mz, wall links) from T2 and the
    link bits. Level n: 2 x 2 sums of the level below, bounds-checked so odd
-   sizes reduce exactly. Ends at 1 x 1. */
+   sizes reduce exactly. Ends at 1 x 1. uCount scales the count channel at every
+   level: 1 on a float32 chain; 0.25 on a float16 chain (no float32 render
+   targets), where a sum above 2,048 would lose exactness and one above 65,504
+   would overflow, so the count is carried as a mean and multiplied back by
+   4^levels on the CPU. The force sums stay sums (a mean would underflow). */
 export const REDUCE0_FRAG = /* glsl */`${HEAD}
 uniform sampler2D tF2;
 uniform sampler2D tCell;
+uniform float uCount;
 layout(location = 0) out vec4 o;
 int popcount8(int b) { int n = 0; for (int i = 0; i < 8; i++) n += (b >> i) & 1; return n; }
 void main() {
@@ -434,11 +461,12 @@ void main() {
     if (bits == 0) continue;
     acc += vec4(texelFetch(tF2, q, 0).yzw, float(popcount8(bits)));
   }
-  o = acc;
+  o = vec4(acc.xyz, acc.w * uCount);
 }
 `;
 export const REDUCE_FRAG = /* glsl */`${HEAD}
 uniform sampler2D tSrc;
+uniform float uCount;
 layout(location = 0) out vec4 o;
 void main() {
   ivec2 size = textureSize(tSrc, 0);
@@ -448,19 +476,21 @@ void main() {
     ivec2 q = base + ivec2(i, j);
     if (q.x < size.x && q.y < size.y) acc += texelFetch(tSrc, q, 0);
   }
-  o = acc;
+  o = vec4(acc.xyz, acc.w * uCount);
 }
 `;
 
 /* -------------------------------------------------------------- probe */
 /* Validation helper: per 2 x 2 block, the count of non-finite or out-of-range
    cells (rho outside 0.2..5, |u| above 0.5) and the max |u| and max |rho - 1|,
-   reduced like the force. Runs only on request (lattice.check()). */
+   reduced like the force (the two counts scaled by uCount, as there). Runs only on
+   request (lattice.check()). */
 export const PROBE0_FRAG = /* glsl */`${HEAD}
 uniform sampler2D tF0;
 uniform sampler2D tF1;
 uniform sampler2D tF2;
 uniform sampler2D tCell;
+uniform float uCount;
 layout(location = 0) out vec4 o;
 ${LATTICE_COMMON}
 void main() {
@@ -482,12 +512,13 @@ void main() {
     acc.y += 1.0;
     if (!bad) { acc.z = max(acc.z, speed); acc.w = max(acc.w, abs(rho - 1.0)); }
   }
-  o = acc;
+  o = vec4(acc.xy * uCount, acc.zw);
 }
 `;
-/* x, y summed; z, w max */
+/* x, y summed (scaled by uCount); z, w max */
 export const PROBE_FRAG = /* glsl */`${HEAD}
 uniform sampler2D tSrc;
+uniform float uCount;
 layout(location = 0) out vec4 o;
 void main() {
   ivec2 size = textureSize(tSrc, 0);
@@ -500,7 +531,7 @@ void main() {
     acc.xy += v.xy;
     acc.zw = max(acc.zw, v.zw);
   }
-  o = acc;
+  o = vec4(acc.xy * uCount, acc.zw);
 }
 `;
 
