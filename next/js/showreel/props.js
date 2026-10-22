@@ -87,7 +87,7 @@ function revolve(prof, i0, i1, segs, vScale) {
   for (let j = 0; j < rows; j++) {
     const [r, y] = prof.pts[i0 + j], [nr, ny] = prof.normals[i0 + j], v = (prof.s[i0 + j] - s0) / vScale;
     for (let k = 0; k < cols; k++) {
-      const a = k / segs * TAU, sn = Math.sin(a), cs = Math.cos(a), o = j * cols + k;
+      const a = (k % segs) / segs * TAU, sn = Math.sin(a), cs = Math.cos(a), o = j * cols + k;   // seam column reuses the exact k = 0 values
       pos[o * 3] = r * sn; pos[o * 3 + 1] = y; pos[o * 3 + 2] = r * cs;
       nor[o * 3] = nr * sn; nor[o * 3 + 1] = ny; nor[o * 3 + 2] = nr * cs;
       uv[o * 2] = k / segs; uv[o * 2 + 1] = v;
@@ -166,12 +166,12 @@ function coffeeTexture() {
   g.addColorStop(0, '#2b160a'); g.addColorStop(0.5, '#331a0c'); g.addColorStop(0.78, '#3f2210');
   g.addColorStop(0.89, '#5a3519'); g.addColorStop(0.945, '#7b4f29'); g.addColorStop(0.985, '#5a3719'); g.addColorStop(1, '#2a150a');
   ctx.fillStyle = g; ctx.fillRect(0, 0, 256, 256);
-  // faint crema swirl and a few small bubbles clinging near the wall
-  ctx.lineCap = 'round';
-  for (let i = 0; i < 5; i++) {
-    ctx.strokeStyle = `rgba(120,78,42,${0.10 + rnd() * 0.10})`; ctx.lineWidth = 3 + rnd() * 5;
-    const r = 40 + rnd() * 60, a0 = rnd() * TAU;
-    ctx.beginPath(); ctx.arc(m, m, r, a0, a0 + 0.8 + rnd() * 1.4); ctx.stroke();
+  // soft crema patches (no hard strokes) and a few small bubbles clinging near the wall
+  for (let i = 0; i < 7; i++) {
+    const a = rnd() * TAU, r = 25 + rnd() * 55, x = m + Math.cos(a) * r, y = m + Math.sin(a) * r, rad = 28 + rnd() * 34;
+    const pg = ctx.createRadialGradient(x, y, 0, x, y, rad);
+    pg.addColorStop(0, `rgba(118,76,40,${0.16 + rnd() * 0.1})`); pg.addColorStop(1, 'rgba(118,76,40,0)');
+    ctx.fillStyle = pg; ctx.fillRect(0, 0, 256, 256);
   }
   for (let i = 0; i < 46; i++) {
     const a = rnd() * TAU, r = 100 + rnd() * 22, rad = 0.8 + rnd() * 2.2;
@@ -197,9 +197,9 @@ function handleGeometry(lengthSegs, radialSegs) {
     const u = i / lengthSegs;
     curve.getPointAt(u, p); curve.getTangentAt(u, t);
     N.set(-t.y, t.x, 0).normalize();
-    const flare = 1 + 0.40 * (1 - ss(0, 0.13, u)) + 0.45 * (1 - ss(0, 0.13, 1 - u));
+    const flare = 1 + 0.30 * (1 - ss(0, 0.2, u)) + 0.34 * (1 - ss(0, 0.2, 1 - u));
     const mid = 1 - 0.18 * Math.sin(u * Math.PI);                   // slimmer in the middle
-    const hw = 0.0060 * flare * mid, ht = 0.0042 * flare * (0.92 + 0.08 * mid);
+    const hw = 0.0060 * (1 + 0.5 * (flare - 1)) * mid, ht = 0.0042 * flare * (0.92 + 0.08 * mid);
     for (let k = 0; k < cols; k++) {
       const a = k / radialSegs * TAU, c = Math.cos(a), s = Math.sin(a);
       const x = Math.sign(c) * Math.pow(Math.abs(c), e), z = Math.sign(s) * Math.pow(Math.abs(s), e);
@@ -247,7 +247,7 @@ export function createMug({ quality = 'high' } = {}) {
     .line(0, 0.0065, 2);
   P.finish();
 
-  const glazeOut = new THREE.MeshStandardMaterial({ color: 0x2f2d2b, roughness: 0.44, metalness: 0 });
+  const glazeOut = new THREE.MeshStandardMaterial({ color: 0x2f2d2b, roughness: 0.58, metalness: 0 });
   const glazeIn = new THREE.MeshStandardMaterial({ color: 0xe9e2d3, roughness: 0.32, metalness: 0 });
   const outer = new THREE.Mesh(revolve(P, 0, lipIndex, segs, 0.2), glazeOut); outer.name = 'mugOuter';
   const inner = new THREE.Mesh(revolve(P, lipIndex, P.pts.length - 1, segs, 0.2), glazeIn); inner.name = 'mugInner';
@@ -344,7 +344,7 @@ export function createCan({ quality = 'high' } = {}) {
   const rough = brushedTexture();
   if (rough) rough.repeat.set(1, circumference / 0.03);
   const metal = new THREE.MeshPhysicalMaterial({
-    color: 0xc7cacd, metalness: 1, roughness: 0.34, roughnessMap: rough || null
+    color: 0xdfe2e5, metalness: 1, roughness: 0.34, roughnessMap: rough || null
   });
   const baseMat = metal.clone(), topMat = metal.clone();
   topMat.roughness = 0.3;

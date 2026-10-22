@@ -39,10 +39,11 @@ import { createMug, createCan } from '../js/showreel/props.js';
 
 const q = new URLSearchParams(location.search);
 const canvas = document.getElementById('c');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+const ALPHA = q.get('alpha') !== '0', MSAA = q.get('aa') !== '0';
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: MSAA, alpha: ALPHA, preserveDrawingBuffer: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.setClearColor(0x000000, 0);
+renderer.setClearColor(ALPHA ? 0x000000 : 0xe7e8ea, ALPHA ? 0 : 1);
 
 const scene = new THREE.Scene();
 // the engine's lights (copied from hero3d.js)
