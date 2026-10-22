@@ -56,6 +56,14 @@
     }));
   };
   setWords(0);
+  // The showreel holds the word set that carries the active project's name
+  // and brings that slot forward (see showreel/index.js).
+  let held = -1;
+  const words = {
+    hold(n) { held = n; if (n !== set) setWords(n); },
+    release() { held = -1; lastSwap = performance.now(); },
+    focus(slot) { drift.classList.toggle('is-reel', !!slot); slots.forEach(s => s.classList.toggle('is-active', s === slot)); }
+  };
 
   let x = 0, dir = -1, lastY = scrollY, lastT = performance.now(), boost = 0, lastSwap = performance.now(), lastScrollAt = 0, lastP = -1;
   const par = $$('[data-par]'), parOn = new Set();
@@ -77,7 +85,7 @@
         dispatchEvent(new CustomEvent('studio:scroll', { detail: p }));
         // words change as you scroll (every ~16% of the hero)
         const n = Math.floor(p * 6) % 3;
-        if (n !== set && p > 0.02) { setWords(n); lastSwap = now; }
+        if (n !== set && p > 0.02 && held < 0) { setWords(n); lastSwap = now; }
       }
       if (!reduced) {
         boost += (Math.min(Math.abs(dy) * 0.9, 24) - boost) * 0.08;
@@ -85,7 +93,7 @@
         if (itemW) { if (x <= -itemW) x += itemW; if (x > 0) x -= itemW; }
         track.style.transform = `translate3d(${x.toFixed(2)}px, 0, 0)`;
         // idle: keep the words changing slowly at the top of the page
-        if (now - lastSwap > 3800 && now - lastScrollAt > 1500) { setWords(set + 1); lastSwap = now; }
+        if (held < 0 && now - lastSwap > 3800 && now - lastScrollAt > 1500) { setWords(set + 1); lastSwap = now; }
       }
     }
     if (!reduced) parOn.forEach(el => {
@@ -159,11 +167,22 @@
   const tick = () => { clock.textContent = fmt.format(new Date()) + ' in Austin'; };
   tick(); setInterval(tick, 30000);
 
-  /* live CHARGER: after load and idle, only if WebGL works */
+  /* live CHARGER and the showreel: after load and idle, only if WebGL works.
+     With reduced motion the poster stays; if the setting is turned off later,
+     the live hero starts then (the showreel itself listens for changes too). */
   const saveData = navigator.connection && navigator.connection.saveData;
   const canGL = (() => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } })();
-  if (!reduced && !saveData && canGL && !/[?&]still/.test(location.search)) {
-    const start = () => import('./hero3d.js').then(m => m.mountHero(object)).catch(err => console.warn('3D hero unavailable, keeping the still', err));
-    addEventListener('load', () => (window.requestIdleCallback ? requestIdleCallback(start, { timeout: 2500 }) : setTimeout(start, 1200)));
+  if (!saveData && canGL && !/[?&]still/.test(location.search)) {
+    const rq = matchMedia('(prefers-reduced-motion: reduce)');
+    let mounted = false, loaded = document.readyState === 'complete';
+    const start = () => {
+      if (mounted || rq.matches) return;
+      mounted = true;
+      import('./showreel/index.js').then(m => m.mountShowreel({ box: object, drift, words }))
+        .catch(err => console.warn('3D hero unavailable, keeping the still', err));
+    };
+    const later = () => (window.requestIdleCallback ? requestIdleCallback(start, { timeout: 2500 }) : setTimeout(start, 1200));
+    if (loaded) later(); else addEventListener('load', () => { loaded = true; later(); });
+    rq.addEventListener('change', () => { if (!rq.matches && loaded) start(); });
   }
 })();

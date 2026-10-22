@@ -403,3 +403,11 @@ details[open] .row__plus::after { transform: rotate(0deg); }
 .door:focus-visible .door__go { transform: rotate(-45deg) scale(1.08); background: var(--signal); border-color: var(--signal); color: var(--ink); }
 .btn:focus-visible { color: var(--paper); }
 .btn:focus-visible::before { transform: none; border-radius: 0; }
+/* ------------------------------------------------------------- showreel */
+/* The active project's drift word comes forward; the rest recede. */
+.drift .slot { transition: opacity 1.2s var(--ease), filter 1.2s var(--ease), scale 1.6s var(--ease); }
+.drift.is-reel .slot:not(.is-active) { opacity: .3; filter: blur(2.5px); scale: .94; }
+.drift.is-reel .slot.is-active { scale: 1.1; z-index: 4; }
+.drift.is-reel .slot.is-active sup { color: var(--signal-ink); transition: color 1s var(--ease); }
+.hero__shadow { transition: opacity .25s linear; }
+@media (prefers-reduced-motion: reduce) { .drift.is-reel .slot { filter: none; scale: none; } }
