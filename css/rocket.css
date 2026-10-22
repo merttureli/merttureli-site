@@ -26,6 +26,9 @@
 .rocket-box > canvas { opacity: 0; transition: opacity .32s ease; }
 .rocket-box.has-canvas > canvas { opacity: 1; }
 .rocket-box.canvas-ready > img { visibility: hidden; transition: visibility 0s .32s; }
+.rocket-box.has-still > .rocket-sat { visibility: hidden; }
+.rocket-box > canvas.still-canvas { opacity: 1; transition: none; }
+.rocket-box.has-canvas > .still-canvas { display: none; }
 
 /* Build: the CAD line drawing resolves into the painted rocket, tail to nose, from the first paint.
    CSS only, so it never waits for a script. */
@@ -38,10 +41,15 @@
   -webkit-mask-image: linear-gradient(0deg, #000 calc(var(--rv) - .6%), transparent calc(var(--rv) + .4%));
   mask-image: linear-gradient(0deg, #000 calc(var(--rv) - .6%), transparent calc(var(--rv) + .4%));
 }
+.rocket-box > .rocket-glow, .rocket-box > .still-canvas { position: absolute; inset: 0; display: block; }
+/* The glow is the line drawing lit just behind the front: a white layer masked by the drawing (a CSS
+   mask image is never a paint candidate, so it cannot move the LCP) and by the front's band. */
 .rocket-glow {
-  filter: brightness(1.6) drop-shadow(0 0 6px #ffffff8c);
-  -webkit-mask-image: linear-gradient(0deg, transparent calc(var(--rv) - 7%), #000 calc(var(--rv) - .5%), transparent calc(var(--rv) + .5%));
-  mask-image: linear-gradient(0deg, transparent calc(var(--rv) - 7%), #000 calc(var(--rv) - .5%), transparent calc(var(--rv) + .5%));
+  background: #fff; filter: drop-shadow(0 0 5px #ffffffa0);
+  -webkit-mask-image: url(../assets/rocket/line.webp), linear-gradient(0deg, transparent calc(var(--rv) - 7%), #000 calc(var(--rv) - .5%), transparent calc(var(--rv) + .5%));
+  mask-image: url(../assets/rocket/line.webp), linear-gradient(0deg, transparent calc(var(--rv) - 7%), #000 calc(var(--rv) - .5%), transparent calc(var(--rv) + .5%));
+  -webkit-mask-size: 100% 100%; mask-size: 100% 100%;
+  -webkit-mask-composite: source-in; mask-composite: intersect;
   animation: rocket-glow 1.1s linear .12s both;
 }
 @keyframes rocket-build { from { --rv: 0%; } to { --rv: 104%; } }

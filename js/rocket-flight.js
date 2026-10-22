@@ -37,19 +37,21 @@
   let ticking = false, relayoutAfterClose = false;
 
   /* ---------- poster: sharper copies once they are decoded ---------- */
-  const glow = heroBox.querySelector('.rocket-glow'), line = heroBox.querySelector('.rocket-line');
-  // The glow only rides the build front; skip it when this script runs after the build is under way.
-  const buildStarted = () => heroBox.getAnimations?.().some(a => a.animationName === 'rocket-build' && a.currentTime > 200);
-  if (glow && line && !buildStarted()) glow.src = line.src; else glow?.remove();
-  function swapHi() {
-    heroBox.querySelectorAll('img[data-hi]').forEach(img => {
-      const im = new Image();
-      im.src = img.dataset.hi;
-      (im.decode ? im.decode() : Promise.resolve()).then(() => {
-        img.src = im.src;
-        if (img === line && glow?.isConnected && !heroBox.classList.contains('is-built')) glow.src = im.src;
-      }).catch(() => {});
-    });
+  // The inlined poster is 800 px tall. When the rocket stays still (reduced motion) the full still is
+  // drawn into a canvas over it once the page has loaded: sharper, and a canvas is not an LCP candidate,
+  // so the swap cannot move the page's LCP.
+  let stillCanvas = null;
+  function sharpStill() {
+    if (stillCanvas || !still) return;
+    const img = new Image();
+    img.src = new URL('assets/rocket/still.webp', document.baseURI).href;
+    img.decode().then(() => {
+      if (stillCanvas || !still) return;
+      const c = document.createElement('canvas'), w = heroBox.offsetWidth, h = heroBox.offsetHeight;
+      c.width = Math.round(w * DPR); c.height = Math.round(h * DPR); c.className = 'still-canvas';
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      stillCanvas = c; heroBox.appendChild(c); heroBox.classList.add('has-still');
+    }).catch(() => {});
   }
   // The CSS build runs from the first paint; mark it done so the drawing layers drop out.
   function built() { heroBox.classList.add('is-built'); }
@@ -225,6 +227,7 @@
       if (canvasBox) canvasBox.classList.remove('has-canvas', 'canvas-ready');
       if (canvas) canvas.remove();
       canvasBox = null;
+      if (document.readyState === 'complete') sharpStill();
     } else if (document.readyState === 'complete') startLive();
     handed = false; seated = false; seatWrap.classList.remove('is-handed');
     host()?.unseat();
@@ -260,6 +263,6 @@
 
   /* ---------- go ---------- */
   measure(); frame();
-  const goLive = () => { swapHi(); (window.requestIdleCallback ? requestIdleCallback(startLive, { timeout: 1200 }) : setTimeout(startLive, 200)); };
+  const goLive = () => { sharpStill(); (window.requestIdleCallback ? requestIdleCallback(startLive, { timeout: 1200 }) : setTimeout(startLive, 200)); };
   if (document.readyState === 'complete') goLive(); else addEventListener('load', goLive, { once: true });
 })();
