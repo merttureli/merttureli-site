@@ -35,11 +35,12 @@ Playwright at `/opt/node22/lib/node_modules/playwright` for `build`, `smoke` and
 | `links` | fast | a local `href`, `src`, `srcset`, `poster`, `data-*` path, CSS `url()`, JS `import`, sitemap `<loc>` or `https://merttureli.com/...` URL points at a missing file, escapes the repo, or at a file git ignores | fix the path, or `git add` the file |
 | `js` | fast | `node --check` fails on a `.js` file or an inline `<script>` | the line is in the message |
 | `json` | fast | a `.json` file or inline `ld+json` / `importmap` does not parse | |
-| `robots` | fast | a page under `next/`, `studies/`, `docs/` lacks `<meta name="robots" content="noindex">`; robots.txt does not `Disallow` those folders; a sitemap URL is disallowed or noindex | add the meta tag / robots.txt line |
+| `robots` | fast | a page under `next/`, `studies/`, `docs/` lacks `<meta name="robots" content="noindex">`; robots.txt does not `Disallow` those folders (or `/.claude/` while `.nojekyll` exists); a sitemap URL is disallowed or noindex | add the meta tag / robots.txt line |
+| `tokens` | fast | never (WARN only): a stylesheet in `css/` or `next/css/` changed vs `--base` and its values move once every `var(--token)` is expanded, or it newly uses a token that a palette, `@media` or `.on-dark` also sets | expected for a real style change: prove it with `--only visual`; for a token rename, fix the token |
 | `smoke` | default | console error, uncaught error, failed or 4xx local request, or a page that does not load in 30 s, at 390 and 1440 | the page, width and URL are in the message |
 | `visual` | full | any screen differs from `--base` (default HEAD) or a gate changes (h1 count, console errors, external hosts) | open the contact sheet it prints |
 
-WARNs: open flags; a JS string that looks like an asset path but resolves nowhere
+WARNs: open flags; a CSS diff that is not a pure token rename; a JS string that looks like an asset path but resolves nowhere
 (it may be built at runtime); robots.txt allowing non-page folders (`templates/`,
 `content/`, `cards/`, `src/`, `tools/`); external request failures in the smoke.
 
@@ -51,6 +52,7 @@ WARNs: open flags; a JS string that looks like an asset path but resolves nowher
 | Smoke a new page | `python3 tools/check.py --only smoke --pages mypage.html` |
 | Keep the smoke screenshots | `python3 tools/check.py --only smoke --out /tmp/check-out` (PNGs in `smoke/`) |
 | Pixel-check CSS edits on two pages | `python3 tools/check.py --only visual --pages index.html,websites.html` |
+| Prove a token rename changed no value | `python3 tools/check.py --only tokens --base <commit before the rename> -v` |
 | Pixel-check against an older commit | `python3 tools/check.py --only visual --base 4c19af5` |
 | Writing check against a branch point | `python3 tools/check.py --only writing --base main` |
 | Machine-readable result | `python3 tools/check.py --json /tmp/check.json` |

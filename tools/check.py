@@ -18,6 +18,7 @@ Checks (modes in brackets):
     js       [fast default full]  node --check on every JS file and inline script
     json     [fast default full]  JSON files and inline JSON scripts parse
     robots   [fast default full]  noindex on next/ studies/ docs/, robots.txt, sitemap
+    tokens   [fast default full]  CSS changed vs --base is a pure token rename (WARN if values move)
     smoke    [default full]       headless Chromium at 390+1440: console errors, failed requests
     visual   [full]               tools/visual-regress vs --base (pixels + gates)
 
@@ -36,9 +37,9 @@ import traceback
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from checks import Context, Result, ROOT, PASS, WARN, FAIL, SKIP  # noqa: E402
-from checks import build, writing, flags, links, jssyntax, jsonfiles, robots, smoke, visual  # noqa: E402
+from checks import build, writing, flags, links, jssyntax, jsonfiles, robots, tokens, smoke, visual  # noqa: E402
 
-CHECKS = [build, writing, flags, links, jssyntax, jsonfiles, robots, smoke, visual]
+CHECKS = [build, writing, flags, links, jssyntax, jsonfiles, robots, tokens, smoke, visual]
 HEAVY = {"build", "smoke", "visual"}
 COLOR = {PASS: "32", WARN: "33", FAIL: "31", SKIP: "90"}
 
