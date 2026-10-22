@@ -64,7 +64,7 @@
       <div style="display: flex; flex-direction: column; gap: var(--space-5)">
         <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" wide="true" hint-size="300px,16px">Case study / SunThru</x-import>
         <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="1" treatment="inverse" as="h1" hint-size="100%,140px">Custom three-point bend fixture</x-import>
-        <p style="font-size: var(--fs-body-lg); line-height: var(--lh-body); color: var(--paper-a90); max-width: var(--measure)">Commercial bend fixtures are built for metals and plastics and will damage a fragile specimen before the test begins. SunThru needed one matched to its own samples, so I designed a fully printable 12 part fixture built around gentle handling.</p>
+        <p style="font-size: var(--fs-body-lg); line-height: var(--lh-body); color: var(--paper-a90); max-width: var(--measure)">Commercial bend fixtures will damage a fragile specimen before the test begins. I designed a fully printable 12 part one for SunThru's samples.</p>
         <div style="display: flex; gap: var(--space-4); flex-wrap: wrap; margin-top: var(--space-2)">
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="glass" variant="glass" trailing="→" href="../index.html#work" dc-props="{{ linkOnDark }}" hint-size="150px,44px">All work</x-import>
         </div>
@@ -80,13 +80,10 @@
 
   <section data-track="brief" style="position: relative; padding: var(--section-y) var(--page-margin) var(--space-9);">
     <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-7)">
-      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import data-depth-rule="true" data-heading="2" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Brief" right="01" hint-size="100%,14px"></x-import>
-      </div>
       <div data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-8); align-items: start">
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-6)"><x-import component-from-global-scope="MertTReliDesignSystem_56763c.SpecList" items="{{ brief }}" columns="minmax(64px,110px) minmax(0,1fr)" hint-size="100%%,260px"></x-import></div>
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-5)">      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Renders are blurred here because the fixture is SunThru hardware. The engineering worth describing is the parametric structure and the design for printing, neither of which needs the geometry shown.</p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Renders are blurred because the fixture is SunThru hardware.</p>
       </div></div>
       </div>
     </div>
@@ -105,53 +102,20 @@
 
   <section style="position: relative; padding: var(--section-y) var(--page-margin) var(--section-y);">
     <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-9)">
-      <div data-track="the-problem" style="display: flex; flex-direction: column; gap: var(--space-9)">
-      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import data-depth-rule="true" data-heading="2" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="The problem" right="02" hint-size="100%,14px"></x-import>
-      </div>
-      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Three-point bend testing is a standard way to measure flexural strength, but commercial fixtures assume a specimen that can take being clamped. When the sample cannot, the fixture itself becomes the thing that breaks it.</p>
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">SunThru needed a fixture sized to its own samples, gentle enough not to pre-damage them, and cheap enough to iterate on, which meant printing it in house.</p>
-      </div>
-      </div>
-      <div data-track="constraints" style="display: flex; flex-direction: column; gap: var(--space-9)">
-      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import data-depth-rule="true" data-heading="2" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Constraints" right="03" hint-size="100%,14px"></x-import>
-      </div>
-      <div data-reveal="1" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5)">
-        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">01</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Every part printable on the lab's FDM printer, no machined components</span></div>
-        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">02</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">12 interlocking parts on one coordinate system, so dimension changes ripple predictably</span></div>
-        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">03</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Standard M3 hardware throughout, with printable cross-hole channels</span></div>
-        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">04</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Compliant contact geometry at the load nose and both supports</span></div>
-        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">05</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Cheap enough to reprint a part rather than rework it</span></div>
-        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">06</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Sized to the lab's own specimens rather than a standard</span></div>
-      </div>
-      </div>
       <div data-track="parametric-part-design" style="display: flex; flex-direction: column; gap: var(--space-9)">
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import data-depth-rule="true" data-heading="2" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Parametric part design" right="04" hint-size="100%,14px"></x-import>
+        <x-import data-depth-rule="true" data-heading="2" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Parametric part design" right="01" hint-size="100%,14px"></x-import>
       </div>
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">A 12 part fixture with interlocked dimensions is a maintenance problem: change one dimension by hand and eleven other parts silently stop fitting. Every part sits on a shared coordinate system, and I automated the rebuilds with SolidWorks VBA so a dimension change regenerates the affected parts consistently.</p>
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Each part's geometry is checked against its expected volume before it is accepted, which catches a rebuild that succeeded but produced the wrong solid.</p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">All 12 parts sit on one shared coordinate system. I automated the rebuilds with SolidWorks VBA, so a dimension change regenerates the affected parts.</p>
       </div>
       </div>
-      <div data-track="designed-for-the-printer-not-around-it" style="display: flex; flex-direction: column; gap: var(--space-9)">
+      <div data-track="designed-for-printing" style="display: flex; flex-direction: column; gap: var(--space-9)">
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import data-depth-rule="true" data-heading="2" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Designed for the printer, not around it" right="05" hint-size="100%,14px"></x-import>
-      </div>
-      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">The parts are shaped the way the machine builds them: additive layer friendly geometry throughout, and horizontal M3 cross-holes drawn as printable channels so nothing needs support material or post-drilling.</p>
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">One hardware size across the whole fixture means one driver, one drill, and no chance of an assembly step needing something that is not on the bench.</p>
-      </div>
-      </div>
-      <div data-track="what-i-learned" style="display: flex; flex-direction: column; gap: var(--space-9)">
-      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import data-depth-rule="true" data-heading="2" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="What I learned" right="06" hint-size="100%,14px"></x-import>
+        <x-import data-depth-rule="true" data-heading="2" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Designed for printing" right="02" hint-size="100%,14px"></x-import>
       </div>
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">The decisions that held up were the ones that thought like the manufacturing process. Geometry built up in layers the way the printer builds it, holes shaped for printability instead of for drills, hardware chosen from one standard size.</p>
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">Designing for the process beat designing around it.</p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">Horizontal M3 cross-holes are drawn as printable channels, so nothing needs support material or post-drilling. One hardware size across the whole fixture.</p>
       </div>
       </div>
     </div>
@@ -172,7 +136,7 @@
         <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Wordmark" name="MERT TURELI" size="md" hint-size="220px,20px"></x-import>
         <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="320px,16px">Austin, Texas / B.S. Mechanical Engineering, Union College, 2026</x-import>
       </div>
-      <p style="max-width: 96ch; font-family: var(--font-mono); font-size: var(--fs-meta-sm); line-height: 1.5; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-meta)">Photographs of the machine and the team by Paul Buckowski / Union College. CAD animations rendered from the source assemblies. Aircraft models are third-party, illustration only. / <a href="../privacy.html" style="color: var(--text-meta); text-decoration: underline; text-underline-offset: 3px">Privacy</a></p>
+      <p style="max-width: 96ch; font-family: var(--font-mono); font-size: var(--fs-meta-sm); line-height: 1.5; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-meta)"><mark class="flag" data-flag="bend-fixture-030" data-note="The shortened credit just says &#x27;Photographs by Paul Buckowski / Union College&#x27;. Does it still cover only the machine and team photos, and does the site-wide footer still need the CAD animation note?">Photographs by Paul Buckowski / Union College.</mark> Aircraft models are third-party, illustration only. / <a href="../privacy.html" style="color: var(--text-meta); text-decoration: underline; text-underline-offset: 3px">Privacy</a></p>
     </div>
   </footer>
 </div>
@@ -184,7 +148,6 @@ class Component extends DCLogic {
     return {
       nav: [
         { id: "work", label: "Work", href: "../index.html#work" },
-        { id: "experience", label: "Experience", href: "../index.html#experience" },
         { id: "beyond", label: "Beyond", href: "../index.html#beyond" },
         { id: "websites", label: "Websites", href: "../websites.html" },
         { id: "contact", label: "Contact", href: "../index.html#contact" },
@@ -196,10 +159,6 @@ class Component extends DCLogic {
       linkOnDark: { tone: "inverse" },
       headerRow: { style: { padding: "0 max(var(--page-margin), calc((100% - var(--max-width)) / 2))" } },
       brief: [
-        { label: "Role", value: "Design engineer, solo" },
-        { label: "For", value: "SunThru, early stage hardware R&amp;D" },
-        { label: "Tools", value: "SolidWorks 2025, VBA macro automation, FDM printing" },
-        { label: "Timeline", value: "2026" },
         { label: "Status", value: "Base plate and gauge plate printed and in lab use" },
       ],
     };
