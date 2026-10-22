@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Props lab</title>
+<style>
+  :root { --paper: #e7e8ea; --ink: #121315; --muted: #676b72; --line: rgba(18,19,21,.16); }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--paper); color: var(--ink); font: 13px/1.4 ui-monospace, Menlo, monospace; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+  .panel { position: fixed; left: 16px; right: 16px; bottom: 16px; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center;
+    padding: 10px 12px; background: rgba(231,232,234,.82); backdrop-filter: blur(6px); border: 1px solid var(--line); border-radius: 10px; max-width: 760px; }
+  .panel button, .panel label { font: inherit; color: inherit; }
+  button { padding: 6px 12px; background: transparent; border: 1px solid var(--ink); border-radius: 99px; cursor: pointer; }
+  button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  label { display: inline-flex; align-items: center; gap: 6px; }
+  input[type=range] { width: 110px; }
+  .info { color: var(--muted); flex-basis: 100%; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="panel">
+  <button id="bMug" aria-pressed="true">Mug</button>
+  <button id="bCan" aria-pressed="false">Can</button>
+  <label><input id="tTurn" type="checkbox"> turn</label>
+  <label><input id="tWire" type="checkbox"> wire</label>
+  <label><input id="tEnv" type="checkbox" checked> env</label>
+  <label>yaw <input id="sYaw" type="range" min="-180" max="180" value="-35"></label>
+  <label>pitch <input id="sPitch" type="range" min="-10" max="80" value="22"></label>
+  <label>wetness <input id="sWet" type="range" min="0" max="100" value="0" title="darkens the can body a little, stand-in only"></label>
+  <div class="info" id="info"></div>
+</div>
+<script type="module">
+import * as THREE from '../js/three.module.min.js';
+import { createMug, createCan } from '../js/showreel/props.js';
+
+const q = new URLSearchParams(location.search);
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.setClearColor(0x000000, 0);
+
+const scene = new THREE.Scene();
+// the engine's lights (copied from hero3d.js)
+scene.add(new THREE.HemisphereLight(0xffffff, 0x7d828c, 1.35));
+const key = new THREE.DirectionalLight(0xfff8f0, 3.8); key.position.set(-2.5, 4, 5); scene.add(key);
+const fill = new THREE.DirectionalLight(0xdfe6ff, 1.1); fill.position.set(4, -1, 3); scene.add(fill);
+const rim = new THREE.DirectionalLight(0xffffff, 2.4); rim.position.set(3, 3, -4); scene.add(rim);
+
+// small procedural studio environment (soft boxes) so metal and glaze have something to reflect
+function studioEnv() {
+  const env = new THREE.Scene();
+  const room = new THREE.Mesh(new THREE.BoxGeometry(10, 6, 10), new THREE.MeshBasicMaterial({ color: 0x9aa0a8, side: THREE.BackSide }));
+  room.position.y = 2; env.add(room);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), new THREE.MeshBasicMaterial({ color: 0x8a8782 }));
+  floor.rotation.x = -Math.PI / 2; floor.position.y = -0.99; env.add(floor);
+  const box = (w, h, x, y, z, v, tint = 0xffffff) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: new THREE.Color(tint).multiplyScalar(v), side: THREE.DoubleSide }));
+    m.position.set(x, y, z); m.lookAt(0, 0.4, 0); env.add(m);
+  };
+  box(3.2, 2.2, -3.2, 3.0, 3.4, 9);                 // key softbox, front left high
+  box(0.7, 3.4, 4.2, 1.6, 0.8, 7, 0xe8f0ff);        // cool strip right
+  box(3.0, 0.9, 0.0, 3.8, -3.6, 6);                 // rim light behind
+  box(2.4, 1.6, 0.5, 1.0, 4.4, 2.2, 0xfff0e0);      // dim fill front
+  const rt = new THREE.PMREMGenerator(renderer).fromScene(env, 0.03);
+  return rt.texture;
+}
+const envTex = studioEnv();
+scene.environment = envTex; scene.environmentIntensity = 0.9;
+
+// soft contact shadow decal (lab only; the engine owns the real one)
+const sc = document.createElement('canvas'); sc.width = sc.height = 128;
+{ const x = sc.getContext('2d'), g = x.createRadialGradient(64, 64, 6, 64, 64, 64);
+  g.addColorStop(0, 'rgba(0,0,0,.42)'); g.addColorStop(.45, 'rgba(0,0,0,.2)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  x.fillStyle = g; x.fillRect(0, 0, 128, 128); }
+const shadow = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.2), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(sc), transparent: true, depthWrite: false }));
+shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.00005; scene.add(shadow);
+const SHADOW = { mug: 0.135, can: 0.095 };
+
+const camera = new THREE.PerspectiveCamera(24, 1, 0.02, 10);
+const view = { yaw: THREE.MathUtils.degToRad(+(q.get('yaw') ?? -35)), pitch: THREE.MathUtils.degToRad(+(q.get('pitch') ?? 22)), dist: +(q.get('dist') || 0), turn: q.get('turn') === '1' };
+const props = {};
+let active = null, ready = false;
+
+function show(name) {
+  if (active) scene.remove(active.group);
+  props[name] ||= (name === 'mug' ? createMug({ renderer, quality: q.get('quality') || 'high' }) : createCan({ renderer, quality: q.get('quality') || 'high' }));
+  active = props[name]; active.name = name; scene.add(active.group);
+  document.getElementById('bMug').setAttribute('aria-pressed', name === 'mug');
+  document.getElementById('bCan').setAttribute('aria-pressed', name === 'can');
+  view.dist = 0; shadow.scale.setScalar(SHADOW[name] / 0.2);
+  fit();
+  document.getElementById('info').textContent = name + ': ' + Math.round(active.triangles()) + ' triangles';
+  applyWire(); applyWet();
+}
+const H = { mug: 0.085, can: 0.1221 };
+function fit() { // frame the prop for the current aspect
+  const h = H[active.name], aspect = innerWidth / innerHeight;
+  const needH = h * 1.55 + 0.02, needW = (active.name === 'mug' ? 0.13 : 0.07) * 1.3;
+  const t = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  view.base = Math.max(needH / (2 * t), needW / (2 * t * aspect));
+}
+function resize() {
+  renderer.setSize(innerWidth, innerHeight, false);
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  if (active) fit();
+}
+function applyWire() { active?.group.traverse(o => { if (o.isMesh) o.material.wireframe = document.getElementById('tWire').checked; }); }
+function applyWet() {
+  if (active?.bodyMaterial) { const w = document.getElementById('sWet').value / 100; active.bodyMaterial.color.setHex(0xb8141c).multiplyScalar(1 - w * 0.25); }
+}
+function frame(t) {
+  if (view.turn) view.yaw += 0.006;
+  const d = (view.dist || 1) * view.base, cy = H[active.name] * +(q.get('ty') ?? 0.5);
+  camera.position.set(Math.sin(view.yaw) * Math.cos(view.pitch) * d, cy + Math.sin(view.pitch) * d, Math.cos(view.yaw) * Math.cos(view.pitch) * d);
+  camera.lookAt(0, cy - 0.003, 0);
+  scene.environment = document.getElementById('tEnv').checked ? envTex : null;
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+
+// pointer: drag to orbit, wheel / pinch to zoom
+let drag = null;
+canvas.addEventListener('pointerdown', e => { drag = [e.clientX, e.clientY]; canvas.setPointerCapture(e.pointerId); canvas.style.cursor = 'grabbing'; });
+canvas.addEventListener('pointerup', () => { drag = null; canvas.style.cursor = 'grab'; });
+canvas.addEventListener('pointermove', e => {
+  if (!drag) return;
+  view.yaw -= (e.clientX - drag[0]) * 0.008; view.pitch = Math.min(1.4, Math.max(-0.2, view.pitch + (e.clientY - drag[1]) * 0.006));
+  drag = [e.clientX, e.clientY]; sync();
+});
+canvas.addEventListener('wheel', e => { e.preventDefault(); view.dist = Math.min(2, Math.max(0.25, (view.dist || 1) * Math.exp(e.deltaY * 0.001))); }, { passive: false });
+const sync = () => { sYaw.value = THREE.MathUtils.radToDeg(((view.yaw + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI); sPitch.value = THREE.MathUtils.radToDeg(view.pitch); };
+const sYaw = document.getElementById('sYaw'), sPitch = document.getElementById('sPitch');
+sYaw.oninput = () => { view.yaw = THREE.MathUtils.degToRad(+sYaw.value); };
+sPitch.oninput = () => { view.pitch = THREE.MathUtils.degToRad(+sPitch.value); };
+document.getElementById('bMug').onclick = () => show('mug');
+document.getElementById('bCan').onclick = () => show('can');
+document.getElementById('tTurn').onchange = e => { view.turn = e.target.checked; };
+document.getElementById('tWire').onchange = applyWire;
+document.getElementById('sWet').oninput = applyWet;
+if (view.turn) document.getElementById('tTurn').checked = true;
+if (q.get('panel') === '0') document.querySelector('.panel').style.display = 'none';
+addEventListener('resize', resize);
+
+resize(); show(q.get('prop') === 'can' ? 'can' : 'mug'); sync();
+if (q.get('dist')) view.dist = +q.get('dist');
+requestAnimationFrame(frame);
+window.__lab = { show, view, THREE, scene, props, get active() { return active; } };
+window.__ready = true;
+</script>
+</body>
+</html>
