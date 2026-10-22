@@ -6,8 +6,10 @@ The point of generating rather than hand writing these is theme parity. The
 head, the helmet block (design tokens, the design-system bundle, the mobile
 stylesheet, the keyframes), the reveal/clip runtime and the footer colophon are
 all lifted straight out of src/index.html at build time, so a case page cannot
-drift from the home page when the home page changes. Only the content is
-authored here, as data.
+drift from the home page when the home page changes. The content is data in
+content/: content/projects.json sets the order (and so the Previous / Next
+buttons), content/projects/<slug>.json holds one case. Field reference and
+recipes: docs/recipes/content.md and docs/recipes/add-project.md.
 
 This writes the runtime templates, src/projects/*.html. They are not served:
 tools/build.py renders them in a browser and writes the static pages that are
@@ -23,6 +25,10 @@ are rewritten for one directory down, since the case pages live in projects/.
 
 Normally run python3 tools/build.py instead, which runs this and then the
 static render.
+
+Content errors (bad JSON, an unknown or missing field, a file not listed in
+the order) stop the build with exit 2 and name the file and field. Asset paths
+that do not exist are printed as warnings.
 
 Depth hooks (depth-hero, depth-stage, data-depth-*) are emitted by the helpers
 below so css/depth.css sees the same markup as on the home
@@ -49,18 +55,15 @@ NS = "MertTReliDesignSystem_56763c"
 
 # Smaller VP9-alpha encodes of the turntable clips. js/media-playback.js picks
 # <base>-<md>-alpha.webm above the phone breakpoint and <base>-<sm>-alpha.webm
-# at phone widths; the full size <base>-alpha.webm stays as data-src.
-MOTION_VARIANTS = {
-    "robo-catcher-360": (1280, 960),
-    "rudder-pedals-working": (1280, 960),
-    "charger-square": (1080, 720),
-    "therma-shift-airflow": (1200, 800),
-}
+# at phone widths; the full size <base>-alpha.webm stays as data-src. Filled
+# from each case's "clip_sizes": [md, sm] in content/projects/<slug>.json.
+MOTION_VARIANTS = {}
 # Clips whose opaque .mp4 is the intended look (the blurred IP renders are white
-# tiles by design). Every other turntable is a transparent cutout whose mp4 has
-# a baked background that clashes with the palettes, so it ships webm only: a
-# browser without VP9 alpha keeps the WebP poster, which has alpha.
-OPAQUE_CLIPS = {"bend-fixture-blurred"}
+# tiles by design): "clip_opaque": true. Every other turntable is a transparent
+# cutout whose mp4 has a baked background that clashes with the palettes, so it
+# ships webm only: a browser without VP9 alpha keeps the WebP poster, which has
+# alpha.
+OPAQUE_CLIPS = set()
 
 
 def webm_source(base, alpha=True):
@@ -680,342 +683,191 @@ def build(case, index, out_dir=OUT_DIR):
 
 # ------------------------------------------------------------------- the cases
 
-# The full colophon credit line, for case pages whose footer keeps all of it
-FULL_CREDIT = ("Photographs of the machine and the team by Paul Buckowski / Union College. "
-               "CAD animations rendered from the source assemblies. Aircraft models are third-party, "
-               "illustration only.")
+# The case content lives in content/: content/projects.json holds the order,
+# content/projects/<slug>.json holds one case each. docs/recipes/content.md has
+# the field reference. load_cases() turns the JSON into the shapes build()
+# expects and rejects unknown fields, so a typo fails loudly instead of
+# silently dropping copy.
 
+CONTENT = os.path.join(ROOT, "content")
+
+# Fields a case file may carry. Required ones must be present.
+CASE_REQUIRED = {"nav_title", "title", "eyebrow", "description", "og_alt", "lede", "brief",
+                 "sections"}
+CASE_OPTIONAL = {"seo_title", "clip", "clip_ratio", "clip_aria", "clip_note", "clip_sizes",
+                 "clip_opaque", "hero_image", "hero_caption", "walkthrough", "brief_label",
+                 "brief_note", "colophon"}
+SECTION_FIELDS = {"kind", "label", "anchor", "track", "dark", "strong", "paras", "cards", "list",
+                  "stats", "frames", "ratio", "flip", "cols", "min_col", "src", "alt", "caption",
+                  "base"}
+SECTION_KINDS = {None, "stats", "bleed", "clip_band"}
+
+
+class ContentError(Exception):
+    pass
+
+
+def _rich(value, where):
+    """
+    Rich text: a string (HTML allowed), or a list of strings and flag objects
+    {"flag": id, "note": question, "text": shown text (default [TBD])}.
+    """
+    if isinstance(value, str):
+        return value
+    if isinstance(value, dict):
+        value = [value]
+    if not isinstance(value, list):
+        raise ContentError("%s: expected text or a list of text and flags" % where)
+    out = []
+    for part in value:
+        if isinstance(part, str):
+            out.append(part)
+        elif isinstance(part, dict) and set(part) <= {"flag", "note", "text"} and "flag" in part:
+            out.append(flag(part["flag"], part.get("note", ""), part.get("text", "[TBD]")))
+        else:
+            raise ContentError("%s: a list item must be text or {\"flag\", \"note\", \"text\"}" % where)
+    return "".join(out)
+
+
+def _case(slug, data, where):
+    if not isinstance(data, dict):
+        raise ContentError("%s: expected a JSON object" % where)
+    missing = sorted(CASE_REQUIRED - set(data))
+    unknown = sorted(k for k in set(data) - CASE_REQUIRED - CASE_OPTIONAL if not k.startswith("_"))
+    if missing:
+        raise ContentError("%s: missing field(s): %s" % (where, ", ".join(missing)))
+    if unknown:
+        raise ContentError("%s: unknown field(s): %s (allowed: %s)" % (
+            where, ", ".join(unknown), ", ".join(sorted(CASE_REQUIRED | CASE_OPTIONAL))))
+    case = {"slug": slug}
+    for key, value in data.items():
+        if key.startswith("_") or key in ("clip_sizes", "clip_opaque"):
+            continue
+        case[key] = value
+    for key in ("lede", "colophon"):
+        if case.get(key) is not None:
+            case[key] = _rich(case[key], "%s: %s" % (where, key))
+    if "brief_note" in case:
+        case["brief_note"] = [_rich(p, "%s: brief_note[%d]" % (where, i))
+                              for i, p in enumerate(case["brief_note"])]
+    rows = []
+    for i, row in enumerate(data["brief"]):
+        w = "%s: brief[%d]" % (where, i)
+        if not isinstance(row, dict) or set(row) - {"label", "value", "aside"} or "label" not in row:
+            raise ContentError('%s: expected {"label", "value", "aside"}' % w)
+        value = row.get("value", "")
+        if isinstance(value, dict):
+            # a flagged value renders as a React element, not as markup
+            if "flag" not in value or set(value) - {"flag", "note", "text"}:
+                raise ContentError('%s: value must be text or {"flag", "note", "text"}' % w)
+            value = FlagValue(value["flag"], value.get("note", ""), value.get("text", "[TBD]"))
+        elif not isinstance(value, str):
+            raise ContentError("%s: value must be text or a single flag object" % w)
+        rows.append((row["label"], value, row.get("aside", "")))
+    case["brief"] = rows
+    sections = []
+    for i, sec in enumerate(data["sections"]):
+        w = "%s: sections[%d]" % (where, i)
+        if not isinstance(sec, dict):
+            raise ContentError("%s: expected an object" % w)
+        unknown = sorted(k for k in set(sec) - SECTION_FIELDS if not k.startswith("_"))
+        if unknown:
+            raise ContentError("%s: unknown field(s): %s (allowed: %s)" % (
+                w, ", ".join(unknown), ", ".join(sorted(SECTION_FIELDS))))
+        if sec.get("kind") not in SECTION_KINDS:
+            raise ContentError("%s: kind must be one of stats, bleed, clip_band (or absent)" % w)
+        s = {k: v for k, v in sec.items() if not k.startswith("_")}
+        for key in ("paras", "cards", "list"):
+            if key in s:
+                s[key] = [_rich(p, "%s: %s[%d]" % (w, key, j)) for j, p in enumerate(s[key])]
+        if "stats" in s:
+            s["stats"] = [(st["value"], st["label"]) for st in s["stats"]]
+        if "frames" in s:
+            frames = []
+            for j, fr in enumerate(s["frames"]):
+                if set(fr) - {"src", "alt", "caption", "index"} or not {"src", "alt", "caption"} <= set(fr):
+                    raise ContentError('%s: frames[%d]: expected {"src", "alt", "caption", "index"}' % (w, j))
+                frames.append(("F", fr["src"], fr["alt"], fr["caption"], fr.get("index")))
+            s["frames"] = frames
+        sections.append(s)
+    case["sections"] = sections
+    return case
+
+
+def _missing_assets(case):
+    """Asset paths a case names that are not on disk (reported, not fatal)."""
+    paths = ["assets/og/case-%s-v1.png" % case["slug"]]
+    if case.get("clip"):
+        paths.append("assets/motion/%s-poster.webp" % case["clip"])
+    if case.get("hero_image"):
+        paths.append(case["hero_image"])
+    for sec in case["sections"]:
+        paths += [fr[1] for fr in sec.get("frames") or [] if isinstance(fr, tuple)]
+        if sec.get("kind") == "bleed":
+            paths.append(sec["src"])
+        if sec.get("kind") == "clip_band":
+            paths.append("assets/motion/%s-poster.webp" % sec["base"])
+    return [p for p in paths if not os.path.exists(os.path.join(ROOT, p))]
+
+
+def load_cases(content=CONTENT):
+    """
+    Read content/ into an ordered {slug: case} dict. Fills MOTION_VARIANTS and
+    OPAQUE_CLIPS from each case's clip_sizes / clip_opaque, and derives the
+    Previous / Next buttons from the order: the first case has no Previous, the
+    last case's Next loops back to the first.
+    """
+    index_path = os.path.join(content, "projects.json")
+    try:
+        order = json.load(io.open(index_path, encoding="utf-8"))["order"]
+    except (IOError, OSError, ValueError, KeyError) as e:
+        raise ContentError("%s: %s" % (os.path.relpath(index_path, ROOT), e))
+    folder = os.path.join(content, "projects")
+    on_disk = sorted(f[:-5] for f in os.listdir(folder) if f.endswith(".json"))
+    stray = [s for s in on_disk if s not in order]
+    if stray:
+        raise ContentError("content/projects/%s.json is not listed in content/projects.json "
+                           "\"order\"" % stray[0])
+    if len(set(order)) != len(order):
+        raise ContentError("content/projects.json: a slug is listed twice in \"order\"")
+    cases = {}
+    for slug in order:
+        where = "content/projects/%s.json" % slug
+        if not re.match(r"^[a-z0-9]+(-[a-z0-9]+)*$", slug):
+            raise ContentError("content/projects.json: bad slug %r (use lower-case-words)" % slug)
+        try:
+            data = json.load(io.open(os.path.join(folder, slug + ".json"), encoding="utf-8"))
+        except (IOError, OSError) as e:
+            raise ContentError("%s: listed in content/projects.json but %s" % (where, e.strerror))
+        except ValueError as e:
+            raise ContentError("%s: invalid JSON: %s" % (where, e))
+        cases[slug] = _case(slug, data, where)
+        clip = data.get("clip")
+        if clip and data.get("clip_sizes"):
+            MOTION_VARIANTS[clip] = tuple(data["clip_sizes"])
+        if clip and data.get("clip_opaque"):
+            OPAQUE_CLIPS.add(clip)
+    for i, slug in enumerate(order):
+        if i > 0:
+            prev = cases[order[i - 1]]
+            cases[slug]["prev"] = (prev["nav_title"], prev["slug"] + ".html")
+        if len(order) > 1:
+            nxt = cases[order[(i + 1) % len(order)]]
+            cases[slug]["next"] = (nxt["nav_title"], nxt["slug"] + ".html")
+    for slug, case in cases.items():
+        for path in _missing_assets(case):
+            sys.stderr.write("warning: content/projects/%s.json names %s, which does not exist\n"
+                             % (slug, path))
+        # plain text fields cannot hold a flag, so a scaffold leaves "TBD" there
+        for key in ("nav_title", "title", "seo_title", "eyebrow", "description", "og_alt"):
+            if "TBD" in (case.get(key) or ""):
+                sys.stderr.write("warning: content/projects/%s.json: %s is still a placeholder\n"
+                                 % (slug, key))
+    return cases
+
+
+# Filled by main() from content/.
 CASES = {}
-
-CASES["robo-catcher"] = {
-    "slug": "robo-catcher",
-    "eyebrow": "Case study / Senior capstone",
-    "title": "Robo-Catcher",
-    "description": ("A softball machine that catches an incoming throw and returns it, built by a 12 "
-                    "person capstone team for under $700. I owned the electronics and firmware."),
-    "og_alt": "Render of the Robo-Catcher softball catch and return machine.",
-    "lede": "A machine that catches the ball and returns it. Our capstone team built it for under $700.",
-    "clip": "robo-catcher-360",
-    "clip_ratio": "4 / 3",
-    # index.html's Robo-Catcher card deep-links to #mechanism-tour
-    "walkthrough": {
-        "id": "mechanism-tour",
-        "label": "Robo-Catcher mechanism walkthrough",
-        "project": "robo-catcher",
-    },
-    "brief_label": None,
-    "brief": [
-        ("Role", "Feeding subsystem co-lead, all electronics and firmware", ""),
-        ("Team", "12", ""),
-        ("Build", "Laser cut HDF and 3D printed parts", ""),
-        ("Timeline", "2025", ""),
-    ],
-    "sections": [
-        # results up front, at display size, so the page opens with weight
-        {"kind": "stats", "stats": [
-            ("100%", "Feed indexing, competition day"),
-            ("&lt;$700", "Total build cost"),
-            ("55 lb", "One person portable"),
-            ("1.5 hr", "Runtime, one 12 V 20 Ah battery"),
-        ]},
-        {"label": "The feeder", "paras": [
-            "The feeder is a rotating dual chamber: catch a ball, rotate 180 degrees, hand it to the "
-            "return flywheel.",
-        ], "frames": [("F", "assets/photos/robo-catcher-photography/indexer-cross-section.jpg",
-                       "Indexer cross-section", "Chamber geometry", None),
-                      ("F", "assets/photos/robo-catcher-photography/full-feeder.jpg",
-                       "The assembled feeder", "The assembled feeder", None)],
-         "flip": True, "cols": "minmax(0, 1fr) minmax(0, 1.05fr)"},
-        {"label": None, "track": "electronics-and-firmware", "paras": [
-            "One ESP32 runs everything. A wireless remote starts and stops it.",
-        ], "frames": [("F", "assets/photos/robo-catcher-photography/working-on-electronics.jpg",
-                       "The team running the machine on the field", "On the field", None),
-                      ("F", "assets/photos/robo-catcher-photography/flywheel-full.jpg",
-                       "Return flywheel assembly", "Return flywheel, 120 W DC motor", None)]},
-        # the walkthrough's last stage links to #project-result
-        {"label": None, "anchor": "project-result", "list": [
-            "100% feed indexing on competition day: every ball delivered, no misses",
-            "Under $700 total build cost against a $700 cap",
-            "55 lb, one person portable, assembles with no tools",
-            "1.5 hours continuous runtime on a single 12 V 20 Ah SLA battery",
-        ], "frames": [("F", "assets/photos/shop-and-machine-photography/machine-field.jpg",
-                       "The finished machine on the field", "The finished machine", None)]},
-        {"label": None, "track": "what-i-learned", "strong": True, "paras": [
-            "The MATLAB torque study felt slow while teammates were already printing parts. Then "
-            "the feeder ran a full competition day without a missed index.",
-        ]},
-    ],
-    "next": ("CHARGER", "charger.html"),
-}
-
-
-CASES["charger"] = {
-    "slug": "charger",
-    "eyebrow": "Case study / Union College Rocket Team",
-    "title": "Deployable sensor payload",
-    "seo_title": "CHARGER · Deployable sensor payload",
-    "description": ("CHARGER won the Deployable Sensor Payload event at Battle of the Rockets 2026, with "
-                    "custom payload electronics and five live telemetry channels."),
-    "og_alt": "Render of the CHARGER rocket.",
-    "lede": ("A rocket that drops a sensor payload at apogee and streams five channels of "
-             "telemetry to a handheld ground station. We built CHARGER and it won."),
-    "clip": "charger-square",
-    "clip_ratio": "1 / 1",
-    "brief": [
-        ("Role", "Captain and chief engineer", ""),
-        ("Team", "Union College Rocket Team", ""),
-        ("Event", "Battle of the Rockets 2026", ""),
-        ("Where", "Culpeper, Virginia, April 2026", ""),
-        ("Result", "First place", ""),
-        ("Advisers", "Scott Suriano, Ashok Ramasubramanian", ""),
-    ],
-    "brief_note": [
-        "There was no rocket team at Union College when I started. I founded it.",
-        "Published by " + '<a href="https://www.union.edu/news/stories/202604/rocket-club-soars-new-heights-first-place-finish-national-competition" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-hairline)">Union College</a>' + " and by " + '<a href="https://www.rocketbattle.org/winners.html" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-hairline)">the competition organizer</a>' + ".",
-    ],
-    "sections": [
-        {"kind": "stats", "stats": [
-            ("1st", "Deployable Sensor Payload event"),
-            ("1.80 cal", "Stability margin, 37 inch airframe"),
-            ("13.8 ft/s", "Descent, against a 15 ft/s limit"),
-            ("$716", "Total hardware cost"),
-        ]},
-        {"label": "The event", "paras": [
-            "A G motor flies the rocket to 700-1,200 feet. On the way down the payload releases "
-            "the nose cone at 75 percent of peak altitude, and the nose cone has to land under 15 "
-            "feet per second on its own.",
-            "With the nose cone gone, a camera on the payload films the ground until it lands.",
-        ]},
-        {"label": "The airframe", "paras": [
-            "37 inches, single stage, "
-            + flag("charger-029", "Diameter: CAD measures 2.68 in. Confirm 2.63 or correct it.", "2.63")
-            + " inches across, four trapezoidal balsa fins on a cardboard body tube. Center of "
-            "gravity at 22 inches, stability margin 1.80 calibers.",
-            "Cardboard because the payload transmits from the pad on, and carbon fiber would put a "
-            "conductive shell around the 2.4 GHz antenna.",
-            '<a href="../assets/charger-explorer/index.html" style="color: inherit; '
-            'text-decoration: underline; text-underline-offset: 3px; '
-            'text-decoration-color: var(--line-hairline)">Explore all 28 components in 3D</a>.',
-        ], "ratio": "3 / 4", "cols": "minmax(0, 1fr) minmax(0, 1fr)", "frames": [
-            ("F", "assets/photos/charger-rocket-photography/charger-pad-tall.jpg",
-             "CHARGER on the launch rail before a flight", "On the rail", "01"),
-            ("F", "assets/photos/charger-rocket-photography/charger-pad-close.jpg",
-             "CHARGER standing on pad one", "Pad one", "02"),
-        ]},
-        {"label": "The numbers", "paras": [
-            "Aerotech G77R-7, thrust to weight 8.17. Simulated apogee 1,033 feet. Descent 13.8 feet "
-            "per second under a 48 inch ripstop nylon canopy.",
-        ], "list": [
-            "Length 37 in, maximum diameter "
-            + flag("charger-035", "Diameter: CAD measures 2.68 in. Confirm 2.63 or correct it.", "2.63")
-            + " in, single stage",
-            "Four trapezoidal fins, root chord 2.76 in, height 2.36 in, sweep 2.17 in",
-            "Stability margin 1.80 cal, centre of gravity at 22 in",
-            "Aerotech G77R-7, thrust to weight 8.17, burn 1.25 s",
-            "Simulated apogee 1,033 ft, descent 13.8 ft/s on a 48 in parachute",
-            "Rail buttons at 2 in from the aft end and 22 in from the nose, near the CG",
-            "Rocket $465.42, payload $250.53, ground station $0.00 from existing kit",
-        ]},
-        {"label": "What the rules forced", "dark": True, "paras": [
-            "The event bans commercial flight computers in the payload, so every ejection charge "
-            "fires off our own board and barometric sensor. The commercial altimeter is only there "
-            "so a judge can read peak altitude after recovery.",
-        ]},
-        {"kind": "bleed", "src": "assets/photos/charger-rocket-photography/charger-pad-band.jpg",
-         "alt": "CHARGER vertical on pad one at Battle of the Rockets, Culpeper, Virginia",
-         "caption": "Pad one, Culpeper, Virginia, April 2026"},
-        {"label": "Launch day", "paras": [
-            "We got two clean flights away on the first day, then put up the qualifying flight "
-            "before noon on the second.",
-        ], "strong": True},
-        {"label": "The result", "dark": True, "paras": [
-            "Final standings, published by "
-            + '<a href="https://www.union.edu/news/stories/202604/rocket-club-soars-new-heights-first-place-finish-national-competition" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--paper-a45)">Union College</a>' + ", April 23, 2026.",
-        ], "list": [
-            "Union College Rocket Club",
-            "Chantilly Aerospace Club Team 3",
-            "Thomas Jefferson High School",
-            "Spring Grove Area High School Team 2",
-            "George Mason University",
-        ]},
-    ],
-    "prev": ("Robo-Catcher", "robo-catcher.html"),
-    "next": ("The bend fixture", "bend-fixture.html"),
-    "colophon": FULL_CREDIT,
-}
-
-
-CASES["bend-fixture"] = {
-    "slug": "bend-fixture",
-    "eyebrow": "Case study / SunThru",
-    "title": "Custom three-point bend fixture",
-    "description": ("A 3D printable 12 part three-point bend fixture, designed in SolidWorks 2025 for "
-                    "specimens too delicate for commercial fixtures, with rebuilds automated in VBA."),
-    "og_alt": "Blurred render of the three-point bend fixture.",
-    "lede": ("Commercial bend fixtures will damage a fragile specimen before the test begins. I "
-             "designed a fully printable 12 part one for SunThru's samples."),
-    "clip": "bend-fixture-blurred",
-    "clip_ratio": "16 / 9",
-    "clip_note": "IP protected",
-    "brief_label": None,
-    "brief": [
-        ("Status", "Base plate and gauge plate printed and in lab use", ""),
-    ],
-    "brief_note": [
-        "Renders are blurred because the fixture is SunThru hardware.",
-    ],
-    "sections": [
-        {"kind": "stats", "stats": [
-            ("12", "Interlocking parts"),
-            ("100%", "FDM printable, no machining"),
-            ("M3", "One hardware size throughout"),
-            ("VBA", "Automated rebuilds"),
-        ]},
-        {"label": "Parametric part design", "paras": [
-            "All 12 parts sit on one shared coordinate system. I automated the rebuilds with "
-            "SolidWorks VBA, so a dimension change regenerates the affected parts.",
-        ]},
-        {"label": "Designed for printing", "paras": [
-            "Horizontal M3 cross-holes are drawn as printable channels, so nothing needs support "
-            "material or post-drilling. One hardware size across the whole fixture.",
-        ], "strong": True},
-    ],
-    "prev": ("CHARGER", "charger.html"),
-    "next": ("Rudder pedals", "rudder-pedals.html"),
-    "colophon": (flag("bend-fixture-030",
-                      "The shortened credit just says 'Photographs by Paul Buckowski / Union College'. "
-                      "Does it still cover only the machine and team photos, and does the site-wide "
-                      "footer still need the CAD animation note?",
-                      "Photographs by Paul Buckowski / Union College.")
-                 + " Aircraft models are third-party, illustration only."),
-}
-
-
-CASES["rudder-pedals"] = {
-    "slug": "rudder-pedals",
-    "eyebrow": "Case study / Personal project",
-    "title": "Flight sim rudder pedals",
-    "description": ("Three-axis flight sim rudder pedals with fighter style geometry, Hall effect sensing "
-                    "and C++ USB HID firmware. Designed, printed, wired and programmed solo."),
-    "og_alt": "Render of the flight sim rudder pedal mechanism.",
-    "lede": ("I fly ultralights and consumer sim pedals never felt right, so I built my own. "
-             "Fighter style geometry, three axes, Hall sensors instead of potentiometers."),
-    "clip": "rudder-pedals-working",
-    "clip_ratio": "16 / 9",
-    "brief_label": None,
-    "brief": [
-        ("Timeline", "2026", ""),
-        ("Status", "In daily use at my sim", ""),
-    ],
-    "sections": [
-        {"kind": "stats", "stats": [
-            ("3", "Independent axes"),
-            ("0", "Potentiometers in the signal path"),
-            ("USB HID", "No drivers, any simulator"),
-            ("A1301", "Contactless Hall sensing"),
-        ]},
-        {"label": "Mechanism", "paras": [
-            "I designed it in SolidWorks and printed it, iterating on pivot placement and return feel.",
-        ]},
-        {"kind": "clip_band", "base": "rudder-pedals-mechanism",
-         "caption": "The CAD assembly driven through its real linkage: yaw both ways, each toe brake, "
-                    "then differential braking"},
-        {"label": "Sensing", "paras": [
-            "Each axis uses an A1301 Hall effect sensor reading a magnet on the moving part. No "
-            "contact, nothing to wear.",
-        ], "frames": [("F", "assets/renders/rudder-pedals/a1301-hall-sensor.jpg",
-                       "An A1301 Hall effect sensor in a TO-92 package",
-                       "A1301 Hall sensor and magnet", "01")]},
-        {"label": "Firmware", "paras": [
-            "The Pro Micro shows up as a standard USB gamepad. No driver needed.",
-        ], "strong": True,
-         "frames": [("F", "assets/renders/rudder-pedals/pro-micro.jpg",
-                     "An Arduino Pro Micro board",
-                     "The Pro Micro that replaced the counterfeit Teensy", "02")],
-         "flip": True},
-    ],
-    "prev": ("The bend fixture", "bend-fixture.html"),
-    "next": ("Therma-Shift", "therma-shift.html"),
-    "colophon": (flag("rudder-pedals-035",
-                      "The footer credits 'photographs of the machine and the team' to Paul Buckowski / "
-                      "Union College, which looks copied from another case page. Does that credit apply "
-                      "to the rudder pedals page, or should it come out?",
-                      "Photographs of the machine and the team by Paul Buckowski / Union College.")
-                 + " CAD animations rendered from the source assemblies. Aircraft models are "
-                 "third-party, illustration only."),
-}
-
-
-CASES["therma-shift"] = {
-    "slug": "therma-shift",
-    "eyebrow": "Case study / Personal project",
-    "title": "Therma-Shift coaster",
-    "description": ("A dual mode thermoelectric coaster that heats or cools any mug or glass. Bench "
-                    "validated to 11 C on the cold face at 12 V, with thermal runaway protection."),
-    "og_alt": "Airflow illustration of the Therma-Shift coaster heat sink.",
-    "lede": "A solid state desktop coaster that heats or cools any mug, glass or can.",
-    "clip": "therma-shift-airflow",
-    "clip_aria": "Airflow illustration: air enters all bottom grille slots, passes through the heatsink fins, descends into the blower and exits the oval side vent. Heating and cooling use the same flow direction.",
-    "clip_ratio": "4 / 3",
-    "brief_label": None,
-    "brief": [
-        ("Built for", FlagValue("therma-shift-007",
-                                "Confirm the competition name and date (SparkLabs Seed Competition, "
-                                "March 2026) in the factual pass.",
-                                "SparkLabs seed competition, March 2026"), ""),
-        ("Status", "Thermal stack validated, electronics in progress", ""),
-    ],
-    "brief_note": [
-        "Heated mugs lock you into their cup. Cheap USB warmers have no temperature control.",
-    ],
-    "sections": [
-        {"kind": "stats", "stats": [
-            ("11 &deg;C", "Cold face at 12 V, steady state"),
-            ("~5 min", "To thermal equilibrium"),
-            ("2", "Modes from one stack, by polarity"),
-            ("&plusmn;2 &deg;F", "Closed loop target"),
-        ]},
-        {"label": "The problem", "paras": [
-            "The coaster has to run unattended on a desk.",
-        ]},
-        {"label": "Constraints", "cards": [
-            "Universal: any mug, glass or can, the device adapts to the drinkware",
-            "Dual mode, heating and cooling from the same hardware",
-            "Powered over USB-C Power Delivery, within a desk power budget",
-            "Thermal runaway prevention independent of the control loop",
-            "Low profile and quiet enough for an office desk",
-            "No proprietary cup, ever",
-        ]},
-        {"label": "The design", "paras": [
-            "A thermoelectric module heats or cools depending on current direction. The TEC1-12703 "
-            "sits between an aluminum top plate and a finned heatsink with a blower.",
-            "An NTC thermistor at the plate closes the loop, targeting about 2 degrees F around "
-            "setpoint.",
-            flag("therma-shift-021",
-                 "Are the independent firmware thermal-runaway cutoffs built and running yet, or still "
-                 "planned? The Where It Stands list says closed loop integration is in progress. If "
-                 "they are planned, reword in future tense or cut.",
-                 "Separate firmware cutoffs watch for thermal runaway independently of the control "
-                 "loop and shut the device down on a fault."),
-        ]},
-        {"label": "Bench test", "paras": [
-            "Before adding any control loop, I bench tested the bare thermal stack on a lab supply "
-            "with K-type thermocouples on both faces.",
-        ], "strong": True},
-        {"label": "Where it stands", "list": [
-            "10.7 to 12 degrees C cold face at 12 V, steady state",
-            "About 5 minutes to thermal equilibrium",
-            "Dual mode verified: the same stack heats and cools by polarity",
-            "Staged firmware test suite written; closed loop integration in progress",
-        ]},
-    ],
-    "prev": ("Rudder pedals", "rudder-pedals.html"),
-    "next": ("Robo-Catcher", "robo-catcher.html"),
-    "colophon": flag("therma-shift-028",
-                     "The footer is now per-page (CAD credit only). Confirm the other project pages get "
-                     "credits that match their own content in the factual pass.",
-                     "CAD animations rendered from the source assemblies."),
-}
 
 
 def expand_frames(case):
@@ -1058,14 +910,22 @@ def check(index, wanted):
         shutil.rmtree(tmp, ignore_errors=True)
     if dirty:
         print("build-case.py output does not match src/projects/. Regenerate, or port the "
-              "hand edit into build-case.py.")
+              "hand edit into content/ or build-case.py.")
     return dirty
 
 
 def main():
     args = sys.argv[1:]
+    if "-h" in args or "--help" in args:
+        print(__doc__.strip())
+        return
     checking = "--check" in args
     args = [a for a in args if a != "--check"]
+    try:
+        CASES.update(load_cases())
+    except ContentError as e:
+        sys.stderr.write("content error: %s\n" % e)
+        sys.exit(2)
     index = read_index()
     wanted = args or list(CASES)
     unknown = [slug for slug in wanted if slug not in CASES]

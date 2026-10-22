@@ -1,0 +1,96 @@
+{
+  "nav_title": "Robo-Catcher",
+  "title": "Robo-Catcher",
+  "eyebrow": "Case study / Senior capstone",
+  "description": "A softball machine that catches an incoming throw and returns it, built by a 12 person capstone team for under $700. I owned the electronics and firmware.",
+  "og_alt": "Render of the Robo-Catcher softball catch and return machine.",
+  "lede": "A machine that catches the ball and returns it. Our capstone team built it for under $700.",
+  "clip": "robo-catcher-360",
+  "clip_ratio": "4 / 3",
+  "clip_sizes": [1280, 960],
+  "walkthrough": {
+    "id": "mechanism-tour",
+    "label": "Robo-Catcher mechanism walkthrough",
+    "project": "robo-catcher"
+  },
+  "brief_label": null,
+  "brief": [
+    {"label": "Role", "value": "Feeding subsystem co-lead, all electronics and firmware"},
+    {"label": "Team", "value": "12"},
+    {"label": "Build", "value": "Laser cut HDF and 3D printed parts"},
+    {"label": "Timeline", "value": "2025"}
+  ],
+  "sections": [
+    {
+      "kind": "stats",
+      "stats": [
+        {"value": "100%", "label": "Feed indexing, competition day"},
+        {"value": "&lt;$700", "label": "Total build cost"},
+        {"value": "55 lb", "label": "One person portable"},
+        {"value": "1.5 hr", "label": "Runtime, one 12 V 20 Ah battery"}
+      ]
+    },
+    {
+      "label": "The feeder",
+      "paras": [
+        "The feeder is a rotating dual chamber: catch a ball, rotate 180 degrees, hand it to the return flywheel."
+      ],
+      "frames": [
+        {
+          "src": "assets/photos/robo-catcher-photography/indexer-cross-section.jpg",
+          "alt": "Indexer cross-section",
+          "caption": "Chamber geometry"
+        },
+        {
+          "src": "assets/photos/robo-catcher-photography/full-feeder.jpg",
+          "alt": "The assembled feeder",
+          "caption": "The assembled feeder"
+        }
+      ],
+      "flip": true,
+      "cols": "minmax(0, 1fr) minmax(0, 1.05fr)"
+    },
+    {
+      "label": null,
+      "track": "electronics-and-firmware",
+      "paras": ["One ESP32 runs everything. A wireless remote starts and stops it."],
+      "frames": [
+        {
+          "src": "assets/photos/robo-catcher-photography/working-on-electronics.jpg",
+          "alt": "The team running the machine on the field",
+          "caption": "On the field"
+        },
+        {
+          "src": "assets/photos/robo-catcher-photography/flywheel-full.jpg",
+          "alt": "Return flywheel assembly",
+          "caption": "Return flywheel, 120 W DC motor"
+        }
+      ]
+    },
+    {
+      "label": null,
+      "anchor": "project-result",
+      "list": [
+        "100% feed indexing on competition day: every ball delivered, no misses",
+        "Under $700 total build cost against a $700 cap",
+        "55 lb, one person portable, assembles with no tools",
+        "1.5 hours continuous runtime on a single 12 V 20 Ah SLA battery"
+      ],
+      "frames": [
+        {
+          "src": "assets/photos/shop-and-machine-photography/machine-field.jpg",
+          "alt": "The finished machine on the field",
+          "caption": "The finished machine"
+        }
+      ]
+    },
+    {
+      "label": null,
+      "track": "what-i-learned",
+      "strong": true,
+      "paras": [
+        "The MATLAB torque study felt slow while teammates were already printing parts. Then the feeder ran a full competition day without a missed index."
+      ]
+    }
+  ]
+}

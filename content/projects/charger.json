@@ -1,0 +1,132 @@
+{
+  "nav_title": "CHARGER",
+  "title": "Deployable sensor payload",
+  "seo_title": "CHARGER · Deployable sensor payload",
+  "eyebrow": "Case study / Union College Rocket Team",
+  "description": "CHARGER won the Deployable Sensor Payload event at Battle of the Rockets 2026, with custom payload electronics and five live telemetry channels.",
+  "og_alt": "Render of the CHARGER rocket.",
+  "lede": "A rocket that drops a sensor payload at apogee and streams five channels of telemetry to a handheld ground station. We built CHARGER and it won.",
+  "clip": "charger-square",
+  "clip_ratio": "1 / 1",
+  "clip_sizes": [1080, 720],
+  "brief": [
+    {"label": "Role", "value": "Captain and chief engineer"},
+    {"label": "Team", "value": "Union College Rocket Team"},
+    {"label": "Event", "value": "Battle of the Rockets 2026"},
+    {"label": "Where", "value": "Culpeper, Virginia, April 2026"},
+    {"label": "Result", "value": "First place"},
+    {"label": "Advisers", "value": "Scott Suriano, Ashok Ramasubramanian"}
+  ],
+  "brief_note": [
+    "There was no rocket team at Union College when I started. I founded it.",
+    "Published by <a href=\"https://www.union.edu/news/stories/202604/rocket-club-soars-new-heights-first-place-finish-national-competition\" target=\"_blank\" rel=\"noopener\" style=\"color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-hairline)\">Union College</a> and by <a href=\"https://www.rocketbattle.org/winners.html\" target=\"_blank\" rel=\"noopener\" style=\"color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-hairline)\">the competition organizer</a>."
+  ],
+  "sections": [
+    {
+      "kind": "stats",
+      "stats": [
+        {"value": "1st", "label": "Deployable Sensor Payload event"},
+        {"value": "1.80 cal", "label": "Stability margin, 37 inch airframe"},
+        {"value": "13.8 ft/s", "label": "Descent, against a 15 ft/s limit"},
+        {"value": "$716", "label": "Total hardware cost"}
+      ]
+    },
+    {
+      "label": "The event",
+      "paras": [
+        "A G motor flies the rocket to 700-1,200 feet. On the way down the payload releases the nose cone at 75 percent of peak altitude, and the nose cone has to land under 15 feet per second on its own.",
+        "With the nose cone gone, a camera on the payload films the ground until it lands."
+      ]
+    },
+    {
+      "label": "The airframe",
+      "paras": [
+        [
+          "37 inches, single stage, ",
+          {
+            "flag": "charger-029",
+            "note": "Diameter: CAD measures 2.68 in. Confirm 2.63 or correct it.",
+            "text": "2.63"
+          },
+          " inches across, four trapezoidal balsa fins on a cardboard body tube. Center of gravity at 22 inches, stability margin 1.80 calibers."
+        ],
+        "Cardboard because the payload transmits from the pad on, and carbon fiber would put a conductive shell around the 2.4 GHz antenna.",
+        "<a href=\"../assets/charger-explorer/index.html\" style=\"color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-hairline)\">Explore all 28 components in 3D</a>."
+      ],
+      "frames": [
+        {
+          "src": "assets/photos/charger-rocket-photography/charger-pad-tall.jpg",
+          "alt": "CHARGER on the launch rail before a flight",
+          "caption": "On the rail",
+          "index": "01"
+        },
+        {
+          "src": "assets/photos/charger-rocket-photography/charger-pad-close.jpg",
+          "alt": "CHARGER standing on pad one",
+          "caption": "Pad one",
+          "index": "02"
+        }
+      ],
+      "ratio": "3 / 4",
+      "cols": "minmax(0, 1fr) minmax(0, 1fr)"
+    },
+    {
+      "label": "The numbers",
+      "paras": [
+        "Aerotech G77R-7, thrust to weight 8.17. Simulated apogee 1,033 feet. Descent 13.8 feet per second under a 48 inch ripstop nylon canopy."
+      ],
+      "list": [
+        [
+          "Length 37 in, maximum diameter ",
+          {
+            "flag": "charger-035",
+            "note": "Diameter: CAD measures 2.68 in. Confirm 2.63 or correct it.",
+            "text": "2.63"
+          },
+          " in, single stage"
+        ],
+        "Four trapezoidal fins, root chord 2.76 in, height 2.36 in, sweep 2.17 in",
+        "Stability margin 1.80 cal, centre of gravity at 22 in",
+        "Aerotech G77R-7, thrust to weight 8.17, burn 1.25 s",
+        "Simulated apogee 1,033 ft, descent 13.8 ft/s on a 48 in parachute",
+        "Rail buttons at 2 in from the aft end and 22 in from the nose, near the CG",
+        "Rocket $465.42, payload $250.53, ground station $0.00 from existing kit"
+      ]
+    },
+    {
+      "label": "What the rules forced",
+      "dark": true,
+      "paras": [
+        "The event bans commercial flight computers in the payload, so every ejection charge fires off our own board and barometric sensor. The commercial altimeter is only there so a judge can read peak altitude after recovery."
+      ]
+    },
+    {
+      "kind": "bleed",
+      "src": "assets/photos/charger-rocket-photography/charger-pad-band.jpg",
+      "alt": "CHARGER vertical on pad one at Battle of the Rockets, Culpeper, Virginia",
+      "caption": "Pad one, Culpeper, Virginia, April 2026"
+    },
+    {
+      "label": "Launch day",
+      "strong": true,
+      "paras": [
+        "We got two clean flights away on the first day, then put up the qualifying flight before noon on the second."
+      ]
+    },
+    {
+      "label": "The result",
+      "dark": true,
+      "paras": [
+        "Final standings, published by <a href=\"https://www.union.edu/news/stories/202604/rocket-club-soars-new-heights-first-place-finish-national-competition\" target=\"_blank\" rel=\"noopener\" style=\"color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--paper-a45)\">Union College</a>, April 23, 2026."
+      ],
+      "list": [
+        "Union College Rocket Club",
+        "Chantilly Aerospace Club Team 3",
+        "Thomas Jefferson High School",
+        "Spring Grove Area High School Team 2",
+        "George Mason University"
+      ]
+    }
+  ],
+  "colophon": "Photographs of the machine and the team by Paul Buckowski / Union College. CAD animations rendered from the source assemblies. Aircraft models are third-party, illustration only."
+}

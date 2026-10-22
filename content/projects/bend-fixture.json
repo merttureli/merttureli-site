@@ -1,0 +1,47 @@
+{
+  "nav_title": "The bend fixture",
+  "title": "Custom three-point bend fixture",
+  "eyebrow": "Case study / SunThru",
+  "description": "A 3D printable 12 part three-point bend fixture, designed in SolidWorks 2025 for specimens too delicate for commercial fixtures, with rebuilds automated in VBA.",
+  "og_alt": "Blurred render of the three-point bend fixture.",
+  "lede": "Commercial bend fixtures will damage a fragile specimen before the test begins. I designed a fully printable 12 part one for SunThru's samples.",
+  "clip": "bend-fixture-blurred",
+  "clip_ratio": "16 / 9",
+  "clip_note": "IP protected",
+  "clip_opaque": true,
+  "brief_label": null,
+  "brief": [{"label": "Status", "value": "Base plate and gauge plate printed and in lab use"}],
+  "brief_note": ["Renders are blurred because the fixture is SunThru hardware."],
+  "sections": [
+    {
+      "kind": "stats",
+      "stats": [
+        {"value": "12", "label": "Interlocking parts"},
+        {"value": "100%", "label": "FDM printable, no machining"},
+        {"value": "M3", "label": "One hardware size throughout"},
+        {"value": "VBA", "label": "Automated rebuilds"}
+      ]
+    },
+    {
+      "label": "Parametric part design",
+      "paras": [
+        "All 12 parts sit on one shared coordinate system. I automated the rebuilds with SolidWorks VBA, so a dimension change regenerates the affected parts."
+      ]
+    },
+    {
+      "label": "Designed for printing",
+      "strong": true,
+      "paras": [
+        "Horizontal M3 cross-holes are drawn as printable channels, so nothing needs support material or post-drilling. One hardware size across the whole fixture."
+      ]
+    }
+  ],
+  "colophon": [
+    {
+      "flag": "bend-fixture-030",
+      "note": "The shortened credit just says 'Photographs by Paul Buckowski / Union College'. Does it still cover only the machine and team photos, and does the site-wide footer still need the CAD animation note?",
+      "text": "Photographs by Paul Buckowski / Union College."
+    },
+    " Aircraft models are third-party, illustration only."
+  ]
+}
