@@ -23,7 +23,7 @@
 .charger-dialog-bar button:hover{color:#bbb}
 .charger-dialog-bar button:focus-visible{outline:2px solid #fff;outline-offset:4px}
 .charger-dialog-content{position:relative;flex:1;min-height:0}
-#charger-frame{display:block;width:100%;height:100%;border:0;background:#0a0a0a}
+#charger-frame{display:block;width:100%;height:100%;border:0;background:var(--ink-900,#0a0a0a);color-scheme:dark}
 #charger-launch-status{position:absolute;inset:0;display:grid;place-items:center;margin:0;background:#0a0a0a;color:#aaa;font:14px 'Martian Mono',monospace;pointer-events:none}
 #charger-launch-status[hidden]{display:none}
 @keyframes charger-enter{from{opacity:0;transform:translateY(20px) scale(.94)}to{opacity:1;transform:none}}

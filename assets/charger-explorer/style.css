@@ -28,9 +28,9 @@
 .modal .hotspot{font-size:12px}
 @media(max-width:740px){.modal .scene-column,.modal .focused .scene-column{height:46svh;min-height:300px;max-height:410px}.modal .explorer{min-height:100svh}.modal .scene-bottom{font-size:11px}.modal .footer-secondary{flex-wrap:wrap}.modal .footer-secondary>div{flex-wrap:wrap}}
 /* Home page handoff (app.js): inline in the CHARGER entry, and growing into and out of the dialog. */
-html.inline,html.inline body,html.stage-full,html.stage-full body{background:transparent}
-/* A frame whose colour scheme differs from the page's is painted opaque, so match the home page's. */
-html.inline,html.stage-full{color-scheme:light}
+html.inline,html.inline body,html.stage-full,html.stage-full body{background:var(--ink)}
+/* Opaque, in the host section's own ink (synced by integration.js), so no browser paints a white backdrop behind the frame. */
+html.inline,html.stage-full{color-scheme:dark}
 html.inline body{overflow:hidden}
 html.inline :is(.site-header,.story-column,.explorer-footer,.scene-top,.scene-bottom,.hotspots,#loading){visibility:hidden;opacity:0}
 html.inline #stage,html.stage-full #stage{position:fixed;inset:0;z-index:5}
