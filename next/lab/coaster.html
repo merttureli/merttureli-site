@@ -36,6 +36,7 @@
 <script type="module">
 import * as THREE from '../js/three.module.min.js';
 import createCoaster from '../js/showreel/coaster.js';
+import { addStudioLights, createStudioEnvironment } from '../js/showreel/engine.js';
 
 const qs = new URLSearchParams(location.search);
 if (qs.has('shot')) document.body.classList.add('shot');
@@ -45,37 +46,24 @@ renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.setClearColor(0x000000, 0);
 
-// Engine-like lighting: the hero's hemisphere + key/fill/rim, plus a soft studio environment so metals read.
+// The engine's own studio rig and environment (engine.js), applied the way engine.adopt() does it: module materials get
+// the PMREM environment at envGain 0.55, nothing else does.
 const scene = new THREE.Scene();
-scene.add(new THREE.HemisphereLight(0xffffff, 0x7d828c, 1.35));
-const key = new THREE.DirectionalLight(0xfff8f0, 3.8); key.position.set(-2.5, 4, 5); scene.add(key);
-const fill = new THREE.DirectionalLight(0xdfe6ff, 1.1); fill.position.set(4, -1, 3); scene.add(fill);
-const rim = new THREE.DirectionalLight(0xffffff, 2.4); rim.position.set(3, 3, -4); scene.add(rim);
-
-function studioEnv() {
-  const env = new THREE.Scene();
-  const sky = new THREE.SphereGeometry(10, 24, 12), col = [], p = sky.attributes.position;
-  const top = new THREE.Color(0xf4f2ee), mid = new THREE.Color(0xd9d8d5), bot = new THREE.Color(0x6d6f73), c = new THREE.Color();
-  for (let i = 0; i < p.count; i++) { const y = p.getY(i) / 10; c.copy(mid).lerp(y > 0 ? top : bot, Math.abs(y) ** 0.8); col.push(c.r, c.g, c.b); }
-  sky.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
-  env.add(new THREE.Mesh(sky, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide })));
-  const box = (w, h, x, y, z, k) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: new THREE.Color(k, k, k), side: THREE.DoubleSide })); m.position.set(x, y, z); m.lookAt(0, 0, 0); env.add(m); };
-  box(6, 3, -3, 6, 4, 3.2); box(3, 6, 6, 2, -3, 2.2); box(8, 1.5, 0, 8.5, 0, 1.6);
-  const pm = new THREE.PMREMGenerator(renderer);
-  const rt = pm.fromScene(env, 0.04);
-  pm.dispose();
-  return rt.texture;
+addStudioLights(scene);
+const envTex = createStudioEnvironment(renderer);
+const ENV_GAIN = 0.55;
+function adopt(root, on) {
+  root.traverse((o) => { if (o.material && o.material.isMeshStandardMaterial) { o.material.envMap = on ? envTex : null; o.material.envMapIntensity = ENV_GAIN; o.material.needsUpdate = true; } });
 }
-const envTex = studioEnv();
-scene.environment = envTex;
-scene.environmentIntensity = 0.8;
 
 const camera = new THREE.PerspectiveCamera(26, 1, 0.01, 10);
 const pivot = new THREE.Group(); scene.add(pivot);
 const coaster = createCoaster({ THREE, renderer, quality: qs.get('q') || 'high' });
 pivot.add(coaster.group);
+adopt(coaster.group, true);
+let envOn = true;
 
-const state = { p: 1, t: 22, az: 28, spin: false, play: false, fan: false };
+const state = { p: 1, t: 22, az: 28, el: 24, zoom: 1, spin: false, play: false, fan: false };
 const el = (id) => document.getElementById(id);
 function frame() {
   const w = innerWidth, h = innerHeight;
@@ -83,8 +71,8 @@ function frame() {
   // fit a sphere that grows from the assembled box to the tall exploded stack, whatever the aspect
   const tall = 1 - state.p, r = 0.082 + tall * 0.05;
   const vf = THREE.MathUtils.degToRad(camera.fov), hf = 2 * Math.atan(Math.tan(vf / 2) * camera.aspect);
-  const dist = r / Math.sin(Math.min(vf, hf) / 2) * (camera.aspect < 1 ? 1.08 : 1.25);
-  const el2 = THREE.MathUtils.degToRad(24);
+  const dist = r / Math.sin(Math.min(vf, hf) / 2) * (camera.aspect < 1 ? 1.08 : 1.25) / state.zoom;
+  const el2 = THREE.MathUtils.degToRad(state.el);
   camera.position.set(0, -0.022 + Math.sin(el2) * dist, Math.cos(el2) * dist);
   camera.lookAt(0, -0.022 - tall * 0.006, 0);
   camera.updateProjectionMatrix();
@@ -105,7 +93,7 @@ document.querySelectorAll('[data-p]').forEach((b) => b.onclick = () => { state.p
 document.querySelectorAll('[data-t]').forEach((b) => b.onclick = () => { state.t = +b.dataset.t; el('t').value = state.t; render(); });
 const toggle = (id, k, fn) => el(id).onclick = () => { state[k] = !state[k]; el(id).setAttribute('aria-pressed', state[k]); fn && fn(); render(); };
 toggle('spin', 'spin'); toggle('fan', 'fan', () => coaster.setFanSpeed(state.fan ? 3 : 0));
-el('env').onclick = () => { const on = !scene.environment; scene.environment = on ? envTex : null; el('env').setAttribute('aria-pressed', on); render(); };
+el('env').onclick = () => { envOn = !envOn; adopt(coaster.group, envOn); el('env').setAttribute('aria-pressed', envOn); render(); };
 let playT = -1;
 el('play').onclick = () => { state.play = true; playT = 0; };
 let last = performance.now();
@@ -124,11 +112,11 @@ let drag = null;
 canvas.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, az: state.az }; canvas.setPointerCapture(e.pointerId); });
 canvas.addEventListener('pointermove', (e) => { if (drag) { state.az = drag.az - (e.clientX - drag.x) * 0.4; el('a').value = state.az; render(); } });
 canvas.addEventListener('pointerup', () => drag = null);
-for (const k of ['p', 't', 'az']) if (qs.has(k)) state[k] = +qs.get(k);
+for (const k of ['p', 't', 'az', 'el', 'zoom']) if (qs.has(k)) state[k] = +qs.get(k);
 el('p').value = state.p; el('t').value = state.t; el('a').value = state.az;
 render();
 requestAnimationFrame(loop);
-window.lab = { coaster, state, render, THREE, scene, camera, renderer, set(o) { Object.assign(state, o); render(); }, setEnv(on) { scene.environment = on ? envTex : null; render(); } };
+window.lab = { coaster, state, render, THREE, scene, camera, renderer, set(o) { Object.assign(state, o); render(); }, setEnv(on) { envOn = on; adopt(coaster.group, on); render(); } };
 window.labReady = true;
 </script>
 </body>

@@ -6,7 +6,9 @@
 // export default create({ THREE, renderer, quality }) -> {
 //   group, duration,
 //   setProgress(p)          0 = fully exploded, 1 = assembled. Pure function of p, staggered smootherstep arrivals in build
-//                           order (shell, blower, board, heatsink, peltier, thermistor, topPlate, screws).
+//                           order (shell, blower, board, heatsink, peltier, thermistor, topPlate, screws). The board and
+//                           thermistor slide in over the rim first, then drop. At p = 1 the covered Peltier and
+//                           thermistor are hidden (visible = false) to save draws.
 //   update(dt, time)        spins the blower rotor at the speed set by setFanSpeed (0 by default, so it is a no-op).
 //   setPlateTemperature(c)  degrees C, 0..70. Tints the top plate only: neutral aluminium near 22 C, warm amber above
 //                           about 40 C, cool blue-white below about 15 C. Subtle by design.
@@ -45,8 +47,8 @@ export default function create({ THREE = THREE_, renderer, quality = 'high' } = 
   // ------------------------------------------------------------------------------------------- materials
   const M = (o, phys) => { const m = phys ? new THREE.MeshPhysicalMaterial(o) : new THREE.MeshStandardMaterial(o); mats.push(m); return m; };
   const mat = {
-    shell: M({ color: 0x626a7b, roughness: 0.74, metalness: 0, vertexColors: true }),
-    plate: M({ color: 0xc8ccd2, roughness: 0.36, metalness: 0.85, emissive: 0x000000 }),
+    shell: M({ color: 0x6d717c, roughness: 0.74, metalness: 0, vertexColors: true }),
+    plate: M({ color: 0xd3d7dd, roughness: 0.4, metalness: 0.6, emissive: 0x000000 }),
     ceramic: M({ color: 0xefede7, roughness: 0.82, metalness: 0 }),
     pellets: M({ color: 0x4c5056, roughness: 0.6, metalness: 0.2 }),
     sealant: M({ color: 0xdedcd6, roughness: 0.9, metalness: 0 }),
@@ -165,7 +167,7 @@ export default function create({ THREE = THREE_, renderer, quality = 'high' } = 
   const shell = part('shell');
   {
     const parts = [];
-    const lidTop = 0.0005, lidBot = -LID, c = 0.0007;
+    const lidTop = 0.0011, lidBot = -LID, c = 0.0007;
     // Lid band (chamfered top and bottom edge: the bottom chamfer plus the groove ring reads as the lid seam).
     const lidShape = rrShape(W - 2 * c, D - 2 * c, R - c);
     lidShape.holes.push(rrPath(PW + 0.0006 + 2 * c, PD + 0.0006 + 2 * c, 0.002 + c));
@@ -193,9 +195,9 @@ export default function create({ THREE = THREE_, renderer, quality = 'high' } = 
     const span = D - 2 * R;
     const wall = new THREE.Shape([[-span / 2, yb], [span / 2, yb], [span / 2, yt], [-span / 2, yt]].map(([u, v]) => new THREE.Vector2(u, v)));
     const hole = (z, y, w, h, r) => wall.holes.push(rrPath(w, h, r, -z, y, 3));
-    hole(0.0300, -0.0355, 0.0122, 0.0046, 0.0016);           // USB-C opening (port + status LED)
-    hole(0.0035, -0.0262, 0.0220, 0.0080, 0.0040);           // side vent slot
-    wall.holes.push(circlePath(0.0034, 0.0300, -0.0175, low ? 10 : 16)); // round port (u = -z, z = -0.030)
+    hole(0.0300, -0.0352, 0.0124, 0.0068, 0.0013);           // USB-C opening (port + status LED)
+    hole(0.0030, -0.0255, 0.0250, 0.0094, 0.0047);           // side vent slot
+    wall.holes.push(circlePath(0.0038, 0.0310, -0.0170, low ? 10 : 18)); // round port (u = -z, z = -0.030)
     const wg = new THREE.ExtrudeGeometry(wall, { depth: T, bevelEnabled: false, curveSegments: 3 });
     wg.rotateY(Math.PI / 2); wg.translate(HW - T, 0, 0);
     parts.push(wg);
@@ -266,18 +268,26 @@ export default function create({ THREE = THREE_, renderer, quality = 'high' } = 
 
   // ------------------------------------------------------------------------------------------- screws (M3 countersunk)
   const screws = part('screws');
-  const screwObjs = [];
-  {
-    const head = smooth(new THREE.CylinderGeometry(0.0028, 0.0015, 0.0016, 14, 1).translate(0, -0.0008, 0), 50);
-    const shank = smooth(new THREE.CylinderGeometry(0.0015, 0.0015, 0.008, 8, 1).translate(0, -0.0056, 0), 50);
-    const steel = merge([head, shank]);
-    const sock = track(new THREE.CircleGeometry(0.0011, 6).rotateX(-Math.PI / 2).translate(0, 0.00003, 0));
-    for (const [x, z] of screwXY()) {
-      const s = new THREE.Group(); s.position.set(x, 0, z);
-      s.add(mesh(steel, mat.steel)); s.add(mesh(sock, mat.socket));
-      screws.add(s); screwObjs.push(s);
+  // Two instanced draws for all four screws; setProgress spins each about its own axis as it lands.
+  const SCREW_XY = screwXY();
+  const screwSteel = new THREE.InstancedMesh(merge([
+    smooth(new THREE.CylinderGeometry(0.0028, 0.0015, 0.0016, 14, 1).translate(0, -0.0008, 0), 50),
+    smooth(new THREE.CylinderGeometry(0.0015, 0.0015, 0.008, 8, 1).translate(0, -0.0056, 0), 50),
+  ]), mat.steel, 4);
+  const screwSock = new THREE.InstancedMesh(track(new THREE.CircleGeometry(0.0011, 6).rotateX(-Math.PI / 2).translate(0, 0.00003, 0)), mat.socket, 4);
+  screwSteel.name = 'screwHeads'; screwSock.name = 'screwSockets';
+  screws.add(screwSteel, screwSock);
+  const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _p = new THREE.Vector3(), _s = new THREE.Vector3(1, 1, 1), _yAxis = new THREE.Vector3(0, 1, 0);
+  function poseScrews(ang) {
+    for (let i = 0; i < 4; i++) {
+      _q.setFromAxisAngle(_yAxis, ang + i * 0.9);
+      _m.compose(_p.set(SCREW_XY[i][0], 0, SCREW_XY[i][1]), _q, _s);
+      screwSteel.setMatrixAt(i, _m); screwSock.setMatrixAt(i, _m);
     }
+    screwSteel.instanceMatrix.needsUpdate = true; screwSock.instanceMatrix.needsUpdate = true;
   }
+  poseScrews(0);
+  screwSteel.computeBoundingSphere(); screwSock.computeBoundingSphere();
 
   // ------------------------------------------------------------------------------------------- Peltier TEC1-12703
   const peltier = part('peltier');
@@ -375,19 +385,19 @@ export default function create({ THREE = THREE_, renderer, quality = 'high' } = 
 
   // ------------------------------------------------------------------------------------------- parts, explode, progress
   const order = [
-    // name, part, explode offset, arrival window [start, end] in p
+    // name, part, explode offset, arrival window [start, end] in p, lateral-first (slides over the rim, then drops in)
     ['shell', shell, [0, -0.112, 0], [0.00, 0.40]],
     ['blower', blower, [0, -0.030, 0], [0.12, 0.50]],
-    ['board', board, [0.058, -0.016, 0.018], [0.20, 0.56]],
+    ['board', board, [0.052, 0.046, 0.020], [0.18, 0.58], true],
     ['heatsink', heatsink, [0, 0.004, 0], [0.28, 0.64]],
     ['peltier', peltier, [0, 0.030, 0], [0.40, 0.74]],
-    ['thermistor', thermistor, [0.022, 0.044, 0.016], [0.48, 0.80]],
+    ['thermistor', thermistor, [0.024, 0.040, 0.018], [0.50, 0.84], true],
     ['topPlate', topPlate, [0, 0.056, 0], [0.56, 0.90]],
     ['screws', screws, [0, 0.082, 0], [0.66, 1.00]],
   ];
   const parts = {}, list = [];
-  for (const [name, obj, e, win] of order) {
-    const rec = { name, mesh: obj, explode: new THREE.Vector3(...e), base: obj.position.clone(), win };
+  for (const [name, obj, e, win, lat = false] of order) {
+    const rec = { name, mesh: obj, explode: new THREE.Vector3(...e), base: obj.position.clone(), win, lat };
     parts[name] = obj; list.push(rec);
   }
   const smoother = (t) => t * t * t * (t * (t * 6 - 15) + 10);
@@ -396,32 +406,38 @@ export default function create({ THREE = THREE_, renderer, quality = 'high' } = 
     progress = p = Math.min(1, Math.max(0, p));
     for (const r of list) {
       const t = Math.min(1, Math.max(0, (p - r.win[0]) / (r.win[1] - r.win[0])));
-      const k = 1 - smoother(t);
-      r.mesh.position.copy(r.base).addScaledVector(r.explode, k);
-      r.mesh.visible = true;
+      if (r.lat) {
+        // lateral offset closes over the first 45 % of the window while the part stays high, then it drops in
+        const kl = 1 - smoother(Math.min(1, t / 0.45)), kv = 1 - smoother(Math.max(0, (t - 0.3) / 0.7));
+        r.mesh.position.set(r.base.x + r.explode.x * kl, r.base.y + r.explode.y * kv, r.base.z + r.explode.z * kl);
+      } else {
+        r.mesh.position.copy(r.base).addScaledVector(r.explode, 1 - smoother(t));
+      }
     }
     // screws turn in as they land (two and a half turns)
     const st = list[list.length - 1], ts = Math.min(1, Math.max(0, (p - st.win[0]) / (st.win[1] - st.win[0])));
     const ang = (1 - smoother(ts)) * Math.PI * 5;
-    for (const s of screwObjs) s.rotation.y = ang;
+    poseScrews(ang);
+    // the Peltier and thermistor are fully covered once the plate is down: skip their draws
+    peltier.visible = thermistor.visible = p < 1;
   }
 
   // Plate temperature tint (pre-allocated colours, no per-call allocation).
-  const cNeutral = new THREE.Color(0xc8ccd2), cWarm = new THREE.Color(0xd2c4b3), cCold = new THREE.Color(0xc5d0dd);
+  const cNeutral = new THREE.Color(0xd3d7dd), cWarm = new THREE.Color(0xddcdb9), cCold = new THREE.Color(0xccd8e6);
   const eWarm = new THREE.Color(0xff7a2e), eCold = new THREE.Color(0x8fc2ff), eTmp = new THREE.Color();
   const sstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
   function setPlateTemperature(c) {
     const w = sstep(28, 66, c), k = sstep(20, 2, c);
     mat.plate.color.copy(cNeutral).lerp(cWarm, w).lerp(cCold, k);
     mat.plate.emissive.copy(eTmp.setRGB(0, 0, 0)).lerp(eWarm, w * 0.07).lerp(eCold, k * 0.03);
-    mat.plate.roughness = 0.36 + k * 0.08;          // a cold plate looks a touch duller (faint mist)
+    mat.plate.roughness = 0.4 + k * 0.08;          // a cold plate looks a touch duller (faint mist)
   }
   setPlateTemperature(22);
   setProgress(1);
 
   let fanSpeed = 0;
   let triangles = 0;
-  group.traverse((o) => { if (o.isMesh && o !== shadow) { const g = o.geometry; triangles += (g.index ? g.index.count : g.attributes.position.count) / 3; } });
+  group.traverse((o) => { if (o.isMesh && o !== shadow) { const g = o.geometry; triangles += (g.index ? g.index.count : g.attributes.position.count) / 3 * (o.isInstancedMesh ? o.count : 1); } });
 
   return {
     group, duration: 4.0, parts, triangles, shadow,
@@ -433,6 +449,7 @@ export default function create({ THREE = THREE_, renderer, quality = 'high' } = 
     setShadowOpacity(a) { shadowMat.opacity = 0.55 * Math.min(1, Math.max(0, a)); shadow.visible = a > 0.001; },
     update(dt) { if (fanSpeed) rotor.rotation.y -= dt * fanSpeed * Math.PI * 2; },
     dispose() {
+      screwSteel.dispose(); screwSock.dispose();
       for (const g of geos) g.dispose();
       for (const m of mats) m.dispose();
       for (const t of texs) t.dispose();
