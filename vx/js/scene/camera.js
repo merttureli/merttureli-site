@@ -16,8 +16,11 @@
               accelerates), camera trails behind the air-relative flight path.
      pad      camera fixed on the ground near the pad, looking at the rocket, with
               a tracking zoom (field of view narrows as the range grows).
-     free     entered when the visitor orbits or zooms; rigid follow with the
-              offset the visitor left.
+     free     entered on the first camera move the visitor makes (a drag or a zoom,
+              not a plain click); rigid follow with the offset the visitor left. It
+              keeps the field of view it was entered with, so the framing does not
+              jump, and its zoom limits scale with that view (the same framing range
+              as at 32 deg) and always include the distance it started from.
    The rig never runs its own animation frame: the scene calls update(dt, ctx)
    once per drawn frame and keeps drawing while update() returns true. */
 import * as THREE from 'three';
@@ -115,6 +118,7 @@ export function createCameraRig({ camera, canvas, reducedMotion = false, zoom = 
   let mode = 'side', preset = 'side', reduced = !!reducedMotion;
   let transition = null;                    // { t0, dur, fromRel: V3, fromSph, fromFov }
   let userActive = false, damping = false;
+  let freeFov = FOV_DEG;                    // fov kept from the view free mode was entered from
   const freeOffset = new THREE.Vector3(0, 0.2, 3.3);
   const target = new THREE.Vector3();
   const desiredTarget = new THREE.Vector3(), desiredOffset = new THREE.Vector3();
@@ -125,14 +129,29 @@ export function createCameraRig({ camera, canvas, reducedMotion = false, zoom = 
   const sA = { r: 1, az: 0, el: 0 }, sB = { r: 1, az: 0, el: 0 };
   let fov = FOV_DEG;
 
+  /* OrbitControls fires 'start' on pointer down, before anything moves, so a plain
+     click (focusing the canvas for the arrow keys, say) must not leave the preset:
+     'start' only sets the zoom limits for the gesture, and the rig enters free mode
+     on the first 'change' the gesture produces. Limits: the preset range scaled by
+     tan(16 deg) / tan(fov / 2), widened to the current distance, so neither a pad
+     camera 249 m out nor a narrow fov is snapped by the first drag. */
   const onStart = () => {
-    userActive = true; transition = null;
-    if (mode !== 'free') { mode = 'free'; freeOffset.subVectors(camera.position, controls.target); }
-    controls.minDistance = MIN_DISTANCE_M; controls.maxDistance = MAX_DISTANCE_M;
+    userActive = true;
+    const d = camera.position.distanceTo(controls.target);
+    const k = Math.max(1, Math.tan(FOV_DEG * DEG / 2) / Math.tan(Math.max(0.1, camera.fov) * DEG / 2));
+    controls.minDistance = Math.min(MIN_DISTANCE_M * k, d);
+    controls.maxDistance = Math.max(MAX_DISTANCE_M * k, d);
     if (onUserStart) onUserStart();
   };
   const onEnd = () => { userActive = false; damping = controls.enableDamping; };
-  const onCtrlChange = () => { if (onChange) onChange(); };
+  const onCtrlChange = () => {
+    if (userActive && mode !== 'free') {
+      mode = 'free'; transition = null;
+      freeOffset.subVectors(camera.position, controls.target);
+      freeFov = fov;
+    }
+    if (onChange) onChange();
+  };
   controls.addEventListener('start', onStart);
   controls.addEventListener('end', onEnd);
   controls.addEventListener('change', onCtrlChange);
@@ -161,7 +180,7 @@ export function createCameraRig({ camera, canvas, reducedMotion = false, zoom = 
     }
     outTarget.copy(ctx.frame);
     outOffset.copy(freeOffset);
-    return FOV_DEG;
+    return freeFov;
   }
 
   /* Tracking filter for the chase target: x'' = w^2 (c - x) + 2 w (c' - x'),
@@ -207,7 +226,7 @@ export function createCameraRig({ camera, canvas, reducedMotion = false, zoom = 
       if (changed && !userActive) moving = true;
       if (!changed) damping = false;
       freeOffset.subVectors(camera.position, controls.target);
-      applyFov(FOV_DEG);
+      applyFov(freeFov);
       target.copy(controls.target);
     } else {
       let f = presetPose(mode, ctx, desiredTarget, desiredOffset);

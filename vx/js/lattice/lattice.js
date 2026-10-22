@@ -7,9 +7,18 @@
      bounce-back, collide, write, into three RGBA32F textures through one MRT
      draw (WebGLRenderTarget count 3, NearestFilter, no depth). Without float32
      render targets: RGBA16F holding f_i - w_i (stats.precision says which).
+     Stabilisers, documented because the contract's model alone did not pass its
+     own gate (see MACH_K and STARTUP_TAU below):
+       regularised collision (STD, Latt and Chopard 2006), on by default: the
+         non-equilibrium part is projected on its second-order moment before
+         relaxing, which removes the ghost modes that grow at tau0 near 0.504;
+       a local viscosity floor where |u| > 0.15 (EST), off elsewhere;
+       a start-up viscosity that eases from tau 0.75 to tau0 over 2,000 steps
+         after a reset (EST).
      Walls: halfway bounce-back with Ladd's moving-wall term (STD, Ladd 1994),
      u_w = omega x (r - r_cg) from setBodyRate. Outer edges: equilibrium at rho 1
-     and u_in where the freestream enters, zero-gradient copy elsewhere.
+     and u_in where the freestream enters; elsewhere zero-gradient velocity and
+     non-equilibrium part (STD, Guo, Zheng and Shi 2002) with rho held at 1.
      Force: momentum exchange per wall link (Galilean-corrected, STD, Wen et al.
      2014), accumulated per cell in the spare channels of the third texture,
      reduced by 2 x 2 halving passes to 1 x 1 and read back with
@@ -115,7 +124,7 @@ export function createLattice(renderer, options = {}) {
   const stats = {
     grid: [0, 0], dye: [0, 0], tier, stepsPerFrame: 0, stepsPerSecond: 0, msPerFrame: 0, issueMs: 0,
     precision: 'none', re: 0, tau0: 0, tauNow: 0, nu: 0, uIn: 0.05, uNow: 0, alpha: 0, alphaDeg: 0, dCells: 0,
-    steps: 0, shed: 0, stepScale: 1, nanResets: 0, view: 'smoke', smagorinsky: SMAGORINSKY_C, regularised: !!options.regularised, machK: Number.isFinite(options.machK) ? options.machK : MACH_K,
+    steps: 0, shed: 0, stepScale: 1, nanResets: 0, view: 'smoke', smagorinsky: SMAGORINSKY_C, regularised: options.regularised !== false, machK: Number.isFinite(options.machK) ? options.machK : MACH_K,
     fallback: null, lost: false, forceReadback: true,
   };
   const api = {
@@ -312,7 +321,7 @@ export function createLattice(renderer, options = {}) {
 
   /* ---------------------------------------------------------- parameters */
   const flow = { uIn: 0.05, alpha: 0, omega: 0, view: 0 };
-  const visc = { mode: 're', re: RE_TARGET, uRef: U_REF, tau0: 0.51, c: SMAGORINSKY_C, reg: !!options.regularised, machK: Number.isFinite(options.machK) ? options.machK : MACH_K };
+  const visc = { mode: 're', re: RE_TARGET, uRef: U_REF, tau0: 0.51, c: SMAGORINSKY_C, reg: options.regularised !== false, machK: Number.isFinite(options.machK) ? options.machK : MACH_K };
   function updateViscosity() {
     const d = section.dCells > 0 ? section.dCells : 24;
     if (visc.mode === 're') visc.tau0 = tauFor(visc.re, visc.uRef, d);
@@ -492,6 +501,7 @@ export function createLattice(renderer, options = {}) {
     begin();
     [inflow.x, inflow.y] = targetVec();  /* uniform inflow: the tunnel is already running */
     sinceReset = 0;
+    stats.uNow = Math.hypot(inflow.x, inflow.y); stats.tauNow = tauNow();
     initState();
     pendingDye = 0;
     dyePass(true);

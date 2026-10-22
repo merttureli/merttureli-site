@@ -26,7 +26,9 @@
   .lt-note { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: var(--space-5); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: 1.8; color: var(--paper-a70); background: rgba(10,10,10,.72); }
   .lt-note b { font-weight: 400; color: var(--paper); }
   .lt-note[hidden] { display: none; }
-  .lt-note.is-badge { inset: auto auto 4px 0; display: block; padding: 0 var(--space-4); background: none; text-align: left; line-height: 1.4; }
+  .lt-key { margin-top: calc(-1 * var(--space-2)); }
+  .lt-status { color: var(--paper-a90); }
+  .lt-status:empty { display: none; }
   .lt-caption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-2) var(--space-5); padding: 0 var(--page-margin) var(--space-4); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); }
   .lt-chart { display: block; width: 100%; height: 120px; padding: 0; }
   .lt-chartwrap { padding: var(--space-3) var(--page-margin); border-top: 1px solid var(--paper-a18); }
@@ -55,6 +57,7 @@
     .lt-panel { border-left: 0; border-top: 1px solid var(--paper-a18); max-height: none; position: static; }
   }
   @media (max-width: 600px) {
+    .lt-readout { white-space: pre-wrap; }
     .lt-head { padding: var(--space-4) var(--space-4); }
     .lt-caption, .lt-chartwrap, .lt-readout, .lt-validate { padding-left: var(--space-4); padding-right: var(--space-4); }
     .lt-panel { padding: var(--space-4); }
@@ -80,6 +83,8 @@
       <p class="lt-note" id="note" hidden></p>
     </figure>
     <p class="lt-caption"><span>Page simulation / D2Q9 lattice Boltzmann / lattice units / src: SIM</span><span>Section shapes are analytic stand-ins (EST), not the CAD</span></p>
+    <p class="lt-caption lt-key"><span>CG: quartered disc, 22 in from the nose (PAGE) on the CAD length</span><span>CP: ring and resultant from the lattice (SIM)</span></p>
+    <p class="lt-caption lt-status" id="status"></p>
     <div class="lt-chartwrap"><canvas class="lt-chart" id="chart" aria-hidden="true"></canvas></div>
     <pre class="lt-readout" id="readout" aria-label="Lattice readout">LATTICE / STARTING</pre>
     <pre class="lt-validate" id="validate" hidden></pre>
@@ -99,7 +104,7 @@
     <label class="lt-row">Re at u_in 0.10 <output id="re-out">3000</output><input type="range" id="re" min="100" max="6000" step="50" value="3000"><small>Sets tau0; Re follows u_in</small></label>
     <label class="lt-row">Body rate, rad per step <output id="rate-out">0</output><input type="range" id="rate" min="-3" max="3" step="0.1" value="0"><small>Positive raises theta (flight sign)</small></label>
     <label class="lt-row">Smagorinsky C 0.12 <input type="checkbox" id="smag" checked></label>
-    <label class="lt-row">Regularised collision <input type="checkbox" id="reg"></label>
+    <label class="lt-row">Regularised collision <input type="checkbox" id="reg" checked><small>Latt and Chopard 2006; plain BGK is unstable at tau0 near 0.504</small></label>
 
     <h2>View</h2>
     <div class="lt-group" role="group" aria-label="View">

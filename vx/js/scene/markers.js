@@ -30,7 +30,7 @@ export const T_ARROW_M_PER_N = 0.006;    // 6 mm per newton of thrust, clamped t
 const N_ARROW_MAX_M = 0.7, T_ARROW_MAX_M = 0.8;
 const WIND_ARROW_M = [0.24, 0.5];        // relative wind arrow length (m) from rest to 100 m/s and above
 const BODY_R = 0.034;                    // CAD body radius (m)
-const LABEL_PX = 11;                     // mono label size in CSS px (site meta 10 to 12 px)
+export const LABEL_PX = 11;              // mono label size in CSS px (site meta 10 to 12 px); the scene never scales it below 10 px
 
 /* ---------- mono labels ---------------------------------------------------
    One fixed-size canvas per label (the texture never changes size, so three
@@ -223,8 +223,10 @@ export function createMarkers({ dpr = 2 } = {}) {
   const fit = fitLabelSide;
 
   /* s: { body: Object3D (CAD frame), noseY, tailY, xcg, xcp, xcpLattice, theta,
-     alpha, v, thrust, N, tags }, view: { camera, pxToScale, mpp, now, width (CSS
-     px), labelK (label scale on this viewport) } */
+     alpha, v, airspeed, thrust, N, tags }, view: { camera, pxToScale, mpp, now,
+     width (CSS px), labelK (label scale on this viewport) }. The relative wind
+     uses airspeed (|v_air|, the flight model's state.airspeed); v, the inertial
+     speed, stands in only when no airspeed is given. */
   function update(s, view) {
     group.visible = visible;
     if (!visible) return;
@@ -246,12 +248,13 @@ export function createMarkers({ dpr = 2 } = {}) {
 
     // relative wind: arrives from (sin(theta - alpha), cos(theta - alpha))
     const gam = s.theta - s.alpha;
+    const vAir = Number.isFinite(s.airspeed) ? s.airspeed : s.v;
     P.from.set(Math.sin(gam), Math.cos(gam), 0);
-    const vlen = WIND_ARROW_M[0] + (WIND_ARROW_M[1] - WIND_ARROW_M[0]) * Math.min(1, Math.max(0, s.v) / 100);
+    const vlen = WIND_ARROW_M[0] + (WIND_ARROW_M[1] - WIND_ARROW_M[0]) * Math.min(1, Math.max(0, vAir) / 100);
     const tip = P.a.copy(P.nose).addScaledVector(P.from, 0.03 + 6 * mpp);
     const tail = P.b.copy(tip).addScaledVector(P.from, vlen);
     wind.set(tail, tip, mpp);
-    wind.material.opacity = s.v > 1 ? 0.95 : 0.5;
+    wind.material.opacity = vAir > 1 ? 0.95 : 0.5;
     out.windDir.copy(P.from).negate(); out.windTail.copy(tail); out.windTip.copy(tip);
     L.wind.sprite.position.copy(tail);
     const windSide = ndcX(tail, camera) < ndcX(tip, camera) ? 'left' : 'right';
@@ -287,7 +290,7 @@ export function createMarkers({ dpr = 2 } = {}) {
         [['MARGIN', META], [`${fmt((s.xcp - s.xcg) / (2 * BODY_R), 2)} CAL`], [tags.margin || 'SIM', META]],
         ...(Number.isFinite(s.N) ? [[['N', META], [`${sgn(s.N * LB_PER_N, 2)} LBF`], [tags.N || 'SIM', META]]] : [])]);
       if (hasRing) L.ring.set([[['CP LBM', META], [`${fmt(s.xcpLattice * IN_PER_M, 1)} IN`], [tags.xcpLattice || 'SIM', META]]]);
-      L.wind.set([[['REL WIND', META], [`${fmt(Math.max(0, s.v) * FT_PER_M, 0)} FT/S`]],
+      L.wind.set([[['REL WIND', META], [`${fmt(Math.max(0, vAir) * FT_PER_M, 0)} FT/S`], [tags.airspeed || tags.v || 'SIM', META]],
         [['ALPHA', META], [`${sgn(s.alpha * DEG, 1)} DEG`], [tags.alpha || 'SIM', META]]], windSide);
       if (tShown) L.thrust.set([[['T', META], [`${fmt(s.thrust * LB_PER_N, 1)} LBF`], [tags.thrust || 'SIM', META]]]);
     }

@@ -174,9 +174,9 @@ function outputs() {
 function push() {
   const th = (S.theta + toy.offset) * DEG, al = (S.alpha + toy.offset) * DEG;
   scene.setFlight(
-    { x: S.x, y: S.y, theta: th, alpha: al, v: S.v, thrust: S.thrust, N: S.N, phase: 'lab' },
+    { x: S.x, y: S.y, theta: th, alpha: al, v: S.v, airspeed: S.v, thrust: S.thrust, N: S.N, phase: 'lab' },
     { xcg: S.cg * IN, xref: XREF, xcp: S.cp * IN, xcpLattice: S.cplOn ? (S.cp + S.cpl) * IN : NaN,
-      tags: { xcg: 'EST', xcp: 'EST', xcpLattice: 'EST', margin: 'EST', alpha: 'EST', N: 'EST', thrust: 'EST' } });
+      tags: { xcg: 'EST', xcp: 'EST', xcpLattice: 'EST', margin: 'EST', alpha: 'EST', N: 'EST', thrust: 'EST', y: 'EST', v: 'EST' } });
   drawCard();
 }
 let cardKey = '';

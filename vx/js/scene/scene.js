@@ -31,15 +31,19 @@
    Interaction: a pointer down on the rocket (raycast against an invisible
    cylinder around the body, at least 22 px in radius on screen) starts a flick
    drag; the drag shows a vector, the release returns a pitch-rate impulse through
-   onFlick(radPerSec). Anywhere else the vendored OrbitControls orbit and zoom.
-   With the canvas focused, the left and right arrow keys flick too. The pointer
-   never reaches the lattice. */
+   onFlick(radPerSec). The grab point and the CG are held in body coordinates, so
+   a rocket that moves during the drag (the cameras follow it) is not counted as
+   drag. Anywhere else the vendored OrbitControls orbit and zoom; while they own a
+   pointer, a second finger always goes to them (a pinch), and a second finger
+   during a flick cancels the flick. With the canvas focused, the left and right
+   arrow keys flick too (no key repeat, no modifier chords). The pointer never
+   reaches the lattice. */
 import * as THREE from 'three';
 import { dprFor } from '../core/governor.js';
 import { loadGeometry, describeParts, buildScene, disposeScene } from '../stage/loader.js';
 import { createCameraRig, FOV_DEG, NEAR_M, FAR_M, PRESETS } from './camera.js';
-import { createSlice, NOSE_Y, LENGTH_M } from './slice.js';
-import { createMarkers, createLabel, createArrow, fitLabelSide } from './markers.js';
+import { createSlice, defaultDomain, NOSE_Y, LENGTH_M } from './slice.js';
+import { createMarkers, createLabel, createArrow, fitLabelSide, LABEL_PX } from './markers.js';
 import { createExhaust } from './exhaust.js';
 
 const DEG = Math.PI / 180;
@@ -65,11 +69,14 @@ const LADDER = { x: -0.62, z: -0.5, topFt: 1100, majorFt: 100, minorFt: 10, majo
 const FRAME_FROM_NOSE_M = 0.62;
 /* Flick (EST, interaction gains, not physics): the drag's angle about the CG
    (lateral drag over lever arm) times FLICK_GAIN is the pitch-rate impulse,
-   clamped to FLICK_MAX. A drag that would turn the rocket by 10 deg gives 40 deg/s. */
+   clamped to FLICK_MAX. A drag that would turn the rocket by 10 deg gives 40 deg/s.
+   The squared lever arm in the denominator is floored at FLICK_MIN_ARM_M squared,
+   so a sideways push at the CG gives no rotation and the response stays bounded
+   and continuous through the CG. */
 export const FLICK_GAIN = 4;                 // 1/s
 export const FLICK_MAX = 3;                  // rad/s (172 deg/s)
 export const FLICK_KEY = 0.6;                // rad/s per arrow key press (34 deg/s), doubled with Shift
-const FLICK_MIN_ARM_M = 0.15;                // lever arm floor so a grab near the CG does not explode
+const FLICK_MIN_ARM_M = 0.15;                // lever arm floor (m) in the denominator; a grab near the CG does not explode
 const FLICK_DEADZONE_PX = 4;
 const FLICK_FADE_MS = 480;                   // the vector fades over --dur-3 after release
 const GRAB_MIN_PX = 22;                      // grab cylinder radius floor on screen (touch target)
@@ -78,6 +85,7 @@ const GRAB_MIN_PX = 22;                      // grab cylinder radius floor on sc
    renderer, a throttled tab) is not mistaken for the caller having stopped. */
 const EXTERNAL_YIELD_MS = 100, EXTERNAL_YIELD_K = 2.5;
 const ARIA_MS = 1000;                        // the canvas label changes at most once per second
+const LABEL_K_MIN = 10 / LABEL_PX;           // sprite labels never below the site's 10 px meta floor (FIELD.md section 2)
 
 /* Flight-frame pose of the reference station xref (m from the nose) on the pad:
    aft end at the rail base (the flight origin), as vx/js/flight places it. */
@@ -133,13 +141,14 @@ export function createScene(canvas, options = {}) {
   let raf = 0, lastTick = 0, dirty = true, animating = false, lastExternal = -1e9, extInterval = 0, lastDrawAt = 0;
   let frames = 0, lastMs = 0, lastAria = -1e9, ariaText = '', cursorText = -1e9;
   const flickFns = new Set();
-  const flight = { x: 0, y: 0, theta: 0, alpha: 0, v: 0, thrust: 0, N: 0, phase: 'pad', t: 0 };
+  const flight = { x: 0, y: 0, theta: 0, alpha: 0, v: 0, airspeed: NaN, thrust: 0, N: 0, phase: 'pad', t: 0 };
   const derived = { xcp: NaN, xcg: CG_DEFAULT_M, xref: CG_DEFAULT_M, xcpLattice: NaN, tags: {} };
   Object.assign(flight, padPose());
   let finScale = 1, railLength = PAD.railDefaultM, launchAngle = 0, markersOn = true, view = 'smoke';
   let error = null, cad = null, entries = [];
   const info = { calls: 0, triangles: 0, ms: 0 };
-  const flick = { active: null, count: 0, last: 0, fadeT0: 0, preview: 0 };
+  const flick = { active: null, count: 0, last: 0, fadeT0: 0, preview: 0, fade: null, gW: new THREE.Vector3(), cW: new THREE.Vector3() };
+  const orbitPointers = new Set();             // pointers OrbitControls owns (pointer downs the scene let through)
 
   /* ---------- renderer (WebGL2 or a clean fallback) ---------- */
   let gl = null, renderer = null, fallback = null;
@@ -157,15 +166,35 @@ export function createScene(canvas, options = {}) {
   canvas.dataset.scene = fallback ? 'fallback' : 'loading';
 
   if (fallback) {
-    // Every method is a safe no-op; the page shows its 2D fallback (panel/fallback.js).
+    // Every method is safe and draws nothing; the page shows its 2D fallback
+    // (panel/fallback.js). stats and the getters keep the documented shape with
+    // neutral values, so callers read them the same way on every browser.
     const noop = () => {};
+    let fbFins = 1, fbMarkers = true, fbView = 'smoke', fbSlice = 'through';
+    const dom = defaultDomain();
     return {
-      ready: Promise.resolve(false), fallback, renderer: null, camera: null, three: null, error,
-      setFlight: noop, setSliceTexture: noop, setSliceDomain: noop, setSliceView: noop, setView: noop, setCamera: () => false,
-      setMarkers: noop, setFinScale: noop, setRail: noop, setTier: noop, resize: noop, render: noop,
+      ready: Promise.resolve(false), fallback, renderer: null, camera: null, three: null,
+      get error() { return error; },
+      setFlight: noop, setSliceTexture: noop, setSliceDomain: noop,
+      setSliceView(v) { if (v !== 'through' && v !== 'between') return false; fbSlice = v; return true; },
+      setView(name) { fbView = String(name); },
+      setCamera: () => false,
+      setMarkers(on) { fbMarkers = !!on; },
+      setFinScale(k) { fbFins = Math.max(0, num(+k, 1)); },
+      setRail: noop, setTier(t) { tier = Math.max(0, Math.min(3, t | 0)); }, resize: noop, render: noop,
       onFlick: () => noop, checkSign: () => null, destroy: noop,
-      get stats() { return { fallback, built: false, frames: 0 }; },
+      get stats() {
+        return {
+          fallback, built: false, tier, dpr: 1, frames: 0, ms: 0, calls: 0, triangles: 0, loop: 'idle',
+          camera: { mode: 'side', preset: 'side', distance: 0, fov: FOV_DEG, transitioning: false },
+          flick: { count: 0, last: 0, preview: 0, dragging: false },
+          slice: { visible: false, view: fbSlice, domain: { ...dom }, size: { widthM: dom.cols * dom.cellM, heightM: dom.rows * dom.cellM } },
+          size: { width: 0, height: 0 }, contextLost: false, reduced, mpp: 0,
+        };
+      },
       get cad() { return null; }, get tier() { return tier; },
+      get finScale() { return fbFins; }, get markers() { return fbMarkers; }, get view() { return fbView; },
+      get sliceView() { return fbSlice; }, get cameraPreset() { return 'side'; },
     };
   }
 
@@ -302,7 +331,7 @@ export function createScene(canvas, options = {}) {
   const plane = new THREE.Plane();
   let mpp = 0.002;
   const pxToScale = (px) => 2 * px * labelK() / (camera.projectionMatrix.elements[5] * Math.max(1, height));
-  const labelK = () => Math.max(0.82, Math.min(1, width / 900));   // labels shrink a little on phones
+  const labelK = () => Math.max(LABEL_K_MIN, Math.min(1, width / 900));   // labels shrink a little on phones, never below 10 px
 
   function applyFlight() {
     rocket.position.set(num(flight.x, 0), num(flight.y, 0) + PAD.standM, 0);
@@ -345,7 +374,7 @@ export function createScene(canvas, options = {}) {
 
     markers.update({
       body, noseY: NOSE_Y, tailY: TAIL_Y, xcg: num(derived.xcg, CG_DEFAULT_M), xcp: derived.xcp, xcpLattice: derived.xcpLattice,
-      theta, alpha, v: num(flight.v, 0), thrust: num(flight.thrust, 0), N: flight.N, tags: derived.tags,
+      theta, alpha, v: num(flight.v, 0), airspeed: flight.airspeed, thrust: num(flight.thrust, 0), N: flight.N, tags: derived.tags,
     }, { camera, pxToScale, mpp, now: t0, width, labelK: labelK() });
     moving = updateFlickVisual(t0) || moving;
     const fitView = { camera, width, labelK: labelK() };
@@ -411,18 +440,27 @@ export function createScene(canvas, options = {}) {
     return raycaster.intersectObject(grab, false)[0] || null;
   }
   /* Pitch-rate impulse for a drag d (world, z dropped) at grab point g, CG c:
-     dtheta = -(r x d)_z / |r|^2 with r = g - c (a rotation about +z by a positive
-     angle turns +y toward -x, which is negative theta). */
+     dtheta = -(r x d)_z / max(|r|^2, FLICK_MIN_ARM_M^2) with r = g - c (a rotation
+     about +z by a positive angle turns +y toward -x, which is negative theta). */
   function flickRate(g, cur, cgw) {
-    let rx = g.x - cgw.x, ry = g.y - cgw.y;
-    const rl = Math.hypot(rx, ry);
-    if (rl < FLICK_MIN_ARM_M) {
-      const s = rl > 1e-6 ? FLICK_MIN_ARM_M / rl : 0;
-      if (s) { rx *= s; ry *= s; } else { const th = num(flight.theta, 0); rx = Math.sin(th) * FLICK_MIN_ARM_M; ry = Math.cos(th) * FLICK_MIN_ARM_M; }
-    }
+    const rx = g.x - cgw.x, ry = g.y - cgw.y;
     const dx = cur.x - g.x, dy = cur.y - g.y;
-    const dth = -(rx * dy - ry * dx) / (rx * rx + ry * ry);
+    const dth = -(rx * dy - ry * dx) / Math.max(rx * rx + ry * ry, FLICK_MIN_ARM_M * FLICK_MIN_ARM_M);
     return Math.max(-FLICK_MAX, Math.min(FLICK_MAX, FLICK_GAIN * dth));
+  }
+  /* The drag as it stands now: the grab point and the CG back from body
+     coordinates with the current body matrix, the drag plane through the grab
+     point facing the current camera, the pointer's ray (its last NDC) cut with it.
+     Fills f.grabW, f.cgW, f.curW (world) and returns the pitch-rate impulse. */
+  function flickNow(f) {
+    rocket.updateMatrixWorld(true);
+    body.localToWorld(f.grabW.copy(f.grabL));
+    body.localToWorld(f.cgW.copy(f.cgL));
+    camera.getWorldDirection(v3.d);
+    plane.setFromNormalAndCoplanarPoint(v3.d, f.grabW);
+    raycaster.setFromCamera(f.ndc, camera);
+    if (raycaster.ray.intersectPlane(plane, v3.a)) f.curW.copy(v3.a);
+    return f.moved >= FLICK_DEADZONE_PX ? flickRate(f.grabW, f.curW, f.cgW) : 0;
   }
   function emitFlick(rate) {
     flick.count++; flick.last = rate;
@@ -430,27 +468,37 @@ export function createScene(canvas, options = {}) {
   }
   function onPointerDown(e) {
     if (destroyed || contextLost) return;
-    if (flick.active) { e.stopImmediatePropagation(); return; }           // a second finger never starts an orbit mid-flick
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (e.isPrimary) orbitPointers.clear();        // a new primary pointer: no earlier pointer of the gesture is still down
+    const f = flick.active;
+    if (f) {
+      if (e.pointerId === f.id) return;
+      // a second finger mid-flick makes it a pinch or an orbit: drop the flick, let this one through
+      endFlick({ pointerId: f.id }, false);
+      orbitPointers.add(e.pointerId);
+      return;
+    }
+    // OrbitControls already owns a pointer: this one belongs to its gesture (a pinch), even on the rocket
+    if (orbitPointers.size || (e.pointerType === 'mouse' && e.button !== 0)) { orbitPointers.add(e.pointerId); return; }
     const hit = hitRocket(e);
-    if (!hit) return;
+    if (!hit) { orbitPointers.add(e.pointerId); return; }
     e.stopImmediatePropagation(); e.preventDefault();
     try { canvas.setPointerCapture(e.pointerId); } catch { /* pointer already gone */ }
-    camera.getWorldDirection(v3.d);
-    plane.setFromNormalAndCoplanarPoint(v3.d, hit.point);
-    body.localToWorld(v3.c.set(0, NOSE_Y - num(derived.xcg, CG_DEFAULT_M), 0));
-    flick.active = { id: e.pointerId, grab: hit.point.clone(), cur: hit.point.clone(), cg: v3.c.clone(), x0: e.clientX, y0: e.clientY, moved: 0 };
-    flick.preview = 0; flick.fadeT0 = 0;
+    const grabL = body.worldToLocal(hit.point.clone());
+    const cgL = new THREE.Vector3(0, NOSE_Y - num(derived.xcg, CG_DEFAULT_M), 0);
+    flick.active = {
+      id: e.pointerId, grabL, cgL, ndc: eventNdc(e).clone(), x0: e.clientX, y0: e.clientY, moved: 0,
+      grabW: hit.point.clone(), cgW: new THREE.Vector3(), curW: hit.point.clone(),
+    };
+    flick.preview = 0; flick.fadeT0 = 0; flick.fade = null;
     canvas.dataset.drag = 'flick';
     invalidate();
   }
   function onPointerMove(e) {
     const f = flick.active;
     if (f && e.pointerId === f.id) {
-      raycaster.setFromCamera(eventNdc(e), camera);
-      if (raycaster.ray.intersectPlane(plane, v3.a)) f.cur.copy(v3.a);
+      f.ndc.copy(eventNdc(e));
       f.moved = Math.max(f.moved, Math.hypot(e.clientX - f.x0, e.clientY - f.y0));
-      flick.preview = f.moved >= FLICK_DEADZONE_PX ? flickRate(f.grab, f.cur, f.cg) : 0;
+      flick.preview = flickNow(f);
       invalidate();
       return;
     }
@@ -465,37 +513,50 @@ export function createScene(canvas, options = {}) {
     try { canvas.releasePointerCapture(e.pointerId); } catch { /* already released */ }
     flick.active = null;
     delete canvas.dataset.drag;
-    const rate = f.moved >= FLICK_DEADZONE_PX ? flickRate(f.grab, f.cur, f.cg) : 0;
+    if (commit && Number.isFinite(e.clientX)) {
+      f.ndc.copy(eventNdc(e));
+      f.moved = Math.max(f.moved, Math.hypot(e.clientX - f.x0, e.clientY - f.y0));
+    }
+    const rate = flickNow(f);
     flick.preview = rate;
     flick.fadeT0 = performance.now();
-    flick.fadeFrom = { grab: f.grab, cur: f.cur };
+    // the fading vector rides with the rocket: both ends in body coordinates
+    flick.fade = { grabL: f.grabL, curL: body.worldToLocal(f.curW.clone()) };
     if (commit && rate !== 0) emitFlick(rate);
     invalidate();
   }
   const onPointerUp = (e) => endFlick(e, true);
   const onPointerCancel = (e) => endFlick(e, false);
+  const onDocPointerEnd = (e) => { orbitPointers.delete(e.pointerId); };
   function onKeyDown(e) {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    // one flick per press (flight.flick adds every impulse to the pitch rate), and
+    // Alt+Arrow (history), Ctrl/Cmd+Arrow stay with the browser
+    if (e.repeat || e.altKey || e.ctrlKey || e.metaKey) return;
     e.preventDefault();
     emitFlick((e.key === 'ArrowRight' ? 1 : -1) * FLICK_KEY * (e.shiftKey ? 2 : 1));
   }
   function updateFlickVisual(now) {
-    const f = flick.active || (flick.fadeT0 && flick.fadeFrom ? { grab: flick.fadeFrom.grab, cur: flick.fadeFrom.cur } : null);
-    if (!f) { flickArrow.group.visible = false; flickLabel.sprite.visible = false; return false; }
-    let op = 0.95, moving = !!flick.active;
-    if (!flick.active) {
+    let op = 0.95, moving = !!flick.active, g, c;
+    if (flick.active) {
+      // re-cast every frame: the camera and the rocket may have moved under a still pointer
+      flick.preview = flickNow(flick.active);
+      g = flick.active.grabW; c = flick.active.curW;
+    } else if (flick.fadeT0 && flick.fade) {
       const k = reduced ? 1 : (now - flick.fadeT0) / FLICK_FADE_MS;
-      if (k >= 1) { flick.fadeT0 = 0; flick.fadeFrom = null; flickArrow.group.visible = false; flickLabel.sprite.visible = false; return false; }
+      if (k >= 1) { flick.fadeT0 = 0; flick.fade = null; flickArrow.group.visible = false; flickLabel.sprite.visible = false; return false; }
       op = 0.95 * (1 - k); moving = true;
-    }
-    const shown = flickArrow.set(f.grab, f.cur, mpp);
+      g = body.localToWorld(flick.gW.copy(flick.fade.grabL));
+      c = body.localToWorld(flick.cW.copy(flick.fade.curL));
+    } else { flickArrow.group.visible = false; flickLabel.sprite.visible = false; return false; }
+    const shown = flickArrow.set(g, c, mpp);
     flickArrow.material.opacity = op;
     flickLabel.sprite.visible = shown;
     if (shown) {
       flickLabel.set([[['FLICK', 'rgba(255,255,255,0.72)'], [`${flick.preview >= 0 ? '+' : '-'}${Math.abs(flick.preview / DEG).toFixed(0)} DEG/S`]]]);
-      flickLabel.sprite.position.copy(f.cur);
+      flickLabel.sprite.position.copy(c);
       flickLabel.sprite.material.opacity = op / 0.95;
-      flickLabel.place(pxToScale, f.cur.x >= f.grab.x ? 'right' : 'left', 12);
+      flickLabel.place(pxToScale, c.x >= g.x ? 'right' : 'left', 12);
     }
     return moving;
   }
@@ -504,6 +565,9 @@ export function createScene(canvas, options = {}) {
   canvas.addEventListener('pointerup', onPointerUp);
   canvas.addEventListener('pointercancel', onPointerCancel);
   canvas.addEventListener('lostpointercapture', onPointerCancel);
+  const doc = canvas.ownerDocument || document;
+  doc.addEventListener('pointerup', onDocPointerEnd, true);       // OrbitControls' pointers may end anywhere
+  doc.addEventListener('pointercancel', onDocPointerEnd, true);
   if (keyboard) { if (!canvas.hasAttribute('tabindex')) canvas.tabIndex = 0; canvas.addEventListener('keydown', onKeyDown); }
   if (!canvas.hasAttribute('role')) canvas.setAttribute('role', 'img');
 
@@ -621,16 +685,26 @@ export function createScene(canvas, options = {}) {
         size: { width, height }, contextLost, reduced, mpp,
       };
     },
-    /* state {x, y, theta, alpha, v, thrust, N, phase, t?} SI (m, rad, m/s, N),
-       derived {xcp, xcg, xcpLattice, tags?} in metres from the nose tip. */
+    /* state {x, y, theta, alpha, v, airspeed?, thrust, N, phase, t?, refFromNose?}
+       SI (m, rad, m/s, N): v is the inertial speed, airspeed |v_air| (the relative
+       wind the markers print; v stands in when it is absent), refFromNose the body
+       station (x, y) refers to (flight.state carries all of these).
+       derived {xcp, xcg (m, or a function of t), xref?, xcpLattice, tags?} in metres
+       from the nose tip. flight.state and flight.derived can be passed as they are. */
     setFlight(state, d) {
-      if (state) for (const k of ['x', 'y', 'theta', 'alpha', 'v', 'thrust', 'N', 't']) { const v = state[k]; if (Number.isFinite(v)) flight[k] = v; }
+      if (state) for (const k of ['x', 'y', 'theta', 'alpha', 'v', 'airspeed', 'thrust', 'N', 't']) { const v = state[k]; if (Number.isFinite(v)) flight[k] = v; }
       if (state && typeof state.phase === 'string') flight.phase = state.phase;
+      // the body station (x, y) refers to: the flight's fixed liftoff station, never
+      // the moving CG (that would slide the airframe along its axis by the CG travel)
+      const refNow = state && Number.isFinite(state.refFromNose);
+      if (refNow) derived.xref = state.refFromNose;
       if (d) {
         const xcg = typeof d.xcg === 'function' ? d.xcg(flight.t) : d.xcg;
         if (Number.isFinite(xcg)) derived.xcg = xcg;
-        // the body station (x, y) refers to; without one the CG is taken as it
-        if (Number.isFinite(d.xref)) derived.xref = d.xref; else if (Number.isFinite(xcg)) derived.xref = xcg;
+        if (!refNow) {
+          const x0 = typeof d.xcg === 'function' ? d.xcg(0) : d.xcg;
+          if (Number.isFinite(d.xref)) derived.xref = d.xref; else if (Number.isFinite(x0)) derived.xref = x0;
+        }
         derived.xcp = Number.isFinite(d.xcp) ? d.xcp : derived.xcp;
         if ('xcpLattice' in d) derived.xcpLattice = Number.isFinite(d.xcpLattice) ? d.xcpLattice : NaN;
         if (d.tags) derived.tags = d.tags;
@@ -705,6 +779,9 @@ export function createScene(canvas, options = {}) {
       canvas.removeEventListener('pointerup', onPointerUp);
       canvas.removeEventListener('pointercancel', onPointerCancel);
       canvas.removeEventListener('lostpointercapture', onPointerCancel);
+      doc.removeEventListener('pointerup', onDocPointerEnd, true);
+      doc.removeEventListener('pointercancel', onDocPointerEnd, true);
+      orbitPointers.clear();
       canvas.removeEventListener('keydown', onKeyDown);
       canvas.removeEventListener('webglcontextlost', onLost);
       canvas.removeEventListener('webglcontextrestored', onRestored);

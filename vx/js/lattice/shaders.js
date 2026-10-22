@@ -103,8 +103,13 @@ void main() {
    which happens at a sharp nose or fin tip at incidence. Conserves mass and
    momentum (it only changes the relaxation rate); EST, see lattice.js.
    Outer edges: a cell on an edge where the freestream enters is set to the
-   equilibrium at rho 1 and u_in; any other edge cell copies its inward
-   neighbour (zero-gradient outflow), so any alpha in +-35 degrees works. */
+   equilibrium at rho 1 and u_in; any other edge cell takes the velocity and the
+   non-equilibrium part of its inward neighbour (zero-gradient outflow, the
+   extrapolation of Guo, Zheng and Shi 2002, STD) with the density held at 1.
+   A plain copy of the neighbour let mass pile up once a lifting section's
+   vortices crossed the outflow edges (domain rho - 1 reached 0.2 within 10,000
+   steps with the rocket at 4 degrees); holding rho there anchors the pressure.
+   Any alpha in +-35 degrees works. */
 function stepFrag() {
   /* Generated as straight-line scalar code (no arrays passed to functions),
      which keeps the populations in registers on every compiler, SwiftShader's
@@ -182,10 +187,17 @@ void main() {
   if (x0 || x1 || y0 || y1) {
     bool inflow = (x0 && uU.x > EDGE_EPS) || (x1 && uU.x < -EDGE_EPS) || (y0 && uU.y > EDGE_EPS) || (y1 && uU.y < -EDGE_EPS);
     if (inflow) { writeEq(uU); return; }
+    /* outflow: velocity and non-equilibrium part from the inward neighbour
+       (zero gradient), density held at the freestream value 1 */
     ivec2 q = p + ivec2(x0 ? 1 : x1 ? -1 : 0, y0 ? 1 : y1 ? -1 : 0);
-    o0 = texelFetch(tF0, q, 0);
-    o1 = texelFetch(tF1, q, 0);
-    o2 = vec4(texelFetch(tF2, q, 0).x, 0.0, 0.0, 0.0);
+    vec4 b0 = texelFetch(tF0, q, 0) + REST0;
+    vec4 b1 = texelFetch(tF1, q, 0) + REST1;
+    float b8 = texelFetch(tF2, q, 0).x + REST8;
+    float rn = b0.x + b0.y + b0.z + b0.w + b1.x + b1.y + b1.z + b1.w + b8;
+    vec2 un = vec2(b0.y - b0.w + b1.y - b1.z - b1.w + b8, b0.z - b1.x + b1.y + b1.z - b1.w - b8) / rn;
+    o0 = b0 + vec4(feq(0, 1.0, un) - feq(0, rn, un), feq(1, 1.0, un) - feq(1, rn, un), feq(2, 1.0, un) - feq(2, rn, un), feq(3, 1.0, un) - feq(3, rn, un)) - REST0;
+    o1 = b1 + vec4(feq(4, 1.0, un) - feq(4, rn, un), feq(5, 1.0, un) - feq(5, rn, un), feq(6, 1.0, un) - feq(6, rn, un), feq(7, 1.0, un) - feq(7, rn, un)) - REST1;
+    o2 = vec4(b8 + feq(8, 1.0, un) - feq(8, rn, un) - REST8, 0.0, 0.0, 0.0);
     return;
   }
   vec4 cell = texelFetch(tCell, p, 0);

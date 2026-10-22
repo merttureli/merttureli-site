@@ -182,7 +182,7 @@ export async function validateCylinder(renderer, { steps = 20000, chunk = 50, on
 }
 
 /* Stability gate: the rocket stand-in at the tier 3 grid. */
-export async function validateStability(renderer, { steps = 20000, re = RE_TARGET, uIn = U_REF, alphaDeg = 15, reg = false, machK = null, tier = 3, chunk = 100, checkEvery = 1000, onProgress, onFrame } = {}) {
+export async function validateStability(renderer, { steps = 20000, re = RE_TARGET, uIn = U_REF, alphaDeg = 15, reg = true, machK = null, tier = 3, chunk = 100, checkEvery = 1000, onProgress, onFrame } = {}) {
   const lat = createLattice(renderer, { tier, autoResetOnNaN: false });
   await lat.ready;
   if (lat.fallback) { lat.destroy(); return { case: 'stability', error: lat.fallback }; }
@@ -285,6 +285,7 @@ export function mountLab(doc = document) {
   const query = new URLSearchParams(location.search);
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const validate = query.get('validate');
+  const status = $('status');
   const stage = $('stage'), glCanvas = $('gl'), overlay = $('overlay'), note = $('note'), readout = $('readout'), chart = $('chart'), pre = $('validate');
   const octx = overlay.getContext('2d'), cctx = chart.getContext('2d');
 
@@ -302,7 +303,7 @@ export function mountLab(doc = document) {
   const state = {
     shape: query.get('shape') || 'rocket', alphaDeg: query.has('alpha') ? Number(query.get('alpha')) : 10, uIn: query.has('u') ? Number(query.get('u')) : 0.08,
     re: query.has('re') ? Number(query.get('re')) : RE_TARGET, rate: 0, incidence: 0, view: VIEWS.includes(query.get('view')) ? query.get('view') : 'smoke',
-    tierMode: query.has('tier') ? String(query.get('tier')) : 'auto', spf: 0, running: !reduced, reg: query.get('reg') === '1', smag: true,
+    tierMode: query.has('tier') ? String(query.get('tier')) : 'auto', spf: 0, running: !reduced, reg: query.get('reg') !== '0', smag: true,
   };
   const startTier = state.tierMode === 'auto' ? (reduced ? 1 : Math.max(1, governor.tier)) : Number(state.tierMode);
   const lattice = createLattice(renderer, { tier: startTier });
@@ -379,9 +380,10 @@ export function mountLab(doc = document) {
     octx.fillStyle = C.paper;
     for (const q0 of [0, Math.PI]) { octx.beginPath(); octx.moveTo(X, Y); octx.arc(X, Y, r, q0, q0 + Math.PI / 2); octx.closePath(); octx.fill(); }
     octx.strokeStyle = C.paper; octx.beginPath(); octx.arc(X, Y, r, 0, 2 * Math.PI); octx.stroke();
+    const roomy = box.w >= 600;
     octx.textAlign = 'center'; octx.fillStyle = C.p90;
     const labelAbove = gy(cgy) - Math.max(16, (current.dCells / g.rows) * box.h * 0.5 + 12);
-    octx.fillText(state.shape === 'rocket' ? 'CG / PAGE' : 'REF', X, labelAbove);
+    if (roomy) octx.fillText(state.shape === 'rocket' ? 'CG' : 'REF', X, labelAbove);
     /* CP ring and resultant from the lattice */
     const f = lattice.force;
     if (f && f.finite && f.xcpCells !== null && f.xcpCells > -g.cols && f.xcpCells < 2 * g.cols) {
@@ -392,7 +394,7 @@ export function mountLab(doc = document) {
       const ex = px + (f.fx / mag) * k, ey = py - (f.fy / mag) * k;
       octx.beginPath(); octx.moveTo(px, py); octx.lineTo(ex, ey); octx.stroke();
       octx.lineWidth = 1; octx.fillStyle = C.p90; octx.textAlign = 'center';
-      octx.fillText('CP / SIM', px, py + (f.fy > 0 ? 24 : -16));
+      if (roomy) octx.fillText('CP', px, py + (f.fy > 0 ? 24 : -16));
     }
     /* reference length bar */
     const dpx = current.dCells / g.cols * box.w;
@@ -422,7 +424,8 @@ export function mountLab(doc = document) {
     let lo = -0.5, hi = 0.5;
     for (const [a, b] of hist) { lo = Math.min(lo, a, b); hi = Math.max(hi, a, b); }
     const pad = (hi - lo) * 0.1; lo -= pad; hi += pad;
-    const top = 20, bottom = H - 8, left = 0, right = W;
+    const narrow = W < 560;
+    const top = narrow ? 34 : 20, bottom = H - 8, left = 0, right = W;
     const yv = (v) => bottom - (v - lo) / (hi - lo) * (bottom - top);
     cctx.strokeStyle = C.p18;
     cctx.beginPath(); cctx.moveTo(left, yv(0)); cctx.lineTo(right, yv(0)); cctx.stroke();
@@ -434,9 +437,9 @@ export function mountLab(doc = document) {
       lx += 18 + cctx.measureText(names[i]).width + 16;
     }
     cctx.fillStyle = C.p70;
-    cctx.fillText(`/ LAST ${(hist.length / 10).toFixed(0)} S OF READBACKS AT 10 HZ / SRC: SIM`, lx, 11);
-    cctx.textAlign = 'right';
-    cctx.fillText(`${hi.toFixed(2)} / ${lo.toFixed(2)}`, right, 11);
+    cctx.fillText(narrow ? `/ LAST ${(hist.length / 10).toFixed(0)} S / SIM` : `/ LAST ${(hist.length / 10).toFixed(0)} S OF READBACKS AT 10 HZ / SRC: SIM`, lx, 11);
+    cctx.textAlign = narrow ? 'left' : 'right';
+    cctx.fillText(`RANGE ${hi.toFixed(2)} / ${lo.toFixed(2)}`, narrow ? left : right, narrow ? 25 : 11);
     const n = 240;
     for (const [idx, color] of [[0, C.p90], [1, C.livery]]) {
       cctx.strokeStyle = color; cctx.lineWidth = 2; cctx.beginPath();
@@ -456,7 +459,8 @@ export function mountLab(doc = document) {
     const d = current ? current.dCells : 0;
     const xcpCal = f && f.xcpCells !== null && current ? (f.xcpCells - current.xNose) / d : null;
     const lines = [
-      `ENGINE    D2Q9 / BGK + SMAGORINSKY C ${s.smagorinsky.toFixed(2)} (STD HOU 1996)${s.regularised ? ' / REGULARISED (STD LATT 2006)' : ''} / PULL + MRT x3 / ${s.precision.toUpperCase()}`,
+      `ENGINE    D2Q9 / ONE PULL PASS / MRT x3 / ${s.precision.toUpperCase()}`,
+      `MODEL     BGK + SMAGORINSKY C ${s.smagorinsky.toFixed(2)} (STD HOU 1996)${s.regularised ? ' / REGULARISED (STD LATT 2006)' : ''}${s.machK > 0 ? ' / TAU FLOOR ABOVE |U| 0.15 (EST)' : ''}`,
       `GRID      ${g.cols} x ${g.rows} CELLS / DYE ${s.dye[0]} x ${s.dye[1]} / TIER ${lattice.tier} / ${s.stepsPerFrame} STEPS PER FRAME${lattice.stepsPerFrame ? ' (SET)' : ''}`,
       `RATE      ${s.stepsPerSecond} STEPS/S / ${fmt(s.msPerFrame, 1)} MS PER FRAME / ${fmt(s.issueMs, 2)} MS ISSUE / ${s.shed} SHED (SIM)`,
       `FLOW      U_IN ${fmt(s.uIn)} LU${Math.abs(s.uNow - s.uIn) > 5e-4 ? ` (RAMPING, ${fmt(s.uNow)})` : ''} / ALPHA ${fmt(s.alphaDeg, 1)} DEG / TAU0 ${fmt(s.tau0, 5)}${s.tauNow > s.tau0 + 1e-5 ? ` (START-UP ${fmt(s.tauNow, 3)})` : ''} / NU ${fmt(s.nu, 5)} / RE ${fmt(s.re, 0)} (SIM)`,
@@ -487,12 +491,12 @@ export function mountLab(doc = document) {
     if (!renderer) html = '<b>WebGL2 unavailable</b><br>The lattice needs WebGL2 render targets / the bench shows its controls and readout only';
     else if (lattice.fallback === 'no-float') html = '<b>No float render targets</b><br>This GPU cannot render to RGBA32F or RGBA16F / lattice off';
     else if (lattice.tier === 0) html = '<b>Tier 0</b><br>Lattice off / pick tier 1 to 3 to run the bench';
-    let badge = false;
-    if (!html && stillPending) { html = `Reduced motion / no autoplay / computing a still frame, ${stillDone} of ${STILL_STEPS} steps`; badge = true; }
-    else if (!html && reduced && !state.running) { html = 'Reduced motion / no autoplay / Play or Step runs the bench'; badge = true; }
+    let line = '';
+    if (!html && stillPending) line = `Reduced motion / no autoplay / computing a still frame, ${stillDone} of ${STILL_STEPS} steps`;
+    else if (!html && reduced && !state.running) line = `Reduced motion / no autoplay / a still frame after ${lattice.stats.steps} steps / Play or Step runs the bench`;
+    if (status.textContent !== line) status.textContent = line;
     if (html === noteHtml) return;
     noteHtml = html; note.hidden = !html; note.innerHTML = html;
-    note.classList.toggle('is-badge', badge);
   }
 
   /* ---------- loop ---------- */
@@ -517,7 +521,7 @@ export function mountLab(doc = document) {
     draw(); drawReadout(true);
     while (stillDone < STILL_STEPS && !state.running) {
       stillDone += lattice.step(40) || 40;
-      updateNote();
+      updateNote(); drawReadout(true);
       await nextFrame();
     }
     stillPending = false;
@@ -662,7 +666,7 @@ export function mountLab(doc = document) {
     let result;
     try {
       if (kind === 'cylinder') result = await validateCylinder(renderer, { steps: num('steps', 20000), onProgress: progress, onFrame: stageDraw, smagorinsky: num('c', SMAGORINSKY_C) });
-      else if (kind === 'stability') result = await validateStability(renderer, { steps: num('steps', 20000), re: num('re', RE_TARGET), uIn: num('u', U_REF), alphaDeg: num('alpha', 15), reg: query.get('reg') === '1', machK: query.has('mach') ? num('mach', 0) : null, tier: num('tier', 3), onProgress: progress, onFrame: stageDraw });
+      else if (kind === 'stability') result = await validateStability(renderer, { steps: num('steps', 20000), re: num('re', RE_TARGET), uIn: num('u', U_REF), alphaDeg: num('alpha', 15), reg: query.get('reg') !== '0', machK: query.has('mach') ? num('mach', 0) : null, tier: num('tier', 3), onProgress: progress, onFrame: stageDraw });
       else if (kind === 'bench') result = await validateBench(renderer, { seconds: num('seconds', 4), onProgress: progress });
       else if (kind === 'destroy') result = await validateDestroy(renderer);
       else result = { case: kind, error: 'unknown validation; use cylinder, stability, bench or destroy' };
