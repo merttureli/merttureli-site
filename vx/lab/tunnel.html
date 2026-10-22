@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LAB / 04 / TUNNEL · Mert Tureli</title>
+<meta name="description" content="Test bench for the vx wind tunnel: a WebGL2 stable-fluids solver with the rocket silhouette as an obstacle, a smoke rake, pointer disturbance and field views. Page simulation, not flight data.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0A0A0A">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230A0A0A'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='26' font-weight='600' fill='%23FFFFFF'%3EMT%3C/text%3E%3C/svg%3E">
+<link rel="preload" href="../../assets/charger-explorer/fonts/SpaceGrotesk-var.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="preload" href="../../assets/charger-explorer/fonts/IBMPlexMono-Regular.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/lab.css">
+<link rel="stylesheet" href="../css/tunnel.css">
+<style>
+  /* bench-only layout tweaks; module styles live in tunnel.css */
+  .lab-stage { min-height: 62svh; }
+  .lab-panel { max-height: calc(100svh - 72px); }
+  .lab-panel h2:first-child { margin-top: 0; }
+  @media (max-width: 860px) { .lab-panel { max-height: none; } .lab-stage { min-height: 56svh; } }
+  @media (max-width: 600px) {
+    .lab-head { flex-wrap: wrap; gap: var(--space-3) var(--space-5); }
+    .lab-head h1 { white-space: nowrap; }
+    .lab-head nav { gap: var(--space-4); flex-wrap: wrap; }
+    .tn-hint { max-width: 26ch; }
+  }
+</style>
+</head>
+<body class="lab on-dark">
+<a class="sr-only" href="#panel">Skip to the controls</a>
+<header class="lab-head">
+  <h1>LAB / 04 / TUNNEL</h1>
+  <nav aria-label="Lab navigation">
+    <a href="index.html">All labs</a>
+    <a href="../">VX</a>
+    <a href="/">Production site</a>
+  </nav>
+</header>
+<main class="lab-body">
+  <section class="lab-stage tn-stage" id="stage" aria-label="Wind tunnel test section, a page simulation">
+    <canvas class="tn-canvas" id="tunnel" aria-hidden="true"></canvas>
+    <svg class="tn-overlay" id="overlay" aria-hidden="true" focusable="false"></svg>
+    <p class="tn-hint"><span class="tn-fine">Drag the silhouette to move the obstacle / move the pointer to disturb the flow</span><span class="tn-coarse">Drag the silhouette to move it / swipe sideways to disturb the flow</span></p>
+    <p class="tn-label">Page simulation / not flight data / src: this page</p>
+    <p class="tn-note" id="note" hidden></p>
+    <p class="sr-only" id="sr-state" aria-live="polite"></p>
+  </section>
+  <aside class="lab-panel" id="panel" aria-label="Tunnel parameters">
+    <h2>Flow</h2>
+    <label class="lab-row">U∞ <output id="uInf-out">1.00</output><input type="range" id="uInf" min="0" max="2" step="0.05" value="1"></label>
+    <label class="lab-row">ε vorticity <output id="eps-out">0.06</output><input type="range" id="eps" min="0" max="0.6" step="0.01" value="0.06"></label>
+    <label class="lab-row">Jacobi iterations <output id="jacobi-out">24</output><input type="range" id="jacobi" min="4" max="48" step="1" value="24"></label>
+    <label class="lab-row">Coarse sweeps (W/4) <output id="coarse-out">120</output><input type="range" id="coarse" min="0" max="240" step="4" value="120"></label>
+    <label class="lab-row">Rake ports <output id="rake-out">7</output><input type="range" id="rake" min="0" max="9" step="1" value="7"></label>
+    <label class="lab-row">Dye decay / step <output id="dyeDecay-out">0.996</output><input type="range" id="dyeDecay" min="0.980" max="0.999" step="0.001" value="0.996"></label>
+    <label class="lab-row">Perturbation decay / step <output id="velDecay-out">0.998</output><input type="range" id="velDecay" min="0.980" max="1.000" step="0.001" value="0.998"></label>
+
+    <h2>Quality</h2>
+    <label class="lab-row">Tier <output id="tier-out">3</output><input type="range" id="tier" min="0" max="3" step="1" value="3"></label>
+    <label class="lab-row">Freeze <input type="checkbox" id="freeze"></label>
+
+    <h2>Field</h2>
+    <div class="tn-fields" role="group" aria-label="Field view">
+      <button class="lab-button" type="button" data-field="smoke" aria-pressed="true">Smoke</button>
+      <button class="lab-button" type="button" data-field="velocity" aria-pressed="false">Velocity</button>
+      <button class="lab-button" type="button" data-field="pressure" aria-pressed="false">Pressure</button>
+      <button class="lab-button" type="button" data-field="vorticity" aria-pressed="false">Vorticity</button>
+    </div>
+
+    <h2>Obstacle</h2>
+    <label class="lab-row">Position X <output id="ox-out">0.46</output><input type="range" id="ox" min="0.15" max="0.85" step="0.01" value="0.46"></label>
+    <label class="lab-row">Position Y <output id="oy-out">0.50</output><input type="range" id="oy" min="0.15" max="0.85" step="0.01" value="0.5"></label>
+    <label class="lab-row">Incidence α <output id="alpha-out">0°</output><input type="range" id="alpha" min="-15" max="15" step="1" value="0"></label>
+    <label class="lab-row">Scale <output id="scale-out">1.00</output><input type="range" id="scale" min="0.5" max="1.6" step="0.05" value="1"></label>
+    <div class="tn-buttons">
+      <button class="lab-button" type="button" id="reset-obstacle">Reset obstacle</button>
+      <button class="lab-button" type="button" id="no-obstacle" aria-pressed="false">No obstacle</button>
+    </div>
+
+    <h2>Checks</h2>
+    <div class="tn-buttons">
+      <button class="lab-button" type="button" id="selfcheck">Self-check</button>
+      <button class="lab-button" type="button" id="reset">Reset fields</button>
+      <button class="lab-button" type="button" id="lose">Lose context</button>
+    </div>
+    <p class="tn-kbd"><b>1 – 4</b> field / <b>F</b> freeze / <b>R</b> reset fields / <b>?enc=1</b> forces the RGBA8 packed path / <b>?tier=N</b> starts at a tier / <b>?preroll=0</b> starts from still air with the 1200 ms ramp</p>
+  </aside>
+</main>
+<pre class="lab-readout" id="readout" aria-label="Tunnel readout"></pre>
+
+<script type="module">
+import { bus } from '../js/core/bus.js';
+import { governor } from '../js/core/governor.js';
+import { createTunnel, FIELDS, TIERS } from '../js/tunnel/tunnel.js';
+
+const $ = (id) => document.getElementById(id);
+const query = new URLSearchParams(location.search);
+const canvas = $('tunnel'), stage = $('stage'), overlay = $('overlay'), note = $('note'), readout = $('readout'), sr = $('sr-state');
+const NS = 'http://www.w3.org/2000/svg';
+
+/* ---------- mount ---------- */
+const startTier = query.has('tier') ? Number(query.get('tier')) : governor.tier;
+/* 240 settled steps before the first frame (the tier 1 figure, 4 s of flow at U∞ = 1); the module itself defaults to 0 and the page starts on the ramp */
+const preroll = query.has('preroll') ? Number(query.get('preroll')) : 240;
+const tunnel = createTunnel(canvas, { tier: startTier, forcePacked: query.get('enc') === '1', preroll });
+window.tunnel = tunnel;
+if (query.has('field') && FIELDS.includes(query.get('field'))) tunnel.setField(query.get('field'));
+
+/* ---------- obstacle stand-in: one capsule and four boxes in CSS px ---------- */
+const model = { cx: 0.46, cy: 0.5, alpha: 0, scale: 1, enabled: true };
+const offsets = [0, 1, 2, 3].map(() => ({ dx: 0, dy: 0 }));
+let stageW = 0, stageH = 0;
+function parts() {
+  /* local frame: origin at the body centre, x toward the tail, y down */
+  const L = 0.46 * stageW * model.scale, r = 0.034 * L;
+  return {
+    body: { x1: -L / 2 + r, y1: 0, x2: L / 2 - r, y2: 0, r },
+    boxes: [
+      { cx: L / 2 - 0.075 * L, cy: -(r + 0.022 * L), w: 0.13 * L, h: 0.05 * L, angle: -22, name: 'fin' },
+      { cx: L / 2 - 0.075 * L, cy: (r + 0.022 * L), w: 0.13 * L, h: 0.05 * L, angle: 22, name: 'fin' },
+      { cx: L / 2 + 0.012 * L, cy: 0, w: 0.03 * L, h: 1.5 * r, angle: 0, name: 'cap' },
+      { cx: -0.12 * L, cy: -(r + 0.004 * L), w: 0.07 * L, h: 0.014 * L, angle: 0, name: 'mount' },
+    ],
+  };
+}
+function shapes() {
+  if (!model.enabled || !stageW) return [];
+  const p = parts();
+  const cx = model.cx * stageW, cy = model.cy * stageH;
+  const a = model.alpha * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
+  const rot = (x, y) => [cx + x * c - y * s, cy + x * s + y * c];
+  const [x1, y1] = rot(p.body.x1, p.body.y1), [x2, y2] = rot(p.body.x2, p.body.y2);
+  const list = [{ kind: 'capsule', x1, y1, x2, y2, r: p.body.r }];
+  p.boxes.forEach((b, i) => {
+    const [bx, by] = rot(b.cx, b.cy);
+    const o = offsets[i];
+    /* the spec's box form: x, y top-left, w, h, angle in degrees clockwise about the centre */
+    list.push({ kind: 'box', x: bx + o.dx - b.w / 2, y: by + o.dy - b.h / 2, w: b.w, h: b.h, angle: b.angle + model.alpha });
+  });
+  return list;
+}
+function capsulePath(s) {
+  const dx = s.x2 - s.x1, dy = s.y2 - s.y1, len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len * s.r, ny = dx / len * s.r;
+  return `M${s.x1 + nx} ${s.y1 + ny} L${s.x2 + nx} ${s.y2 + ny} A${s.r} ${s.r} 0 0 0 ${s.x2 - nx} ${s.y2 - ny} L${s.x1 - nx} ${s.y1 - ny} A${s.r} ${s.r} 0 0 0 ${s.x1 + nx} ${s.y1 + ny} Z`;
+}
+let svgShapes = [];
+function renderOverlay() {
+  const list = shapes();
+  overlay.setAttribute('viewBox', `0 0 ${stageW} ${stageH}`);
+  overlay.replaceChildren();
+  svgShapes = [];
+  /* centreline and inflow ticks so the bench reads as a rig */
+  const axis = document.createElementNS(NS, 'line');
+  axis.setAttribute('class', 'tn-axis');
+  axis.setAttribute('x1', 0); axis.setAttribute('x2', stageW);
+  axis.setAttribute('y1', model.cy * stageH); axis.setAttribute('y2', model.cy * stageH);
+  overlay.append(axis);
+  const tick = document.createElementNS(NS, 'text');
+  tick.setAttribute('class', 'tn-tick');
+  tick.setAttribute('x', 24); tick.setAttribute('y', model.cy * stageH - 8);
+  tick.textContent = `U∞ → / α ${model.alpha}°`;
+  overlay.append(tick);
+  list.forEach((s, i) => {
+    let el;
+    if (s.kind === 'capsule') { el = document.createElementNS(NS, 'path'); el.setAttribute('d', capsulePath(s)); }
+    else {
+      el = document.createElementNS(NS, 'rect');
+      el.setAttribute('x', s.x); el.setAttribute('y', s.y); el.setAttribute('width', s.w); el.setAttribute('height', s.h);
+      el.setAttribute('transform', `rotate(${s.angle} ${s.x + s.w / 2} ${s.y + s.h / 2})`);
+    }
+    el.setAttribute('class', 'tn-shape');
+    el.dataset.index = String(i);
+    overlay.append(el);
+    svgShapes.push(el);
+  });
+}
+function pushObstacle() { renderOverlay(); tunnel.setObstacle(shapes()); }
+function measureStage() {
+  const r = stage.getBoundingClientRect();
+  stageW = r.width; stageH = r.height;
+}
+
+/* dragging: the capsule moves the whole silhouette, a box moves on its own */
+let drag = null;
+overlay.addEventListener('pointerdown', (e) => {
+  const el = e.target.closest('.tn-shape');
+  if (!el) return;
+  e.preventDefault();
+  const index = Number(el.dataset.index);
+  drag = { index, x: e.clientX, y: e.clientY, cx: model.cx, cy: model.cy, dx: index ? offsets[index - 1].dx : 0, dy: index ? offsets[index - 1].dy : 0, el };
+  el.classList.add('is-dragging'); stage.classList.add('is-dragging');
+  el.setPointerCapture(e.pointerId);
+});
+overlay.addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (drag.index === 0) {
+    model.cx = Math.min(0.95, Math.max(0.05, drag.cx + dx / stageW));
+    model.cy = Math.min(0.95, Math.max(0.05, drag.cy + dy / stageH));
+    sync('ox', model.cx, 2); sync('oy', model.cy, 2);
+  } else {
+    offsets[drag.index - 1] = { dx: drag.dx + dx, dy: drag.dy + dy };
+  }
+  pushObstacle();
+  svgShapes[drag.index]?.classList.add('is-dragging');
+});
+function endDrag(e) {
+  if (!drag) return;
+  svgShapes[drag.index]?.classList.remove('is-dragging');
+  stage.classList.remove('is-dragging');
+  drag = null;
+}
+overlay.addEventListener('pointerup', endDrag);
+overlay.addEventListener('pointercancel', endDrag);
+
+/* pointer disturbance: velocity from consecutive samples, CSS px per second */
+let last = null;
+stage.addEventListener('pointermove', (e) => {
+  if (drag) { last = null; return; }
+  const now = performance.now();
+  const r = canvas.getBoundingClientRect();
+  const x = e.clientX - r.left, y = e.clientY - r.top;
+  if (last && now - last.t > 0) {
+    const dt = Math.min(now - last.t, 100) / 1000;
+    tunnel.setPointer(x, y, (x - last.x) / dt, (y - last.y) / dt);
+  }
+  last = { x, y, t: now };
+});
+stage.addEventListener('pointerleave', () => { last = null; });
+
+/* ---------- controls ---------- */
+function sync(id, value, digits) {
+  const input = $(id), out = $(id + '-out');
+  if (input) input.value = String(value);
+  if (out) out.value = typeof digits === 'number' ? Number(value).toFixed(digits) : String(value);
+}
+function bindRange(id, digits, apply) {
+  const input = $(id), out = $(id + '-out');
+  const show = () => { out.value = digits === 'deg' ? `${input.value}°` : Number(input.value).toFixed(digits); };
+  input.addEventListener('input', () => { show(); apply(Number(input.value)); });
+  show();
+}
+bindRange('uInf', 2, (v) => tunnel.setFreestream(v));
+bindRange('eps', 2, (v) => { tunnel.params.eps = v; });
+bindRange('jacobi', 0, (v) => { tunnel.params.jacobi = v; });
+bindRange('coarse', 0, (v) => { tunnel.params.coarse = v; });
+bindRange('rake', 0, (v) => { tunnel.params.rake = v; });
+bindRange('dyeDecay', 3, (v) => { tunnel.params.dyeDecay = v; });
+bindRange('velDecay', 3, (v) => { tunnel.params.velDecay = v; });
+bindRange('tier', 0, (v) => { tunnel.setTier(v); sync('jacobi', tunnel.params.jacobi, 0); sync('coarse', tunnel.params.coarse, 0); updateNote(); });
+bindRange('ox', 2, (v) => { model.cx = v; pushObstacle(); });
+bindRange('oy', 2, (v) => { model.cy = v; pushObstacle(); });
+bindRange('alpha', 'deg', (v) => { model.alpha = v; pushObstacle(); });
+bindRange('scale', 2, (v) => { model.scale = v; pushObstacle(); });
+$('freeze').addEventListener('change', (e) => tunnel.freeze(e.target.checked));
+const fieldButtons = [...document.querySelectorAll('[data-field]')];
+function setField(f) {
+  tunnel.setField(f);
+  for (const b of fieldButtons) b.setAttribute('aria-pressed', String(b.dataset.field === f));
+}
+for (const b of fieldButtons) b.addEventListener('click', () => setField(b.dataset.field));
+$('reset-obstacle').addEventListener('click', () => {
+  model.cx = 0.46; model.cy = 0.5; model.alpha = 0; model.scale = 1; model.enabled = true;
+  offsets.forEach((o) => { o.dx = 0; o.dy = 0; });
+  sync('ox', 0.46, 2); sync('oy', 0.5, 2); sync('alpha', 0); $('alpha-out').value = '0°'; sync('scale', 1, 2);
+  $('no-obstacle').setAttribute('aria-pressed', 'false');
+  pushObstacle();
+});
+$('no-obstacle').addEventListener('click', (e) => {
+  model.enabled = !model.enabled;
+  e.currentTarget.setAttribute('aria-pressed', String(!model.enabled));
+  pushObstacle();
+});
+$('reset').addEventListener('click', () => tunnel.reset());
+$('lose').addEventListener('click', () => { if (!tunnel.loseContext(1500)) sr.textContent = 'WEBGL_lose_context is not available'; });
+let lastCheck = null;
+$('selfcheck').addEventListener('click', runCheck);
+async function runCheck() {
+  let r = null;
+  try { r = await tunnel.selfCheck(); } catch { r = null; }
+  if (!r) return;
+  lastCheck = r;
+  console.info('[tunnel lab] divergence RMS 1/s: before projection %s, after %s, interior before %s after %s, %d fluid cells', r.before.toFixed(4), r.after.toFixed(4), r.beforeInterior.toFixed(4), r.afterInterior.toFixed(4), r.cells);
+  render();
+}
+addEventListener('keydown', (e) => {
+  const t = e.target;
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+  if (e.key >= '1' && e.key <= '4') setField(FIELDS[Number(e.key) - 1]);
+  else if (e.key === 'f' || e.key === 'F') { $('freeze').checked = !$('freeze').checked; tunnel.freeze($('freeze').checked); }
+  else if (e.key === 'r' || e.key === 'R') tunnel.reset();
+});
+
+/* visibility: no stepping while the stage is off screen */
+if ('IntersectionObserver' in window) {
+  new IntersectionObserver((entries) => { for (const en of entries) tunnel.setVisible(en.isIntersecting); }, { threshold: 0 }).observe(stage);
+}
+if ('ResizeObserver' in window) new ResizeObserver(() => { measureStage(); pushObstacle(); }).observe(stage);
+else addEventListener('resize', () => { measureStage(); pushObstacle(); });
+
+/* ---------- notes and readout ---------- */
+let lastNote = null;
+function updateNote() {
+  const s = tunnel.stats;
+  const gov = bus.state['governor:tier'];
+  let html = '';
+  if (tunnel.fallback) html = '<b>WebGL2 unavailable</b><br>Tunnel off<br>The page keeps its ink ground and the stage draws the rocket poster';
+  else if (tunnel.tier === 0) html = `<b>Tier 0</b><br>No decorative motion / tunnel off<br>${(gov && gov.reason === 'prefers-reduced-motion') || governor.ceiling === 0 ? 'prefers-reduced-motion is on / the tier slider still runs the bench' : 'raise the tier slider to run the bench'}`;
+  else if (s.lost) html = '<b>Context lost</b><br>Waiting for the browser to restore it';
+  if (html === lastNote) return;
+  lastNote = html;
+  note.hidden = !html;
+  if (html) note.innerHTML = `<span>${html}</span>`;
+}
+const fmt = (v, d = 2) => (Number.isFinite(v) ? v.toFixed(d) : '–');
+/* the velocity texture's quantum at U∞: a divergence below about one ulp per cell is format noise */
+function ulpNote() {
+  const u = tunnel.stats.uInfCells;
+  if (!(u > 0)) return 'ULP –';
+  const bits = tunnel.stats.path.startsWith('PACKED') ? 15 : 10;      /* 16 bit fixed over ±256 vs half-float mantissa */
+  const ulp = tunnel.stats.path.startsWith('PACKED') ? 512 / 65535 : Math.pow(2, Math.floor(Math.log2(u)) - bits);
+  return `VEL ULP AT U∞ ${ulp.toFixed(4)} CELL/S`;
+}
+let lastText = '';
+function render() {
+  const s = tunnel.stats, p = tunnel.params, g = governor.stats, gov = bus.state['governor:tier'];
+  const spec = TIERS[tunnel.tier] || TIERS[0];
+  const pxPerCell = s.grid[0] ? (canvas.width / s.grid[0]).toFixed(2) : '–';
+  const lines = [
+    `GRID      ${s.grid[0]} × ${s.grid[1]} CELL / DYE ${s.dyeGrid[0]} × ${s.dyeGrid[1]} / ${pxPerCell} DEVICE PX PER CELL / CANVAS ${canvas.width} × ${canvas.height} PX`,
+    `PATH      ${s.path}${s.renderer ? ' / ' + s.renderer.toUpperCase().slice(0, 56) : ''}`,
+    `STEP      ${s.steps} STEPS (${s.preroll} PRE-ROLLED) / ${fmt(s.stepMs)} MS CPU PER STEP / ${s.drawsPerStep} DRAWS PER STEP / ${fmt(s.fps, 1)} FPS / ${s.frames} FRAMES`,
+    `U∞        ${fmt(p.uInf)} × 0.14 WIDTH/S = ${fmt(s.uInfCells, 1)} CELL/S / ${fmt(s.cfl)} CELL/STEP / CFL MAX 1.00 / RAMP 1200 MS`,
+    `SOLVER    JACOBI ${p.jacobi} + ${p.coarse} COARSE / ${s.maccormack ? 'MACCORMACK' : 'BILINEAR'} / ε ${fmt(p.eps)} / RAKE ${p.rake} PORTS / DYE DECAY ${fmt(p.dyeDecay, 3)} / VEL DECAY ${fmt(p.velDecay, 3)}`,
+    lastCheck
+      ? `DIV RMS   ALL FLUID ${fmt(lastCheck.before, 3)} → ${fmt(lastCheck.after, 3)} 1/S (×${fmt(lastCheck.after / Math.max(lastCheck.before, 1e-9), 2)}) / INTERIOR ${fmt(lastCheck.beforeInterior, 3)} → ${fmt(lastCheck.afterInterior, 3)} 1/S (×${fmt(lastCheck.afterInterior / Math.max(lastCheck.beforeInterior, 1e-9), 2)}) / MAX ${fmt(lastCheck.maxAfter, 2)} AT ${lastCheck.maxAt[0]},${lastCheck.maxAt[1]} / ${lastCheck.cells} CELLS / STEP ${lastCheck.step} / ${ulpNote()}`
+      : 'DIV RMS   – / RUN SELF-CHECK (AUTOMATIC AFTER 180 STEPS)',
+    lastCheck && lastCheck.profile && lastCheck.profile.length
+      ? `FLUX      MEAN U AT X/W ${lastCheck.profile.map((q) => `${q.x.toFixed(1)}:${q.u.toFixed(1)}`).join(' / ')} CELL/S (INLET ${fmt(lastCheck.uInfCells, 1)})`
+      : 'FLUX      \u2013',
+    `STATE     TIER ${tunnel.tier} ${spec.label.toUpperCase()} / FIELD ${p.field.toUpperCase()} / ${s.running ? 'RUNNING' : s.frozen ? 'FROZEN' : 'STOPPED'} / ${s.visible ? 'VISIBLE' : 'OFF SCREEN'} / CONTEXT ${s.lost ? 'LOST' : 'OK'} / OBSTACLE ${shapes().length} SHAPES`,
+    `GOVERNOR  TIER ${g.tier} OF ${g.ceiling} / P50 ${fmt(g.p50Ms, 1)} MS / P95 ${fmt(g.p95Ms, 1)} MS / ${(gov && gov.reason ? gov.reason : '').toUpperCase()}`,
+  ];
+  const text = lines.join('\n');
+  if (text !== lastText) { readout.textContent = text; lastText = text; }
+  updateNote();
+}
+let checked = false;
+bus.on('tunnel:stats', (d) => {
+  if (!checked && d.steps >= 180 && !tunnel.fallback) { checked = true; runCheck(); }
+  sr.textContent = `Tunnel ${d.running ? 'running' : 'stopped'}, ${d.steps} steps, grid ${d.grid[0]} by ${d.grid[1]} cells, field ${d.field}`;
+});
+setInterval(render, 250);
+
+/* ---------- go ---------- */
+measureStage();
+pushObstacle();
+sync('tier', tunnel.tier, 0);
+sync('jacobi', tunnel.params.jacobi, 0);
+sync('coarse', tunnel.params.coarse, 0);
+sync('uInf', tunnel.params.uInf, 2);
+setField(tunnel.params.field);
+updateNote();
+render();
+bus.on('governor:tier', updateNote);
+</script>
+</body>
+</html>

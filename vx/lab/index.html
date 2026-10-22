@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LAB / 00 / INDEX · Mert Tureli VX</title>
+<meta name="robots" content="noindex">
+<meta name="description" content="Every engine of the vx build running alone with its parameters exposed.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230A0A0A'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='26' font-weight='600' fill='%23FFFFFF'%3EMT%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/lab.css">
+<style>
+  .lab-index { display: grid; grid-template-rows: auto 1fr auto; }
+  .lab-list { list-style: none; margin: 0; padding: var(--space-6) var(--page-margin); display: grid; gap: 0; max-width: 1100px; }
+  .lab-list li { display: grid; grid-template-columns: 56px minmax(140px, 220px) minmax(0, 1fr) auto; gap: var(--space-4); align-items: baseline; padding: var(--space-4) 0; border-top: 1px solid var(--paper-a18); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); }
+  .lab-list li:last-child { border-bottom: 1px solid var(--paper-a18); }
+  .lab-list .n { color: var(--paper-a45); font-variant-numeric: tabular-nums; }
+  .lab-list a { color: var(--paper); text-decoration: none; border-bottom: 1px solid var(--paper-a45); padding-bottom: 2px; transition: border-color var(--dur-2) var(--ease-out); }
+  .lab-list a:hover { border-bottom-color: var(--paper); }
+  .lab-list .line { letter-spacing: .06em; text-transform: none; color: var(--paper-a70); }
+  .lab-list .files { color: var(--paper-a45); letter-spacing: .04em; text-transform: none; white-space: nowrap; }
+  .lab-intro { padding: var(--space-6) var(--page-margin) 0; max-width: 72ch; font-size: var(--fs-body); line-height: var(--lh-body); color: var(--paper-a90); }
+  .lab-foot { padding: var(--space-5) var(--page-margin); border-top: 1px solid var(--paper-a18); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a45); }
+  @media (max-width: 720px) {
+    .lab-list li { grid-template-columns: 40px minmax(0, 1fr); }
+    .lab-list .line { grid-column: 2; }
+    .lab-list .files { grid-column: 2; white-space: normal; }
+  }
+  @media (prefers-reduced-motion: reduce) { .lab-list a { transition: none; } }
+</style>
+</head>
+<body class="on-dark">
+<div class="lab lab-index">
+  <header class="lab-head">
+    <h1>LAB / 00 / INDEX</h1>
+    <nav aria-label="Lab navigation"><a href="../">VX</a><a href="/">Production site</a></nav>
+  </header>
+  <main>
+    <p class="lab-intro">Every engine of the vx build runs alone here with its parameters exposed as controls and its internal state printed beneath. The page at <a href="../" style="color: inherit">/vx/</a> is these engines wired together.</p>
+    <ol class="lab-list">
+      <li><span class="n">01</span><a href="stage.html">Stage</a><span class="line">The CHARGER flight model rendered live from the published assembly: pad view, the eight-station descent, the explode schedule, the silhouette.</span><span class="files">js/stage/</span></li>
+      <li><span class="n">02</span><a href="callouts.html">Callouts</a><span class="line">Leader-line part callouts from the explorer's part stories, solved on two rails or in a bottom sheet, on a synthetic or the real stage.</span><span class="files">js/callouts.js</span></li>
+      <li><span class="n">03</span><a href="tunnel.html">Tunnel</a><span class="line">The GPU wind tunnel behind the hero: stable fluids on ping-pong framebuffers with a draggable obstacle and four field views. Page simulation, not flight data.</span><span class="files">js/tunnel/</span></li>
+      <li><span class="n">04</span><a href="boot.html">Boot</a><span class="line">The T-minus sequence: every awaited step with its measured milliseconds while a pen plotter draws the rocket from the bytes as they arrive.</span><span class="files">js/boot.js, js/plotter.js</span></li>
+      <li><span class="n">05</span><a href="instruments.html">Instruments</a><span class="line">Altimeter, vertical speed indicator and engine gauge, reading scroll depth, scroll velocity and frame time. SRC: SCROLL and SRC: RAF.</span><span class="files">js/instruments.js</span></li>
+      <li><span class="n">06</span><a href="telemetry.html">Telemetry</a><span class="line">Ten cells and two strip charts of page instrumentation: frame time, long tasks, scroll, viewport, network, GL, governor, input, memory.</span><span class="files">js/telemetry.js</span></li>
+      <li><span class="n">07</span><a href="console.html">Console</a><span class="line">The command console with a manifest of the repository's real files and their real byte sizes, fuzzy matching, history and a calendar of the roles.</span><span class="files">js/console.js, js/data/vfs.js</span></li>
+      <li><span class="n">08</span><a href="hid.html">HID bench</a><span class="line">Three gauges reading any connected controller through the Gamepad API, with the measured poll rate. SRC: GAMEPAD API.</span><span class="files">js/hid.js</span></li>
+      <li><span class="n">09</span><a href="contact-sheet.html">Contact sheet</a><span class="line">A 36-cell contact sheet of 35 frames with a loupe that samples the files at native resolution, a viewer and a PNG export.</span><span class="files">js/contact-sheet.js, js/data/frames.js</span></li>
+      <li><span class="n">10</span><a href="dimension.html">Dimensions</a><span class="line">Live dimension lines in CSS px and millimetres on any element carrying data-dim, with boxed basic dimensions and their deviation.</span><span class="files">js/dimension.js</span></li>
+      <li><span class="n">11</span><a href="timeline.html">Timeline and ladder</a><span class="line">The mission timeline on a real month axis, the launch weekend on an hour track, and the flight-event ladder with every figure sourced.</span><span class="files">js/timeline.js, js/ladder.js, js/data/mission.js</span></li>
+    </ol>
+  </main>
+  <footer class="lab-foot">Every number on these pages is measured from the page in your browser. Nothing is sent anywhere.</footer>
+</div>
+</body>
+</html>

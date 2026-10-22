@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en" class="on-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LAB / 08 / CONSOLE</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/lab.css">
+<link rel="stylesheet" href="../css/console.css">
+<style>
+  .lab-stage { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: var(--space-4); padding: var(--space-5) var(--page-margin); align-content: start; }
+  .stage-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a45); }
+  .stage-bar b { font-weight: 400; color: var(--paper); }
+  .stage-bar .spacer { flex: 1; }
+  .stage-bar input[type="text"] { width: 160px; min-height: 36px; padding: 0 var(--space-3); border: 1px solid var(--paper-a18); border-radius: var(--radius-sm); background: none; color: var(--paper); font: inherit; letter-spacing: 0; text-transform: none; }
+  #host { height: var(--host-h, 480px); min-height: 240px; width: min(100%, 1120px); margin: 0 auto; }
+  #host:empty { display: grid; place-items: center; border: 1px dashed var(--paper-a18); border-radius: var(--radius-md); color: var(--paper-a45); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; }
+  #host:empty::before { content: "Dialog mode / press / or Ctrl K, or the open button above"; text-align: center; padding: var(--space-4); }
+  .lab-panel form { display: contents; }
+  .lab-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .lab-note { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: .08em; line-height: 1.6; color: var(--paper-a45); margin: 0; }
+  .lab-readout { white-space: pre-wrap; overflow-wrap: anywhere; }
+  @media (max-width: 860px) { .lab-stage { padding: var(--space-5) var(--page-margin); } }
+  @media (max-width: 560px) {
+    .lab-head { flex-wrap: wrap; gap: var(--space-2) var(--space-4); }
+    .lab-head h1, .lab-head nav a { white-space: nowrap; }
+    .stage-bar input[type="text"] { width: 100%; }
+    #host { height: var(--host-h, 420px); }
+  }
+</style>
+</head>
+<body class="lab">
+  <header class="lab-head">
+    <h1>LAB / 08 / CONSOLE</h1>
+    <nav aria-label="Lab navigation"><a href="./">Lab index</a><a href="../">VX</a><a href="/">The production site</a></nav>
+  </header>
+  <div class="lab-body">
+    <div class="lab-stage">
+      <div class="stage-bar">
+        <span>Mode <b id="mode-out">inline</b></span>
+        <span>Cwd <b id="cwd-out">~</b></span>
+        <span class="spacer"></span>
+        <label>Line <input id="line" type="text" value="ls ~/projects" aria-label="Command line to run"></label>
+        <button class="lab-button" id="run-line" type="button">Run</button>
+        <button class="lab-button" id="opener" type="button" data-console-open>Open console</button>
+      </div>
+      <div id="host"></div>
+    </div>
+    <aside class="lab-panel" aria-label="Controls">
+      <h2>Mount</h2>
+      <form id="form">
+        <label class="lab-row">Inline in the stage <input id="inline" type="checkbox" checked></label>
+        <label class="lab-row">Height px <output id="height-out">480</output><input id="height" type="range" min="240" max="760" step="20" value="480"></label>
+        <label class="lab-row">Hotkeys / and Ctrl K <input id="hotkeys" type="checkbox" checked></label>
+        <label class="lab-row">Navigate on open <input id="navigate" type="checkbox"></label>
+        <h2>Matcher and log</h2>
+        <label class="lab-row">Suggestions <output id="suggest-out">5</output><input id="suggest" type="range" min="1" max="8" step="1" value="5"></label>
+        <label class="lab-row">Virtualise from <output id="virtual-out">500</output><input id="virtual" type="range" min="50" max="1000" step="50" value="500"></label>
+        <h2>Samples</h2>
+        <div class="lab-actions">
+          <button class="lab-button" type="button" data-run="help">help</button>
+          <button class="lab-button" type="button" data-run="tree ~/cad">tree ~/cad</button>
+          <button class="lab-button" type="button" data-run="cat charger">cat charger</button>
+          <button class="lab-button" type="button" data-run="cal 2026">cal 2026</button>
+          <button class="lab-button" type="button" data-run="flood 1200">flood 1200</button>
+          <button class="lab-button" type="button" data-run="clear">clear</button>
+        </div>
+        <h2>Governor</h2>
+        <label class="lab-row">Tier <output id="tier-out">auto</output><select id="tier"><option value="">auto</option><option value="3">3 full</option><option value="2">2 reduced</option><option value="1">1 minimal</option><option value="0">0 static</option></select></label>
+        <h2>Bus</h2>
+        <label class="lab-row">Log console:run <input id="log" type="checkbox"></label>
+      </form>
+      <p class="lab-note">Extra commands registered here: echo, tier, flood. Keyboard path: press / anywhere, type, Tab accepts the first suggestion, Enter runs, Up walks history, Esc closes and returns focus. URL: ?dialog=1 mounts as a dialog, ?tier=N pins the governor.</p>
+    </aside>
+  </div>
+  <pre class="lab-readout" id="readout" aria-live="off">console / mounting</pre>
+<script type="module">
+  import { bus } from '../js/core/bus.js';
+  import { governor } from '../js/core/governor.js';
+  import { mountConsole } from '../js/console.js';
+
+  const $ = (id) => document.getElementById(id);
+  const host = $('host'), readout = $('readout'), stage = document.querySelector('.lab-stage');
+  const inlineBox = $('inline'), height = $('height'), hotkeys = $('hotkeys'), navigate = $('navigate');
+  const suggest = $('suggest'), virtual = $('virtual'), tierSel = $('tier'), log = $('log'), line = $('line');
+  let api = null, events = 0, last = null, opens = 0, closes = 0;
+
+  /* Sample commands the page would not ship: echo, tier (pins the governor) and flood (fills the log to exercise virtualisation). */
+  const extras = [
+    { name: 'echo', args: '<text>', help: 'Print the arguments', run(argv, io) { io.print(argv.join(' ') || ''); } },
+    { name: 'tier', args: '[0-3 | auto]', help: 'Read or pin the governor tier',
+      complete: (a) => ['0', '1', '2', '3', 'auto'].filter((t) => t.startsWith(a)),
+      run([t], io) {
+        if (t === undefined) return io.print(`Tier ${governor.tier} / ceiling ${governor.ceiling} / ${governor.stats.pinned ? 'pinned' : 'auto'} / p50 ${governor.stats.p50Ms.toFixed(1)} ms`);
+        if (t === 'auto') { governor.pin(null); tierSel.value = ''; return io.print('Governor unpinned.'); }
+        const n = parseInt(t, 10);
+        if (!(n >= 0 && n <= 3)) return io.error('Usage: tier <0-3 | auto>');
+        governor.pin(n); tierSel.value = String(n);
+        io.print(`Governor pinned at tier ${n}.`, { className: 'con-line--ok' });
+      } },
+    { name: 'flood', args: '[lines]', help: 'Print N numbered lines (virtualisation test)',
+      run([n], io) {
+        const count = Math.min(5000, Math.max(1, parseInt(n, 10) || 1000));
+        const t0 = performance.now();
+        for (let i = 1; i <= count; i++) io.print(`${String(i).padStart(5, '0')}  line ${i} of ${count}`, { className: i % 100 === 0 ? 'con-line--ok' : undefined });
+        io.print(`${count} lines queued in ${(performance.now() - t0).toFixed(1)} ms`, { className: 'con-line--dim' });
+      } },
+  ];
+
+  function mount() {
+    api?.destroy();
+    const inline = inlineBox.checked;
+    api = mountConsole({
+      commands: extras,
+      inline: inline ? host : null,
+      hotkeys: hotkeys.checked,
+      navigate: navigate.checked ? 'auto' : false,
+      suggestMax: +suggest.value,
+      virtualFrom: +virtual.value,
+    });
+    window.vxConsole = api;   // for the browser console and the Playwright run
+    $('mode-out').textContent = inline ? 'inline' : 'dialog';
+    render();
+  }
+  mount();
+
+  inlineBox.addEventListener('change', mount);
+  hotkeys.addEventListener('change', () => api.configure({ hotkeys: hotkeys.checked }));
+  navigate.addEventListener('change', () => api.configure({ navigate: navigate.checked ? 'auto' : false }));
+  height.addEventListener('input', () => { $('height-out').value = height.value; stage.style.setProperty('--host-h', `${height.value}px`); });
+  suggest.addEventListener('input', () => { $('suggest-out').value = suggest.value; api.configure({ suggestMax: +suggest.value }); render(); });
+  virtual.addEventListener('input', () => { $('virtual-out').value = virtual.value; api.configure({ virtualFrom: +virtual.value }); render(); });
+  $('run-line').addEventListener('click', () => { api.open(); api.run(line.value); });
+  line.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); api.open(); api.run(line.value); } });
+  for (const b of document.querySelectorAll('[data-run]')) b.addEventListener('click', () => { api.open(); api.run(b.dataset.run); });
+
+  tierSel.addEventListener('change', () => { governor.pin(tierSel.value === '' ? null : +tierSel.value); });
+  governor.subscribe(({ tier, stats }) => { $('tier-out').value = `${tier}${stats.pinned ? ' pin' : ''}`; render(); });
+
+  bus.on('console:run', (d) => { events++; last = d; if (log.checked) console.log('console:run', d); render(); });
+  bus.on('console:open', () => { opens++; render(); });
+  bus.on('console:close', () => { closes++; render(); });
+
+  function render() {
+    if (!api) return;
+    const s = api.state;
+    $('cwd-out').textContent = s.cwd;
+    const out = last ? last.output.split('\n') : [];
+    const head = out.slice(0, 6).join('\n') + (out.length > 6 ? `\n… ${out.length - 6} more lines` : '');
+    // Text nodes only: cwd, suggestion labels, args and output are reader input and must never reach innerHTML.
+    const text =
+      ` / ${s.inline ? 'inline' : 'dialog'}  open ${s.open}  cwd ${s.cwd}  tier ${s.tier ?? '--'}  hotkeys ${s.hotkeys}  navigate ${s.navigate}\n` +
+      `log      entries ${s.entries}  rendered ${s.rendered[0]}..${s.rendered[1]}  virtual ${s.virtual} (from ${s.virtualFrom})  follow ${s.follow}  row ${s.rowH} px\n` +
+      `matcher  suggestions ${s.suggestMax} max  shown [${s.suggestions.join(', ')}]  index ${s.suggestionIndex}  history ${s.history}  runs ${s.runs}\n` +
+      `bus      console:open x${opens}  console:close x${closes}  console:run x${events}\n` +
+      `last     ${last ? `${last.name} [${last.args.map((a) => JSON.stringify(a)).join(', ')}]` : '--'}\n` +
+      (last ? head : '');
+    const b = document.createElement('b');
+    b.textContent = 'console';
+    readout.replaceChildren(b, document.createTextNode(text));
+  }
+  addEventListener('pagehide', () => api?.destroy(), { once: true });
+
+  // URL presets
+  const q = new URLSearchParams(location.search);
+  if (q.has('tier') && q.get('tier') !== '') { tierSel.value = q.get('tier'); governor.pin(+q.get('tier')); }
+  if (q.get('dialog') === '1') { inlineBox.checked = false; mount(); }
+  render();
+</script>
+</body>
+</html>

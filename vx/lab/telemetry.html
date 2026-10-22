@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en" class="on-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lab / Telemetry · Mert Tureli VX</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0A0A0A">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/lab.css">
+<link rel="stylesheet" href="../css/telemetry.css">
+<style>
+  /* Lab-only layout: the wall at full size, a ticker instance beneath it, then a scroll runway so SCROLL V has something to read. */
+  .lab-panel { position: sticky; top: 0; align-self: start; max-height: 100svh; }
+  .lab-stage { display: grid; align-content: start; gap: var(--space-6); padding: var(--space-5) var(--page-margin) var(--space-7); overflow: visible; }
+  .tlab-row { display: grid; gap: var(--space-3); }
+  .tlab-row > .meta { color: var(--paper-a70); }
+  /* the ticker row stays pinned to the top of the stage, so SCROLL V and the velocity strip (through the sheet) read live while the runway scrolls */
+  .tlab-ticker-row { position: sticky; top: 0; z-index: 2; margin: 0 calc(-1 * var(--space-3)); padding: var(--space-3) var(--space-3) var(--space-4); background: var(--ink-900); border-bottom: 1px solid var(--paper-a18); }
+  .tlab-wall-row { grid-template-columns: minmax(0, 440px) minmax(0, 1fr); gap: var(--space-5) var(--space-7); align-items: start; }
+  .tlab-wall-row > .meta { grid-column: 1 / -1; }
+  .tlab-aside { display: grid; gap: var(--space-3); max-width: var(--measure-narrow); color: var(--paper-a70); font-size: var(--fs-body-sm); }
+  .tlab-aside h2 { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps-wide); text-transform: uppercase; font-weight: 400; color: var(--paper-a70); }
+  .tlab-aside dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--space-1) var(--space-4); margin: 0; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.06em; line-height: 1.6; }
+  .tlab-aside dt { color: var(--paper); text-transform: uppercase; letter-spacing: var(--ls-caps); }
+  .tlab-aside dd { margin: 0; color: var(--paper-a70); }
+  #ticker { border: 1px solid var(--paper-a18); border-radius: var(--radius-md); overflow: hidden; }
+  #ticker .tel-ticker { border-bottom: 0; }
+  .tlab-runway { display: grid; border-top: 1px solid var(--paper-a18); }
+  .tlab-band { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-4); height: 240px; padding: var(--space-4) 0; border-bottom: 1px solid var(--paper-a18); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); }
+  .tlab-band b { font-weight: 400; color: var(--paper-a18); font-family: var(--font-display); font-size: var(--fs-display-3); letter-spacing: var(--ls-display); line-height: 1; }
+  .lab-row.tlab-seg { grid-template-columns: repeat(3, 1fr); }
+  .lab-row.tlab-seg .lab-button { min-height: 32px; padding: 0 var(--space-2); }
+  .lab-row.tlab-act { grid-template-columns: 1fr 1fr; }
+  .tlab-note { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.04em; line-height: 1.6; color: var(--paper-a70); }
+  .lab-stage .lab-readout { min-height: 160px; padding: var(--space-4); border: 1px solid var(--paper-a18); border-radius: var(--radius-md); }
+  .lab-readout i { font-style: normal; color: var(--paper-a70); }
+  @media (max-width: 860px) {
+    .lab-panel { position: static; max-height: none; order: -1; border-top: 0; border-bottom: 1px solid var(--paper-a18); }
+    .tlab-wall-row { grid-template-columns: 1fr; }
+    .tlab-band { height: 200px; }
+  }
+  @media (max-width: 560px) {
+    .lab-head { flex-wrap: wrap; gap: var(--space-2) var(--space-4); }
+    .lab-head h1, .lab-head nav a { white-space: nowrap; }
+  }
+</style>
+</head>
+<body>
+<div class="lab">
+  <header class="lab-head">
+    <h1>LAB / 06 / TELEMETRY</h1>
+    <nav aria-label="Lab navigation">
+      <a href="./">All labs</a>
+      <a href="../">VX</a>
+      <a href="/">The production site</a>
+    </nav>
+  </header>
+  <div class="lab-body">
+    <main class="lab-stage" aria-label="Telemetry wall and ticker">
+      <section class="tlab-row tlab-wall-row" aria-label="Wall layout">
+        <p class="meta">Wall layout / 10 cells / two strips / 440 px</p>
+        <div id="wall"></div>
+        <div class="tlab-aside">
+          <h2>What the wall reads</h2>
+          <dl>
+            <dt>Frame</dt><dd>governor.stats p50 and p95, requestAnimationFrame intervals in this tab; the bar runs 0 to 33.3 ms with the 16.7 ms budget mark at its middle.</dd>
+            <dt>Long tasks</dt><dd>PerformanceObserver longtask, buffered; the BUSY button adds one.</dd>
+            <dt>Scroll v</dt><dd>scroll.state.vy, signed, px/s; the runway below gives it room and the ticker row stays pinned while you scroll it.</dd>
+            <dt>Net</dt><dd>transferSize summed over Resource Timing entries; cached and cross-origin entries report 0 B and are counted.</dd>
+            <dt>GL</dt><dd>bus.state stage:render; a dash on this page because no stage is mounted.</dd>
+            <dt>Input</dt><dd>pointer media query, last pointer:move emitted by this page.</dd>
+            <dt>Mem</dt><dd>performance.memory where it exists; a dash elsewhere.</dd>
+          </dl>
+          <p>Strips draw at the tier's rate: every frame at T3, 30 Hz at T2, 10 Hz at T1; at T0 the rings fill from governor:stats at 4 Hz and the canvas repaints when the scroll stops. The loop runs only while the canvas is on screen.</p>
+        </div>
+      </section>
+      <section class="tlab-row tlab-ticker-row" aria-label="Ticker layout">
+        <p class="meta">Ticker layout / phones / the button opens the wall as a sheet / pinned while the runway scrolls</p>
+        <div id="ticker"></div>
+      </section>
+      <section class="tlab-row" aria-label="Readout">
+        <p class="meta">Readout / internal state at 4 Hz / snapshot() on demand</p>
+        <pre class="lab-readout" id="readout" aria-live="off">mounting</pre>
+      </section>
+      <section class="tlab-row" aria-label="Scroll runway">
+        <p class="meta">Runway / scroll through it to drive SCROLL V and the velocity strip</p>
+        <div class="tlab-runway">
+          <div class="tlab-band"><span>Band 01 / 08</span><b>01</b></div>
+          <div class="tlab-band"><span>Band 02 / 08</span><b>02</b></div>
+          <div class="tlab-band"><span>Band 03 / 08</span><b>03</b></div>
+          <div class="tlab-band"><span>Band 04 / 08</span><b>04</b></div>
+          <div class="tlab-band"><span>Band 05 / 08</span><b>05</b></div>
+          <div class="tlab-band"><span>Band 06 / 08</span><b>06</b></div>
+          <div class="tlab-band"><span>Band 07 / 08</span><b>07</b></div>
+          <div class="tlab-band"><span>Band 08 / 08</span><b>08</b></div>
+        </div>
+      </section>
+    </main>
+    <aside class="lab-panel" aria-label="Telemetry controls">
+      <h2>Layout of the first instance</h2>
+      <div class="lab-row tlab-seg" role="group" aria-label="Layout">
+        <button type="button" class="lab-button" data-layout="wall">Wall</button>
+        <button type="button" class="lab-button" data-layout="ticker">Ticker</button>
+        <button type="button" class="lab-button" data-layout="auto">Auto</button>
+      </div>
+      <h2>Parameters</h2>
+      <label class="lab-row">Budget, ms <input id="budget" type="range" min="8" max="33.3" step="0.1" value="16.7"> <output for="budget">16.7</output></label>
+      <label class="lab-row">Text rate, Hz <input id="hz" type="range" min="1" max="10" step="1" value="4"> <output for="hz">4</output></label>
+      <label class="lab-row">Strip samples <input id="samples" type="range" min="60" max="240" step="10" value="120"> <output for="samples">120</output></label>
+      <label class="lab-row">Strip charts <input id="strips" type="checkbox" checked></label>
+      <label class="lab-row">Emit pointer:move from this page <input id="pointer" type="checkbox" checked></label>
+      <h2>Governor</h2>
+      <label class="lab-row">Tier
+        <select id="tier">
+          <option value="auto">Auto (measured)</option>
+          <option value="3">T3 full</option>
+          <option value="2">T2 reduced</option>
+          <option value="1">T1 minimal</option>
+          <option value="0">T0 static</option>
+        </select>
+      </label>
+      <h2>Actions</h2>
+      <div class="lab-row tlab-act" role="group" aria-label="Actions">
+        <button type="button" class="lab-button" id="busy">Busy 300 ms</button>
+        <button type="button" class="lab-button" id="snapshot">Snapshot</button>
+      </div>
+      <p class="tlab-note">BUSY runs a 300 ms synchronous loop on the main thread; LONG TASKS records it and the frame strip shows the gap. SNAPSHOT prints telemetry.snapshot() into the readout under the ticker, the text the console's status command prints. URL: ?tier=N pins the governor.</p>
+    </aside>
+  </div>
+</div>
+<noscript><p class="tlab-note" style="padding: 24px">The telemetry wall needs JavaScript: every cell is measured from this page in this tab.</p></noscript>
+<script type="module">
+  import { bus } from '../js/core/bus.js';
+  import { governor } from '../js/core/governor.js';
+  import { scroll } from '../js/core/scroll.js';
+  import { mountTelemetry } from '../js/telemetry.js';
+
+  const $ = (id) => document.getElementById(id);
+  const wall = mountTelemetry($('wall'), { layout: 'wall' });
+  const ticker = mountTelemetry($('ticker'), { layout: 'ticker' });
+  window.vxTelemetry = { wall, ticker };   // for the console
+
+  /* ?tier=N pins the governor for screenshots */
+  const q = new URLSearchParams(location.search);
+  if (q.has('tier')) { const t = parseInt(q.get('tier'), 10); if (t >= 0 && t <= 3) { governor.pin(t); $('tier').value = String(t); } }
+
+  /* pointer:move, coalesced to one emit per frame, the way the page's main.js does it */
+  let pending = null, pRaf = 0, lastP = null;
+  function onPointer(e) {
+    if (!$('pointer').checked) return;
+    pending = e;
+    if (!pRaf) pRaf = requestAnimationFrame(flushPointer);
+  }
+  function flushPointer(t) {
+    pRaf = 0;
+    const e = pending; pending = null;
+    if (!e) return;
+    const dt = lastP ? Math.max(1, t - lastP.t) : 16.7;
+    const vx = lastP ? (e.clientX - lastP.x) / dt * 1000 : 0, vy = lastP ? (e.clientY - lastP.y) / dt * 1000 : 0;
+    lastP = { x: e.clientX, y: e.clientY, t };
+    bus.emit('pointer:move', { x: e.clientX, y: e.clientY, nx: (e.clientX / innerWidth) * 2 - 1, ny: (e.clientY / innerHeight) * 2 - 1, vx, vy, t });
+  }
+  addEventListener('pointermove', onPointer, { passive: true });
+
+  /* layout of the first instance */
+  const layoutButtons = [...document.querySelectorAll('[data-layout]')].filter((b) => b.tagName === 'BUTTON');
+  function syncLayout() { for (const b of layoutButtons) b.setAttribute('aria-pressed', String(b.dataset.layout === wall.state.mode)); }
+  for (const b of layoutButtons) b.addEventListener('click', () => { wall.setLayout(b.dataset.layout); syncLayout(); });
+  syncLayout();
+
+  /* parameters apply to both instances */
+  const budget = $('budget'), hz = $('hz'), samples = $('samples'), strips = $('strips');
+  function applyParams() {
+    budget.nextElementSibling.value = budget.valueAsNumber.toFixed(1);
+    hz.nextElementSibling.value = String(hz.valueAsNumber);
+    samples.nextElementSibling.value = String(samples.valueAsNumber);
+    const o = { budgetMs: budget.valueAsNumber, textHz: hz.valueAsNumber, samples: samples.valueAsNumber, strips: strips.checked };
+    wall.set(o); ticker.set(o);
+  }
+  for (const i of [budget, hz, samples]) i.addEventListener('input', applyParams);
+  strips.addEventListener('change', applyParams);
+
+  /* governor */
+  const tierSel = $('tier');
+  tierSel.addEventListener('change', () => governor.pin(tierSel.value === 'auto' ? null : Number(tierSel.value)));
+
+  /* a 300 ms synchronous loop: one long task, one missed run of frames */
+  let busyRuns = 0;
+  $('busy').addEventListener('click', () => {
+    const t0 = performance.now();
+    let x = 0;
+    while (performance.now() - t0 < 300) x += Math.sqrt(x + 1);   // busy work the optimiser cannot drop
+    if (x > 0) busyRuns++;
+  });
+
+  /* readout: internal state at 4 Hz, the snapshot beneath it on demand */
+  const readout = $('readout');
+  let snap = '';
+  $('snapshot').addEventListener('click', () => { snap = wall.snapshot(); print(); });
+  const pad = (s, n) => String(s).padEnd(n);
+  function print() {
+    const s = wall.state, t = ticker.state;
+    readout.replaceChildren();
+    const lines = [
+      ['LAYOUT', `${s.layout}`, ` (${s.mode})  tier T${s.tier}  loop ${s.loop ? 'on' : 'off'}  draw gap ${Number.isFinite(s.drawGapMs) ? s.drawGapMs + ' ms' : 'scroll idle'}`],
+      ['STRIPS', `${s.samples} / ${s.capacity}`, ` samples  ${(s.spanMs / 1000).toFixed(1)} s  draws ${s.draws}  last ${s.lastDrawMs.toFixed(2)} ms  canvas ${s.canvasSize} @${s.dpr}${s.ctx ? '' : '  no 2d'}`],
+      ['TEXT', `${s.textHz} Hz`, `  ticks ${s.ticks}  root ${s.rootVisible ? 'on screen' : 'off screen'}  ${s.hidden ? 'tab hidden' : 'tab visible'}`],
+      ['LONG', `${s.longCount}`, ` tasks  last ${Math.round(s.longLast)} ms  ${s.longOk ? 'longtask supported' : 'longtask unsupported'}  busy runs ${busyRuns}`],
+      ['NET', `${(s.netBytes / 1024).toFixed(1)} KB`, `  ${s.netCount} req  ${s.netZero} at 0 B  ${s.netOk ? '' : 'resource timing unsupported'}`],
+      ['TICKER', `${t.layout}`, `  loop ${t.loop ? 'on' : 'off'}  sheet ${t.sheetOpen ? 'open' : 'closed'}  ticks ${t.ticks}`],
+      ['SCROLL', `${Math.round(scroll.state.y)} px`, `  vy ${Math.round(scroll.state.vy)} px/s  ${scroll.state.moving ? 'moving' : 'idle'}`],
+    ];
+    for (const [k, strong, rest] of lines) {
+      const b = document.createElement('b'); b.textContent = strong;
+      readout.append(pad(k, 8), b, rest, '\n');
+    }
+    if (snap) {
+      const i = document.createElement('i'); i.textContent = '\nsnapshot()\n';
+      readout.append(i, snap, '\n');
+    }
+  }
+  print();
+  setInterval(print, 250);
+</script>
+</body>
+</html>

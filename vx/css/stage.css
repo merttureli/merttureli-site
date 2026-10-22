@@ -1,0 +1,74 @@
+/* Stage: the live CHARGER canvas (pad view, stack walk, pull-out). Class prefix .st- */
+
+/* ---- containers ------------------------------------------------------- */
+.st-stage { position: relative; overflow: hidden; background: transparent; }
+.st-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: pan-y; }
+.st-canvas[hidden] { display: none; }
+/* Poster for pages without WebGL (also the first paint and reading mode): the painted render is a diagonal wide shot, so it is
+   stood upright where the live pad view stands the rocket instead of being fitted across the whole stage. Measured from the
+   file's alpha: the body axis runs at 147 deg (so +57 deg makes it vertical), the rocket is 83.1% of the image width long and its
+   midpoint sits at 51.2% / 51.3%. A 16:9 box 58% of the stage tall therefore draws the rocket about 86% of the stage height,
+   centred like the live model, so the crossfade to the first frame lands on the same silhouette. No fill: a rotated box must
+   not show as a dark plate over the tunnel; the stage's own ground is ink already. */
+.st-poster { position: absolute; inset: 50% auto auto 50%; width: auto; height: 58%; max-width: none; aspect-ratio: 16 / 9; object-fit: contain; object-position: center; transform-origin: 51.2% 51.3%; transform: translate(-51.2%, -51.3%) rotate(57deg); background: transparent; pointer-events: none; }
+.st-poster[hidden] { display: none; }
+/* Overlay for leaders and the lab's silhouette check: same box as the canvas, never catches the pointer. */
+.st-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.st-sil { fill: rgba(214, 59, 8, .12); stroke: var(--livery); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.st-sil-axis { fill: none; stroke: var(--paper-a45); stroke-width: 1; stroke-dasharray: 2 4; }
+
+/* Corner ticks: the stage's registration marks, hard-cornered on purpose (the one allowed exception). */
+.st-ticks { position: absolute; inset: var(--space-4); pointer-events: none; }
+.st-ticks::before, .st-ticks::after, .st-ticks > i::before, .st-ticks > i::after { content: ""; position: absolute; width: 12px; height: 12px; border: 0 solid var(--paper-a45); }
+.st-ticks::before { top: 0; left: 0; border-top-width: 1px; border-left-width: 1px; }
+.st-ticks::after { top: 0; right: 0; border-top-width: 1px; border-right-width: 1px; }
+.st-ticks > i::before { bottom: 0; left: 0; border-bottom-width: 1px; border-left-width: 1px; }
+.st-ticks > i::after { bottom: 0; right: 0; border-bottom-width: 1px; border-right-width: 1px; }
+.st-ticks > i { position: absolute; inset: 0; display: block; }
+.st-ticks[data-blink="1"] > i::before { border-color: var(--livery); transition: border-color var(--dur-2) var(--ease-out); }
+
+/* Captions and flags in the stage: 10 px mono caps. */
+.st-caption { position: absolute; left: var(--space-6); bottom: var(--space-6); margin: 0; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: var(--lh-meta); color: var(--paper-a45); pointer-events: none; max-width: calc(100% - 2 * var(--space-6)); }
+.st-caption b { color: var(--paper); font-weight: 400; }
+.st-caption em { color: var(--livery); font-style: normal; }
+.st-flag { position: absolute; right: var(--space-6); top: var(--space-6); margin: 0; padding: 6px 10px; border: 1px solid var(--paper-a45); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper); pointer-events: none; }
+.st-flag[hidden] { display: none; }
+/* Progress hairline along the bottom edge: scroll depth through the range section. */
+.st-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--paper-a18); pointer-events: none; }
+.st-progress > i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--livery); }
+/* Station marks on that hairline: eight ticks at the stop positions. */
+.st-progress > b { position: absolute; top: -3px; width: 1px; height: 7px; background: var(--paper-a45); }
+
+/* ---- lab page ---------------------------------------------------------- */
+/* The header stays, the stage and the panel pin below it while the 500vh track scrolls. */
+.st-lab .lab-head { position: sticky; top: 0; z-index: 3; background: var(--ink-900); }
+.st-lab-body { height: calc(100svh + 500vh); align-items: start; grid-template-columns: minmax(0, 1fr) 400px; }
+.st-lab-stage { position: sticky; top: var(--st-head, 70px); height: calc(100svh - var(--st-head, 70px)); min-height: 0; }
+.st-lab-panel { position: sticky; top: var(--st-head, 70px); height: calc(100svh - var(--st-head, 70px)); }
+.st-lab-panel > * { flex: none; }
+.st-lab-group { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+/* Readout: a HUD plate over the stage on wide screens, a block at the top of the panel on narrow ones. */
+.st-hud { position: absolute; left: var(--space-6); bottom: calc(var(--space-6) + 32px); z-index: 2; margin: 0; padding: var(--space-3) var(--space-4); max-width: calc(100% - 2 * var(--space-6)); background: rgba(10, 10, 10, .62); border: 1px solid var(--paper-a18); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: .06em; text-transform: uppercase; line-height: 1.6; white-space: pre; color: var(--paper-a70); font-variant-numeric: tabular-nums; pointer-events: none; overflow: hidden; }
+.st-lab-panel .st-hud { position: static; max-width: none; padding: 0 0 var(--space-3); background: none; border: 0; border-bottom: 1px solid var(--paper-a18); pointer-events: auto; overflow: auto; }
+.st-lab-stations { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); }
+.st-lab-stations li { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 2px var(--space-2); align-items: baseline; padding: 6px 0; border-top: 1px solid var(--paper-a18); }
+.st-lab-stations li:last-child { border-bottom: 1px solid var(--paper-a18); }
+.st-lab-stations .st-n { color: var(--paper-a45); }
+.st-lab-stations b { font-weight: 400; color: var(--paper); }
+.st-lab-stations .st-yaz { color: var(--paper-a45); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.st-lab-stations .st-ids { grid-column: 2 / -1; letter-spacing: .06em; text-transform: none; color: var(--paper-a45); line-height: 1.5; }
+/* The current station keeps its text in paper (10 px livery on ink is below AA); the livery marks the row's rule instead. */
+.st-lab-stations li[aria-current="true"] { border-top-color: var(--livery); }
+.st-lab-stations li[aria-current="true"] .st-n { color: var(--paper); }
+.st-lab-files { margin: var(--space-3) 0 0; padding-top: var(--space-3); border-top: 1px solid var(--paper-a18); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: .08em; text-transform: uppercase; line-height: 1.6; color: var(--paper-a45); overflow-wrap: anywhere; }
+.st-lab-files b { color: var(--paper); font-weight: 400; }
+.lab-row select { background: var(--ink-800); color: var(--paper); border: 1px solid var(--paper-a18); border-radius: var(--radius-sm); padding: 6px 8px; font: inherit; letter-spacing: inherit; text-transform: inherit; }
+@media (max-width: 860px) {
+  /* Block, not grid: a grid would stretch the two rows over the whole track and push the panel a viewport below the stage before it could stick. */
+  .st-lab-body { display: block; height: calc(100svh + 300vh); grid-template-columns: 1fr; }
+  .st-lab-stage { height: 56svh; min-height: 0; }
+  .st-lab-panel { top: calc(var(--st-head, 70px) + 56svh); height: calc(44svh - var(--st-head, 70px)); }
+  /* Keep the caption and the flag clear of the 16 px registration ticks (12 px marks plus air). */
+  .st-caption { left: calc(var(--space-4) + 20px); bottom: calc(var(--space-4) + 4px); max-width: calc(100% - 2 * var(--space-4) - 40px); }
+  .st-flag { right: calc(var(--space-4) + 20px); top: calc(var(--space-4) + 4px); }
+}

@@ -1,0 +1,99 @@
+/* vx tokens. Values lifted from the site's design system (_ds/.../tokens) so the
+   experimental build stays recognisably his. Fonts are served from the files the
+   CHARGER explorer already ships, so the page has no third-party request. */
+@font-face { font-family: "Space Grotesk"; font-weight: 300 700; font-style: normal; font-display: swap; src: url("../../assets/charger-explorer/fonts/SpaceGrotesk-var.ttf") format("truetype"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 400; font-style: normal; font-display: swap; src: url("../../assets/charger-explorer/fonts/IBMPlexMono-Regular.ttf") format("truetype"); }
+
+:root {
+  /* type */
+  --font-display: "Space Grotesk", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-body: var(--font-display);
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --fs-display-1: clamp(64px, 11.5vw, 184px);
+  --fs-display-2: clamp(48px, 8vw, 128px);
+  --fs-display-3: clamp(36px, 5.2vw, 84px);
+  --fs-title-1: clamp(28px, 3.2vw, 52px);
+  --fs-title-2: 32px;
+  --fs-title-3: 24px;
+  --fs-body-lg: 18px;
+  --fs-body: 16px;
+  --fs-body-sm: 14px;
+  --fs-meta: 12px;
+  --fs-meta-sm: 10px;
+  --lh-display: 0.92;
+  --lh-title: 1.08;
+  --lh-body: 1.62;
+  --lh-meta: 1.4;
+  --ls-display: -0.03em;
+  --ls-title: -0.015em;
+  --ls-caps: 0.18em;
+  --ls-caps-wide: 0.32em;
+  --ls-nav: 0.12em;
+  --measure: 62ch;
+  --measure-narrow: 44ch;
+
+  /* ink ramp */
+  --ink-900: #0A0A0A; --ink-800: #141414; --ink-700: #2B2B2B; --ink-600: #454545; --ink-500: #6B6B6B;
+  --ink-400: #8C8C8C; --ink-300: #A8A8A8; --ink-200: #C9C9C9; --ink-100: #DEDEDE; --ink-050: #EFEFEE;
+  --paper: #FFFFFF; --board: #D9D9D9;
+  --ink-a80: rgba(10,10,10,.80); --ink-a55: rgba(10,10,10,.55); --ink-a30: rgba(10,10,10,.30); --ink-a12: rgba(10,10,10,.12); --ink-a06: rgba(10,10,10,.06);
+  --paper-a90: rgba(255,255,255,.90); --paper-a70: rgba(255,255,255,.70); --paper-a45: rgba(255,255,255,.45); --paper-a18: rgba(255,255,255,.18); --paper-a08: rgba(255,255,255,.08);
+
+  /* the one earned accent: CHARGER's livery */
+  --livery: #D63B08; --livery-deep: #890919;
+  --accent: var(--livery);
+
+  /* semantic, light surface */
+  --surface-page: var(--paper); --surface-sunken: var(--ink-050); --surface-board: var(--board); --surface-inverse: var(--ink-900);
+  --text-display: var(--ink-900); --text-body: var(--ink-700); --text-muted: var(--ink-500); --text-meta: var(--ink-400);
+  --line-hairline: var(--ink-a12); --line-strong: var(--ink-900);
+
+  /* space */
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px;
+  --space-7: 48px; --space-8: 64px; --space-9: 96px; --space-10: 128px; --space-11: 192px; --space-12: 256px;
+  --page-margin: clamp(24px, 5vw, 88px);
+  --section-y: clamp(96px, 14vh, 192px);
+  --max-width: 1680px;
+  --header-h: 88px;
+
+  /* effects */
+  --radius-xs: 2px; --radius-sm: 4px; --radius-md: 8px; --radius-lg: 20px; --radius-xl: 40px; --radius-2xl: 64px; --radius-pill: 999px;
+  --grain-url: url("../../assets/grain.svg");
+  --scrim-hero: linear-gradient(180deg, rgba(0,0,0,.42) 0%, rgba(0,0,0,.18) 42%, rgba(0,0,0,.05) 100%);
+  --blur-glass: saturate(120%) blur(14px);
+
+  /* motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-1: 120ms; --dur-2: 240ms; --dur-3: 480ms; --dur-4: 780ms; --dur-5: 1200ms; --dur-6: 2400ms;
+  --stagger: 90ms;
+
+  /* z */
+  --z-media: 1; --z-content: 10; --z-rail: 40; --z-header: 50; --z-overlay: 90; --z-boot: 200;
+}
+.on-dark, [data-theme="dark"] {
+  --surface-page: var(--ink-900); --surface-sunken: var(--ink-800);
+  --text-display: var(--paper); --text-body: var(--paper-a90); --text-muted: var(--paper-a70); --text-meta: var(--paper-a45);
+  --line-hairline: var(--paper-a18); --line-strong: var(--paper);
+}
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-3: 1ms; --dur-4: 1ms; --dur-5: 1ms; --dur-6: 1ms; --stagger: 0ms; }
+}
+
+/* base */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { margin: 0; font-family: var(--font-body); font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); background: var(--surface-page); -webkit-font-smoothing: antialiased; }
+h1, h2, h3, h4, p, figure { margin: 0; }
+img, video, canvas, svg { display: block; max-width: 100%; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+a { color: inherit; }
+:focus-visible { outline: 1px solid currentColor; outline-offset: 3px; }
+.meta { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: var(--lh-meta); color: var(--text-meta); }
+.meta-sm { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: var(--lh-meta); color: var(--text-meta); }
+.eyebrow { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps-wide); text-transform: uppercase; color: var(--text-meta); }
+.display-1 { font-family: var(--font-display); font-weight: 500; font-size: var(--fs-display-1); line-height: var(--lh-display); letter-spacing: var(--ls-display); text-transform: uppercase; color: var(--text-display); }
+.display-2 { font-family: var(--font-display); font-weight: 500; font-size: var(--fs-display-2); line-height: var(--lh-display); letter-spacing: var(--ls-display); text-transform: uppercase; color: var(--text-display); }
+.display-3 { font-family: var(--font-display); font-weight: 500; font-size: var(--fs-display-3); line-height: var(--lh-display); letter-spacing: var(--ls-display); text-transform: uppercase; color: var(--text-display); }
+.title-1 { font-family: var(--font-display); font-weight: 500; font-size: var(--fs-title-1); line-height: var(--lh-title); letter-spacing: var(--ls-title); color: var(--text-display); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }

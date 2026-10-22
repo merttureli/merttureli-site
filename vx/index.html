@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mert Tureli · VX</title>
+<meta name="description" content="The experimental build of merttureli.com: the CHARGER flight model rendered live from the published assembly inside a page wind-tunnel simulation, with every live number measured from this page in your browser.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0A0A0A">
+<link rel="canonical" href="https://merttureli.com/vx/">
+<meta property="og:title" content="Mert Tureli · VX">
+<meta property="og:description" content="Mechanical engineer in Austin, Texas. The experimental build: CHARGER rendered live from the flight model, scroll-driven station by station.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://merttureli.com/vx/">
+<meta property="og:image" content="https://merttureli.com/assets/og-cover.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230A0A0A'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='26' font-weight='600' fill='%23FFFFFF'%3EMT%3C/text%3E%3C/svg%3E">
+<script>document.documentElement.classList.replace('no-js','js');</script>
+<link rel="preload" as="font" type="font/ttf" crossorigin href="../assets/charger-explorer/fonts/SpaceGrotesk-var.ttf">
+<link rel="preload" as="font" type="font/ttf" crossorigin href="../assets/charger-explorer/fonts/IBMPlexMono-Regular.ttf">
+<link rel="preload" as="image" href="../assets/motion/charger-painted-wide-poster.png" fetchpriority="high">
+<link rel="modulepreload" href="js/main.js">
+<link rel="modulepreload" href="js/core/bus.js">
+<link rel="modulepreload" href="js/core/governor.js">
+<link rel="modulepreload" href="js/core/scroll.js">
+<link rel="modulepreload" href="js/core/media.js">
+<link rel="modulepreload" href="js/boot.js">
+<link rel="modulepreload" href="js/plotter.js">
+<script type="importmap">{"imports":{"three":"../assets/charger-explorer/vendor/three.module.js"}}</script>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/boot.css">
+<link rel="stylesheet" href="css/stage.css">
+<link rel="stylesheet" href="css/tunnel.css">
+<link rel="stylesheet" href="css/callouts.css">
+<link rel="stylesheet" href="css/instruments.css">
+<link rel="stylesheet" href="css/telemetry.css">
+<link rel="stylesheet" href="css/console.css">
+<link rel="stylesheet" href="css/hid.css">
+<link rel="stylesheet" href="css/contact-sheet.css">
+<link rel="stylesheet" href="css/dimension.css">
+<link rel="stylesheet" href="css/timeline.css">
+<link rel="stylesheet" href="css/vx.css">
+<link rel="stylesheet" href="css/mobile.css">
+<noscript><style>#boot{display:none}</style></noscript>
+<script type="module" src="js/main.js"></script>
+</head>
+<body>
+
+<div id="boot" class="bt" role="dialog" aria-label="Loading">
+  <button class="bt-skip" type="button">Skip</button>
+  <p class="bt-facts"><span><b>Mert Tureli</b> / Mechanical engineer / Austin, Texas / B.S. Mechanical Engineering, Union College, 2026</span> <a href="../assets/Mert-Tureli-Resume.pdf">Resume (PDF)</a> <a href="mailto:merttureli0@gmail.com">Email</a> <a href="https://linkedin.com/in/merttureli">LinkedIn</a> <a href="../hi/mert-tureli.vcf">Save contact (VCF)</a></p>
+</div>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="vx-header" data-dim-more="HEADER" data-dim-basic="88px" data-dim-side="height">
+  <a class="wordmark" href="#pad">Mert Tureli <span>/ VX</span></a>
+  <nav class="vx-nav" aria-label="Sections">
+    <a href="#03-charger">Charger</a>
+    <a href="#ladder">Events</a>
+    <a href="#01-hotbox">Sheets</a>
+    <a href="#experience">Crew</a>
+    <a href="#beyond">Off range</a>
+    <a href="#contact">Comms</a>
+  </nav>
+  <div class="vx-tools">
+    <button id="tel-toggle" class="tool tool-tel" type="button" aria-expanded="true" aria-controls="telemetry">Telemetry</button>
+    <button id="reader-toggle" class="tool" type="button" aria-pressed="false">Reading mode</button>
+    <button class="tool tool-console" type="button" data-console-open aria-label="Open the console (slash, Ctrl K or Cmd K)">&gt;_</button>
+    <a class="tool" href="lab/">Lab</a>
+    <a class="tool tool-site" href="/"><span class="tool-site-long">The production site</span><span class="tool-site-short" aria-hidden="true">Site</span> <span aria-hidden="true">→</span></a>
+  </div>
+</header>
+
+<div id="telemetry-dock" class="tel-dock on-dark">
+  <div id="telemetry"></div>
+</div>
+
+<main id="main" tabindex="-1">
+
+  <section id="range" class="range on-dark" data-station="CHARGER" data-index="01" aria-label="CHARGER on the pad and the stack walk">
+    <div class="range-sticky" id="range-sticky">
+      <div class="scene" id="scene">
+        <canvas id="tunnel" class="tn-canvas" aria-hidden="true"></canvas>
+        <img id="poster" class="st-poster" src="../assets/motion/charger-painted-wide-poster.png" width="1280" height="720" alt="Painted render of CHARGER: orange livery with dark red bands and the CHARGER / UCRC / 2026 lettering, on a plain background" fetchpriority="high" decoding="async">
+        <canvas id="stage" class="st-canvas" role="img" aria-label="CHARGER flight model, rendered live from the published assembly, station by station as the page scrolls"></canvas>
+        <svg id="leaders" class="st-overlay" aria-hidden="true" focusable="false"></svg>
+        <div id="callouts"></div>
+        <div class="st-ticks" id="ticks" aria-hidden="true"><i></i></div>
+        <p class="st-flag" id="stage-flag" hidden>No WebGL / poster</p>
+        <button id="load3d" class="load3d" type="button" hidden>Load 3D / 2.5 MB</button>
+      </div>
+
+      <i class="margin-probe" data-dim="PAGE MARGIN" data-dim-side="width" aria-hidden="true"></i>
+      <div id="pad" class="pad-copy">
+        <p class="eyebrow pad-eyebrow">Mechanical engineer / Austin, Texas</p>
+        <h1 class="display-1 pad-title" data-dim="DISPLAY HEADING"><span>Mert</span> <span>Tureli</span></h1>
+        <p class="pad-thesis">I design, build, and test hardware end to end, from CAD and drawings through electronics and firmware to the test rig that proves it works.</p>
+        <div class="pad-ctas">
+          <a class="btn btn-glass" href="#03-charger">See the work <span aria-hidden="true">→</span></a>
+          <a class="btn btn-link" href="../assets/Mert-Tureli-Resume.pdf">Resume (PDF) <span aria-hidden="true">→</span></a>
+        </div>
+      </div>
+
+      <p class="st-caption pad-caption" id="stage-caption"><b>CHARGER</b> / rendered from the flight model, thirty internal components at their true stations / <span id="stage-state">pad view</span></p>
+
+      <p class="tunnel-label meta-sm"><b>Tunnel</b> / page simulation / not flight data / <span id="tunnel-readout">off</span></p>
+      <div class="stage-bar" id="stage-bar" data-dim-more="STAGE BAR" data-dim-basic="56px" data-dim-side="height">
+        <div class="stage-bar-ranges">
+          <label class="range-control"><span>Progress</span><input id="progress-range" type="range" min="0" max="1" step="0.001" value="0" aria-describedby="progress-out"><output id="progress-out">0.000</output></label>
+          <label class="range-control range-explode"><span>Explode</span><input id="explode-range" type="range" min="0" max="1" step="0.01" value="0"><output id="explode-out">0.00</output></label>
+          <button id="explode-auto" class="chip" type="button" aria-pressed="true">Auto</button>
+        </div>
+        <div class="stage-bar-links">
+          <a href="../assets/charger-explorer/cad/charger-hybrid.step" download><span class="bar-verb">Download </span>STEP (3.1 MB)</a>
+          <a href="../assets/charger-explorer/assembly.glb" download><span class="bar-verb">Download </span>GLB (2.0 MB)</a>
+          <a href="../assets/charger-explorer/index.html"><span class="bar-verb">Open the </span>explorer <span aria-hidden="true">→</span></a>
+        </div>
+      </div>
+    </div>
+
+    <div id="03-charger" class="range-anchor" aria-hidden="true"></div>
+
+    <div class="range-static inner">
+      <p class="eyebrow">03 / Airframe / Payload</p>
+      <h2 class="display-3">Deployable sensor payload</h2>
+      <p class="meta">Union College Rocket Team, 2026 / Captain and chief engineer / First place</p>
+      <p class="body">The competition entry that won its event at Battle of the Rockets 2026. I led the design and manufacture of the airframe and the deployable payload, and ran the team through design review, build, and launch day recovery.</p>
+      <p class="body strong">The win is published by both Union College and the competition organizer.</p>
+      <dl class="spec">
+        <div><dt>Event</dt><dd>Battle of the Rockets 2026</dd></div>
+        <div><dt>Result</dt><dd>First place</dd></div>
+        <div><dt>Role</dt><dd>Captain, chief engineer</dd></div>
+        <div><dt>Scope</dt><dd>Airframe and deployable payload</dd></div>
+      </dl>
+      <p><a class="btn btn-outline" href="../projects/charger.html">Read the case study <span aria-hidden="true">→</span></a></p>
+      <h3 class="meta stations-head">Stations / nose to tail / from the explorer's part stories</h3>
+      <ol class="stations" id="stations">
+        <li><span class="idx">01</span><b>Nose cone</b><ul><li><span>00</span>Nose cone <em>Light enough to recover on its own.</em></li></ul></li>
+        <li><span class="idx">02</span><b>Camera</b><ul><li><span>17</span>Camera holder <em>Holding the camera in place.</em></li><li><span>15</span>Camera <em>A view from the rocket.</em></li><li><span>14</span>Camera mount <em>Camera support and nose-cone separation.</em></li></ul></li>
+        <li><span class="idx">03</span><b>PCB stack</b><ul><li><span>23</span>Top PCB holder <em>Locating the electronics.</em></li><li><span>24</span>Middle PCB holder <em>Locating the electronics.</em></li><li><span>25</span>Bottom PCB holder <em>Locating the electronics.</em></li><li><span>01</span>Upper body tube <em>The structure around the payload.</em></li></ul></li>
+        <li><span class="idx">04</span><b>Battery</b><ul><li><span>13</span>Battery <em>Power on board.</em></li><li><span>10</span>Rail button 1 <em>Guided before free flight.</em></li></ul></li>
+        <li><span class="idx">05</span><b>Coupler</b><ul><li><span>21</span>Wooden rod 1 <em>Support through the assembly.</em></li><li><span>27</span>Wooden rod 2 <em>Support through the assembly.</em></li><li><span>28</span>Wooden rod 3 <em>Support through the assembly.</em></li><li><span>29</span>Wooden rod 4 <em>Support through the assembly.</em></li><li><span>16</span>Internal coupler <em>Joining the body sections.</em></li><li><span>20</span>Antenna <em>The onboard antenna.</em></li><li><span>22</span>Antenna holder <em>Keeping the antenna in position.</em></li></ul></li>
+        <li><span class="idx">06</span><b>Altimeter</b><ul><li><span>26</span>Lower shock-cord mount <em>Connecting recovery to the airframe.</em></li><li><span>12</span>Altimeter <em>A record of the flight.</em></li><li><span>02</span>Lower body tube <em>The structure around the motor.</em></li></ul></li>
+        <li><span class="idx">07</span><b>Motor</b><ul><li><span>11</span>Rail button 2 <em>Guided before free flight.</em></li><li><span>05</span>Motor <em>The source of thrust.</em></li><li><span>18</span>Motor mount <em>A motor mount you can replace.</em></li><li><span>06</span>Fin 1 <em>Stability in flight.</em></li><li><span>07</span>Fin 2 <em>Stability in flight.</em></li><li><span>08</span>Fin 3 <em>Stability in flight.</em></li><li><span>09</span>Fin 4 <em>Stability in flight.</em></li></ul></li>
+        <li><span class="idx">08</span><b>Screw cap</b><ul><li><span>19</span>Motor screw cap <em>Securing the motor from the rear.</em></li></ul></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="ladder" class="section on-paper" data-station="EVENTS" data-index="02">
+    <div class="inner">
+      <header class="sec-head">
+        <p class="eyebrow">03 / CHARGER / flight events / 02</p>
+        <h2 class="display-2">Flight events</h2>
+      </header>
+      <div class="ladder-grid">
+        <div class="ladder-copy pin">
+          <p class="body-lg">The event asks for a rocket that puts a custom built sensor payload into a five hundred foot window, drops it at apogee, sheds its nose cone partway down, and streams five channels of telemetry to a handheld ground station until it lands. We built CHARGER, and it won.</p>
+          <p class="body">The rocket flies a commercial G motor to between seven hundred and twelve hundred feet, drops the payload at apogee, and at seventy five percent of peak altitude the payload releases the nose cone, which has to reach the ground under fifteen feet per second on its own.</p>
+          <p class="body">With the nose cone gone the payload exposes a camera and films the ground until it lands. Throughout, from the moment it goes on the pad, it transmits air pressure, altitude, acceleration, temperature and rotation rate to a ground station that has to plot all of it live and derive the descent rate as it happens.</p>
+          <ul class="figures" aria-label="Figures from the case study">
+            <li><b>1st</b><span>Deployable Sensor Payload event</span></li>
+            <li><b>1.80 cal</b><span>Stability margin, 37 inch airframe</span></li>
+            <li><b>13.8 ft/s</b><span>Descent, against a 15 ft/s limit</span></li>
+            <li><b>$716</b><span>Total hardware cost</span></li>
+          </ul>
+          <figure class="plate photo">
+            <img loading="lazy" decoding="async" src="../assets/photos/video/nose-cone-ejection-test.jpg" width="520" height="293" alt="Ejection charge test on a field: the rocket lying on the grass between orange cones, the charge's smoke at the nose, a video still">
+            <figcaption class="meta-sm">Nose cone ejection test / video still</figcaption>
+          </figure>
+          <p><a class="btn btn-outline" href="../projects/charger.html">Read the case study <span aria-hidden="true">→</span></a></p>
+        </div>
+        <div id="ladder-root" class="ladder-root"></div>
+      </div>
+      <div id="ladder-log" class="ladder-log"></div>
+    </div>
+  </section>
+
+  <section id="decisions" class="section on-dark" data-station="DECISIONS" data-index="03">
+    <div class="inner">
+      <header class="sec-head">
+        <p class="eyebrow">Two decisions the rules forced / 03</p>
+        <h2 class="display-2">Two decisions</h2>
+      </header>
+      <div class="decisions-grid">
+        <div class="decisions-copy pin">
+          <ol class="notes">
+            <li><span class="idx">01</span><p>The rules do not accept a friction fit motor mount. There was no retention design at the preliminary review, so I drew a screw-on cap. The motor changed from a G80T to the G77R-7 in the same period, once the mass budget settled and the simulation had a real airframe rather than an estimate.</p></li>
+            <li><span class="idx">02</span><p>The rocket carries a commercial altimeter and does not use it for recovery. The event bans commercial flight computers in the payload, so every ejection charge fires off the team's own board reading its own barometric sensor. The commercial unit is there so a judge can read peak altitude off it after recovery, with the power still on.</p></li>
+          </ol>
+          <p class="eyebrow">Where the margin was</p>
+          <p class="body strong">The shock cord attachment carries the whole rocket at the instant the parachute opens. Peak simulated acceleration 24.4 feet per second squared on a 2.2 pound rocket is 19 pounds of force through an M3 screw with 0.11 square inches in shear. 1,641 psi against a 10,000 psi allowable, so six times margin.</p>
+        </div>
+        <div class="decisions-media">
+          <figure class="plate photo">
+            <img loading="lazy" decoding="async" src="../assets/photos/3d-model-renders/shockcord-beauty-render.jpg" width="520" height="650" alt="Render of the shock cord attachment: a flat plate with five holes, on black">
+            <figcaption class="meta-sm">Shock cord attachment / render</figcaption>
+          </figure>
+          <figure class="plate photo">
+            <img loading="lazy" decoding="async" src="../assets/photos/3d-model-renders/shockcord-shot-sheet.jpg" width="520" height="394" alt="Shot guide for the shock cord attachment: six frames of the plate at scroll progress 0.00 to 1.00 on one dark sheet">
+            <figcaption class="meta-sm">Shock cord attachment / shot sheet</figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="weekend" class="section on-paper" data-station="WEEKEND" data-index="04">
+    <div class="inner">
+      <header class="sec-head">
+        <p class="eyebrow">Launch day / Pad one, Culpeper, Virginia, April 2026 / 04</p>
+        <h2 class="display-2">Launch weekend</h2>
+      </header>
+      <div class="weekend-grid">
+        <div class="weekend-copy pin">
+          <p class="body strong">Three attempts per team, and the range closes at four in the afternoon. Weather can take the whole weekend, and if it does the awards are decided on the December and March review scores alone.</p>
+          <p class="body strong">We got two clean flights away on the first day while the weather held, then put up the qualifying flight before noon on the second. One team member stands at the launch control officer's position as mission control and nothing leaves the pad until they say it does.</p>
+          <div class="photo-row">
+            <figure class="plate photo">
+              <img loading="lazy" decoding="async" src="../assets/photos/video/rocket-launch.jpg" width="520" height="292" alt="An ignition flash at night on snow, lighting the bare trees, a video still">
+              <figcaption class="meta-sm">Ignition / video still</figcaption>
+            </figure>
+            <figure class="plate photo">
+              <img loading="lazy" decoding="async" src="../assets/photos/charger-rocket-photography/charger-pad-tall.jpg" width="520" height="693" alt="CHARGER on the launch rail before a flight">
+              <figcaption class="meta-sm">On the rail / 01</figcaption>
+            </figure>
+            <figure class="plate photo">
+              <img loading="lazy" decoding="async" src="../assets/photos/charger-rocket-photography/charger-pad-close.jpg" width="520" height="693" alt="CHARGER standing on pad one">
+              <figcaption class="meta-sm">Pad one / 02</figcaption>
+            </figure>
+          </div>
+          <p class="eyebrow">The result</p>
+          <p class="body">Final standings, published by <a href="https://www.union.edu/news/stories/202604/rocket-club-soars-new-heights-first-place-finish-national-competition" target="_blank" rel="noopener">Union College on 23 April 2026</a> and listed by <a href="https://www.rocketbattle.org/winners.html" target="_blank" rel="noopener">the competition organizer</a>.</p>
+          <ol class="standings">
+            <li><span class="idx">01</span>Union College Rocket Club</li>
+            <li><span class="idx">02</span>Chantilly Aerospace Club Team 3</li>
+            <li><span class="idx">03</span>Thomas Jefferson High School</li>
+            <li><span class="idx">04</span>Spring Grove Area High School Team 2</li>
+            <li><span class="idx">05</span>George Mason University</li>
+          </ol>
+        </div>
+        <div id="timeline-root" class="timeline-root"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="01-hotbox" class="section sheet on-paper" data-station="HOTBOX" data-index="05" aria-labelledby="t-hotbox">
+    <div class="inner">
+      <div class="zone-ticks" aria-hidden="true"><i>A</i><i>B</i><i>C</i><i>D</i><i>E</i><i>F</i><i>G</i><i>H</i></div>
+      <div class="title-block" data-dim-more="TITLE BLOCK" data-dim-side="height">
+        <div class="tb-cell tb-title"><span class="tb-k">Title</span><span class="tb-v">HOTBOX: thermal test bench</span></div>
+        <div class="tb-cell"><span class="tb-k">Sheet</span><span class="tb-v">01 of 05</span></div>
+        <div class="tb-cell"><span class="tb-k">Org / year</span><span class="tb-v">SunThru / 2026</span></div>
+        <div class="tb-cell tb-role"><span class="tb-k">Role</span><span class="tb-v">Design, electronics, firmware, safety systems</span></div>
+        <div class="tb-cell"><span class="tb-k">Rev</span><span class="tb-v">A</span></div>
+      </div>
+      <header class="sec-head sheet-head">
+        <p class="eyebrow">01 / Thermal / Instrumentation</p>
+        <h2 id="t-hotbox" class="display-3">HOTBOX: thermal test bench</h2>
+      </header>
+      <div class="sheet-grid">
+        <div class="sheet-notes">
+          <h3 class="meta">Notes</h3>
+          <ol class="notes">
+            <li><span class="idx">01</span><p>The company needed to rank glazing samples by insulating performance and had no way to measure it. I designed and built the whole bench: the insulated test chamber, the sensor stack, the electronics, the firmware, and the safety system that lets it run unattended overnight.</p></li>
+            <li><span class="idx">02</span><p>The measurement approach was the interesting decision. Rather than inferring performance from heater power, the rig reads actual heat flow through the sample with a calibrated sensor, and it will not accept a result until the readings have held steady for a full hour. The safety design is layered and redundant, because a heater running all night with nobody watching is a real hazard and not a theoretical one.</p></li>
+            <li><span class="idx">03</span><p class="strong">It was built for roughly a quarter of what a comparable commercial unit was quoted at, and the same electronics and firmware scale to a larger chamber for full size windows.</p></li>
+          </ol>
+          <table class="parts">
+            <caption class="meta">Measurement / parts list</caption>
+            <thead><tr><th scope="col">No.</th><th scope="col">Item</th><th scope="col">Value</th></tr></thead>
+            <tbody>
+              <tr><td>01</td><td>Measures</td><td>Heat flow through the sample</td></tr>
+              <tr><td>02</td><td>Sensor</td><td>Calibrated heat flux</td></tr>
+              <tr><td>03</td><td>Accepts</td><td>One hour of steady readings</td></tr>
+              <tr><td>04</td><td>Safety</td><td>Layered, redundant, unattended</td></tr>
+              <tr><td>05</td><td>Cost</td><td>About a quarter of the quote</td></tr>
+              <tr><td>06</td><td>Scales</td><td>Full size window chamber</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="sheet-media pin">
+          <div class="media-cell plate dark" style="--ratio: 16 / 9">
+            <video data-stream poster="../assets/motion/hotbox-blurred-poster.jpg" width="1280" height="720" muted loop playsinline preload="none" disablepictureinpicture controlslist="nodownload noremoteplayback" aria-label="Blurred render, SunThru proprietary hardware, intentionally blurred"><source data-src="../assets/motion/hotbox-blurred-alpha.webm" type="video/webm"><source data-src="../assets/motion/hotbox-blurred.mp4" type="video/mp4"></video>
+            <span class="pill ip-pill">IP protected</span>
+          </div>
+          <p class="meta-sm media-note">Blurred render / SunThru proprietary hardware / no case study page</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="02-robo-catcher" class="section sheet on-paper" data-station="CATCHER" data-index="06" aria-labelledby="t-robo">
+    <div class="inner">
+      <div class="zone-ticks" aria-hidden="true"><i>A</i><i>B</i><i>C</i><i>D</i><i>E</i><i>F</i><i>G</i><i>H</i></div>
+      <div class="title-block">
+        <div class="tb-cell tb-title"><span class="tb-k">Title</span><span class="tb-v">Robo-Catcher</span></div>
+        <div class="tb-cell"><span class="tb-k">Sheet</span><span class="tb-v">02 of 05</span></div>
+        <div class="tb-cell"><span class="tb-k">Org / year</span><span class="tb-v">Senior capstone / 2025</span></div>
+        <div class="tb-cell tb-role"><span class="tb-k">Role</span><span class="tb-v">Twelve person team / feeding co-lead, all electronics and firmware</span></div>
+        <div class="tb-cell"><span class="tb-k">Rev</span><span class="tb-v">A</span></div>
+      </div>
+      <header class="sec-head sheet-head">
+        <p class="eyebrow">02 / Mechanism / Electronics / Firmware</p>
+        <h2 id="t-robo" class="display-3">Robo-Catcher</h2>
+      </header>
+      <div class="sheet-grid sheet-grid-wide">
+        <div class="sheet-notes pin">
+          <h3 class="meta">Notes</h3>
+          <ol class="notes">
+            <li><span class="idx">01</span><p>An automatic softball catching and return machine. I co-led the feeding subsystem and then took over all the electronics and firmware for the entire robot when the project needed someone to own it. That meant the flywheel drive, the stepper based feed indexing, the limit switch and interlock logic, wireless start and stop, and hardware emergency cutoffs wired independently of the microcontroller.</p></li>
+            <li><span class="idx">02</span><p class="strong">It hit one hundred percent feed indexing reliability on competition day, came in under budget, and fits in a car trunk. The reliability number came from testing the indexing path to failure ahead of time and fixing what jammed, not from luck on the day.</p></li>
+          </ol>
+          <p><a class="btn btn-outline" href="../projects/robo-catcher.html">Read the case study <span aria-hidden="true">→</span></a></p>
+          <figure class="plate photo crew-photo">
+            <img loading="lazy" decoding="async" src="../assets/photos/shop-and-machine-photography/uc-team.jpg" width="520" height="346" alt="The Robo-Catcher capstone team around the net frame and ramps on the Union College field">
+            <figcaption class="meta-sm">The capstone team / Photograph Paul Buckowski / Union College</figcaption>
+          </figure>
+        </div>
+        <div class="sheet-media">
+          <div class="media-cell plate dark" style="--ratio: 16 / 9">
+            <video data-stream data-coarse-poster poster="../assets/motion/robo-catcher-360-poster.png" width="1920" height="1080" muted loop playsinline preload="none" aria-label="Robo-Catcher, the full 84 part assembly turning on a turntable, CAD animation"><source data-src="../assets/motion/robo-catcher-360-alpha.webm" type="video/webm"><source data-src="../assets/motion/robo-catcher-360.mp4" type="video/mp4"></video>
+          </div>
+          <p class="meta-sm media-note"><b>02</b> / Full 84 part assembly. Net, ramps, indexer, flywheel thrower</p>
+          <div class="photo-row three">
+            <figure class="plate photo">
+              <img loading="lazy" decoding="async" src="../assets/photos/robo-catcher-photography/indexer-cross-section.jpg" width="457" height="450" alt="Cross section of the dual-chamber indexer, the softball feed path cut open to show the chambers">
+              <figcaption class="meta-sm">Indexer / cross section</figcaption>
+            </figure>
+            <figure class="plate photo">
+              <img loading="lazy" decoding="async" src="../assets/photos/robo-catcher-photography/working-on-electronics.jpg" width="520" height="599" alt="Two team members crouched over one of the Robo-Catcher's units on the field, one holding a softball, the rest of the team behind">
+              <figcaption class="meta-sm">Running it on the field</figcaption>
+            </figure>
+            <figure class="plate photo">
+              <img loading="lazy" decoding="async" src="../assets/photos/shop-and-machine-photography/machine-field.jpg" width="520" height="650" alt="Robo-Catcher on the field">
+              <figcaption class="meta-sm">On the field / Photograph Paul Buckowski / Union College</figcaption>
+            </figure>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="04-bend-fixture" class="section sheet on-paper" data-station="FIXTURE" data-index="07" aria-labelledby="t-bend">
+    <div class="inner">
+      <div class="zone-ticks" aria-hidden="true"><i>A</i><i>B</i><i>C</i><i>D</i><i>E</i><i>F</i><i>G</i><i>H</i></div>
+      <div class="title-block">
+        <div class="tb-cell tb-title"><span class="tb-k">Title</span><span class="tb-v">Custom three-point bend fixture and data logger</span></div>
+        <div class="tb-cell"><span class="tb-k">Sheet</span><span class="tb-v">03 of 05</span></div>
+        <div class="tb-cell"><span class="tb-k">Org / year</span><span class="tb-v">SunThru / 2026</span></div>
+        <div class="tb-cell tb-role"><span class="tb-k">Role</span><span class="tb-v">Solo design</span></div>
+        <div class="tb-cell"><span class="tb-k">Rev</span><span class="tb-v">A</span></div>
+      </div>
+      <header class="sec-head sheet-head">
+        <p class="eyebrow">04 / Design for manufacture</p>
+        <h2 id="t-bend" class="display-3">Custom three-point bend fixture and data logger</h2>
+      </header>
+      <div class="sheet-grid">
+        <div class="sheet-notes">
+          <h3 class="meta">Notes</h3>
+          <ol class="notes">
+            <li><span class="idx">01</span><p>Aerogel is too fragile for off the shelf flexural test fixtures, so I designed one. It is fully 3D printable, built from interlocking parts on a shared coordinate system, and sized for the lab's samples with gentle repeatable clamping. It is in use for flexural characterization.</p></li>
+            <li><span class="idx">02</span><p class="strong">A small, clean example of design for manufacture, and of solving a problem by making the tool rather than buying it.</p></li>
+          </ol>
+          <table class="parts">
+            <caption class="meta">Build / parts list</caption>
+            <thead><tr><th scope="col">No.</th><th scope="col">Item</th><th scope="col">Value</th></tr></thead>
+            <tbody>
+              <tr><td>01</td><td>Printing</td><td>Fully 3D printable</td></tr>
+              <tr><td>02</td><td>Build</td><td>Interlocking parts, one coordinate system</td></tr>
+              <tr><td>03</td><td>Sized for</td><td>The lab's aerogel samples</td></tr>
+              <tr><td>04</td><td>Clamping</td><td>Gentle and repeatable</td></tr>
+              <tr><td>05</td><td>Status</td><td>In use for characterization</td></tr>
+            </tbody>
+          </table>
+          <p><a class="btn btn-outline" href="../projects/bend-fixture.html">Read the case study <span aria-hidden="true">→</span></a></p>
+        </div>
+        <div class="sheet-media pin">
+          <div class="media-cell plate dark" style="--ratio: 16 / 9">
+            <video data-stream poster="../assets/motion/bend-fixture-blurred-poster.jpg" width="1280" height="720" muted loop playsinline preload="none" disablepictureinpicture controlslist="nodownload noremoteplayback" aria-label="Blurred render, SunThru proprietary hardware, intentionally blurred"><source data-src="../assets/motion/bend-fixture-blurred-alpha.webm" type="video/webm"><source data-src="../assets/motion/bend-fixture-blurred.mp4" type="video/mp4"></video>
+            <span class="pill ip-pill">IP protected</span>
+          </div>
+          <p class="meta-sm media-note">Blurred render / SunThru proprietary hardware</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="05-rudder-pedals" class="section sheet on-paper" data-station="PEDALS" data-index="08" aria-labelledby="t-pedals">
+    <div class="inner">
+      <div class="zone-ticks" aria-hidden="true"><i>A</i><i>B</i><i>C</i><i>D</i><i>E</i><i>F</i><i>G</i><i>H</i></div>
+      <div class="title-block">
+        <div class="tb-cell tb-title"><span class="tb-k">Title</span><span class="tb-v">Flight sim rudder pedals</span></div>
+        <div class="tb-cell"><span class="tb-k">Sheet</span><span class="tb-v">04 of 05</span></div>
+        <div class="tb-cell"><span class="tb-k">Org / year</span><span class="tb-v">Personal project / 2026</span></div>
+        <div class="tb-cell tb-role"><span class="tb-k">Role</span><span class="tb-v">Solo / mechanism design to USB HID firmware</span></div>
+        <div class="tb-cell"><span class="tb-k">Rev</span><span class="tb-v">A</span></div>
+      </div>
+      <header class="sec-head sheet-head">
+        <p class="eyebrow">05 / Mechanism / Firmware</p>
+        <h2 id="t-pedals" class="display-3">Flight sim rudder pedals</h2>
+      </header>
+      <div class="sheet-grid sheet-grid-wide">
+        <div class="sheet-notes pin">
+          <h3 class="meta">Notes</h3>
+          <ol class="notes">
+            <li><span class="idx">01</span><p>A three axis fighter style rudder and toe brake set, designed in CAD and 3D printed, using contactless magnetic sensing so there is nothing to wear out. I wrote the USB HID firmware myself, so it is plug and play in any simulator with no drivers, custom calibration, and its own deadzone logic.</p></li>
+            <li><span class="idx">02</span><p class="strong">A solo project that goes all the way from mechanism design to firmware, and it connects to the flying.</p></li>
+          </ol>
+          <div class="photo-row two">
+            <figure class="plate photo">
+              <img loading="lazy" decoding="async" src="../assets/renders/rudder-pedals/a1301-hall-sensor.jpg" width="1600" height="900" alt="Render of the A1301 Hall effect sensor in a TO-92 package, the contactless sensing element of the pedals">
+              <figcaption class="meta-sm">A1301 Hall-effect sensor / render</figcaption>
+            </figure>
+            <figure class="plate photo">
+              <img loading="lazy" decoding="async" src="../assets/renders/rudder-pedals/pro-micro.jpg" width="1600" height="900" alt="Render of the Pro Micro microcontroller board that runs the USB HID firmware">
+              <figcaption class="meta-sm">Pro Micro / render</figcaption>
+            </figure>
+          </div>
+          <p><a class="btn btn-outline" href="../projects/rudder-pedals.html">Read the case study <span aria-hidden="true">→</span></a></p>
+        </div>
+        <div class="sheet-media">
+          <div class="media-cell plate dark" style="--ratio: 4 / 3">
+            <video data-stream poster="../assets/motion/rudder-pedals-working-poster.png" width="1920" height="1080" muted loop playsinline preload="none" aria-label="The rudder pedals working: the rudder bar and both toe brakes moving, CAD animation"><source data-src="../assets/motion/rudder-pedals-working-alpha.webm" type="video/webm"><source data-src="../assets/motion/rudder-pedals-working.mp4" type="video/mp4"></video>
+          </div>
+          <figure class="plate photo">
+            <img loading="lazy" decoding="async" src="../assets/photos/rudder-pedal-photography/pedals-hero.jpg" width="520" height="346" alt="The built rudder pedal assembly, one pedal unit with its toe brake">
+            <figcaption class="meta-sm">Built hardware</figcaption>
+          </figure>
+        </div>
+      </div>
+      <div class="hid-wrap">
+        <p class="meta-sm hid-lead">HID bench / plug any controller in and press a button / the page reads it through the Gamepad API, nothing leaves the browser</p>
+        <div id="hid-root"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="06-therma-shift" class="section sheet on-paper" data-station="COASTER" data-index="09" aria-labelledby="t-therma">
+    <div class="inner">
+      <div class="zone-ticks" aria-hidden="true"><i>A</i><i>B</i><i>C</i><i>D</i><i>E</i><i>F</i><i>G</i><i>H</i></div>
+      <div class="title-block">
+        <div class="tb-cell tb-title"><span class="tb-k">Title</span><span class="tb-v">Therma-Shift coaster</span></div>
+        <div class="tb-cell"><span class="tb-k">Sheet</span><span class="tb-v">05 of 05</span></div>
+        <div class="tb-cell"><span class="tb-k">Org / year</span><span class="tb-v">Personal project / 2026</span></div>
+        <div class="tb-cell tb-role"><span class="tb-k">Role</span><span class="tb-v">Solo / thermal core, control electronics</span></div>
+        <div class="tb-cell"><span class="tb-k">Rev</span><span class="tb-v">A</span></div>
+      </div>
+      <header class="sec-head sheet-head">
+        <p class="eyebrow">06 / Thermal / Control electronics</p>
+        <h2 id="t-therma" class="display-3">Therma-Shift coaster</h2>
+      </header>
+      <div class="sheet-grid">
+        <div class="sheet-notes">
+          <h3 class="meta">Notes</h3>
+          <ol class="notes">
+            <li><span class="idx">01</span><p>A solid state coaster that actively heats or cools any mug or glass, built for a seed competition. Closed loop temperature control with thermal runaway cutoffs, in an aluminum topped form factor designed to work with drinkware people already own rather than a proprietary cup.</p></li>
+            <li><span class="idx">02</span><p class="strong">I bench validated the thermal core before integrating the control electronics.</p></li>
+          </ol>
+          <p><a class="btn btn-outline" href="../projects/therma-shift.html">Read the case study <span aria-hidden="true">→</span></a></p>
+        </div>
+        <div class="sheet-media">
+          <div class="media-cell plate dark" style="--ratio: 5 / 4">
+            <video data-stream poster="../assets/motion/therma-shift-360-noflow-poster.png" width="1920" height="1080" muted loop playsinline preload="none" aria-label="Therma-Shift coaster turning on a turntable, CAD animation"><source data-src="../assets/motion/therma-shift-360-noflow-alpha.webm" type="video/webm"><source data-src="../assets/motion/therma-shift-360-noflow.mp4" type="video/mp4"></video>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="experience" class="section on-dark" data-station="CREW" data-index="10">
+    <div class="inner">
+      <header class="sec-head">
+        <p class="eyebrow">Crew log / Rev A – D / 10</p>
+        <h2 class="display-2">Experience</h2>
+      </header>
+      <div class="crew">
+        <article class="crew-entry">
+          <div class="crew-head">
+            <p class="eyebrow">Rev D</p>
+            <h3 class="title-1">Engineering intern</h3>
+            <p class="meta strong">SunThru</p>
+            <p class="meta">Schenectady, NY / June 2026 to September 2026</p>
+          </div>
+          <div class="crew-body">
+            <p class="body">SunThru is a Union College spin-out developing silica aerogel inserts that give double pane windows triple pane performance. I worked on both prototypes and production equipment.</p>
+            <p class="body">On the product: I built and tested the company's first full in-house prototype units and led validation work on thermal performance and optical clarity. I produced toleranced drawings for machine-shop quotes and managed component sourcing under tight lead times.</p>
+            <p class="body">On the equipment: I supported bring-up of a PLC automation system, including ladder logic, panel wiring, instrumentation, and structured test procedures on live hardware.</p>
+            <p class="body muted">I also led sourcing for a replacement production blower on a one week deadline, which involved specifying the requirement, working the manufacturer's rep, catching a power spec mismatch against the site's actual supply, and raising material compatibility questions before anyone ordered anything.</p>
+          </div>
+        </article>
+        <article class="crew-entry">
+          <div class="crew-head">
+            <p class="eyebrow">Rev C</p>
+            <h3 class="title-1">Founder and president</h3>
+            <p class="meta strong">Union College Rocket Team</p>
+            <p class="meta">Schenectady, NY / August 2023 to June 2026</p>
+          </div>
+          <div class="crew-body">
+            <p class="body">Started the team from nothing and built it to competition standard. Led the twelve person competition team as captain, trained new members through build labs, and owned safety compliance for high power launches. Grew the team budget by seven hundred percent by writing funding proposals, which paid for the airframe.</p>
+            <p class="body strong">The team won first place at Battle of the Rockets 2026 in the Deployable Sensor Payload event, and was chartered as an official section of the National Association of Rocketry.</p>
+          </div>
+        </article>
+        <article class="crew-entry">
+          <div class="crew-head">
+            <p class="eyebrow">Rev B</p>
+            <h3 class="title-1">Founder</h3>
+            <p class="meta strong">ModuFly</p>
+            <p class="meta">Schenectady, NY / September 2024 to January 2026</p>
+          </div>
+          <div class="crew-body">
+            <p class="body">Co-founded a startup around a modular interlocking rocket system for STEM education. Raised $70,000 in seed funding, starting with a $10,000 prize at the SparkLabs competition and then a further $60,000 from private investors. Led R&amp;D and production, and ran hands-on rocketry workshops teaching design and troubleshooting to more than twenty high school students.</p>
+          </div>
+        </article>
+        <article class="crew-entry">
+          <div class="crew-head">
+            <p class="eyebrow">Rev A</p>
+            <h3 class="title-1">Design engineer and materials intern</h3>
+            <p class="meta strong">TASECS</p>
+            <p class="meta">Ankara, Turkey / Summer 2024</p>
+          </div>
+          <div class="crew-body">
+            <p class="body">Aerospace thermal management. Designed high efficiency HVAC valve components, ran material stress and fatigue analysis supporting two national fighter and jet trainer programs, and selected aerospace grade materials for printed prototypes, including cooling upgrades for high ambient temperature operation.</p>
+            <div class="photo-row two">
+              <div class="media-cell plate dark" style="--ratio: 16 / 9">
+                <video data-stream poster="../assets/motion/kaan-360-poster.png" width="1920" height="1080" muted loop playsinline preload="none" aria-label="Third-party aircraft model turning on a turntable, illustration only"><source data-src="../assets/motion/kaan-360-alpha.webm" type="video/webm"><source data-src="../assets/motion/kaan-360.mp4" type="video/mp4"></video>
+              </div>
+              <div class="media-cell plate dark" style="--ratio: 16 / 9">
+                <video data-stream poster="../assets/motion/hurjet-360-poster.png" width="1920" height="1080" muted loop playsinline preload="none" aria-label="Third-party aircraft model turning on a turntable, illustration only"><source data-src="../assets/motion/hurjet-360-alpha.webm" type="video/webm"><source data-src="../assets/motion/hurjet-360.mp4" type="video/mp4"></video>
+              </div>
+            </div>
+            <p class="meta-sm media-note">Third-party aircraft models, illustration only</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="skills" class="section on-paper" data-station="SKILLS" data-index="11">
+    <div class="inner">
+      <header class="sec-head">
+        <p class="eyebrow">What I work with / 11</p>
+        <h2 class="display-2">What I work with</h2>
+      </header>
+      <div class="skills">
+        <div class="skill-group"><p class="meta strong"><span class="idx">01</span>Design and CAD</p><ul class="pills"><li>SolidWorks / expert</li><li>Macro and API automation</li><li>GD&amp;T to ASME Y14.5</li><li>Tolerance stack-up</li><li>Design for manufacture</li><li>Design for assembly</li><li>Shop drawings for quoting</li><li>AutoCAD</li><li>CATIA</li><li>Revit</li></ul></div>
+        <div class="skill-group"><p class="meta strong"><span class="idx">02</span>Controls and automation</p><ul class="pills"><li>PLC ladder logic</li><li>Control panel wiring</li><li>Hardware termination</li><li>4-20 mA instrumentation</li><li>Pressure transducers</li><li>Thermocouples</li><li>PID control</li><li>I/O documentation</li><li>Fault troubleshooting</li></ul></div>
+        <div class="skill-group"><p class="meta strong"><span class="idx">03</span>Electronics and firmware</p><ul class="pills"><li>C++</li><li>ESP32</li><li>Teensy</li><li>Embedded data acquisition</li><li>Closed loop control firmware</li><li>USB HID</li><li>Hall effect sensors</li><li>Thermistors</li><li>Digital temperature sensors</li><li>Heat flux sensors</li></ul></div>
+        <div class="skill-group"><p class="meta strong"><span class="idx">04</span>Analysis</p><ul class="pills"><li>FEA</li><li>CFD</li><li>MATLAB</li><li>Heat transfer</li><li>Thermal analysis</li><li>HVAC load calculation</li><li>Stress analysis</li><li>Fatigue analysis</li></ul></div>
+        <div class="skill-group"><p class="meta strong"><span class="idx">05</span>Fabrication</p><ul class="pills"><li>3D printing / FDM</li><li>3D printing / SLA</li><li>Laser cutting</li><li>Milling</li><li>Lathe</li><li>Rapid prototyping</li><li>Bench assembly</li><li>Calibration</li></ul></div>
+        <div class="skill-group"><p class="meta strong"><span class="idx">06</span>Software</p><ul class="pills"><li>Python</li><li>JavaScript</li><li>HTML</li><li>CSS</li></ul><p class="body-sm muted">This site's predecessor was hand built with no framework.</p></div>
+        <div class="skill-group"><p class="meta strong"><span class="idx">07</span>Languages</p><ul class="pills"><li>Turkish / native</li><li>English / professional</li><li>German / intermediate</li><li>Spanish / beginner</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="beyond" class="section on-dark beyond" data-station="OFF RANGE" data-index="12">
+    <div class="beyond-plate plate dark">
+      <video data-stream poster="../assets/motion/balloon-segovia-poster.jpg" width="1920" height="1080" muted loop playsinline preload="none" aria-label="Aerial shot of a hot air balloon over open country at sunrise"><source data-src="../assets/motion/balloon-segovia.mp4" type="video/mp4"></video>
+      <span class="scrim" aria-hidden="true"></span>
+      <div class="beyond-plate-copy inner">
+        <p class="eyebrow">Off range / Beyond engineering / 12</p>
+        <h2 class="display-2">Beyond engineering</h2>
+        <p class="body-lg on-photo"><b>01 / Piloting</b> Licensed ultralight pilot, certified through the Turkish civil aviation authority. The rudder pedals came out of the same interest.</p>
+      </div>
+    </div>
+    <div class="inner beyond-body">
+      <div class="beyond-grid">
+        <div class="beyond-col">
+          <p class="meta strong"><span class="idx">02</span>Filmmaking</p>
+          <p class="body">Three short films screened at the Robert College Film Festival in 2022, made while in high school in Istanbul. One of them, a solo project, was nominated in three technical categories: cinematography, editing, and sound design. Entirely self taught.</p>
+          <ul class="slates" aria-label="Film slates">
+            <li><span>Short 01</span><b>Robert College Film Festival / 2022 / screened</b></li>
+            <li><span>Short 02</span><b>Robert College Film Festival / 2022 / screened</b></li>
+            <li><span>Short 03 / solo</span><b>Robert College Film Festival / 2022 / screened / nominated / cinematography / editing / sound design</b></li>
+          </ul>
+          <p class="meta-sm muted">The shorts are not published on this site.</p>
+        </div>
+        <div class="beyond-col about">
+          <figure class="cutout">
+            <img loading="lazy" decoding="async" src="../assets/portrait/mert-cutout.png" width="616" height="768" alt="Mert Tureli, head-and-shoulders cut-out portrait">
+            <figcaption class="meta-sm">Portrait</figcaption>
+          </figure>
+          <div class="about-copy">
+            <p class="body-lg">I grew up in Izmir and came to New York for the degree. Outside of engineering I fly, make short films, shoot photography, cook, and travel as much as I can get away with.</p>
+            <p class="body">I am a mechanical engineer who does not stop at the mechanical part. Most of my work has the same shape: something needs to exist, nobody has built it yet, and the fastest way to find out if it works is to design it, wire it, write the firmware, and then build the rig that measures it.</p>
+            <dl class="spec">
+              <div><dt>Title</dt><dd>Mechanical engineer</dd></div>
+              <div><dt>Based</dt><dd>Austin, Texas</dd></div>
+              <div><dt>From</dt><dd>Izmir, Turkey</dd></div>
+              <div><dt>Degree</dt><dd>B.S. Mechanical Engineering <span class="muted">/ Union College, 2026</span></dd></div>
+            </dl>
+          </div>
+        </div>
+      </div>
+      <div class="photography">
+        <p class="meta strong"><span class="idx">03</span>Photography</p>
+        <p class="body">An ongoing thing rather than a project.</p>
+        <div id="contact-sheet" class="contact-sheet-root"></div>
+        <noscript><p class="meta-sm muted">The contact sheet needs scripts. The frames are in the photography lab.</p></noscript>
+        <p><a class="btn btn-outline on-dark" href="../photography-lab.html">The corridor <span aria-hidden="true">→</span></a></p>
+      </div>
+      <div class="beyond-grid">
+        <div class="beyond-col"><p class="meta strong"><span class="idx">04</span>Cooking</p><p class="body">I cook most days, mostly the food I grew up with in Izmir.</p></div>
+        <div class="beyond-col"><p class="meta strong"><span class="idx">05</span>Travelling</p><p class="body">I grew up in Izmir, moved to New York for the degree, and travel whenever there is room to. The camping and the vlogging fit in here.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="recognition" class="section on-paper" data-station="AWARDS" data-index="13">
+    <div class="inner">
+      <header class="sec-head">
+        <p class="eyebrow">Recognition / 13</p>
+        <h2 class="display-2">Recognition</h2>
+      </header>
+      <ol class="recognition">
+        <li><span class="idx">01</span><p>First place, Battle of the Rockets 2026, Deployable Sensor Payload, as captain and chief engineer <a class="meta source-link" href="https://www.union.edu/news/stories/202604/rocket-club-soars-new-heights-first-place-finish-national-competition" target="_blank" rel="noopener">Union College</a></p></li>
+        <li><span class="idx">02</span><p>Founded the Union College Rocket Team and grew its budget by seven hundred percent</p></li>
+        <li><span class="idx">03</span><p>Raised $70,000 in seed funding for ModuFly, a $10,000 SparkLabs competition prize plus $60,000 from private investors</p></li>
+        <li><span class="idx">04</span><p>Three film nominations at the Robert College Film Festival 2022 for a single solo short</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="websites" class="section websites on-paper" data-station="WEBSITES" data-index="14" aria-labelledby="website-entry-title">
+    <div class="inner websites-inner">
+      <div>
+        <p class="eyebrow">Websites / Design &amp; development</p>
+        <h2 id="website-entry-title" class="display-3">Like what you see?<br><span>Let's build yours.</span></h2>
+      </div>
+      <div class="websites-copy">
+        <p class="body-lg">Your work, your business, your next idea. Let's give it a website people want to explore.</p>
+        <p class="body">This page is the demonstration.</p>
+        <p class="websites-links"><a class="btn btn-outline" href="../websites.html">A website for you <span aria-hidden="true">↗</span></a> <a class="btn btn-link" href="../websites.html#inquiry">Start an inquiry <span aria-hidden="true">→</span></a></p>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact" class="section on-dark" data-station="COMMS" data-index="15">
+    <div class="inner contact-grid">
+      <div class="contact-copy pin">
+        <p class="eyebrow">Comms / Contact</p>
+        <h2 class="display-2">Get in touch</h2>
+        <p class="body-lg">Based in Austin, Texas. For a conversation about engineering, photography, or something interesting you are building, get in touch.</p>
+        <p><a class="btn btn-outline" href="https://linkedin.com/in/merttureli">LinkedIn <span aria-hidden="true">→</span></a></p>
+        <div class="rows">
+          <a class="row" href="../assets/Mert-Tureli-Resume.pdf"><span class="k">Resume</span><span>Mert Tureli, PDF</span></a>
+          <a class="row" href="https://linkedin.com/in/merttureli"><span class="k">LinkedIn</span><span>linkedin.com/in/merttureli</span></a>
+          <a class="row" href="mailto:merttureli0@gmail.com"><span class="k">Email</span><span>merttureli0@gmail.com</span></a>
+          <a class="row" href="../hi/mert-tureli.vcf"><span class="k">Contact</span><span>Save contact, VCF</span></a>
+        </div>
+      </div>
+      <div class="contact-manifest">
+        <p class="eyebrow">Build manifest / this page, measured now / SRC: resource timing</p>
+        <div id="build-manifest" class="manifest">
+          <table class="manifest-table">
+            <caption class="sr-only">Every script and stylesheet this page loaded, with its transfer size and, for scripts, its load duration, read from Resource Timing in your browser</caption>
+            <thead><tr><th scope="col">File</th><th scope="col">Transfer</th><th scope="col">Duration</th></tr></thead>
+            <tbody id="manifest-body"><tr><td colspan="3" class="muted">Measured by main.js from Resource Timing once scripts run. Nothing is sent anywhere.</td></tr></tbody>
+          </table>
+          <p id="manifest-foot" class="meta-sm muted">Stored locally: vx-boot-v1, vx-tier, vx-reader. This session: vx-console-history. No analytics.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="vx-footer on-dark">
+  <div class="inner">
+    <p class="facts meta-sm"><b>Mert Tureli</b> / Mechanical engineer / Austin, Texas / B.S. Mechanical Engineering, Union College, 2026 <a href="../assets/Mert-Tureli-Resume.pdf">Resume (PDF)</a> <a href="mailto:merttureli0@gmail.com">Email</a> <a href="https://linkedin.com/in/merttureli">LinkedIn</a> <a href="../hi/mert-tureli.vcf">Save contact (VCF)</a></p>
+    <p class="credit meta-sm">Photographs of the machine and the team by Paul Buckowski / Union College. CAD animations rendered from the source assemblies. Aircraft models are third-party, illustration only. / <a href="../privacy.html">Privacy</a></p>
+    <p class="measured meta-sm">Every live number on this page is measured from this page in your browser. Nothing is sent anywhere.</p>
+    <p class="footer-links meta-sm"><a href="/">The production site <span aria-hidden="true">→</span></a> <a href="lab/">Lab <span aria-hidden="true">→</span></a> <a href="../privacy.html">Privacy</a></p>
+  </div>
+</footer>
+
+<aside id="rail" aria-label="Instrument rail"></aside>
+<div id="sheet" class="sheet-root" hidden></div>
+<svg id="dimensions" aria-hidden="true" focusable="false"></svg>
+
+<dialog id="keys" class="keys on-dark" aria-labelledby="keys-title">
+  <div class="keys-head"><p id="keys-title" class="meta">Keys / every shortcut on this page</p><button class="chip" type="button" data-keys-close>Close</button></div>
+  <dl class="keys-list">
+    <div><dt>/</dt><dd>Open the console</dd></div>
+    <div><dt>Ctrl K / Cmd K</dt><dd>Open the console from anywhere</dd></div>
+    <div><dt>?</dt><dd>This sheet</dd></div>
+    <div><dt>J / K</dt><dd>Next and previous section</dd></div>
+    <div><dt>1 to 4</dt><dd>Tunnel view: smoke, velocity, pressure, vorticity</dd></div>
+    <div><dt>F</dt><dd>Freeze and release the tunnel</dd></div>
+    <div><dt>Tab</dt><dd>Walk the callouts; a focused callout moves the stage to its station</dd></div>
+    <div><dt>I / O</dt><dd>Mark in and out on the contact sheet</dd></div>
+    <div><dt>Esc</dt><dd>Close any sheet or dialog</dd></div>
+  </dl>
+  <p class="meta-sm muted">Single keys are off while you type in a field.</p>
+</dialog>
+
+<div id="announce" class="sr-only" aria-live="polite"></div>
+</body>
+</html>

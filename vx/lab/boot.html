@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en" class="on-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LAB / 05 / BOOT</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/lab.css">
+<link rel="stylesheet" href="../css/boot.css">
+<style>
+  .lab-main { display: grid; grid-template-rows: auto auto; min-width: 0; }
+  /* the overlay is fixed full-viewport on the page; here it fills the stage, sized so head plus stage is one viewport */
+  .lab-stage { min-height: calc(100svh - 69px); }
+  .lab-stage:empty::after { content: "press run boot"; position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); }
+  .lab-panel form { display: contents; }
+  .lab-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .lab-note { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.08em; line-height: 1.6; color: var(--paper-a70); margin: 0; }
+  /* the finished drawing, static, for review */
+  .bt-plate { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-6); padding: var(--space-6) var(--page-margin); border-top: 1px solid var(--paper-a18); }
+  .bt-plate-head { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-2) var(--space-5); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); }
+  .bt-plate-head h2 { font: inherit; letter-spacing: inherit; color: var(--paper); }
+  .bt-plate-stage { position: relative; height: min(92svh, 1100px); }
+  .bt-plate-svg { width: 100%; height: 100%; }
+  .bt-plate-stats { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); display: grid; grid-template-columns: auto auto; gap: var(--space-2) var(--space-5); align-content: start; margin: 0; min-width: 200px; }
+  .bt-plate-stats dd { margin: 0; color: var(--paper); text-align: right; font-variant-numeric: tabular-nums; }
+  .bt-plate-stats dt { white-space: nowrap; }
+  @media (max-width: 860px) { .bt-plate { grid-template-columns: 1fr; } .bt-plate-stats { grid-template-columns: auto 1fr; } .bt-plate-stage { height: 80svh; } }
+  @media (max-width: 720px) { .lab-stage { min-height: calc(100svh - 101px); } }   /* the lab head wraps to two lines on phones */
+</style>
+</head>
+<body class="lab">
+  <header class="lab-head">
+    <h1>LAB / 05 / BOOT</h1>
+    <nav aria-label="Lab navigation"><a href="./">Lab index</a><a href="../">VX</a><a href="/">The production site</a></nav>
+  </header>
+  <!-- the overlay as the page ships it: static strip and SKIP button first, the sequencer appends the rest -->
+  <template id="boot-template">
+    <div id="boot" class="bt bt-embedded" role="dialog" aria-label="Loading">
+      <button class="bt-skip" type="button">Skip</button>
+      <p class="bt-facts"><span><b>Mert Tureli</b> / Mechanical engineer / Austin, Texas / B.S. Mechanical Engineering, Union College, 2026</span> <a href="../../assets/Mert-Tureli-Resume.pdf">Resume (PDF)</a> <a href="mailto:merttureli0@gmail.com">Email</a> <a href="https://linkedin.com/in/merttureli" rel="noopener">LinkedIn</a> <a href="../../hi/mert-tureli.vcf">Save contact (VCF)</a></p>
+    </div>
+  </template>
+  <div class="lab-body">
+    <div class="lab-main">
+      <div class="lab-stage" id="stage"></div>
+      <section class="bt-plate" aria-labelledby="plate-title">
+        <div class="bt-plate-head">
+          <h2 id="plate-title">CHARGER / front view / static plot</h2>
+          <span>exterior parts 00 01 02 06 07 08 09 10 11 18 19 / assembly.bin wire data / model units</span>
+        </div>
+        <div class="bt-plate-stage"><svg class="bt-plate-svg" id="plate" role="img" aria-label="CHARGER front view drawn from the exterior parts' wire segments"></svg></div>
+        <dl class="bt-plate-stats" id="plate-stats"><dt>status</dt><dd>waiting for geometry</dd></dl>
+      </section>
+    </div>
+    <aside class="lab-panel" aria-label="Controls">
+      <h2>Sequence</h2>
+      <div class="lab-actions">
+        <button class="lab-button" id="run" type="button">Run boot</button>
+        <button class="lab-button" id="skip" type="button">Skip</button>
+        <button class="lab-button" id="unmask" type="button">Unmask</button>
+        <button class="lab-button" id="load" type="button">Load geometry</button>
+      </div>
+      <label class="lab-row">Min hold ms <output id="min-out">900</output><input id="min" type="range" min="400" max="4000" step="100" value="900"></label>
+      <label class="lab-row">Max cap ms <output id="max-out">2200</output><input id="max" type="range" min="800" max="10000" step="100" value="2200"></label>
+      <label class="lab-row">Auto unmask <input id="auto" type="checkbox"></label>
+      <label class="lab-row">Repeat visit <input id="repeat" type="checkbox"></label>
+      <label class="lab-row">Skip on scroll <input id="scroll" type="checkbox"></label>
+      <label class="lab-row">Geometry <select id="geometry"><option value="auto">auto (connection)</option><option value="stream">stream</option><option value="defer">defer</option></select></label>
+      <h2>Plotter</h2>
+      <label class="lab-row">Pen speed m/s <output id="speed-out">80</output><input id="speed" type="range" min="5" max="300" step="5" value="80"></label>
+      <h2>Network</h2>
+      <label class="lab-row">Slow network <input id="slow" type="checkbox"></label>
+      <label class="lab-row">Delay per chunk ms <output id="delay-out">40</output><input id="delay" type="range" min="0" max="250" step="5" value="40"></label>
+      <label class="lab-row">Chunk size KB <output id="chunk-out">32</output><input id="chunk" type="range" min="4" max="256" step="4" value="32"></label>
+      <h2>Governor</h2>
+      <label class="lab-row">Pin tier <output id="tier-out">auto</output><input id="tier" type="range" min="-1" max="3" step="1" value="-1"></label>
+      <p class="lab-note">The page caps the boot at 2,200 ms on fine pointers and 1,200 ms on coarse ones; the cap holds whatever step is pending. SKIP, any key, a tap, a wheel or the first scroll skips the visual; the loads continue and the promise still resolves with the geometry. Skip on scroll is off here because this page scrolls to the plate below. The repeat-visit flag vx-boot-v1 (localStorage) is cleared before every run and not written by the lab. Load geometry starts a deferred stream (geometry: defer, or auto under save-data / 2g / 3g).</p>
+    </aside>
+  </div>
+  <pre class="lab-readout" id="readout" aria-live="off">boot / idle</pre>
+  <script type="module">
+    import { bus } from '../js/core/bus.js';
+    import { governor } from '../js/core/governor.js';
+    import { createBoot, deferReason } from '../js/boot.js';
+    import { createPlotter } from '../js/plotter.js';
+
+    const $ = (id) => document.getElementById(id);
+    const stage = $('stage'), readout = $('readout'), template = $('boot-template');
+    const lines = [];
+    let boot = null, plate = null, geometry = null, progress = 0;
+
+    const bind = (id, fmt = (v) => v) => { const i = $(id), o = $(id + '-out'); const f = () => { o.textContent = fmt(i.value); }; i.addEventListener('input', f); f(); return i; };
+    const minI = bind('min'), maxI = bind('max'), speedI = bind('speed'), delayI = bind('delay'), chunkI = bind('chunk');
+    const tierI = bind('tier', (v) => (v < 0 ? 'auto' : `T${v}`));
+    tierI.addEventListener('input', () => governor.pin(tierI.value < 0 ? null : Number(tierI.value)));
+    speedI.addEventListener('input', () => boot?.plotter?.setSpeed(Number(speedI.value)));
+
+    const fmtInt = (n) => Math.round(n).toLocaleString('en-US');
+    const fmtMs = (ms) => `${ms < 10 ? ms.toFixed(1) : Math.round(ms)} ms`;
+    function render() {
+      const s = boot?.state, p = boot?.plotter?.stats;
+      const flags = s ? [s.skipped && 'skipped', s.bypassed && 'bypassed', s.deferred && `deferred / ${s.deferReason}`, s.green && 'green', s.unmasked && 'unmasked'].filter(Boolean).join(' / ') : '';
+      const head = [
+        `<b>boot</b> / ${s ? s.phase : 'idle'}${flags ? ' / ' + flags : ''}  clock ${s ? (s.clock / 1000).toFixed(3) : '0.000'} s  hold ${s && s.clock === 0 && !s.unmasked && !s.green && (!s.stepsDone || !s.geometryDone) ? 'yes' : 'no'}  connection ${deferReason() || 'fast or unknown'}`,
+        `<b>geometry</b> ${s ? fmtInt(s.received) : 0} / ${s ? fmtInt(s.total) : 0} B  chunks ${progress}${geometry ? ` / resolved ${fmtInt(geometry.buffer.byteLength)} B` : ''}`,
+        p ? `<b>plotter</b> ${p.arrived} / ${p.parts} parts  segments ${fmtInt(p.segments)}  polylines ${fmtInt(p.polylines)}  paths ${p.chunks}  travel ${p.travel.toFixed(2)} m  up ${p.travelUp.toFixed(2)} m  drawn ${p.drawn.toFixed(2)} m  build ${p.buildMs.toFixed(0)} ms  ${p.busy ? 'plotting' : p.done ? 'done' : 'waiting'}` : '<b>plotter</b> not created',
+        `<b>governor</b> T${governor.tier} / ceiling T${governor.ceiling} / p50 ${governor.stats.p50Ms.toFixed(1)} ms / ${governor.stats.frames} frames`,
+        `<b>dom</b> ${document.getElementById('boot') ? `overlay in dom / first focusable ${document.getElementById('boot').querySelector('button, a')?.className || 'none'}` : 'overlay removed'}  inert siblings ${[...stage.parentNode.children].filter((n) => n.inert).length}`,
+        '',
+        ...lines,
+      ];
+      readout.innerHTML = head.join('\n');
+    }
+    bus.on('boot:line', ({ index, label, result, ms }) => { lines.push(`${index == null ? '  ' : String(index).padStart(2, '0')} ${label.padEnd(16)} ${String(result).toUpperCase().padEnd(44).slice(0, 44)} ${fmtMs(ms).padStart(9)}`); render(); });
+    bus.on('boot:done', ({ timings, skipped, bypassed }) => { lines.push(`-- boot:done / ${timings.length} timings [${timings.map((t) => t.label).join(', ')}] / skipped ${skipped} / bypassed ${bypassed}`); render(); });
+    bus.on('boot:progress', () => { progress++; });
+    bus.on('assets:geometry', (g) => { lines.push(`-- assets:geometry / ${fmtInt(g.buffer.byteLength)} B / ${g.json.parts.length} parts`); render(); });
+
+    let rafId = 0;
+    function poll() { rafId = 0; render(); if (boot && boot.state.phase === 'running') rafId = requestAnimationFrame(poll); }
+
+    async function run() {
+      boot?.destroy();
+      lines.length = 0; geometry = null; progress = 0;
+      try { localStorage.removeItem('vx-boot-v1'); } catch {}
+      const overlay = template.content.firstElementChild.cloneNode(true);
+      stage.replaceChildren(overlay);
+      boot = createBoot({
+        overlay,
+        minMs: Number(minI.value), maxMs: Number(maxI.value),
+        autoUnmask: $('auto').checked,
+        repeat: $('repeat').checked,
+        skipOnScroll: $('scroll').checked,
+        geometry: $('geometry').value,
+        remember: false,
+        penSpeed: Number(speedI.value),
+        throttle: $('slow').checked ? { delayMs: Number(delayI.value), chunkBytes: Number(chunkI.value) * 1024 } : null,
+      });
+      if (!rafId) rafId = requestAnimationFrame(poll);
+      const result = await boot.run();
+      geometry = result.geometry;
+      lines.push(`-- resolved / geometry ${geometry ? fmtInt(geometry.buffer.byteLength) + ' B' : 'null'} / ${result.timings.length} timings / skipped ${result.skipped} / deferred ${result.deferred} / bypassed ${result.bypassed}`);
+      render();
+      if (geometry && !plate) drawPlate(geometry);
+    }
+    $('run').addEventListener('click', run);
+    $('skip').addEventListener('click', () => boot?.skip());
+    $('unmask').addEventListener('click', () => boot?.unmask());
+    $('load').addEventListener('click', async () => {
+      if (!boot) return;
+      const g = await boot.loadGeometry();
+      if (g) { geometry = g; lines.push(`-- loadGeometry / ${fmtInt(g.buffer.byteLength)} B`); if (!plate) drawPlate(g); }
+      else lines.push('-- loadGeometry / null');
+      render();
+    });
+
+    /* the finished front view, drawn instantly beneath the stage */
+    function drawPlate({ json, buffer }) {
+      plate = createPlotter($('plate'), { json, speed: Infinity, tier: governor.tier });
+      plate.feed(buffer, buffer.byteLength);
+      const s = plate.stats;
+      const rows = [['parts', `${s.arrived} / ${s.parts}`], ['raw segments', fmtInt(s.raw)], ['unique segments', fmtInt(s.segments)], ['polylines', fmtInt(s.polylines)], ['paths', String(s.chunks)], ['pen travel', `${s.travel.toFixed(2)} m`], ['pen up', `${s.travelUp.toFixed(2)} m`], ['build', `${s.buildMs.toFixed(0)} ms`], ['viewbox mm', plate.viewBox.map((v) => v.toFixed(0)).join(' ')], ['scale', `${plate.scale.toFixed(3)} px/mm`]];
+      $('plate-stats').replaceChildren(...rows.flatMap(([k, v]) => { const dt = document.createElement('dt'); dt.textContent = k; const dd = document.createElement('dd'); dd.textContent = v; return [dt, dd]; }));
+    }
+
+    window.lab = { get boot() { return boot; }, get plate() { return plate; }, governor, bus };
+    run();
+  </script>
+</body>
+</html>

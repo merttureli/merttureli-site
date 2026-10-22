@@ -1,0 +1,281 @@
+/* telemetry.css — the telemetry wall, its strip charts, the ticker layout and
+   the sheet the ticker expands into. Prefix .tel-.
+   Hooks for the integrator:
+     --tel-w         max width of the wall (440px); the sheet ignores it
+     --tel-bg        wall background (transparent); set a scrim over photography
+     --tel-strips-h  height of the strip chart canvas (104px)
+   The module sets data-layout="wall" | "ticker" and data-tier="0..3" on the root.
+   Colours come from the tokens, so the wall reads paper on ink inside .on-dark
+   and ink on paper elsewhere; the sheet is always on dark. Every 10 px line that
+   carries information (labels, units, the head and foot lines, the ticker's label
+   words) sits on --text-muted (paper-a70 / ink-500); --text-meta is kept for
+   separators and marks only. */
+.tel {
+  --tel-w: 440px;
+  --tel-bg: transparent;
+  --tel-strips-h: 104px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-display);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ---- the wall ---- */
+.tel-wall {
+  width: 100%;
+  max-width: var(--tel-w);
+  border: 1px solid var(--line-hairline);
+  border-radius: var(--radius-md);
+  background: var(--tel-bg);
+  overflow: hidden;
+  container-type: inline-size;   /* the unit lines reserve a third line when the wall is narrow (see below) */
+}
+.tel-head, .tel-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 10px 14px;
+  font-size: var(--fs-meta-sm);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  line-height: var(--lh-meta);
+  color: var(--text-muted);
+}
+.tel-head { border-bottom: 1px solid var(--line-hairline); }
+.tel-head-title { color: var(--text-display); }
+.tel-head-src { text-align: right; }
+.tel-foot { flex-direction: column; align-items: flex-start; gap: 2px; border-top: 1px solid var(--line-hairline); }
+.tel-foot-line { color: var(--text-display); }
+.tel-foot-note { letter-spacing: 0.08em; }
+
+/* ten cells, two columns; hairlines between cells, none on the outside */
+.tel-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.tel-cell {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--line-hairline);
+}
+.tel-cell:nth-child(odd) { border-right: 1px solid var(--line-hairline); }
+.tel-label {
+  font-size: var(--fs-meta-sm);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  line-height: var(--lh-meta);
+  color: var(--text-muted);
+}
+.tel-value {
+  margin-top: 6px;
+  font-size: 22px;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--text-display);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+}
+.tel-unit {
+  margin-top: auto;          /* units sit on the cell's baseline whether or not the cell carries a bar */
+  padding-top: 6px;
+  font-size: var(--fs-meta-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: var(--lh-meta);
+  color: var(--text-muted);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  min-height: calc(var(--fs-meta-sm) * var(--lh-meta) * 2);   /* two lines reserved so the grid never reflows on a longer reason */
+}
+/* a wall under 360 px (a 390 px phone in wall layout, or a narrow --tel-w) has cells of about 21 characters a line,
+   so the unit lines get a third line instead of an ellipsis; the 390 px sheet is wider than this and keeps two */
+@container (max-width: 360px) {
+  .tel-unit { -webkit-line-clamp: 3; min-height: calc(var(--fs-meta-sm) * var(--lh-meta) * 3); }
+  .tel-head-page { display: none; }   /* the head keeps to one line; the foot still reads LIVE / THIS PAGE */
+}
+
+/* the FRAME budget bar: a hairline track, 0 at the left, the budget mark at the middle, twice the budget at the right.
+   --fill is p50 as a fraction of the track, --over the part past the mark, --p95 the p95 position. */
+.tel-bar {
+  --fill: 0; --over: 0; --p95: 0;
+  position: relative;
+  height: 8px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+.tel-bar::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 2px;
+  background: var(--line-hairline);
+}
+.tel-bar-fill, .tel-bar-over {
+  position: absolute;
+  left: 0; bottom: 0;
+  width: 100%;
+  height: 2px;
+  transform-origin: 0 50%;
+  transition: transform var(--dur-2) var(--ease-out);
+}
+.tel-bar-fill { background: var(--text-display); transform: scaleX(var(--fill)); }
+/* the overrun span is the right half of the track: --over runs 0..0.5, so scaleX(--over × 2) reaches the right edge at exactly twice the budget */
+.tel-bar-over { left: 50%; width: 50%; background: var(--livery); transform: scaleX(calc(var(--over) * 2)); }
+.tel-bar-mark {
+  position: absolute;
+  left: 50%; bottom: 0;
+  width: 1px; height: 8px;
+  background: var(--text-display);
+}
+.tel-bar-p95 {
+  position: absolute;
+  left: 0; bottom: 0;
+  width: 100%; height: 5px;
+  border-left: 1px solid var(--text-muted);
+  transform: translateX(calc(var(--p95) * 100%));
+  transition: transform var(--dur-2) var(--ease-out);
+}
+
+/* the two strip charts share one canvas */
+.tel-strips {
+  position: relative;
+  height: var(--tel-strips-h);
+  margin: 0;
+  overflow: hidden;
+}
+.tel-strips[hidden] { display: none; }
+.tel-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.tel-strips-legend {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+/* no 2D context: the legend stands in for the canvas */
+.tel-strips[data-fallback] .tel-canvas { display: none; }
+.tel-strips[data-fallback] .tel-strips-legend {
+  position: static; width: auto; height: auto; margin: 0; clip: auto; white-space: normal; overflow: hidden;
+  padding: 10px 14px; font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-muted);
+}
+
+/* ---- the ticker ---- */
+.tel[data-layout="ticker"] { container-type: inline-size; }
+.tel-ticker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 40px;
+  padding: 0 var(--space-4);
+  border-bottom: 1px solid var(--line-hairline);
+  font-size: var(--fs-meta-sm);
+  letter-spacing: var(--ls-nav);
+  text-transform: uppercase;
+  line-height: var(--lh-meta);
+  color: var(--text-display);
+}
+.tel-line {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tel-seg-k { color: var(--text-muted); }
+.tel-sep { color: var(--text-meta); }
+/* narrow containers (a 390 px phone): the units name the values, so the label words go, and the button keeps only its mark */
+@container (max-width: 480px) {
+  .tel-seg-k { display: none; }
+  .tel-ticker { letter-spacing: 0.06em; padding: 0 var(--space-3); }
+  .tel-expand { padding: 0 11px; }
+  .tel-expand::before { margin-right: 0; }
+  .tel-expand-text { display: none; }
+}
+.tel-expand, .tel-close {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--line-hairline);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta-sm);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--text-display);
+  transition: background var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out);
+}
+.tel-expand::before { content: "+"; margin-right: 0.6em; color: var(--text-meta); }
+.tel-expand:hover, .tel-close:hover, .tel-expand[aria-expanded="true"] { border-color: var(--text-display); background: var(--text-display); color: var(--surface-page); }
+.tel-expand:hover::before, .tel-expand[aria-expanded="true"]::before { color: inherit; }
+/* touch: a 44 px bar and 36 px buttons; the focus ring (3 px offset) still clears the bar's edges */
+@media (pointer: coarse) {
+  .tel-ticker { min-height: 44px; }
+  .tel-expand, .tel-close { min-height: 36px; }
+}
+
+/* ---- the sheet: the wall, full width, anchored to the bottom edge ---- */
+.tel-sheet {
+  position: fixed;
+  inset: auto 0 0 0;
+  margin: 0 auto;
+  width: min(100%, 520px);
+  max-width: none;
+  max-height: calc(100svh - 48px);
+  padding: 0;
+  border: 1px solid var(--paper-a18);
+  border-bottom: 0;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: var(--ink-900);
+  color: var(--paper);
+  overflow: auto;
+  overscroll-behavior: contain;
+  z-index: var(--z-overlay, 90);
+  box-shadow: 0 -24px 48px -24px rgba(0, 0, 0, .6);
+}
+.tel-sheet::backdrop { background: rgba(10, 10, 10, .55); }
+.tel-sheet[open] { animation: tel-sheet-in var(--dur-2) var(--ease-out); }
+@keyframes tel-sheet-in { from { transform: translateY(16px); opacity: 0; } to { transform: none; opacity: 1; } }
+.tel-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--paper-a18);
+  font-size: var(--fs-meta-sm);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--paper-a70);
+}
+.tel-sheet .tel-wall {
+  max-width: none;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ---- phones ---- */
+@media (max-width: 480px) {
+  .tel-cell { padding: 10px 12px 8px; }
+  .tel-value { font-size: 20px; }
+  .tel-head, .tel-foot { padding: 8px 12px; }
+}
+
+/* ---- motion and contrast preferences ---- */
+@media (prefers-reduced-motion: reduce) {
+  .tel-bar-fill, .tel-bar-over, .tel-bar-p95, .tel-expand, .tel-close { transition: none; }
+  .tel-sheet[open] { animation: none; }
+}
+@media (forced-colors: active) {
+  .tel-wall, .tel-head, .tel-foot, .tel-cell, .tel-ticker, .tel-sheet, .tel-sheet-head, .tel-expand, .tel-close { border-color: CanvasText; }
+  .tel-bar::before, .tel-bar-fill, .tel-bar-mark { background: CanvasText; }
+  .tel-bar-over { background: Highlight; }
+  .tel-canvas { display: none; }
+  .tel-strips-legend { position: static; width: auto; height: auto; margin: 0; clip: auto; white-space: normal; overflow: hidden; padding: 10px 14px; font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; }
+}

@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en" class="on-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lab / Instruments · Mert Tureli VX</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0A0A0A">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/lab.css">
+<link rel="stylesheet" href="../css/instruments.css">
+<style>
+  /* Lab-only layout: a tall scrolling stage of eight dummy stations so the tape has
+     station marks, and a sticky control panel kept clear of the fixed rail. */
+  html { scroll-behavior: smooth; }
+  @media (min-width: 860px) {
+    .lab-body { padding-right: 64px; }
+    .lab-head { padding-right: calc(var(--page-margin) + 64px); }
+  }
+  .lab-panel { position: sticky; top: 0; align-self: start; max-height: 100svh; }
+  .lab-stage { overflow: visible; }
+  .ilab-station { position: relative; height: 750px; padding: var(--space-6) var(--page-margin); border-bottom: 1px solid var(--paper-a18); display: grid; align-content: start; gap: var(--space-3); }
+  .ilab-station .display-2 { color: var(--paper-a18); font-weight: 400; }
+  .ilab-station .meta { color: var(--paper-a70); }
+  .ilab-station p { max-width: var(--measure-narrow); color: var(--paper-a70); font-size: var(--fs-body-sm); }
+  .ilab-tick { position: absolute; left: 0; top: 0; width: 100%; height: 1px; }
+  .lab-row.ilab-seg { grid-template-columns: repeat(3, 1fr); }
+  .lab-row.ilab-seg .lab-button { min-height: 32px; padding: 0 var(--space-2); }
+  .ilab-note { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.04em; line-height: 1.6; color: var(--paper-a70); }
+  .lab-panel .lab-readout { padding: var(--space-3) 0 0; border-top: 1px solid var(--paper-a18); margin-top: var(--space-2); }
+  @media (max-width: 859.98px) {   /* the module's own breakpoint, so 860 px exactly keeps the rail clearance */
+    .lab-body { padding-right: 0; padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px)); }
+    .lab-panel { position: static; max-height: none; order: -1; border-top: 0; border-bottom: 1px solid var(--paper-a18); }
+    .ilab-station { height: 600px; }
+  }
+  @media (max-width: 479.98px) { .lab-head { flex-wrap: wrap; } }   /* h1 + nav min-content is 366 px side by side; wrapped, 320 px phones get no horizontal scroll */
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+<div class="lab">
+  <header class="lab-head">
+    <h1>LAB / 05 / INSTRUMENTS</h1>
+    <nav aria-label="Lab navigation">
+      <a href="./">All labs</a>
+      <a href="../">VX</a>
+      <a href="/">The production site</a>
+    </nav>
+  </header>
+  <div class="lab-body">
+    <main class="lab-stage" id="stage" aria-label="Eight dummy stations, 750 px each">
+      <section class="ilab-station" id="st-01" data-station="NOSE CONE"><p class="meta">Station 01 / 08 / 0 px</p><h2 class="display-2">01</h2><p>Nose cone. The tape marks the top of every registered section; the orange bug sits on the next one.</p></section>
+      <section class="ilab-station" id="st-02" data-station="CAMERA"><p class="meta">Station 02 / 08 / 750 px</p><h2 class="display-2">02</h2><p>Camera. Scroll depth drives the altimeter; the drum counter carries like an odometer.</p></section>
+      <section class="ilab-station" id="st-03" data-station="PCB STACK"><p class="meta">Station 03 / 08 / 1,500 px</p><h2 class="display-2">03</h2><p>PCB stack. Scroll velocity drives the VSI on a non-linear scale, 0 to 3,000 px/s.</p></section>
+      <section class="ilab-station" id="st-04" data-station="BATTERY"><p class="meta">Station 04 / 08 / 2,250 px</p><h2 class="display-2">04</h2><p>Battery. The peak-hold mark rides the rim for 1.5 s after the fastest sample.</p></section>
+      <section class="ilab-station" id="st-05" data-station="COUPLER"><p class="meta">Station 05 / 08 / 3,000 px</p><h2 class="display-2">05</h2><p>Coupler. The engine gauge reads the governor: median frame time on a 0 to 50 ms arc with the 16.7 ms budget tick.</p></section>
+      <section class="ilab-station" id="st-06" data-station="ALTIMETER"><p class="meta">Station 06 / 08 / 3,750 px</p><h2 class="display-2">06</h2><p>Altimeter. Four annunciators T0 to T3; the active tier is lit and flashes for 240 ms on a change.</p></section>
+      <section class="ilab-station" id="st-07" data-station="MOTOR"><p class="meta">Station 07 / 08 / 4,500 px</p><h2 class="display-2">07</h2><p>Motor. At tier 0 the instruments redraw only when the scroll comes to rest.</p></section>
+      <section class="ilab-station" id="st-08" data-station="SCREW CAP"><p class="meta">Station 08 / 08 / 5,250 px</p><h2 class="display-2">08</h2><p>Screw cap. Every value on the rail is measured from this page in this tab. None of it is flight data.</p></section>
+    </main>
+    <aside class="lab-panel" aria-label="Instrument controls">
+      <h2>Layout</h2>
+      <div class="lab-row ilab-seg" role="group" aria-label="Layout">
+        <button type="button" class="lab-button" data-layout="rail">Rail</button>
+        <button type="button" class="lab-button" data-layout="strip">Strip</button>
+        <button type="button" class="lab-button" data-layout="auto">Auto</button>
+      </div>
+      <h2>Altimeter</h2>
+      <label class="lab-row">Tape scale, px per px <input id="scale" type="range" min="0.04" max="0.40" step="0.01" value="0.12"> <output for="scale">0.12</output></label>
+      <div class="lab-row ilab-seg" role="group" aria-label="Scroll">
+        <button type="button" class="lab-button" id="go-top">Top</button>
+        <button type="button" class="lab-button" id="go-next">Next</button>
+        <button type="button" class="lab-button" id="go-end">End</button>
+      </div>
+      <h2>Vertical speed</h2>
+      <label class="lab-row">Drive the VSI from the slider <input id="fake-on" type="checkbox"></label>
+      <label class="lab-row">Fake velocity, px/s <input id="fake-vy" type="range" min="-3000" max="3000" step="10" value="0"> <output for="fake-vy">0</output></label>
+      <h2>Governor</h2>
+      <label class="lab-row">Tier
+        <select id="tier">
+          <option value="auto">Auto (measured)</option>
+          <option value="3">T3 full</option>
+          <option value="2">T2 reduced</option>
+          <option value="1">T1 minimal</option>
+          <option value="0">T0 static</option>
+        </select>
+      </label>
+      <p class="ilab-note">Pinning a tier emits governor:tier, which flashes the annunciator. The engine gauge reads requestAnimationFrame intervals in this tab.</p>
+      <pre class="lab-readout" id="readout" aria-live="off">booting</pre>
+    </aside>
+  </div>
+</div>
+<aside id="rail" aria-label="Instrument rail"></aside>
+<noscript><p class="ilab-note" style="padding: 24px">The instruments need JavaScript: they draw scroll depth, scroll velocity and frame time measured in this tab.</p></noscript>
+<script type="module">
+  import { governor } from '../js/core/governor.js';
+  import { scroll } from '../js/core/scroll.js';
+  import { mountInstruments } from '../js/instruments.js';
+
+  for (const el of document.querySelectorAll('.ilab-station')) scroll.track(el, el.id);
+  const rail = document.getElementById('rail');
+  const instruments = mountInstruments(rail, { layout: 'auto', tapeScale: 0.12 });
+  window.vxInstruments = instruments;   // for the console
+
+  // layout
+  const layoutButtons = [...document.querySelectorAll('[data-layout]')].filter(b => b.tagName === 'BUTTON');
+  function syncLayout() { for (const b of layoutButtons) b.setAttribute('aria-pressed', String(b.dataset.layout === instruments.state.mode)); }
+  for (const b of layoutButtons) b.addEventListener('click', () => { instruments.setLayout(b.dataset.layout); syncLayout(); });
+  syncLayout();
+
+  // altimeter
+  const scaleIn = document.getElementById('scale');
+  scaleIn.addEventListener('input', () => { instruments.setTapeScale(scaleIn.valueAsNumber); scaleIn.nextElementSibling.value = scaleIn.valueAsNumber.toFixed(2); });
+  document.getElementById('go-top').addEventListener('click', () => scrollTo({ top: 0, behavior: 'smooth' }));
+  document.getElementById('go-end').addEventListener('click', () => scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' }));
+  document.getElementById('go-next').addEventListener('click', () => { const n = scroll.next(); if (n) scroll.to(n.el); });
+
+  // VSI override
+  const fakeOn = document.getElementById('fake-on'), fakeVy = document.getElementById('fake-vy');
+  function applyFake() {
+    fakeVy.nextElementSibling.value = (fakeVy.valueAsNumber > 0 ? '+' : '') + fakeVy.valueAsNumber;
+    instruments.setOverride(fakeOn.checked ? { vy: fakeVy.valueAsNumber } : null);
+  }
+  fakeOn.addEventListener('change', applyFake);
+  fakeVy.addEventListener('input', applyFake);
+
+  // governor
+  const tierSel = document.getElementById('tier');
+  tierSel.addEventListener('change', () => governor.pin(tierSel.value === 'auto' ? null : Number(tierSel.value)));
+
+  // readout at 4 Hz
+  const readout = document.getElementById('readout');
+  const pad = (s, n) => String(s).padEnd(n);
+  const sgn = (v) => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.round(Math.abs(v));
+  function print() {
+    const s = instruments.state;
+    readout.replaceChildren();
+    const lines = [
+      ['LAYOUT', s.layout, ` (${s.mode})  dpr ${s.dpr}  ${s.visible && !s.hidden ? 'drawing' : 'paused'}`],
+      ['ALT', `y ${Math.round(s.y)}`, ` / ${Math.round(s.max)} px`],
+      ['NEXT', s.next ? s.next.id : 'none', s.next ? ` in ${Math.round(s.next.dist)} px  (${s.sections} sections)` : `  (${s.sections} sections)`],
+      ['VSI', `vy ${sgn(s.vy)}`, ` px/s  peak ${sgn(s.vyPeak)}${s.peakHeld ? ' held' : ''}${s.override ? '  override' : ''}`],
+      ['ENG', `p50 ${(s.p50Ms || 0).toFixed(1)}`, ` ms  p95 ${(s.p95Ms || 0).toFixed(1)} ms`],
+      ['TIER', `T${s.tier}`, ` / T${s.ceiling}${s.pinned ? '  pinned' : '  measured'}${s.flashing ? '  flash' : ''}`],
+      ['DRAWS', String(s.draws), `  last ${s.lastDrawMs.toFixed(2)} ms`],
+      ['SIZE', `${s.sizes.alt}`, `  ${s.sizes.vsi}  ${s.sizes.eng}`],
+    ];
+    for (const [k, strong, rest] of lines) {
+      const b = document.createElement('b'); b.textContent = strong;
+      readout.append(pad(k, 8), b, rest, '\n');
+    }
+  }
+  print();
+  setInterval(print, 250);
+</script>
+</body>
+</html>
