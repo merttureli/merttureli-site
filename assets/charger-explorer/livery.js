@@ -38,7 +38,7 @@ export function createLivery() {
   }
   ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   function letters(text, firstY, step, height) {
-    ctx.font = `700 ${height / (BODY_TOP - BODY_BOTTOM) * canvas.height}px "Space Grotesk", sans-serif`;
+    ctx.font = `700 ${height / (BODY_TOP - BODY_BOTTOM) * canvas.height}px "Archivo", sans-serif`;
     [...text].forEach((letter, i) => ctx.fillText(letter, canvas.width / 2, py(firstY - i * step), 80));
   }
   letters('CHARGER', .318, .056, .040);

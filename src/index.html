@@ -32,6 +32,13 @@
 <link rel="stylesheet" href="css/website-entry.css">
 <script src="js/interaction-polish.js" defer></script>
 <script src="js/photography-loader.js" defer></script>
+<style>
+  /* The home page's one h1 is the name: Archivo Name (wdth 116, wght 600, see
+     css/fonts.css). DisplayHeading sets its family inline, hence !important.
+     It sits in the head, not in the helmet block, on purpose: build-case.py
+     copies the helmet block to the case pages, whose h1 is the case title. */
+  h1 { font-family: var(--font-name) !important; }
+</style>
 </head>
 <body class="depth-design">
 <a class="skip-link" href="#main">Skip to content</a>

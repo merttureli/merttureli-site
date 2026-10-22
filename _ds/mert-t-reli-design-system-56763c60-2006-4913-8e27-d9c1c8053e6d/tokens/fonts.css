@@ -1,11 +1,9 @@
-/* Webfonts. No brand font files were supplied — these are the nearest Google Fonts
-   matches to the reference boards (see readme.md → Typography → Substitutions).
-   Space Grotesk  → the grotesque display/UI face (LUX, Salamandra, Star Wars boards)
-   IBM Plex Mono  → the small technical metadata face (specs, indices, captions) */
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap");
-
-:root {
-  --font-display: "Space Grotesk", "Helvetica Neue", Helvetica, sans-serif;
-  --font-body: "Space Grotesk", "Helvetica Neue", Helvetica, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
-}
+/* Webfonts: Archivo (display, UI and text) and Martian Mono (technical metadata:
+   specs, indices, captions), self-hosted in assets/fonts/. The @font-face rules
+   and the family tokens live in the site's css/fonts.css, the one source for
+   both; the prerendered pages link that file in this file's place.
+     --font-name     Archivo at wdth 116, wght 600: the name
+     --font-display  Archivo at wdth 110: headings, titles, nav
+     --font-body     Archivo at wdth 100: running text
+     --font-mono     Martian Mono, scaled to the old mono's cap height */
+@import url("../../../css/fonts.css");

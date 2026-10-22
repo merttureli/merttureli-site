@@ -68,7 +68,7 @@ const DS = "_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/"
 const REACT_URL = "https://unpkg.com/react@18.3.1/umd/react.production.min.js";
 const REACT_DOM_URL = "https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js";
 const LUCIDE = "https://unpkg.com/lucide-static@0.544.0/icons/";
-const FONT_PRELOADS = ["assets/fonts/space-grotesk-latin.woff2", "assets/fonts/ibm-plex-mono-400-latin.woff2"];
+const FONT_PRELOADS = ["assets/fonts/archivo-latin.woff2", "assets/fonts/martian-mono-latin.woff2"];
 
 // Scripts the render needs. Anything else is an island and gets an empty body.
 const ALLOWED_SCRIPTS = new Set(["/support.js", "/" + DS + "_ds_bundle.js",
@@ -290,8 +290,8 @@ async function render(browser, origin, pagePath, icons) {
     fontLink.setAttribute("href", prefix + "css/fonts.css");
     // _ds/.../styles.css is nothing but @imports of the eight token files the
     // links just before it already load, in the same order, so it changes no
-    // computed value. It would also pull tokens/fonts.css, and with it Google
-    // Fonts, back in. It goes.
+    // computed value. It would also pull tokens/fonts.css back in, a second
+    // path to the same @font-face rules. It goes.
     const dsStyles = head.querySelector("link[rel=stylesheet][href$='" + DS + "styles.css']") || fail("no styles.css link");
     if (dsStyles.previousElementSibling?.getAttribute("href") !== prefix + DS + "tokens/base.css") fail("styles.css no longer follows the token links");
     dsStyles.remove();
