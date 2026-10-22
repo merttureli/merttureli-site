@@ -9,7 +9,7 @@ Detail: `docs/recipes/new-page.md`. Components to reuse: `docs/design/components
 
 Page:
 1. `python3 tools/new.py page <name> --title "Title" --dry-run`, then without `--dry-run`. `--style site` (default, websites.html chrome) or `--style plain` (privacy.html column); `--dir <folder>` for a subfolder.
-2. It starts `noindex` with flagged placeholder copy. Public page: rerun with `--index --force` (or remove the robots meta), add it to `sitemap.xml`, give it an `og:image` (`docs/recipes/meta.md`).
+2. It starts `noindex` with flagged placeholder copy. Public page: pass `--index` at creation or later delete the `robots noindex` line, add a `<url>` to `sitemap.xml`, give it an `og:image` (`docs/recipes/meta.md`).
 
 Section:
 1. `python3 tools/new.py section <name> --site studio|page|home --number 07 --label "Label"`. It prints the snippet; paste it into `next/index.html`, a websites-style page, or `src/index.html` (then `python3 tools/build.py`).

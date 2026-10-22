@@ -17,7 +17,7 @@ Use this to replace a picture or video that is already on the site. To add new m
 2. Write the new file over the old one, same width, aspect and format. Example for a 1400 x 1750 JPEG:
    ```sh
    python3 tools/media.py image <source> --out assets/portrait --name mert-bridge \
-     --widths 1400 --aspect 4:5 --format jpg --no-suffix --dry-run   # drop --dry-run to write
+     --widths 1400 --aspect 4:5 --format jpg --no-suffix --force --dry-run   # drop --dry-run to write
    ```
    `--gravity top|bottom|left|right` picks what the crop keeps. Keep the name exactly.
 4. Check the page (step "Verify" below). Nothing to build: generated pages point at the file by path.
@@ -47,10 +47,10 @@ A clip in `assets/motion/` is a set. Replace all members together:
 The case page sizes are `"clip_sizes": [md, sm]` in `content/projects/<slug>.json`. Make the set with the same `<base>` so no reference changes:
 
 ```sh
-python3 tools/media.py video <source.mov> --name <base> --out assets/motion --widths <full>,<md>,<sm> --dry-run
+python3 tools/media.py video <source.mov> --name <base> --out assets/motion --widths <full>,<md>,<sm> --force --dry-run
 ```
 
-Alpha is detected; `--alpha` makes it required, `--mp4-bg white` adds the opaque mp4 for an alpha clip, `--poster-at <s>` picks the poster frame. A new poster alone: `python3 tools/media.py poster <clip> --out assets/motion --name <base>`.
+Alpha is detected; `--alpha` makes it required, `--mp4-bg white` adds the opaque mp4 for an alpha clip, `--poster-at <s>` picks the poster frame. A new poster alone: `python3 tools/media.py poster <clip> --at <s> --out assets/motion --name <base> --force`. `--force` lets it overwrite the files already there.
 
 ## D. Share images
 
