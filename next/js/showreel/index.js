@@ -12,8 +12,20 @@
 //   word     the drift word that represents it (must match a .drift <i>)
 //   actor    async factory (ctx) -> scene actor (see createThermaShift)
 //   sequence [[STATE_NAME, seconds], ...]    the actor's part of the reel
-// The actor samples the reel as a pure function of time: sample(T, states),
-// with beginAbort()/sampleAbort(u) for a graceful exit from any moment.
+// The actor the factory resolves to:
+//   group                 added to the shared scene (engine.adopt() gives its
+//                         materials the studio environment)
+//   sequence              [[STATE, seconds], ...] played between ROCKET_EXIT
+//                         and ROCKET_RETURN; state windows reach sample() as
+//                         states[STATE] = { t0, t1 } in reel seconds
+//   layout(frame)         size/place itself: { halfW, halfH, camera, w, h,
+//                         free: {l,t,r,b}, avoid: [rects] } (canvas px)
+//   sample(T, states)     pose everything as a pure function of reel time
+//   beginAbort()/sampleAbort(u)  leave gracefully from wherever it is, u 0..1
+//   reset(), update(dt, time), prewarm(renderer, camera, scene), visible
+// Projects take turns, one per reel. To add one: write its actor, then
+// registerProject() here before mountShowreel runs (its word must exist in
+// the .drift markup). HOTBOX and the bend fixture are never animated.
 //
 // Debug: #reel-coaster (or ?reel=coaster) or the `c` key starts the reel now;
 // #reel-fast runs it at 3x. window.__reel exposes seek/pause for capture.
