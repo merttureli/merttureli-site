@@ -33,6 +33,7 @@
 <link rel="stylesheet" href="css/interaction-polish.css">
 <link rel="stylesheet" href="css/website-entry.css">
 <script src="js/interaction-polish.js" defer></script>
+<script src="js/home-websites.js" defer></script>
 <script src="js/photography-loader.js" defer></script>
 <style>
   /* The home page's one h1 is the name, set in Archivo Name (wdth 116, wght 600,
@@ -377,10 +378,43 @@
   </section>
 
 
-  <section id="websites" class="website-entry" aria-labelledby="website-entry-label">
-    <div class="website-entry-inner">
-      <div><span class="website-entry-label" id="website-entry-label"><mark class="flag" data-flag="home-163" data-note="Owner to confirm: do you want the website design service entry (label plus &quot;A WEBSITE FOR YOU&quot; button) on the home page at all?">Websites / Design &amp; development</mark></span></div>
-      <div><a href="websites.html" class="website-entry-link" data-depth-button="outline">A website for you <span aria-hidden="true">↗</span></a></div>
+  <section id="websites" class="on-dark websell" aria-labelledby="websell-title">
+    <div class="websell-inner">
+      <div class="websell-head">
+        <div class="websell-heading">
+          <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" wide="true" hint-size="260px,16px">Websites / Design &amp; development</x-import>
+          <div id="websell-title"><x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="2" hint-size="100%,120px">I build websites</x-import></div>
+        </div>
+        <p class="websell-lead">This site is one of them. Here are four redesigns of it, each a working page.</p>
+      </div>
+      <div class="websell-body">
+        <div class="websell-picker" role="group" aria-label="Choose a redesign">
+          <button type="button" class="websell-option" data-study="hangar" data-name="Hangar" aria-pressed="true" aria-controls="websell-frame"><span class="websell-option-index" aria-hidden="true">A</span><span class="websell-option-name">Hangar</span></button>
+          <button type="button" class="websell-option" data-study="launch" data-name="Launch" aria-pressed="false" aria-controls="websell-frame"><span class="websell-option-index" aria-hidden="true">B</span><span class="websell-option-name">Launch</span></button>
+          <button type="button" class="websell-option" data-study="studio" data-name="Studio" aria-pressed="false" aria-controls="websell-frame"><span class="websell-option-index" aria-hidden="true">C</span><span class="websell-option-name">Studio</span></button>
+          <button type="button" class="websell-option" data-study="specimen" data-name="Specimen" aria-pressed="false" aria-controls="websell-frame"><span class="websell-option-index" aria-hidden="true">D</span><span class="websell-option-name">Specimen</span></button>
+        </div>
+        <div class="websell-stage">
+          <div class="websell-frame" id="websell-frame" role="region" aria-label="Hangar redesign" data-study="hangar" data-state="idle">
+            <div class="websell-bar" aria-hidden="true"><span class="websell-dots">&#9679; &#9679; &#9679;</span><span class="websell-url">merttureli.com/studies/<span data-websell-key>hangar</span>/</span><span class="websell-state"><span class="websell-state-dot"></span><span data-websell-state>Loading</span></span></div>
+            <div class="websell-screen"><span class="websell-loading" aria-hidden="true"></span><button type="button" class="websell-try" aria-label="Try the Hangar page in the frame" data-track="websell-try"><span>Try it</span></button></div>
+          </div>
+          <div class="websell-under">
+            <button type="button" class="websell-try-alt" aria-pressed="false" aria-controls="websell-frame" data-track="websell-try">Try it here</button>
+            <a class="websell-open" href="studies/hangar/" data-track="websell-study-open">Open the <span data-websell-name>Hangar</span> page <span aria-hidden="true">&#8599;</span></a>
+          </div>
+          <p class="visually-hidden" role="status" aria-live="polite" data-websell-status></p>
+        </div>
+        <div class="websell-actions">
+          <a class="websell-cta websell-cta--solid" href="websites.html#inquiry" data-track="websell-inquiry" data-depth-button="solid">Find a day to talk <span aria-hidden="true">&#8594;</span></a>
+          <a class="websell-cta" href="websites.html" data-track="websell-websites" data-depth-button="outline">A website for you <span aria-hidden="true">&#8599;</span></a>
+        </div>
+        <div class="websell-more">
+          <h3 class="websell-more-label">More web work</h3>
+          <a href="#charger-explorer" data-track="websell-charger-3d"><span>CHARGER explorer</span><span>3D model, three.js</span></a>
+          <a href="hi/" data-track="websell-hi"><span>Business card page</span><span>merttureli.com/hi</span></a>
+        </div>
+      </div>
     </div>
   </section>
 
