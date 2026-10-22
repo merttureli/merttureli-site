@@ -87,7 +87,7 @@
     <section class="design-gallery page-width" id="studies" aria-labelledby="gallery-title">
       <div class="section-head">
         <div class="section-head-title"><span class="ds-meta">02 / Studies</span><h2 class="ds-title" id="gallery-title">Same work<br>four directions</h2></div>
-        <p class="ds-lead">I built four redesigns of this portfolio as working pages. Pick one to see its first screen, then explore it live here or open the full page.</p>
+        <p class="ds-lead">I built four redesigns of this portfolio as working pages. Pick one to see it live here, or open the full page.</p>
       </div>
       <div class="study-showcase">
         <div class="study-picker" role="group" aria-label="Choose a direction">
@@ -97,22 +97,13 @@
         <button type="button" class="study-option" data-study="specimen" data-name="Specimen" data-letter="D" aria-pressed="false" aria-controls="study-viewer"><span class="study-option-index" aria-hidden="true">D</span><span class="study-option-body"><span class="study-option-name">Specimen</span><span class="study-option-line">My monochrome identity, pushed further. A refined serif for headlines, dot-matrix type for data. Every build appears as a matching white study model at one scale, like an exhibit catalog.</span></span></button>
         </div>
         <div class="study-stage">
-          <div class="study-frame" id="study-viewer" role="region" aria-label="Hangar direction" data-state="poster">
-            <div class="study-bar"><span class="study-dots" aria-hidden="true">&#9679; &#9679; &#9679;</span><span class="study-url">merttureli.com/studies/<span data-study-key>hangar</span>/</span><span class="study-state" aria-hidden="true"><span class="study-state-dot"></span><span data-study-state>Preview</span></span></div>
-            <div class="study-screen">
-              <picture class="study-poster">
-                <source media="(max-width: 700px)" type="image/avif" srcset="assets/studies/hangar-phone-720.avif">
-                <source media="(max-width: 700px)" type="image/webp" srcset="assets/studies/hangar-phone-720.webp">
-                <source type="image/avif" srcset="assets/studies/hangar-desktop-1200.avif 1200w, assets/studies/hangar-desktop-1800.avif 1800w" sizes="(min-width: 1440px) 1000px, (min-width: 901px) 62vw, 100vw">
-                <img src="assets/studies/hangar-desktop-1200.webp" srcset="assets/studies/hangar-desktop-1200.webp 1200w, assets/studies/hangar-desktop-1800.webp 1800w" sizes="(min-width: 1440px) 1000px, (min-width: 901px) 62vw, 100vw" width="1200" height="750" loading="lazy" decoding="async" alt="First screen of the Hangar direction">
-              </picture>
-              <div class="study-loading" hidden><span class="study-loading-bar" aria-hidden="true"></span><span>Loading <span data-study-name>Hangar</span></span></div>
-            </div>
+          <div class="study-frame" id="study-viewer" role="region" aria-label="Hangar direction" data-study="hangar" data-state="idle">
+            <div class="study-bar"><span class="study-dots" aria-hidden="true">&#9679; &#9679; &#9679;</span><span class="study-url">merttureli.com/studies/<span data-study-key>hangar</span>/</span><span class="study-state" aria-hidden="true"><span class="study-state-dot"></span><span data-study-state>Loading</span></span></div>
+            <div class="study-screen"><span class="study-loading" aria-hidden="true"></span></div>
           </div>
           <div class="study-actions">
             <p class="study-caption"><span class="study-caption-name"><span data-study-letter>A</span> / <span data-study-name>Hangar</span></span><span class="study-caption-line" data-study-line>Light, premium flight hardware. A warm gray ground, with CHARGER rendered live in its livery across a huge MERT TURELI.</span></p>
             <div class="study-buttons">
-              <button type="button" class="ds-button ds-button--solid study-explore" data-depth-button="outline" aria-controls="study-viewer" hidden>Explore it here <span aria-hidden="true">&rarr;</span></button>
               <a class="ds-link study-open" href="studies/hangar/">Open full page <span aria-hidden="true">&#8599;</span></a>
             </div>
             <p class="study-sr" role="status" aria-live="polite" data-study-status></p>
