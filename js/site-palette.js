@@ -92,8 +92,12 @@
       el.querySelectorAll('button[data-palette]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.palette === palette)));
       const sw = el.querySelector('[data-motion-toggle]');
       sw.setAttribute('aria-checked', String(on));
-      sw.querySelector('b').textContent = on ? 'On' : 'Off';
-      if (saveFailed) el.querySelector('.site-display-note').textContent = 'This browser cannot save your choice. It applies to this page only.';
+      // Write text only when it changes: a write is a DOM mutation, and boot()'s observer would
+      // call back here, which looped forever (and woke other observers every frame).
+      const label = sw.querySelector('b'), text = on ? 'On' : 'Off';
+      if (label.textContent !== text) label.textContent = text;
+      const note = saveFailed && el.querySelector('.site-display-note'), noteText = 'This browser cannot save your choice. It applies to this page only.';
+      if (note && note.textContent !== noteText) note.textContent = noteText;
     }
   }
 
