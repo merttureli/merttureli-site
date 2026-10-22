@@ -17,5 +17,5 @@ Detail: `docs/recipes/copy.md` (titles and descriptions: `docs/recipes/meta.md`)
 4. If you edited `src/index.html` or `content/`: `python3 tools/build.py`. Never pass `--help` to build.py (it runs a full build).
 5. `python3 check-writing.py <each page you changed>` prints no hits.
 6. `python3 tools/check.py` passes.
-7. Same fact elsewhere (home card, case page, websites.html, Studio)? Change every place in the same commit.
+7. Same fact elsewhere (home card, case page, websites.html, Studio)? `python3 tools/new.py project <slug> --where` lists the places; change every one in the same commit.
 8. Commit source and built page together: `git add <files> && git commit -m "Copy: <what changed>"`.
