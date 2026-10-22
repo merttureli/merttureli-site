@@ -27,6 +27,8 @@
    was drawn for, and a label keeps about its old length.
    The custom properties match _ds/.../tokens/fonts.css, which imports this file
    (the prerendered pages link this file in its place). */
+/* Every page links this file, so it also brings in the site tokens. */
+@import url("tokens.css");
 /* latin-ext */
 @font-face {
   font-family: 'Archivo';
