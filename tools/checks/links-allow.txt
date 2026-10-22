@@ -1,0 +1,3 @@
+# JS string literals the links check should not report, one per line:
+#   path/to/file.js: literal.webp
+# Use only for strings that look like asset paths but are not (ids, labels).
