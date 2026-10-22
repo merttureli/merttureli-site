@@ -8,6 +8,8 @@
 <link rel="icon" href="/assets/icons/favicon.ico" sizes="32x32">
 <link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
+<link rel="preload" href="/assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/martian-mono-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/css/fonts.css">
 <style>
 /* The not-found page. GitHub Pages serves this file for any path that does not
@@ -19,13 +21,14 @@
   --ink:#0A0A0A; --paper:#FFF;
   --p90:rgba(255,255,255,.90); --p70:rgba(255,255,255,.70);
   --p45:rgba(255,255,255,.45); --p14:rgba(255,255,255,.14);
-  --display:"Space Grotesk","Helvetica Neue",Helvetica,sans-serif;
-  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --body:"Archivo","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --display:"Archivo Display","Archivo","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --mono:"Martian Mono",ui-monospace,Menlo,monospace;
   --ease:cubic-bezier(.22,1,.36,1);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--ink);color:var(--paper)}
-body{font-family:var(--display);-webkit-font-smoothing:antialiased;
+body{font-family:var(--body);-webkit-font-smoothing:antialiased;
      padding:max(28px,env(safe-area-inset-top)) 24px
              max(36px,env(safe-area-inset-bottom));
      min-height:100svh;display:flex;flex-direction:column}
@@ -34,7 +37,7 @@ body{font-family:var(--display);-webkit-font-smoothing:antialiased;
 
 .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;
          text-transform:uppercase;color:var(--p45);margin:0}
-h1{font-size:clamp(36px,9vw,72px);font-weight:500;letter-spacing:-.035em;
+h1{font-family:var(--display);font-size:clamp(36px,9vw,72px);font-weight:500;letter-spacing:-.035em;
    line-height:.94;margin:10px 0 0;text-wrap:balance}
 
 .line{font-size:17px;line-height:1.55;color:var(--p90);margin:0;

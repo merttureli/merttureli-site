@@ -174,7 +174,7 @@ try{
   if(!metaResponse.ok)throw Error('Metadata unavailable');if(!binResponse.ok)throw Error('Geometry unavailable');
   const [meta,buffer]=await Promise.all([metaResponse.json(),binResponse.arrayBuffer()]);
   data=meta;if(buffer.byteLength!==data.bytes)throw Error('Geometry is updating. Reload the page.');
-  await document.fonts.load('700 32px "Space Grotesk"').catch(()=>{});
+  await document.fonts.load('700 32px "Archivo"').catch(()=>{});
   const paintPart=createLivery();
   for(const p of data.parts){
     const g=new THREE.Group();g.userData={part:p,opacity:opacityFor(p,null,options()),bounds:new THREE.Box3()};

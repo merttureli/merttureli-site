@@ -1,9 +1,12 @@
 :root {
   /* Display — huge caps, tight tracking, tight leading */
-  --fs-display-1: clamp(64px, 11.5vw, 184px); /* @kind font */
-  --fs-display-2: clamp(48px, 8vw, 128px);    /* @kind font */
-  --fs-display-3: clamp(36px, 5.2vw, 84px);   /* @kind font */
-  --fs-title-1: clamp(28px, 3.2vw, 52px);     /* @kind font */
+  /* Sized for Archivo Display (wdth 106, --font-display), whose caps run about
+     1.2 times as wide as Space Grotesk's did: 0.84 of the old sizes, so a line
+     of caps keeps its old length and breaks where it broke before. */
+  --fs-display-1: clamp(54px, 9.7vw, 155px);  /* @kind font */
+  --fs-display-2: clamp(40px, 6.7vw, 108px);  /* @kind font */
+  --fs-display-3: clamp(30px, 4.4vw, 71px);   /* @kind font */
+  --fs-title-1: clamp(24px, 2.7vw, 44px);     /* @kind font */
   --fs-title-2: 32px;    /* @kind font */
   --fs-title-3: 24px;    /* @kind font */
   --fs-body-lg: 18px;    /* @kind font */
