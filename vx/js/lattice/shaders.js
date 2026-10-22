@@ -110,20 +110,16 @@ void main() {
    that rises only where the local lattice Mach number |u| / c_s passes U / c_s,
    which happens at a sharp nose or fin tip at incidence. Conserves mass and
    momentum (it only changes the relaxation rate); EST, see lattice.js.
-   Outer edges: the far-field velocity at an edge cell is the freestream plus the
-   velocity induced by a point vortex that carries the section's circulation,
-   Gamma = -L / (rho u_in) from the measured lift (Kutta-Joukowski), placed at the
-   measured centre of pressure: the vortex-corrected far field of Thomas and Salas
-   (1986, STD). A 2D lifting section's disturbance decays only as 1 / r, so without
-   it an edge that imposes the plain freestream acts as a tunnel wall: the windward
-   half of the domain pressurised above stagnation (C_p 1.6 at 10 degrees one cell
-   inside the edge, 512 x 160) and the lift was inflated. Where that far-field
-   velocity enters the domain the cell takes it with the density and the
-   non-equilibrium part of its inward neighbour (Guo, Zheng and Shi 2002, STD); an
-   equilibrium at rho 1 there put a one-cell density jump on the edge. Any other
-   edge cell takes the velocity and the non-equilibrium part of its inward
-   neighbour (zero-gradient outflow, same extrapolation) with the density held at 1
-   and any inward (backflow) normal velocity removed.
+   Outer edges: a cell on an edge where the freestream enters is set to the
+   equilibrium at rho 1 and u_in (uInflowNeq = 0, the default); any other edge cell
+   takes the velocity and the non-equilibrium part of its inward neighbour
+   (zero-gradient outflow, the extrapolation of Guo, Zheng and Shi 2002, STD) with
+   the density held at 1 and any inward (backflow) normal velocity removed. With
+   uInflowNeq = 1 an inflow cell takes u_in with the neighbour's density and
+   non-equilibrium part instead (same extrapolation), which removes the one-cell
+   density jump an inflow edge carries at incidence but, in a domain this short
+   across the flow, lets the windward half pressurise further (lattice.js header,
+   EDGES).
    A plain copy of the neighbour let mass pile up once a lifting section's
    vortices crossed the outflow edges (domain rho - 1 reached 0.2 within 10,000
    steps with the rocket at 4 degrees); holding rho there anchors the pressure.
@@ -186,7 +182,7 @@ uniform float uMachK;      /* slope of that floor, tau per lattice unit of speed
 uniform float uSpongeW;    /* width of the absorbing layer along the outer edges, cells (0: off) */
 uniform float uSpongeTau;  /* relaxation time at the edge itself */
 uniform float uPositive;   /* 1: limit the relaxation so no population goes negative */
-uniform vec3 uVortex;      /* far-field vortex: centre (cells) and counter-clockwise circulation (lattice units); z = 0: off */
+uniform float uInflowNeq;  /* 1: an inflow edge cell takes the neighbour's density and non-equilibrium part; 0: equilibrium at rho 1 */
 layout(location = 0) out vec4 o0;
 layout(location = 1) out vec4 o1;
 layout(location = 2) out vec4 o2;
@@ -207,15 +203,10 @@ void main() {
   ivec2 p = ivec2(gl_FragCoord.xy);
   bool x0 = p.x == 0, x1 = p.x == size.x - 1, y0 = p.y == 0, y1 = p.y == size.y - 1;
   if (x0 || x1 || y0 || y1) {
-    /* far-field velocity at this edge cell: the freestream plus the velocity a point
-       vortex carrying the section's measured circulation induces here */
-    vec2 ub = uU;
-    if (uVortex.z != 0.0) {
-      vec2 r = vec2(p) + 0.5 - uVortex.xy;
-      ub += uVortex.z / (6.28318531 * max(dot(r, r), 1.0)) * vec2(-r.y, r.x);
-    }
-    bool inflow = (x0 && ub.x > EDGE_EPS) || (x1 && ub.x < -EDGE_EPS) || (y0 && ub.y > EDGE_EPS) || (y1 && ub.y < -EDGE_EPS);
-    /* density, velocity and non-equilibrium part of the inward neighbour */
+    bool inflow = (x0 && uU.x > EDGE_EPS) || (x1 && uU.x < -EDGE_EPS) || (y0 && uU.y > EDGE_EPS) || (y1 && uU.y < -EDGE_EPS);
+    if (inflow && uInflowNeq < 0.5) { writeEq(uU); return; }
+    /* density, velocity and non-equilibrium part of the inward neighbour (clamped into
+       the texture, so grids one or two cells wide stay finite) */
     ivec2 inward = ivec2(x0 ? 1 : x1 ? -1 : 0, y0 ? 1 : y1 ? -1 : 0);
     ivec2 q = clamp(p + inward, ivec2(0), size - 1);
     vec4 b0 = texelFetch(tF0, q, 0) + REST0;
@@ -226,8 +217,8 @@ void main() {
     vec2 ue = un;
     float re = 1.0;
     if (inflow) {
-      /* inflow: the far-field velocity with the neighbour's density (Guo, Zheng and Shi 2002) */
-      ue = ub; re = rn;
+      /* inflow with uInflowNeq = 1: u_in at the neighbour's density (Guo, Zheng and Shi 2002) */
+      ue = uU; re = rn;
     } else {
       /* outflow: the neighbour's velocity (zero gradient) at the freestream density 1; a
          velocity that points back into the domain loses its inward normal part (backflow

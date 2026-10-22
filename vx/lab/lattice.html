@@ -51,6 +51,8 @@
   .lt-validate { margin: 0; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.04em; line-height: 1.6; color: var(--paper-a90); white-space: pre-wrap; padding: var(--space-4) var(--page-margin); border-top: 1px solid var(--paper-a18); }
   .lt-validate[hidden] { display: none; }
   .is-validating .lt-panel, .is-validating .lt-chartwrap, .is-validating .lt-readout { display: none; }
+  /* the skip link is the first Tab stop: visible while it has focus (tokens.css .sr-only clips it) */
+  .sr-only:focus-visible { position: fixed; left: 16px; top: 16px; width: auto; height: auto; margin: 0; padding: 8px 12px; clip: auto; clip-path: none; overflow: visible; white-space: normal; background: var(--ink-900); color: var(--paper); outline: 1px solid var(--paper); outline-offset: 2px; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; z-index: 10; }
   .is-validating .lt-body { grid-template-columns: 1fr; }
   @media (max-width: 860px) {
     .lt-body { grid-template-columns: 1fr; }
@@ -84,12 +86,13 @@
     </figure>
     <p class="lt-caption"><span>Page simulation / D2Q9 lattice Boltzmann / lattice units / src: SIM</span><span>Section shapes are analytic stand-ins (EST), not the CAD</span></p>
     <p class="lt-caption lt-key"><span>CG: quartered disc, 22 in from the nose (PAGE) on the CAD length</span><span>CP: ring and resultant from the lattice (SIM)</span></p>
+    <p class="lt-caption lt-key"><span>C_N, C_M and CP are 2D section values. A 2D section lifts like an airfoil along its whole length, so its CP sits ahead of the 3D rocket's (Barrowman); above about 5 degrees the edges, 0.16 of the width from a body 0.66 long, also confine the flow and pressurise the windward half</span></p>
     <p class="lt-caption lt-status" id="status"></p>
     <div class="lt-chartwrap"><canvas class="lt-chart" id="chart" aria-hidden="true"></canvas></div>
     <pre class="lt-readout" id="readout" aria-label="Lattice readout">LATTICE / STARTING</pre>
     <pre class="lt-validate" id="validate" hidden></pre>
   </div>
-  <aside class="lt-panel" id="panel" aria-label="Lattice parameters">
+  <aside class="lt-panel" id="panel" tabindex="-1" aria-label="Lattice parameters">
     <h2>Section</h2>
     <div class="lt-group" role="group" aria-label="Section shape">
       <button class="lt-button" type="button" data-shape="rocket" aria-pressed="true">Rocket</button>
@@ -110,6 +113,7 @@
     <label class="lt-row">Positivity limiter <input type="checkbox" id="positive" checked></label>
     <label class="lt-row">Speed floor on tau <input type="checkbox" id="mach" checked></label>
     <label class="lt-row">Absorbing edges <input type="checkbox" id="sponge" checked><small>Plain BGK + Smagorinsky does not pass the alpha 15 gate at tau0 near 0.504; these keep it running (Latt and Chopard 2006, Brownlee et al. 2007, EST)</small></label>
+    <label class="lt-row">Inflow at neighbour density <input type="checkbox" id="neq"><small>Guo et al. 2002: removes the one-cell density jump on an inflow edge, but in this domain the windward half pressurises further (C_p 3.3 at 10 degrees against 1.65, SIM)</small></label>
 
     <h2>View</h2>
     <div class="lt-group" role="group" aria-label="View">

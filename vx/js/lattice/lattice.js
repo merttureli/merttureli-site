@@ -16,14 +16,11 @@
        a start-up viscosity that eases from tau 0.75 to tau0 over 2,000 steps
          after a reset (EST).
      Walls: halfway bounce-back with Ladd's moving-wall term (STD, Ladd 1994),
-     u_w = omega x (r - r_cg) from setBodyRate. Outer edges: the far-field
-     velocity is u_in plus the velocity of a point vortex that carries the
-     section's circulation Gamma = -L / (rho u_in), from the measured lift, at the
-     measured centre of pressure (vortex-corrected far field, STD, Thomas and
-     Salas 1986; FAR FIELD below). Where it enters the domain an edge cell takes
-     it with the inward neighbour's density and non-equilibrium part; elsewhere
-     zero-gradient velocity and non-equilibrium part with rho held at 1 (both
-     STD, Guo, Zheng and Shi 2002).
+     u_w = omega x (r - r_cg) from setBodyRate. Outer edges: equilibrium at rho 1
+     and u_in where the freestream enters; elsewhere zero-gradient velocity and
+     non-equilibrium part (STD, Guo, Zheng and Shi 2002) with rho held at 1.
+     Option inflowNeq (setStabilisers): inflow cells take u_in with the inward
+     neighbour's density and non-equilibrium part (same reference); see EDGES.
      Force: momentum exchange per wall link (Galilean-corrected, STD, Wen et al.
      2014), accumulated per cell in the spare channels of the third texture,
      reduced by 2 x 2 halving passes to 1 x 1 and read back with
@@ -45,34 +42,41 @@
      The real rocket at 70 m/s is near Re 3e5 (D 0.068 m CAD, nu 1.5e-5 m^2/s STD
        sea-level air); the lattice is a Reynolds-scaled model and says so.
 
-   What the lattice's c_n, c_m and centre of pressure mean. The lattice is a 2D
-     section through the pitch plane: an infinitely long extrusion of the body
-     outline, which is aerodynamically a slender airfoil of chord L (17.4 D) with
-     the fins as a thickening near its trailing edge. A 2D airfoil carries lift
-     along its whole chord with the centre of pressure near the quarter chord
-     (thin-airfoil theory, STD, Anderson, Fundamentals of Aerodynamics, ch. 4),
-     while the 3D body of revolution carries its body lift on the nose and the
-     fins carry the rest (Barrowman 1967). So the lattice's centre of pressure sits
-     ahead of Barrowman's and its c_m about the PAGE CG is positive (destabilising)
-     at every alpha once the circulation has built up, with or without the far-field
-     correction (SIM, rocket stand-in, 512 x 160, u 0.10: tunnel edges +44 at 5 deg,
-     far-field edges in the numbers of the lab report). They are 2D section values
-     for the flow picture and a qualitative cross-check of the force direction, not
-     the 3D rocket's moment; the lab toggle that lets the lattice fly the rocket
-     shows what a 2D section would do and will diverge.
-     FAR FIELD. Without the vortex term the edges imposed the plain freestream at
-     0.16 cols from a body 0.66 cols long; a 2D lifting section's disturbance decays
-     only as 1 / r, so the edges acted as tunnel walls: one cell inside the inflow
-     edge C_p was 1.65 at 10 deg and 2.50 at 15 deg (512 x 160, u 0.10, SIM) and the
-     whole windward half sat above stagnation. A larger domain alone does not cure
-     it (body 0.40 cols, rows = cols / 2: C_p 1.2 at the windward edge at 15 deg,
-     SIM), because the interference scales with chord over distance, not with the
-     projected blockage. The vortex follows the measured lift with a time constant of
-     VORTEX_STEPS steps, starts VORTEX_HOLD steps after a reset (the start-up
-     transient is a pressure pulse, not circulation) and its induced speed at the
-     nearest edge is capped at VORTEX_MAX u_in. It needs force readbacks:
-     frame() takes them at 10 Hz; a caller that only calls step() must call
-     sampleForce() now and then, or the edges stay at the plain freestream.
+   EDGES AND WHAT c_n, c_m AND THE CENTRE OF PRESSURE MEAN (SIM, measured on the lab's
+   rocket stand-in at 512 x 160, u_in 0.10, 3,000 steps, SwiftShader).
+     Confinement. The edges sit 0.16 cols from a body 0.66 cols long, and at incidence
+     two of them feed the cross-flow u_in sin(alpha) along their whole length. The body
+     splits the domain, so the fluid fed in under it has to leave around its ends: the
+     windward half becomes a plenum above stagnation pressure. One cell inside the
+     inflow edge C_p is 0.88 at 5 deg, 1.65 at 10 deg and 2.50 at 15 deg, the edge
+     cell itself holds 0, and only half the imposed cross-flow gets in (u_y 0.0091
+     against 0.0174 at 10 deg). c_n is inflated (34 at 10 deg; a 2D flat plate of the
+     same length gives 2 pi sin(alpha) L / D = 19, STD thin-airfoil theory). The
+     pressure view saturates over the windward half above about 5 deg.
+     What does not cure it here: inflow cells at the neighbour's density (option
+     inflowNeq) remove the edge jump but let the plenum rise further (C_p 3.3 to 3.9
+     under the body at 10 deg, c_n 100); a taller domain with the body at 0.40 cols and
+     rows = cols / 2 (blockage 0.8 sin alpha) still holds C_p 1.1 at the windward edge
+     at 15 deg with that option; a point-vortex far-field correction (Thomas and Salas
+     1986) and pressure-anchored side inlets were tried and failed (unstable feedback;
+     an inverted windward pressure). The interference scales with chord over domain
+     height (about 4 here), so the cure is a domain several chords tall, which the
+     tier budget does not allow; the grid and the body's 0.66-cols layout are FIELD 4
+     and 5, shared with vx/js/geom.
+     2D section. Even unconfined, a 2D section through the pitch plane is an
+     infinitely long extrusion of the outline: aerodynamically a slender airfoil of
+     chord L (17.4 D) with the fins as a thickening near its trailing edge. It carries
+     lift along its whole chord with the centre of pressure near the quarter chord
+     (thin-airfoil theory, STD, Anderson, Fundamentals of Aerodynamics, ch. 4), while
+     the 3D body of revolution carries its body lift on the nose and the fins carry
+     the rest (Barrowman 1967). The lattice's centre of pressure therefore sits ahead
+     of Barrowman's, and c_m about the PAGE CG is positive (destabilising) at every
+     alpha once the circulation has built up: +44 at 5 deg, +66 at 10 deg and +82 at
+     15 deg here, +33 at 5 deg in the taller domain above; negative only in the first
+     few hundred steps after a reset, before the circulation forms. So c_n, c_m and
+     xcpCells are 2D section values for the flow picture, not the 3D rocket's; above
+     about 5 deg they are dominated by the confinement as well. A caller that lets the
+     lattice fly the rocket shows what a 2D section would do: it diverges.
 
    Grid frame: +x from nose to tail (column 0 upstream of the nose), +y the body's
    +x side; inflow direction (cos alpha, sin alpha) with alpha from section 2.
@@ -143,9 +147,6 @@ const SELFTEST_TOL = 2e-3;    /* tolerance on f1 after one step of uniform flow 
 const SELFTEST_U = 0.08;      /* lattice units: the self-test's uniform flow along +x. f1 - w1 is then 0.029, so a
                                  target that never renders (reads 0) fails on either path (f0 - 4/9 at u 0.05 was
                                  -0.0017, inside the tolerance) */
-const VORTEX_STEPS = 800;     /* steps: time constant over which the far-field vortex follows the measured circulation (EST) */
-const VORTEX_HOLD = 400;      /* steps after a reset before it starts following (EST) */
-const VORTEX_MAX = 0.5;       /* cap on the vortex's induced speed at the nearest edge, as a fraction of u_in (EST) */
 
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
@@ -178,8 +179,8 @@ export function createLattice(renderer, options = {}) {
     grid: [0, 0], dye: [0, 0], tier, stepsPerFrame: 0, stepsPerSecond: 0, msPerFrame: 0, issueMs: 0,
     precision: 'none', re: 0, tau0: 0, tauNow: 0, nu: 0, uIn: 0.05, uNow: 0, alpha: 0, alphaDeg: 0, dCells: 0,
     steps: 0, shed: 0, stepScale: 1, nanResets: 0, view: 'smoke', smagorinsky: SMAGORINSKY_C, regularised: options.regularised !== false, machK: Number.isFinite(options.machK) ? options.machK : MACH_K,
-    sponge: options.sponge !== false, positive: options.positive !== false, farField: options.farField !== false,
-    circulation: 0, vortexX: 0, fallback: null, lost: false, forceReadback: true,
+    sponge: options.sponge !== false, positive: options.positive !== false, inflowNeq: options.inflowNeq === true,
+    fallback: null, lost: false, forceReadback: true,
   };
   const api = {
     ready: null, fallback: null, stats, texture: null, force: null, stepsPerFrame: null,
@@ -247,7 +248,7 @@ export function createLattice(renderer, options = {}) {
       step: material(S.STEP_FRAG, {
         tF0: u(null), tF1: u(null), tF2: u(null), tCell: u(null), uU: u(new THREE.Vector2()),
         uTau0: u(0.51), uC2: u(SMAGORINSKY_C * SMAGORINSKY_C), uOmega: u(0), uCg: u(new THREE.Vector2()), uAccum: u(0), uReg: u(0),
-        uMachU: u(MACH_U), uMachK: u(0), uSpongeW: u(0), uSpongeTau: u(SPONGE_TAU), uPositive: u(1), uVortex: u(new THREE.Vector3()),
+        uMachU: u(MACH_U), uMachK: u(0), uSpongeW: u(0), uSpongeTau: u(SPONGE_TAU), uPositive: u(1), uInflowNeq: u(0),
       }),
       macro: material(S.MACRO_FRAG, { tF0: u(null), tF1: u(null), tF2: u(null), tCell: u(null), uOmega: u(0), uCg: u(new THREE.Vector2()) }),
       dye: material(S.DYE_FRAG, {
@@ -317,7 +318,9 @@ export function createLattice(renderer, options = {}) {
 
   /* ------------------------------------------------------------ section */
   let sectionSource = null;
-  const section = { cols: 0, rows: 0, dCells: 24, cgX: 0, cgY: 0, x0: 0, x1: 0, solidCells: 0, links: 0, clippedEdge: 0 };
+  const section = { cols: 0, rows: 0, dCells: 24, cgX: 0, cgY: 0, solidCells: 0, links: 0, clippedEdge: 0 };
+  let gen = 0;         /* generation: bumped by reset(), a grid change and a new section; a force readback
+                          issued under an older generation is dropped when it lands */
   let cellData = null;
 
   function normaliseCg(cg, cols, rows) {
@@ -357,11 +360,11 @@ export function createLattice(renderer, options = {}) {
     if (!cellData || cellData.length !== cols * rows * 4) cellData = new Uint8Array(cols * rows * 4);
     else cellData.fill(0);
     const E = S.D2Q9.e;
-    let solids = 0, links = 0, bx0 = cols, bx1 = -1;
+    let solids = 0, links = 0;
     for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
       const i = r * cols + c, o = i * 4;
       cellData[o + 3] = 255;
-      if (solid[i]) { cellData[o] = 255; solids++; if (c < bx0) bx0 = c; if (c > bx1) bx1 = c; continue; }
+      if (solid[i]) { cellData[o] = 255; solids++; continue; }
       if (r === 0 || c === 0 || r === rows - 1 || c === cols - 1) continue;
       let bits = 0;
       for (let k = 1; k <= 8; k++) if (solid[(r - E[k][1]) * cols + (c - E[k][0])]) { bits |= 1 << (k - 1); links++; }
@@ -375,17 +378,15 @@ export function createLattice(renderer, options = {}) {
       cellTex.generateMipmaps = false; cellTex.flipY = false; cellTex.unpackAlignment = 1;
     } else cellTex.image.data = cellData;
     cellTex.needsUpdate = true;
-    if (bx1 < 0) { bx0 = cols / 2; bx1 = cols / 2; } else bx1 += 1;   /* solid extent along x, cell edges */
-    Object.assign(section, { cols, rows, dCells: s ? s.dCells : 0, cgX: s ? s.cgX : cols / 2, cgY: s ? s.cgY : rows / 2, x0: bx0, x1: bx1, solidCells: solids, links, clippedEdge: clipped });
+    Object.assign(section, { cols, rows, dCells: s ? s.dCells : 0, cgX: s ? s.cgX : cols / 2, cgY: s ? s.cgY : rows / 2, solidCells: solids, links, clippedEdge: clipped });
     stats.dCells = section.dCells;
     gen++;               /* readbacks in flight belong to the previous section */
-    resetVortex();
     updateViscosity();
   }
 
   /* ---------------------------------------------------------- parameters */
   const flow = { uIn: 0.05, alpha: 0, omega: 0, view: 0 };
-  const visc = { mode: 're', re: RE_TARGET, uRef: U_REF, tau0: 0.51, c: SMAGORINSKY_C, reg: options.regularised !== false, machK: Number.isFinite(options.machK) ? options.machK : MACH_K, sponge: options.sponge !== false, positive: options.positive !== false, farField: options.farField !== false };
+  const visc = { mode: 're', re: RE_TARGET, uRef: U_REF, tau0: 0.51, c: SMAGORINSKY_C, reg: options.regularised !== false, machK: Number.isFinite(options.machK) ? options.machK : MACH_K, sponge: options.sponge !== false, positive: options.positive !== false, inflowNeq: options.inflowNeq === true };
   function updateViscosity() {
     const d = section.dCells > 0 ? section.dCells : 24;
     if (visc.mode === 're') visc.tau0 = tauFor(visc.re, visc.uRef, d);
@@ -393,28 +394,6 @@ export function createLattice(renderer, options = {}) {
     const nu = (visc.tau0 - 0.5) / 3;
     stats.tau0 = visc.tau0; stats.nu = nu;
     stats.re = nu > 0 ? flow.uIn * d / nu : Infinity;
-  }
-
-  /* ----------------------------------------------------------- far field */
-  /* Point vortex of the edge condition (see FAR FIELD in the header): circulation g
-     (counter-clockwise, lattice units) at (x, y) in cells, relaxing toward the targets
-     the force readbacks set. */
-  let gen = 0;         /* generation: bumped by reset(), a grid change and a new section */
-  const vortex = { g: 0, x: 0, y: 0, gT: 0, xT: 0 };
-  function resetVortex() {
-    const xc = (section.x0 + section.x1) / 2;
-    Object.assign(vortex, { g: 0, gT: 0, x: xc, xT: xc, y: section.cgY });
-    stats.circulation = 0; stats.vortexX = xc;
-  }
-  /* Sets the targets from a force read at alpha with inflow uIn: Kutta-Joukowski,
-     L = -rho u_in Gamma with L the force component normal to the inflow (rho_ref 1). */
-  function followCirculation(f, m) {
-    if (!visc.farField || m.sinceReset < VORTEX_HOLD || !(m.uIn > 1e-4)) return;
-    const lift = -f.fx * Math.sin(m.alpha) + f.fy * Math.cos(m.alpha);
-    if (f.xcpCells !== null && Number.isFinite(f.xcpCells)) vortex.xT = clamp(f.xcpCells, section.x0, section.x1);
-    const reach = Math.max(1, Math.min(vortex.xT, grid.cols - vortex.xT, vortex.y, grid.rows - vortex.y));
-    const gMax = 2 * Math.PI * reach * VORTEX_MAX * m.uIn;
-    vortex.gT = clamp(-lift / m.uIn, -gMax, gMax);
   }
 
   /* -------------------------------------------------------------- passes */
@@ -468,11 +447,7 @@ export function createLattice(renderer, options = {}) {
     m.uMachK.value = visc.machK; m.uMachU.value = MACH_U;
     m.uSpongeW.value = visc.sponge ? Math.max(SPONGE_MIN, Math.round(SPONGE_FRAC * grid.rows)) : 0;
     m.uPositive.value = visc.positive ? 1 : 0;
-    if (visc.farField) {
-      const k = 1 / VORTEX_STEPS;
-      vortex.g += (vortex.gT - vortex.g) * k; vortex.x += (vortex.xT - vortex.x) * k;
-      m.uVortex.value.set(vortex.x, vortex.y, vortex.g);
-    } else m.uVortex.value.set(vortex.x, vortex.y, 0);
+    m.uInflowNeq.value = visc.inflowNeq ? 1 : 0;
     m.uOmega.value = -flow.omega;                 /* flight rate (clockwise in the grid) to counter-clockwise */
     setVec(m.uCg, section.cgX, section.cgY);
     m.uAccum.value = (!half && !accumReset) ? 1 : 0;
@@ -480,7 +455,6 @@ export function createLattice(renderer, options = {}) {
     const t = fA; fA = fB; fB = t;
     accumReset = false; accumSteps++; pendingDye++; stats.steps++; window1.steps++; sinceReset++;
     stats.uNow = Math.hypot(inflow.x, inflow.y); stats.tauNow = m.uTau0.value;
-    stats.circulation = visc.farField ? vortex.g : 0; stats.vortexX = vortex.x;
   }
   function dyePass(init) {
     const m = mats.dye.uniforms;
@@ -534,7 +508,7 @@ export function createLattice(renderer, options = {}) {
     const last = reduceChain(mats.reduce0, { tF2: fA.textures[2], tCell: cellTex }, mats.reduce);
     end();
     const n = half ? 1 : accumSteps;
-    const meta = { gen, steps: n, uIn: flow.uIn, alpha: flow.alpha, d: section.dCells, cgX: section.cgX, issued: performance.now(), stepIndex: stats.steps, sinceReset, countMul: countMul() };
+    const meta = { gen, steps: n, uIn: flow.uIn, alpha: flow.alpha, d: section.dCells, cgX: section.cgX, issued: performance.now(), stepIndex: stats.steps, countMul: countMul() };
     accumSteps = 0; accumReset = true;
     readsInFlight++;
     let p;
@@ -547,7 +521,6 @@ export function createLattice(renderer, options = {}) {
       const f = forceFrom(v, meta);
       if (!f.finite && autoNaNReset) { stats.nanResets++; reset(); return api.force; }
       api.force = f;
-      if (f.finite) followCirculation(f, meta);
       return f;
     }, () => { readsInFlight--; stats.forceReadback = false; return api.force; });
   }
@@ -608,7 +581,6 @@ export function createLattice(renderer, options = {}) {
     if (!mats || destroyed || lost || tier === 0) return;
     begin();
     gen++;                               /* readbacks in flight belong to the old state */
-    resetVortex();
     [inflow.x, inflow.y] = targetVec();  /* uniform inflow: the tunnel is already running */
     sinceReset = 0;
     stats.uNow = Math.hypot(inflow.x, inflow.y); stats.tauNow = tauNow();
@@ -633,7 +605,6 @@ export function createLattice(renderer, options = {}) {
     const expect = w1 * (1 + 3 * ux + 3 * ux * ux) - (half ? w1 : 0);
     inflow.x = ux; inflow.y = 0;
     sinceReset = STARTUP_STEPS;
-    resetVortex();
     begin(); initState(); stepOnce(); end();
     const v = await readTarget(fA, 0, grid.cols >> 1, Math.min(2, grid.rows - 1));   /* an interior cell far from the body */
     if (options.debug) console.log('[lattice] self-test', half ? 'rgba16f' : 'rgba32f', 'read', v, 'expect', expect);
@@ -713,13 +684,13 @@ export function createLattice(renderer, options = {}) {
   function setRegularised(on) { visc.reg = !!on; stats.regularised = visc.reg; }
   /* Local speed floor on tau (see shaders.js): k in tau per lattice unit above MACH_U, 0 turns it off. */
   function setMachFloor(k) { visc.machK = Math.max(0, Number(k) || 0); stats.machK = visc.machK; }
-  /* Stabiliser and edge switches for the lab and the gates: { sponge, positive, farField }
-     booleans (farField: the vortex-corrected far field of the edge condition). */
+  /* Stabiliser and edge switches for the lab and the gates: { sponge, positive, inflowNeq }
+     booleans (inflowNeq: inflow cells at the neighbour's density, see EDGES in the header). */
   function setStabilisers(o = {}) {
     if ('sponge' in o) visc.sponge = !!o.sponge;
     if ('positive' in o) visc.positive = !!o.positive;
-    if ('farField' in o) { visc.farField = !!o.farField; if (!visc.farField) { vortex.g = vortex.gT = 0; stats.circulation = 0; } }
-    stats.sponge = visc.sponge; stats.positive = visc.positive; stats.farField = visc.farField;
+    if ('inflowNeq' in o) visc.inflowNeq = !!o.inflowNeq;
+    stats.sponge = visc.sponge; stats.positive = visc.positive; stats.inflowNeq = visc.inflowNeq;
   }
 
   function step(n = 1) {
