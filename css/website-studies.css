@@ -1,5 +1,5 @@
-/* Studies: four working redesigns of this portfolio. A picker, one browser frame with the selected
-   direction's first screen, and a live view that loads the real page into the frame only when asked. */
+/* Studies: four working redesigns of this portfolio. A picker and one browser frame that loads the
+   selected direction live. The frame wears each page's own first-paint background so nothing flashes. */
 .study-showcase{display:grid;grid-template-columns:minmax(260px,340px) minmax(0,1fr);gap:var(--space-8);align-items:start}
 .study-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 
@@ -29,16 +29,17 @@
 .study-frame[data-state=loading] .study-state-dot{animation:study-blink 1s steps(2,jump-none) infinite}
 .study-frame[data-state=live] .study-state{color:var(--paper)}
 .study-frame[data-state=live] .study-state-dot{background:var(--accent,#ff5a1f)}
-.study-screen{position:relative;aspect-ratio:16/10;overflow:hidden;background:var(--ink-900)}
-.study-poster img{display:block;width:100%;height:100%;object-fit:cover;object-position:top center;transition:opacity .35s var(--ease-out)}
-.study-poster.is-swapping img{opacity:0;transition-duration:.12s}
-.study-frame[data-state=live] .study-poster{visibility:hidden}
-.study-screen iframe{position:absolute;left:0;top:0;border:0;transform-origin:0 0;background:var(--ink-900);opacity:0;transition:opacity .4s var(--ease-out)}
+.study-frame[data-study=hangar]{--study-bg:#e5e4e0;--study-fg:#141518}
+.study-frame[data-study=launch]{--study-bg:#0a0b0d;--study-fg:#ecebe6}
+.study-frame[data-study=studio]{--study-bg:#e7e8ea;--study-fg:#121315}
+.study-frame[data-study=specimen]{--study-bg:#efefec;--study-fg:#0d0d0c}
+.study-screen{position:relative;aspect-ratio:16/10;overflow:hidden;background:var(--study-bg,#e5e4e0);transition:background-color .3s var(--ease-out)}
+.study-screen iframe{position:absolute;left:0;top:0;border:0;transform-origin:0 0;background:var(--study-bg);opacity:0;transition:opacity .4s var(--ease-out)}
 .study-frame[data-state=live] .study-screen iframe{opacity:1}
-.study-loading{position:absolute;left:50%;bottom:22px;translate:-50% 0;display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px 18px 13px;border-radius:var(--radius-pill);background:rgba(10,10,10,.82);color:var(--paper);font:400 11px/1 var(--font-mono);letter-spacing:var(--ls-caps);text-transform:uppercase;white-space:nowrap;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
-.study-loading[hidden]{display:none}
-.study-loading-bar{position:relative;display:block;width:120px;height:1px;background:var(--paper-a18);overflow:hidden}
-.study-loading-bar::after{content:"";position:absolute;inset:0;width:40%;background:var(--paper);animation:study-load 1.1s var(--ease-out) infinite}
+.study-frame[data-state=swapping] .study-screen iframe{transition-duration:.22s}
+.study-loading{position:absolute;left:50%;top:50%;translate:-50% -50%;width:56px;height:2px;border-radius:2px;background:color-mix(in srgb,var(--study-fg) 14%,transparent);overflow:hidden;opacity:.9;transition:opacity .3s var(--ease-out)}
+.study-loading::after{content:"";position:absolute;inset:0;width:40%;border-radius:2px;background:color-mix(in srgb,var(--study-fg) 55%,transparent);animation:study-load 1.1s var(--ease-out) infinite}
+.study-frame[data-state=live] .study-loading,.study-frame[data-state=swapping] .study-loading{opacity:0}
 @keyframes study-load{from{transform:translateX(-100%)}to{transform:translateX(250%)}}
 @keyframes study-blink{50%{opacity:.25}}
 
@@ -48,11 +49,6 @@
 .study-caption-name{display:block;margin-bottom:var(--space-3);font:400 var(--fs-meta)/var(--lh-meta) var(--font-mono);letter-spacing:var(--ls-caps);text-transform:uppercase;color:var(--text-display)}
 .study-caption-line{display:block;color:var(--text-body);max-width:var(--measure)}
 .study-buttons{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-5) var(--space-7);margin-left:auto}
-/* The page resets button type and color, so restate the system button for this one. */
-.website-page .study-explore{font:400 12px/1 var(--font-mono);color:var(--surface-page)}
-.study-explore[hidden]{display:none}
-.website-page .study-explore[aria-pressed=true]{background:transparent;color:var(--text-display);border-color:var(--line-strong)}
-@media(hover:hover){.website-page .study-explore[aria-pressed=true]:hover{background:var(--text-display);color:var(--surface-page)}}
 
 @media(max-width:1100px){.study-showcase{grid-template-columns:minmax(230px,280px) minmax(0,1fr);gap:var(--space-7)}.study-option-line{font-size:13px}}
 /* Narrow: the picker becomes a row of names and the selected description moves under the frame. */
@@ -67,7 +63,7 @@
   .study-caption{display:block;flex:1 1 320px}
   .study-buttons{margin-left:0}
 }
-/* Phone: a phone frame with the phone screenshot. Explore opens the full page instead of a cramped frame. */
+/* Phone: a phone frame; the live page renders at 390 px wide inside it. */
 @media(max-width:700px){
   .study-picker{grid-template-columns:repeat(2,minmax(0,1fr))}
   .study-option{padding:8px 12px}
@@ -77,10 +73,10 @@
   .study-actions{flex-direction:column;align-items:stretch;gap:var(--space-5)}
   .study-caption{flex:none}
   .study-buttons{flex-direction:column;align-items:stretch}
-  .study-explore{display:none!important}
   .study-open{justify-content:center;min-height:48px;padding:14px 22px;border:1px solid var(--line-strong);border-radius:var(--radius-pill);background:var(--text-display);color:var(--surface-page)}
 }
 @media(prefers-reduced-motion:reduce){
-  .study-loading-bar::after{animation:none;width:100%;opacity:.6}
+  .study-screen,.study-screen iframe,.study-loading{transition:none!important}
+  .study-loading::after{animation:none;width:100%;opacity:.6}
   .study-frame[data-state=loading] .study-state-dot{animation:none}
 }
