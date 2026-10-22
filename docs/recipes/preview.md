@@ -47,7 +47,7 @@ References are found in HTML attributes (`href`, `src`, `srcset`, `poster`, `dat
 
 | Mode | Contents |
 |---|---|
-| `site` | every tracked or new (not ignored) file except `tools/`, `src/`, `templates/`, `content/`, dot folders, `*.py`, `*.sh`, `*.md`, `CNAME`, `_headers` |
+| `site` | every tracked or new (not ignored) file except `tools/`, `src/`, `templates/`, `content/`, dot folders, `*.py`, `*.sh`, `*.md` (except `docs/**/*.md`, so the catalog's doc links work), `CNAME`, `_headers`. Markup inside `<script type="text/html">` / `text/plain` (catalog demos) is not scanned for refs; `_ds/` strings in it are still rewritten |
 | `studio` | `next/index.html` as `index.html`, `next/css/` as `css/`, `next/js/` as `js/`, `next/assets/` as `assets/`, `studies/shared/` as `shared/`; root `assets/` files the Studio references go under `site/` (a linked page brings its whole folder, for example `site/charger-explorer/`) |
 
 `next/lab/` is not in the Studio copy. It is in the site copy under `next/lab/`.

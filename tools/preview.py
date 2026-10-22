@@ -104,6 +104,8 @@ def excluded(p):
         return True
     if parts[-1] in EXCLUDE_NAMES:
         return True
+    if p.startswith("docs/") and p.endswith(".md"):
+        return False   # the design docs the catalog links to
     return os.path.splitext(p)[1].lower() in EXCLUDE_EXT
 
 
@@ -170,6 +172,7 @@ def js_refs(text, add, off=0, loose="loose"):
         add(off + m.start(2), m.group(2) + m.group(3), loose)
 
 
+INERT_RE = re.compile(r"<script\b[^>]*\btype\s*=\s*[\"']?text/(?:html|plain|template)[^>]*>(.*?)</script>", re.I | re.S)
 SKIP_SCHEMES = re.compile(r"^(?:[a-z][a-z0-9+.-]*:|//|#|\{|\$|<)", re.I)
 
 
@@ -185,6 +188,15 @@ def find_refs(path, text):
         spans.append((start, start + len(ref), ref, kind))
 
     if ext in (".html", ".htm", ".svg", ".xml"):
+        # Markup held as text (the catalog's <script type="text/html"> demos and
+        # "text/plain" snippets) renders later against its own <base>: not refs of this file.
+        inert = [(m.start(1), m.end(1)) for m in INERT_RE.finditer(text)]
+        if inert:
+            plain = add
+
+            def add(start, ref, kind):
+                if not any(a <= start < b for a, b in inert):
+                    plain(start, ref, kind)
         for m in ATTR_RE.finditer(text):
             add(m.start(3), m.group(3), "nav")
         for m in SRCSET_RE.finditer(text):
