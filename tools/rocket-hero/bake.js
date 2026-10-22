@@ -1,20 +1,20 @@
 // Offline bake (run through tools/rocket-hero/bake-run.js). Uses the same scene code as the
 // live hero, so the still and the line drawing register with the live render to the pixel.
 import * as THREE from 'three';
-import { createLivery } from '/assets/charger-explorer/livery.js';
+import { createLivery } from '../../assets/charger-explorer/livery.js';
 import { makeView, buildModel, VIEW, makeRig } from './src/scene.js';
 
-const EXP = '/assets/charger-explorer/';
+const EXP = '../../assets/charger-explorer/';
 
 async function livery() {
-  await document.fonts.load('700 32px "Space Grotesk"');
+  await document.fonts.load('700 32px "Archivo"');
   const paint = createLivery(), g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(9), 3));
   return paint({ id: 1 }, g).map;
 }
 
 async function hero(opts = {}) {
-  const [meta, buf] = await Promise.all([fetch('/assets/rocket/charger-live.json').then(r => r.json()), fetch('/assets/rocket/charger-live.bin').then(r => r.arrayBuffer())]);
+  const [meta, buf] = await Promise.all([fetch('../../assets/rocket/charger-live.json').then(r => r.json()), fetch('../../assets/rocket/charger-live.bin').then(r => r.arrayBuffer())]);
   let map;
   if (opts.liveryUrl) {
     const img = new Image(); img.src = opts.liveryUrl; await img.decode();

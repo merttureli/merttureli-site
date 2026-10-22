@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="../shared/study.css">
+<script src="../shared/study.js"></script>
+<title>Hangar Direction</title>
+<meta name="description" content="Mert Tureli, mechanical engineer in Austin, Texas. I design, build and test hardware end to end. Captain and chief engineer of CHARGER, first place at Battle of the Rockets 2026. I also design and build websites.">
+<meta name="theme-color" content="#e5e4e0">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23e5e4e0'/%3E%3Cpath d='M14 44 L50 20' stroke='%23ff4f00' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preload" href="../shared/fonts/archivo-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../shared/fonts/martian-mono-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/hangar.css">
+<script>document.documentElement.classList.add('js')</script>
+<script src="js/main.js" defer></script>
+</head>
+<body>
+<a class="study-back study-back--hangar" href="/websites.html#studies"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13 8H3.5M7.5 3.5 3 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Back to websites</a>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav" id="top">
+  <a class="wordmark" href="#top" aria-label="Mert Tureli, back to top">Mert Tureli</a>
+  <nav class="nav-links" id="menu" aria-label="Sections">
+    <a href="#charger"><span>01</span>CHARGER</a>
+    <a href="#work"><span>02</span>Builds</a>
+    <a href="#experience"><span>03</span>Experience</a>
+    <a href="#beyond"><span>04</span>Beyond</a>
+    <a href="#websites"><span>05</span>Websites</a>
+  </nav>
+  <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="menu">Menu</button>
+  <a class="nav-cta" href="#contact">Contact</a>
+</header>
+
+<main id="main">
+
+<!-- ============================================================ HERO -->
+<section class="hero" aria-labelledby="hero-title">
+  <ul class="pills" aria-label="At a glance">
+    <li><span class="dot" aria-hidden="true"></span>Austin, Texas</li>
+    <li>Mechanical engineer</li>
+    <li>B.S. Union College 2026</li>
+  </ul>
+
+  <h1 class="hero-title" id="hero-title"><span class="line">Mert</span> <span class="line">Tureli</span></h1>
+  <canvas class="haze" aria-hidden="true"></canvas>
+
+  <div class="rocket-stage">
+    <div class="rocket-shadow" aria-hidden="true"></div>
+    <picture>
+      <source media="(max-width: 760px)" srcset="assets/img/charger-tall.webp">
+      <img src="assets/img/charger-wide.webp" alt="CHARGER, the orange and white competition rocket, rendered from its CAD flight model" fetchpriority="high" decoding="async">
+    </picture>
+    <canvas aria-hidden="true"></canvas>
+  </div>
+
+  <div class="hero-foot">
+    <div>
+      <p class="tagline">I design, build and <em class="acc">test</em> hardware end to end, from CAD and drawings through electronics and firmware to the rig that proves it works.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-solid btn-mag" href="#work">See the work <span class="arr" aria-hidden="true">&#8600;</span></a>
+        <a class="btn btn-line btn-mag" href="../../assets/charger-explorer/index.html"><span class="badge3d" aria-hidden="true">3D</span> Explore CHARGER</a>
+      </div>
+    </div>
+    <p class="hero-caption mono"><b>CHARGER</b> / live render of the flight model<br>First place, Battle of the Rockets 2026</p>
+  </div>
+</section>
+
+<!-- ========================================================= 01 CHARGER -->
+<section class="sec sec-charger" id="charger" aria-labelledby="charger-h">
+  <div class="wrap">
+    <div class="sec-head" data-reveal><span class="num">01</span><span class="label">CHARGER</span><span class="rule"></span><span class="meta">Union College Rocket Team / 2026</span></div>
+    <div class="charger-intro">
+      <h2 class="h2" id="charger-h" data-reveal>Designed, built and flown to <span class="acc">first</span> place.</h2>
+      <div data-reveal>
+        <p class="lede">There was no rocket team at Union College when I started. I founded it, ran it as captain and chief engineer, and led the design of the airframe and the deployable payload.</p>
+        <p class="lede">The event asked for a custom sensor payload dropped at apogee, a nose cone released at 75 percent of peak altitude on the way down, and five channels of telemetry streamed live to a handheld ground station. CHARGER won it at Battle of the Rockets 2026.</p>
+      </div>
+    </div>
+
+    <figure class="spec" aria-labelledby="spec-cap">
+      <div class="spec-top mono"><span>Spec sheet / CHARGER</span><span>Side elevation, schematic</span></div>
+      <div class="ghost" aria-hidden="true">CHARGER</div>
+      <svg class="diagram diagram-wide" viewBox="0 0 1200 400" role="img" aria-label="Side elevation of CHARGER: 37 inches long, 2.63 inches across, centre of gravity 22 inches from the nose, centre of pressure 1.80 calibres aft of it."><path class="ln" pathLength="1" d="M904.2 154.5 L101.0 154.5 M904.2 225.5 L101.0 225.5"/><path class="ln" pathLength="1" d="M101.0 154.5 L101.0 225.5"/><path class="ln" pathLength="1" d="M904.2 154.5 Q1017.8 153.8 1100.0 190.0 Q1017.8 226.2 904.2 225.5"/><path class="ln thin" pathLength="1" d="M904.2 154.5 L904.2 225.5"/><path class="ln thin" pathLength="1" d="M529.4 154.5 L529.4 225.5 M515.9 154.5 L515.9 225.5"/><path class="ln" pathLength="1" d="M175.5 154.5 L116.9 90.8 L101.0 90.8 L101.0 154.5"/><path class="ln" pathLength="1" d="M175.5 225.5 L116.9 289.2 L101.0 289.2 L101.0 225.5"/><path class="ln thin" pathLength="1" d="M101.0 170.5 L88.8 170.5 L88.8 209.5 L101.0 209.5"/><path class="ln thin" pathLength="1" d="M159.9 154.5 L159.9 148.6 L150.1 148.6 L150.1 154.5"/><path class="ln thin" pathLength="1" d="M510.9 154.5 L510.9 148.6 L501.1 148.6 L501.1 154.5"/><path class="ln axis" pathLength="1" d="M1127.0 190.0 L57.8 190.0"/><path class="ln ext" pathLength="1" d="M1100.0 181.9 L1100.0 44.9"/><path class="ln ext" pathLength="1" d="M101.0 85.4 L101.0 44.9"/><g class="dim "><path class="ln dimline" pathLength="1" d="M1100.0 53.0 L101.0 53.0"/><circle class="handle" cx="1100.0" cy="53.0" r="3.2"/><circle class="handle" cx="101.0" cy="53.0" r="3.2"/><text x="600.5" y="53.0" text-anchor="middle" dy="-9">L 37 in</text></g><g class="dim"><path class="ln dimline" pathLength="1" d="M861.0 154.5 L861.0 225.5"/><circle class="handle" cx="861.0" cy="154.5" r="3.2"/><circle class="handle" cx="861.0" cy="225.5" r="3.2"/><text x="861.0" y="256.5" text-anchor="middle">&#8960; 2.63 in</text></g><g class="mark cg"><circle cx="506.0" cy="190.0" r="8"/><path d="M506.0 190.0 L506.0 182.0 A8 8 0 0 1 514.0 190.0 Z M506.0 190.0 L506.0 198.0 A8 8 0 0 1 498.0 190.0 Z"/></g><g class="mark cp"><circle cx="378.2" cy="190.0" r="8"/><circle class="dot" cx="378.2" cy="190.0" r="2.4"/></g><path class="ln ext" pathLength="1" d="M1100.0 198.1 L1100.0 367.5"/><path class="ln ext" pathLength="1" d="M506.0 214.3 L506.0 367.5"/><path class="ln ext" pathLength="1" d="M378.2 214.3 L378.2 324.3"/><g class="dim accent"><path class="ln dimline" pathLength="1" d="M506.0 324.3 L378.2 324.3"/><circle class="handle" cx="506.0" cy="324.3" r="3.2"/><circle class="handle" cx="378.2" cy="324.3" r="3.2"/><text x="442.1" y="324.3" text-anchor="middle" dy="17">1.80 cal</text></g><g class="dim "><path class="ln dimline" pathLength="1" d="M1100.0 367.5 L506.0 367.5"/><circle class="handle" cx="1100.0" cy="367.5" r="3.2"/><circle class="handle" cx="506.0" cy="367.5" r="3.2"/><text x="803.0" y="367.5" text-anchor="middle" dy="17">CG 22 in from nose</text></g><text class="note" x="134.9" y="94.8" text-anchor="start">fin root 2.76 / height 2.36 / sweep 2.17 in</text><text class="tag" x="506.0" y="175.0" text-anchor="middle">CG</text><text class="tag" x="378.2" y="175.0" text-anchor="middle">CP</text></svg>
+      <svg class="diagram diagram-tall" viewBox="0 0 360 1040" role="img" aria-label="Side elevation of CHARGER: 37 inches long, 2.63 inches across, centre of gravity 22 inches from the nose, centre of pressure 1.80 calibres aft of it."><path class="ln" pathLength="1" d="M224.9 259.5 L224.9 914.0 M167.1 259.5 L167.1 914.0"/><path class="ln" pathLength="1" d="M224.9 914.0 L167.1 914.0"/><path class="ln" pathLength="1" d="M224.9 259.5 Q225.5 167.0 196.0 100.0 Q166.5 167.0 167.1 259.5"/><path class="ln thin" pathLength="1" d="M224.9 259.5 L167.1 259.5"/><path class="ln thin" pathLength="1" d="M224.9 564.9 L167.1 564.9 M224.9 575.9 L167.1 575.9"/><path class="ln" pathLength="1" d="M224.9 853.3 L276.9 901.0 L276.9 914.0 L224.9 914.0"/><path class="ln" pathLength="1" d="M167.1 853.3 L115.2 901.0 L115.2 914.0 L167.1 914.0"/><path class="ln thin" pathLength="1" d="M211.9 914.0 L211.9 923.9 L180.1 923.9 L180.1 914.0"/><path class="ln thin" pathLength="1" d="M224.9 866.0 L229.8 866.0 L229.8 874.0 L224.9 874.0"/><path class="ln thin" pathLength="1" d="M224.9 580.0 L229.8 580.0 L229.8 588.0 L224.9 588.0"/><path class="ln axis" pathLength="1" d="M196.0 78.0 L196.0 949.2"/><path class="ln ext" pathLength="1" d="M202.6 100.0 L314.2 100.0"/><path class="ln ext" pathLength="1" d="M281.2 914.0 L314.2 914.0"/><g class="dim "><path class="ln dimline" pathLength="1" d="M307.6 100.0 L307.6 914.0"/><circle class="handle" cx="307.6" cy="100.0" r="3.2"/><circle class="handle" cx="307.6" cy="914.0" r="3.2"/><text x="307.6" y="507.0" transform="rotate(-90 307.6 507.0)" text-anchor="middle" dy="-8">L 37 in</text></g><g class="dim"><path class="ln dimline" pathLength="1" d="M224.9 294.7 L167.1 294.7"/><circle class="handle" cx="224.9" cy="294.7" r="3.2"/><circle class="handle" cx="167.1" cy="294.7" r="3.2"/><text x="235.9" y="298.7" text-anchor="start">&#8960; 2.63 in</text></g><g class="mark cg"><circle cx="196.0" cy="584.0" r="8"/><path d="M196.0 584.0 L196.0 576.0 A8 8 0 0 1 204.0 584.0 Z M196.0 584.0 L196.0 592.0 A8 8 0 0 1 188.0 584.0 Z"/></g><g class="mark cp"><circle cx="196.0" cy="688.1" r="8"/><circle class="dot" cx="196.0" cy="688.1" r="2.4"/></g><path class="ln ext" pathLength="1" d="M189.4 100.0 L51.4 100.0"/><path class="ln ext" pathLength="1" d="M176.2 584.0 L51.4 584.0"/><path class="ln ext" pathLength="1" d="M176.2 688.1 L86.6 688.1"/><g class="dim accent"><path class="ln dimline" pathLength="1" d="M86.6 584.0 L86.6 688.1"/><circle class="handle" cx="86.6" cy="584.0" r="3.2"/><circle class="handle" cx="86.6" cy="688.1" r="3.2"/><text x="86.6" y="636.1" transform="rotate(-90 86.6 636.1)" text-anchor="middle" dy="16">1.80 cal</text></g><g class="dim "><path class="ln dimline" pathLength="1" d="M51.4 100.0 L51.4 584.0"/><circle class="handle" cx="51.4" cy="100.0" r="3.2"/><circle class="handle" cx="51.4" cy="584.0" r="3.2"/><text x="51.4" y="342.0" transform="rotate(-90 51.4 342.0)" text-anchor="middle" dy="16">CG 22 in from nose</text></g><text class="note" x="-4.4" y="969.4">fin root 2.76 / height 2.36 / sweep 2.17 in</text><text class="tag" x="174.0" y="588.0" text-anchor="middle">CG</text><text class="tag" x="174.0" y="692.1" text-anchor="middle">CP</text></svg>
+      <div class="spec-foot">
+        <figcaption class="mono" id="spec-cap">Drawn from the published numbers. Centre of pressure placed 1.80 calibres aft of the centre of gravity.</figcaption>
+        <dl class="readout mono" aria-label="CHARGER specification">
+          <dt>Result</dt><dd class="hot">1st, Deployable Sensor Payload</dd>
+          <dt>Event</dt><dd>Battle of the Rockets 2026</dd>
+          <dt>Length</dt><dd>37 in, single stage</dd>
+          <dt>Diameter</dt><dd>2.63 in</dd>
+          <dt>Stability</dt><dd>1.80 cal, CG at 22 in</dd>
+          <dt>Motor</dt><dd>Aerotech G77R-7</dd>
+          <dt>Apogee</dt><dd>1,033 ft simulated</dd>
+          <dt>Descent</dt><dd>13.8 ft/s, 48 in canopy</dd>
+          <dt>Hardware</dt><dd>$716</dd>
+        </dl>
+      </div>
+    </figure>
+
+    <ul class="stats">
+      <li class="stat" data-reveal>
+        <span class="v">1st</span>
+        <span class="q">Deployable Sensor Payload event, Battle of the Rockets 2026.</span>
+        <ol class="standings" aria-label="Final standings, top three">
+          <li>Union College Rocket Club</li>
+          <li>Chantilly Aerospace Club Team 3</li>
+          <li>Thomas Jefferson High School</li>
+        </ol>
+      </li>
+      <li class="stat" data-reveal>
+        <span class="v">1.80<small>cal</small></span>
+        <span class="q">Stability margin on a 37 inch airframe, centre of gravity at 22 inches.</span>
+      </li>
+      <li class="stat" data-reveal>
+        <span class="v">13.8<small>ft/s</small></span>
+        <span class="q">Descent under a 48 inch canopy, against a 15 ft/s limit.</span>
+        <div class="gauge" role="img" aria-label="13.8 of a 15 feet per second limit"><span class="fill" style="width:92%"></span><i style="left:92%"></i><i class="lim" style="left:100%"></i></div>
+        <div class="gauge-l mono"><span>0</span><span>Limit 15</span></div>
+      </li>
+      <li class="stat" data-reveal>
+        <span class="v">$716</span>
+        <span class="q">Total hardware: rocket $465.42, payload $250.53, ground station from existing kit.</span>
+        <div class="gauge" role="img" aria-label="Rocket 465 dollars, payload 251 dollars"><span class="fill" style="width:65%"></span><span class="fill b" style="left:65%;width:35%"></span></div>
+        <div class="gauge-l mono"><span>Rocket</span><span>Payload</span></div>
+      </li>
+    </ul>
+
+    <a class="explorer-card" href="../../assets/charger-explorer/index.html" data-reveal>
+      <span class="grid" aria-hidden="true"></span>
+      <span class="txt">
+        <span class="mono">Interactive / Flight model</span>
+        <h3>Take CHARGER apart.</h3>
+        <p>The full assembly, every internal part at its true station. Rotate it, cut it away, and select any part to read what it does.</p>
+        <span class="btn btn-accent go">Launch the 3D explorer <span class="arr" aria-hidden="true">&#8599;</span></span>
+      </span>
+      <span class="art"><img src="assets/img/charger-xray.webp" alt="" loading="lazy" decoding="async" width="1600" height="667"></span>
+      <span class="corner mono" aria-hidden="true">Drag / Cut away / Select</span>
+    </a>
+  </div>
+
+  <figure class="bleed">
+    <img src="assets/img/pad-band.webp" srcset="assets/img/pad-band-960.webp 960w, assets/img/pad-band.webp 1920w" sizes="100vw" alt="CHARGER standing on pad one at Battle of the Rockets, Culpeper, Virginia" loading="lazy" decoding="async" width="1920" height="823">
+    <figcaption class="mono"><span>Pad one, Culpeper, Virginia, April 2026</span><span>Two clean flights on day one, the qualifying flight before noon on day two</span></figcaption>
+  </figure>
+</section>
+
+<!-- ========================================================== 02 BUILDS -->
+<section class="sec sec-work" id="work" aria-labelledby="work-h">
+  <div class="wrap">
+    <div class="sec-head" data-reveal><span class="num">02</span><span class="label">Selected builds</span><span class="rule"></span><span class="meta">2024 to 2026</span></div>
+    <div class="builds-head">
+      <h2 class="h2" id="work-h" data-reveal>Machines I designed, wired and <span class="acc">programmed</span>.</h2>
+      <p class="lede" data-reveal>Most of my work has the same shape: something needs to exist, nobody has built it yet, and the fastest way to find out if it works is to design it, wire it, write the firmware, and then build the rig that measures it.</p>
+    </div>
+
+    <ul class="builds">
+      <li class="build big" data-reveal>
+        <a class="plinth" href="https://merttureli.com/projects/robo-catcher.html" aria-label="Robo-Catcher case study">
+          <span class="idx mono">02.1</span><span class="cat mono">Mechanism / Electronics / Firmware</span>
+          <img src="assets/img/robo-catcher.webp" alt="Robo-Catcher full assembly render: catch net, ramps, indexer and flywheel thrower" loading="lazy" decoding="async" width="945" height="792">
+        </a>
+        <div class="build-cap">
+          <h3>Robo-Catcher</h3><span class="yr mono">2025</span>
+          <p>An automatic softball catching and return machine, built by a twelve person capstone team. I co-led the feeding subsystem, then owned all of the electronics and firmware. It hit one hundred percent feed indexing reliability on competition day.</p>
+          <a class="more mono" href="https://merttureli.com/projects/robo-catcher.html">Case study &#8599;</a>
+        </div>
+      </li>
+      <li class="build tall" data-reveal>
+        <a class="plinth" href="https://merttureli.com/projects/rudder-pedals.html" aria-label="Flight sim rudder pedals case study">
+          <span class="idx mono">02.2</span><span class="cat mono">Mechanism / Firmware</span>
+          <img src="assets/img/rudder-pedals.webp" alt="Rudder pedal mechanism render with the orange toe brake pedal" loading="lazy" decoding="async" width="652" height="982">
+        </a>
+        <div class="build-cap">
+          <h3>Flight sim rudder pedals</h3><span class="yr mono">2026</span>
+          <p>A three axis rudder and toe brake set, 3D printed, with contactless magnetic sensing. I wrote the USB HID firmware, so it works in any simulator with no drivers.</p>
+          <a class="more mono" href="https://merttureli.com/projects/rudder-pedals.html">Case study &#8599;</a>
+        </div>
+      </li>
+      <li class="build" data-reveal>
+        <div class="plinth">
+          <span class="idx mono">02.3</span><span class="cat mono">Thermal / Instrumentation</span>
+          <img class="mul" src="assets/img/hotbox.webp" alt="HOTBOX thermal test bench render, deliberately blurred" loading="lazy" decoding="async" width="1000" height="562">
+          <span class="ip mono">IP protected</span>
+        </div>
+        <div class="build-cap">
+          <h3>HOTBOX thermal bench</h3><span class="yr mono">2026</span>
+          <p>For SunThru I designed and built the whole bench: chamber, sensor stack, electronics, firmware and a layered safety system for unattended overnight runs. It reads heat flow directly, for roughly a quarter of a commercial quote.</p>
+        </div>
+      </li>
+      <li class="build" data-reveal>
+        <a class="plinth" href="https://merttureli.com/projects/bend-fixture.html" aria-label="Three-point bend fixture case study">
+          <span class="idx mono">02.4</span><span class="cat mono">Design for manufacture</span>
+          <img class="mul" src="assets/img/bend-fixture.webp" alt="Three-point bend fixture render, deliberately blurred" loading="lazy" decoding="async" width="1000" height="562">
+          <span class="ip mono">IP protected</span>
+        </a>
+        <div class="build-cap">
+          <h3>Three-point bend fixture</h3><span class="yr mono">2026</span>
+          <p>A fully 3D printable 12 part fixture for aerogel specimens too fragile for commercial fixtures. It is in use for flexural characterization.</p>
+          <a class="more mono" href="https://merttureli.com/projects/bend-fixture.html">Case study &#8599;</a>
+        </div>
+      </li>
+      <li class="build" data-reveal>
+        <a class="plinth" href="https://merttureli.com/projects/therma-shift.html" aria-label="Therma-Shift coaster case study">
+          <span class="idx mono">02.5</span><span class="cat mono">Thermal / Control electronics</span>
+          <img src="assets/img/therma-shift.webp" alt="Therma-Shift coaster render" loading="lazy" decoding="async" width="749" height="294">
+        </a>
+        <div class="build-cap">
+          <h3>Therma-Shift coaster</h3><span class="yr mono">2026</span>
+          <p>A solid state coaster that heats or cools any mug, with closed loop temperature control and thermal runaway cutoffs. I bench validated the thermal core before adding the electronics.</p>
+          <a class="more mono" href="https://merttureli.com/projects/therma-shift.html">Case study &#8599;</a>
+        </div>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<!-- ====================================================== 03 EXPERIENCE -->
+<section class="sec sec-exp" id="experience" aria-labelledby="exp-h">
+  <div class="wrap">
+    <div class="sec-head" data-reveal><span class="num">03</span><span class="label">Experience</span><span class="rule"></span><span class="meta">Austin, Texas / from Izmir, Turkey</span></div>
+    <div class="exp-head">
+      <h2 class="h2" id="exp-h" data-reveal>Where the <span class="acc">hardware</span> got built.</h2>
+      <p class="lede" data-reveal>Prototypes and production equipment at a spin-out, a rocket team I started from nothing, a startup that raised seed money, and fatigue analysis for two jet programs.</p>
+    </div>
+    <ol class="roles">
+      <li class="role" data-reveal>
+        <span class="n mono">01</span>
+        <div><h3>SunThru</h3><span class="t">Engineering intern</span></div>
+        <span class="when mono">Schenectady, NY<br>Jun to Sep 2026</span>
+        <p>Built and tested the company's first full in-house prototype units and led validation of thermal performance and optical clarity. Produced toleranced drawings for machine-shop quotes and supported bring-up of a PLC automation system.</p>
+      </li>
+      <li class="role" data-reveal>
+        <span class="n mono">02</span>
+        <div><h3>Union College Rocket Team</h3><span class="t">Founder and president</span></div>
+        <span class="when mono">Schenectady, NY<br>Aug 2023 to Jun 2026</span>
+        <p>Started the team and built it to competition standard. Captained the twelve person team, trained new members through build labs, owned high power launch safety, and grew the budget by seven hundred percent through funding proposals.</p>
+      </li>
+      <li class="role" data-reveal>
+        <span class="n mono">03</span>
+        <div><h3>ModuFly</h3><span class="t">Co-founder</span></div>
+        <span class="when mono">Schenectady, NY<br>Sep 2024 to Jan 2026</span>
+        <p>Co-founded a startup around a modular interlocking rocket system for STEM education. Raised $70,000 in seed funding, starting with a $10,000 SparkLabs prize, and led R&amp;D and production.</p>
+      </li>
+      <li class="role" data-reveal>
+        <span class="n mono">04</span>
+        <div><h3>TASECS</h3><span class="t">Design engineer and materials intern</span></div>
+        <span class="when mono">Ankara, Turkey<br>Summer 2024</span>
+        <p>Designed HVAC valve components for aerospace thermal management and ran stress and fatigue analysis supporting two national fighter and jet trainer programs.</p>
+      </li>
+    </ol>
+    <div class="kit" data-reveal>
+      <div>
+        <ul class="tags" aria-label="Tools and methods">
+          <li class="k">SolidWorks, expert</li><li class="k">GD&amp;T to ASME Y14.5</li><li>Tolerance stack-up</li><li>DFM / DFA</li><li>FEA</li><li>CFD</li><li>MATLAB</li><li class="k">C++ / ESP32</li><li>USB HID</li><li>PID control</li><li>PLC ladder logic</li><li>Python</li><li>FDM / SLA</li><li>Mill / Lathe</li>
+        </ul>
+        <p class="edu mono">B.S. Mechanical Engineering, Union College, 2026 / Turkish native, English professional, German intermediate</p>
+      </div>
+      <a class="btn btn-solid btn-mag" href="../../assets/Mert-Tureli-Resume.pdf">Resume, PDF <span class="arr" aria-hidden="true">&#8599;</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================== 04 BEYOND -->
+<section class="sec sec-beyond" id="beyond" aria-labelledby="beyond-h">
+  <div class="wrap">
+    <div class="sec-head" data-reveal><span class="num">04</span><span class="label">Beyond engineering</span><span class="rule"></span><span class="meta">Briefly</span></div>
+    <div class="beyond">
+      <div>
+        <h2 class="h2" id="beyond-h" data-reveal>Away from the <span class="acc">bench</span>.</h2>
+        <ol class="pursuits">
+          <li data-reveal><span class="n mono">01</span><h3>Piloting</h3><p>Licensed ultralight pilot, certified through the Turkish civil aviation authority. The rudder pedals came out of the same interest.</p></li>
+          <li data-reveal><span class="n mono">02</span><h3>Filmmaking</h3><p>Three short films screened at the Robert College Film Festival in 2022. One, a solo project, was nominated for cinematography, editing and sound design.</p></li>
+          <li data-reveal><span class="n mono">03</span><h3>Photography</h3><p>An ongoing thing rather than a project.</p></li>
+          <li data-reveal><span class="n mono">04</span><h3>Cooking and travel</h3><p>I cook most days, mostly the food I grew up with in Izmir, and travel whenever there is room to.</p></li>
+        </ol>
+      </div>
+      <div class="photos">
+        <figure data-reveal><img src="assets/img/overlook.webp" alt="Looking out over a forested valley toward the sea" loading="lazy" decoding="async" width="800" height="1000"><figcaption class="mono"><span>Photograph</span><span>Overlook</span></figcaption></figure>
+        <figure data-reveal><img src="assets/img/lighthouse.webp" alt="A white lighthouse behind bare branches" loading="lazy" decoding="async" width="800" height="1000"><figcaption class="mono"><span>Photograph</span><span>Lighthouse</span></figcaption></figure>
+        <figure class="wide" data-reveal><img src="assets/img/balloon.webp" alt="Aerial shot of a hot air balloon over open country at sunrise" loading="lazy" decoding="async" width="1000" height="857"><figcaption class="mono"><span>Film still</span><span>Balloon at sunrise</span></figcaption></figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================== 05 WEBSITES -->
+<section class="sec sec-web" id="websites" aria-labelledby="web-h">
+  <div class="wrap">
+    <div class="sec-head" data-reveal><span class="num">05</span><span class="label">Websites</span><span class="rule"></span><span class="meta">Design and development</span></div>
+    <div class="web-grid">
+      <div>
+        <h2 class="web-h" id="web-h" data-reveal><span class="soft">Like what you see?</span><br>I can build <span class="acc">yours</span>.</h2>
+        <p class="web-copy" data-reveal>I design and build websites around your work, your business, and the things that make them worth exploring. This page is the sample: written by hand with no framework, and the rocket at the top is rendered live from its CAD model.</p>
+        <div class="web-ctas" data-reveal>
+          <a class="btn btn-accent btn-mag" href="mailto:merttureli0@gmail.com?subject=Website%20inquiry">Start a conversation <span class="arr" aria-hidden="true">&#8599;</span></a>
+          <a class="btn btn-paper btn-mag" href="https://merttureli.com/websites.html">More on websites <span class="arr" aria-hidden="true">&#8599;</span></a>
+        </div>
+      </div>
+      <figure class="browser" data-reveal aria-label="This site, in a browser window">
+        <div class="bar" aria-hidden="true"><i></i><i></i><i></i><span>merttureli.com</span></div>
+        <img src="assets/img/site-mock.webp" alt="The homepage hero of this site: the CHARGER rocket over the name, with heat haze from the motor" loading="lazy" decoding="async" width="1280" height="800">
+      </figure>
+    </div>
+    <ol class="offer">
+      <li data-reveal><span class="mono">01 / Design</span><h3>Drawn for your subject</h3><p>Layout, type and motion chosen for what you do, so the site reads as yours from the first screen.</p></li>
+      <li data-reveal><span class="mono">02 / Build</span><h3>Hand written and fast</h3><p>Light pages, real responsive layouts, and care for the phone in one hand.</p></li>
+      <li data-reveal><span class="mono">03 / 3D and motion</span><h3>Your real objects</h3><p>Models, renders and physical motion where they help people understand the thing.</p></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ========================================================= 06 CONTACT -->
+<section class="sec sec-contact" id="contact" aria-labelledby="contact-h">
+  <div class="wrap">
+    <div class="sec-head" data-reveal><span class="num">06</span><span class="label">Contact</span><span class="rule"></span><span class="meta">Austin, Texas</span></div>
+    <div class="contact">
+      <div>
+        <h2 class="contact-h" id="contact-h" data-reveal>Get in <span class="acc">touch</span>.</h2>
+        <p class="lede" data-reveal style="margin-top:28px">Based in Austin, Texas. For an engineering conversation, a website, or something interesting you are building, email me.</p>
+        <div class="links" data-reveal>
+          <a href="mailto:merttureli0@gmail.com"><span class="k mono">Email</span><span class="v">merttureli0@gmail.com</span><span class="arr" aria-hidden="true">&#8599;</span></a>
+          <a href="https://linkedin.com/in/merttureli"><span class="k mono">LinkedIn</span><span class="v">linkedin.com/in/merttureli</span><span class="arr" aria-hidden="true">&#8599;</span></a>
+          <a href="../../assets/Mert-Tureli-Resume.pdf"><span class="k mono">Resume</span><span class="v">Mert Tureli, PDF</span><span class="arr" aria-hidden="true">&#8599;</span></a>
+        </div>
+      </div>
+      <figure class="portrait" data-reveal>
+        <img src="assets/img/portrait.webp" alt="Portrait of Mert Tureli" loading="lazy" decoding="async" width="616" height="754">
+        <figcaption class="mono">Portrait / 2024</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="foot">
+  <div class="wrap mono">
+    <span>Mert Tureli / B.S. Mechanical Engineering, Union College, 2026</span>
+    <span>CHARGER rendered in the browser from its CAD assembly. Photographs of the machine and the team by Paul Buckowski / Union College.</span>
+    <a href="#top">Back to top &#8593;</a>
+  </div>
+</footer>
+</body>
+</html>

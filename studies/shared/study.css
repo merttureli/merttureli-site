@@ -1,0 +1,18 @@
+/* Shared by the four design studies: the way back to the websites page. */
+.study-back{position:fixed;z-index:2147483000;left:max(16px,env(safe-area-inset-left));bottom:max(16px,env(safe-area-inset-bottom));display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px 0 14px;border-radius:999px;background:rgba(17,18,20,.88);color:#f4f4f1;font-family:inherit;font-size:14px;font-weight:500;font-style:normal;line-height:1;letter-spacing:0;text-transform:none;text-decoration:none;box-shadow:0 1px 0 rgba(255,255,255,.12) inset,0 10px 24px -10px rgba(0,0,0,.45);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);transition:background-color .2s ease,transform .2s ease}
+.study-back svg{width:16px;height:16px;flex:none}
+.study-back:focus-visible{outline:2px solid #f4f4f1;outline-offset:3px;box-shadow:0 0 0 5px rgba(17,18,20,.9)}
+@media (hover:hover){.study-back:hover{background:#111214;transform:translateY(-1px)}}
+@media (prefers-reduced-motion:reduce){.study-back{transition:none}.study-back:hover{transform:none}}
+@media print{.study-back{display:none}}
+/* Inside the preview frame on the websites page, the page around it already offers the way back. */
+[data-study-framed] .study-back{display:none}
+/* Each study keeps its calls to action at the bottom of the first screen, so the pill sits where that study has room. */
+.study-back--hangar{left:auto;bottom:auto;top:clamp(60px,5.3vw,76px);right:max(clamp(16px,3.4vw,49px),env(safe-area-inset-right))}
+.study-back--launch,.study-back--studio{left:50%;translate:-50% 0}
+.study-back--specimen{bottom:auto;top:68px;left:max(46px,env(safe-area-inset-left))}
+@media (max-width:1100px){.study-back--specimen{left:50%;translate:-50% 0;top:max(12px,env(safe-area-inset-top))}}
+@media (max-width:760px){
+  .study-back--launch{left:auto;translate:none;bottom:auto;top:58px;right:max(16px,env(safe-area-inset-right))}
+  .study-back--studio{bottom:auto;top:max(18px,env(safe-area-inset-top))}
+}

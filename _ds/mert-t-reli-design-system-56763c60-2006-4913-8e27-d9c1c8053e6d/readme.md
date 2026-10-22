@@ -83,7 +83,7 @@ Monochrome by decision, not by omission. A ten-step ink ramp from `--ink-900` `#
 **Do not introduce a hue.** If something needs to stand out, make it bigger, give it more space, or put a photograph next to it.
 
 ### Type
-**Space Grotesk** for everything read, **IBM Plex Mono** for everything measured. Display sizes are clamped from 64px to 184px, set in caps at `0.92` line-height and `-0.03em` tracking — tight enough that two lines lock into a block. Body is 16px at `1.62`, capped at 62 characters. Metadata is 10–12px mono caps at `0.18em`; eyebrows and the wordmark open to `0.32em`. The contrast between 184px and 10px on the same screen is the system's main typographic effect; mid-sizes are used sparingly.
+**Archivo** for everything read, **Martian Mono** for everything measured. Archivo is variable in width as well as weight, and each role takes one width: the name at wdth 116 and weight 600 (`--font-name`), headings, titles and nav at 110 (`--font-display`), running text at 100 (`--font-body`). Display sizes are clamped from 57px to 164px, set in caps at `0.92` line-height and `-0.03em` tracking — tight enough that two lines lock into a block. Body is 16px at `1.62`, capped at 62 characters. Metadata is 10–12px mono caps at `0.18em`; eyebrows and the wordmark open to `0.32em`. The contrast between 184px and 10px on the same screen is the system's main typographic effect; mid-sizes are used sparingly.
 
 ### Spacing
 Steps widen as they grow: 4, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256. Page margin is `clamp(24px, 5vw, 88px)`; section rhythm is `clamp(96px, 14vh, 192px)`. Component padding is small, section spacing is enormous, and there is very little in between — that gap is what makes the layout feel bold rather than merely airy. Empty area is composition; do not fill it.
@@ -150,7 +150,7 @@ Rules:
 
 ## Substitutions to review
 
-1. **Typefaces.** No brand fonts were supplied. **Space Grotesk** (display/body) and **IBM Plex Mono** (metadata) are Google Fonts substitutes chosen to match the grotesque and technical-mono pairing in the boards, and they load from the Google CDN rather than from local files. If real licensed fonts exist, drop the files into `assets/fonts/` and replace the `@import` in `tokens/fonts.css` with `@font-face` rules.
+1. **Typefaces.** No brand fonts were supplied. **Archivo** (display/body) and **Martian Mono** (metadata) are open-source (OFL) faces, self-hosted from `assets/fonts/` at the site root with `@font-face` rules in the site's `css/fonts.css`, which `tokens/fonts.css` imports. They replaced Space Grotesk and IBM Plex Mono, the first substitutes for the grotesque and technical-mono pairing in the boards.
 2. **Icons.** Lucide, as described above.
 3. **Photography.** All grey plates. Real imagery goes in `assets/photography/`.
 4. **Copy.** Project titles, specs and body copy in the UI kit are plausible placeholders written in the brand voice, not real projects.

@@ -4,11 +4,12 @@
 <meta charset="utf-8">
 <title>Rocket bake</title>
 <style>
-@font-face{font-family:'Space Grotesk';font-weight:300 700;font-style:normal;src:url('/assets/charger-explorer/fonts/SpaceGrotesk-var.ttf') format('truetype')}
+/* the explorer's own face (assets/charger-explorer/style.css), so the baked livery matches it */
+@font-face{font-family:'Archivo';font-weight:100 900;font-stretch:100% 125%;font-style:normal;src:url('../../assets/fonts/archivo-latin.woff2') format('woff2')}
 body{margin:0;background:#222}
 canvas{display:block}
 </style>
-<script type="importmap">{"imports":{"three":"/assets/charger-explorer/vendor/three.module.js"}}</script>
+<script type="importmap">{"imports":{"three":"../../assets/charger-explorer/vendor/three.module.js"}}</script>
 </head>
 <body>
 <!-- Offline bake for the hero rocket: livery sheet, satin still and line drawing.

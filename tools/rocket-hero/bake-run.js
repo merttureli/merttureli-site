@@ -16,7 +16,7 @@ const save = (name, url) => fs.writeFileSync(path.join(out, name), Buffer.from(u
   const page = await browser.newPage();
   page.on('console', m => console.log('page:', m.text()));
   page.on('pageerror', e => console.log('pageerror:', e.message));
-  await page.goto(`http://127.0.0.1:${port}/tools/rocket-hero/bake.html`);
+  await page.goto(`http://127.0.0.1:${port}/${arg("prefix") || ""}tools/rocket-hero/bake.html`);
   await page.waitForFunction(() => window.bakeReady);
   if (test) {
     const variants = JSON.parse(arg('variants') || '[]');
@@ -24,8 +24,9 @@ const save = (name, url) => fs.writeFileSync(path.join(out, name), Buffer.from(u
     if (process.argv.includes('--line')) save('test-line.png', await page.evaluate(() => window.renderLine({ height: 1200 })));
   } else {
     save('livery.png', await page.evaluate(() => window.bakeLivery()));
-    const liveryUrl = '/assets/rocket/livery.webp';
-    save('still.png', await page.evaluate(o => window.renderStill(o), { roll: 0, height: 1200, liveryUrl: fs.existsSync(path.join(__dirname, '../../assets/rocket/livery.webp')) ? liveryUrl : null }));
+    // The stills paint with the livery canvas itself (the same pixels livery.webp stores losslessly).
+    const liveryUrl = null;
+    save('still.png', await page.evaluate(o => window.renderStill(o), { roll: 0, height: 1200, liveryUrl }));
     save('line.png', await page.evaluate(() => window.renderLine({ height: 1200 })));
     // 800 px copies are inlined in the home page so the poster paints with the first paint.
     save('still-800.png', await page.evaluate(o => window.renderStill(o), { roll: 0, height: 800, liveryUrl }));
