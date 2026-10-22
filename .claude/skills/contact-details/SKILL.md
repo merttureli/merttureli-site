@@ -14,4 +14,4 @@ Detail: `docs/recipes/contact.md`.
 4. `python3 tools/build.py` (home and case pages carry LinkedIn and location; home carries email).
 5. Search again: only `studies/`, `cards/` remain.
 6. Resume: overwrite `assets/Mert-Tureli-Resume.pdf`, same name. Compare its dates, titles and numbers with the site; ask the owner about any mismatch and fix the site with the `edit-copy` skill in the same commit.
-7. `python3 tools/check.py --fast`, then commit.
+7. `python3 tools/check.py`, then commit.

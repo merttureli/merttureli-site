@@ -5,7 +5,7 @@
 | Page | Edit | Has |
 |---|---|---|
 | Home | `src/index.html` head, then `python3 tools/build.py` | title, description, canonical, Open Graph, Twitter card |
-| Case studies | case data (`"title"`, optional `"seo_title"`, `"description"`) and the head template in `build-case.py`, then `python3 tools/build.py` | same, `og:type` article, image `assets/og/case-<slug>-v1.png` |
+| Case studies | `content/projects/<slug>.json` (`title`, optional `seo_title`, `description`, `og_alt`); the head template is in `build-case.py`. Then `python3 tools/build.py` | same, `og:type` article, image `assets/og/case-<slug>-v1.png` |
 | `websites.html` | the file head | same as home |
 | `hi/index.html` | the file head | same, plus `noindex` |
 | `privacy.html`, `404.html`, `photography-lab.html` | the file head | title, `noindex` |
@@ -41,5 +41,5 @@ A new public page needs: a `<url>` in `sitemap.xml`, a canonical link, an `og:im
 ## Verify
 
 ```sh
-python3 tools/check.py --fast     # includes robots/noindex sanity and link checks
+python3 tools/check.py           # includes robots/noindex/sitemap sanity and link checks
 ```

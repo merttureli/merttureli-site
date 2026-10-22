@@ -30,9 +30,9 @@ From the repo history (136 commits to Oct 2026, by subject): handoff and merge c
 
 | Command | Does |
 |---|---|
-| `python3 tools/build.py` | regenerate `index.html` and `projects/*.html` from `src/` and the case data |
+| `python3 tools/build.py` | regenerate `index.html` and `projects/*.html` from `src/index.html` and `content/` |
 | `python3 tools/build.py --check` | fail if generated pages do not match their sources |
-| `python3 tools/check.py --fast` | the one check before every commit |
+| `python3 tools/check.py` | the one check before every commit (build, links, JS, smoke; about a minute). `--fast` skips build and browser |
 | `python3 check-writing.py <page>` | house-style lint for copy |
 | `python3 tools/check-flags.py` | list open owner questions (exit 1 while any remain) |
 | `python3 tools/media.py ...` | image and video derivatives, `audit` |

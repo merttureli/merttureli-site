@@ -21,7 +21,7 @@ Until the showreel branch merges, do not edit `next/css/studio.css`, `next/js/st
 ## Check and show
 
 ```sh
-python3 tools/check.py --fast                   # links, JS syntax, noindex, smoke at 390 and 1440
+python3 tools/check.py --pages next/#reel-coaster   # links, JS syntax, noindex, smoke at 390 and 1440
 python3 tools/preview.py studio --serve 8000    # local look at the artifact copy
 ```
 

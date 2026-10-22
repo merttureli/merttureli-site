@@ -11,4 +11,4 @@ Detail: `docs/recipes/new-page.md`. Components to reuse: `docs/design/components
 2. Fill the copy (`edit-copy` rules) and media (`images` skill). Reuse existing classes and tokens; no new colors or sizes.
 3. Public page: add it to `sitemap.xml`, give it an `og:image`, canonical, no `noindex`. Private page: `noindex`, not in the sitemap (`docs/recipes/meta.md`).
 4. Link it from where the owner wants it.
-5. `python3 check-writing.py <page>`, `python3 tools/check.py --fast`, preview for the owner.
+5. `python3 check-writing.py <page>`, `python3 tools/check.py`, preview for the owner.

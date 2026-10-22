@@ -12,4 +12,4 @@ Detail: `docs/recipes/cad-import.md`. Look system and budgets: `docs/design/3d.m
 3. Run the import to a temp dir first: `python3 tools/cad.py --help`, then the convert command from the recipe with `--out <scratchpad>/cad-<name>`.
 4. Check the report: triangle count and draw calls within the 3d.md budget, part names match what the viewer or showreel `getParts()` expects.
 5. Copy the outputs into the asset folder the recipe names; never commit the raw STEP unless the owner asks.
-6. `python3 tools/check.py --fast`; preview for the owner (`preview-site` skill).
+6. `python3 tools/check.py`; preview for the owner (`preview-site` skill).

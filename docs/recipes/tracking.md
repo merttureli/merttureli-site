@@ -10,7 +10,7 @@
 | Link clicks | built in by href: `resume-download`, `vcf-download`, `email-click`, `linkedin-click`, `github-click`, `phone-click`, `project-open:<slug>`, `outbound:<host>` |
 | Custom events | `window.mtTrack('<fixed-name>')` |
 
-Case pages name their sections from `anchor`, `track` or the label slug (`track_id()` in `build-case.py`).
+Case pages name their sections from `anchor`, `track` or the label slug of each section in `content/projects/<slug>.json` (`track_id()` in `build-case.py`).
 
 ## Add a tracked section or event
 

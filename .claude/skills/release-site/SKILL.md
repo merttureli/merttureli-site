@@ -15,11 +15,11 @@ Hand off (batch for later review):
 
 Merge (after the owner says yes):
 1. `git switch claude/funny-sagan-acgved && git merge --no-ff opt/<topic> -m "Merge <topic>: <one line>"`
-2. `python3 tools/check.py --fast`
+2. `python3 tools/check.py`
 3. `git rm HANDOFF.md && git commit -m "Remove <topic> handoff note from the repo"`
 
 Release (only when the owner asks to go live):
-1. On the preview branch: `python3 tools/check.py --public` (0 open flags) and `python3 tools/check.py --full`.
+1. On the preview branch: `python3 tools/check.py --full --public` (visual regress, 0 open flags).
 2. Bump `<lastmod>` in `sitemap.xml` for changed public pages.
 3. `git switch main && git merge --no-ff claude/funny-sagan-acgved -m "Release: <one line>"`. Never reset main: it has commits the preview lacks.
 4. Push only on the owner's word: `git push origin main`. Then check the live pages at phone and desktop width.

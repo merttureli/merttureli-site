@@ -13,5 +13,5 @@ Detail: `docs/recipes/palette.md`. Tokens: `docs/design/site-tokens.md`.
 4. Default palette (`'original'` in `js/site-palette.js`): change only on the owner's word.
 5. Contrast: meta `--ink-400` at least 4.75:1 on `--paper`, `--ink-050`, `--depth-panel-b`; body and on-dark text at least 4.5:1 (checker snippet in the recipe).
 6. Look: in the console `localStorage.setItem('mert-portfolio-palette-v1','<name>'); location.reload()`.
-7. `python3 tools/check.py --fast`, then visual regress on `index.html,websites.html` with `--palettes <name>` (command in the recipe).
+7. `python3 tools/check.py`, then visual regress on `index.html,websites.html` with `--palettes <name>` (command in the recipe).
 8. Commit the CSS and JS together.

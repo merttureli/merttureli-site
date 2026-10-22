@@ -13,7 +13,7 @@ A hit in a generated file means you edit its source instead:
 | Hit in | Generated? | Edit this | Then run |
 |---|---|---|---|
 | `index.html` | yes | `src/index.html` | `python3 tools/build.py` |
-| `projects/<slug>.html` or `src/projects/<slug>.html` | yes | the case data (see [content.md](content.md); today `build-case.py`, `CASES` entry with that `"slug"`) | `python3 tools/build.py` |
+| `projects/<slug>.html` or `src/projects/<slug>.html` | yes | `content/projects/<slug>.json` (fields: [content.md](content.md)) | `python3 tools/build.py` |
 | `websites.html`, `privacy.html`, `404.html`, `hi/index.html`, `photography-*.html` | no | the file itself | nothing |
 | `next/index.html` (Studio, incl. the hero drift words in `data-drift`) | no | the file itself | nothing |
 | `next/js/studio.js` (Studio clock text "in Austin") | no | do not edit while the showreel branch is open; note it for the owner | |
@@ -26,7 +26,7 @@ The home page footer is copied into every case page by `build-case.py`, so a foo
 ## 2. Edit
 
 - Keep the surrounding markup. In `src/index.html` the text sits inside `<x-import ...>` runtime tags: change only the text between the tags.
-- In `build-case.py` strings are Python. Escape nothing new: the helpers escape HTML where needed. Use `flag(...)` for a fact you cannot confirm ([flags.md](flags.md)).
+- In `content/projects/<slug>.json` keep valid JSON (straight double quotes, escape `\"` inside strings). Rich fields allow HTML and entities; `title`, `eyebrow`, `description`, `og_alt` are plain text. A fact you cannot confirm becomes a flag object ([flags.md](flags.md)).
 - House voice: first person ("I", not "we"), past tense for work done, specific, no hype, no editorializing, US spelling, no em or en dashes (use a hyphen or a period). The rule in `check-writing.py`: state what was done and what resulted.
 - No new facts. The owner approves every fact. Never add figures or details about IP-protected work (HOTBOX, the bend fixture).
 - The site must not read as job hunting: no "open to roles" or availability lines. Offering web projects is fine where `websites.html` already does.
@@ -36,10 +36,10 @@ The home page footer is copied into every case page by `build-case.py`, so a foo
 ```sh
 python3 tools/build.py              # only if you edited a source of a generated page
 python3 check-writing.py index.html # or the page you changed; no argument checks every page
-python3 tools/check.py --fast       # one command that proves nothing broke
+python3 tools/check.py              # one command that proves nothing broke
 ```
 
-`check-writing.py` must print no hits for the page you touched. If `tools/check.py` is not there yet, run `python3 tools/build.py --check` instead.
+`check-writing.py` must print no hits for the page you touched. `tools/check.py` must show no FAIL (WARN for open flags is fine).
 
 Never run `python3 tools/build.py --help`: build.py has no help flag, so it runs a full build.
 
@@ -49,7 +49,7 @@ Commit the source and the regenerated page together:
 
 ```sh
 git add src/index.html index.html          # home
-git add build-case.py src/projects/ projects/   # case study
+git add content/ src/projects/ projects/        # case study
 git commit -m "Copy: <what changed>"
 ```
 

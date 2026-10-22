@@ -15,8 +15,8 @@ How a change travels from a work branch to merttureli.com. GitHub Pages serves t
 ```sh
 git switch -c opt/<topic> claude/funny-sagan-acgved
 # edit, then:
-python3 tools/build.py               # if src/ or case data changed
-python3 tools/check.py --fast        # must pass
+python3 tools/build.py               # if src/index.html or content/ changed
+python3 tools/check.py              # must show no FAIL
 git add <the files you changed>      # never git add -A blindly
 git commit -m "<Area>: <what changed>"
 ```
@@ -41,7 +41,7 @@ After the owner says yes:
 ```sh
 git switch claude/funny-sagan-acgved
 git merge --no-ff opt/<topic> -m "Merge <topic>: <one line>"
-python3 tools/check.py --fast
+python3 tools/check.py
 git rm HANDOFF.md && git commit -m "Remove <topic> handoff note from the repo"
 ```
 
@@ -53,8 +53,7 @@ Only when the owner asks to go live.
 
 ```sh
 git switch claude/funny-sagan-acgved
-python3 tools/check.py --public      # flags are fatal here: 0 open flags required
-python3 tools/check.py --full        # adds visual regress against HEAD
+python3 tools/check.py --full --public   # every case page in the smoke, visual regress vs HEAD, 0 open flags
 ```
 
 Then:

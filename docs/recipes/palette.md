@@ -61,7 +61,7 @@ a,b=sorted((L(sys.argv[1]),L(sys.argv[2])),reverse=True);print(round((a+0.05)/(b
 ## Verify
 
 ```sh
-python3 tools/check.py --fast
+python3 tools/check.py
 git archive HEAD | tar -x -C /tmp/site-head      # baseline once
 node tools/visual-regress/visual-regress.js --baseline /tmp/site-head --candidate . \
   --out /tmp/regress-palette --pages index.html,websites.html --palettes <name>
