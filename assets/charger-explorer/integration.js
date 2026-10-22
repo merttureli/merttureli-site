@@ -1,7 +1,8 @@
-// CHARGER explorer on the home page. The explorer (an iframe of index.html) lives in the CHARGER entry's
-// seat. Inline it is the rocket that landed there (js/rocket-flight.js hands over to it, drawn the same
-// way); Expand and every Explore-in-3D entry point grow it into the full-screen dialog as one continuous
-// move, and closing shrinks it back. The page markup is static, so the launcher is delegated.
+// CHARGER explorer on the home page. The explorer (an iframe of index.html) lives in the seat of the
+// CHARGER section. Inline it is the rocket that landed there (js/rocket-flight.js hands over to it, drawn
+// the same way); Expand and every Explore-in-3D entry point grow it into the full-screen dialog as one
+// continuous move, and closing shrinks it back. Seat, section and dialog share one ink, so only the edges
+// move. The page markup is static, so the launcher is delegated.
 (() => {
   const dialog = document.getElementById('charger-explorer');
   const frame = document.getElementById('charger-frame');
@@ -46,6 +47,7 @@
   }
   function onReady() {
     status.hidden = true;
+    syncInk();
     if (state === 'closed') { const f = flight(); if (f) f.explorerReady(); else if (wantSeat) seatInline(wantSeat.pose, wantSeat.fade); }
     else if (origin === 'plain') api.openPlain();
   }
@@ -64,12 +66,23 @@
     dialog.classList.add('is-shown'); inlineShown = true;
     if (!fade) { void dialog.offsetWidth; dialog.style.transition = ''; }
   }
+  // The flight's rocket is already showing under it. If the visitor turned the inline rocket, the two
+  // pictures differ, so the explorer fades out over it; otherwise it can go at once.
   function hideInline() {
     if (!inlineShown) return;
     inlineShown = false;
-    dialog.style.transition = 'none';
+    const fade = !!api?.interacted && !motionOff();
+    if (!fade) dialog.style.transition = 'none';
     dialog.classList.remove('is-shown');
-    void dialog.offsetWidth; dialog.style.transition = '';
+    if (!fade) { void dialog.offsetWidth; dialog.style.transition = ''; }
+  }
+  // The explorer page paints the full-screen dialog with its own ink; use the page's (it changes with the
+  // site's palette), so the dialog, the seat and the CHARGER section are one colour.
+  function syncInk() {
+    try {
+      const ink = getComputedStyle(seat).getPropertyValue('--ink-900').trim();
+      if (ink) frame.contentDocument?.documentElement.style.setProperty('--ink', ink);
+    } catch { /* not ours */ }
   }
 
   /* ---------- opening and closing ---------- */
@@ -85,13 +98,15 @@
   function stopAnimations() { animations.forEach(a => a.cancel()); animations = []; }
   // The dialog is revealed from (or closed down to) a rect: its clip grows from the seat while the dark
   // panel fades in under the rocket, which the explorer keeps drawing throughout.
-  function morphPanel(rect, opening, duration) {
+  function morphPanel(rect, opening, duration, fadeBg) {
     const box = dialog.getBoundingClientRect();
     const from = `inset(${rect.top - box.top}px ${box.right - rect.right}px ${box.bottom - rect.bottom}px ${rect.left - box.left}px round 14px)`;
     const to = 'inset(0px 0px 0px 0px round 0px)';
     const timing = { duration, easing: EASE, fill: 'both' };
     animations.push(dialog.animate(opening ? [{ clipPath: from }, { clipPath: to }] : [{ clipPath: to }, { clipPath: from }], timing));
-    animations.push(bg.animate(opening ? [{ opacity: 0 }, { opacity: 1, offset: .45 }, { opacity: 1 }] : [{ opacity: 1 }, { opacity: 1, offset: .55 }, { opacity: 0 }], { duration, easing: 'linear', fill: 'both' }));
+    // From the seat the panel is the section's own colour, so it is opaque from the first frame and only
+    // its edges move. From the hero (a lit backdrop) it fades in under the rocket instead.
+    if (fadeBg) animations.push(bg.animate(opening ? [{ opacity: 0 }, { opacity: 1, offset: .45 }, { opacity: 1 }] : [{ opacity: 1 }, { opacity: 1, offset: .55 }, { opacity: 0 }], { duration, easing: 'linear', fill: 'both' }));
     animations.push(bar.animate(opening ? [{ opacity: 0 }, { opacity: 0, offset: .55 }, { opacity: 1 }] : [{ opacity: 1 }, { opacity: 0, offset: .3 }, { opacity: 0 }], { duration, easing: 'linear', fill: 'both' }));
   }
 
@@ -113,6 +128,7 @@
     // A deep link (#charger-explorer already in the URL) and Forward onto the entry reuse the current one.
     if (location.hash !== '#charger-explorer') history.pushState({ chargerExplorer: true }, '', '#charger-explorer');
     cleaned = false;
+    syncInk();
     pinBody();
     stopAnimations();
     const morph = origin !== 'plain' && !still;
@@ -134,11 +150,11 @@
       status.hidden = true;
       const fr = frame.getBoundingClientRect();
       if (origin === 'seat') {
-        morphPanel(seatRect, true, OPEN_MS);
+        morphPanel(seatRect, true, OPEN_MS, false);
         api.expand(framePose(f.seatPose(), fr), { duration: OPEN_MS, keepView: true, shift: [seatRect.left - fr.left, seatRect.top - fr.top] }).then(done);
       } else {
         f.hideHero(true);
-        morphPanel(heroRect, true, OPEN_MS);
+        morphPanel(heroRect, true, OPEN_MS, true);
         api.expand(framePose(heroPose, fr), { duration: OPEN_MS }).then(done);
       }
     } else {
@@ -161,7 +177,7 @@
     if (toSeat || toHero) {
       const target = toSeat ? seat.getBoundingClientRect() : f.heroRect();
       dialog.style.setProperty('--morph-ms', CLOSE_MS + 'ms');
-      morphPanel(target, false, CLOSE_MS);
+      morphPanel(target, false, CLOSE_MS, !toSeat);
       dialog.classList.add('is-morphing', 'is-closing');
       const pose = () => framePose(toSeat ? f.seatPose() : f.heroPose());
       api.collapse(pose, { duration: CLOSE_MS }).then(() => finishClose(toSeat ? 'seat' : 'hero'));
@@ -217,7 +233,7 @@
   dialog.addEventListener('pointerdown', event => { backdropDown = dialog.open && event.target === dialog && outside(event); });
   dialog.addEventListener('click', event => { if (backdropDown && event.target === dialog && outside(event)) close(); backdropDown = false; });
   document.addEventListener('click', event => {
-    const trigger = event.target.closest?.('#charger-launch,a[href="#charger-explorer"],[data-charger-expand]');
+    const trigger = event.target.closest?.('#charger-launch,a[href="#charger-explorer"],[data-charger-expand],[data-charger-open]');
     if (!trigger || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault(); open(trigger);
   });
@@ -255,6 +271,11 @@
       if (state !== 'closed') return true;
       seatInline(pose, fade);
       return true;
+    },
+    // The visitor turned the inline rocket and is scrolling away: turn it back to the seated pose first.
+    settle(pose) {
+      if (!api?.settle || !inlineShown || state !== 'closed' || !api.interacted) return Promise.resolve();
+      return api.settle(framePose(pose), { duration: motionOff() ? 0 : 300 });
     },
     reseat(pose) { if (wantSeat) wantSeat.pose = pose; if (api && inlineShown && state === 'closed') api.seat(framePose(pose)); },
     unseat() { wantSeat = null; if (state === 'closed') hideInline(); }
