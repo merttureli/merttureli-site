@@ -429,7 +429,7 @@ export default function create({ THREE = THREE_, renderer, quality = 'high' } = 
   function setPlateTemperature(c) {
     const w = sstep(28, 66, c), k = sstep(20, 2, c);
     mat.plate.color.copy(cNeutral).lerp(cWarm, w).lerp(cCold, k);
-    mat.plate.emissive.copy(eTmp.setRGB(0, 0, 0)).lerp(eWarm, w * 0.07).lerp(eCold, k * 0.03);
+    mat.plate.emissive.copy(eTmp.setRGB(0, 0, 0)).lerp(eWarm, w * 0.05).lerp(eCold, k * 0.03);
     mat.plate.roughness = 0.4 + k * 0.08;          // a cold plate looks a touch duller (faint mist)
   }
   setPlateTemperature(22);
