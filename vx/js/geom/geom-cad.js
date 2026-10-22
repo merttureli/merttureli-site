@@ -52,5 +52,5 @@ export const CAD = Object.freeze({
     21502, 21502, 21502, 21502, 21502, 21502, 21502, 21500, 21464, 20758, 18416, 15387, 14513, 14531, 15401, 15911,
   ],
   fin: {"partId":6,"root":0.07,"tip":0.03,"span":0.055,"sweep":0.055,"thickness":0.003175,"rootLeadingEdgeFromNose":1.071385,"rootRadius":0.034,"tipTrailingEdgeAft":0.015,"area":0.0027500006,"hull":[[1.141385,0],[1.156385,0.055],[1.126385,0.055],[1.071385,0]]},
-  features: {"noseShoulder":0.1999995,"noseConeAft":0.2320005,"bodyTubeEnd":1.1413855,"mountEnd":1.1653855,"capEnd":1.1808855,"railButtons":[0.6246295,1.0653225]},
+  features: {"noseShoulder":0.1999995,"noseConeAft":0.2320005,"bodyTubeEnd":1.1413855,"mountEnd":1.1653855,"capEnd":1.1808855,"railButtons":[0.6246295,1.0653225],"railButtonBounds":[{"id":10,"sFwd":0.6197795,"sAft":0.6294795,"rIn":0.034,"rOut":0.0437,"axis":"x","side":-1,"across":[-0.00485,0.00485]},{"id":11,"sFwd":1.0604725,"sAft":1.0701725,"rIn":0.034,"rOut":0.0437,"axis":"x","side":-1,"across":[-0.00485,0.00485]}]},
 });

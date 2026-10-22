@@ -19,6 +19,11 @@ if (buffer.byteLength !== json.bytes) throw new Error(`assembly.bin is ${buffer.
 
 const { profile, fin, features } = measureAssembly(json, buffer);
 const m7 = (x) => Number(x.toFixed(7));            // 0.1 um in metres
+/* numbers to 0.1 um, recursively through arrays and plain objects; strings and ids kept */
+const bakeValue = (v) => (typeof v === 'number' ? (Number.isInteger(v) ? v : m7(v))
+  : Array.isArray(v) ? v.map(bakeValue)
+  : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, bakeValue(x)]))
+  : v);
 const um = Array.from(profile.r, (r) => Math.round(r * 1e6)); // radius in whole micrometres
 
 const data = {
@@ -36,7 +41,7 @@ const data = {
     rootRadius: m7(fin.rootRadius), tipTrailingEdgeAft: m7(fin.tipTrailingEdgeAft), area: Number(fin.area.toExponential(7)),
     hull: fin.hull.map(([s, h]) => [m7(s), m7(h)]),
   },
-  features: Object.fromEntries(Object.entries(features).map(([k, v]) => [k, Array.isArray(v) ? v.map(m7) : m7(v)])),
+  features: Object.fromEntries(Object.entries(features).map(([k, v]) => [k, bakeValue(v)])),
 };
 
 const lines = [];

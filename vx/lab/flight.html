@@ -1,0 +1,804 @@
+<!doctype html>
+<html lang="en" class="on-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lab / Flight · Mert Tureli VX</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0A0A0A">
+<meta name="description" content="Bench for the CHARGER flight model: 3-DOF pitch plane, Barrowman stability, RK4 at 1 ms.">
+<link rel="stylesheet" href="../css/tokens.css">
+<style>
+  /* Flight lab. Dark stage, mono meta, one accent (the livery orange) for angle of attack,
+     the CP and the normal force. Layout: figures and data on the left, controls on the
+     right at desktop; on phones figures, then controls, then data. */
+  /* --livery-text: the livery orange lifted for 10 px text (5.35:1 on ink-800, 5.75:1 on
+     ink-900, 4.8:1 on a paper-a08 wash; #D63B08 itself is 3.94:1). Strokes and fills keep
+     --livery. Local to this lab; tokens.css is untouched. */
+  :root { color-scheme: dark; --livery-text: #EC5B2A; }
+  html, body { background: var(--ink-900); }
+  body { color: var(--paper-a90); min-height: 100svh; }
+  .fl-skip { position: absolute; left: 8px; top: -48px; padding: 8px 12px; background: var(--paper); color: var(--ink-900); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; z-index: 10; }
+  .fl-skip:focus { top: 8px; }
+  .fl-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--space-2) var(--space-5); padding: var(--space-5) var(--page-margin) var(--space-4); padding-top: max(var(--space-5), env(safe-area-inset-top)); border-bottom: 1px solid var(--paper-a18); }
+  .fl-head h1 { font-family: var(--font-mono); font-weight: 400; font-size: var(--fs-meta); letter-spacing: var(--ls-caps-wide); text-transform: uppercase; color: var(--paper); }
+  .fl-head p, .fl-head nav { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); }
+  .fl-head nav { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+  .fl-head a { text-decoration: none; border-bottom: 1px solid var(--paper-a18); padding-bottom: 2px; }
+  .fl-head a:hover { border-color: var(--paper); color: var(--paper); }
+
+  .fl-body { display: grid; grid-template-columns: minmax(0, 1fr) 372px; grid-template-areas: "stage rail" "data rail"; align-items: start; }
+  .fl-stage { grid-area: stage; padding: var(--space-5) var(--page-margin) var(--space-6); display: grid; gap: var(--space-5); align-content: start; min-width: 0; }
+  .fl-data { grid-area: data; padding: 0 var(--page-margin) var(--space-8); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5) var(--space-6); min-width: 0; }
+  .fl-data .fl-note { grid-column: 1 / -1; }
+  .fl-body .fl-data > .fl-group { border-top: 1px solid var(--paper-a18); padding-top: var(--space-4); }
+  .fl-rail { grid-area: rail; border-left: 1px solid var(--paper-a18); padding: var(--space-5) var(--space-5) var(--space-8); display: grid; gap: var(--space-5); align-content: start; min-width: 0; min-height: 100%; }
+
+  .fl-fig { display: grid; gap: var(--space-2); min-width: 0; }
+  .fl-figcap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-1) var(--space-4); font-family: var(--font-mono); font-weight: 400; font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); }
+  .fl-figcap b { font-weight: 400; color: var(--paper); }
+  .fl-figcap .live { color: var(--livery-text); }
+  .fl-canvas { position: relative; width: 100%; border: 1px solid var(--paper-a18); border-radius: var(--radius-xs); background: var(--ink-800); overflow: hidden; }
+  .fl-canvas canvas { width: 100%; height: 100%; }
+  #view-wrap { height: clamp(320px, 48vh, 460px); }
+  #chart-wrap { height: 230px; }
+  .fl-key { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .fl-key i { display: inline-block; width: 14px; height: 2px; background: currentColor; }
+  .fl-key.a { color: var(--livery-text); }
+  .fl-key.a i { background: var(--livery); }
+  .fl-key.t { color: var(--paper-a90); }
+  .fl-fallback { display: none; padding: var(--space-4); font-family: var(--font-mono); font-size: var(--fs-meta-sm); color: var(--paper-a70); }
+  [data-no2d] .fl-fallback { display: block; }
+  [data-no2d] canvas { display: none; }
+
+  .fl-note { font-family: var(--font-mono); font-size: var(--fs-meta-sm); line-height: 1.7; letter-spacing: 0.02em; color: var(--paper-a70); max-width: 92ch; }
+  .fl-note strong { font-weight: 400; color: var(--paper); }
+
+  .fl-events { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 0 var(--space-4); }
+  .fl-events button { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); padding: 7px 4px; border-top: 1px solid var(--paper-a18); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.06em; text-transform: uppercase; color: var(--paper-a70); text-align: left; transition: background-color var(--dur-1) var(--ease-out); }
+  .fl-events button span:last-child { color: var(--paper); text-align: right; font-variant-numeric: tabular-nums; }
+  .fl-events button:hover:not(:disabled) { background: var(--paper-a08); }
+  .fl-events button[aria-pressed="true"] { border-top-color: var(--livery); color: var(--paper); background: var(--paper-a08); }
+  .fl-events button[aria-pressed="true"] span:last-child { color: var(--livery-text); }
+  .fl-events button:disabled { cursor: default; }
+  .fl-events button:disabled span:last-child { color: var(--paper-a45); }
+
+  .fl-group { display: grid; gap: var(--space-3); align-content: start; padding-top: var(--space-4); border-top: 1px solid var(--paper-a18); }
+  .fl-group:first-child { border-top: 0; padding-top: 0; }
+  .fl-group h2 { font-family: var(--font-mono); font-weight: 400; font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps-wide); text-transform: uppercase; color: var(--paper-a70); }
+  .fl-group h2 b { font-weight: 400; color: var(--paper); letter-spacing: var(--ls-caps); }
+  .fl-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px var(--space-3); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.1em; text-transform: uppercase; color: var(--paper-a70); }
+  .fl-row output, .fl-row .v { color: var(--paper); font-variant-numeric: tabular-nums; text-align: right; min-width: 7ch; }
+  .fl-row input[type="range"] { grid-column: 1 / -1; width: 100%; margin: 0; accent-color: var(--livery); height: 24px; }
+  .fl-row select, .fl-row input[type="number"] { font: inherit; letter-spacing: 0.06em; color: var(--paper); background: var(--ink-800); border: 1px solid var(--paper-a18); border-radius: var(--radius-xs); height: 34px; padding: 0 var(--space-2); }
+  .fl-row select { grid-column: 1 / -1; width: 100%; }
+  .fl-row input[type="number"] { width: 12ch; text-align: right; }
+  .fl-check { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.1em; text-transform: uppercase; color: var(--paper-a70); cursor: pointer; min-height: 24px; }
+  .fl-check input { accent-color: var(--livery); width: 16px; height: 16px; margin: 0; flex: none; }
+  .fl-btns { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: var(--space-2); }
+  .fl-btn { min-height: 36px; padding: 0 var(--space-2); border: 1px solid var(--paper-a18); border-radius: var(--radius-xs); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper); transition: border-color var(--dur-1) var(--ease-out), background-color var(--dur-1) var(--ease-out); }
+  .fl-btn:hover:not(:disabled) { border-color: var(--paper-a70); }
+  .fl-btn[aria-pressed="true"] { background: var(--paper); color: var(--ink-900); border-color: var(--paper); }
+  .fl-btn.primary { background: var(--livery); border-color: var(--livery); color: var(--ink-900); }
+  .fl-btn.primary:hover:not(:disabled) { background: #E5501F; border-color: #E5501F; }
+  .fl-btn:disabled { color: var(--paper-a45); cursor: default; }
+  .fl-btn.primary:disabled { background: transparent; border-color: var(--livery); color: var(--livery-text); }
+
+  .fl-readout { display: grid; grid-template-columns: minmax(0, 1fr) auto 3.4em; gap: 0 var(--space-2); margin: 0; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.06em; text-transform: uppercase; }
+  .fl-readout dt { color: var(--paper-a70); padding: 5px 0; border-top: 1px solid var(--paper-a08); }
+  .fl-readout dd { margin: 0; padding: 5px 0; border-top: 1px solid var(--paper-a08); color: var(--paper); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .fl-readout dd.tag { color: var(--paper-a70); text-align: left; padding-left: var(--space-1); }
+  .fl-readout dd.hot { color: var(--livery-text); }
+
+  @media (max-width: 1199.98px) { .fl-data { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 959.98px) {
+    .fl-body { grid-template-columns: minmax(0, 1fr); grid-template-areas: "stage" "rail" "data"; }
+    .fl-rail { border-left: 0; border-top: 1px solid var(--paper-a18); padding: var(--space-5) var(--page-margin) var(--space-6); min-height: 0; }
+    .fl-data { border-top: 1px solid var(--paper-a18); padding-top: var(--space-5); padding-bottom: max(var(--space-8), env(safe-area-inset-bottom)); }
+    .fl-body .fl-data > .fl-group:first-child { border-top: 0; padding-top: 0; }
+  }
+  @media (max-width: 599.98px) { #view-wrap { height: 540px; } }
+  @media (max-width: 479.98px) {
+    #chart-wrap { height: 210px; }
+    .fl-events { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (forced-colors: active) { .fl-canvas canvas { forced-color-adjust: none; } .fl-btn[aria-pressed="true"], .fl-events button[aria-pressed="true"] { outline: 2px solid CanvasText; } }
+</style>
+</head>
+<body>
+<a class="fl-skip" href="#controls">Skip to controls</a>
+<header class="fl-head">
+  <div>
+    <h1>LAB / FLIGHT</h1>
+    <p>3-DOF pitch plane / Barrowman 1967 / RK4 at 1 ms</p>
+  </div>
+  <nav aria-label="Lab navigation"><a href="./">All labs</a><a href="../">VX</a><a href="/projects/charger.html">CHARGER</a></nav>
+</header>
+<main class="fl-body" id="main">
+  <div class="fl-stage">
+    <figure class="fl-fig">
+      <figcaption class="fl-figcap"><span>Attitude / relative wind / forces / SIM</span><span id="cap-time"><b>T+00.000</b> PAD</span></figcaption>
+      <div class="fl-canvas" id="view-wrap"><canvas id="view" role="img" aria-label="Rocket attitude, relative wind and trajectory"></canvas><p class="fl-fallback">Canvas 2D is unavailable in this browser; the readouts below carry every number.</p></div>
+    </figure>
+    <figure class="fl-fig">
+      <figcaption class="fl-figcap"><span><span class="fl-key a"><i></i>Angle of attack</span>&nbsp;&nbsp; <span class="fl-key t"><i></i>Pitch</span></span><span><span id="cap-window">Whole flight</span> / deg vs T+ s / SIM</span></figcaption>
+      <div class="fl-canvas" id="chart-wrap"><canvas id="chart" role="img" aria-label="Strip chart of angle of attack and pitch"></canvas></div>
+    </figure>
+    <section aria-labelledby="ev-h" class="fl-fig">
+      <h2 id="ev-h" class="fl-figcap"><span>Events / T+ s / select one to inspect it</span><span id="ev-count">0 / 7</span></h2>
+      <ol class="fl-events" id="events"></ol>
+    </section>
+  </div>
+
+  <aside class="fl-rail" id="controls" aria-label="Flight controls">
+    <section class="fl-group" aria-labelledby="g-run">
+      <h2 id="g-run">Run</h2>
+      <div class="fl-btns" style="--n: 3">
+        <button type="button" class="fl-btn primary" id="launch">Launch</button>
+        <button type="button" class="fl-btn" id="pause" aria-pressed="false">Pause</button>
+        <button type="button" class="fl-btn" id="reset">Reset</button>
+      </div>
+      <div class="fl-btns" style="--n: 2">
+        <button type="button" class="fl-btn" id="step">Step 0.1 s</button>
+        <button type="button" class="fl-btn" id="toend">Run to end</button>
+      </div>
+      <div class="fl-row"><span>Playback, x real time</span><span class="v" id="rate-v">1/2</span></div>
+      <div class="fl-btns" style="--n: 4" role="group" aria-label="Playback rate">
+        <button type="button" class="fl-btn" data-rate="0.03125" aria-pressed="false">1/32</button>
+        <button type="button" class="fl-btn" data-rate="0.125" aria-pressed="false">1/8</button>
+        <button type="button" class="fl-btn" data-rate="0.5" aria-pressed="true">1/2</button>
+        <button type="button" class="fl-btn" data-rate="1" aria-pressed="false">1</button>
+      </div>
+      <label class="fl-row">Scenario
+        <select id="scenario">
+          <option value="gust">Gust 5 m/s at rail exit</option>
+          <option value="still">Still air</option>
+          <option value="cross">Crosswind 10 mph</option>
+          <option value="half">Half fins, gust at rail exit</option>
+          <option value="none">No fins, gust at rail exit</option>
+        </select>
+      </label>
+    </section>
+
+    <section class="fl-group" aria-labelledby="g-veh">
+      <h2 id="g-veh">Vehicle</h2>
+      <label class="fl-row">Fin scale, about the root LE <output id="fins-v">1.00</output><input id="fins" type="range" min="0" max="1.5" step="0.01" value="1"></label>
+      <div class="fl-btns" style="--n: 3" role="group" aria-label="Fin presets">
+        <button type="button" class="fl-btn" data-fins="0">None</button>
+        <button type="button" class="fl-btn" data-fins="0.5">Half</button>
+        <button type="button" class="fl-btn" data-fins="1">Full</button>
+      </div>
+      <label class="fl-row">CG from nose, in <output id="cg-v">22.00</output><input id="cg" type="range" min="12" max="41" step="0.05" value="22"></label>
+    </section>
+
+    <section class="fl-group" aria-labelledby="g-range">
+      <h2 id="g-range">Range</h2>
+      <label class="fl-row">Rail length, in <output id="rail-v">72.0</output><input id="rail" type="range" min="35.4" max="94.5" step="0.1" value="72"></label>
+      <label class="fl-row">Launch angle, deg <output id="ang-v">0.0</output><input id="ang" type="range" min="-10" max="10" step="0.1" value="0"></label>
+      <label class="fl-row">Wind toward +x, mph <output id="wind-v">0.0</output><input id="wind" type="range" min="0" max="20.1" step="0.1" value="0"></label>
+      <label class="fl-row">Turbulence, mph RMS <output id="turb-v">0.0</output><input id="turb" type="range" min="0" max="8" step="0.1" value="0"></label>
+      <label class="fl-row">Turbulence seed <input id="seed" type="number" min="0" max="4294967295" step="1" value="1"></label>
+    </section>
+
+    <section class="fl-group" aria-labelledby="g-dist">
+      <h2 id="g-dist">Disturb</h2>
+      <label class="fl-row">Gust peak, mph <output id="gust-v">11.2</output><input id="gust" type="range" min="0" max="33.6" step="0.1" value="11.2"></label>
+      <label class="fl-check"><input type="checkbox" id="gust-arm" checked> Fire at rail exit</label>
+      <div class="fl-btns" style="--n: 1"><button type="button" class="fl-btn" id="gust-fire">Fire gust now</button></div>
+      <label class="fl-row">Flick, deg/s <output id="flick-v">20</output><input id="flick" type="range" min="0" max="120" step="1" value="20"></label>
+      <div class="fl-btns" style="--n: 2">
+        <button type="button" class="fl-btn" id="flick-neg">Flick to -x</button>
+        <button type="button" class="fl-btn" id="flick-pos">Flick to +x</button>
+      </div>
+    </section>
+
+    <section class="fl-group" aria-labelledby="g-lat">
+      <h2 id="g-lat">Lattice moment / bench</h2>
+      <label class="fl-check"><input type="checkbox" id="lat-on"> Lattice flies it</label>
+      <label class="fl-row">C_m, theta sense <output id="lat-v">0.00</output><input id="lat" type="range" min="-10" max="10" step="0.05" value="0"></label>
+      <p class="fl-note">On the page the lattice supplies C_m live through a 10 Hz low-pass. Here a fixed value replaces the Barrowman moment so the sign and the filter can be checked. Positive C_m raises theta.</p>
+    </section>
+  </aside>
+
+  <div class="fl-data">
+    <section class="fl-group" aria-labelledby="g-state">
+      <h2 id="g-state">State / <b id="state-src">live</b></h2>
+      <dl class="fl-readout" id="ro-state"></dl>
+    </section>
+    <section class="fl-group" aria-labelledby="g-der">
+      <h2 id="g-der">Derived / Barrowman, liftoff mass</h2>
+      <dl class="fl-readout" id="ro-derived"></dl>
+    </section>
+    <p class="fl-note">Shape from the CAD assembly (<strong>46.5 in, four fins</strong>, CAD); mass and CG from the page (<strong>2.2 lb, 22 in</strong>, PAGE). The page's 1.80 cal is its three-fin design review figure; every margin here is recomputed (SIM). The CAD fin's root chord and sweep match the page's 2.76 in and 2.17 in; its span is 2.17 in against the page's 2.36 in height. The drag coefficient is fitted so the still-air apogee equals the page's 1,033 ft (FIT). Thrust: AeroTech G77R RASP curve from thrustcurve.org via OpenRocket, tagged STD as published reference data. Inertia, propellant station and burnout CG are estimates (EST). Alpha is ill-defined as airspeed goes to zero, so the chart scales to the part of the flight above 50 Pa of dynamic pressure and shades the rest. <strong>First alpha peak</strong> is the end of the first swing after rail exit (alpha low-passed at 5 Hz, so turbulence noise cannot end it); <strong>max alpha</strong> in the state readout is the largest over the ascent. The normal-force arrow sits at <strong>CP(alpha)</strong>, the resultant including body lift (hollow ring, SIM); the filled dot is the small-alpha Barrowman CP. Without fins CHARGER does not tumble: body lift acts at the planform centroid, <strong>24.42 in</strong> from the nose (SIM), aft of the 22 in CG, so the rocket settles at a high-alpha trim and loops over instead of passing 60 deg of angle of attack.</p>
+  </div>
+</main>
+
+<script type="module">
+  import { createFlight, IN, FT, EVENT_NAMES, CD_FIT, ALPHA_Q_MIN, DEFAULTS } from '../js/flight/flight.js';
+  import { ogiveRadius } from '../js/flight/barrowman.js';
+
+  /* units (STD: exact definitions) */
+  const MPH = 0.44704, LBF = 4.4482216152605, LBF_IN = LBF * IN, LBF_FT2 = LBF / (FT * FT), LB = 0.45359237, DEG = Math.PI / 180;
+  const LOW_Q = ALPHA_Q_MIN;   // Pa; below this the chart does not scale to alpha (near apogee alpha is ill-defined)
+
+  const flight = createFlight();
+  window.flightLab = flight;   // console access while debugging
+
+  const $ = (id) => document.getElementById(id);
+  const css = getComputedStyle(document.documentElement);
+  const tok = (n, fb) => css.getPropertyValue(n).trim() || fb;
+  const C = {
+    ink: tok('--ink-800', '#141414'),
+    paper: '#FFFFFF', p90: 'rgba(255,255,255,.90)', p70: 'rgba(255,255,255,.70)', p45: 'rgba(255,255,255,.45)', p18: 'rgba(255,255,255,.18)', p08: 'rgba(255,255,255,.08)',
+    livery: tok('--livery', '#D63B08'),
+    liveryText: tok('--livery-text', '#EC5B2A'),   // 10 px text in the accent (contrast)
+    mono: '"IBM Plex Mono", ui-monospace, Menlo, monospace',
+  };
+
+  /* ---------------------------------------------------------------- lab state */
+  let rate = 0.5, running = false, paused = false, raf = 0, last = 0;
+  let marks = [];                  // chart marks that are not flight events: {t, label}
+  let inspect = null;              // event name whose snapshot is shown, or null for the live state
+  let lastAria = -1e9, lastDom = 0, ariaTimer = 0;
+
+  const isLive = () => running && !paused && !flight.done;
+  function shown() {
+    if (inspect && !isLive()) { const e = flight.events.find((x) => x.name === inspect); if (e) return e.state; }
+    return flight.state;
+  }
+
+  /* ---------------------------------------------------------------- canvases */
+  function setupCanvas(canvas) {
+    let ctx = null;
+    try { ctx = canvas.getContext('2d'); } catch { ctx = null; }
+    if (!ctx) { canvas.parentElement.dataset.no2d = ''; canvas.setAttribute('aria-hidden', 'true'); return null; }
+    return { canvas, ctx, w: 0, h: 0, dpr: 1 };
+  }
+  const view = setupCanvas($('view'));
+  const chart = setupCanvas($('chart'));
+  function size(c) {
+    // the canvas box itself: the wrapper's 1 px border would make the backing store 2 px too big
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = Math.max(1, c.canvas.clientWidth), h = Math.max(1, c.canvas.clientHeight);
+    if (w !== c.w || h !== c.h || dpr !== c.dpr) { c.w = w; c.h = h; c.dpr = dpr; c.canvas.width = Math.round(w * dpr); c.canvas.height = Math.round(h * dpr); }
+    c.ctx.setTransform(c.dpr, 0, 0, c.dpr, 0, 0);
+  }
+
+  /* ---------------------------------------------------------------- formatting */
+  const fx = (v, d = 1) => (Number.isFinite(v) ? v.toFixed(d) : '--');
+  const tc = (t) => { const s = Math.max(0, t || 0); const ms = Math.round(s * 1000); return `T+${String(Math.floor(ms / 1000)).padStart(2, '0')}.${String(ms % 1000).padStart(3, '0')}`; };
+  const deg = (r) => r / DEG;
+  const EV_LABEL = { ignition: 'Ignition', liftoff: 'Liftoff', railExit: 'Rail exit', maxQ: 'Max Q', burnout: 'Burnout', maxAlpha: 'First alpha peak', apogee: 'Apogee' };
+
+  /* ---------------------------------------------------------------- drawing helpers */
+  function arrow(ctx, x0, y0, x1, y1, color, width = 1.5, head = 7) {
+    const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy);
+    if (L < 1) return;
+    const ux = dx / L, uy = dy / L;
+    ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width;
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1 - ux * head * 0.6, y1 - uy * head * 0.6); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1 - ux * head - uy * head * 0.45, y1 - uy * head + ux * head * 0.45); ctx.lineTo(x1 - ux * head + uy * head * 0.45, y1 - uy * head - ux * head * 0.45); ctx.closePath(); ctx.fill();
+  }
+  function label(ctx, text, x, y, color = C.p70, align = 'left', base = 'middle') {
+    ctx.font = `10px ${C.mono}`; ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = base;
+    ctx.fillText(text, x, y);
+  }
+  /* label at a screen offset vector from an anchor, aligned so the text grows away from it */
+  function offsetLabel(ctx, text, ax, ay, ox, oy, color) {
+    const L = Math.hypot(ox, oy) || 1, ux = ox / L, uy = oy / L;
+    const align = ux < -0.35 ? 'right' : ux > 0.35 ? 'left' : 'center';
+    const base = Math.abs(ux) > 0.35 ? 'middle' : uy < 0 ? 'bottom' : 'top';
+    label(ctx, text, ax + ox, ay + oy, color, align, base);
+  }
+  /* box of a label placed by offsetLabel, for overlap tests */
+  function labelBox(ctx, text, ax, ay, ox, oy) {
+    const L = Math.hypot(ox, oy) || 1, ux = ox / L, uy = oy / L;
+    ctx.font = `10px ${C.mono}`;
+    const w = ctx.measureText(text).width, x = ax + ox, y = ay + oy;
+    const x0 = ux < -0.35 ? x - w : ux > 0.35 ? x : x - w / 2;
+    const y0 = Math.abs(ux) > 0.35 ? y - 6 : uy < 0 ? y - 12 : y;
+    return { x0, y0, x1: x0 + w, y1: y0 + 12 };
+  }
+  /* draw offset labels in order; a label that would overlap an earlier one moves down a line
+     and 6 px further out from its anchor, so it clears the marker it belongs to */
+  function stackLabels(ctx, items) {
+    const boxes = [];
+    const hit = (b) => boxes.some((o) => b.x0 < o.x1 + 2 && b.x1 > o.x0 - 2 && b.y0 < o.y1 && b.y1 > o.y0);
+    for (const it of items) {
+      const L = Math.hypot(it.ox, it.oy) || 1;
+      let k = 0, ox = it.ox, oy = it.oy, b = labelBox(ctx, it.text, it.ax, it.ay, ox, oy);
+      while (k < 6 && hit(b)) {
+        k++; ox = it.ox * (L + 6 * k) / L; oy = it.oy * (L + 6 * k) / L;
+        b = labelBox(ctx, it.text, it.ax, it.ay + 12 * k, ox, oy);
+      }
+      boxes.push(b);
+      offsetLabel(ctx, it.text, it.ax, it.ay + 12 * k, ox, oy, it.color);
+    }
+  }
+  function cgSymbol(ctx, x, y, r) {
+    ctx.lineWidth = 1.25; ctx.strokeStyle = C.paper;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fillStyle = C.ink; ctx.fill(); ctx.stroke();
+    ctx.fillStyle = C.paper;
+    for (const a of [0, Math.PI]) { ctx.beginPath(); ctx.moveTo(x, y); ctx.arc(x, y, r, a - Math.PI / 2, a); ctx.closePath(); ctx.fill(); }
+  }
+  function niceStep(span, target) {
+    const raw = span / Math.max(1, target), p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / p;
+    return (m < 1.5 ? 1 : m < 3.5 ? 2 : m < 7.5 ? 5 : 10) * p;
+  }
+
+  /* ---------------------------------------------------------------- attitude view */
+  function outline(cfg, fins) {
+    const R = cfg.diameter / 2, pts = [];
+    for (let i = 0; i <= 24; i++) { const x = cfg.noseLength * i / 24; pts.push([x, ogiveRadius(x, cfg.noseLength, R)]); }
+    pts.push([cfg.length - cfg.tailCapLength, R], [cfg.length - cfg.tailCapLength, cfg.tailCapRadius], [cfg.length, cfg.tailCapRadius]);
+    const fin = fins && fins.span > 0 ? [
+      [fins.rootLeadingEdgeFromNose, R], [fins.rootLeadingEdgeFromNose + fins.sweep, R + fins.span],
+      [fins.rootLeadingEdgeFromNose + fins.sweep + fins.tip, R + fins.span], [fins.rootLeadingEdgeFromNose + fins.root, R],
+    ] : null;
+    return { pts, fin };
+  }
+
+  function drawView() {
+    if (!view) return;
+    size(view);
+    const { ctx, w, h } = view;
+    const s = shown(), cfg = flight.config, d = flight.derived;
+    ctx.clearRect(0, 0, w, h);
+    // wide: attitude left, trajectory right. Narrow (phones): attitude on top, trajectory below.
+    const narrow = w < 600;
+    const splitX = narrow ? w : Math.round(w * 0.62);
+    const ah = narrow ? Math.round(h * 0.62) : h;
+    const cx = splitX / 2, cy = ah / 2;
+    const th = s.theta, xcg = s.xcg;
+    // px per m: the longer end of the rocket from the CG plus room for the thrust arrow fits
+    // the panel height; at large pitch a phone-width panel may clip the ends
+    const half = Math.max(xcg, cfg.length - xcg) + 0.14;
+    const scale = Math.max(40, (Math.min(splitX * 0.8, ah) / 2 - 34) / half);
+    // reference: the +y axis and the horizon through the CG, rings every 0.15 m
+    ctx.strokeStyle = C.p08; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx, 8); ctx.lineTo(cx, ah - 8); ctx.moveTo(8, cy); ctx.lineTo(splitX - 8, cy); ctx.stroke();
+    for (let k = 1; k <= 3; k++) { const r = k * 0.15 * scale; if (r > Math.min(cx, cy) - 8) continue; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke(); }
+    // axis glyph, top left: +y up, +x downrange (wind blows toward +x)
+    ctx.strokeStyle = C.p45; ctx.fillStyle = C.p45;
+    arrow(ctx, 18, 46, 18, 18, C.p70, 1.25, 5); arrow(ctx, 18, 46, 46, 46, C.p70, 1.25, 5);
+    label(ctx, '+Y', 24, 20, C.p70); label(ctx, '+X', 50, 46, C.p70);
+
+    const ax = Math.sin(th), ay = -Math.cos(th);   // nose direction on screen
+    const nx = Math.cos(th), ny = Math.sin(th);    // body +x side on screen
+    const toScr = (st, r) => { const along = (xcg - st) * scale; return [cx + ax * along + nx * r * scale, cy + ay * along + ny * r * scale]; };
+    const shape = outline(cfg, d.fins);
+
+    // flight direction relative to the air through the CG, and the alpha arc to the body axis
+    const vax = s.wind - s.vx, vay = -s.vy, V = Math.hypot(vax, vay);
+    if (V > 0.5) {
+      const fxs = -vax / V, fys = vay / V;          // -v_air on screen (y down)
+      const reach = 0.62 * cfg.length * scale;
+      ctx.setLineDash([3, 4]); ctx.strokeStyle = C.p45; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(cx - fxs * reach, cy - fys * reach); ctx.lineTo(cx + fxs * reach, cy + fys * reach); ctx.stroke();
+      ctx.setLineDash([]);
+      const a0 = Math.atan2(fys, fxs), a1 = a0 + s.alpha;    // screen angles grow clockwise, as theta and alpha do
+      const rr = Math.min(0.36 * cfg.length * scale, cy - 16);
+      ctx.strokeStyle = C.livery; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(cx, cy, rr, Math.min(a0, a1), Math.max(a0, a1)); ctx.stroke();
+      // relative wind arriving at the nose
+      const [tx, ty] = toScr(0, 0), len = Math.min(48, 14 + V * 0.5), gap = 10;
+      arrow(ctx, tx + fxs * (gap + len), ty + fys * (gap + len), tx + fxs * gap, ty + fys * gap, C.p90, 1.5);
+      offsetLabel(ctx, `V AIR ${fx(V / FT, 0)} FT/S`, tx + fxs * (gap + len), ty + fys * (gap + len), fxs * 6, fys * 6, C.p90);
+    }
+    // body
+    ctx.beginPath();
+    shape.pts.forEach(([st, r], i) => { const [x, y] = toScr(st, r); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+    for (let i = shape.pts.length - 1; i >= 0; i--) { const [st, r] = shape.pts[i]; const [x, y] = toScr(st, -r); ctx.lineTo(x, y); }
+    ctx.closePath(); ctx.fillStyle = 'rgba(255,255,255,.10)'; ctx.fill(); ctx.strokeStyle = C.p90; ctx.lineWidth = 1.25; ctx.stroke();
+    // the two fins in the pitch plane (the other two are edge-on along the axis)
+    if (shape.fin) for (const side of [1, -1]) {
+      ctx.beginPath(); shape.fin.forEach(([st, r], i) => { const [x, y] = toScr(st, r * side); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+      ctx.closePath(); ctx.fillStyle = 'rgba(214,59,8,.28)'; ctx.fill(); ctx.strokeStyle = C.livery; ctx.lineWidth = 1.25; ctx.stroke();
+    }
+    // thrust behind the nozzle
+    if (s.thrust > 0.5) {
+      const [x0, y0] = toScr(cfg.length + 0.02, 0), [x1, y1] = toScr(cfg.length + 0.02 + Math.min(0.11, s.thrust / 800), 0);
+      arrow(ctx, x1, y1, x0, y0, C.p70, 1.5);
+      offsetLabel(ctx, `T ${fx(s.thrust / LBF, 1)} LBF`, x1, y1, -ax * 6, -ay * 6, C.p70);
+    }
+    // labels go on the side away from the normal-force arrow (up-left by default)
+    let side = (-0.8 * nx - 0.6 * ny) >= 0 ? 1 : -1;
+    if (Math.abs(s.N) > 0.02) side = -Math.sign(s.N);
+    const lat = (cfg.diameter / 2 + 0.03) * scale;
+    // Barrowman CP (filled dot, small-alpha slopes) and the normal force at CP(alpha), the
+    // resultant including body lift (hollow ring): N is drawn where the model applies it
+    const [px, py] = toScr(d.xcp, 0);
+    const hasN = Math.abs(s.N) > 0.02 && Number.isFinite(s.xcpNow);
+    const [qx, qy] = hasN ? toScr(s.xcpNow, 0) : [px, py];
+    if (hasN) {
+      const sg = Math.sign(s.N), len = Math.min(100, 14 + Math.abs(s.N) * 5);
+      arrow(ctx, qx + nx * sg * 6, qy + ny * sg * 6, qx + nx * sg * len, qy + ny * sg * len, C.livery, 2);
+      offsetLabel(ctx, `N ${fx(Math.abs(s.N) / LBF, 2)} LBF`, qx + nx * sg * len, qy + ny * sg * len, nx * sg * 6, ny * sg * 6, C.liveryText);
+    }
+    ctx.fillStyle = C.livery; ctx.beginPath(); ctx.arc(px, py, 4.5, 0, Math.PI * 2); ctx.fill();
+    if (hasN) { ctx.strokeStyle = C.livery; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(qx, qy, 6.5, 0, Math.PI * 2); ctx.stroke(); }
+    const [gx, gy] = toScr(xcg, 0);
+    cgSymbol(ctx, gx, gy, 6);
+    const off = (lat + 8);
+    stackLabels(ctx, [
+      { text: `CG ${fx(xcg / IN, 2)} IN`, ax: gx, ay: gy, ox: nx * side * off, oy: ny * side * off, color: C.paper },
+      { text: `CP ${fx(d.xcp / IN, 2)} IN`, ax: px, ay: py, ox: nx * side * off, oy: ny * side * off, color: C.liveryText },
+      ...(hasN ? [{ text: `CP(ALPHA) ${fx(s.xcpNow / IN, 2)} IN / SIM`, ax: qx, ay: qy, ox: nx * side * off, oy: ny * side * off, color: C.liveryText }] : []),
+    ]);
+    // corner block
+    label(ctx, `ALPHA ${fx(deg(s.alpha), 2)} DEG`, 14, ah - 44, C.liveryText);
+    label(ctx, `PITCH ${fx(deg(s.theta), 2)} DEG`, 14, ah - 29, C.p90);
+    label(ctx, `MARGIN ${fx(s.margin, 2)} CAL / SIM`, 14, ah - 14, C.p90);
+
+    ctx.strokeStyle = C.p18; ctx.lineWidth = 1;
+    ctx.beginPath();
+    if (narrow) { ctx.moveTo(0, ah + 0.5); ctx.lineTo(w, ah + 0.5); } else { ctx.moveTo(splitX + 0.5, 0); ctx.lineTo(splitX + 0.5, h); }
+    ctx.stroke();
+    if (narrow) drawTrajectory(ctx, 0, ah, w, h - ah, s, true);
+    else drawTrajectory(ctx, splitX, 0, w - splitX, h, s, false);
+  }
+
+  function drawTrajectory(ctx, x0, y0, w, h, s, narrow) {
+    const hist = flight.history;
+    const xr = hist.length ? hist.at(0).x : s.x, yr = hist.length ? hist.at(0).y : s.y;
+    let maxAlt = 1100, maxX = 50;
+    hist.forEach((r) => { const alt = (r.y - yr) / FT; if (alt > maxAlt) maxAlt = alt; const xx = Math.abs((r.x - xr) / FT); if (xx > maxX) maxX = xx; });
+    maxAlt *= 1.08; maxX *= 1.2;
+    const padL = 44, padR = 12, padT = narrow ? 30 : 40, padB = 24;
+    const pw = w - padL - padR, ph = h - padT - padB;
+    if (pw < 30 || ph < 40) return;
+    const X = (xm) => x0 + padL + pw / 2 + (xm / FT) / maxX * pw / 2;
+    const Y = (alt) => y0 + padT + ph - alt / maxAlt * ph;
+    const apEv = flight.events.find((e) => e.name === 'apogee');
+    label(ctx, narrow ? 'TRAJECTORY / FT / SIM' : 'TRAJECTORY / ALT VS RANGE / FT / SIM', x0 + 12, y0 + 14, C.p70);
+    if (narrow) label(ctx, apEv ? `APOGEE ${fx(apEv.state.altitude / FT, 0)} FT` : 'APOGEE --', x0 + w - 12, y0 + 14, apEv ? C.liveryText : C.p70, 'right');
+    else label(ctx, apEv ? `APOGEE ${fx(apEv.state.altitude / FT, 0)} FT` : 'APOGEE --', x0 + 12, y0 + 27, apEv ? C.liveryText : C.p70);
+    const sy = niceStep(maxAlt, narrow ? 3 : 5), sx = niceStep(maxX, 2);
+    ctx.lineWidth = 1;
+    for (let a = 0; a <= maxAlt; a += sy) { ctx.strokeStyle = C.p08; ctx.beginPath(); ctx.moveTo(x0 + padL, Y(a)); ctx.lineTo(x0 + padL + pw, Y(a)); ctx.stroke(); label(ctx, String(Math.round(a)), x0 + padL - 6, Y(a), C.p70, 'right'); }
+    for (let k = -Math.floor(maxX / sx); k <= Math.floor(maxX / sx); k++) { const xv = k * sx * FT; ctx.strokeStyle = k ? C.p08 : C.p18; ctx.beginPath(); ctx.moveTo(X(xv), Y(0)); ctx.lineTo(X(xv), Y(maxAlt)); ctx.stroke(); label(ctx, String(Math.round(k * sx)), X(xv), Y(0) + 13, C.p70, 'center'); }
+    ctx.setLineDash([2, 4]); ctx.strokeStyle = C.p45; ctx.beginPath(); ctx.moveTo(x0 + padL, Y(1033)); ctx.lineTo(x0 + padL + pw, Y(1033)); ctx.stroke(); ctx.setLineDash([]);
+    if (hist.length > 1) {
+      ctx.strokeStyle = C.p90; ctx.lineWidth = 1.5; ctx.beginPath();
+      hist.forEach((r, i) => { const px = X(r.x - xr), py = Y((r.y - yr) / FT); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); });
+      ctx.stroke();
+    }
+    if (apEv) {
+      const axp = X(apEv.state.downrange), ayp = Y(apEv.state.altitude / FT);
+      ctx.strokeStyle = C.livery; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(axp - 6, ayp); ctx.lineTo(axp + 6, ayp); ctx.moveTo(axp, ayp - 6); ctx.lineTo(axp, ayp + 6); ctx.stroke();
+    }
+    label(ctx, 'PAGE 1,033', x0 + padL + pw, Y(1033) - 8, C.p70, 'right');
+    ctx.fillStyle = C.paper; ctx.beginPath(); ctx.arc(X(s.downrange), Y(s.altitude / FT), 3.5, 0, Math.PI * 2); ctx.fill();
+  }
+
+  /* ---------------------------------------------------------------- strip chart */
+  function drawChart() {
+    if (!chart) return;
+    size(chart);
+    const { ctx, w, h } = chart;
+    ctx.clearRect(0, 0, w, h);
+    const hist = flight.history, s = flight.state, live = isLive();
+    const tEnd = hist.length ? hist.last().t : 0;
+    const t1 = live ? Math.max(8, s.t) : Math.max(8, tEnd);
+    const t0 = live ? Math.max(0, s.t - 8) : 0;
+    const capWin = live ? '8 s window' : tEnd > 0 ? 'Whole flight' : 'On the pad';
+    if ($('cap-window').textContent !== capWin) $('cap-window').textContent = capWin;
+    // scale to the ascent above LOW_Q
+    let m = 10;
+    hist.forEach((r) => { if (r.t < t0 || r.t > t1 || r.qdyn < LOW_Q || r.phase === 'descent') return; m = Math.max(m, Math.abs(deg(r.alpha)), Math.abs(deg(r.theta))); });
+    const step = m <= 10 ? 5 : m <= 30 ? 10 : m <= 60 ? 15 : m <= 120 ? 30 : 60;
+    const lim = Math.min(180, Math.ceil(m * 1.08 / step) * step);
+    const padL = 40, padR = 12, padT = 42, padB = 22;
+    const pw = w - padL - padR, ph = h - padT - padB;
+    const X = (t) => padL + (t - t0) / (t1 - t0) * pw;
+    const Y = (v) => padT + ph / 2 - (v / lim) * ph / 2;
+    // shade low dynamic pressure after liftoff
+    let lowStart = null, first = true, lowLabel = null;
+    ctx.fillStyle = 'rgba(255,255,255,.045)';
+    const shade = (a, b) => { const xa = X(Math.max(a, t0)), xb = X(Math.min(b, t1)); ctx.fillRect(xa, padT, xb - xa, ph); if (first && xb - xa > 40) { first = false; lowLabel = [(xa + xb) / 2, padT + ph / 2 + 12]; } };
+    hist.forEach((r) => { if (r.t < t0 || r.t > t1) return; const low = (r.qdyn < LOW_Q && r.phase !== 'pad' && r.t > 0.5) || r.phase === 'descent'; if (low && lowStart === null) lowStart = r.t; if (!low && lowStart !== null) { shade(lowStart, r.t); lowStart = null; } });
+    if (lowStart !== null) shade(lowStart, Math.min(t1, tEnd));
+    // grid
+    ctx.lineWidth = 1;
+    for (let v = -lim; v <= lim + 1e-9; v += step) { ctx.strokeStyle = v === 0 ? C.p18 : C.p08; ctx.beginPath(); ctx.moveTo(padL, Y(v)); ctx.lineTo(padL + pw, Y(v)); ctx.stroke(); label(ctx, String(v), padL - 6, Y(v), C.p70, 'right'); }
+    const ts = niceStep(t1 - t0, w < 500 ? 5 : 10);
+    for (let t = Math.ceil(t0 / ts - 1e-9) * ts; t <= t1 + 1e-9; t += ts) { ctx.strokeStyle = C.p08; ctx.beginPath(); ctx.moveTo(X(t), padT); ctx.lineTo(X(t), padT + ph); ctx.stroke(); label(ctx, t.toFixed(ts < 1 ? 1 : 0), X(t), padT + ph + 12, C.p70, 'center'); }
+    // event and disturbance marks; labels share a time when within 10 ms, then stack on three rows
+    const items = flight.events.filter((e) => ['railExit', 'maxAlpha', 'burnout', 'apogee'].includes(e.name)).map((e) => ({ t: e.t, label: EV_LABEL[e.name].toUpperCase(), hot: false }));
+    for (const mk of marks) { const same = items.find((i) => Math.abs(i.t - mk.t) < 0.01); if (same) { same.label += ` + ${mk.label}`; same.hot = true; } else items.push({ t: mk.t, label: mk.label, hot: true }); }
+    items.sort((a, b) => a.t - b.t);
+    ctx.font = `10px ${C.mono}`;
+    const ends = [-1e9, -1e9, -1e9];
+    for (const it of items) {
+      if (it.t < t0 || it.t > t1) continue;
+      const x = X(it.t);
+      ctx.strokeStyle = it.hot ? C.livery : C.p45; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, padT + ph); ctx.stroke(); ctx.setLineDash([]);
+      const wl = ctx.measureText(it.label).width;
+      const flip = x + 4 + wl > w - 4;
+      const x0 = flip ? x - 4 - wl : x + 4;
+      let row = ends.findIndex((e) => x0 > e + 6);
+      if (row < 0) row = 2;
+      label(ctx, it.label, flip ? x - 4 : x + 4, 9 + row * 11, it.hot ? C.liveryText : C.p70, flip ? 'right' : 'left');
+      ends[row] = x0 + wl;
+    }
+    // inspected instant
+    const sh = shown();
+    if (sh !== flight.state && sh.t >= t0 && sh.t <= t1) { ctx.strokeStyle = C.paper; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X(sh.t), padT); ctx.lineTo(X(sh.t), padT + ph); ctx.stroke(); }
+    // traces, clipped to the plot
+    ctx.save(); ctx.beginPath(); ctx.rect(padL, padT, pw, ph); ctx.clip();
+    const trace = (key, color, width) => {
+      ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineJoin = 'round'; ctx.beginPath();
+      let pen = false, prev = 0;
+      hist.forEach((r) => {
+        if (r.t < t0 - 0.02 || r.t > t1 + 0.02) return;
+        const v = deg(r[key]);
+        if (pen && Math.abs(v - prev) > 180) pen = false;     // break the line at the +-180 wrap
+        const x = X(r.t), y = Y(Math.max(-lim * 1.3, Math.min(lim * 1.3, v)));
+        pen ? ctx.lineTo(x, y) : ctx.moveTo(x, y); pen = true; prev = v;
+      });
+      ctx.stroke();
+    };
+    trace('theta', C.p90, 2);
+    trace('alpha', C.livery, 2);
+    ctx.restore();
+    if (lowLabel) { ctx.font = `10px ${C.mono}`; const tw = ctx.measureText('LOW Q').width; ctx.fillStyle = C.ink; ctx.fillRect(lowLabel[0] - tw / 2 - 4, lowLabel[1] - 8, tw + 8, 16); label(ctx, 'LOW Q', lowLabel[0], lowLabel[1], C.p70, 'center'); }
+    if (!hist.length) label(ctx, 'LAUNCH TO FLY, OR RUN TO END FOR AN INSTANT RESULT', padL + pw / 2, padT + ph / 2 - 14, C.p70, 'center');
+  }
+
+  /* ---------------------------------------------------------------- readouts */
+  function rows(el, data) {
+    if (el.childElementCount !== data.length * 3) {
+      el.textContent = '';
+      for (const [k] of data) { const dt = document.createElement('dt'); dt.textContent = k; const dd = document.createElement('dd'); const tg = document.createElement('dd'); tg.className = 'tag'; el.append(dt, dd, tg); }
+    }
+    data.forEach(([k, v, tag, hot], i) => {
+      const dt = el.children[i * 3], dd = el.children[i * 3 + 1], tg = el.children[i * 3 + 2];
+      if (dt.textContent !== k) dt.textContent = k;
+      if (dd.textContent !== v) dd.textContent = v;
+      dd.classList.toggle('hot', !!hot);
+      if (tg.textContent !== tag) tg.textContent = tag;
+    });
+  }
+  function updateReadouts() {
+    const s = shown(), d = flight.derived, cfg = flight.config;
+    const insp = s !== flight.state;
+    $('cap-time').innerHTML = `<b>${tc(s.t)}</b> ${s.phase.toUpperCase()}${insp ? ` / ${EV_LABEL[inspect].toUpperCase()}` : isLive() ? ' / <span class="live">LIVE</span>' : ''}`;
+    $('state-src').textContent = insp ? `${EV_LABEL[inspect].toLowerCase()} snapshot` : isLive() ? 'live' : flight.done ? 'end of run' : flight.ignited ? 'paused' : 'on the pad';
+    rows($('ro-state'), [
+      ['Time code', tc(s.t), 'SIM'],
+      ['Phase', s.phase.toUpperCase(), 'SIM'],
+      ['Altitude', `${fx(s.altitude / FT, 1)} ft`, 'SIM'],
+      ['Downrange', `${fx(s.downrange / FT, 1)} ft`, 'SIM'],
+      ['Airspeed', `${fx(s.airspeed / FT, 1)} ft/s`, 'SIM'],
+      ['Angle of attack', `${fx(deg(s.alpha), 2)} deg`, 'SIM', true],
+      ['Pitch', `${fx(deg(s.theta), 2)} deg`, 'SIM'],
+      ['Pitch rate', `${fx(deg(s.omega), 1)} deg/s`, 'SIM'],
+      ['Dynamic pressure', `${fx(s.qdyn / LBF_FT2, 2)} lbf/ft2`, 'SIM'],
+      ['Thrust', `${fx(s.thrust / LBF, 2)} lbf`, 'SIM'],
+      ['Mass', `${fx(s.mass / LB, 3)} lb`, 'SIM'],
+      ['CG from nose', `${fx(s.xcg / IN, 2)} in`, 'SIM'],
+      ['Static margin, now', `${fx(s.margin, 2)} cal`, 'SIM'],
+      ['Normal force', `${fx(s.N / LBF, 3)} lbf`, 'SIM'],
+      [s.lattice ? 'Moment, lattice C_m' : 'Aero moment, theta sense', `${fx(s.Maero / LBF_IN, 3)} lbf in`, 'SIM'],
+      ['Wind incl. gust', `${fx(s.wind / MPH, 1)} mph`, 'SIM'],
+      ['Rail exit speed', Number.isFinite(s.railExitSpeed) ? `${fx(s.railExitSpeed / FT, 1)} ft/s` : '--', 'SIM'],
+      ['Max alpha, q over 50 Pa', `${fx(deg(s.maxAlpha), 2)} deg`, 'SIM'],
+      ['Apogee', Number.isFinite(s.apogee) ? `${fx(s.apogee / FT, 0)} ft` : '--', 'SIM'],
+    ]);
+    const f = d.fins, on = d.finsActive, asBuilt = cfg.finScale === 1;
+    const wn = d.naturalFrequency(30), z = d.dampingRatio(30);
+    rows($('ro-derived'), [
+      ['C_Na, total', `${fx(d.cna, 3)} /rad`, 'SIM'],
+      ['C_Na, nose / fins', `${fx(d.noseCna, 2)} / ${fx(d.finCna, 2)}`, 'SIM'],
+      ['Fin interference K_fb', on ? fx(d.finKfb, 3) : '--', 'SIM'],
+      ['CP from nose', `${fx(d.xcp / IN, 2)} in`, 'SIM', true],
+      // a value moved off its published or fitted reference is the simulation's input (SIM), shown with the reference
+      Math.abs(cfg.cgFromNose - DEFAULTS.cgFromNose) < 1e-9 ? ['CG at liftoff', `${fx(d.xcgLiftoff / IN, 2)} in`, 'PAGE'] : ['CG at liftoff, set', `${fx(d.xcgLiftoff / IN, 2)} in (page ${fx(DEFAULTS.cgFromNose / IN, 2)})`, 'SIM'],
+      ['CG at burnout', `${fx(d.xcgBurnout / IN, 2)} in`, 'EST'],
+      ['Margin, liftoff / burnout', `${fx(d.staticMargin, 2)} / ${fx(d.staticMarginBurnout, 2)} cal`, 'SIM'],
+      cfg.cd === CD_FIT ? ['Drag coefficient', fx(cfg.cd, 4), 'FIT'] : ['Drag coefficient, set', `${fx(cfg.cd, 4)} (fit ${fx(CD_FIT, 4)})`, 'SIM'],
+      ['Rail exit, predicted', `${fx(d.railExitSpeedPrediction / FT, 1)} ft/s`, 'SIM'],
+      ['Natural freq., 30 m/s', wn > 0 ? `${fx(wn / (2 * Math.PI), 3)} Hz` : 'unstable', 'SIM'],
+      ['Damping ratio, 30 m/s', Number.isFinite(z) ? fx(z, 3) : '--', 'SIM'],
+      ['Thrust / weight, mean', fx(d.averageThrustToWeight, 2), 'SIM'],
+      ['Thrust / weight, page', '8.17', 'PAGE'],
+      ['Motor impulse / burn', `${fx(d.totalImpulse, 1)} N s / ${fx(d.burnTime, 3)} s`, 'STD'],
+      // CAD only as measured; a scaled planform is the CAD fin times the fin scale (SIM)
+      ['Fin root / tip', on ? `${fx(f.root / IN, 2)} / ${fx(f.tip / IN, 2)} in${asBuilt ? '' : ` x${fx(cfg.finScale, 2)}`}` : 'removed', asBuilt ? 'CAD' : 'SIM'],
+      ['Fin span / sweep', on ? `${fx(f.span / IN, 2)} / ${fx(f.sweep / IN, 2)} in${asBuilt ? '' : ` x${fx(cfg.finScale, 2)}`}` : 'removed', asBuilt ? 'CAD' : 'SIM'],
+      ['Body-lift centroid', `${fx(d.planformCentroid / IN, 2)} in`, 'SIM'],
+      ['Pitch inertia, liftoff', `${fx(d.inertiaLiftoff, 4)} kg m2`, 'EST'],
+    ]);
+  }
+
+  function renderEvents() {
+    const ol = $('events');
+    if (ol.childElementCount !== EVENT_NAMES.length) {
+      ol.textContent = '';
+      for (const n of EVENT_NAMES) {
+        const li = document.createElement('li'), b = document.createElement('button');
+        b.type = 'button'; b.dataset.ev = n; b.innerHTML = '<span></span><span></span>';
+        b.addEventListener('click', () => { if (isLive()) return; inspect = inspect === n ? null : n; drawAll(true); });
+        li.append(b); ol.append(li);
+      }
+    }
+    const got = new Map(flight.events.map((e) => [e.name, e]));
+    let count = 0;
+    for (const li of ol.children) {
+      const b = li.firstChild, n = b.dataset.ev, e = got.get(n);
+      b.children[0].textContent = EV_LABEL[n];
+      b.children[1].textContent = e ? e.t.toFixed(3) : '--';
+      b.disabled = !e || isLive();
+      b.setAttribute('aria-pressed', String(!!e && inspect === n && !isLive()));
+      b.setAttribute('aria-label', e ? `${EV_LABEL[n]} at T plus ${e.t.toFixed(3)} seconds; show its state` : `${EV_LABEL[n]}, not reached`);
+      if (e) count++;
+    }
+    $('ev-count').textContent = `${count} / ${EVENT_NAMES.length}`;
+  }
+
+  /* canvas labels change at most once per second (FIELD 2); a change inside the window is
+     written by one trailing timer so the final value still lands */
+  function updateAria() {
+    const wait = 1000 - (performance.now() - lastAria);
+    if (wait > 0) { if (!ariaTimer) ariaTimer = setTimeout(() => { ariaTimer = 0; updateAria(); }, wait); return; }
+    const s = shown();
+    const a = `Rocket at ${tc(s.t)}, ${s.phase}: pitch ${fx(deg(s.theta), 1)} degrees, angle of attack ${fx(deg(s.alpha), 1)} degrees, altitude ${fx(s.altitude / FT, 0)} feet`;
+    const b = `Strip chart of angle of attack and pitch; largest angle of attack after rail exit ${fx(deg(flight.state.maxAlpha), 1)} degrees`;
+    let wrote = false;
+    if (view && view.canvas.getAttribute('aria-label') !== a) { view.canvas.setAttribute('aria-label', a); wrote = true; }
+    if (chart && chart.canvas.getAttribute('aria-label') !== b) { chart.canvas.setAttribute('aria-label', b); wrote = true; }
+    if (wrote) lastAria = performance.now();
+  }
+
+  function syncButtons() {
+    const live = isLive();
+    $('pause').setAttribute('aria-pressed', String(paused));
+    $('pause').textContent = paused ? 'Resume' : 'Pause';
+    $('pause').disabled = !running || flight.done;
+    $('launch').textContent = flight.done ? 'Relaunch' : live ? 'Flying' : flight.ignited ? 'Relaunch' : 'Launch';
+    $('launch').disabled = live;
+    $('step').disabled = flight.done || live;
+    $('toend').disabled = flight.done;
+    const free = flight.ignited && !flight.done && !flight.state.onRail;
+    $('flick-neg').disabled = $('flick-pos').disabled = !free;
+    $('gust-fire').disabled = !flight.ignited || flight.done;
+  }
+
+  function drawAll(forceDom = true) {
+    drawView(); drawChart();
+    const now = performance.now();
+    if (forceDom || now - lastDom > 100) { lastDom = now; updateReadouts(); renderEvents(); syncButtons(); }
+    updateAria();
+  }
+
+  /* ---------------------------------------------------------------- loop: rAF only while a flight runs */
+  function frame(now) {
+    raf = 0;
+    const dt = last ? Math.min(0.1, (now - last) / 1000) : 0;
+    last = now;
+    flight.step(dt * rate);
+    if (flight.done) running = false;
+    drawAll(!running);
+    if (running && !paused && !document.hidden) raf = requestAnimationFrame(frame);
+    else last = 0;
+  }
+  function startLoop() { if (!raf && !document.hidden) { last = 0; raf = requestAnimationFrame(frame); } }
+  function stopLoop() { if (raf) cancelAnimationFrame(raf); raf = 0; last = 0; }
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stopLoop(); else if (running && !paused) startLoop(); });
+
+  /* ---------------------------------------------------------------- actions */
+  flight.onEvent((e) => {
+    if (e.name === 'railExit' && $('gust-arm').checked) {
+      const peak = parseFloat($('gust').value) * MPH;
+      if (peak > 0 && flight.gust(peak)) marks.push({ t: e.t, label: 'GUST' });
+    }
+  });
+  function toPad() { stopLoop(); running = false; paused = false; marks = []; inspect = null; flight.reset(); }
+  function defaultInspect() { inspect = flight.events.some((e) => e.name === 'maxAlpha') ? 'maxAlpha' : flight.events.some((e) => e.name === 'railExit') ? 'railExit' : null; }
+  function launch() { toPad(); flight.ignite(); running = true; startLoop(); drawAll(true); }
+  function runToEnd() { stopLoop(); if (!flight.ignited) flight.ignite(); flight.run(60); running = false; paused = false; defaultInspect(); drawAll(true); }
+  function stepTenth() { stopLoop(); inspect = null; if (!flight.ignited) flight.ignite(); running = true; paused = true; flight.run(0.1); if (flight.done) { running = false; paused = false; } drawAll(true); }
+
+  $('launch').addEventListener('click', launch);
+  $('reset').addEventListener('click', () => { toPad(); drawAll(true); });
+  $('pause').addEventListener('click', () => { if (!running) return; paused = !paused; inspect = null; if (!paused) startLoop(); else stopLoop(); drawAll(true); });
+  $('toend').addEventListener('click', runToEnd);
+  $('step').addEventListener('click', stepTenth);
+  for (const b of document.querySelectorAll('[data-rate]')) b.addEventListener('click', () => {
+    rate = parseFloat(b.dataset.rate);
+    for (const o of document.querySelectorAll('[data-rate]')) o.setAttribute('aria-pressed', String(o === b));
+    $('rate-v').textContent = b.textContent;
+  });
+  $('gust-fire').addEventListener('click', () => { const p = parseFloat($('gust').value) * MPH; if (flight.gust(p)) { marks.push({ t: flight.state.t, label: 'GUST' }); drawAll(true); } });
+  const flick = (sgn) => { const r = sgn * parseFloat($('flick').value) * DEG; if (flight.flick(r)) { marks.push({ t: flight.state.t, label: sgn > 0 ? 'FLICK +' : 'FLICK -' }); drawAll(true); } };
+  $('flick-pos').addEventListener('click', () => flick(1));
+  $('flick-neg').addEventListener('click', () => flick(-1));
+
+  /* sliders: value -> setter. During a run, wind, fins, CG, turbulence and C_m take effect in
+     flight; rail and launch angle send a paused flight back to the pad. After a finished run any
+     change re-runs the flight instantly so the chart answers at once. */
+  const sliders = {
+    fins: { out: (v) => v.toFixed(2), set: (v) => flight.setFinScale(v) },
+    cg: { out: (v) => v.toFixed(2), set: (v) => flight.setCg(v * IN) },
+    rail: { out: (v) => v.toFixed(1), set: (v) => flight.setRail(v * IN), pad: true },
+    ang: { out: (v) => v.toFixed(1), set: (v) => flight.setLaunchAngle(v * DEG), pad: true },
+    wind: { out: (v) => v.toFixed(1), set: (v) => flight.setWind(v * MPH) },
+    turb: { out: (v) => v.toFixed(1), set: (v) => flight.setTurbulence(v * MPH) },
+    gust: { out: (v) => v.toFixed(1), set: null },
+    flick: { out: (v) => v.toFixed(0), set: null },
+    lat: { out: (v) => v.toFixed(2), set: (v) => flight.setLatticeMoment(v) },
+  };
+  for (const [id, sl] of Object.entries(sliders)) {
+    const el = $(id);
+    el.addEventListener('input', () => {
+      const v = parseFloat(el.value);
+      $(`${id}-v`).textContent = sl.out(v);
+      if (!sl.set) return;
+      const wasDone = flight.done;
+      sl.set(v);
+      if (wasDone) { toPad(); runToEnd(); return; }
+      if (flight.ignited && (!running || (sl.pad && !isLive()))) toPad();
+      drawAll(true);
+    });
+  }
+  for (const b of document.querySelectorAll('[data-fins]')) b.addEventListener('click', () => { $('fins').value = b.dataset.fins; $('fins').dispatchEvent(new Event('input')); });
+  $('seed').addEventListener('change', () => { const n = parseInt($('seed').value, 10); if (!Number.isFinite(n)) return; const wasDone = flight.done; flight.setSeed(n); if (wasDone) { toPad(); runToEnd(); } else { if (!isLive()) toPad(); drawAll(true); } });
+  $('lat-on').addEventListener('change', () => { const wasDone = flight.done; flight.useLattice($('lat-on').checked); if (wasDone) { toPad(); runToEnd(); } else drawAll(true); });
+
+  const SCENARIOS = {
+    gust: { fins: 1, wind: 0, arm: true },
+    still: { fins: 1, wind: 0, arm: false },
+    cross: { fins: 1, wind: 10, arm: false },
+    half: { fins: 0.5, wind: 0, arm: true },
+    none: { fins: 0, wind: 0, arm: true },
+  };
+  function setSlider(id, v) { $(id).value = v; $(`${id}-v`).textContent = sliders[id].out(v); }
+  /* every scenario starts from the defaults for every control (CG, rail, angle, turbulence,
+     seed, lattice toggle and C_m included), then applies its own fields, in one configure() */
+  function applyScenario(name) {
+    const sc = SCENARIOS[name] || SCENARIOS.gust;
+    setSlider('fins', sc.fins);
+    setSlider('cg', +(DEFAULTS.cgFromNose / IN).toFixed(2));
+    setSlider('rail', +(DEFAULTS.railLength / IN).toFixed(1));
+    setSlider('ang', +(DEFAULTS.launchAngle / DEG).toFixed(1));
+    setSlider('wind', sc.wind);
+    setSlider('turb', +(DEFAULTS.turbulence / MPH).toFixed(1));
+    setSlider('gust', 11.2);
+    setSlider('lat', 0);
+    $('seed').value = String(DEFAULTS.seed);
+    $('gust-arm').checked = sc.arm;
+    $('lat-on').checked = false;
+    flight.useLattice(false);
+    flight.setLatticeMoment(0);
+    flight.configure({
+      finScale: sc.fins, wind: sc.wind * MPH, cgFromNose: DEFAULTS.cgFromNose, railLength: DEFAULTS.railLength,
+      launchAngle: DEFAULTS.launchAngle, turbulence: DEFAULTS.turbulence, seed: DEFAULTS.seed,
+    });
+    toPad();
+    runToEnd();
+  }
+  $('scenario').addEventListener('change', () => applyScenario($('scenario').value));
+
+  /* keyboard: L launch, R reset, space pause, G gust; ignored while typing in a field */
+  document.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const tag = (e.target && e.target.tagName) || '';
+    if (/INPUT|SELECT|TEXTAREA/.test(tag)) return;
+    if (e.key === 'l' || e.key === 'L') launch();
+    else if (e.key === 'r' || e.key === 'R') { toPad(); drawAll(true); }
+    else if (e.key === 'g' || e.key === 'G') $('gust-fire').click();
+    else if (e.key === ' ' && running && tag !== 'BUTTON') { e.preventDefault(); $('pause').click(); }
+  });
+
+  /* resize redraws once; nothing animates unless a flight is running */
+  let resizeRaf = 0;
+  const ro = new ResizeObserver(() => { if (resizeRaf) return; resizeRaf = requestAnimationFrame(() => { resizeRaf = 0; drawView(); drawChart(); }); });
+  for (const el of [$('view-wrap'), $('chart-wrap')]) ro.observe(el);
+
+  /* first paint: the reference scenario computed instantly (no animation), shown at its
+     max-alpha instant. LAUNCH replays it live. */
+  applyScenario('gust');
+  if (document.fonts) document.fonts.ready.then(() => drawAll(true));
+</script>
+</body>
+</html>

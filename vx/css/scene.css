@@ -1,0 +1,36 @@
+/* CHARGER field scene (vx/js/scene). Hooks, all prefixed .sc-:
+   .sc-stage     the box the canvas fills (relative, dark, clips)
+   .sc-canvas    the WebGL canvas; the scene sets data-scene (loading | ready | error |
+                 fallback | context-lost | destroyed), data-hover="rocket" while the pointer
+                 is over the grab cylinder and data-drag="flick" during a flick
+   .sc-ticks     four hard-cornered registration ticks (the site's one square motif)
+   .sc-hint      mono caption, bottom left (informational: paper-a70)
+   .sc-fallback  the no-WebGL2 notice; honours [hidden]
+   The scene never sizes the canvas: CSS does, the scene reads clientWidth/Height. */
+.sc-stage { position: relative; overflow: hidden; background: var(--ink-900, #0a0a0a); isolation: isolate; }
+.sc-canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; max-width: none; touch-action: none; cursor: default; outline: none; -webkit-tap-highlight-color: transparent; }
+.sc-canvas[data-hover="rocket"] { cursor: grab; }
+.sc-canvas[data-drag="flick"] { cursor: grabbing; }
+.sc-canvas:focus-visible { outline: 1px solid var(--paper-a70, rgba(255,255,255,.7)); outline-offset: -6px; }
+.sc-canvas[data-scene="fallback"], .sc-canvas[data-scene="destroyed"] { visibility: hidden; }
+
+.sc-ticks { position: absolute; inset: var(--space-3, 12px); pointer-events: none; z-index: 2; }
+.sc-ticks::before, .sc-ticks::after, .sc-ticks > i::before, .sc-ticks > i::after { content: ""; position: absolute; width: 14px; height: 14px; border: 0 solid var(--paper-a45, rgba(255,255,255,.45)); }
+.sc-ticks::before { left: 0; top: 0; border-left-width: 1px; border-top-width: 1px; }
+.sc-ticks::after { right: 0; top: 0; border-right-width: 1px; border-top-width: 1px; }
+.sc-ticks > i::before { left: 0; bottom: 0; border-left-width: 1px; border-bottom-width: 1px; }
+.sc-ticks > i::after { right: 0; bottom: 0; border-right-width: 1px; border-bottom-width: 1px; }
+
+.sc-hint { position: absolute; left: calc(var(--space-3, 12px) + 22px); bottom: calc(var(--space-3, 12px) + 6px); right: calc(var(--space-3, 12px) + 22px); z-index: 2; margin: 0; pointer-events: none;
+  font-family: var(--font-mono, monospace); font-size: var(--fs-meta-sm, 10px); letter-spacing: var(--ls-caps, .18em); text-transform: uppercase; line-height: 1.5; color: var(--paper-a70, rgba(255,255,255,.7)); }
+.sc-hint b { font-weight: 400; color: var(--paper, #fff); }
+
+.sc-fallback { position: absolute; inset: 0; z-index: 3; display: grid; place-content: center; gap: var(--space-2, 8px); margin: 0; padding: var(--space-6, 32px); text-align: center;
+  font-family: var(--font-mono, monospace); font-size: var(--fs-meta, 12px); letter-spacing: var(--ls-caps, .18em); text-transform: uppercase; line-height: 1.6; color: var(--paper-a70, rgba(255,255,255,.7)); }
+.sc-fallback b { font-weight: 400; color: var(--paper, #fff); }
+.sc-fallback[hidden] { display: none; }
+
+@media (forced-colors: active) {
+  .sc-ticks::before, .sc-ticks::after, .sc-ticks > i::before, .sc-ticks > i::after { border-color: CanvasText; }
+  .sc-hint, .sc-fallback { color: CanvasText; }
+}

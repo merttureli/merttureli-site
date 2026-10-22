@@ -11,13 +11,17 @@
    dimension line labelled with the static margin in calibres.
 
    Both painters are pure with respect to the flight: the panel hands them data and
-   calls draw(). Neither starts a loop. Both tolerate NaN and empty data. */
+   calls draw(). Neither starts a loop. Both tolerate NaN and empty data, and both
+   paint their own ink ground, so their paper-coloured labels stay legible when forced
+   colours turn the surrounding panel white. Every loop is bounded by a count, so a
+   time or length too large for its step to register cannot hang the tab. */
 import { DEG, M_PER_IN, fixed, fitCanvas, readTheme } from './format.js';
 
-const PAD = { l: 40, r: 58, t: 22, b: 18 };   // CSS px plot margins (y labels, end values, legend row, time row)
+const PAD = { l: 40, r: 58, t: 22, b: 18 };   // CSS px plot margins (y labels, end values, legend and event row, time row)
 const SCALES_DEG = [2, 5, 10, 20, 45, 90];      // symmetric y ranges; the smallest that holds the window wins
 const SHRINK_HOLD_MS = 1200;                    // a smaller range must hold this long before the axis shrinks
 const EVENT_LABELS = { railExit: 'RAIL EXIT', burnout: 'BURNOUT', apogee: 'APOGEE' };
+const MAX_TICKS = 256;                          // loop bound for the time and inch ticks
 
 export function createStripChart(canvas, { windowS = 8, theme = null, events = Object.keys(EVENT_LABELS) } = {}) {
   const ctx = canvas.getContext('2d');
@@ -44,7 +48,7 @@ export function createStripChart(canvas, { windowS = 8, theme = null, events = O
     if (!ctx) return;
     const { w, h } = size;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = th.ink900; ctx.fillRect(0, 0, w, h);
     const x0 = PAD.l, x1 = Math.max(x0 + 10, w - PAD.r), y0 = PAD.t, y1 = Math.max(y0 + 10, h - PAD.b);
     const tEnd = Math.max(windowS, tNow), tStart = tEnd - windowS;
     const X = (t) => x0 + ((t - tStart) / windowS) * (x1 - x0);
@@ -81,29 +85,46 @@ export function createStripChart(canvas, { windowS = 8, theme = null, events = O
     }
     // time ticks every second
     ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-    for (let s = Math.ceil(tStart); s <= tEnd + 1e-6; s++) {
+    for (let s = Math.ceil(tStart), n = 0; s <= tEnd + 1e-6 && n < MAX_TICKS; s++, n++) {
       const x = Math.round(X(s)) + 0.5;
       ctx.strokeStyle = th.a08; ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke();
       ctx.strokeStyle = th.a45; ctx.beginPath(); ctx.moveTo(x, y1); ctx.lineTo(x, y1 + 3); ctx.stroke();
       if (x > x0 + 8 && x < x1 - 8) { ctx.fillStyle = th.a70; ctx.fillText('T+' + s, x, h - 4); }
     }
-    // event ticks with labels, staggered onto two rows when they would collide
-    let lastRight = -Infinity, row = 0;
+    // top band: legend on the left, unit and source on the right; event labels share
+    // the band when they fit and drop to a second row inside the plot when they do not
+    ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+    const taken = [[], []];                       // occupied [x0, x1] per label row
+    let lx = x0;
+    for (const [color, name] of [[th.accent, 'AOA'], [th.ink200, 'PITCH']]) {
+      ctx.fillStyle = color; ctx.fillRect(lx, 9, 12, 2);
+      ctx.fillStyle = th.a70; ctx.fillText(name, lx + 16, 10);
+      lx += 16 + ctx.measureText(name).width + 14;
+    }
+    taken[0].push([x0 - 2, lx]);
+    ctx.textAlign = 'right'; ctx.fillStyle = th.a70;
+    ctx.fillText('DEG', x0 - 6, 10);
+    const meta = `${windowS} S / SIM`;
+    const mw = ctx.measureText(meta).width;
+    ctx.fillText(meta, w - 2, 10);
+    taken[0].push([w - 2 - mw - 6, w]);
     ctx.textAlign = 'left';
+    const free = (row, a, b) => taken[row].every(([p, q]) => b < p || a > q);
     for (const e of evts.slice().sort((a, b) => a.t - b.t)) {
       if (e.t < tStart || e.t > tEnd) continue;
       const x = Math.round(X(e.t)) + 0.5;
+      ctx.strokeStyle = th.a45; ctx.setLineDash([2, 3]);
+      ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke();
+      ctx.setLineDash([]);
       const label = `${EVENT_LABELS[e.name] || e.name.toUpperCase()} ${e.t.toFixed(2)}`;
       const tw = ctx.measureText(label).width;
-      row = x < lastRight + 6 ? (row + 1) % 2 : 0;
-      ctx.strokeStyle = th.a45; ctx.setLineDash([2, 3]);
-      ctx.beginPath(); ctx.moveTo(x, y0 - 2 + row * 0); ctx.lineTo(x, y1); ctx.stroke();
-      ctx.setLineDash([]);
-      const ty = row === 0 ? 10 : y0 + 10;
-      const tx = Math.min(x + 4, w - tw - 2);
-      ctx.fillStyle = th.ink900; ctx.fillRect(tx - 2, ty - 8, tw + 4, 11);
+      const tx = Math.min(x + 4, w - PAD.r - tw - 2);
+      const row = free(0, tx - 3, tx + tw + 3) ? 0 : free(1, tx - 3, tx + tw + 3) ? 1 : -1;
+      if (row < 0) continue;                      // no room: the tick stays, the label is dropped
+      const ty = row === 0 ? 10 : y0 + 9;
+      if (row === 1) { ctx.fillStyle = th.ink900; ctx.fillRect(tx - 3, ty - 7, tw + 6, 13); }
       ctx.fillStyle = th.a70; ctx.fillText(label, tx, ty);
-      lastRight = Math.max(lastRight, tx + tw);
+      taken[row].push([tx - 3, tx + tw + 3]);
     }
     // the two traces: pitch first (ink), angle of attack on top (accent)
     const traces = [['theta', th.ink200], ['alpha', th.accent]];
@@ -113,10 +134,12 @@ export function createStripChart(canvas, { windowS = 8, theme = null, events = O
     ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     for (const [key, color] of traces) {
       ctx.strokeStyle = color; ctx.beginPath();
-      let started = false, lx = NaN, ly = NaN;
+      let started = false, lx = NaN, ly = NaN, pv = NaN;
       for (let i = i0; i < i1; i++) {
         const s = data[i]; const v = s[key] * DEG;
         if (!Number.isFinite(v)) { started = false; continue; }
+        if (Math.abs(v - pv) > 180) started = false;     // an angle wrapping through +-180 deg is a jump, not a line
+        pv = v;
         const x = X(s.t), y = Y(Math.max(-scale, Math.min(scale, v)));
         if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
         lx = x; ly = y;
@@ -126,26 +149,19 @@ export function createStripChart(canvas, { windowS = 8, theme = null, events = O
     }
     ctx.restore();
     // end dots and current values beside the plot, nudged apart when close
-    ends.sort((a, b) => a.y - b.y);
-    if (ends.length === 2 && ends[1].y - ends[0].y < 12) { const m = (ends[0].y + ends[1].y) / 2; ends[0].ly = m - 6; ends[1].ly = m + 6; }
+    const lo = y0 + 6, hi = y1 - 6;                      // keep end labels inside the plot band, 12 px apart
+    for (const e of ends) e.ly = Math.max(lo, Math.min(hi, e.y));
+    ends.sort((a, b) => a.ly - b.ly);
+    if (ends.length === 2 && ends[1].ly - ends[0].ly < 12) {
+      const m = Math.max(lo + 6, Math.min(hi - 6, (ends[0].ly + ends[1].ly) / 2));
+      ends[0].ly = m - 6; ends[1].ly = m + 6;
+    }
     ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
     for (const e of ends) {
       ctx.fillStyle = e.color; ctx.beginPath(); ctx.arc(e.x, e.y, 2.5, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = e.key === 'alpha' ? th.paper : th.a70;
-      ctx.fillText(fixed(e.v, 2, true), x1 + 8, Math.max(y0, Math.min(y1, e.ly ?? e.y)));
+      ctx.fillText(fixed(e.v, 2, true), x1 + 8, e.ly);
     }
-    // legend row
-    ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
-    let lx = x0;
-    for (const [key, color, name] of [['alpha', th.accent, 'AOA'], ['theta', th.ink200, 'PITCH']]) {
-      ctx.fillStyle = color; ctx.fillRect(lx, 9, 12, 2);
-      ctx.fillStyle = th.a70; ctx.fillText(name, lx + 16, 10);
-      lx += 16 + ctx.measureText(name).width + 14;
-      void key;
-    }
-    ctx.fillStyle = th.a70;
-    const meta = `DEG / ${windowS} S / SIM`;
-    if (evts.length === 0 || lx + ctx.measureText(meta).width < X(evts[0]?.t ?? Infinity) - 8) ctx.fillText(meta, lx, 10);
   }
 
   function summary(units = 'degrees') {
@@ -184,7 +200,7 @@ export function createCpCgBar(canvas, { theme = null } = {}) {
     if (!ctx) return;
     const { w, h } = size;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = th.ink900; ctx.fillRect(0, 0, w, h);
     const o = model.outline;
     if (!o || !o.polys || !(o.length > 0)) return;
     const L = o.length;
@@ -193,12 +209,13 @@ export function createCpCgBar(canvas, { theme = null } = {}) {
     const A = (a) => BAR_PAD_X + a * sx;
     // outline: body and fins share the same 1 px drawing line
     ctx.lineWidth = 1; ctx.lineJoin = 'round';
-    for (const p of o.polys) {
+    for (const pass of ['solid', 'detail']) for (const p of o.polys) {
+      if ((p.kind === 'detail') !== (pass === 'detail')) continue;
       ctx.beginPath();
       p.pts.forEach(([a, l], i) => { const x = A(a), y = cy - l * sx; if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); });
       ctx.closePath();
-      ctx.fillStyle = th.ink800; ctx.fill();
-      ctx.strokeStyle = th.a70; ctx.stroke();
+      if (pass === 'solid') { ctx.fillStyle = th.ink800; ctx.fill(); ctx.strokeStyle = th.a70; } else ctx.strokeStyle = th.a18;
+      ctx.stroke();
     }
     // centre line (drawing convention: long dash, short dash)
     ctx.strokeStyle = th.a18; ctx.setLineDash([8, 2, 2, 2]);
@@ -207,7 +224,7 @@ export function createCpCgBar(canvas, { theme = null } = {}) {
     const yS = h - 14;
     ctx.font = `10px ${th.mono}`; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'center';
     const Lin = L / M_PER_IN;
-    for (let i = 0; i <= Lin + 1e-6; i += BAR_TICK_IN) {
+    for (let i = 0, n = 0; i <= Lin + 1e-6 && n < MAX_TICKS; i += BAR_TICK_IN, n++) {
       const x = Math.round(A(i * M_PER_IN)) + 0.5;
       const major = i % 12 === 0;
       ctx.strokeStyle = major ? th.a45 : th.a18;

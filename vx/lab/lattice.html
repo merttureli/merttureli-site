@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LAB / LATTICE · Mert Tureli</title>
+<meta name="description" content="Test bench for the CHARGER field study's flow engine: a D2Q9 lattice Boltzmann solver with a Smagorinsky subgrid model on three.js render targets, momentum-exchange forces and four views. Page simulation in lattice units.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0A0A0A">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230A0A0A'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='26' font-weight='600' fill='%23FFFFFF'%3EMT%3C/text%3E%3C/svg%3E">
+<link rel="preload" href="../../assets/charger-explorer/fonts/IBMPlexMono-Regular.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="stylesheet" href="../css/tokens.css">
+<style>
+  /* bench layout, self-contained (tokens only) */
+  .lt { min-height: 100svh; display: grid; grid-template-rows: auto 1fr; background: var(--ink-900); color: var(--paper); }
+  .lt-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-3) var(--space-5); padding: var(--space-5) var(--page-margin); border-bottom: 1px solid var(--paper-a18); }
+  .lt-head h1 { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps-wide); text-transform: uppercase; font-weight: 400; color: var(--paper); white-space: nowrap; }
+  .lt-head nav { display: flex; flex-wrap: wrap; gap: var(--space-4) var(--space-5); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; }
+  .lt-head nav a { color: var(--paper-a70); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out); }
+  .lt-head nav a:hover { color: var(--paper); border-bottom-color: var(--paper); }
+  .lt-body { display: grid; grid-template-columns: minmax(0, 1fr) 320px; min-height: 0; }
+  .lt-main { min-width: 0; display: flex; flex-direction: column; }
+  .lt-stage { position: relative; min-height: 180px; overflow: hidden; background: var(--ink-900); }
+  .lt-stage canvas { position: absolute; display: block; }
+  #overlay { left: 0; top: 0; pointer-events: none; }
+  .lt-note { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: var(--space-5); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: 1.8; color: var(--paper-a70); background: rgba(10,10,10,.72); }
+  .lt-note b { font-weight: 400; color: var(--paper); }
+  .lt-note[hidden] { display: none; }
+  .lt-note.is-badge { inset: auto auto 4px 0; display: block; padding: 0 var(--space-4); background: none; text-align: left; line-height: 1.4; }
+  .lt-caption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-2) var(--space-5); padding: 0 var(--page-margin) var(--space-4); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); }
+  .lt-chart { display: block; width: 100%; height: 120px; padding: 0; }
+  .lt-chartwrap { padding: var(--space-3) var(--page-margin); border-top: 1px solid var(--paper-a18); }
+  .lt-readout { margin: 0; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.08em; line-height: 1.7; color: var(--paper-a70); white-space: pre; overflow-x: auto; padding: var(--space-4) var(--page-margin); border-top: 1px solid var(--paper-a18); font-variant-numeric: tabular-nums; }
+  .lt-panel { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-5); border-left: 1px solid var(--paper-a18); overflow: auto; max-height: calc(100svh - 64px); position: sticky; top: 0; }
+  .lt-panel h2 { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps-wide); text-transform: uppercase; font-weight: 400; color: var(--paper-a70); margin-top: var(--space-3); }
+  .lt-panel h2:first-child { margin-top: 0; }
+  .lt-row { display: grid; grid-template-columns: minmax(0, 1fr) 72px; gap: var(--space-2) var(--space-3); align-items: center; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); }
+  .lt-row[hidden] { display: none; }
+  .lt-row input[type="range"], .lt-row select { grid-column: 1 / -1; width: 100%; accent-color: var(--livery); }
+  .lt-row select { font: inherit; color: var(--paper); background: var(--ink-800); border: 1px solid var(--paper-a45); border-radius: var(--radius-sm); padding: 6px 8px; min-height: 36px; }
+  .lt-row output { text-align: right; color: var(--paper); font-variant-numeric: tabular-nums; }
+  .lt-row input[type="checkbox"] { justify-self: end; accent-color: var(--livery); width: 16px; height: 16px; }
+  .lt-row small { grid-column: 1 / -1; font-size: inherit; letter-spacing: 0.08em; text-transform: none; color: var(--paper-a70); }
+  .lt-group { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .lt-button { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; padding: 0 var(--space-4); border: 1px solid var(--paper-a45); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper); text-decoration: none; transition: background var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out); }
+  .lt-button:hover, .lt-button[aria-pressed="true"] { background: var(--paper); color: var(--ink-900); }
+  .lt-kbd, .lt-out { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.08em; line-height: 1.7; color: var(--paper-a70); }
+  .lt-kbd b { font-weight: 400; color: var(--paper); }
+  .lt-validate { margin: 0; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.04em; line-height: 1.6; color: var(--paper-a90); white-space: pre-wrap; padding: var(--space-4) var(--page-margin); border-top: 1px solid var(--paper-a18); }
+  .lt-validate[hidden] { display: none; }
+  .is-validating .lt-panel, .is-validating .lt-chartwrap, .is-validating .lt-readout { display: none; }
+  .is-validating .lt-body { grid-template-columns: 1fr; }
+  @media (max-width: 860px) {
+    .lt-body { grid-template-columns: 1fr; }
+    .lt-panel { border-left: 0; border-top: 1px solid var(--paper-a18); max-height: none; position: static; }
+  }
+  @media (max-width: 600px) {
+    .lt-head { padding: var(--space-4) var(--space-4); }
+    .lt-caption, .lt-chartwrap, .lt-readout, .lt-validate { padding-left: var(--space-4); padding-right: var(--space-4); }
+    .lt-panel { padding: var(--space-4); }
+  }
+</style>
+<script type="importmap">{"imports":{"three":"../../assets/charger-explorer/vendor/three.module.js"}}</script>
+</head>
+<body class="lt on-dark">
+<a class="sr-only" href="#panel">Skip to the controls</a>
+<header class="lt-head">
+  <h1>LAB / LATTICE</h1>
+  <nav aria-label="Lab navigation">
+    <a href="index.html">All labs</a>
+    <a href="../">VX</a>
+    <a href="/">Production site</a>
+  </nav>
+</header>
+<main class="lt-body">
+  <div class="lt-main">
+    <figure class="lt-stage" id="stage" role="img" aria-label="Lattice Boltzmann flow section, a page simulation in lattice units">
+      <canvas id="gl" aria-hidden="true"></canvas>
+      <canvas id="overlay" aria-hidden="true"></canvas>
+      <p class="lt-note" id="note" hidden></p>
+    </figure>
+    <p class="lt-caption"><span>Page simulation / D2Q9 lattice Boltzmann / lattice units / src: SIM</span><span>Section shapes are analytic stand-ins (EST), not the CAD</span></p>
+    <div class="lt-chartwrap"><canvas class="lt-chart" id="chart" aria-hidden="true"></canvas></div>
+    <pre class="lt-readout" id="readout" aria-label="Lattice readout">LATTICE / STARTING</pre>
+    <pre class="lt-validate" id="validate" hidden></pre>
+  </div>
+  <aside class="lt-panel" id="panel" aria-label="Lattice parameters">
+    <h2>Section</h2>
+    <div class="lt-group" role="group" aria-label="Section shape">
+      <button class="lt-button" type="button" data-shape="rocket" aria-pressed="true">Rocket</button>
+      <button class="lt-button" type="button" data-shape="plate" aria-pressed="false">Plate</button>
+      <button class="lt-button" type="button" data-shape="cylinder" aria-pressed="false">Cylinder</button>
+    </div>
+    <label class="lt-row" id="incidence-row" hidden>Plate incidence <output id="incidence-out">0°</output><input type="range" id="incidence" min="-30" max="30" step="0.5" value="0"><small>Adds to alpha</small></label>
+
+    <h2>Flow</h2>
+    <label class="lt-row">Alpha <output id="alpha-out">10.0°</output><input type="range" id="alpha" min="-35" max="35" step="0.5" value="10"></label>
+    <label class="lt-row">U_in, lattice units <output id="uin-out">0.080</output><input type="range" id="uin" min="0.01" max="0.12" step="0.005" value="0.08"><small>Page range 0.03 to 0.10</small></label>
+    <label class="lt-row">Re at u_in 0.10 <output id="re-out">3000</output><input type="range" id="re" min="100" max="6000" step="50" value="3000"><small>Sets tau0; Re follows u_in</small></label>
+    <label class="lt-row">Body rate, rad per step <output id="rate-out">0</output><input type="range" id="rate" min="-3" max="3" step="0.1" value="0"><small>Positive raises theta (flight sign)</small></label>
+    <label class="lt-row">Smagorinsky C 0.12 <input type="checkbox" id="smag" checked></label>
+    <label class="lt-row">Regularised collision <input type="checkbox" id="reg"></label>
+
+    <h2>View</h2>
+    <div class="lt-group" role="group" aria-label="View">
+      <button class="lt-button" type="button" data-view="smoke" aria-pressed="true">Smoke</button>
+      <button class="lt-button" type="button" data-view="pressure" aria-pressed="false">Pressure</button>
+      <button class="lt-button" type="button" data-view="vorticity" aria-pressed="false">Vorticity</button>
+      <button class="lt-button" type="button" data-view="speed" aria-pressed="false">Speed</button>
+    </div>
+
+    <h2>Run</h2>
+    <label class="lt-row">Tier <select id="tier"><option value="auto">Auto, governor, 1 to 3</option><option value="3">3 / 1024 x 320 / 24 steps</option><option value="2">2 / 768 x 240 / 16 steps</option><option value="1">1 / 512 x 160 / 8 steps</option><option value="0">0 / off</option></select></label>
+    <label class="lt-row">Steps per frame <output id="spf-out">TIER</output><input type="range" id="spf" min="0" max="48" step="1" value="0"></label>
+    <div class="lt-group">
+      <button class="lt-button" type="button" id="play" aria-pressed="false">Pause</button>
+      <button class="lt-button" type="button" id="step">Step</button>
+      <button class="lt-button" type="button" id="reset">Reset</button>
+    </div>
+
+    <h2>Checks</h2>
+    <div class="lt-group">
+      <button class="lt-button" type="button" id="check">Field check</button>
+      <a class="lt-button" href="?validate=cylinder">Cylinder gate</a>
+      <a class="lt-button" href="?validate=stability">Stability gate</a>
+    </div>
+    <p class="lt-out" id="check-out"></p>
+    <p class="lt-kbd"><b>1 – 4</b> view / <b>Space</b> pause / <b>S</b> step / <b>R</b> reset / <b>?validate=</b>cylinder, stability, bench, destroy / <b>?tier=N</b> / <b>?reg=1</b></p>
+  </aside>
+</main>
+<script type="module">
+import { mountLab } from '../js/lattice/lattice-lab.js';
+mountLab(document);
+</script>
+</body>
+</html>

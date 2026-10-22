@@ -40,12 +40,14 @@ export const phaseLabel = (p) => PHASES[p] || (p ? String(p).toUpperCase() : DAS
 
 /* Read a value that the flight module may expose as a number or as a function of
    one argument (derived.xcg(t), derived.naturalFrequency(V)). */
-export function readDerived(d, key, arg) {
+export function readDerived(d, key, ...args) {
   if (!d) return NaN;
   const v = d[key];
-  if (typeof v === 'function') { try { const r = v.call(d, arg); return typeof r === 'number' ? r : NaN; } catch { return NaN; } }
+  if (typeof v === 'function') { try { const r = v.apply(d, args); return typeof r === 'number' ? r : NaN; } catch { return NaN; } }
   return typeof v === 'number' ? v : NaN;
 }
+/* First finite number among the candidates (live state fields before derived ones). */
+export function firstFinite(...vals) { for (const v of vals) if (typeof v === 'number' && Number.isFinite(v)) return v; return NaN; }
 
 /* Read flight.history, whatever ring-buffer shape it has, into an ordered array of
    samples {t, theta, alpha, ...}. Returns null when nothing usable is there. */
@@ -73,16 +75,17 @@ export function readEvents(e) {
    a = axial distance from the nose tip, positive aft; l = lateral offset from the
    body axis, positive toward the body's +x side (FIELD 2). */
 
-/* CAD-derived defaults, used only when neither geometry nor flight.config supply a
-   shape. length, diameter, nose length, fin span, fin root position and thickness
-   are CAD (assembly bounds, 0.001 m per unit, FIELD 1); the fin tip chord and the
-   leading-edge sweep are EST (chosen so the planform fills the 85 mm axial bound of
-   parts 6 to 9 with a trailing edge square to the body). */
+/* CAD defaults, used only when neither geometry nor flight.config supply a shape
+   (assembly bounds and vertices, 0.001 m per unit, FIELD 1). The fin planform is part 6
+   projected on (x, y), the same numbers as flight.js CAD_FINS: vertices (34, -500.69)
+   (34, -570.69) (89, -585.69) (89, -555.69) mm with the nose tip at y +570.693 mm, so
+   root chord 70 mm, tip chord 30 mm, span 55 mm, leading-edge sweep 55 mm (the 85 mm
+   axial bound of the fin is sweep plus tip chord, not the root chord). */
 export const OUTLINE_DEFAULTS = {
   length: 1.1809,                 // m, CAD: nose tip y +570.7 mm to screw cap y -610.2 mm
   diameter: 0.068,                // m, CAD: body radius 34 mm
   noseLength: 0.232,              // m, CAD
-  fins: { n: 4, root: 0.085, tip: 0.030, span: 0.055, sweep: 0.055, thickness: 0.00317, rootLeadingEdgeFromNose: 1.0714 },
+  fins: { n: 4, root: 0.070, tip: 0.030, span: 0.055, sweep: 0.055, thickness: 0.003175, rootLeadingEdgeFromNose: 1.071385 },   // m, CAD (part 6)
 };
 
 /* Tangent ogive radius at axial station a (STD: r(a) = sqrt(rho^2 - (Ln - a)^2) + R - rho,
@@ -133,7 +136,7 @@ export function normalisePolygons(input) {
   const raw = [];
   for (const item of list) {
     const pts = toPoints(item && !Array.isArray(item) && !ArrayBuffer.isView(item) ? (item.points || item.pts || item.polygon || item.vertices) : item);
-    if (pts.length >= 3) raw.push({ kind: String(item.kind || item.id || item.name || '').toLowerCase().includes('fin') ? 'fin' : 'part', pts });
+    if (pts.length >= 3) raw.push({ kind: kindOf(item), pts });
   }
   if (!raw.length) return null;
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
@@ -156,13 +159,28 @@ export function normalisePolygons(input) {
     const a0 = axialIsY ? y : x, l0 = (axialIsY ? x : y) - lMid;
     return [noseAtLo ? a0 - aMin : aMax - a0, l0];
   }) }));
-  // the part with the largest area is the body
-  let best = 0, bi = 0;
-  polys.forEach((p, i) => { const A = Math.abs(area(p.pts)); if (A > best) { best = A; bi = i; } });
-  polys.forEach((p, i) => { if (p.kind !== 'fin') p.kind = i === bi ? 'body' : 'part'; });
+  // without a named body, the part with the largest area is the body
+  if (!polys.some((p) => p.kind === 'body')) {
+    let best = 0, bi = 0;
+    polys.forEach((p, i) => { const A = p.kind === 'part' ? Math.abs(area(p.pts)) : 0; if (A > best) { best = A; bi = i; } });
+    if (polys[bi] && polys[bi].kind === 'part') polys[bi].kind = 'body';
+  }
   let R = 0;
-  for (const p of polys) if (p.kind !== 'fin') for (const [a, l] of p.pts) if (a > 0.4 * span && a < 0.8 * span) R = Math.max(R, Math.abs(l));
+  for (const p of polys) if (p.kind === 'body' || p.kind === 'part') for (const [a, l] of p.pts) if (a > 0.4 * span && a < 0.8 * span) R = Math.max(R, Math.abs(l));
   return { polys, length: span, radius: R || OUTLINE_DEFAULTS.diameter / 2, nose: 0 };
+}
+
+/* body (nose, tube, body), fin (an in-plane planform), detail (edge-on fin slabs, fin
+   seats: drawn as light lines, never filled), part (anything else, drawn like the body) */
+function kindOf(item) {
+  if (!item || Array.isArray(item) || ArrayBuffer.isView(item)) return 'part';
+  const k = String(item.kind || '').toLowerCase(), id = String(item.id || item.name || '').toLowerCase();
+  if (/edge|seat|slab|detail/.test(k)) return 'detail';
+  if (/fin/.test(k)) return 'fin';
+  if (/body|nose|tube/.test(k)) return 'body';
+  if (!k && /fin/.test(id)) return 'fin';
+  if (!k && /body|nose|tube/.test(id)) return 'body';
+  return 'part';
 }
 
 function toPoints(src) {
@@ -187,16 +205,19 @@ export function resolveOutline(geometry, config, opts = {}) {
     } catch { /* fall through to the config outline */ }
   }
   const o = outlineFromConfig(config || {}, opts);
-  o.source = config && config.length ? 'CAD' : 'CAD';
+  o.source = 'CAD';       // CAD lengths and the CAD fin planform (or the config's own fins)
   return o;
 }
 
 /* ---------------------------------------------------------------- idle-aware loop
    Runs fn(now, dt) on requestAnimationFrame only while there is something to
    animate. fn returns true to keep going; after `idleFrames` consecutive false
-   returns the loop stops. wake() restarts it. Stops while the document is hidden. */
-export function createIdleLoop(fn, { idleFrames = 20 } = {}) {
-  let raf = 0, last = 0, idle = 0, destroyed = false;
+   returns the loop stops. wake() restarts it. While stopped, an optional poll()
+   is checked every pollMs (a timer, not rAF) so an external driver that changes
+   the flight without telling anyone still restarts the loop. Nothing runs while
+   the document is hidden. */
+export function createIdleLoop(fn, { idleFrames = 20, poll = null, pollMs = 250 } = {}) {
+  let raf = 0, last = 0, idle = 0, destroyed = false, timer = 0;
   const tick = (now) => {
     raf = 0;
     if (destroyed || document.hidden) return;
@@ -206,15 +227,25 @@ export function createIdleLoop(fn, { idleFrames = 20 } = {}) {
     try { busy = fn(now, dt) === true; } catch (err) { console.error('[panel] frame failed', err); busy = false; }
     idle = busy ? 0 : idle + 1;
     if (idle < idleFrames) raf = requestAnimationFrame(tick);
-    else last = 0;
+    else { last = 0; arm(); }
   };
-  const wake = () => { if (destroyed || document.hidden) return; idle = 0; if (!raf) raf = requestAnimationFrame(tick); };
-  const onVis = () => { if (document.hidden) { if (raf) cancelAnimationFrame(raf); raf = 0; last = 0; } else wake(); };
+  function arm() {
+    if (!poll || timer || destroyed) return;
+    timer = setInterval(() => {
+      if (destroyed || document.hidden || raf) return;
+      let go = false; try { go = poll() === true; } catch { go = false; }
+      if (go) wake();
+    }, pollMs);
+  }
+  function disarm() { if (timer) clearInterval(timer); timer = 0; }
+  function wake() { if (destroyed || document.hidden) return; idle = 0; disarm(); if (!raf) raf = requestAnimationFrame(tick); }
+  const onVis = () => { if (document.hidden) { if (raf) cancelAnimationFrame(raf); raf = 0; last = 0; disarm(); } else wake(); };
   document.addEventListener('visibilitychange', onVis);
+  arm();
   return {
     wake,
     get running() { return raf !== 0; },
-    destroy() { destroyed = true; if (raf) cancelAnimationFrame(raf); raf = 0; document.removeEventListener('visibilitychange', onVis); },
+    destroy() { destroyed = true; if (raf) cancelAnimationFrame(raf); raf = 0; disarm(); document.removeEventListener('visibilitychange', onVis); },
   };
 }
 

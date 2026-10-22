@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en" class="on-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lab / Panel · Mert Tureli VX</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0A0A0A">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/panel.css">
+<script type="importmap">{"imports":{"three":"../../assets/charger-explorer/vendor/three.module.js"}}</script>
+<style>
+  /* Lab-only layout. The stage is one screen tall and holds the 2D view, the panel
+     rail (desktop) or sheet (phone) and the chart dock; the bench sits below it. */
+  body { background: var(--ink-900); color: var(--paper); }
+  .plab-skip { position: absolute; left: 12px; top: -48px; z-index: 100; padding: 8px 12px; background: var(--paper); color: var(--ink-900); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; text-decoration: none; border-radius: var(--radius-pill); }
+  .plab-skip:focus { top: 8px; }
+  .plab-head { --h: 56px; display: flex; align-items: center; justify-content: space-between; gap: var(--space-3) var(--space-5); height: var(--h); padding: 0 max(var(--space-5), env(safe-area-inset-right, 0px)) 0 max(var(--space-5), env(safe-area-inset-left, 0px)); border-bottom: 1px solid var(--paper-a18); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; }
+  .plab-head h1 { font-size: var(--fs-meta); font-weight: 400; letter-spacing: var(--ls-caps-wide); color: var(--paper); white-space: nowrap; }
+  .plab-sub { flex: 1 1 auto; color: var(--paper-a70); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .plab-head nav { display: flex; gap: var(--space-5); white-space: nowrap; }
+  .plab-head nav a { color: var(--paper-a70); text-decoration: none; border-bottom: 1px solid transparent; transition: color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out); }
+  .plab-head nav a:hover { color: var(--paper); border-bottom-color: var(--paper); }
+  .plab-stage { height: calc(100svh - 56px); min-height: 600px; background: var(--ink-900); overflow: hidden; }
+  .plab-bench { padding: var(--space-7) max(var(--space-5), env(safe-area-inset-right, 0px)) var(--space-9) max(var(--space-5), env(safe-area-inset-left, 0px)); border-top: 1px solid var(--paper-a18); }
+  .plab-bench-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: var(--space-3) var(--space-7); align-items: baseline; margin-bottom: var(--space-6); }
+  .plab-h2 { font-family: var(--font-display); font-weight: 500; font-size: var(--fs-display-3); line-height: var(--lh-display); letter-spacing: var(--ls-display); text-transform: uppercase; color: var(--paper); }
+  .plab-note { max-width: var(--measure); font-size: var(--fs-body-sm); line-height: 1.6; color: var(--paper-a70); }
+  .plab-note b { font-weight: 500; color: var(--paper); }
+  .plab-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: var(--space-7); align-items: start; }
+  .plab-ctl { display: grid; gap: var(--space-5); }
+  .plab-group { display: grid; gap: var(--space-2); }
+  .plab-k { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps-wide); text-transform: uppercase; color: var(--paper-a70); }
+  .plab-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .plab-btn { min-height: 36px; padding: 0 14px; border: 1px solid var(--paper-a45); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper); transition: background-color var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out); }
+  .plab-btn:hover { background: var(--paper-a08); }
+  .plab-btn[aria-pressed="true"] { background: var(--paper); color: var(--ink-900); border-color: var(--paper); }
+  .plab-btn:focus-visible, .plab-select:focus-visible, .plab-range:focus-visible { outline: 1px solid var(--paper); outline-offset: 2px; }
+  .plab-seek { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; align-items: center; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); color: var(--paper-a70); }
+  .plab-seek output { color: var(--paper); font-variant-numeric: tabular-nums; }
+  .plab-range { grid-column: 1 / -1; width: 100%; accent-color: var(--paper); }
+  .plab-select { min-height: 36px; padding: 0 12px; background: var(--ink-900); color: var(--paper); border: 1px solid var(--paper-a45); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; }
+  .plab-check { display: flex; gap: 10px; align-items: center; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); }
+  .plab-check input { width: 16px; height: 16px; accent-color: var(--paper); }
+  .plab-readout { margin: 0; padding: var(--space-4); min-height: 320px; background: var(--ink-800); border: 1px solid var(--paper-a18); border-radius: var(--radius-md); font-family: var(--font-mono); font-size: var(--fs-meta-sm); line-height: 1.7; letter-spacing: 0.04em; color: var(--paper-a70); white-space: pre-wrap; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+  .plab-readout b { font-weight: 400; color: var(--paper); }
+  @media (max-width: 859.98px) {
+    .plab-head { --h: 48px; height: 48px; padding: 0 16px; }
+    .plab-sub { display: none; }
+    .plab-head nav { gap: var(--space-4); }
+    .plab-stage { height: calc(100svh - 48px); min-height: 560px; }
+    .plab-bench { padding: var(--space-6) 16px calc(var(--space-9) + env(safe-area-inset-bottom, 0px)); }
+    .plab-bench-head, .plab-grid { grid-template-columns: 1fr; gap: var(--space-5); }
+  }
+  @media (prefers-reduced-motion: reduce) { .plab-btn, .plab-head nav a { transition: none; } }
+</style>
+</head>
+<body>
+<a class="plab-skip" href="#bench">Skip to the bench</a>
+<header class="plab-head">
+  <h1>LAB / 05 / PANEL</h1>
+  <p class="plab-sub">Instrument panel / controls / strip chart / 2D view</p>
+  <nav aria-label="Lab navigation"><a href="./">All labs</a><a href="../">VX</a></nav>
+</header>
+<main>
+  <section class="plab-stage" id="stage" aria-label="Stage: 2D side view, flight panel and strip chart">
+    <div class="pn-viewport"><canvas id="view"></canvas></div>
+  </section>
+  <section class="plab-bench" id="bench" aria-labelledby="bench-h">
+    <div class="plab-bench-head">
+      <h2 class="plab-h2" id="bench-h">Bench</h2>
+      <p class="plab-note"><b>Scripted stand-in, not the flight model.</b> The panel is driven here by a script with the flight module's shape: rail exit at 0.35 s, a gust at 0.60 s and the 1.2 Hz damped wobble of angle of attack after it, burnout at 1.25 s, apogee near 8 s. Its numbers show that the panel reads, converts and tags values correctly; they are not results. The lattice line and lattice CP are scripted the same way. The 2D view on the stage is the panel's fallback for browsers without WebGL2, drawn from an inline polygon set (ogive nose, body tube, two trapezoidal fins, metres).</p>
+    </div>
+    <div class="plab-grid">
+      <div class="plab-ctl">
+        <div class="plab-group">
+          <p class="plab-k" id="k-src">Flight source</p>
+          <div class="plab-row" role="group" aria-labelledby="k-src">
+            <button type="button" class="plab-btn" data-src="script" aria-pressed="true">Scripted</button>
+            <button type="button" class="plab-btn" data-src="module" aria-pressed="false">Flight module</button>
+          </div>
+        </div>
+        <div class="plab-group">
+          <label class="plab-seek" for="seek"><span class="plab-k">Seek, paused at</span><output id="seek-out" for="seek">T+02.400</output>
+            <input class="plab-range" id="seek" type="range" min="0" max="9.8" step="0.05" value="2.4">
+          </label>
+          <label class="plab-check"><input type="checkbox" id="autogust" checked> Scripted gust at 0.60 s, 5 m/s</label>
+        </div>
+        <div class="plab-group">
+          <p class="plab-k" id="k-geom">Geometry</p>
+          <div class="plab-row" role="group" aria-labelledby="k-geom">
+            <button type="button" class="plab-btn" data-geom="inline" aria-pressed="true">Inline set</button>
+            <button type="button" class="plab-btn" data-geom="module" aria-pressed="false">Geometry module</button>
+          </div>
+        </div>
+        <div class="plab-group">
+          <p class="plab-k" id="k-lat">Lattice</p>
+          <div class="plab-row" role="group" aria-labelledby="k-lat">
+            <button type="button" class="plab-btn" data-lat="script" aria-pressed="true">Scripted</button>
+            <button type="button" class="plab-btn" data-lat="no-webgl2" aria-pressed="false">No WebGL2</button>
+            <button type="button" class="plab-btn" data-lat="none" aria-pressed="false">None</button>
+          </div>
+        </div>
+        <div class="plab-group">
+          <p class="plab-k" id="k-scene">Scene</p>
+          <div class="plab-row" role="group" aria-labelledby="k-scene">
+            <button type="button" class="plab-btn" data-scene="stub" aria-pressed="true">3D stub</button>
+            <button type="button" class="plab-btn" data-scene="2d" aria-pressed="false">2D view only</button>
+            <button type="button" class="plab-btn" data-scene="none" aria-pressed="false">None</button>
+          </div>
+        </div>
+        <div class="plab-group">
+          <p class="plab-k" id="k-sheet">Phone sheet</p>
+          <div class="plab-row" role="group" aria-labelledby="k-sheet">
+            <button type="button" class="plab-btn" data-sheet="collapsed" aria-pressed="true">Collapsed</button>
+            <button type="button" class="plab-btn" data-sheet="expanded" aria-pressed="false">Expanded</button>
+          </div>
+        </div>
+        <div class="plab-group">
+          <label class="plab-k" for="tier">Governor tier</label>
+          <select class="plab-select" id="tier">
+            <option value="auto">Auto, measured</option>
+            <option value="3">T3 full</option>
+            <option value="2">T2 reduced</option>
+            <option value="1">T1 minimal</option>
+            <option value="0">T0 static</option>
+          </select>
+        </div>
+        <div class="plab-group">
+          <p class="plab-k" id="k-life">Panel lifecycle</p>
+          <div class="plab-row" role="group" aria-labelledby="k-life">
+            <button type="button" class="plab-btn" id="destroy">Destroy</button>
+            <button type="button" class="plab-btn" id="remount">Remount</button>
+          </div>
+        </div>
+      </div>
+      <pre class="plab-readout" id="readout" aria-label="Internal state of the panel, updated four times a second">booting</pre>
+    </div>
+  </section>
+</main>
+<noscript><p class="plab-note" style="padding: 24px">The panel needs JavaScript: it reads a flight model in this tab and draws its instruments.</p></noscript>
+<script type="module">
+  import { bus } from '../js/core/bus.js';
+  import { governor } from '../js/core/governor.js';
+  import { mountPanel } from '../js/panel/panel.js';
+  import { createFallbackView } from '../js/panel/fallback.js';
+  import { createScriptFlight, createScriptLattice } from '../js/panel/lab-script.js';
+  import { ogiveRadius, timeCode } from '../js/panel/format.js';
+
+  const qs = new URLSearchParams(location.search);
+  const $ = (s) => document.querySelector(s);
+  const stage = $('#stage'), viewCanvas = $('#view'), readout = $('#readout');
+  const hasGL2 = (() => { try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; } })();
+
+  /* ---- an inline polygon set in metres: ogive nose, body tube, two trapezoidal fins.
+     CAD (FIELD 1): length 1.1809, diameter 0.068, nose 0.232; the fin is part 6
+     (flight.js CAD_FINS): root leading edge 1.071385 from the nose, root chord 0.070,
+     tip chord 0.030, span 0.055, leading-edge sweep 0.055 (85 mm axial extent).
+     x is axial from the nose tip, y lateral toward the body +x side. */
+  const L = 1.1809, R = 0.034, LN = 0.232, FIN = { le: 1.071385, root: 0.070, tip: 0.030, span: 0.055, sweep: 0.055 };
+  const nose = []; for (let i = 0; i <= 12; i++) { const a = LN * (i / 12) ** 1.5; nose.push([a, ogiveRadius(a, R, LN)]); }
+  const POLYS = {
+    nose: [...nose, ...nose.slice().reverse().map(([a, l]) => [a, -l])],
+    body: [[LN, R], [L, R], [L, -R], [LN, -R]],
+    fin: (k, s) => [[FIN.le, s * R], [FIN.le + FIN.sweep * k, s * (R + FIN.span * k)], [FIN.le + (FIN.sweep + FIN.tip) * k, s * (R + FIN.span * k)], [FIN.le + FIN.root * k, s * R]],
+  };
+  const inlineGeometry = {
+    sectionPolygons({ finScale = 1, view = 'through' } = {}) {
+      const out = [{ kind: 'nose', points: POLYS.nose }, { kind: 'body', points: POLYS.body }];
+      if (view !== 'between' && finScale > 0) out.push({ kind: 'fin', points: POLYS.fin(finScale, 1) }, { kind: 'fin', points: POLYS.fin(finScale, -1) });
+      return out;
+    },
+  };
+  let geometry = inlineGeometry, geomMode = 'inline';
+
+  /* ---- collaborators */
+  const calls = [];
+  const log = (s) => { calls.push(s); if (calls.length > 10) calls.shift(); };
+  let flight = createScriptFlight({ emit: (t, d) => bus.emit(t, d), autoGust: true });
+  let source = 'script';
+  let lattice = createScriptLattice(flight);
+  let latMode = qs.get('lattice') || (hasGL2 ? 'script' : 'no-webgl2');
+  let sceneMode = qs.get('scene') || (hasGL2 ? 'stub' : '2d');
+
+  const fallbackView = createFallbackView(viewCanvas, geometry, flight, { lattice, section: lattice.section });
+  const setCaption = () => fallbackView.setCaption([hasGL2 ? '2D VIEW / PITCH PLANE' : '2D FALLBACK / NO WEBGL2', `LAB BENCH / ${source === 'module' ? 'FLIGHT MODULE' : 'SCRIPTED FLIGHT'}`]);
+  setCaption();
+  const sceneStub = {
+    setView(v) { log(`scene.setView(${v})`); },
+    setSliceView(v) { log(`scene.setSliceView(${v})`); fallbackView.setSliceView(v); },
+    setCamera(p) { log(`scene.setCamera(${p})`); },
+    setMarkers(b) { log(`scene.setMarkers(${b})`); fallbackView.setMarkers(b); },
+    setFinScale(k) { log(`scene.setFinScale(${(+k).toFixed(2)})`); fallbackView.setFinScale(k); },
+    setRail(m) { log(`scene.setRail(${(+m).toFixed(4)})`); },
+    wake() { fallbackView.wake(); },
+  };
+  const sceneFor = (m) => (m === 'stub' ? sceneStub : m === '2d' ? fallbackView : null);
+  const latticeFor = (m) => { if (m === 'none') return null; lattice.fallback = m === 'no-webgl2' ? 'no-webgl2' : null; return lattice; };
+  const origSetView = lattice.setView; lattice.setView = (v) => { log(`lattice.setView(${v})`); origSetView(v); };
+
+  /* ---- playback: steps the flight on rAF while running; nothing runs while paused */
+  let raf = 0, last = 0;
+  const playback = {
+    rate: 1 / 8, paused: false, running: false,
+    get done() { return !!flight.done; },
+    setRate(r) { playback.rate = r; log(`playback.setRate(1/${Math.round(1 / r)})`); },
+    launch() { log('playback.launch()'); if (flight.done) flight.reset(); if (flight.phase === 'pad') flight.ignite(); playback.paused = false; start(); },
+    pause() { log('playback.pause()'); if (flight.phase === 'pad' || flight.done) return; playback.paused = !playback.paused; if (playback.paused) stop(); else start(); },
+    reset() { log('playback.reset()'); stop(); flight.reset(); playback.paused = false; tickLattice(); },
+    step(dt) { log(`playback.step(${dt})`); if (flight.done) return; if (flight.phase === 'pad') flight.ignite(); stop(); playback.paused = true; flight.run(dt); tickLattice(); fallbackView.wake(); panel && panel.wake(); },
+  };
+  function start() { if (raf || flight.done) return; playback.running = true; last = 0; raf = requestAnimationFrame(frame); }
+  function stop() { if (raf) cancelAnimationFrame(raf); raf = 0; playback.running = false; }
+  function frame(now) {
+    raf = 0;
+    const dt = last ? Math.min(0.05, (now - last) / 1000) : 0; last = now;
+    flight.step(dt * playback.rate);
+    tickLattice();
+    if (flight.done) { playback.running = false; return; }
+    raf = requestAnimationFrame(frame);
+  }
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { if (raf) cancelAnimationFrame(raf); raf = 0; last = 0; } else if (playback.running && !playback.paused) start(); });
+  function tickLattice() { if (lattice && !lattice.fallback && typeof lattice.tick === 'function') lattice.tick(governor.tier); }
+  // the lattice publishes stats at 1 Hz like the real one; only while the tab is visible
+  const statsTimer = setInterval(() => {
+    if (document.hidden || !lattice || lattice.fallback) return;
+    if (lattice.age) lattice.age();
+    bus.emit('lattice:stats', { grid: lattice.stats.grid, stepsPerSecond: lattice.stats.stepsPerSecond, force: lattice.force });
+  }, 1000);
+
+  /* ---- seek: reset, ignite and run the scripted flight to T, paused */
+  function seek(t) {
+    stop(); flight.reset();
+    if (t > 0) { flight.ignite(); flight.run(t); playback.paused = true; }
+    else playback.paused = false;
+    tickLattice(); fallbackView.wake(); panel && panel.wake();
+    $('#seek-out').value = timeCode(flight.state.t);
+  }
+
+  /* ---- mount */
+  let panel = null;
+  function mount() {
+    panel = mountPanel(stage, { flight, lattice: latticeFor(latMode), scene: sceneFor(sceneMode), playback, geometry, section: lattice.section, lab: true, sheet: qs.get('sheet') === 'open' ? 'expanded' : 'collapsed' });
+    panel.onControl(({ name, value }) => { if (name === 'markers' && sceneMode === 'stub') { /* the stub forwards to the 2D view already */ } void value; });
+    window.vxPanel = { panel, flight, lattice, fallbackView, playback, bus };
+  }
+  mount();
+  const t0 = qs.has('t') ? Math.max(0, Math.min(9.8, Number(qs.get('t')) || 0)) : 2.4;
+  $('#seek').value = String(t0);
+  seek(t0);
+
+  /* ---- bench controls */
+  const pressGroup = (attr, value) => { for (const b of document.querySelectorAll(`[data-${attr}]`)) b.setAttribute('aria-pressed', String(b.dataset[attr] === value)); };
+  pressGroup('lat', latMode); pressGroup('scene', sceneMode); pressGroup('sheet', panel.sheet);
+  $('#seek').addEventListener('input', (e) => seek(e.target.valueAsNumber));
+  $('#autogust').addEventListener('change', (e) => {
+    flight = createScriptFlight({ emit: (t, d) => bus.emit(t, d), autoGust: e.target.checked });
+    rebindFlight(); seek($('#seek').valueAsNumber);
+  });
+  function rebindFlight() {
+    const keepSection = lattice.section;
+    lattice = createScriptLattice(flight); lattice.section = keepSection;
+    const sv = lattice.setView; lattice.setView = (v) => { log(`lattice.setView(${v})`); sv(v); };
+    fallbackView.setFlight(flight); fallbackView.setLattice(latticeFor(latMode), lattice.section);
+    panel && panel.attach({ flight, lattice: latticeFor(latMode) });
+    if (window.vxPanel) Object.assign(window.vxPanel, { flight, lattice });
+  }
+  for (const b of document.querySelectorAll('[data-lat]')) b.addEventListener('click', () => {
+    latMode = b.dataset.lat; pressGroup('lat', latMode);
+    const lat = latticeFor(latMode); tickLattice();
+    panel && panel.attach({ lattice: lat }); fallbackView.setLattice(lat, lattice.section);
+  });
+  for (const b of document.querySelectorAll('[data-geom]')) b.addEventListener('click', async () => {
+    if (b.dataset.geom === geomMode) return;
+    if (b.dataset.geom === 'module') {
+      try { const mod = await import('../js/geom/geom.js'); geometry = mod.getBakedGeometry(); geomMode = 'module'; }
+      catch (err) { log(`geometry module not available: ${err && err.message ? err.message.slice(0, 60) : 'import failed'}`); return; }
+    } else { geometry = inlineGeometry; geomMode = 'inline'; }
+    fallbackView.setGeometry(geometry); panel && panel.attach({ geometry });
+    pressGroup('geom', geomMode);
+  });
+  for (const b of document.querySelectorAll('[data-scene]')) b.addEventListener('click', () => { sceneMode = b.dataset.scene; pressGroup('scene', sceneMode); panel && panel.attach({ scene: sceneFor(sceneMode) }); });
+  for (const b of document.querySelectorAll('[data-sheet]')) b.addEventListener('click', () => { if (!panel) return; panel.setSheet(b.dataset.sheet); pressGroup('sheet', panel.sheet); stage.scrollIntoView({ block: 'start' }); });
+  for (const b of document.querySelectorAll('[data-src]')) b.addEventListener('click', async () => {
+    if (b.dataset.src === source) return;
+    if (b.dataset.src === 'module') {
+      try {
+        const mod = await import('../js/flight/flight.js');
+        const real = mod.createFlight({}, { bus });
+        flight = real; source = 'module'; rebindFlight(); seek(0); setCaption();
+      } catch (err) { log(`flight module not available: ${err && err.message ? err.message.slice(0, 60) : 'import failed'}`); return; }
+    } else { flight = createScriptFlight({ emit: (t, d) => bus.emit(t, d), autoGust: $('#autogust').checked }); source = 'script'; rebindFlight(); seek($('#seek').valueAsNumber); setCaption(); }
+    pressGroup('src', source);
+  });
+  const tierSel = $('#tier');
+  tierSel.addEventListener('change', () => governor.pin(tierSel.value === 'auto' ? null : Number(tierSel.value)));
+  $('#destroy').addEventListener('click', () => { if (panel) { panel.destroy(); panel = null; log('panel.destroy()'); } });
+  $('#remount').addEventListener('click', () => { if (!panel) { mount(); log('mountPanel()'); pressGroup('sheet', panel.sheet); } });
+
+  /* ---- readout at 4 Hz while it is on screen */
+  let readoutVisible = true;
+  new IntersectionObserver((es) => { readoutVisible = es[es.length - 1].isIntersecting; }).observe(readout);
+  const f2 = (v, d = 2) => (Number.isFinite(v) ? v.toFixed(d) : '—');
+  function print() {
+    if (!readoutVisible || document.hidden) return;
+    const lines = [];
+    const add = (k, strong, rest = '') => lines.push([k, strong, rest]);
+    if (panel) {
+      const s = panel.state;
+      add('PANEL', `${s.layout} / sheet ${s.sheet}`, `  away ${s.away ? 'yes' : 'no'}  loop ${s.loop ? 'running' : 'idle'}  tier T${s.tier}  reduced ${s.reduced ? 'yes' : 'no'}`);
+      add('FLIGHT', `${source.toUpperCase()} ${timeCode(s.t)} ${String(s.phase).toUpperCase()}`, `  playback ${playback.running ? 'running' : 'stopped'}${playback.paused ? ' / paused' : ''}  rate 1/${Math.round(1 / playback.rate)}`);
+      const v = s.values;
+      add('CONFIG', `fins ${f2(v.fins)}  cg ${f2(v.cg, 1)} in  rail ${f2(v.rail, 0)} in`, `  angle ${f2(v.angle, 1)} deg  wind ${f2(v.wind, 1)} mph  gust ${f2(v.gust, 1)} mph`);
+      add('VIEW', `${v.view} / ${v.section} / ${v.camera}`, `  markers ${v.markers ? 'on' : 'off'}  lattice flies ${v.latticeFlies ? 'on' : 'off'}`);
+      add('CHART', `${s.chartPoints} points`, `  range +/-${s.chartScaleDeg} deg  max aoa after rail ${f2(s.maxAoaDeg)} deg`);
+      add('EVENTS', s.events.join('  ') || 'none');
+      add('WORK', `${s.stats.updates} updates`, `  ${s.stats.textWrites} text writes  ${s.stats.chartDraws} chart draws  last ${f2(s.stats.lastUpdateMs)} ms`);
+      add('SUMMARY', '', s.summary);
+      add('LIVE', '', s.live || '—');
+    } else add('PANEL', 'destroyed', '  press Remount');
+    const fv = fallbackView.state;
+    add('GEOMETRY', geomMode === 'module' ? 'geom.js baked CAD section' : 'inline lab set (CAD lengths, CAD part 6 fin planform)', '');
+    add('2D VIEW', `${fv.draws} draws`, `  last ${f2(fv.lastDrawMs)} ms  ${fv.running ? 'running' : 'idle'}  ${fv.size.w}x${fv.size.h} px at dpr ${fv.dpr}  outline ${fv.outlineSource}${Number.isFinite(fv.lastFlick) ? `  flick ${f2(fv.lastFlick)} rad/s` : ''}`);
+    const lat = lattice;
+    add('LATTICE', latMode === 'none' ? 'not attached' : lat.fallback ? `fallback ${lat.fallback}` : `${lat.stats.grid} ${lat.stats.stepsPerSecond} steps/s`, latMode === 'script' ? `  cn ${f2(lat.force.cn, 3)}  cm ${f2(lat.force.cm, 3)}  xcp ${f2(lat.force.xcpCells, 1)} cells  view ${lat.view}` : '');
+    add('CALLS', '', [...(flight.calls || []), ...calls].slice(-10).join('  /  ') || '—');
+    readout.replaceChildren();
+    for (const [k, strong, rest] of lines) { const b = document.createElement('b'); b.textContent = strong; readout.append(k.padEnd(9), b, rest, '\n'); }
+  }
+  print();
+  const printTimer = setInterval(print, 250);
+  addEventListener('pagehide', () => { clearInterval(printTimer); clearInterval(statsTimer); });
+</script>
+</body>
+</html>

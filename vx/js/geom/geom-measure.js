@@ -17,7 +17,7 @@
 export const PROFILE_STEP_M = 0.002;       // FIELD 5: outer radius sampled every 2 mm
 export const FIN_PART_IDS = [6, 7, 8, 9];  // CAD: assembly.json labels Fin 1 .. Fin 4
 export const PLANFORM_PART_ID = 6;         // CAD: Fin 1, the fin on CAD +x
-export const RAIL_BUTTON_IDS = [10, 11];   // CAD: rail buttons, left out of the radius profile (one-sided, not axisymmetric)
+export const RAIL_BUTTON_IDS = [10, 11];   // CAD: rail buttons, left out of the radius profile (one-sided, not axisymmetric); geom.js puts them in the section as one-sided polygons
 export const MM = 0.001;                   // m per mm (json bounds are mm)
 const EPS_M = 2e-7;                        // 0.2 um: tolerance for an edge touching a sample plane; float32 near 0.6 m resolves 6e-8 m
 const TOL_M = 1e-6;                        // 1 um: vertices this close to the root or tip line count as on it
@@ -60,7 +60,10 @@ function edgesOf(p, buffer) {
 }
 
 /* The parts that make up the axisymmetric outer shape: everything except the four
-   fins, the two rail buttons and the reference-only envelopes (not physical). */
+   fins, the two rail buttons and the reference-only envelopes (not physical). The
+   buttons stand on one side only, so a radius profile (mirrored about the axis) cannot
+   hold them; measureFeatures() returns their bounds and geom.js adds them to the
+   section as one-sided polygons. */
 export function profileParts(json) {
   return json.parts.filter(p => !FIN_PART_IDS.includes(p.id) && !RAIL_BUTTON_IDS.includes(p.id) && !p.referenceOnly);
 }
@@ -199,6 +202,28 @@ export function measureFeatures(json, noseTipY) {
     mountEnd: s(18, 0),      // aft end of the revised motor mount
     capEnd: s(19, 0),        // aft face of the motor screw cap
     railButtons: RAIL_BUTTON_IDS.map(id => { const p = by(id); return p ? noseTipY - ((p.bounds[0][1] + p.bounds[1][1]) / 2) * MM : NaN; }),
+    railButtonBounds: RAIL_BUTTON_IDS.map(id => buttonBounds(by(id), noseTipY)).filter(Boolean),
+  };
+}
+
+/* A rail button's box from its json bounds (mm), in metres:
+     sFwd, sAft   axial extent, aft of the nose tip
+     rIn, rOut    radial extent along the axis it stands out on (CAD x or z)
+     axis, side   that axis and its sign (+1 or -1)
+     across       [lo, hi] extent along the other cross axis; the button meets the
+                  plane through the rocket axis and its own axis when lo <= 0 <= hi */
+function buttonBounds(p, noseTipY) {
+  if (!p) return null;
+  const [lo, hi] = p.bounds;
+  const cx = (lo[0] + hi[0]) / 2, cz = (lo[2] + hi[2]) / 2;
+  const alongX = Math.abs(cx) >= Math.abs(cz), a = alongX ? 0 : 2, o = alongX ? 2 : 0;
+  const side = Math.sign(alongX ? cx : cz) || 1;
+  return {
+    id: p.id,
+    sFwd: noseTipY - hi[1] * MM, sAft: noseTipY - lo[1] * MM,
+    rIn: Math.min(Math.abs(lo[a]), Math.abs(hi[a])) * MM, rOut: Math.max(Math.abs(lo[a]), Math.abs(hi[a])) * MM,
+    axis: alongX ? 'x' : 'z', side,
+    across: [lo[o] * MM, hi[o] * MM],
   };
 }
 
