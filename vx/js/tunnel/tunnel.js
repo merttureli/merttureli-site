@@ -13,6 +13,17 @@
      a sixteenth of a fine sweep each), gradient subtraction
      dye advection at 2x the velocity grid, rake injection, composite.
 
+   Start-up is spread over animation frames so the page stays interactive:
+   the context is created at once (so `fallback` answers "no WebGL2"
+   synchronously), the 26 programs are issued together without reading any
+   status and the driver links them in the background while the page runs;
+   a fence behind the links is polled once per frame without waiting and their
+   status is read in one pass on the frame after it signals (with
+   KHR_parallel_shader_compile: each program as soon as it reports complete);
+   the grids are allocated on the next frame and the warm-up steps begin on the
+   frame after that. stats.build records the frames, the wall time and the
+   main-thread time the status reads cost.
+
    Units: velocity in grid cells per second on a staggered (MAC) lattice, DT =
    1/60 s per step, pressure is the projection pseudo-pressure (see shaders.js).
    The grid is independent of DPR; the composite is drawn at canvas resolution.
@@ -23,7 +34,7 @@
        setObstacle(shapes), setPointer(x, y, vx, vy), setFreestream(u), setField(f),
        setTier(t), setVisible(b), setFade(f), freeze(b), reset(), step(n), draw(),
        selfCheck(), resize(), destroy(), params, stats, fallback, canvas
-     bus event tunnel:stats at 1 Hz. */
+     bus event tunnel:stats at 1 Hz, from the first frame with grids. */
 import { bus } from '../core/bus.js';
 import { governor } from '../core/governor.js';
 import { createGL } from './gl.js';
@@ -62,6 +73,21 @@ const SMOKE_ALPHA = 0.6;       /* paper white ceiling in the smoke view */
 const JACOBI_OMEGA = 0.8;      /* damped Jacobi weight, the optimal 2D smoother */
 const MIN_CELLS = 16;          /* short-side floor so an extreme aspect never collapses the grid */
 const RESIZE_DEBOUNCE_MS = 120;
+const BUILD_POLL_FRAMES = 120; /* frames to poll for completion before reading LINK_STATUS regardless */
+
+/* [key, source, defines]: every program the solver and the composite use,
+   issued in this order (the allocation's fills first). */
+const PROGRAMS = [
+  ['fillVel', S.FILL, ['KIND_VEL']], ['fillS', S.FILL, ['KIND_S']], ['fillDye', S.FILL, ['KIND_DYE']],
+  ['copyVel', S.COPY_VEL], ['copyS', S.COPY, ['KIND_S']], ['copyDye', S.COPY, ['KIND_DYE']],
+  ['mask', S.MASK], ['coarseMask', S.COARSE_MASK],
+  ['boundary', S.BOUNDARY], ['advectVel', S.ADVECT_VEL], ['macVel', S.MACCORMACK_VEL],
+  ['curl', S.CURL], ['vorticity', S.VORTICITY], ['splatVel', S.SPLAT_VEL], ['splatDye', S.SPLAT, ['KIND_DYE']],
+  ['divergence', S.DIVERGENCE], ['jacobi', S.JACOBI], ['residual', S.RESIDUAL], ['restrict', S.RESTRICT],
+  ['prolongate', S.PROLONGATE], ['gradient', S.GRADIENT],
+  ['advectDye', S.ADVECT_DYE], ['macDye', S.MACCORMACK_DYE], ['rake', S.RAKE, ['KIND_DYE']],
+  ['composite', S.COMPOSITE], ['readback', S.READBACK],
+];
 
 /* cubic-bezier(0.22, 1, 0.36, 1), the site's one easing, solved for y at a given x. */
 export function cubicBezier(x1, y1, x2, y2) {
@@ -96,11 +122,15 @@ export function createTunnel(canvas, options = {}) {
     steps: 0, stepMs: 0, frames: 0, fps: 0, drawsPerStep: 0, tier: 0, path: 'OFF', renderer: '',
     grid: [0, 0], dyeGrid: [0, 0], uInfCells: 0, cfl: 0, jacobi: 0, maccormack: false,
     running: false, visible: true, hidden: !!document.hidden, lost: false, frozen: false, divRms: null, preroll: 0, coarse: 120,
+    /* start-up record: programs linked of total, frames and wall ms the build
+       spanned, main-thread ms spent on status reads */
+    build: { parallel: false, programs: PROGRAMS.length, linked: 0, frames: 0, ms: 0, waitMs: 0, done: false },
   };
 
   let tier = clampTier(options.tier ?? governor.tier);
-  let G = null, P = null, F = null;       /* gl layer, programs, fields */
-  let fallback = null;                   /* null until the first context attempt */
+  let G = null, P = null, F = null;       /* gl layer, programs (set once all are linked), fields */
+  let fallback = null;                   /* null until the first context attempt; true for good once WebGL2 or the GLSL fails */
+  let building = false, buildRaf = 0;    /* the multi-frame program build, then the frame that allocates the grids */
   let W = 0, H = 0, cssW = 0, cssH = 0;
   let shapes = [];
   const shapeA = new Float32Array(48), shapeB = new Float32Array(48);
@@ -115,53 +145,78 @@ export function createTunnel(canvas, options = {}) {
   let resizeTimer = 0;
 
   /* ---------- GL setup ---------- */
+  /* true once the context exists and every program is linked. The first call
+     creates the context and starts the build; the build calls resize() and
+     resume() itself when it is done. */
   function initGL() {
-    if (G) return true;
+    if (P) return true;
+    if (building || lost || fallback === true) return false;     /* a lost context rebuilds from onRestored */
     try {
       G = createGL(canvas, { forcePacked: !!options.forcePacked });
     } catch { G = null; }
     if (!G) { fallback = true; stats.path = 'NO WEBGL2'; return false; }
-    try {
-      P = {
-        boundary: G.program(S.BOUNDARY),
-        advectVel: G.program(S.ADVECT_VEL),
-        advectDye: G.program(S.ADVECT_DYE),
-        macVel: G.program(S.MACCORMACK_VEL),
-        macDye: G.program(S.MACCORMACK_DYE),
-        curl: G.program(S.CURL),
-        vorticity: G.program(S.VORTICITY),
-        splatVel: G.program(S.SPLAT_VEL),
-        splatDye: G.program(S.SPLAT, ['KIND_DYE']),
-        divergence: G.program(S.DIVERGENCE),
-        jacobi: G.program(S.JACOBI),
-        residual: G.program(S.RESIDUAL),
-        restrict: G.program(S.RESTRICT),
-        coarseMask: G.program(S.COARSE_MASK),
-        prolongate: G.program(S.PROLONGATE),
-        gradient: G.program(S.GRADIENT),
-        mask: G.program(S.MASK),
-        rake: G.program(S.RAKE, ['KIND_DYE']),
-        copyVel: G.program(S.COPY_VEL),
-        copyS: G.program(S.COPY, ['KIND_S']),
-        copyDye: G.program(S.COPY, ['KIND_DYE']),
-        fillVel: G.program(S.FILL, ['KIND_VEL']),
-        fillS: G.program(S.FILL, ['KIND_S']),
-        fillDye: G.program(S.FILL, ['KIND_DYE']),
-        readback: G.program(S.READBACK),
-        composite: G.program(S.COMPOSITE),
-      };
-    } catch (err) {
-      /* a driver that rejects the GLSL: behave exactly like no WebGL */
-      console.info('[tunnel] shader build failed, tunnel off:', err && err.message);
-      try { G.destroy(); } catch { /* context may be gone */ }
-      G = null; P = null; fallback = true; stats.path = 'SHADER BUILD FAILED';
-      return false;
-    }
     fallback = false;
     stats.path = G.path;
-    stats.renderer = G.rendererString();
-    return true;
+    buildPrograms();
+    return false;
   }
+  /* Issue every program at once (well under a millisecond: nothing is read
+     back), then finish them on a later frame, once the driver is through. A
+     status read is a round trip that queues behind whatever the GPU process is
+     busy with, so the reads go in one pass when there is nothing left to wait
+     for, never spread thin over the seconds when the stage uploads and draws for
+     the first time. Without the extension "through" is a fence issued behind
+     the links; with it each program says so itself and is finished then. */
+  function buildPrograms() {
+    const pending = [], built = {};
+    const b = stats.build;
+    b.parallel = G.parallel; b.linked = 0; b.frames = 0; b.ms = 0; b.waitMs = 0; b.done = false;
+    const t0 = performance.now();
+    let fence = null;
+    building = true;
+    const finish = (job) => {
+      const tw = performance.now();
+      built[job.key] = G.finish(job.p);
+      b.waitMs += performance.now() - tw; b.linked++;
+    };
+    const tick = () => {
+      buildRaf = 0;
+      if (destroyed || lost || !G || G.gl.isContextLost()) { building = false; return; }
+      b.frames++;
+      try {
+        const force = b.frames > BUILD_POLL_FRAMES;
+        if (b.frames === 1) {
+          for (const [key, src, defines] of PROGRAMS) pending.push({ key, p: G.program(src, defines) });
+          if (!G.parallel) fence = G.fence();
+        } else if (G.parallel) {
+          for (let i = 0; i < pending.length; i++) {
+            if (force || G.linked(pending[i].p)) { finish(pending[i]); pending.splice(i--, 1); }
+          }
+        } else {
+          const through = G.fenceDone(fence);
+          if (through || force) {
+            if (!through) G.gl.deleteSync(fence);
+            fence = null;
+            while (pending.length) finish(pending.shift());
+          }
+        }
+      } catch (err) {
+        /* a driver that rejects the GLSL: behave exactly like no WebGL */
+        console.info('[tunnel] shader build failed, tunnel off:', err && err.message);
+        try { G.clearCanvas(); G.destroy(); } catch { /* context may be gone */ }
+        G = null; building = false; fallback = true; stats.path = 'SHADER BUILD FAILED';
+        return;
+      }
+      b.ms = performance.now() - t0;
+      if (pending.length) { buildRaf = requestAnimationFrame(tick); return; }
+      P = built; building = false; b.done = true;
+      stats.renderer = G.rendererString();
+      /* the grids on a frame of their own: allocation is a burst of uploads and clears */
+      buildRaf = requestAnimationFrame(() => { buildRaf = 0; resize(); resume(); });
+    };
+    tick();
+  }
+  function cancelBuild() { if (buildRaf) cancelAnimationFrame(buildRaf); buildRaf = 0; building = false; }
 
   function fill(prog, t, value) {
     const u = G.use(prog);
@@ -519,11 +574,17 @@ export function createTunnel(canvas, options = {}) {
       if (stats.steps < target) { if (show) draw(); warmRaf = requestAnimationFrame(chunk); }
       else then();
     };
-    chunk();
+    /* the first chunk on the next frame too: whatever asked (the grid
+       allocation, a tier change) has already had this one */
+    warmRaf = requestAnimationFrame(chunk);
   }
   /* Whatever the tier wants now: loop, settle and freeze, or nothing. */
   function resume() {
     if (!G || !F || lost || destroyed) return;
+    /* a warm-up under way already finishes what this call would start (every
+       state change that should alter it cancels it first); restarting it here
+       would starve it, since the page calls setVisible(true) on every scroll frame */
+    if (warmRaf) return;
     const spec = TIERS[tier];
     if (spec.off) return;
     if (!visible || document.hidden) return;
@@ -636,11 +697,12 @@ export function createTunnel(canvas, options = {}) {
   function onLost(e) {
     e.preventDefault();
     lost = true; stats.lost = true;
-    stop(); stopWarmup();
+    stop(); stopWarmup(); cancelBuild();
   }
   function onRestored() {
     lost = false; stats.lost = false;
     /* every GL object died with the context; drop them and rebuild */
+    cancelBuild();
     G = null; P = null; F = null; W = H = 0;
     stats.steps = 0; stats.stepMs = 0; stats.divRms = null;
     ramp.started = false;
@@ -657,7 +719,7 @@ export function createTunnel(canvas, options = {}) {
   const ro = 'ResizeObserver' in window ? new ResizeObserver(scheduleResize) : null;
   if (ro) ro.observe(canvas); else addEventListener('resize', scheduleResize);
   const statsTimer = setInterval(() => {
-    if (destroyed) return;
+    if (destroyed || building || buildRaf) return;       /* nothing to report until the grids exist */
     bus.emit('tunnel:stats', { grid: [W, H], jacobi: params.jacobi, steps: stats.steps, stepMs: stats.stepMs, tier, field: params.field, fps: stats.fps, frames: stats.frames, path: stats.path, running });
   }, 1000);
 
@@ -733,7 +795,7 @@ export function createTunnel(canvas, options = {}) {
     },
     destroy() {
       destroyed = true;
-      stop(); stopWarmup();
+      stop(); stopWarmup(); cancelBuild();
       clearTimeout(resizeTimer);
       clearInterval(statsTimer);
       if (ro) ro.disconnect(); else removeEventListener('resize', scheduleResize);

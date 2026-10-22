@@ -17,7 +17,7 @@
 .hid[data-hid="simulated"] .hid-chip { color: var(--paper); background: var(--livery-deep); padding: 2px var(--space-2) 2px var(--space-2); border-radius: var(--radius-pill); }
 
 /* gauges */
-.hid-stage { position: relative; min-width: 0; }
+.hid-stage { display: grid; gap: var(--space-4); min-width: 0; }
 .hid-gauges { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5); }
 .hid-gauge { margin: 0; display: grid; gap: var(--space-2); min-width: 0; }
 .hid-gauge canvas { width: 100%; aspect-ratio: 25 / 16; }
@@ -25,11 +25,14 @@
 .hid-gauge-row { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); border-top: 1px solid var(--line-hairline); padding-top: var(--space-2); }
 .hid-value { font-size: var(--fs-meta); color: var(--text-display); font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
 .hid[data-hid="live"] .hid-value, .hid[data-hid="simulated"] .hid-value { color: var(--livery); }
+.hid[data-hid="idle"] .hid-value, .hid[data-hid="unavailable"] .hid-value { color: var(--text-muted); }   /* resting placeholders, not readings */
 
-/* the instrument flag: drops over the dimmed gauges when there is nothing to read */
-.hid-flag { position: absolute; inset: 0; display: grid; place-content: center; pointer-events: none; }
+/* the instrument flag: its own strip under the dimmed dials when there is nothing to read
+   (never laid over a dial); dashed because nothing is being measured */
+.hid-flag { min-width: 0; }
 .hid-flag[hidden] { display: none; }
-.hid-flag-box { display: grid; gap: var(--space-1); justify-items: center; text-align: center; max-width: 100%; padding: var(--space-3) var(--space-4); border: 1px solid var(--line-strong); background: var(--surface-page); }
+.hid-flag-box { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: var(--space-1) var(--space-4); text-align: center; padding: var(--space-3) var(--space-4); border: 1px dashed var(--line-strong); }
+.hid-flag span { text-wrap: balance; }
 .hid-flag b { font-weight: 400; font-size: var(--fs-meta); letter-spacing: var(--ls-caps-wide); text-transform: uppercase; color: var(--text-display); }
 
 /* device line */
@@ -45,8 +48,7 @@
   .hid-gauge:first-child { grid-column: 1 / -1; justify-self: center; width: min(100%, 220px); }
   .hid-meta { grid-template-columns: 1fr 1fr; }
   .hid-meta > div:first-child { grid-column: 1 / -1; }
-  /* the rudder dial is the top row here, so the flag drops over it instead of the captions */
-  .hid-flag { place-content: start center; padding-top: 14%; }
+  .hid-flag-box { padding: var(--space-3); }
 }
 @media (prefers-reduced-motion: no-preference) {
   .hid-chip, .hid-value, .hid-gauge canvas { transition: color var(--dur-2) var(--ease-out), opacity var(--dur-2) var(--ease-out); }

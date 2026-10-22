@@ -22,13 +22,16 @@
                   textContent write per tick and only when the string changed.
                   Paused while the document is hidden or the wall is off screen.
                   At tier 0 the interval drops to 1 Hz.
-     strips       a rAF loop that runs only while the canvas is on screen, the
-                  document is visible and the tier is 1 or more. It records one
-                  frame interval per frame and draws at the tier's rate:
-                  tier 3 every frame, tier 2 every 33 ms, tier 1 every 100 ms.
-                  At tier 0 there is no loop: samples come from governor:stats
-                  (4 Hz, the governor's own loop) and the canvas repaints on
-                  scroll:idle, resize, tier change and mount only.
+     strips       tiers 2 and 3: a rAF loop that runs only while the canvas is on
+                  screen and the document is visible. It records one frame
+                  interval per frame and draws at the tier's rate: tier 3 every
+                  frame, tier 2 every 33 ms.
+                  Tiers 0 and 1: no loop of this module's own (the governor owns
+                  the only always-on loop). Samples come from governor:stats
+                  (about 4 Hz, every 15 governor frames): its p50 and the scroll
+                  velocity at that moment. Tier 1 redraws on each of those events
+                  while the canvas is on screen; tier 0 repaints on scroll:idle,
+                  resize, tier change and mount only.
      sr summary   one visually hidden sentence refreshed at most once per second;
                   it rides inside the sheet while the sheet is open (a modal makes
                   the rest of the page inert) and returns to the root on close.
@@ -43,7 +46,8 @@ import { governor } from './core/governor.js';
 import { scroll } from './core/scroll.js';
 
 const BUDGET_MS = 1000 / 60;                      // 16.7 ms: one frame at 60 Hz
-const DRAW_GAP_MS = { 3: 0, 2: 33, 1: 100, 0: Infinity };   // minimum ms between strip draws per tier
+const DRAW_GAP_MS = { 3: 0, 2: 33 };              // minimum ms between strip draws for the rAF tiers; tiers 0 and 1 follow governor:stats
+const STATS_GAP_MS = 250;                         // the governor's nominal stats interval (15 frames at 60 Hz) until one is measured
 const A11Y_MS = 1000;                             // the sr-only summary refreshes at most this often
 const FRAME_SCALE_MS = 40;                        // the frame strip's full height, 0 to 40 ms (30 fps sits at 33 ms)
 const VY_FLOOR = 500;                             // the velocity strip never zooms closer than ±500 px/s
@@ -80,7 +84,10 @@ function fmtClockWords(ms) {
   const m = Math.floor(t / 60), s = Math.floor(t % 60);
   return m ? `${m} minute${m === 1 ? '' : 's'} ${s} second${s === 1 ? '' : 's'}` : `${s} second${s === 1 ? '' : 's'}`;
 }
-const ms1 = (v) => (v > 0 ? v.toFixed(1) : DASH);
+/* FRAME values: one decimal under 100 ms, whole ms from 100 up, so the widest pair is 11 characters ("99.9 / 99.9",
+   "1000 / 1000"; the governor drops gaps over 1 s) and fits the 22 px value line of a 380 px wall. The rounding is
+   checked first so 99.96 reads 100, not 100.0. */
+const msFrame = (v) => (v > 0 ? (Math.round(v * 10) < 1000 ? v.toFixed(1) : String(Math.round(v))) : DASH);
 /* Non-finite readings (a NaN velocity from a zero-length scroll sample, an Infinity passed to set()) never reach a cell or the canvas. */
 const fin = (v, d = 0) => (Number.isFinite(v) ? v : d);
 
@@ -209,7 +216,7 @@ export function mountTelemetry(root, { layout = 'wall', budgetMs = BUDGET_MS, te
   const sr = el('p', 'sr-only tel-sr', 'Page telemetry: measuring.');
 
   /* ---- state ---- */
-  const frameRing = new Ring(opt.samples);        // ms per frame (tiers 1–3) or governor p50 at 4 Hz (tier 0)
+  const frameRing = new Ring(opt.samples);        // ms per frame (tiers 2–3) or governor p50 at about 4 Hz (tiers 0–1)
   const vyRing = new Ring(opt.samples);           // px/s
   let tier = governor.tier, reason = bus.state['governor:tier']?.reason || 'initial heuristic';
   let mode = layout, currentLayout = 'wall';
@@ -218,6 +225,7 @@ export function mountTelemetry(root, { layout = 'wall', budgetMs = BUDGET_MS, te
   if (!ctx) strips.dataset.fallback = 'no-2d';
   let w = 0, h = 0, dpr = 1, theme = null;
   let raf = 0, lastTick = 0, lastDraw = 0, draws = 0, lastDrawMs = 0, frames = 0;
+  let statsAt = 0, statsGap = 0;                  // when the last governor:stats arrived and the measured gap to the one before
   let canvasVisible = false, rootVisible = true, hidden = document.hidden;
   let textTimer = 0, textRate = 0, lastA11y = 0, ticks = 0;
   let longCount = 0, longLast = 0, longObs = null;
@@ -321,7 +329,9 @@ export function mountTelemetry(root, { layout = 'wall', budgetMs = BUDGET_MS, te
 
   /* ---- the strip loop ---- */
   /* w and h guard a zero-size strip: a zero-area canvas still counts as intersecting, and a loop that draws nothing is a loop nobody wants */
-  function loopWanted() { return !destroyed && opt.strips && !!ctx && tier >= 1 && canvasVisible && !hidden && w > 0 && h > 0; }
+  function drawWanted() { return !destroyed && opt.strips && !!ctx && canvasVisible && !hidden && w > 0 && h > 0; }
+  /* only tiers 2 and 3 keep a per-frame loop; tier 1 is "static canvases refreshed on demand" and draws on governor:stats instead */
+  function loopWanted() { return tier >= 2 && drawWanted(); }
   function syncLoop() {
     if (loopWanted()) { if (!raf) { lastTick = 0; raf = requestAnimationFrame(tick); } }
     else if (raf) { cancelAnimationFrame(raf); raf = 0; lastTick = 0; }
@@ -430,11 +440,16 @@ export function mountTelemetry(root, { layout = 'wall', budgetMs = BUDGET_MS, te
     syncLoop(); syncText();
     resize();   // the tier sets the DPR (governor.dpr()), so the backing store may change size; resize() redraws either way
   });
-  /* tier 0: the governor's 4 Hz stats feed the rings; the canvas repaints when the scroll stops */
+  /* tiers 0 and 1: the governor's stats (about 4 Hz, from its own loop) feed the rings. Tier 1 draws on each event while the canvas
+     is on screen; tier 0 repaints only when the scroll stops. The rings fill off screen too (two writes), so the history has no gap. */
   const offStats = bus.on('governor:stats', (s) => {
-    if (tier !== 0) return;
+    const now = performance.now();
+    if (statsAt && now - statsAt < 2000) statsGap = now - statsAt;   // a longer gap is a hidden tab, not the cadence
+    statsAt = now;
+    if (tier >= 2) return;
     if (s.p50Ms > 0) frameRing.push(s.p50Ms);
     vyRing.push(fin(scroll.state.vy));
+    if (tier === 1 && drawWanted()) draw(now);
   });
   const offIdle = bus.on('scroll:idle', () => { if (tier === 0) draw(performance.now(), true); });
 
@@ -471,16 +486,16 @@ export function mountTelemetry(root, { layout = 'wall', budgetMs = BUDGET_MS, te
   }
   /* Each cell as [value, unit] strings. Units are sentence-cased here; the CSS sets them in caps. Every unit line ends with the
      reading's source (the honesty rule); GOV's source is the governor the label names, and its reason text needs the room. The
-     lines are kept under about 50 characters so they fit the two clamped lines of a 390 px sheet. */
+     lines must word-wrap into the two clamped lines of a 380 px wall, about 23 characters each, with the source on the second. */
   function rows(r) {
     return {
-      frame: [`${ms1(r.p50)} / ${ms1(r.p95)}`, `ms p50 / p95 / budget ${r.budget.toFixed(1)} / src: raf`],
+      frame: [`${msFrame(r.p50)} / ${msFrame(r.p95)}`, `ms p50 / p95 / budget ${r.budget.toFixed(1)} / src: raf`],
       longtasks: r.longOk ? [`${r.longCount} / ${r.longLast ? Math.round(r.longLast) : DASH}`, 'count / last ms / src: longtask'] : [DASH, 'longtask not supported here'],
       scroll: [fmtSigned(r.vy), `px/s / peak ${fmtSigned(r.vyPeak)} / src: scroll`],
       viewport: [`${r.vw}${TIMES}${r.vh}`, `px / dpr ${+r.dpr.toFixed(2)} / scale ${r.vScale.toFixed(2)} / src: window`],
       net: r.netOk ? [fmtBytes(r.netBytes), `${r.netCount} req${r.netZero ? ` / ${r.netZero} at 0 B` : ''} / src: resource timing`] : [DASH, 'resource timing not supported here'],
-      tplus: [fmtClock(r.tplus), 'mm:ss.t since navigation / src: performance.now'],
-      gl: r.gl ? [`${fmtInt(r.gl.calls)} / ${fmtCompact(r.gl.triangles)}`, `calls / triangles / ${r.gl.ms.toFixed(1)} ms / src: renderer.info`] : [DASH, 'calls / triangles / no stage yet'],
+      tplus: [fmtClock(r.tplus), 'mm:ss.t since nav / src: performance.now'],
+      gl: r.gl ? [`${fmtInt(r.gl.calls)} / ${fmtCompact(r.gl.triangles)}`, `calls / tris / ${r.gl.ms.toFixed(1)} ms / src: renderer.info`] : [DASH, 'calls / tris / no stage yet'],
       gov: [`T${r.tier}`, `${r.reason}${r.pinned && !/pinned/i.test(r.reason) ? ' / pinned' : ''} / ceiling T${r.ceiling}`],
       input: [r.pointerKind.toUpperCase(), r.pointer ? `pointer ${r.pointer.x}, ${r.pointer.y} / src: pointermove` : 'pointer / no event yet'],
       mem: r.mem === null ? [DASH, 'MB JS heap / no performance.memory here'] : [r.mem.toFixed(1), 'MB JS heap / src: performance.memory'],
@@ -501,7 +516,7 @@ export function mountTelemetry(root, { layout = 'wall', budgetMs = BUDGET_MS, te
     cells.frame.cell.classList.toggle('is-over', r.p50 > r.budget);
     /* ticker segments */
     const segText = {
-      frame: `${ms1(r.p50)} ms`,
+      frame: `${msFrame(r.p50)} ms`,
       scroll: `${fmtSigned(r.vy)} px/s`,
       tplus: `T+ ${fmtClock(r.tplus)}`,
       gov: `T${r.tier}`,
@@ -523,7 +538,8 @@ export function mountTelemetry(root, { layout = 'wall', budgetMs = BUDGET_MS, te
     const out = ['TELEMETRY / LIVE / THIS PAGE / NO ROCKET DATA'];
     for (const k in cells) out.push(`${labels[k].padEnd(12)}${rw[k][0].padEnd(15)}${rw[k][1].toUpperCase()}`);
     const span = frameRing.sum();
-    out.push(`${'STRIPS'.padEnd(12)}${`${frameRing.filled} SAMPLES`.padEnd(15)}${tier === 0 ? 'P50 AT 4 HZ / REPAINT ON SCROLL IDLE' : `${(span / 1000).toFixed(1)} S / DRAW ${tier === 3 ? 'EVERY FRAME' : tier === 2 ? '30 HZ' : '10 HZ'}`}`);
+    const statsHz = (1000 / (statsGap || STATS_GAP_MS)).toFixed(1);
+    out.push(`${'STRIPS'.padEnd(12)}${`${frameRing.filled} SAMPLES`.padEnd(15)}${tier <= 1 ? `P50 AT ${statsHz} HZ / ${tier === 0 ? 'REPAINT ON SCROLL IDLE' : `DRAW ${statsHz} HZ`}` : `${(span / 1000).toFixed(1)} S / DRAW ${tier === 3 ? 'EVERY FRAME' : '30 HZ'}`}`);
     out.push(`${'SNAPSHOT'.padEnd(12)}${`T+ ${fmtClock(r.tplus)}`.padEnd(15)}${new Date().toISOString()}`);
     return out.join('\n');
   }
@@ -592,7 +608,7 @@ export function mountTelemetry(root, { layout = 'wall', budgetMs = BUDGET_MS, te
     close: closeSheet,
     get state() {
       return {
-        layout: currentLayout, mode, tier, loop: !!raf, drawGapMs: DRAW_GAP_MS[tier], draws, lastDrawMs, frames,
+        layout: currentLayout, mode, tier, loop: !!raf, drawGapMs: tier >= 2 ? DRAW_GAP_MS[tier] : tier === 1 ? Math.round(statsGap || STATS_GAP_MS) : Infinity, draws, lastDrawMs, frames,
         samples: frameRing.filled, capacity: frameRing.n, spanMs: frameRing.sum(), canvasVisible, rootVisible, hidden, sheetOpen: sheet.open,
         textHz: tier === 0 ? 1 : opt.textHz, ticks, longCount, longLast, longOk: !!longObs, netBytes, netCount, netZero, netOk: !!resObs,
         canvasSize: `${canvas.width}${TIMES}${canvas.height}`, dpr, ctx: !!ctx,

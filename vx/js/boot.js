@@ -53,6 +53,7 @@ const STEPS = ['FONTS', 'MANIFEST', 'GEOMETRY', 'RENDERER', 'GOVERNOR', 'INSTRUM
 const GREEN = 'RANGE IS GREEN', READY = 'READY', SKIPPED = 'SKIPPED';
 const FINAL_INDEX = 99;          // sort key that keeps the closing line last in timings
 const MODIFIER_KEYS = /^(Shift|Control|Alt|Meta|CapsLock|Tab|NumLock|ScrollLock|Dead|Fn|OS|Unidentified)$/;
+const ACTIVATE_KEYS = /^(Enter| |Spacebar)$/;   // the keys a focused link or button acts on itself
 
 const fmtInt = (n) => Math.round(n).toLocaleString('en-US');
 const fmtMs = (ms) => `${ms < 10 ? ms.toFixed(1) : Math.round(ms)} ms`;
@@ -323,7 +324,15 @@ export function createBoot({
 
   /* ---- skip: the SKIP button, any key, click, tap, wheel, or the first scroll ---- */
   const isControl = (t) => t && t.nodeType === 1 && /^(input|select|textarea|button|a)$/i.test(t.tagName);
-  function onKey(e) { if (e.metaKey || e.ctrlKey || e.altKey || MODIFIER_KEYS.test(e.key) || isControl(e.target)) return; skip(); }
+  const isField = (t) => t && t.nodeType === 1 && (/^(input|select|textarea)$/i.test(t.tagName) || t.isContentEditable);
+  /* Escape and any key on the overlay's own SKIP always skip; a text field keeps its keys; a link or another button keeps
+     only Enter / Space (the fact strip's links still navigate), every other key skips from there too. */
+  function onKey(e) {
+    if (e.metaKey || e.ctrlKey || e.altKey || MODIFIER_KEYS.test(e.key)) return;
+    const t = e.target;
+    if (e.key !== 'Escape' && t !== skipButton && (isField(t) || (isControl(t) && ACTIVATE_KEYS.test(e.key)))) return;
+    skip();
+  }
   function onPointer(e) { if (isControl(e.target)) return; skip(); }
   function onWheel() { skip(); }
   function onScroll() { if (elapsed() < SCROLL_GUARD_MS) { scrollY0 = window.scrollY; return; } if (Math.abs(window.scrollY - scrollY0) >= SCROLL_SKIP_PX) skip(); }

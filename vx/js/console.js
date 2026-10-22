@@ -6,7 +6,7 @@
    over the virtual filesystem in data/vfs.js (real files, real byte sizes).
 
    Opening: "/" when no input, textarea, select or contenteditable has focus,
-   Ctrl/Cmd+K anywhere, any element carrying [data-console-open]. Escape closes.
+   Ctrl/Cmd+K anywhere, any element carrying [data-console-open]. Escape, the ESC chip or a tap on the backdrop closes.
    Focus returns to whatever opened it.
 
    Commands are plain objects { name, args, help, run(argv, io, ctx), complete? }.
@@ -667,6 +667,25 @@ export function mountConsole({
     opener = t;
     open();
   }
+  /* A tap or click on the backdrop (the dimmed page around the sheet) closes the
+     dialog. In a modal <dialog> the backdrop's events target the dialog element
+     itself, while anything inside the sheet targets a descendant; the point must
+     also lie outside the sheet's box (its 1 px border also targets the dialog).
+     The press has to start on the backdrop too, so a text selection dragged out
+     of the log does not end the session. Listened on the dialog itself, not by
+     delegation from document, which iOS Safari does not reliably deliver taps to. */
+  let pressOnBackdrop = false;
+  function onBackdrop(e) {
+    if (e.target !== el) return false;
+    const r = el.getBoundingClientRect();
+    return e.clientX < r.left || e.clientX >= r.right || e.clientY < r.top || e.clientY >= r.bottom;
+  }
+  function onBackdropDown(e) { pressOnBackdrop = isOpen && onBackdrop(e); }
+  function onBackdropClick(e) {
+    const hit = pressOnBackdrop && isOpen && onBackdrop(e);
+    pressOnBackdrop = false;
+    if (hit) close();
+  }
   function onInputKey(e) {
     if (e.key === 'Tab' && !e.shiftKey && sug.items.length) { e.preventDefault(); accept(); return; }
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
@@ -690,7 +709,10 @@ export function mountConsole({
     follow = true;
     run(line);
   }
-  function onDialogClose() { if (isOpen) close(); }
+  /* The close event is queued as a task after el.close(); if the console is
+     re-opened before it runs, the stale event must not end the new session.
+     A genuine close always leaves .open false. */
+  function onDialogClose() { if (isOpen && !el.open) close(); }
   function onCancel(e) { e.preventDefault(); close(); }     // Escape from anywhere inside the modal
   /* On phones the software keyboard shrinks the visual viewport but not the
      layout viewport; the console tracks the visual viewport so the prompt stays
@@ -716,7 +738,11 @@ export function mountConsole({
   form.addEventListener('submit', onSubmit);
   log.addEventListener('scroll', onLogScroll, { passive: true });
   closeBtn.addEventListener('click', close);
-  if (!inline) { el.addEventListener('close', onDialogClose); el.addEventListener('cancel', onCancel); vv?.addEventListener('resize', onViewport); vv?.addEventListener('scroll', onViewport); }
+  if (!inline) {
+    el.addEventListener('close', onDialogClose); el.addEventListener('cancel', onCancel);
+    el.addEventListener('pointerdown', onBackdropDown); el.addEventListener('click', onBackdropClick);
+    vv?.addEventListener('resize', onViewport); vv?.addEventListener('scroll', onViewport);
+  }
   const unsubTier = governor.subscribe(({ tier }) => { el.dataset.tier = String(tier); });
   setCwd(cwd);
   if (inline) { isOpen = true; el.dataset.open = ''; if (banner) { bannered = true; printBanner(); flush(); } }

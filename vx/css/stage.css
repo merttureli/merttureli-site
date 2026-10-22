@@ -4,8 +4,13 @@
 .st-stage { position: relative; overflow: hidden; background: transparent; }
 .st-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: pan-y; }
 .st-canvas[hidden] { display: none; }
-/* Poster for pages without WebGL: the painted render, letterboxed on ink. */
-.st-poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: center; background: var(--ink-900); }
+/* Poster for pages without WebGL (also the first paint and reading mode): the painted render is a diagonal wide shot, so it is
+   stood upright where the live pad view stands the rocket instead of being fitted across the whole stage. Measured from the
+   file's alpha: the body axis runs at 147 deg (so +57 deg makes it vertical), the rocket is 83.1% of the image width long and its
+   midpoint sits at 51.2% / 51.3%. A 16:9 box 58% of the stage tall therefore draws the rocket about 86% of the stage height,
+   centred like the live model, so the crossfade to the first frame lands on the same silhouette. No fill: a rotated box must
+   not show as a dark plate over the tunnel; the stage's own ground is ink already. */
+.st-poster { position: absolute; inset: 50% auto auto 50%; width: auto; height: 58%; max-width: none; aspect-ratio: 16 / 9; object-fit: contain; object-position: center; transform-origin: 51.2% 51.3%; transform: translate(-51.2%, -51.3%) rotate(57deg); background: transparent; pointer-events: none; }
 .st-poster[hidden] { display: none; }
 /* Overlay for leaders and the lab's silhouette check: same box as the canvas, never catches the pointer. */
 .st-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }

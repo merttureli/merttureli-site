@@ -87,9 +87,11 @@
 .cs-viewer { position: fixed; inset: 0; border: 0; padding: 0; margin: 0; width: auto; height: auto; max-width: none; max-height: none; background: var(--ink-900); color: var(--paper); overscroll-behavior: contain; }
 .cs-viewer::backdrop { background: rgba(10, 10, 10, .94); }
 .cs-viewer[open] { display: grid; grid-template-rows: minmax(0, 1fr) auto; }
-.cs-viewer-stage { display: grid; place-items: center; min-height: 0; padding: var(--space-5); touch-action: pan-y; }
+/* one definite 1fr cell: an auto row grew to the picture's width-derived height and pushed it under the caption bar
+   on a landscape phone (844 x 390: a 796 x 530 box in a 390 px dialog); the cell now bounds the box in both axes */
+.cs-viewer-stage { display: grid; grid-template: minmax(0, 1fr) / minmax(0, 1fr); place-items: center; min-height: 0; overflow: hidden; padding: var(--space-5); touch-action: pan-y; }
 /* the picture fills the stage but never goes past 2 × its native size; --w / --h are set per frame by the module */
-.cs-viewer-img { width: 100%; height: 100%; max-width: calc(var(--w, 1280) * 2px); max-height: calc(var(--h, 1600) * 2px); object-fit: contain; -webkit-user-drag: none; user-select: none; }
+.cs-viewer-img { width: 100%; height: 100%; max-width: min(100%, calc(var(--w, 1280) * 2px)); max-height: min(100%, calc(var(--h, 1600) * 2px)); object-fit: contain; -webkit-user-drag: none; user-select: none; }
 .cs-viewer-bar { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3) var(--space-5); flex-wrap: wrap; padding: var(--space-3) var(--page-margin) calc(var(--space-3) + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--paper-a18); }
 .cs-viewer-cap { margin: 0; display: grid; gap: 3px; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: var(--lh-meta); color: var(--paper-a70); min-width: 0; }
 .cs-viewer-line { font-size: var(--fs-meta); color: var(--paper); font-variant-numeric: tabular-nums; }
@@ -100,7 +102,7 @@
   .cs-mark, .cs-btn { transition: opacity var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out), background var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out); }
 }
 
-/* widths, by the sheet's own width: 6 columns from 1000 px, 4 from 560 px, 3 below */
+/* widths, by the sheet's own width: 6 columns from 1000 px, 4 from 560 px, 3 from 420 px, 2 below */
 @container (max-width: 999px) { .cs-grid { --cs-cols: 4; } }
 @container (max-width: 559px) {
   .cs-head p { letter-spacing: .1em; }
@@ -118,6 +120,7 @@
   .cs-actions { width: 100%; }
   .cs-actions .cs-btn { flex: 1 1 0; }
 }
+@container (max-width: 419px) { .cs-grid { --cs-cols: 2; } }   /* narrow phones: two 160 px cells, not three 95 px stamps under their edge print */
 @supports not (container-type: inline-size) {
   @media (max-width: 1100px) { .cs-grid { --cs-cols: 4; } }
   @media (max-width: 700px) {
@@ -129,6 +132,7 @@
     .cs-mark { top: 0; bottom: auto; opacity: 1; }
     .cs-leader { grid-column: 1 / -1; aspect-ratio: auto; }
   }
+  @media (max-width: 439px) { .cs-grid { --cs-cols: 2; } }
 }
 /* touch: MARK is always shown, with a hit area reaching past its 9 px lettering; toolbar buttons grow to 44 px */
 @media (pointer: coarse) {

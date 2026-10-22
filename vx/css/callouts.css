@@ -13,7 +13,9 @@
   --co-accent-text: var(--livery);
   --co-accent-text: color-mix(in srgb, var(--livery) 72%, var(--paper));
   --co-label-w: 220px;                      /* label column width; the solver reads this */
-  /* --co-list-max (read by .co-sheet-list, default 36svh): the host's cap for the sheet's scrolling list.
+  /* --co-list-max (read by .co-sheet-list): the host's cap for the sheet's scrolling list. Without it the
+     whole sheet (head, list, nav) stays within 40 % of the viewport height, the list never under one row;
+     that default does not know the host's chrome, so a host with a stage above the sheet should set it.
      A host whose sheet sits under a stage sets it on the sheet root from the free space, e.g.
      calc(100svh - <chrome above> - <stage height> - <chrome below> - 115px), where 115 px is the sheet's
      own head, nav and padding (107 px measured; 95 px under 700 px tall) plus an 8 px gap. A host that
@@ -52,7 +54,9 @@
 .co-label:focus-visible { outline: 1px solid var(--co-ink); outline-offset: 4px; }
 .co-eyebrow { display: block; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps-wide); text-transform: uppercase; line-height: 1.4; color: var(--co-ink-70); font-variant-numeric: tabular-nums; transition: color var(--dur-2) var(--ease-out); }
 .co-name { display: block; margin-top: 2px; font-family: var(--font-display); font-weight: 500; font-size: 14px; line-height: 1.2; letter-spacing: -0.01em; color: var(--co-ink); }
-.co-sub { display: block; margin-top: 2px; font-family: var(--font-body); font-size: 12px; line-height: 1.3; color: var(--co-ink-70); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* the subtitle may take two lines on the rail (the solver reads the button's height, so a two-line label gets
+   its room); a third line, which no part story needs at 220 px, ends in the clamp's ellipsis */
+.co-sub { display: block; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; margin-top: 2px; font-family: var(--font-body); font-size: 12px; line-height: 1.3; color: var(--co-ink-70); overflow: hidden; }
 .co-label:hover .co-eyebrow { color: var(--co-ink); }
 .co-item.is-locked .co-eyebrow { color: var(--co-accent-text); }
 
@@ -79,13 +83,23 @@
 .co-sheet-index { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); color: var(--co-ink-70); font-variant-numeric: tabular-nums; }
 .co-sheet-station { flex: 1; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--co-ink); }
 .co-sheet-count { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--co-ink-70); font-variant-numeric: tabular-nums; }
-/* the list is the only part that scrolls: capped by the host's --co-list-max (36svh when the host says nothing)
-   and, when the host fixes the sheet's height, shrunk to whatever the head and nav leave */
-.co-sheet-list { flex: 1 1 auto; min-height: 0; max-height: var(--co-list-max, 36svh); overflow: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+/* the list is the only part that scrolls: capped by the host's --co-list-max (when the host says nothing, 40svh
+   less the 107 px of head, nav and padding, so the sheet never passes 40 % of the viewport) and, when the host
+   fixes the sheet's height, shrunk to whatever the head and nav leave */
+.co-sheet-list { flex: 1 1 auto; min-height: 0; max-height: var(--co-list-max, max(64px, calc(40svh - 107px))); overflow: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+/* the list's foot: while the list holds more than it shows (a phone in landscape shows one row of three), a mono
+   MORE mark sits at its bottom edge and fades as the end arrives. Scroll-driven: a list that does not overflow
+   has an inactive timeline, so the mark keeps its hidden base style; a browser without scroll timelines never
+   shows it. The negative margin keeps it out of the scroll height; it is hidden from assistive tech. */
+.co-sheet-list::after { content: "More \2193"; content: "More \2193" / ""; position: sticky; bottom: 0; z-index: 1; display: block; width: max-content; height: 20px; margin: -20px 0 0 auto; padding-left: var(--space-5); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: 20px; color: var(--co-ink-70); background: linear-gradient(to right, transparent, var(--ink-900) var(--space-4)); pointer-events: none; opacity: 0; visibility: hidden; }
+@supports (animation-timeline: scroll()) {
+  .co-sheet-list::after { animation: co-more linear both; animation-duration: auto; animation-timeline: scroll(); }
+}
+@keyframes co-more { 0%, 85% { opacity: 1; visibility: visible; } 100% { opacity: 0; visibility: hidden; } }
 .co-sheet .co-item { position: static; width: auto; transform: none; text-align: left; will-change: auto; border-bottom: 1px solid var(--co-ink-18); }
 .co-sheet .co-item:last-child { border-bottom: 0; }
 .co-sheet .co-label { padding: 10px 0; min-height: 44px; }
-.co-sheet .co-sub { white-space: normal; }
+.co-sheet .co-sub { display: block; -webkit-line-clamp: none; line-clamp: none; }   /* the sheet shows the whole subtitle */
 .co-sheet .co-desc-text { padding-top: 0; }
 .co-sheet .co-item.is-locked .co-desc-inner { padding-bottom: 12px; }
 .co-sheet-nav { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding-top: var(--space-2); border-top: 1px solid var(--co-ink-18); }
@@ -111,6 +125,7 @@
   .co-sheet-btn { min-height: 40px; }
   .co-strip-dot { height: 32px; }
   .co-sheet .co-label { padding: 8px 0; min-height: 40px; }
+  .co-sheet-list { max-height: var(--co-list-max, max(64px, calc(40svh - 95px))); }   /* the same 40 % rule over the tighter chrome */
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -127,4 +142,5 @@
   .co-sheet, .co-sheet-head, .co-sheet-nav, .co-sheet .co-item { border-color: CanvasText; }
   .co-strip-dot::before { background: CanvasText; }
   .co-strip-dot[aria-current="step"]::before { background: Highlight; }
+  .co-sheet-list::after { background: Canvas; color: CanvasText; }
 }

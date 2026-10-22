@@ -113,11 +113,30 @@
   .con-cal-months { grid-template-columns: 1fr 1fr; gap: var(--space-3); }
   .con-cal-grid { grid-template-columns: repeat(7, 1fr); font-size: 11px; }
 }
+/* Touch: the prompt is focused on open, and iOS Safari zooms the layout for
+   any focused input under 16 px (and stays zoomed after Escape). The prompt
+   alone goes to 16 px; the log, suggestions and head stay at 13 px. any-pointer
+   also covers an iPad driven from a trackpad, which still zooms. */
+@media (pointer: coarse), (any-pointer: coarse) {
+  .con-input { font-size: 16px; }
+}
+/* Touch: ESC and RUN get 44 x 44 px hit boxes. The pill is drawn by ::before
+   at the old 28 px height, and margin-block -8px gives the extra height back,
+   so the head and the prompt row keep their size; the box reaches into the
+   8 px head padding and the 44 px prompt row. The border moves to the pill
+   (padding +1 px keeps the width) and so does the focus ring. */
+@media (pointer: coarse) {
+  .con-close, .con-run { position: relative; min-width: 44px; min-height: 44px; margin-block: -8px; border: 0; padding: 0 calc(var(--space-3) + 1px); }
+  .con-close::before, .con-run::before { content: ""; position: absolute; inset: 8px 0; border: 1px solid var(--paper-a18); border-radius: var(--radius-pill); pointer-events: none; }
+  .con-close:hover::before, .con-run:hover::before { border-color: var(--paper); }
+  .con-close:focus-visible, .con-run:focus-visible { outline: none; }
+  .con-close:focus-visible::before, .con-run:focus-visible::before { outline: 1px solid currentColor; outline-offset: 3px; }
+}
 @media (prefers-reduced-motion: reduce) {
   .con[open], .con[open]::backdrop { animation: none; }
   .con-line--link a { transition: none; }
 }
 @media (forced-colors: active) {
-  .con, .con-head, .con-prompt, .con-suggest, .con-close, .con-run, .con-cal-head, .con-table [role="columnheader"] { border-color: CanvasText; }
+  .con, .con-head, .con-prompt, .con-suggest, .con-close, .con-run, .con-close::before, .con-run::before, .con-cal-head, .con-table [role="columnheader"] { border-color: CanvasText; }
   .con-sug[aria-selected="true"] { forced-color-adjust: none; outline: 1px solid Highlight; }
 }

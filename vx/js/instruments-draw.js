@@ -10,7 +10,10 @@
    the deep red marks only an over-budget frame time.
    Text that carries information (tick labels, scale labels, units, SRC lines,
    station names) is paper-a70 or stronger; paper-a45 is kept for the drum's
-   off faces and paper-a18 for hatching and unreachable tiers.
+   off faces and paper-a18 for hatching and unreachable tiers. The words a reader
+   needs on the tape (station index and name, 500 px tick numbers, SRC lines) are
+   9 to 10 px; a station name that does not fit steps down to 8 px, then takes an
+   ellipsis.
    All text is IBM Plex Mono through the theme's font string.
 
    Every painter tolerates NaN, Infinity and degenerate boxes: it draws what it
@@ -31,7 +34,12 @@ export const FLASH_MS = 240;          // annunciator flash on a tier change (his
 export const STROKE = 1.5;            // symbology stroke in CSS px
 export const CAPTION_H = 24;          // two caption lines (name/unit and SRC) under a stacked instrument
 export const NAME_PX = 9;             // caption name size (ALT, VSI, ENG)
-export const SRC_PX = 8.5;            // SRC line size: the largest that fits "SRC: SCROLL" in the 64 px rail
+export const SRC_PX = 9;              // SRC line size: "SRC: SCROLL" untracked is 59.4 px, inside the 63 px rail canvas
+export const STATION_IDX_PX = 10;     // station index on the rail tape
+export const STRIP_IDX_PX = 9;        // station index along the strip's top edge (10 px would clip at the canvas top)
+export const STATION_PX = 9;          // station name on the tape; fitted down to STATION_MIN_PX, then cut with an ellipsis
+export const STATION_MIN_PX = 8;
+export const TICK_PX = 9;             // 500 px tick numbers
 export const UNIT_PX = 7.5;           // caption unit size (PX, P95 16.8)
 const MAX_TICKS = 2000;               // loop guard for the tape ticks (far beyond any real tape)
 
@@ -93,14 +101,25 @@ function text(ctx, th, str, x, y, { px = 8, align = 'left', color = th.sym, spac
   ctx.textAlign = align; ctx.textBaseline = baseline; ctx.fillStyle = color;
   ctx.fillText(str, Math.round(x), Math.round(y));
 }
-/* Text that must fit a width: steps the size down to 5.5 px, then cuts characters. */
-function fitText(ctx, th, str, x, y, maxW, opts) {
+/* Text that must fit a width: steps the size down to opts.minPx (never below 8 px),
+   then cuts characters behind an ellipsis. Measures only; returns { s, px, w }. */
+function fitText(ctx, th, str, maxW, opts) {
+  const min = Math.max(8, opts.minPx || 8);
   let px = opts.px, s = str;
   font(ctx, th, px, opts.spacing || 0);
-  while (ctx.measureText(s).width > maxW && px > 5.5) { px -= 0.5; font(ctx, th, px, opts.spacing || 0); }
-  while (ctx.measureText(s).width > maxW && s.length > 1) s = s.slice(0, -1);
-  text(ctx, th, s, x, y, { ...opts, px });
+  while (ctx.measureText(s).width > maxW && px > min) { px = Math.max(min, px - 0.5); font(ctx, th, px, opts.spacing || 0); }
+  if (ctx.measureText(s).width > maxW) {
+    while (s.length > 1 && ctx.measureText(s + '\u2026').width > maxW) s = s.slice(0, -1);
+    s = s.replace(/\s+$/, '') + '\u2026';
+  }
+  return { s, px, w: ctx.measureText(s).width };
 }
+/* Glyph band of a line of caps or digits drawn with textBaseline 'middle': half an em
+   above the centre and 0.4 em below, slightly generous against Plex Mono's measured box
+   (4.4 / 3.6 px at 9 px), so collision tests err on the side of a gap. */
+const bandUp = (px) => 0.5 * px, bandDn = (px) => 0.4 * px;
+/* Axis-aligned rectangles [x0, y0, x1, y1]; true when they come closer than pad px. */
+const hits = (a, b, pad = 1) => a[0] < b[2] + pad && b[0] < a[2] + pad && a[1] < b[3] + pad && b[1] < a[3] + pad;
 function line(ctx, x0, y0, x1, y1, color, width = STROKE) {
   ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1);
   ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineCap = 'butt'; ctx.stroke();
@@ -117,7 +136,7 @@ function hatch(ctx, x, y, w, h, color) {
 function caption(ctx, th, w, h, name, unit, src) {
   text(ctx, th, name, 2, h - 15, { px: NAME_PX, color: th.sym, spacing: 0.08 });
   if (unit) text(ctx, th, unit, w - 2, h - 15, { px: UNIT_PX, align: 'right', color: th.mid, spacing: 0.04 });
-  text(ctx, th, src, 2, h - 5, { px: SRC_PX, color: th.mid, spacing: 0.02 });
+  text(ctx, th, src, 2, h - 5, { px: SRC_PX, color: th.mid });
 }
 /* Mix two CSS colours given as rgb arrays. */
 function mix(a, b, t) { return `rgb(${a.map((c, i) => Math.round(c + (b[i] - c) * t)).join(',')})`; }
@@ -182,35 +201,64 @@ export function drawAltimeter(ctx, th, w, h, d) {
   const yOf = (s) => cy - (s - y) * scale;        // deeper on the page = higher on the tape, like altitude
   const lo = y - cy / scale, hi = y + (tapeH - cy) / scale;   // scroll depths at the tape's bottom and top
   const boxTop = cy - 9, boxBot = cy + 9;          // drum box occupies this band
+  const drumBox = [6, boxTop, 60, boxBot];          // box plus its notch toward the scale
+  const tape = [0, 0, w, tapeH];
+  const inside = (r) => r[1] >= tape[1] && r[3] <= tape[3];
   ctx.save(); ctx.beginPath(); ctx.rect(0, 0, w, Math.max(0, tapeH)); ctx.clip();
   hatch(ctx, 0, 0, w, Math.min(tapeH, yOf(max)), th.faint);                  // beyond the page end
   hatch(ctx, 0, Math.max(0, yOf(0)), w, tapeH - Math.max(0, yOf(0)), th.faint); // above the page top
-  // station marks first so tick labels can yield to them
-  const marks = [];
+  // station marks first so tick labels can yield to them. Each mark is a hairline from
+  // x 24 to the edge; the index (10 px) sits above and the name (9 px) below, both
+  // right-aligned at the edge and set 13 px off the line so they clear the 14 px tall
+  // next-section bug. Text is drawn only when it clears the drum box by a pixel and
+  // lies inside the tape; every drawn rectangle is kept so tick numbers can yield.
+  const taken = [];
+  const right = w - 2, nameLeft = 12;               // the name never reaches the 10 px major ticks
   for (const s of data.sections) {
     const ty = yOf(num(s.top));
-    if (!(ty >= -14 && ty <= tapeH + 14)) continue;
-    marks.push(ty);
-    const col = s.state === 'next' || s.state === 'current' ? th.sym : th.mid;   // the orange is kept for the line and the bug: 8 px orange text on ink is 4.2:1
-    line(ctx, 24, Math.round(ty) + .5, w, Math.round(ty) + .5, s.state === 'next' ? th.livery : th.faint, 1);
-    // the index sits above the mark (glyphs about ty-10..ty-2), the name below it (about ty+3..ty+9);
-    // each is drawn only when it clears the drum box by a pixel and lies inside the tape
-    const idxOk = (ty - 2 < boxTop - 1 || ty - 10 > boxBot + 1) && ty - 10 >= 0 && ty - 2 <= tapeH;
-    const lblOk = (ty + 9 < boxTop - 1 || ty + 3 > boxBot + 1) && ty + 3 >= 0 && ty + 9 <= tapeH;
-    if (idxOk) text(ctx, th, s.index, w - 9, ty - 6, { px: 8, align: 'right', color: col });
-    if (s.label && lblOk) fitText(ctx, th, s.label, w - 9, ty + 6, w - 22, { px: 6.5, align: 'right', color: col, spacing: 0.02 });
+    if (!(ty >= -24 && ty <= tapeH + 24)) continue;
+    const r = Math.round(ty);
+    const col = s.state === 'next' || s.state === 'current' ? th.sym : th.mid;   // the orange is kept for the line and the bug: small orange text on ink is 4.2:1
+    line(ctx, 24, r + .5, w, r + .5, s.state === 'next' ? th.livery : th.faint, 1);
+    taken.push([24, r - 1, w, r + 2]);
+    const idx = String(s.index == null ? '' : s.index);
+    if (idx) {
+      const iy = r - 13;
+      font(ctx, th, STATION_IDX_PX);
+      const iw = ctx.measureText(idx).width;
+      const rect = [right - iw, iy - bandUp(STATION_IDX_PX), right, iy + bandDn(STATION_IDX_PX)];
+      if (!hits(rect, drumBox) && inside(rect)) {
+        text(ctx, th, idx, right, iy, { px: STATION_IDX_PX, align: 'right', color: col });
+        taken.push([13, rect[1], rect[2], rect[3]]);   // the whole row: '11500  05' would read as one number
+      }
+    }
+    if (s.label) {
+      const ny = r + 13;
+      const fit = fitText(ctx, th, String(s.label), right - nameLeft, { px: STATION_PX, minPx: STATION_MIN_PX });
+      const rect = [right - fit.w, ny - bandUp(fit.px), right, ny + bandDn(fit.px)];
+      if (!hits(rect, drumBox) && inside(rect)) {
+        text(ctx, th, fit.s, right, ny, { px: fit.px, align: 'right', color: col });
+        taken.push(rect);
+      }
+    }
   }
-  // ticks every 100 px, labels every 500 px
+  // ticks every 100 px, numbers every 500 px; a number is skipped where it would touch
+  // the drum box, a station's line or text or index row, or the number before it, or
+  // where the tape edge would cut it
   const first = Math.ceil(Math.max(lo, 0) / TAPE_TICK_PX) * TAPE_TICK_PX;
   const last = Math.min(hi, max);
+  let prev = null;
   for (let s = first, n = 0; s <= last + 1e-6 && n < MAX_TICKS; s += TAPE_TICK_PX, n++) {
     const ty = Math.round(yOf(s)) + .5;
     const major = Math.round(s) % TAPE_LABEL_PX === 0;
     line(ctx, 0, ty, major ? 10 : 5, ty, th.sym, 1);
     if (!major) continue;
-    if (ty > boxTop - 5 && ty < boxBot + 5) continue;
-    if (marks.some(m => Math.abs(m - ty) < 11)) continue;
-    text(ctx, th, String(Math.round(s)), 13, ty, { px: 8, color: th.mid });
+    const str = String(Math.round(s));
+    font(ctx, th, TICK_PX);
+    const rect = [13, ty - bandUp(TICK_PX), 13 + ctx.measureText(str).width, ty + bandDn(TICK_PX)];
+    if (!inside(rect) || hits(rect, drumBox) || taken.some(t => hits(rect, t)) || (prev && hits(rect, prev))) continue;
+    text(ctx, th, str, 13, ty, { px: TICK_PX, color: th.mid });
+    prev = rect;
   }
   // next-section bug: a notched orange marker on the right edge, like a PFD altitude bug
   if (Number.isFinite(data.nextTop)) {
@@ -246,17 +294,25 @@ function drawAltimeterWide(ctx, th, w, h, d) {
     marks.push(tx);
     const col = s.state === 'next' || s.state === 'current' ? th.sym : th.mid;
     line(ctx, tx, 0, tx, 8, s.state === 'next' ? th.livery : th.dim, 1);
-    if (tx < boxL - 6 || tx > boxR + 6) text(ctx, th, s.index, tx + 8, 5, { px: 7, color: col });   // 8 px clears the bug's half-width
+    if (tx < boxL - 6 || tx > boxR + 6) text(ctx, th, s.index, tx + 8, 5, { px: STRIP_IDX_PX, color: col });   // 8 px clears the bug's half-width; 9 px glyphs span y 0.5..8.6
   }
   const first = Math.ceil(Math.max(lo, 0) / TAPE_TICK_PX) * TAPE_TICK_PX;
   const last = Math.min(hi, max);
+  let prevR = -Infinity;
   for (let s = first, n = 0; s <= last + 1e-6 && n < MAX_TICKS; s += TAPE_TICK_PX, n++) {
     const tx = Math.round(xOf(s)) + .5;
     const major = Math.round(s) % TAPE_LABEL_PX === 0;
     line(ctx, tx, base, tx, base - (major ? 9 : 5), th.sym, 1);
-    if (!major || (tx > boxL - 12 && tx < boxR + 12)) continue;
+    if (!major) continue;
+    const str = String(Math.round(s));
+    font(ctx, th, TICK_PX);
+    const half = ctx.measureText(str).width / 2;
+    if (tx + half > boxL - 3 && tx - half < boxR + 3) continue;   // the number shares the drum box's rows (y 21..29): keep 3 px from it
+    if (tx - half < 1 || tx + half > w - 1) continue;            // never half a number at the cell edge
+    if (tx - half < prevR + 4) continue;                         // a dense tape scale never overprints two numbers
     if (marks.some(m => Math.abs(m - tx) < 14)) continue;
-    text(ctx, th, String(Math.round(s)), tx, base - 15, { px: 7.5, align: 'center', color: th.mid });
+    text(ctx, th, str, tx, base - 15, { px: TICK_PX, align: 'center', color: th.mid });
+    prevR = tx + half;
   }
   if (Number.isFinite(d.nextTop)) {
     const tx = Math.max(6, Math.min(w - 6, xOf(d.nextTop)));
@@ -269,7 +325,7 @@ function drawAltimeterWide(ctx, th, w, h, d) {
   line(ctx, cx, base - 10, cx, base, th.sym);      // reference pointer under the drum
   drawDrum(ctx, th, cx, 20, y, { boxW: 48, boxH: 18, px: 11, pointer: 'none' });
   text(ctx, th, 'ALT', 2, h - 6, { px: 8, color: th.sym, spacing: 0.08 });
-  text(ctx, th, 'SRC: SCROLL', w - 2, h - 6, { px: SRC_PX, align: 'right', color: th.mid, spacing: 0.02 });
+  text(ctx, th, 'SRC: SCROLL', w - 2, h - 6, { px: SRC_PX, align: 'right', color: th.mid });
 }
 
 /* ---- vertical speed indicator ---------------------------------------------- */
@@ -278,7 +334,7 @@ function drawAltimeterWide(ctx, th, w, h, d) {
    The pivot sits at the left edge and the 170 degree arc opens to the right, so a
    64 px rail gets a 50 px needle: zero points east, climb (scrolling down the page,
    vy > 0) swings the needle up, descent swings it down, as on the round instrument.
-   In the strip the text block (name, value, unit, SRC) needs about 58 px to the
+   In the strip the text block (name, value, unit, SRC) needs about 60 px to the
    right of the dial, so narrow cells shrink the dial first and drop its labels. */
 export function drawVsi(ctx, th, w, h, d) {
   th = norm(th);
@@ -286,7 +342,7 @@ export function drawVsi(ctx, th, w, h, d) {
   const wide = d.wide;
   const vy = num(d.vy), peak = num(d.peak);
   const dialH = wide ? h : h - CAPTION_H;
-  const R = wide ? Math.max(10, Math.min(24, h / 2 - 4, w - 76)) : Math.max(10, Math.min(w - 14, dialH / 2 - 4));
+  const R = wide ? Math.max(10, Math.min(24, h / 2 - 4, w - 78)) : Math.max(10, Math.min(w - 14, dialH / 2 - 4));
   const showLabels = R >= 20;
   const cx = 8, cy = Math.round(dialH / 2);
   const angle = (v) => -vsiAngle(v) * DEG;                 // canvas y points down, so climb is a negative angle
@@ -325,12 +381,12 @@ export function drawVsi(ctx, th, w, h, d) {
     text(ctx, th, 'VSI', tx, 10, { px: 8, color: th.sym, spacing: 0.08 });
     text(ctx, th, val, tx, cy + 1, { px: 11, color: th.sym });
     text(ctx, th, 'PX/S', tx + 38, cy + 2, { px: 6.5, color: th.mid, spacing: 0.04 });
-    text(ctx, th, 'SRC: SCROLL', tx, h - 7, { px: SRC_PX, color: th.mid, spacing: 0.02 });
+    text(ctx, th, 'SRC: SCROLL', tx, h - 7, { px: SRC_PX, color: th.mid });
   } else {
     if (showLabels) text(ctx, th, 'PX/S', cx + R - 8, cy + 11, { px: 6, align: 'right', color: th.mid, spacing: 0.04 });   // inside the dial, under the rest position
     text(ctx, th, 'VSI', 2, h - 15, { px: NAME_PX, color: th.sym, spacing: 0.08 });
     text(ctx, th, val, w - 2, h - 15, { px: NAME_PX, align: 'right', color: th.sym });
-    text(ctx, th, 'SRC: SCROLL', 2, h - 5, { px: SRC_PX, color: th.mid, spacing: 0.02 });
+    text(ctx, th, 'SRC: SCROLL', 2, h - 5, { px: SRC_PX, color: th.mid });
   }
 }
 
@@ -395,7 +451,7 @@ export function drawEngine(ctx, th, w, h, d) {
   }
   if (wide) {
     text(ctx, th, 'ENG', ax, cy + 5, { px: 8, color: th.sym, spacing: 0.08 });
-    text(ctx, th, 'SRC: RAF', ax, h - 7, { px: SRC_PX, color: th.mid, spacing: 0.02 });
+    text(ctx, th, 'SRC: RAF', ax, h - 7, { px: SRC_PX, color: th.mid });
   } else {
     caption(ctx, th, w, h, 'ENG', 'P95 ' + (p95 >= 100 ? '99+' : p95.toFixed(1)), 'SRC: RAF');
   }

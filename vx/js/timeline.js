@@ -7,7 +7,9 @@
         index. When the axis does not fit the column (566 px at 14 px per
         month, so any column under 600 px) it wraps into rows of equal month
         count, each row no wider than the column (two rows on a phone).
-     2. an hour track for the two launch days, 08:00–16:00 each. Events sit only
+     2. an hour track for the two launch days, 08:00–16:00 each (08:00 is the
+        drawn origin, not a published time; WEEKEND.track.note is printed under
+        the track). Events sit only
         where the case study gives a time (16:00, the range closing) or a bound
         (before noon); an untimed event is a dashed span across its day.
    Beside the axes, the log: one <button> per event in chronological order; it
@@ -111,15 +113,19 @@ export function mountTimeline(root, { pxPerMonth = PX_PER_MONTH, progress = null
   const monthsWrap = html('div', { class: 'tl-axis tl-months' });
   const hourOut = html('span', { class: 'tl-hour-out' }, '—');
   const hoursHead = html('div', { class: 'tl-sub meta-sm' },
-    html('span', {}, html('b', {}, 'Launch weekend'), ` / ${WEEKEND.place} / ${fmtDate(WEEKEND.date)} / ${fmtHour(WEEKEND.track.startHour)} – ${fmtHour(WEEKEND.track.endHour)}`),
+    html('span', {}, html('b', {}, 'Launch weekend'), ` / ${WEEKEND.place} / ${fmtDate(WEEKEND.date)} / ${fmtHour(WEEKEND.track.startHour)} origin – ${fmtHour(WEEKEND.track.endHour)} close`),
     hourOut);
   const hoursWrap = html('div', { class: 'tl-axis tl-hours' });
-  const hoursNote = html('p', { class: 'tl-note-line meta-sm' }, 'Events sit only where the case study gives a time or a bound. A dashed span carries no time.');
+  const hoursNote = html('p', { class: 'tl-note-line meta-sm' }, `${WEEKEND.track.note} A dashed span carries no time.`);
   const axes = html('div', { class: 'tl-axes' }, head, monthsWrap, hoursHead, hoursWrap, hoursNote);
   const log = html('ol', { class: 'tl-log', 'aria-label': 'Mission events in order' });
   root.append(html('div', { class: 'tl-grid' }, axes, log));
 
   /* ---- the log: one button per event ----------------------------------- */
+  // The Derived badge is a boxed inline-block, so nothing separates it from the
+  // label in innerText or a button's accessible name ("PRELIMINARY REVIEWDERIVED").
+  // A visually hidden " / " goes first; the box and its 8 px gap are unchanged.
+  const derivedTag = (cls) => [html('span', { class: 'sr-only' }, ' / '), html('span', { class: cls }, 'Derived')];
   const rows = new Map();   // id → { li, button, note, glyph }
   for (const e of events) {
     const noteId = `tl-note-${e.id}`;
@@ -127,7 +133,7 @@ export function mountTimeline(root, { pxPerMonth = PX_PER_MONTH, progress = null
     const button = html('button', { type: 'button', class: 'tl-row', 'aria-expanded': 'false', 'aria-controls': noteId, 'data-id': e.id, 'data-kind': e.kind },
       html('span', { class: 'tl-idx' }, e.index),
       html('span', { class: 'tl-when' }, e.when),
-      html('span', { class: 'tl-label' }, e.label, e.derived ? html('span', { class: 'tl-derived tl-row-derived' }, 'Derived') : null),
+      html('span', { class: 'tl-label' }, e.label, ...(e.derived ? derivedTag('tl-derived tl-row-derived') : [])),
       glyph);
     const body = html('div', { class: 'tl-note-body' }, html('p', { class: 'tl-sentence' }, e.sentence));
     if (e.id === 'published') {
@@ -135,7 +141,7 @@ export function mountTimeline(root, { pxPerMonth = PX_PER_MONTH, progress = null
         ...STANDINGS.rows.map(r => html('li', {}, html('span', { class: 'tl-place' }, r.place), html('span', {}, r.team)))));
     }
     const meta = html('p', { class: 'tl-meta meta-sm' }, html('span', {}, `Source / ${sourceFile(e.source)}`));
-    if (e.derived) meta.append(html('span', { class: 'tl-derived' }, 'Derived'), html('span', { class: 'tl-derivation' }, e.derivation || ''));
+    if (e.derived) meta.append(...derivedTag('tl-derived'), html('span', { class: 'tl-derivation' }, e.derivation || ''));
     body.append(meta);
     const note = html('div', { class: 'tl-note', id: noteId, hidden: '' }, body);
     const li = html('li', { class: 'tl-item', 'data-id': e.id }, button, note);
@@ -306,7 +312,7 @@ export function mountTimeline(root, { pxPerMonth = PX_PER_MONTH, progress = null
     const X = (h) => HOUR_GUTTER + (h - h0) * pph;
     const W = HOUR_GUTTER + hours * pph + RIGHT_PAD;
     const H = WEEKEND.days.length * HOUR_ROW_H + TOP_H;
-    const svgRoot = svg('svg', { class: 'tl-svg', width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `Hour track for ${WEEKEND.days.map(d => d.label.toLowerCase()).join(' and ')}, ${fmtHour(h0)} to ${fmtHour(h1)}` });
+    const svgRoot = svg('svg', { class: 'tl-svg', width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `Hour track for ${WEEKEND.days.map(d => d.label.toLowerCase()).join(' and ')}, drawn from an origin at ${fmtHour(h0)}, not a published time, to the published range close at ${fmtHour(h1)}` });
     const hits = html('div', { class: 'tl-hits', 'aria-hidden': 'true' });
     const everyHour = pph >= 52;   // "10:00" is about 39 px wide; label every hour only when 12 px stay between labels
     const dayRows = [];

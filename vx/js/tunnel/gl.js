@@ -1,7 +1,17 @@
 /* Thin WebGL2 layer for the tunnel: context and extension probe, program
    compilation with a define prefix, render targets and ping-pong pairs, a single
    fullscreen triangle, and bookkeeping so destroy() can release everything.
-   No library: the solver owns its own state. */
+   No library: the solver owns its own state.
+
+   Program builds come in two halves so the driver compiles while the page
+   does something else: program() only issues the compile and the link and
+   returns at once; finish() reads LINK_STATUS and the uniform table, the one
+   call that waits for the driver. linked() asks, without waiting, whether
+   finish() would return at once (KHR_parallel_shader_compile; null without
+   it: then a fence() issued after the links, polled with fenceDone(), says
+   when the driver has worked through them). No status is read anywhere else
+   on the build path: each read is a round trip that stalls the main thread
+   until the driver has caught up. */
 import { VERT, PRELUDE } from './shaders.js';
 
 const CONTEXT_ATTRIBUTES = {
@@ -52,16 +62,18 @@ export function createGL(canvas, { forcePacked = false } = {}) {
     textures.add(t);
     return t;
   }
-  /* A texture with a framebuffer on it. */
-  function target(w, h, role) {
+  /* A texture with a framebuffer on it. `check` reads the completeness status,
+     a blocking round trip: only the format probe below asks for it; field
+     targets reuse a format the probe has already proven, so `complete` is
+     null on them. */
+  function target(w, h, role, check = false) {
     const tex = texture(w, h, fmt[role]);
     const fbo = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
-    const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+    const complete = check ? gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE : null;
     framebuffers.add(fbo);
-    const t = { tex, fbo, w, h, role, complete: status === gl.FRAMEBUFFER_COMPLETE };
-    return t;
+    return { tex, fbo, w, h, role, complete };
   }
   function release(t) {
     if (!t) return;
@@ -80,7 +92,7 @@ export function createGL(canvas, { forcePacked = false } = {}) {
   /* Probe: a float path whose targets are not actually complete falls back to
      packed before any field is allocated. */
   if (!packed) {
-    const probe = target(4, 4, 'vel'), probe2 = target(4, 4, 'scalar32'), probe3 = target(4, 4, 'dye');
+    const probe = target(4, 4, 'vel', true), probe2 = target(4, 4, 'scalar32', true), probe3 = target(4, 4, 'dye', true);
     const ok = probe.complete && probe2.complete && probe3.complete;
     release(probe); release(probe2); release(probe3);
     if (!ok) { packed = true; fmt = FORMATS(); }
@@ -102,22 +114,19 @@ export function createGL(canvas, { forcePacked = false } = {}) {
   gl.disable(gl.CULL_FACE);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
 
+  /* Issue a compile; its status is read only if the link fails (finish). */
   function shader(type, src) {
     const s = gl.createShader(type);
     gl.shaderSource(s, src);
     gl.compileShader(s);
-    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS) && !gl.isContextLost()) {
-      const log = gl.getShaderInfoLog(s);
-      gl.deleteShader(s);
-      throw new Error(`tunnel shader: ${log}`);
-    }
     return s;
   }
   const vert = shader(gl.VERTEX_SHADER, VERT);
+  const extParallel = gl.getExtension('KHR_parallel_shader_compile');
 
-  /* Compile `source` behind the shared prelude. `defines` is a list such as
-     ['KIND_VEL']; PACKED is added from the storage path. Returns {prog, u}
-     where u maps every active uniform name (arrays without their [0]) to its location. */
+  /* Issue the compile and link of `source` behind the shared prelude and return
+     at once. `defines` is a list such as ['KIND_VEL']; PACKED is added from the
+     storage path. Returns {prog, frag, u: null}; finish(p) fills u. */
   function program(source, defines = []) {
     const all = (packed ? ['PACKED'] : []).concat(defines);
     const head = '#version 300 es\n' + all.map(d => `#define ${d}\n`).join('');
@@ -127,21 +136,50 @@ export function createGL(canvas, { forcePacked = false } = {}) {
     gl.attachShader(prog, frag);
     gl.bindAttribLocation(prog, 0, 'a_pos');
     gl.linkProgram(prog);
-    gl.deleteShader(frag);
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS) && !gl.isContextLost()) {
-      const log = gl.getProgramInfoLog(prog);
-      gl.deleteProgram(prog);
-      throw new Error(`tunnel program: ${log}`);
-    }
-    const u = Object.create(null);
-    const n = gl.getProgramParameter(prog, gl.ACTIVE_UNIFORMS) || 0;
-    for (let i = 0; i < n; i++) {
-      const info = gl.getActiveUniform(prog, i);
-      if (!info) continue;
-      u[info.name.replace(/\[0\]$/, '')] = gl.getUniformLocation(prog, info.name);
-    }
-    const p = { prog, u };
+    const p = { prog, frag, u: null };
     programs.add(p);
+    return p;
+  }
+  /* true when finish(p) would not wait, false while the driver is still on it,
+     null when the driver cannot say (no KHR_parallel_shader_compile). */
+  function linked(p) {
+    if (p.u) return true;
+    if (!extParallel) return null;
+    return gl.getProgramParameter(p.prog, extParallel.COMPLETION_STATUS_KHR) === true;
+  }
+  /* A fence behind everything issued so far, and a poll that never waits: the
+     status only changes between tasks, so poll it once per frame. A lost
+     context or a failed wait counts as done, so no caller polls forever. */
+  function fence() { const f = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0); gl.flush(); return f; }
+  function fenceDone(f) {
+    if (!f || gl.isContextLost()) return true;
+    const r = gl.clientWaitSync(f, 0, 0);
+    if (r === gl.TIMEOUT_EXPIRED) return false;
+    gl.deleteSync(f);
+    return true;
+  }
+  /* Read the link result (waits for the driver if it is not done) and map every
+     active uniform name (arrays without their [0]) to its location in p.u.
+     Throws with the compile and link logs when the driver rejected the GLSL. */
+  function finish(p) {
+    if (p.u) return p;
+    if (!gl.getProgramParameter(p.prog, gl.LINK_STATUS) && !gl.isContextLost()) {
+      const log = [gl.getShaderInfoLog(p.frag), gl.getShaderInfoLog(vert), gl.getProgramInfoLog(p.prog)]
+        .map((l) => (l || '').replace(/\0/g, '').trim()).filter(Boolean).join(' / ');
+      gl.deleteShader(p.frag); p.frag = null;
+      gl.deleteProgram(p.prog);
+      programs.delete(p);
+      throw new Error(`tunnel program: ${log || 'link failed'}`);
+    }
+    gl.deleteShader(p.frag); p.frag = null;
+    const u = Object.create(null);
+    const n = gl.getProgramParameter(p.prog, gl.ACTIVE_UNIFORMS) || 0;
+    for (let i = 0; i < n; i++) {
+      const info = gl.getActiveUniform(p.prog, i);
+      if (!info) continue;
+      u[info.name.replace(/\[0\]$/, '')] = gl.getUniformLocation(p.prog, info.name);
+    }
+    p.u = u;
     return p;
   }
 
@@ -196,7 +234,7 @@ export function createGL(canvas, { forcePacked = false } = {}) {
     } catch { return 'unknown'; }
   }
   function destroy() {
-    for (const p of programs) gl.deleteProgram(p.prog);
+    for (const p of programs) { if (p.frag) gl.deleteShader(p.frag); gl.deleteProgram(p.prog); }
     programs.clear();
     for (const f of framebuffers) gl.deleteFramebuffer(f);
     framebuffers.clear();
@@ -209,9 +247,9 @@ export function createGL(canvas, { forcePacked = false } = {}) {
   }
 
   return {
-    gl, packed, float32: !!extFloat && !packed,
+    gl, packed, float32: !!extFloat && !packed, parallel: !!extParallel,
     path: packed ? 'PACKED RGBA8' : extFloat ? 'FLOAT (RG16F / R32F / RGBA16F)' : 'HALF FLOAT (RG16F / R16F / RGBA16F)',
-    texture, target, pair, release, program, use, tex, draw, clearCanvas, readBytes, rendererString, destroy,
+    texture, target, pair, release, program, linked, finish, fence, fenceDone, use, tex, draw, clearCanvas, readBytes, rendererString, destroy,
     loseContextExt: gl.getExtension('WEBGL_lose_context'),
   };
 }

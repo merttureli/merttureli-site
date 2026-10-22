@@ -106,7 +106,7 @@ export function mountHid(root) {
       <div><dt>Buttons</dt><dd data-role="buttons">--</dd></div>
       <div><dt>Poll</dt><dd><span data-role="hz">--</span> <span class="hid-note" data-role="note"></span></dd></div>
     </dl>
-    <p class="hid-src">SRC: Gamepad API / your device / brakes read (axis + 1) / 2 / nothing leaves the browser</p>`;
+    <p class="hid-src">SRC: Gamepad API / your device / brakes read (axis + 1) ÷ 2 / nothing leaves the browser</p>`;
 
   const el = {
     chip: root.querySelector('[data-role="chip"]'),

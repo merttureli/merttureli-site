@@ -18,6 +18,9 @@ const MAX_PLAYING = [0, 1, 2, 4];       // concurrent playing videos per tier
 let nearObs, visObs, ro;
 
 function blocked() { return reduced.matches || governor.tier === 0 || document.hidden; }
+/* nearObs only attaches inside its own callback, and it skips while blocked (a background tab, reduced motion).
+   Its s.near flag is kept regardless, so whatever unblocks the page runs this pass before sync(), which needs s.attached. */
+function attachNear() { if (blocked()) return; for (const [v, s] of registry) if (s.near && v.isConnected) attach(v, s); }
 function attach(video, s) {
   if (s.attached) return;
   const sources = video.querySelectorAll('source[data-src]');
@@ -103,7 +106,7 @@ if ('IntersectionObserver' in window) {
   const origDisconnect = nearObs.disconnect.bind(nearObs);
   nearObs.disconnect = () => { origDisconnect(); farObs.disconnect(); };
 }
-document.addEventListener('visibilitychange', sync);
-reduced.addEventListener('change', () => { if (reduced.matches) for (const [v, s] of registry) detach(v, s); sync(); });
+document.addEventListener('visibilitychange', () => { attachNear(); sync(); });
+reduced.addEventListener('change', () => { if (reduced.matches) for (const [v, s] of registry) detach(v, s); else attachNear(); sync(); });
 governor.subscribe(() => { if (governor.tier === 0) for (const [v, s] of registry) detach(v, s); else for (const [v, s] of registry) if (s.near) attach(v, s); sync(); });
 export default media;

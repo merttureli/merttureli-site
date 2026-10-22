@@ -13,7 +13,8 @@
      name, size (bytes), repo (path from the repository root), href (the same
      path relative to the vx page, ../assets/...), and url (absolute, resolved
      from this module with import.meta.url so it works from any page depth).
-   README nodes are text files whose content is quoted from index.html. */
+   README nodes are text files whose content is quoted from index.html; they
+   have repo === null and totals() keeps them out of the file and byte counts. */
 
 /* [vfs path, repository path, bytes] — generated 2026-10-21 */
 export const FILES = [
@@ -269,11 +270,20 @@ export function walk(node, fn, depth = 0) {
 }
 /* Every node under a directory as a flat array (for completion and open by name). */
 export function flatten(node = root) { const out = []; walk(node, (n) => { if (n !== node) out.push(n); }); return out; }
-/* Recursive totals for a directory. */
+/* Recursive totals for a directory. files and bytes count repository files
+   only (the stat-measured FILES rows), so every byte figure the console prints
+   is a measured one and ~ agrees with TOTAL_BYTES: 109 files / 73,635,536 B.
+   The README nodes are page copy quoted from index.html, not repository files;
+   they are counted apart as notes / noteBytes (UTF-8 length of their text). */
 export function totals(node) {
-  let files = 0, dirs = 0, bytes = 0;
-  walk(node, (n) => { if (n === node) return; if (n.type === 'dir') dirs++; else { files++; bytes += n.size; } });
-  return { files, dirs, bytes };
+  let files = 0, dirs = 0, bytes = 0, notes = 0, noteBytes = 0;
+  walk(node, (n) => {
+    if (n === node) return;
+    if (n.type === 'dir') dirs++;
+    else if (n.repo) { files++; bytes += n.size; }
+    else { notes++; noteBytes += n.size; }
+  });
+  return { files, dirs, bytes, notes, noteBytes };
 }
 /* Bytes formatted the way the site writes sizes, in decimal units (1 MB =
    1,000,000 B) so the console agrees with the published numbers: assembly.bin

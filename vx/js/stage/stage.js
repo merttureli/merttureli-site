@@ -7,7 +7,8 @@
    context came back. In the pad view at tier 2 or better a 100 ms timer
    advances the idle yaw one step per draw, and a requestAnimationFrame chain
    runs only while the pointer parallax is still easing or a goto flies or
-   releases; both stop themselves otherwise.
+   releases; both stop themselves otherwise. Shader programs are linked while the
+   geometry builds (renderer.compileAsync, bounded), so the first frame only draws.
    Public API: ARCHITECTURE.md section 4. Events: stage:ready, stage:render,
    stage:station, and assets:geometry when the stage fetched the geometry itself. */
 import * as THREE from 'three';
@@ -31,6 +32,7 @@ const RELEASE_SPAN = 0.02;         // progress span over which a goto pose blend
 const RELEASE_MS = 480;            // and the time it takes without a scroll (tier 0: at once)
 const BODY_RADIUS_M = 0.034;       // body tube radius, for the silhouette capsule
 const NEAR_MIN = 0.00005, NEAR_MAX = 0.02; // near plane bounds (metres), recomputed per frame as the explorer does
+const COMPILE_WAIT_MS = 3000;      // longest the build waits for the driver to finish linking before the first draw
 const MODES = ['solid', 'edges', 'wire'];
 
 function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
@@ -296,6 +298,7 @@ export async function createStage({ canvas, geometry, tier = 3 } = {}) {
         if (destroyed) return false;
         entries = buildScene({ json: geo.json, buffer: geo.buffer, root, parts });
         byId = new Map(entries.map(en => [en.part.id, en]));
+        await precompile();
       }
       if (destroyed) return false;
       built = true;
@@ -310,6 +313,32 @@ export async function createStage({ canvas, geometry, tier = 3 } = {}) {
       stage.error = err;
       console.error('[stage] geometry failed', err);
       return false;
+    }
+  }
+
+  /* Link the shader programs before the first visible frame, so that frame only draws. compile() only
+     queues the GL compile and link. With KHR_parallel_shader_compile the driver links off the main thread
+     and compileAsync resolves once the programs report complete; the transparent back and front passes the
+     descent switches the parts to (applyAppearance) are queued too, so the first scroll into the walk does
+     not link on the main thread either, and the wait covers the pad view's programs. The wait is bounded:
+     a lost context or a driver that never reports completion only falls back to linking on the first draw.
+     Without the extension the pad view's programs are queued now (a head start, no wait): anything queued
+     ahead of the first draw would hold it, and compileAsync would only warn that the extension is missing. */
+  async function precompile() {
+    let timer = 0, opaque = [];
+    try {
+      if (!renderer.extensions.has('KHR_parallel_shader_compile')) { renderer.compile(scene, camera); return; }
+      opaque = entries.filter(en => en.mesh && !en.mesh.material.transparent).map(en => en.mesh.material);
+      renderer.compile(scene, camera);
+      for (const m of opaque) m.transparent = true;
+      renderer.compile(scene, camera);
+      for (const m of opaque) { m.transparent = false; m.needsUpdate = true; }
+      // re-selects the pad view's programs (already queued, nothing new compiles) and waits for them
+      await Promise.race([renderer.compileAsync(scene, camera), new Promise((resolve) => { timer = setTimeout(resolve, COMPILE_WAIT_MS); })]);
+    } catch { /* not fatal: the first draw links whatever is left, as it did before */ }
+    finally {
+      clearTimeout(timer);
+      for (const m of opaque) if (m.transparent) { m.transparent = false; m.needsUpdate = true; }
     }
   }
 

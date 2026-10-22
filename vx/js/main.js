@@ -45,6 +45,7 @@ let instrumentsReady = Promise.resolve();
 let tunnelFields = ['smoke', 'velocity', 'pressure', 'vorticity'];
 let tunnelFrozen = false, tunnelStarted = false, lastFade = -1, tunnelOffset = { x: 0, y: 0 }, tunnelModule = null;
 let sheetStation = -1, dimsManual = false, dimsAuto = null;
+let pendingRoute = null;   // an unknown hash seen before the console mounted
 
 /* ---------- the live region ------------------------------------------------- */
 const announceEl = $('announce');
@@ -64,7 +65,8 @@ for (const el of document.querySelectorAll('main > section[data-station]')) scro
 
 const STATION_KEYS = ['nose', 'camera', 'pcb', 'battery', 'coupler', 'altimeter', 'motor', 'cap'];
 const STATION_LABELS = ['Nose cone', 'Camera', 'PCB stack', 'Battery', 'Coupler', 'Altimeter', 'Motor', 'Screw cap'];
-function headerH() { return parseFloat(getComputedStyle(root).getPropertyValue('--header-h')) || 88; }
+const headerEl = document.querySelector('.vx-header');
+function headerH() { return (headerEl && headerEl.getBoundingClientRect().height) || parseFloat(getComputedStyle(root).getPropertyValue('--header-h')) || 88; }
 function stationProgress(k) {
   const stops = mods.stage && mods.stage.path && mods.stage.path.stops;
   if (stops && stops[k] !== undefined) return stops[k];
@@ -85,7 +87,9 @@ function routeHash() {
   if (!id || id === 'card') return;
   if (SECTION_IDS.includes(id)) { scrollToSection(id); return; }
   if (document.getElementById(id)) return;   /* a real fragment (#main from the skip link): the browser's own navigation stands */
-  /* no element carries the id: the route logic directly, with no echo and nothing in the console's history */
+  /* no element carries the id: the console's goto prints NO SECTION AT #id in its log, scrolls to the top, and console:run relays the line to #announce */
+  if (mods.console) { pendingRoute = null; mods.console.run(`goto #${id}`, { echo: false }); return; }
+  pendingRoute = id;   /* the console is not mounted yet: the same notice now, and the log line once it is */
   console.info(`[vx] NO SECTION AT #${id}`);
   announce(`No section at #${id}`);
   scrollTo({ top: 0, behavior: 'instant' });
@@ -160,6 +164,9 @@ const bootResult = (async () => {
   try { return await boot.run(); } catch (err) { fail('boot', err); try { overlay.remove(); } catch {} return null; }
 })();
 bus.on('boot:done', ({ skipped, bypassed }) => {
+  /* boot:done fires before the overlay is removed: if focus is still inside it (SKIP from the keyboard), it goes to the skip link rather than
+     falling into the body when the overlay leaves the document */
+  if (overlay && overlay.isConnected && overlay.contains(document.activeElement)) document.querySelector('.skip-link')?.focus({ preventScroll: true });
   announce(bypassed ? 'Boot bypassed. Range is green.' : skipped ? 'Boot skipped. Range is green.' : 'Boot complete. Range is green.');
   setTimeout(routeHash, 60);
   startTunnel();
@@ -189,7 +196,8 @@ instrumentsReady = (async () => {
     mods.telemetry = mountTelemetry($('telemetry'), { layout: 'auto' });
   });
 })();
-function stationUp() { return sheetStation >= 0 && progress > 0.065 && progress < 0.94 && rangeOnScreen && !readerOn; }
+/* on phones the sheet waits for the descent flag (0.12): before it, the fading hero copy still sits where the sheet would */
+function stationUp() { return sheetStation >= 0 && progress > (narrow.matches ? 0.12 : 0.065) && progress < 0.94 && rangeOnScreen && !readerOn; }
 function syncDock() {
   let open;
   if (telUser === null) open = progress < 0.12 && rangeOnScreen && !readerOn;
@@ -255,7 +263,13 @@ function syncStageVisibility() {
 }
 /* the callout sheet (phones) only exists while a station is current and the range is on screen; the page's own progress gates it too,
    because stage:station {index: -1} only arrives with a render and the stage does not render once its canvas has left the viewport */
-function syncSheet() { sheetRoot.classList.toggle('is-idle', !stationUp()); syncDock(); }
+function syncSheet() {
+  const up = stationUp();
+  sheetRoot.classList.toggle('is-idle', !up);
+  /* the pull-out with no station current: the phone's scene grows into the space the sheet used (mobile.css) */
+  sticky.classList.toggle('is-pullout', !up && progress >= 0.88 && !readerOn);
+  syncDock();
+}
 bus.on('stage:station', ({ index }) => { sheetStation = index; syncSheet(); });
 /* the dimension overlay is on by default in the pad view only (the heading and the page margin); `dim` makes it manual */
 function syncDims(p = progress) {
@@ -279,6 +293,24 @@ async function mountCalloutsNow(stage) {
     bus.on('callouts:unlock', () => { calloutLocked = false; syncDock(); stage.release(); });
     bus.on('callouts:station', ({ index, source }) => { if (source === 'sheet' && index >= 0) scrollToProgress(stationProgress(index), 'instant'); });
   });
+}
+/* focus a locked part's label as soon as a render has placed it (cross-station locks: the label is hidden until the new station is solved) */
+let focusWatch = null;
+function focusCalloutWhenPlaced(id) {
+  focusWatch?.();
+  let renders = 0;
+  /* only once the stage stands at the part's station: a station change re-appends the labels, which would drop a focus given earlier */
+  const st = mods.stage && mods.stage.stations ? mods.stage.stations.findIndex((s) => s.partIds && s.partIds.includes(id)) : -1;
+  const tryFocus = () => {
+    if (st >= 0 && mods.stage.station !== st) return false;
+    const btn = document.getElementById(`co-label-${id}`);
+    const item = btn && btn.closest('.co-item');
+    if (btn && item && !item.classList.contains('is-off') && !item.hidden && btn.offsetParent !== null) { btn.focus({ preventScroll: true }); return true; }
+    return false;
+  };
+  if (tryFocus()) return;
+  const off = bus.on('stage:render', () => { if (tryFocus() || ++renders > 90) { off(); focusWatch = null; } });
+  focusWatch = off;
 }
 if (stageModule) startStage(); else showPoster('No WebGL / poster');
 
@@ -407,10 +439,31 @@ function setupVideos() {
     cell.append(btn);
     const attach = () => { for (const s of v.querySelectorAll('source[data-src]')) { s.src = s.dataset.src; s.removeAttribute('data-src'); } v.load(); };
     if (coarse.matches && v.hasAttribute('data-coarse-poster')) {
-      /* the 10.9 MB turntable waits for a tap on phones: the poster stands in */
+      /* the 10.9 MB turntable waits for a tap on phones: the poster stands in. The tap hands it to media.js, which attaches it while near,
+         plays it while visible under the tier cap and detaches it beyond three viewports like every other video */
       v.removeAttribute('data-stream');
       btn.hidden = false;
-      btn.addEventListener('click', () => { attach(); v.play().then(() => { btn.hidden = true; }).catch(() => {}); });
+      let handed = false, watched = false;
+      v.addEventListener('playing', () => { btn.hidden = true; });
+      btn.addEventListener('click', () => {
+        if (governor.tier > 0) {
+          if (!handed) { handed = true; v.setAttribute('data-stream', ''); media.register(v); }
+          btn.hidden = true; media.refresh();
+          return;
+        }
+        /* tier 0 shows posters only (media.js would pause it): the tap plays it by hand, and an observer pauses it off screen and releases it
+           beyond three viewports */
+        attach(); v.play().then(() => { btn.hidden = true; }).catch(() => {});
+        if (watched || !('IntersectionObserver' in window)) return;
+        watched = true;
+        new IntersectionObserver((es) => { if (!es[es.length - 1].isIntersecting && !v.paused) { v.pause(); btn.hidden = false; } }, { threshold: 0.05 }).observe(v);
+        new IntersectionObserver((es) => {
+          if (es[es.length - 1].isIntersecting || !v.querySelector('source[src]')) return;
+          v.pause();
+          for (const s of v.querySelectorAll('source[src]')) { s.dataset.src = s.src; s.removeAttribute('src'); }
+          v.removeAttribute('src'); v.load(); btn.hidden = false;
+        }, { rootMargin: '300% 0px' }).observe(v);
+      });
       continue;
     }
     /* PLAY is for a real autoplay refusal: play() is wrapped so a NotAllowedError from media.js's own call is seen here. A video media.js
@@ -444,10 +497,16 @@ async function mountRest() {
     const { mountConsole } = await import('./console.js');
     mods.console = mountConsole({ commands: pageCommands(), live: false });
     bus.on('console:run', ({ output }) => { const line = (output || '').split('\n').find((l) => l.trim()); if (line) announce(line); });
+    if (pendingRoute && decodeURIComponent(location.hash.slice(1)) === pendingRoute) routeHash();   /* an unknown hash seen before the mount: now into the log */
+    pendingRoute = null;
   });
   await guardAsync('dimension', async () => {
     const { mountDimensions } = await import('./dimension.js');
-    mods.dims = mountDimensions($('dimensions'), { noteInset: narrow.matches ? 100 : 96 });
+    /* the corner note sits at (inset, viewport height - inset): on phones it goes in the gap between the copy and the stage bar, which is 48 px over the 56 px strip on touch */
+    const barTop = $('stage-bar').getBoundingClientRect().top, below = innerHeight - barTop;
+    const noteInset = narrow.matches ? (below > 40 && below < 200 ? Math.round(below) + 8 : 120) : 96;
+    mods.dims = mountDimensions($('dimensions'), { noteInset });
+    $('dimensions').style.setProperty('--dim-note-inset', `${noteInset}px`);   /* vx.css / mobile.css shift the note's x onto the page margin */
     syncDims();
   });
   await guardAsync('timeline', async () => {
@@ -457,6 +516,9 @@ async function mountRest() {
   await guardAsync('ladder', async () => {
     const { mountLadder } = await import('./ladder.js');
     mods.ladder = mountLadder($('ladder-root'));
+    /* the notes log runs full width under the two columns (vx.css lays it out); the section is static once rendered */
+    const notes = $('ladder-root').querySelector('.ld-notes'), log = $('ladder-log');
+    if (notes && log) log.append(notes);
   });
   await guardAsync('hid', async () => {
     const { mountHid } = await import('./hid.js');
@@ -469,9 +531,31 @@ async function mountRest() {
   scroll.refresh();
   mods.instruments?.refresh();
   mods.dims?.refresh();
+  placePins();
   scheduleManifest();
 }
 mountRest();
+
+/* ---------- pinned columns (desktop): the short column of a two-column section rides along -------- */
+/* a column that fits under the header pins 32 px below it; a taller one pins with its bottom 32 px above the viewport's, so it scrolls
+   through once and then holds its last lines beside the long column (vx.css: .js .pin { position: sticky; top: var(--pin-top) }) */
+const pinEls = [...document.querySelectorAll('.pin')];
+const wideQuery = matchMedia('(min-width: 860px)');
+let pinRaf = 0;
+function placePins() {
+  pinRaf = 0;
+  if (!wideQuery.matches) return;
+  const top = Math.round(headerH() + 32), floor = innerHeight - 32;
+  for (const el of pinEls) {
+    const t = `${Math.min(top, Math.round(floor - el.offsetHeight))}px`;
+    if (el.style.getPropertyValue('--pin-top') !== t) el.style.setProperty('--pin-top', t);
+  }
+}
+const schedulePins = () => { if (!pinRaf) pinRaf = requestAnimationFrame(placePins); };
+if ('ResizeObserver' in window) { const ro = new ResizeObserver(schedulePins); for (const el of pinEls) ro.observe(el); }
+addEventListener('resize', schedulePins);
+wideQuery.addEventListener?.('change', schedulePins);
+placePins();
 
 /* ---------- the console's command table --------------------------------------- */
 function go(href, io, { newTab = false } = {}) {
@@ -491,16 +575,23 @@ function pageCommands() {
         if (!t) return io.error('Usage: goto <station | part id | #section>');
         const raw = String(t), key = raw.replace(/^#/, '').toLowerCase();
         if (SECTION_IDS.includes(key)) { scrollToSection(key); return io.print(`Scrolled to #${key}`); }
+        if (raw.startsWith('#')) { scrollTo({ top: 0, behavior: 'instant' }); return io.error(`NO SECTION AT #${key}`); }   /* a # is always a section: #3 is not station 3 */
         const si = STATION_KEYS.indexOf(key) >= 0 ? STATION_KEYS.indexOf(key) : (/^[1-8]$/.test(key) ? Number(key) - 1 : -1);
         if (si >= 0) { scrollToProgress(stationProgress(si), 'instant'); return io.print(`Station ${pad2(si + 1)} / ${STATION_LABELS[si]} / progress ${stationProgress(si).toFixed(3)}`, { className: 'con-line--ok' }); }
         const id = /^\d+$/.test(key) ? Number(key) : NaN;
         if (Number.isFinite(id) && mods.stage && !mods.stage.fallback) {
           const part = mods.stage.parts.find((p) => p.id === id);
           if (!part || part.referenceOnly) return io.error(`No drawable part ${pad2(id)}`);
-          if (mods.callouts) mods.callouts.lock(id, { focus: true }); else mods.stage.goto(id).catch(() => {});
-          return io.print(`Part ${pad2(id)} / ${part.label}`, { className: 'con-line--ok' });
+          io.print(`Part ${pad2(id)} / ${part.label}`, { className: 'con-line--ok' });
+          if (mods.callouts) {
+            /* the modal console would swallow the focus (the page behind it is inert), and the new station's label is still unplaced (is-off) until
+               the next render: close first, lock, and focus the label once a render has placed it */
+            mods.console?.close();
+            mods.callouts.lock(id);
+            focusCalloutWhenPlaced(id);
+          } else mods.stage.goto(id).catch(() => {});
+          return;
         }
-        if (raw.startsWith('#')) { scrollTo({ top: 0, behavior: 'instant' }); return io.error(`NO SECTION AT #${key}`); }
         return io.error(`Nothing named ${raw}. Stations: ${STATION_KEYS.join(', ')}. Sections start with #.`);
       } },
     { name: 'explode', args: '<0..1 | auto>', help: 'Override the explode schedule, or return to it',
@@ -536,6 +627,7 @@ function pageCommands() {
         const { rows, total } = manifestRows();
         io.table(rows.map((r) => [r.name, r.size, r.ms]), { head: ['File', 'Transfer', 'Duration'], align: ['l', 'r', 'r'] });
         io.print(total, { className: 'con-line--dim' });
+        const foot = $('manifest-foot'); if (foot) io.print(foot.textContent.trim(), { className: 'con-line--dim' });   /* what the page stores, as the manifest's footer says it */
         for (const f of failures) io.error(`MODULE FAILED ${f.name}: ${f.message}`);
       } },
     { name: 'export', args: '', help: 'Compose the marked contact-sheet frames into a PNG and download it',

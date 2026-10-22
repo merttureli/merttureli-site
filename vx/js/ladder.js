@@ -42,6 +42,9 @@ const MIN_W = 300, MAX_W = 460;    // the SVG's natural width range; a narrower 
 
 function clampPpf(v) { return Math.max(0.25, Math.min(0.8, +v || PX_PER_FT)); }
 function sourceFile(src) { const m = /^([\w./-]+\.html)/.exec(src || ''); return m ? m[1] : 'projects/charger.html'; }
+// The boxed Derived badge, preceded by a visually hidden " / " so innerText and
+// accessible names read "AT THE SIMULATED APOGEE / DERIVED", not "APOGEEDERIVED".
+const derivedTag = () => [html('span', { class: 'sr-only' }, ' / '), html('span', { class: 'ld-derived' }, 'Derived')];
 const fits = (t, maxPx) => textWidth(t, FONT, TRACK) <= maxPx;
 /* Clip one line to the column with an ellipsis (the last resort; nothing in mission.js needs it above 150 px). */
 function clip(text, maxPx) {
@@ -214,7 +217,7 @@ export function mountLadder(root, { pxPerFt = PX_PER_FT, progress = null } = {})
     const bonusRow = html('div', { class: 'ld-prow ld-pbonus', 'data-derived': '' },
       html('span', { class: 'ld-pidx meta-sm' }, '+'),
       html('span', { class: 'ld-pval' }, `+${P.bonus.value}`),
-      html('span', { class: 'ld-plabel' }, P.bonus.label, html('span', { class: 'ld-derived' }, 'Derived'), html('span', { class: 'ld-pextra' }, ` ${P.bonus.derivation}`)));
+      html('span', { class: 'ld-plabel' }, P.bonus.label, ...derivedTag(), html('span', { class: 'ld-pextra' }, ` ${P.bonus.derivation}`)));
     pointsWrap.append(html('h3', { class: 'ld-sub meta-sm' }, html('b', {}, 'Points ladder'), ' / where the points are'), list, totalRow, bonusRow);
   }
 
@@ -225,7 +228,7 @@ export function mountLadder(root, { pxPerFt = PX_PER_FT, progress = null } = {})
     const list = html('ol', { class: 'ld-notes-list' });
     items.forEach((it, i) => {
       const meta = html('p', { class: 'ld-nmeta meta-sm' }, html('span', {}, `Source / ${sourceFile(it.source)}`));
-      if (it.derived) meta.append(html('span', { class: 'ld-derived' }, 'Derived'), html('span', { class: 'ld-derivation' }, it.derivation || ''));
+      if (it.derived) meta.append(...derivedTag(), html('span', { class: 'ld-derivation' }, it.derivation || ''));
       list.append(html('li', { class: 'ld-nrow', 'data-id': it.id, 'data-derived': it.derived ? '' : null },
         html('p', { class: 'ld-nhead meta-sm' }, html('span', { class: 'ld-nidx' }, String(i + 1).padStart(2, '0')), html('b', {}, it.value), html('span', {}, `/ ${it.label}`)),
         html('p', { class: 'ld-nsentence' }, it.sentence),
