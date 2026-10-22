@@ -49,10 +49,10 @@ export default function create({ THREE = THREE_, renderer, quality = 'high' } = 
   const mat = {
     shell: M({ color: 0x6d717c, roughness: 0.74, metalness: 0, vertexColors: true }),
     plate: M({ color: 0xd3d7dd, roughness: 0.4, metalness: 0.6, emissive: 0x000000 }),
-    ceramic: M({ color: 0xefede7, roughness: 0.82, metalness: 0 }),
-    pellets: M({ color: 0x4c5056, roughness: 0.6, metalness: 0.2 }),
-    sealant: M({ color: 0xdedcd6, roughness: 0.9, metalness: 0 }),
-    sink: M({ color: 0x1d1f23, roughness: 0.5, metalness: 0.55 }),
+    ceramic: M({ color: 0xc4874f, roughness: 0.74, metalness: 0 }),   // orange, sampled from the owner's render
+    pellets: M({ color: 0xa96b38, roughness: 0.7, metalness: 0 }),
+    sealant: M({ color: 0xbd7c45, roughness: 0.8, metalness: 0 }),
+    sink: M({ color: 0xc0c5cd, roughness: 0.42, metalness: 0.6 }),     // satin aluminium, sampled from the render
     fan: M({ color: 0x2a2c31, roughness: 0.62, metalness: 0 }),
     blade: M({ color: 0x1b1c20, roughness: 0.55, metalness: 0 }),
     label: M({ color: 0x3b3e45, roughness: 0.5, metalness: 0 }),
@@ -309,7 +309,7 @@ export default function create({ THREE = THREE_, renderer, quality = 'high' } = 
     peltier.position.set(STACK_X, Y_PEL, 0);
   }
 
-  // ------------------------------------------------------------------------------------------- heatsink (black anodised, fins down)
+  // ------------------------------------------------------------------------------------------- heatsink (aluminium, fins down)
   const heatsink = part('heatsink');
   {
     const list = [smooth(cbox(HS_W, HS_B, HS_D, 0.0004, 0, -HS_B / 2))];
