@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="../shared/study.css">
+<script src="../shared/study.js"></script>
+<title>Specimen Direction</title>
+<meta name="description" content="Mert Tureli designs, builds and tests hardware end to end. Captain and chief engineer of CHARGER, first place at Battle of the Rockets 2026. Also designs and builds websites.">
+<meta name="theme-color" content="#efefec">
+<link rel="preload" href="assets/fonts/Spectral-normal-200.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/Doto-normal-100_900.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/HostGrotesk-normal-300_700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/img/hero-charger.webp" as="image" media="(min-width: 601px)">
+<link rel="preload" href="assets/img/hero-charger-phone.webp" as="image" media="(max-width: 600px)">
+<link rel="stylesheet" href="assets/css/site.css">
+</head>
+<body>
+<a class="study-back study-back--specimen" href="/websites.html#studies"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13 8H3.5M7.5 3.5 3 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Back to websites</a>
+<a class="skip" href="#work">Skip to the work</a>
+
+<header class="top" id="top">
+  <a class="wordmark" href="#top" aria-label="Mert Tureli, home"><span class="wm-name">Mert Tureli</span><span class="wm-code dot" aria-hidden="true">MT/26</span></a>
+  <nav class="top-nav" aria-label="Primary">
+    <a href="#work">Work</a><a href="#experience">Experience</a><a href="#beyond">Beyond</a><a href="#websites">Websites</a><a href="#contact">Contact</a>
+  </nav>
+  <a class="top-cta" href="../../assets/Mert-Tureli-Resume.pdf">Resume <span aria-hidden="true">↗</span></a>
+</header>
+
+<main>
+<!-- HERO -->
+<section class="hero" aria-labelledby="h1">
+  <div class="hero-copy">
+    <ul class="pills" aria-label="At a glance">
+      <li>Mechanical engineer</li><li>Austin, Texas</li><li>B.S. Union College, 2026</li>
+    </ul>
+    <h1 id="h1" class="display"><span>Mert</span> <span>Tureli</span></h1>
+    <p class="lede">I design, build and test hardware end to end<span class="lede-more">, from CAD and drawings through electronics and firmware to the test rig that proves it works</span>. <span class="lede-ph">B.S. Mechanical Engineering, Union College, 2026.</span></p>
+    <div class="cta-row">
+      <a class="btn btn-ink" href="#work">See the builds <span aria-hidden="true">↓</span></a>
+      <a class="btn btn-line" href="../../assets/Mert-Tureli-Resume.pdf">Resume, PDF <span aria-hidden="true">↗</span></a>
+    </div>
+    <div class="doors">
+      <a class="door" href="#work">
+        <span class="door-k dot">ENG</span>
+        <span class="door-t">Hardware, end to end</span>
+        <span class="door-s">Six builds, a first place, the full record.</span>
+      </a>
+      <a class="door door-web" href="#websites">
+        <span class="door-k dot"><i class="live" aria-hidden="true"></i>WEB</span>
+        <span class="door-t">Taking website projects</span>
+        <span class="door-s">This site is the sample. Let's build yours.</span>
+      </a>
+    </div>
+  </div>
+
+  <figure class="hero-plate plate-ink" id="heroPlate">
+    <picture><source media="(max-width: 600px)" srcset="assets/img/hero-charger-phone.webp" width="720" height="900"><img class="hero-poster" src="assets/img/hero-charger.webp" width="900" height="1125" alt="CHARGER rendered as a white study model from the flight assembly"></picture>
+    <canvas class="hero-gl" id="heroGL" aria-hidden="true"></canvas>
+    <div class="hp-top">
+      <span class="dot hp-no">S-00</span>
+      <span class="hp-id"><span class="dot">CHARGER</span><span class="hp-sub">Flight model, rendered live</span></span>
+    </div>
+    <div class="hp-scale" aria-hidden="true"><span class="dot">37.0 IN</span></div>
+    <dl class="hp-read">
+      <div><dt>Battle of the Rockets 2026</dt><dd class="dot" data-scan>1ST</dd></div>
+      <div><dt>Stability margin</dt><dd class="dot" data-scan>1.80 CAL</dd></div>
+      <div><dt>Descent, 15 limit</dt><dd class="dot" data-scan>13.8 FT/S</dd></div>
+      <div><dt>Hardware</dt><dd class="dot" data-scan>$716</dd></div>
+    </dl>
+    <div class="hp-sep" aria-hidden="true"><span class="hp-sep-l">Separation</span><span class="dot" id="sepVal">000%</span></div>
+    <a class="hp-open" id="openExplorer" href="../../assets/charger-explorer/index.html">Open the 3D explorer <span aria-hidden="true">↗</span></a>
+    <figcaption class="sr-only">CHARGER, the competition rocket I captained. Scroll to separate it into its components, or open the interactive explorer.</figcaption>
+  </figure>
+</section>
+
+<!-- 01 WORK -->
+<section class="sec work" id="work" aria-labelledby="work-h">
+  <div class="sec-head">
+    <span class="sec-no dot">01</span>
+    <div class="sec-title">
+      <p class="label">Selected builds, 2025 to 2026</p>
+      <h2 id="work-h" class="h2">Six builds at <em>one scale</em></h2>
+    </div>
+    <div class="sec-tools">
+      <p class="hint">Every build rendered from its source assembly as a study model. Hover or tap a plate for the real thing.</p>
+      <div class="switch" role="group" aria-label="Work view">
+        <button type="button" data-view="grid" aria-pressed="true"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="0" y="0" width="5" height="5"/><rect x="7" y="0" width="5" height="5"/><rect x="0" y="7" width="5" height="5"/><rect x="7" y="7" width="5" height="5"/></svg>Plates</button>
+        <button type="button" data-view="index" aria-pressed="false"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="0" y="1" width="12" height="1.4"/><rect x="0" y="5.3" width="12" height="1.4"/><rect x="0" y="9.6" width="12" height="1.4"/></svg>Index</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="views" id="views" data-view="grid">
+    <ol class="grid" id="grid" aria-label="Builds as specimen plates"></ol>
+    <div class="index" id="index" hidden>
+      <div class="viewer plate-ink" aria-hidden="true">
+        <img class="viewer-still" alt="" src="assets/img/study-charger.webp" width="800" height="1000">
+        <video class="viewer-turn" muted playsinline loop preload="none"></video>
+        <span class="dot viewer-no">S-01</span>
+        <span class="viewer-cap"></span>
+      </div>
+      <ol class="index-list" id="indexList" aria-label="Builds as an index"></ol>
+    </div>
+  </div>
+</section>
+
+<!-- RECORD -->
+<section class="record" aria-label="Record">
+  <ol>
+    <li><span class="dot rec-n" data-scan>1ST</span><span class="rec-l">Battle of the Rockets 2026, Deployable Sensor Payload, as captain and chief engineer</span></li>
+    <li><span class="dot rec-n" data-scan>+700%</span><span class="rec-l">Rocket team budget, from funding proposals I wrote</span></li>
+    <li><span class="dot rec-n" data-scan>$70,000</span><span class="rec-l">Seed funding raised for ModuFly</span></li>
+    <li><span class="dot rec-n" data-scan>3</span><span class="rec-l">Festival nominations for one solo short film</span></li>
+  </ol>
+</section>
+
+<!-- 02 EXPERIENCE -->
+<section class="sec exp" id="experience" aria-labelledby="exp-h">
+  <div class="sec-head">
+    <span class="sec-no dot">02</span>
+    <div class="sec-title">
+      <p class="label">Experience</p>
+      <h2 id="exp-h" class="h2">Where I <em>worked</em></h2>
+    </div>
+  </div>
+  <ol class="rows">
+    <li class="row">
+      <p class="row-date dot">06.2026 / 09.2026</p>
+      <div class="row-who"><h3>SunThru</h3><p>Engineering intern / Schenectady, NY</p></div>
+      <p class="row-what">Built and tested the company's first full in-house prototype units and led validation on thermal performance and optical clarity. Supported bring-up of a PLC automation system, from ladder logic to panel wiring.</p>
+      <p class="row-fig"><span class="dot" data-scan>1 WK</span><span>To source a replacement production blower</span></p>
+    </li>
+    <li class="row">
+      <p class="row-date dot">08.2023 / 06.2026</p>
+      <div class="row-who"><h3>Union College Rocket Team</h3><p>Founder and president / Schenectady, NY</p></div>
+      <p class="row-what">Started the team from nothing and built it to competition standard. Led the competition team as captain, trained new members through build labs and owned safety compliance for high power launches.</p>
+      <p class="row-fig"><span class="dot" data-scan>12</span><span>Person competition team I led</span></p>
+    </li>
+    <li class="row">
+      <p class="row-date dot">09.2024 / 01.2026</p>
+      <div class="row-who"><h3>ModuFly</h3><p>Co-founder / Schenectady, NY</p></div>
+      <p class="row-what">Co-founded a startup around a modular interlocking rocket system for STEM education. Raised $70,000, starting with a $10,000 SparkLabs prize. Led R&amp;D and production and ran hands-on rocketry workshops.</p>
+      <p class="row-fig"><span class="dot" data-scan>20+</span><span>High school students taught</span></p>
+    </li>
+    <li class="row">
+      <p class="row-date dot">SUMMER 2024</p>
+      <div class="row-who"><h3>TASECS</h3><p>Design engineer and materials intern / Ankara</p></div>
+      <p class="row-what">Aerospace thermal management. Designed high efficiency HVAC valve components and ran stress and fatigue analysis supporting national fighter and jet trainer programs.</p>
+      <p class="row-fig"><span class="dot" data-scan>2</span><span>National aircraft programs supported</span></p>
+    </li>
+  </ol>
+  <div class="kit">
+    <p class="label kit-h">Toolkit</p>
+    <dl class="kit-grid">
+      <div><dt>Design and CAD</dt><dd>SolidWorks, expert / GD&amp;T to ASME Y14.5 / Tolerance stack-up / DFM and DFA / CATIA</dd></div>
+      <div><dt>Controls</dt><dd>PLC ladder logic / Panel wiring / 4-20 mA instrumentation / PID control</dd></div>
+      <div><dt>Electronics and firmware</dt><dd>C++ / ESP32 / Teensy / USB HID / Embedded data acquisition</dd></div>
+      <div><dt>Analysis</dt><dd>FEA / CFD / MATLAB / Heat transfer / Stress and fatigue</dd></div>
+      <div><dt>Fabrication</dt><dd>FDM and SLA printing / Laser cutting / Milling / Lathe</dd></div>
+      <div><dt>Languages</dt><dd>Turkish, native / English, professional / German, intermediate / Spanish, beginner</dd></div>
+    </dl>
+  </div>
+</section>
+
+<!-- 03 BEYOND -->
+<section class="sec beyond" id="beyond" aria-labelledby="by-h">
+  <div class="sec-head">
+    <span class="sec-no dot">03</span>
+    <div class="sec-title">
+      <p class="label">Beyond engineering</p>
+      <h2 id="by-h" class="h2">Off the <em>bench</em></h2>
+    </div>
+  </div>
+  <div class="by-body">
+    <dl class="by-list">
+      <div><dt>Piloting</dt><dd>Licensed ultralight pilot, certified through the Turkish civil aviation authority. The rudder pedals came out of the same interest.</dd></div>
+      <div><dt>Filmmaking</dt><dd>Three short films screened at the Robert College Film Festival in 2022. One solo short was nominated for cinematography, editing and sound design.</dd></div>
+      <div><dt>Photography</dt><dd>An ongoing thing rather than a project.</dd></div>
+      <div><dt>Cooking</dt><dd>Most days, mostly the food I grew up with in Izmir.</dd></div>
+      <div><dt>Travelling</dt><dd>I grew up in Izmir, moved to New York for the degree and travel whenever there is room to.</dd></div>
+    </dl>
+    <ul class="by-strip" aria-label="Photographs">
+      <li><figure><img loading="lazy" decoding="async" src="assets/img/beyond-overlook.webp" width="560" height="700" alt="Looking out over a forested valley"><figcaption class="dot">PH-01</figcaption></figure></li>
+      <li><figure><img loading="lazy" decoding="async" src="assets/img/beyond-lake-framed.webp" width="560" height="700" alt="A lake and two rounded hills framed by pine branches"><figcaption class="dot">PH-02</figcaption></figure></li>
+      <li><figure><img loading="lazy" decoding="async" src="assets/img/beyond-lighthouse.webp" width="560" height="700" alt="A lighthouse seen through bare branches"><figcaption class="dot">PH-03</figcaption></figure></li>
+      <li><figure><img loading="lazy" decoding="async" src="assets/img/beyond-moon-pines.webp" width="560" height="700" alt="A crescent moon beside pine silhouettes"><figcaption class="dot">PH-04</figcaption></figure></li>
+    </ul>
+  </div>
+</section>
+
+<!-- 04 WEBSITES -->
+<section class="web" id="websites" aria-labelledby="web-h">
+  <div class="web-in">
+    <div class="sec-head sec-head-inv">
+      <span class="sec-no dot">04</span>
+      <div class="sec-title"><p class="label">Websites / Design and development</p></div>
+    </div>
+    <div class="web-grid">
+      <div class="web-main">
+        <h2 id="web-h" class="web-h">Like what you see? <em>Let's build yours.</em></h2>
+        <p class="web-lede">Your work, your business, your next idea. I design and build websites people want to explore, by hand, the same way I built this one.</p>
+        <div class="cta-row">
+          <a class="btn btn-paper" href="mailto:merttureli0@gmail.com?subject=Website%20project">Start a website project <span aria-hidden="true">↗</span></a>
+          <a class="btn btn-line-inv" href="https://merttureli.com/websites.html">Find a day to talk <span aria-hidden="true">↗</span></a>
+        </div>
+        <ol class="steps">
+          <li><span class="dot">01</span><b>Pick a day.</b> I reply by email to confirm a time.</li>
+          <li><span class="dot">02</span><b>Tell me the idea.</b> A rough one is a good place to start.</li>
+          <li><span class="dot">03</span><b>I design and build it.</b> Static, fast, made for your content.</li>
+        </ol>
+      </div>
+      <div class="web-side">
+      <figure class="devices">
+        <div class="dev-desk"><div class="dev-bar" aria-hidden="true"><i></i><i></i><i></i><span class="dot">MERTTURELI.COM</span></div><img loading="lazy" decoding="async" src="assets/img/site-desktop.webp" width="960" height="600" alt="This homepage at desktop width"></div>
+        <div class="dev-phone"><img loading="lazy" decoding="async" src="assets/img/site-phone.webp" width="390" height="844" alt="This homepage at phone width"></div>
+        <figcaption>This page, 1440 and 390 px wide</figcaption>
+      </figure>
+      <aside class="sheet" aria-label="This page, measured">
+        <p class="sheet-h"><span class="dot">SPEC SHEET</span><span>This page, measured</span></p>
+        <dl>
+          <div><dt>First view, transferred</dt><dd class="dot" data-scan id="kbFirst">234 KB</dd></div>
+          <div><dt>Frameworks</dt><dd class="dot" data-scan>0</dd></div>
+          <div><dt>3D library</dt><dd class="dot">NONE</dd></div>
+          <div><dt>Build step</dt><dd class="dot">NONE</dd></div>
+          <div><dt>Typefaces</dt><dd class="dot" data-scan>3</dd></div>
+        </dl>
+        <p class="sheet-f">The rocket at the top is the real flight model, drawn by a small hand-written WebGL renderer.</p>
+      </aside>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 05 CONTACT -->
+<section class="sec contact" id="contact" aria-labelledby="ct-h">
+  <div class="sec-head">
+    <span class="sec-no dot">05</span>
+    <div class="sec-title"><p class="label">Contact</p></div>
+  </div>
+  <div class="ct-grid">
+    <figure class="ct-plate plate-ink">
+      <img loading="lazy" decoding="async" src="assets/img/portrait.webp" width="616" height="768" alt="Portrait of Mert Tureli">
+      <span class="dot ct-no">M. TURELI</span>
+      <span class="ct-clock"><span class="dot" id="clock">--:--</span><span>Austin, Central Time</span></span>
+    </figure>
+    <div class="ct-main">
+      <h2 id="ct-h" class="h2 h2-big">Get in <em>touch</em></h2>
+      <p class="ct-lede">Based in Austin, Texas. For a conversation about engineering, a website, or something interesting you are building, write to me.</p>
+      <ul class="ct-links">
+        <li><span class="label">Email</span><a href="mailto:merttureli0@gmail.com">merttureli0@gmail.com</a></li>
+        <li><span class="label">LinkedIn</span><a href="https://www.linkedin.com/in/merttureli">linkedin.com/in/merttureli</a></li>
+        <li><span class="label">Resume</span><a href="../../assets/Mert-Tureli-Resume.pdf">Mert Tureli, PDF</a></li>
+      </ul>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="foot">
+  <p class="foot-mark dot" aria-hidden="true">MERT TURELI</p>
+  <div class="foot-row">
+    <p>Austin, Texas / B.S. Mechanical Engineering, Union College, 2026</p>
+    <p>Photographs of the machine and the team by Paul Buckowski / Union College. Study models rendered from the source assemblies.</p>
+  </div>
+</footer>
+
+<nav class="dock" id="dock" aria-label="Sections">
+  <span class="dock-no dot" id="dockNo" aria-hidden="true">00/05</span>
+  <a href="#work">Work</a><a href="#experience">Record</a><a href="#websites">Websites</a><a href="#contact">Contact</a>
+</nav>
+
+<div class="wipe" id="wipe" aria-hidden="true"></div>
+
+<script src="assets/js/main.js" defer></script>
+</body>
+</html>

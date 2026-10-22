@@ -189,16 +189,6 @@ import {sendInquiry} from './inquiry-delivery.js';
     }
     finally{sending=false;$('#send-request').disabled=false;$('#review-panel [data-back]').disabled=false;$('#review-panel').removeAttribute('aria-busy');}
   };
-  // Small, user-triggered transitions. No animation loop or embedded prototype.
-  document.querySelectorAll('[data-study]').forEach(button=>button.addEventListener('click',()=>{
-    $('#design-excerpt').dataset.style=button.dataset.study;
-    $('#design-excerpt').setAttribute('aria-label',`${button.textContent} design study`);
-    document.querySelectorAll('[data-study]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
-  }));
-  $('#lift-layers').onclick=()=>{
-    const lifted=$('#lift-layers').getAttribute('aria-pressed')!=='true';
-    $('#design-excerpt').dataset.lifted=String(lifted);$('#lift-layers').setAttribute('aria-pressed',String(lifted));
-  };
   const localZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   if(localZone && !Array.from($('#timezone').options).some(o=>o.value===localZone)){
     const option=document.createElement('option');option.value=localZone;

@@ -32,6 +32,7 @@
   <link rel="stylesheet" href="css/interaction-polish.css">
   <link rel="stylesheet" href="css/websites.css">
   <link rel="stylesheet" href="css/website-studies.css">
+  <script src="js/website-studies.js" defer></script>
   <script src="js/interaction-polish.js" defer></script>
   <script src="js/website-inquiry.js" type="module"></script>
 <link rel="stylesheet" href="css/site-palette.css">
@@ -84,20 +85,36 @@
     <section class="design-gallery page-width" id="studies" aria-labelledby="gallery-title">
       <div class="section-head">
         <div class="section-head-title"><span class="ds-meta">02 / Studies</span><h2 class="ds-title" id="gallery-title">Same work<br>four directions</h2></div>
-        <p class="ds-lead">Saved design studies for this portfolio. Pick a style, then lift the layers to see how each one stacks.</p>
+        <p class="ds-lead">I built four redesigns of this portfolio as working pages. Pick one to see its first screen, then explore it live here or open the full page.</p>
       </div>
-      <div class="style-options" role="group" aria-label="Choose a design style">
-        <button type="button" data-study="relief" aria-pressed="true" aria-controls="design-excerpt">Soft relief</button>
-        <button type="button" data-study="alloy" aria-pressed="false" aria-controls="design-excerpt">Precision depth</button>
-        <button type="button" data-study="field" aria-pressed="false" aria-controls="design-excerpt">Field systems</button>
-        <button type="button" data-study="signal" aria-pressed="false" aria-controls="design-excerpt">Signal terminal</button>
-      </div>
-      <div class="design-excerpt" id="design-excerpt" data-style="relief" aria-label="Soft relief design study">
-        <div class="excerpt-top"><span>MERT TURELI</span><button type="button" id="lift-layers" aria-pressed="false">Lift the layers <span aria-hidden="true">↗</span></button></div>
-        <div class="excerpt-layout">
-          <div class="excerpt-intro"><h3>Mert<br>Tureli<span>.</span></h3><p>I design, build,<br>and test hardware.</p><span class="excerpt-line" aria-hidden="true"></span></div>
-          <div class="excerpt-hardware"><div class="excerpt-model"><span class="excerpt-disc" aria-hidden="true"></span><img src="assets/motion/charger-painted-wide-poster.webp" width="1280" height="720" loading="lazy" decoding="async" alt="CHARGER rocket, presented in an alternative portfolio design"><svg class="excerpt-wire" viewBox="0 0 600 350" aria-hidden="true"><g transform="translate(310 170) rotate(-52)"><path d="M-14 111V-95Q-13-140 0-158Q13-140 14-95V111L39 138 14 129H-14L-39 138ZM-14-95H14M-14-79H14M-14-16H14M-14 48H14M-14 87H14M-14 111H14M-14 129H14M0-158V140M-14-79L14-16-14 48 14 111M14-79L-14-16 14 48-14 111"/></g></svg></div><div class="excerpt-object-name"><span>CHARGER</span><span>Deployable sensor payload</span></div></div>
-          <figure class="excerpt-photo"><img src="assets/photos/beyond/gallery/lighthouse-thumb.webp" width="640" height="427" loading="lazy" decoding="async" alt="Lighthouse on a rocky coastline"><figcaption>Beyond engineering.</figcaption></figure>
+      <div class="study-showcase">
+        <div class="study-picker" role="group" aria-label="Choose a direction">
+        <button type="button" class="study-option" data-study="hangar" data-name="Hangar" data-letter="A" aria-pressed="true" aria-controls="study-viewer"><span class="study-option-index" aria-hidden="true">A</span><span class="study-option-body"><span class="study-option-name">Hangar</span><span class="study-option-line">Light, premium flight hardware. A warm gray ground, with CHARGER rendered live in its livery across a huge MERT TURELI.</span></span></button>
+        <button type="button" class="study-option" data-study="launch" data-name="Launch" data-letter="B" aria-pressed="false" aria-controls="study-viewer"><span class="study-option-index" aria-hidden="true">B</span><span class="study-option-body"><span class="study-option-name">Launch</span><span class="study-option-line">Opens dark and cinematic, then an off-white spec sheet rises over it. Projects are filed as missions (MSN 01-06) with role, year and result. Live Austin time in the header.</span></span></button>
+        <button type="button" class="study-option" data-study="studio" data-name="Studio" data-letter="C" aria-pressed="false" aria-controls="study-viewer"><span class="study-option-index" aria-hidden="true">C</span><span class="study-option-body"><span class="study-option-name">Studio</span><span class="study-option-line">MERT TURELI as a huge, slow marquee with the live rocket cutting across it. Measured proof sits right under it, then two equal doors: hardware for engineers, websites for clients.</span></span></button>
+        <button type="button" class="study-option" data-study="specimen" data-name="Specimen" data-letter="D" aria-pressed="false" aria-controls="study-viewer"><span class="study-option-index" aria-hidden="true">D</span><span class="study-option-body"><span class="study-option-name">Specimen</span><span class="study-option-line">My monochrome identity, pushed further. A refined serif for headlines, dot-matrix type for data. Every build appears as a matching white study model at one scale, like an exhibit catalog.</span></span></button>
+        </div>
+        <div class="study-stage">
+          <div class="study-frame" id="study-viewer" role="region" aria-label="Hangar direction" data-state="poster">
+            <div class="study-bar"><span class="study-dots" aria-hidden="true">&#9679; &#9679; &#9679;</span><span class="study-url">merttureli.com/studies/<span data-study-key>hangar</span>/</span><span class="study-state" aria-hidden="true"><span class="study-state-dot"></span><span data-study-state>Preview</span></span></div>
+            <div class="study-screen">
+              <picture class="study-poster">
+                <source media="(max-width: 700px)" type="image/avif" srcset="assets/studies/hangar-phone-720.avif">
+                <source media="(max-width: 700px)" type="image/webp" srcset="assets/studies/hangar-phone-720.webp">
+                <source type="image/avif" srcset="assets/studies/hangar-desktop-1200.avif 1200w, assets/studies/hangar-desktop-1800.avif 1800w" sizes="(min-width: 1440px) 1000px, (min-width: 901px) 62vw, 100vw">
+                <img src="assets/studies/hangar-desktop-1200.webp" srcset="assets/studies/hangar-desktop-1200.webp 1200w, assets/studies/hangar-desktop-1800.webp 1800w" sizes="(min-width: 1440px) 1000px, (min-width: 901px) 62vw, 100vw" width="1200" height="750" loading="lazy" decoding="async" alt="First screen of the Hangar direction">
+              </picture>
+              <div class="study-loading" hidden><span class="study-loading-bar" aria-hidden="true"></span><span>Loading <span data-study-name>Hangar</span></span></div>
+            </div>
+          </div>
+          <div class="study-actions">
+            <p class="study-caption"><span class="study-caption-name"><span data-study-letter>A</span> / <span data-study-name>Hangar</span></span><span class="study-caption-line" data-study-line>Light, premium flight hardware. A warm gray ground, with CHARGER rendered live in its livery across a huge MERT TURELI.</span></p>
+            <div class="study-buttons">
+              <button type="button" class="ds-button ds-button--solid study-explore" data-depth-button="outline" aria-controls="study-viewer" hidden>Explore it here <span aria-hidden="true">&rarr;</span></button>
+              <a class="ds-link study-open" href="studies/hangar/">Open full page <span aria-hidden="true">&#8599;</span></a>
+            </div>
+            <p class="study-sr" role="status" aria-live="polite" data-study-status></p>
+          </div>
         </div>
       </div>
     </section>

@@ -4,6 +4,8 @@ Disallow: /cards/
 Disallow: /src/
 Disallow: /tools/
 Disallow: /photography-gallery.html
+# Design studies duplicate the portfolio content.
+Disallow: /studies/
 # Keep the design-system notes out of the index, but leave its CSS, fonts and
 # JS crawlable: every page renders from /_ds/ and Googlebot needs it to see them.
 Disallow: /_ds/*.md$
