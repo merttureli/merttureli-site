@@ -1,0 +1,146 @@
+/* CHARGER hero rocket, its seat in the work entry, the explorer handoff and the skills belt.
+   Driven by js/rocket-flight.js and assets/charger-explorer/integration.js.
+
+   The rocket box is a vertical canvas (216 x 1200 frame, the rocket nose up through it); CSS places,
+   tilts and scales the box, the canvas only draws the roll. Until the live canvas is ready the box
+   shows the line drawing and the satin still, both rendered from the same scene. */
+@property --rv { syntax: '<percentage>'; inherits: true; initial-value: 0%; }
+
+/* ---------- hero ---------- */
+.depth-hero-copy { position: relative; z-index: 2; }
+.depth-hero .hero-foot { z-index: 2; }
+#charger-launch { z-index: 1; }
+.depth-design .charger-launch::after { display: none; }   /* the video's floor shadow; the rocket brings its own */
+.hero-rocket, .seat-rocket {
+  position: absolute; inset: 0; display: block; pointer-events: none; container-type: size;
+}
+.hero-rocket { --tilt: 61deg; --L: min(108cqw, 192cqh); --ox: -2cqw; --oy: 0px; }
+@media (max-width: 860px) { .hero-rocket { --tilt: 68deg; --L: min(108cqw, 250cqh, 640px); --ox: 0px; --oy: -6cqh; } }
+.rocket-box {
+  position: absolute; left: 50%; top: 50%; display: block;
+  height: calc(var(--L) * 1.04); width: calc(var(--L) * 1.04 * .18);
+  transform: translate(-50%, -50%) translate(var(--ox, 0px), var(--oy, 0px)) rotate(var(--tilt));
+  will-change: transform;
+}
+.rocket-box > img, .rocket-box > canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.rocket-box > canvas { opacity: 0; transition: opacity .32s ease; }
+.rocket-box.has-canvas > canvas { opacity: 1; }
+.rocket-box.canvas-ready > img { visibility: hidden; transition: visibility 0s .32s; }
+
+/* Build: the CAD line drawing resolves into the painted rocket, tail to nose, from the first paint.
+   CSS only, so it never waits for a script. */
+.hero-rocket .rocket-box { animation: rocket-build .85s cubic-bezier(.5, .05, .25, 1) .12s both; }
+.rocket-line {
+  -webkit-mask-image: linear-gradient(0deg, transparent calc(var(--rv) - .4%), #000 calc(var(--rv) + .6%));
+  mask-image: linear-gradient(0deg, transparent calc(var(--rv) - .4%), #000 calc(var(--rv) + .6%));
+}
+.rocket-sat {
+  -webkit-mask-image: linear-gradient(0deg, #000 calc(var(--rv) - .6%), transparent calc(var(--rv) + .4%));
+  mask-image: linear-gradient(0deg, #000 calc(var(--rv) - .6%), transparent calc(var(--rv) + .4%));
+}
+.rocket-glow {
+  filter: brightness(1.6) drop-shadow(0 0 6px #ffffff8c);
+  -webkit-mask-image: linear-gradient(0deg, transparent calc(var(--rv) - 7%), #000 calc(var(--rv) - .5%), transparent calc(var(--rv) + .5%));
+  mask-image: linear-gradient(0deg, transparent calc(var(--rv) - 7%), #000 calc(var(--rv) - .5%), transparent calc(var(--rv) + .5%));
+  animation: rocket-glow 1.1s linear .12s both;
+}
+@keyframes rocket-build { from { --rv: 0%; } to { --rv: 104%; } }
+@keyframes rocket-glow { 0%, 85% { opacity: 1; } 100% { opacity: 0; } }
+.rocket-box.is-built { --rv: 104%; animation: none; }
+.rocket-box.is-built > .rocket-line, .rocket-box.is-built > .rocket-glow { display: none; }
+.rocket-box.is-built > .rocket-sat { -webkit-mask-image: none; mask-image: none; }
+
+/* Soft floor shadow under the rocket at rest; it fades as the rocket lifts. */
+.rocket-shadow {
+  position: absolute; left: 50%; top: 50%; display: block; width: var(--sw); height: calc(var(--sw) * .15);
+  background: url(../assets/rocket/shadow.webp) center / 100% 100% no-repeat;
+  transform: translate(-50%, -50%) translate(var(--sx, 0px), var(--sy, 0px)); opacity: var(--sh, 0);
+}
+.hero-rocket .rocket-shadow { --sh: .6; --sw: 92cqw; --sx: -4cqw; --sy: 50cqh; }
+
+/* ---------- seat: the CHARGER entry ---------- */
+.charger-seat { position: relative; aspect-ratio: 3 / 4; }
+.seat-rocket { --tilt: 24deg; --L: 84cqh; z-index: 2; }
+.seat-rocket .rocket-box { visibility: hidden; }
+.seat-rocket.is-on .rocket-box { visibility: visible; }
+.seat-rocket .rocket-box { transition: opacity .22s linear; }
+.seat-rocket.is-handed .rocket-box { opacity: 0; }
+.hero-rocket.is-lent .rocket-box { visibility: hidden; }
+.seat-rocket .rocket-shadow { --sw: 78cqw; --sy: 42cqh; }
+.charger-seat-expand {
+  position: absolute; right: 12px; bottom: 12px; z-index: 3;
+  display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 16px 0 12px;
+  border: 1px solid var(--line-strong, #0a0a0a33); border-radius: var(--radius-pill, 999px);
+  background: color-mix(in srgb, var(--paper, #fff) 82%, transparent);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  color: var(--text-display, #0a0a0a); font-family: var(--font-mono); font-size: var(--fs-meta, 12px);
+  letter-spacing: var(--ls-caps, .08em); text-transform: uppercase; cursor: pointer;
+  transition: background var(--t-hover, .24s), color var(--t-hover, .24s), transform var(--t-hover, .24s);
+}
+.charger-seat-expand svg { flex: none; }
+.charger-seat-expand:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+@media (hover: hover) and (pointer: fine) {
+  .charger-seat-expand:hover { background: var(--ink-900, #0a0a0a); color: var(--paper, #fff); }
+}
+.charger-seat-expand:active { transform: translateY(1px); }
+
+/* The explorer dialog lives in the seat. Inline it is shown without being open (no focus move, no
+   top layer) and fills the seat; opened it is the full-screen modal as before. */
+.charger-dialog { background: transparent; border-color: transparent; box-shadow: none; }
+.charger-dialog-bg {
+  position: absolute; inset: 0; z-index: 0; display: block; pointer-events: none;
+  background: #0a0a0a; border: 1px solid #ffffff35; box-shadow: 0 30px 110px #0009; transform-origin: 0 0;
+}
+.charger-dialog > :not(.charger-dialog-bg) { position: relative; z-index: 1; }
+#charger-frame { background: transparent; }
+.charger-dialog.is-inline {
+  display: block; position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none;
+  margin: 0; padding: 0; border: 0; overflow: visible; color: inherit; opacity: 0; z-index: 1;
+  transition: opacity .2s linear; animation: none;
+}
+.charger-dialog.is-inline.is-shown { opacity: 1; }
+.charger-dialog.is-inline > .charger-dialog-bg,
+.charger-dialog.is-inline .charger-dialog-bar,
+.charger-dialog.is-inline #charger-launch-status { display: none; }
+.charger-dialog.is-inline .charger-dialog-content { position: absolute; inset: 0; }
+.charger-dialog.is-morphing { animation: none; }
+.charger-dialog.is-morphing.is-closing { animation: none; }
+.charger-dialog.is-morphing::backdrop { animation-duration: var(--morph-ms, .48s); }
+.charger-seat.is-expanded .seat-rocket .rocket-shadow { opacity: 0 !important; }
+.charger-seat.shadow-in .seat-rocket .rocket-shadow { transition: opacity .4s ease; }
+
+/* ---------- skills belt ---------- */
+.skills-belt {
+  position: relative; overflow: hidden; outline: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+.skills-belt:focus-visible { outline: 2px solid var(--text-display, #0a0a0a); outline-offset: 6px; }
+.skills-belt-track { display: flex; width: max-content; animation: skills-belt var(--belt-duration, 90s) linear infinite; }
+.skills-belt-list { display: flex; align-items: center; gap: var(--space-2); margin: 0; padding: 0 var(--space-2) 0 0; list-style: none; flex: none; }
+.skills-belt-list > li { display: inline-flex; flex: none; }
+.skills-belt-group { display: inline-flex; align-items: center; gap: var(--space-3); padding: 0 var(--space-3) 0 var(--space-6); }
+.skills-belt:hover .skills-belt-track, .skills-belt:focus-within .skills-belt-track { animation-play-state: paused; }
+@keyframes skills-belt { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-50%, 0, 0); } }
+
+/* Reduced motion (the system setting or the site's Display switch): no build, no belt. */
+html[data-motion="off"] .rocket-box { --rv: 104%; animation: none !important; }
+html[data-motion="off"] .rocket-line, html[data-motion="off"] .rocket-glow { display: none; }
+html[data-motion="off"] .rocket-sat { -webkit-mask-image: none; mask-image: none; }
+html[data-motion="off"] .skills-belt { -webkit-mask-image: none; mask-image: none; overflow: visible; }
+html[data-motion="off"] .skills-belt-track { animation: none !important; width: auto; }
+html[data-motion="off"] .skills-belt-list { flex-wrap: wrap; row-gap: var(--space-3); padding: 0; }
+html[data-motion="off"] .skills-belt-list[aria-hidden="true"] { display: none; }
+html[data-motion="off"] .skills-belt-group { padding-left: 0; }
+html[data-motion="off"] .skills-belt-group:not(:first-child) { padding-left: var(--space-4); }
+@media (prefers-reduced-motion: reduce) {
+  .rocket-box { --rv: 104%; animation: none !important; }
+  .rocket-line, .rocket-glow { display: none; }
+  .rocket-sat { -webkit-mask-image: none; mask-image: none; }
+  .skills-belt { -webkit-mask-image: none; mask-image: none; overflow: visible; }
+  .skills-belt-track { animation: none !important; width: auto; }
+  .skills-belt-list { flex-wrap: wrap; row-gap: var(--space-3); padding: 0; }
+  .skills-belt-list[aria-hidden="true"] { display: none; }
+  .skills-belt-group { padding-left: 0; }
+  .skills-belt-group:not(:first-child) { padding-left: var(--space-4); }
+}
