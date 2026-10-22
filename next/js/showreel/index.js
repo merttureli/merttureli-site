@@ -53,9 +53,14 @@ function safe(label, real, fallback) {
   return fallback();
 }
 
-// Screen-space directions (degrees, 0 = right, 90 = up) each coaster part
-// arrives from and leaves by; unknown parts get golden-angle directions.
-const PART_DIRS = { topPlate: 104, peltier: 148, heatsink: -76, blower: -12, shell: 206, thermistor: 46, board: 172, screws: 68 };
+// Clip-free choreography for the coaster parts. Parts leave top-down, each
+// only once its own disassembly has finished, along paths that fan upward and
+// out to the side the part sits on: lower parts start later and climb more
+// slowly than the ones above them, so gaps only ever open. The shell, last
+// and lowest, drops away. Arrival is the mirror image, bottom-up.
+const OUT_U = .45;                  // share of EXPLODE spent un-building (p 1 -> 0)
+const FLY = .38;                    // share of EXPLODE one part's flight takes
+const LAG = .045;                   // minimum gap between consecutive departures
 
 async function createThermaShift(ctx) {
   const { engine, quality } = ctx;
@@ -95,23 +100,68 @@ async function createThermaShift(ctx) {
   // Parts: wrap each in a pivot group so the reel can fly it in and out
   // without touching the coaster's own setProgress transforms.
   const inv = new THREE.Quaternion().copy(view.quaternion).invert();
-  const parts = (coaster.getParts ? coaster.getParts() : []).map((p, i) => {
+  const right = new THREE.Vector3(1, 0, 0).applyQuaternion(inv);   // screen-right in view space (prop arcs)
+  const raw = coaster.getParts ? coaster.getParts() : [];
+  const n = raw.length || 1;
+  coaster.setProgress(0);
+  const parts = raw.map((p, i) => {
     const mesh = p.mesh, parent = mesh.parent, wrap = new THREE.Group();
     parent.add(wrap); wrap.add(mesh);
-    const deg = PART_DIRS[p.name] ?? (i * 137.5 + 30);
-    const dir = new THREE.Vector3(Math.cos(deg * Math.PI / 180), Math.sin(deg * Math.PI / 180), .18).normalize().applyQuaternion(inv);
     const center = new THREE.Vector3();
     if (mesh.geometry) { mesh.geometry.computeBoundingSphere(); center.copy(mesh.geometry.boundingSphere.center); }
+    else { const b = new THREE.Box3().setFromObject(mesh); mesh.updateWorldMatrix(true, false); b.getCenter(center); mesh.worldToLocal(center); }
+    // screen-x of the part in the exploded stack decides which side it leaves by
+    const sx = center.clone().add(mesh.position).applyQuaternion(view.quaternion).x;
+    const a = p.win ? p.win[0] : 1 - (i + .5) / n;   // p at which it is fully un-built
     const axis = new THREE.Vector3(Math.sin(i * 2.1 + 1), Math.cos(i * 1.7), Math.sin(i * 3.3 + 2)).normalize();
-    return { name: p.name, mesh, wrap, dir, center, axis, explode: p.explode, ex0: p.explode ? p.explode.clone() : null, spin: (i % 2 ? -1 : 1) * (.7 + (i * .37) % .6), delay: ((i * .618) % 1) * .32, f: 1, f0: 1 };
+    return { name: p.name, mesh, wrap, center, axis, sx, a, build: i, explode: p.explode, ex0: p.explode ? p.explode.clone() : null, dir: new THREE.Vector3(), spin: 0, fs: 0, f: 1, f0: 1, us: 0 };
   });
+  // A part whose exploded offset leaves it inside the shell (heatsink, blower) is
+  // only free once the shell itself has dropped away, i.e. at p = 0.
+  {
+    const ref = new THREE.Matrix4(), mm = new THREE.Matrix4(), tb = new THREE.Box3();
+    const localBox = (obj, bb) => {
+      bb.makeEmpty(); coaster.group.updateWorldMatrix(true, true); ref.copy(coaster.group.matrixWorld).invert();
+      obj.traverse(m => { if (!m.isMesh || (m.material && m.material.transparent)) return; if (!m.geometry.boundingBox) m.geometry.computeBoundingBox(); mm.multiplyMatrices(ref, m.matrixWorld); bb.union(tb.copy(m.geometry.boundingBox).applyMatrix4(mm)); });
+      return bb;
+    };
+    const shellP = parts.find(P => P.name === 'shell'), sb = new THREE.Box3(), pb = new THREE.Box3();
+    if (shellP) for (const P of parts) {
+      if (P === shellP || P.a <= 0) continue;
+      coaster.setProgress(P.a);
+      localBox(shellP.mesh, sb).expandByScalar(-.001);
+      if (sb.intersectsBox(localBox(P.mesh, pb))) P.a = 0;
+    }
+  }
+  coaster.setProgress(1);
+  // rank from the top (first to leave) and the paths
+  // first to leave: highest un-build point, then (for parts freed together) the higher build index
+  const byTop = parts.slice().sort((x, y) => (y.a - x.a) || (y.build - x.build));
+  byTop.forEach((P, r) => {
+    let deg;
+    if (r === byTop.length - 1) deg = -98;                          // the shell, last and lowest, drops away
+    else {
+      // centred parts leave to the left, clear of the parts that slide out to the right (board, thermistor)
+      const side = Math.abs(P.sx) < .006 ? -1 : Math.sign(P.sx);
+      deg = 90 - side * (14 + 52 * r / Math.max(1, byTop.length - 2));
+    }
+    P.dir.set(Math.cos(deg * Math.PI / 180), Math.sin(deg * Math.PI / 180), .12).normalize().applyQuaternion(inv);
+    P.spin = (r % 2 ? -1 : 1) * (/topPlate|shell|heatsink/.test(P.name) ? .16 : .34);
+    // EXPLODE time (share) at which p falls to P.a, i.e. its disassembly is done
+    const k = 1 - P.a;                                            // inOutSine(e / OUT_U) = k
+    P.fs = OUT_U * Math.acos(1 - 2 * k) / Math.PI;
+    P.top = r;
+  });
+  // a minimum lag between consecutive departures keeps the order strict
+  for (let r = 1; r < byTop.length; r++) byTop[r].fs = Math.max(byTop[r].fs, byTop[r - 1].fs + LAG);
 
   const ST = {
-    sequence: [['COASTER_ENTER', 2.4], ['ASSEMBLE', clampDur(coaster.duration, 2, 3.2)], ['MUG_DROP', 1.8], ['WARM', 4.4], ['SWAP', 2.8], ['CHILL', 4.8], ['EXPLODE', 2.0]],
+    sequence: [['COASTER_ENTER', 3.0], ['ASSEMBLE', 5.0], ['MUG_DROP', 1.9], ['WARM', 6.5], ['SWAP', 3.2], ['CHILL', 7.0], ['CAN_EXIT', 1.7], ['BEAT', 1.3], ['EXPLODE', 3.4]],
   };
-  const v = { p: 0, mugY: 1, canY: 1, temp: 22, steam: 0, cond: 0, wet: 0, fan: 0, shadow: 0 }; // live values
+  const v = { p: 0, mugY: 1, canY: 1, mugArc: 0, canArc: 0, temp: 22, steam: 0, cond: 0, wet: 0, fan: 0, shadow: 0 }; // live values
   const a0 = { ...v };                                                        // captured at abort
-  let dist = 2, drop = .5, lift = 0, lastTemp = NaN, lastFan = -1;
+  let dist = 2, drop = .5, lift = 0, lastTemp = -99, lastFan = -1;
+  const ARC = .17;                  // sideways travel (view units) of the props' entry/exit arcs
   const q = new THREE.Quaternion(), tmp = new THREE.Vector3(), piv = new THREE.Vector3();
 
   // Framing: measure the assembled coaster + can on screen, size it to the
@@ -121,11 +171,11 @@ async function createThermaShift(ctx) {
     const narrow = w < h;
     let S = 2 * Math.min(halfW, halfH) * (narrow ? .44 : .3) / .11;
     stage.scale.setScalar(S); stage.position.set(0, 0, 0);
-    const keep = parts.map(P => P.f), kp = v.p, kc = v.canY, km = v.mugY;
+    const keep = parts.map(P => P.f), kp = v.p, kc = v.canY, km = v.mugY, ka = v.canArc;
     for (const P of parts) P.f = 0;
-    v.p = 1; v.canY = 0; v.mugY = 1; apply();
+    v.p = 1; v.canY = 0; v.mugY = 1; v.canArc = 0; apply();
     const ext = screenExtents([coaster.group, can.group], stage, camera, w, h);
-    parts.forEach((P, i) => { P.f = keep[i]; }); v.p = kp; v.canY = kc; v.mugY = km;
+    parts.forEach((P, i) => { P.f = keep[i]; }); v.p = kp; v.canY = kc; v.mugY = km; v.canArc = ka;
     const fw = free.r - free.l, fh = free.b - free.t;
     const k0 = Math.min(fh * (narrow ? .56 : .84) / (ext.u + ext.d), fw * (narrow ? .8 : .4) / (ext.l + ext.r));
     const prefer = { x: free.l + fw * (narrow ? .5 : .54), y: free.t + fh * .5 };
@@ -169,10 +219,12 @@ async function createThermaShift(ctx) {
       piv.copy(P.mesh.position).add(P.center);
       tmp.copy(piv).applyQuaternion(q);
       P.wrap.quaternion.copy(q);
-      P.wrap.position.copy(P.dir).multiplyScalar(dist * f * (1 + P.delay)).add(piv).sub(tmp);
+      P.wrap.position.copy(P.dir).multiplyScalar(dist * f).add(piv).sub(tmp);
     }
-    mug.group.position.y = drop * v.mugY; mug.group.visible = v.mugY < .999;
-    can.group.position.y = drop * v.canY; can.group.visible = v.canY < .999;
+    // the mug arcs in and out on the left, the can on the right: they never share a path
+    mug.group.position.copy(right).multiplyScalar(-ARC * v.mugArc); mug.group.position.y += drop * v.mugY;
+    can.group.position.copy(right).multiplyScalar(ARC * v.canArc); can.group.position.y += drop * v.canY;
+    mug.group.visible = v.mugY < .999; can.group.visible = v.canY < .999;
     if (Math.abs(v.temp - lastTemp) > .05) { lastTemp = v.temp; coaster.setPlateTemperature && coaster.setPlateTemperature(v.temp); }
     steam.setIntensity(mug.group.visible ? v.steam : 0);
     steam.group.visible = mug.group.visible && v.steam > .002;
@@ -185,50 +237,66 @@ async function createThermaShift(ctx) {
 
   // The reel as a pure function of T (seconds) and the timeline's states.
   function sample(T, S) {
-    const E = S.COASTER_ENTER, A = S.ASSEMBLE, M = S.MUG_DROP, W = S.WARM, X = S.SWAP, C = S.CHILL, B = S.EXPLODE;
-    const uIn = win(T, E.t0 - .6, E.t1), outPop = ease.outCubic(win(T, B.t0, B.t0 + .7));
+    const E = S.COASTER_ENTER, A = S.ASSEMBLE, M = S.MUG_DROP, W = S.WARM, X = S.SWAP, C = S.CHILL, CE = S.CAN_EXIT, BT = S.BEAT, B = S.EXPLODE;
+    // parts: arrive bottom-up during COASTER_ENTER, leave top-down during EXPLODE
+    const uIn = win(T, E.t0 - .6, E.t1), eX = win(T, B.t0, B.t1);
     let fin = 0, fout = 0;
     for (let i = 0; i < parts.length; i++) {
-      const P = parts[i];
-      const inn = ease.outQuart(win(uIn, P.delay, P.delay + .68));
-      const out = ease.inCubic(win(T, B.t0 + .3 + P.delay * 1.4, B.t1));
+      const P = parts[i], d = (P.build / Math.max(1, n - 1)) * .48;
+      const inn = ease.outQuart(win(uIn, d, d + .52));
+      const out = ease.inCubic(win(eX, P.fs + .02, P.fs + .02 + FLY));
       P.f = (1 - inn) + out;
       fin += inn; fout += out;
     }
-    const n = parts.length || 1;
-    v.p = ease.inOutSine(win(T, A.t0 - .25, A.t1)) * (1 - outPop);
-    const mugIn = ease.land(win(T, M.t0 - .45, M.t1)), mugOut = ease.inOutCubic(win(T, X.t0, X.t0 + 1.5));
-    v.mugY = (1 - mugIn) + mugOut;
-    const canIn = ease.land(win(T, X.t0 + .8, X.t1)), canOut = ease.inCubic(win(T, B.t0 + .1, B.t0 + 1.3));
-    v.canY = (1 - canIn) + canOut;
-    const warm = ease.inOutSine(win(T, W.t0 + .2, W.t1 - .3)), chill = ease.outCubic(win(T, C.t0 + .2, C.t1 - .6));
-    v.temp = T < C.t0 ? lerp(22, 55, warm) - 2 * win(T, X.t0, X.t1) : lerp(53, 11, chill);
-    v.steam = (.22 * mugIn + .78 * ease.inOutSine(win(T, W.t0 + .6, W.t1))) * (1 - ease.outQuad(win(T, X.t0, X.t0 + .9)));
-    v.cond = ease.inOutSine(win(T, C.t0 + .6, C.t1 + .2));
-    v.wet = ease.inOutSine(win(T, C.t0 + 2.2, C.t1 + .6)) * (1 - outPop);
-    v.fan = Math.round(20 * win(T, W.t0, W.t0 + 1) * (1 - win(T, C.t1, B.t0 + .5))) / 20;
+    v.p = T < B.t0 ? ease.inOutSine(win(T, A.t0 - .2, A.t1 - .2)) : 1 - ease.inOutSine(win(eX, 0, OUT_U));
+    // mug: in from the upper left, out the same way; can: in from the upper right, then leaves first at the end
+    const mugIn = ease.land(win(T, M.t0 - .45, M.t1)), mugOut = ease.inOutCubic(win(T, X.t0, X.t0 + 1.4));
+    v.mugY = (1 - mugIn) + mugOut; v.mugArc = (1 - mugIn) ** 2 + mugOut * mugOut;
+    const canIn = ease.land(win(T, X.t0 + 1.05, X.t1)), canOut = ease.inOutCubic(win(T, CE.t0, CE.t1));
+    v.canY = (1 - canIn) + canOut; v.canArc = (1 - canIn) ** 2 + canOut * canOut;
+    // plate temperature: neutral, hot through WARM, cold through CHILL, back to neutral in the beat
+    if (T < X.t0) v.temp = lerp(22, 55, ease.inOutSine(win(T, W.t0 + .3, W.t1 - 1.4)));
+    else if (T < C.t0) v.temp = lerp(55, 34, ease.inOutSine(win(T, X.t0 + .9, X.t1)));   // mug away: the plate switches over
+    else if (T < CE.t0) v.temp = lerp(34, 11, ease.outCubic(win(T, C.t0, C.t1 - 2)));
+    else v.temp = lerp(11, 22, ease.inOutSine(win(T, CE.t0 + .5, BT.t1)));
+    v.steam = (.24 * mugIn + .76 * ease.inOutSine(win(T, W.t0 + .5, W.t1 - 1))) * (1 - ease.outQuad(win(T, X.t0, X.t0 + .9)));
+    v.cond = ease.inOutSine(win(T, C.t0 + 1.1, C.t1 - .5));
+    v.wet = ease.inOutSine(win(T, C.t0 + 2.8, C.t1)) * (1 - ease.inOutSine(win(T, CE.t0 + .8, B.t0)));
+    v.fan = Math.round(20 * win(T, W.t0, W.t0 + 1) * (1 - win(T, CE.t0, CE.t1))) / 20;
     v.shadow = Math.min(fin / n, 1 - fout / n) * (.35 + .65 * v.p);
     apply();
   }
 
+  // Abort: props lift away first, then the coaster un-builds and its parts
+  // leave in the same top-down order and on the same paths as EXPLODE.
+  const ABORT_S = 2.4;
   function beginAbort() {
     Object.assign(a0, v);
-    for (const P of parts) P.f0 = P.f;
+    for (const P of parts) {
+      P.f0 = P.f;
+      if (a0.p <= .001) P.us = (P.top / Math.max(1, n - 1)) * .34;  // still arriving: leave top-down now
+      else {
+        if (P.a >= a0.p) P.us = 0;                                    // already free (or flying): keep going
+        else P.us = .14 + .4 * Math.acos(1 - 2 * (1 - P.a / a0.p)) / Math.PI;  // free once un-built
+      }
+    }
+    for (let r = 1; r < byTop.length; r++) byTop[r].us = Math.max(byTop[r].us, byTop[r - 1].us + .045);
   }
-  // u: 0..1 over the abort. Parts leave the way they came, props lift away.
+  // u: 0..1 over ABORT_S seconds.
   function sampleAbort(u) {
     let fin = 0;
     for (let i = 0; i < parts.length; i++) {
       const P = parts[i];
-      P.f = lerp(P.f0, Math.max(P.f0, 1.05), ease.inCubic(win(u, P.delay * .5, .8 + P.delay * .5)));
+      P.f = lerp(P.f0, Math.max(P.f0, 1.05), ease.inQuad(win(u, P.us, Math.min(1, P.us + .38))));
       fin += clamp01(1 - P.f);
     }
-    v.p = a0.p * (1 - ease.outCubic(win(u, 0, .45)));
-    v.mugY = lerp(a0.mugY, Math.max(a0.mugY, 1), ease.inOutCubic(win(u, 0, .7)));
-    v.canY = lerp(a0.canY, Math.max(a0.canY, 1), ease.inOutCubic(win(u, 0, .7)));
+    v.p = a0.p * (1 - ease.inOutSine(win(u, .14, .54)));
+    const k = ease.inOutCubic(win(u, 0, .5));
+    v.mugY = lerp(a0.mugY, Math.max(a0.mugY, 1), k); v.mugArc = a0.mugArc + k * k;
+    v.canY = lerp(a0.canY, Math.max(a0.canY, 1), k); v.canArc = a0.canArc + k * k;
     v.steam = a0.steam * (1 - ease.outQuad(win(u, 0, .35)));
-    v.cond = a0.cond; v.temp = a0.temp; v.wet = a0.wet * (1 - win(u, 0, .4)); v.fan = 0;
-    v.shadow = Math.min(a0.shadow, fin / (parts.length || 1));
+    v.cond = a0.cond; v.temp = lerp(a0.temp, 22, ease.inOutSine(win(u, 0, .6))); v.wet = a0.wet * (1 - win(u, 0, .4)); v.fan = 0;
+    v.shadow = Math.min(a0.shadow, fin / n);
     apply();
   }
   // Compile every shader variant the reel will need (props, steam, beads,
@@ -255,7 +323,7 @@ async function createThermaShift(ctx) {
     v.temp = 11; apply();
     reset();
   }
-  function reset() { for (const P of parts) P.f = 1; Object.assign(v, { p: 0, mugY: 1, canY: 1, temp: 22, steam: 0, cond: 0, wet: 0, fan: 0, shadow: 0 }); apply(); }
+  function reset() { for (const P of parts) P.f = 1; Object.assign(v, { p: 0, mugY: 1, canY: 1, mugArc: 0, canArc: 0, temp: 22, steam: 0, cond: 0, wet: 0, fan: 0, shadow: 0 }); apply(); }
   function update(dt, time) {
     if (!stage.visible) return;
     if (steam.group.visible && steam.update) steam.update(dt, time);
@@ -268,7 +336,7 @@ async function createThermaShift(ctx) {
   reset();
   engine.adopt(stage);
   return {
-    group: stage, sequence: ST.sequence, layout, sample, prewarm, beginAbort, sampleAbort, reset, update,
+    group: stage, sequence: ST.sequence, layout, sample, prewarm, abortSeconds: ABORT_S, values: v, coaster, debugParts: parts, beginAbort, sampleAbort, reset, update,
     get visible() { return stage.visible; },
     modules: { coaster: !!mods.coaster, props: !!mods.props, fx: !!mods.fx },
     dispose() { for (const m of [coaster, mug, can, steam, ring, cond]) m && m.dispose && m.dispose(); if (shadow) { shadow.geometry.dispose(); shadow.material.map.dispose(); shadow.material.dispose(); } },
@@ -297,7 +365,7 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
 
   let flags = parseFlags(), speed = flags.fast ? 3 : 1;
   let mode = 'rest', T = 0, A = 0, idle = 0, loops = 0, timeline = null, guest = null, guestP = null, stateName = 'REST';
-  let exitDist = 3, abortFrom = { fly: 0, spin: 0, wrap: false }, scrollP = 0, scrollSeen = false;
+  let exitDist = 3, abortFrom = { fly: 0, spin: 0, wrap: false, delay: 0, guestS: 1.5 }, scrollP = 0, scrollSeen = false, ABORT = 2.2;
   let visible = true, raf = 0, slow = false, nSamples = 0, last = 0, paused = false, busy = false;
   const samples = new Float32Array(60);
   const t0 = performance.now();
@@ -349,7 +417,7 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
     const w = key ? wordFor.get(key) : null;
     if (w === focused) return;
     focused = w;
-    if (words) { if (w) { words.hold(w.set); words.focus(w.slot); } else { words.release(); words.focus(null); } }
+    if (words) { if (w) { words.hold(w.slot, w.set); words.focus(w.slot); } else { words.release(); words.focus(null); } }
   }
   const projectOf = name => (name === EXIT || name === RETURN ? HOME.key : guestP ? guestP.key : null);
 
@@ -403,14 +471,17 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
     abortFrom.wrap = f > exitDist * .55;                    // gone far enough: come back from behind
     abortFrom.fly = abortFrom.wrap ? -exitDist : f;
     abortFrom.spin = abortFrom.wrap ? -SPIN : rocket.state.spin;
+    // the rocket comes back only once the guest's parts have cleared the frame
+    abortFrom.guestS = guest.abortSeconds || 1.5;
+    abortFrom.delay = abortFrom.wrap ? (guest.visible ? abortFrom.guestS * .8 : .3) : 0;
+    ABORT = Math.max(abortFrom.guestS, abortFrom.delay + 1.7, abortFrom.wrap ? 0 : 1.3);
     guest.beginAbort();
     focus(null);
     setState('RETURNING');
   }
-  const ABORT = 2.2;
   function sampleAbort(A) {
-    guest.sampleAbort(clamp01(A / 1.5));
-    const k = abortFrom.wrap ? ease.outQuint(win(A, .55, ABORT)) : ease.inOutCubic(win(A, 0, 1.3));
+    guest.sampleAbort(clamp01(A / abortFrom.guestS));
+    const k = abortFrom.wrap ? ease.outQuint(win(A, abortFrom.delay, abortFrom.delay + 1.7)) : ease.inOutCubic(win(A, 0, 1.3));
     rocket.state.fly = abortFrom.fly * (1 - k);
     rocket.state.spin = abortFrom.spin * (1 - k);
   }
