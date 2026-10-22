@@ -33,6 +33,7 @@ tools/build.py --check after any change here.
 import difflib
 from html import escape
 import io
+import json
 import os
 import re
 import shutil
@@ -105,14 +106,43 @@ def runtime_script(index, vals_js):
     return block[:vs] + "return {\n" + vals_js + "\n    };" + block[ve:]
 
 
-def footer_block(index):
-    """The colophon, so every page ends the same way."""
+def flag(block_id, note, text="[TBD]"):
+    """
+    An open question for the owner, shown in place as <mark class="flag">.
+    tools/check-flags.py lists every one left in the built pages.
+    """
+    return ('<mark class="flag" data-flag="%s" data-note="%s">%s</mark>'
+            % (block_id, escape(note, quote=True), text))
+
+
+class FlagValue(object):
+    """A flagged SpecList value. SpecList renders values as React children, so
+    the mark goes in as an element rather than as markup in a string."""
+
+    def __init__(self, block_id, note, text):
+        self.block_id, self.note, self.text = block_id, note, text
+
+    def js(self):
+        return ('React.createElement("mark", { className: "flag", "data-flag": %s, "data-note": %s }, %s)'
+                % (json.dumps(self.block_id), json.dumps(self.note), json.dumps(self.text)))
+
+
+def footer_block(index, colophon=None):
+    """
+    The colophon, so every page ends the same way. `colophon` replaces the
+    home page's credit line where a case page needs its own.
+    """
     start = index.index("<footer")
     end = index.index("</footer>") + len("</footer>")
     foot = index[start:end]
     # the home page's footer links are in-page anchors; on a case page they must
     # point back at the home page
     foot = foot.replace('href="#contact"', 'href="../index.html#contact"')
+    # the resume link belongs to the home page's footer only
+    foot = re.sub(r'<a href="assets/Mert-Tureli-Resume\.pdf"[^>]*>Resume \(PDF\)</a> / ', '', foot)
+    if colophon is not None:
+        foot = re.sub(r'(<p [^>]*>)[^<]*(?= / <a href="privacy\.html")',
+                      lambda m: m.group(1) + colophon, foot, count=1)
     foot = foot.replace('href="privacy.html"', 'href="../privacy.html"')
     foot = foot.replace('href="assets/', 'href="../assets/')
     return foot
@@ -317,8 +347,12 @@ def section(inner, dark=False, pad="var(--section-y) var(--page-margin)", extra=
 
 
 def track_id(sec):
-    """The name js/track.js reports for a section: its anchor, or its label as a slug."""
-    return sec.get("anchor") or re.sub(r"[^a-z0-9]+", "-", sec["label"].lower()).strip("-")
+    """
+    The name js/track.js reports for a section: its anchor, its "track" name
+    (kept for sections whose label was dropped), or its label as a slug.
+    """
+    return (sec.get("anchor") or sec.get("track")
+            or re.sub(r"[^a-z0-9]+", "-", sec["label"].lower()).strip("-"))
 
 
 # A labelled part inside a run of light sections. The wrapper repeats the run's
@@ -363,11 +397,12 @@ def walkthrough(w):
     custom element is defined by WALKTHROUGH_JS, which build() adds to <head>
     whenever a case declares one.
     """
+    fallback = ("<p>%s</p>" % w["fallback"]) if w.get("fallback") else ""
     return ('  <section id="%s" aria-label="%s" style="padding:var(--space-8) var(--page-margin);'
             'scroll-margin-top:28px">\n'
             '    <div style="max-width:var(--max-width);margin:0 auto">\n'
-            '      <project-walkthrough project="%s"><p>%s</p></project-walkthrough>\n'
-            '    </div>\n  </section>\n' % (w["id"], w["label"], w["project"], w["fallback"]))
+            '      <project-walkthrough project="%s">%s</project-walkthrough>\n'
+            '    </div>\n  </section>\n' % (w["id"], w["label"], w["project"], fallback))
 
 
 # ---------------------------------------------------------------- page builder
@@ -381,7 +416,6 @@ WALKTHROUGH_JS = "../assets/portfolio-foundation/project-walkthrough.js"
 # page's sections, except Websites, which has its own page.
 NAV = [
     ("work", "Work", "../index.html#work"),
-    ("experience", "Experience", "../index.html#experience"),
     ("beyond", "Beyond", "../index.html#beyond"),
     ("websites", "Websites", "../websites.html"),
     ("contact", "Contact", "../index.html#contact"),
@@ -469,9 +503,11 @@ def build(case, index, out_dir=OUT_DIR):
     if case.get("walkthrough"):
         body.append(walkthrough(case["walkthrough"]))
 
-    # brief
+    # brief. A case can drop the Brief label ("brief_label": None); the
+    # section numbers then start at 01 on the first labelled section.
+    brief_label = case.get("brief_label", "Brief")
     body.append(section(
-        block(rule("Brief", right="01")) + "\n" +
+        (block(rule(brief_label, right="01")) + "\n" if brief_label else "") +
         two_col(spec_list("brief", size="100%%,260px"),
                 block(*[para(p) for p in case["brief_note"]]) if case.get("brief_note") else "",
                 cols="minmax(0, 1fr) minmax(0, 1fr)"),
@@ -481,7 +517,7 @@ def build(case, index, out_dir=OUT_DIR):
     # continuous prose. Text and media sit side by side rather than stacking,
     # which both fills the empty half the measure width leaves behind and cuts
     # the page length roughly in half.
-    n = 2
+    n = 2 if brief_label else 1
     run = []
     # A light run normally continues the light section above it, so it has no
     # top padding. After a dark plate or a stats band it starts a new light
@@ -520,8 +556,14 @@ def build(case, index, out_dir=OUT_DIR):
             after_dark[0] = False
             continue
 
-        head = block(rule(sec["label"], right="%02d" % n, anchor=sec.get("anchor")))
-        n += 1
+        if sec.get("label"):
+            head = block(rule(sec["label"], right="%02d" % n, anchor=sec.get("anchor")))
+            n += 1
+        else:
+            # no label: the part continues the one above it, keeping only its
+            # deep-link anchor
+            head = ('<span id="%s" style="scroll-margin-top:30px"></span>' % sec["anchor"]
+                    if sec.get("anchor") else "")
 
         text = []
         if sec.get("paras"):
@@ -538,14 +580,15 @@ def build(case, index, out_dir=OUT_DIR):
             right = media_col(media)
             if sec.get("flip"):
                 left, right = right, left
-            piece = head + "\n" + two_col(left, right,
+            piece = (head + "\n" if head else "") + two_col(left, right,
                                         cols=sec.get("cols", "minmax(0, 1.05fr) minmax(0, 1fr)"))
         elif media:
             # nothing to sit beside, so the pictures take the full width. A half
             # width column here stacked four plates into 1781px of dead page.
-            piece = "\n".join([head] + text + [gallery(media, min_col=sec.get("min_col", "220px"))])
+            piece = "\n".join(([head] if head else []) + text
+                              + [gallery(media, min_col=sec.get("min_col", "220px"))])
         else:
-            piece = "\n".join([head] + text)
+            piece = "\n".join(([head] if head else []) + text)
 
         if sec.get("dark"):
             flush()
@@ -579,7 +622,8 @@ def build(case, index, out_dir=OUT_DIR):
             '      headerRow: { style: { padding: "0 max(var(--page-margin), calc((100% - var(--max-width)) / 2))" } },',
             "      brief: ["]
     for label, value, aside in case["brief"]:
-        row = '        { label: "%s", value: "%s"' % (label, value)
+        row = '        { label: "%s", value: %s' % (
+            label, value.js() if isinstance(value, FlagValue) else '"%s"' % value)
         if aside:
             row += ', aside: "%s"' % aside
         vals.append(row + " },")
@@ -627,7 +671,7 @@ def build(case, index, out_dir=OUT_DIR):
            escape(case["description"], quote=True), case["slug"], case["slug"],
            escape(case["og_alt"], quote=True), head_modules, helmet_block(index),
            site_header, "\n".join(body),
-           footer_block(index), runtime_script(index, "\n".join(vals))))
+           footer_block(index, case.get("colophon")), runtime_script(index, "\n".join(vals))))
 
     out = os.path.join(out_dir, case["slug"] + ".html")
     io.open(out, "w", encoding="utf-8", newline="\n").write(html)
@@ -635,6 +679,11 @@ def build(case, index, out_dir=OUT_DIR):
 
 
 # ------------------------------------------------------------------- the cases
+
+# The full colophon credit line, for case pages whose footer keeps all of it
+FULL_CREDIT = ("Photographs of the machine and the team by Paul Buckowski / Union College. "
+               "CAD animations rendered from the source assemblies. Aircraft models are third-party, "
+               "illustration only.")
 
 CASES = {}
 
@@ -645,9 +694,7 @@ CASES["robo-catcher"] = {
     "description": ("A softball machine that catches an incoming throw and returns it, built by a 12 "
                     "person capstone team for under $700. I owned the electronics and firmware."),
     "og_alt": "Render of the Robo-Catcher softball catch and return machine.",
-    "lede": ("Pitching machines are everywhere. Machines that catch the ball and return it do not "
-             "exist at any price, so our capstone team built one for under $700. I co-led the feeding "
-             "subsystem and owned all of the machine's electronics and firmware."),
+    "lede": "A machine that catches the ball and returns it. Our capstone team built it for under $700.",
     "clip": "robo-catcher-360",
     "clip_ratio": "4 / 3",
     # index.html's Robo-Catcher card deep-links to #mechanism-tour
@@ -655,19 +702,13 @@ CASES["robo-catcher"] = {
         "id": "mechanism-tour",
         "label": "Robo-Catcher mechanism walkthrough",
         "project": "robo-catcher",
-        "fallback": "Catch. Index. Return. Explore the three stages in the case study below.",
     },
+    "brief_label": None,
     "brief": [
         ("Role", "Feeding subsystem co-lead, all electronics and firmware", ""),
-        ("Team", "12 across capture, feeding and return", ""),
-        ("Tools", "ESP32, C++, MATLAB, NEMA 17 with TB6600, SolidWorks", ""),
+        ("Team", "12", ""),
         ("Build", "Laser cut HDF and 3D printed parts", ""),
-        ("Timeline", "2025, two academic terms", ""),
-    ],
-    "brief_note": [
-        "Twelve of us split across three subsystems: capture, feeding and return. I co-led the "
-        "4 person feeding group and owned the machine's entire electrical and software system: "
-        "motor drive, control firmware, wireless interface and safety logic.",
+        ("Timeline", "2025", ""),
     ],
     "sections": [
         # results up front, at display size, so the page opens with weight
@@ -677,56 +718,31 @@ CASES["robo-catcher"] = {
             ("55 lb", "One person portable"),
             ("1.5 hr", "Runtime, one 12 V 20 Ah battery"),
         ]},
-        {"label": "The problem", "paras": [
-            "A solo player can buy a machine that pitches, but someone still has to walk every ball "
-            "back. We set out to close the loop: a machine that catches an incoming throw, feeds it "
-            "internally and returns it, with nobody in the middle.",
-            "Nothing off the shelf does this at any price, and ours had to come in under a $700 cap.",
-        ]},
-        {"label": "Constraints", "cards": [
-            "Under $700 all in, with every actuator and driver chosen against that cap",
-            "Portable by one person: 55 lb finished, fits in a car trunk",
-            "Assembles at the field with no tools",
-            "Battery powered, a full practice session on one 12 V 20 Ah SLA battery",
-            "Safe around players: wireless emergency stop plus hardware cut-offs",
-            "Catch, index and return without a human touching the ball",
-        ]},
-        {"label": "Sizing the feeder before cutting anything", "paras": [
-            "The feeder is a rotating dual chamber indexer: catch a ball in one chamber, rotate 180 "
-            "degrees, present it to the return flywheel. The failure mode that kills machines like "
-            "this is a stall mid rotation.",
-            "So before any parts were made I modelled the load case in MATLAB, a 0.19 kg ball lifted "
-            "through 180 degrees of rotation, and sized the NEMA 17 stepper and TB6600 driver to a "
-            "1.8x torque safety factor.",
+        {"label": "The feeder", "paras": [
+            "The feeder is a rotating dual chamber: catch a ball, rotate 180 degrees, hand it to the "
+            "return flywheel.",
         ], "frames": [("F", "assets/photos/robo-catcher-photography/indexer-cross-section.jpg",
-                       "Indexer cross-section", "Chamber geometry self-centres the ball", "02"),
+                       "Indexer cross-section", "Chamber geometry", None),
                       ("F", "assets/photos/robo-catcher-photography/full-feeder.jpg",
-                       "The assembled feeder", "The assembled feeder", "03")],
+                       "The assembled feeder", "The assembled feeder", None)],
          "flip": True, "cols": "minmax(0, 1fr) minmax(0, 1.05fr)"},
-        {"label": "Electronics and firmware", "paras": [
-            "Everything runs on one ESP32. The firmware handles PWM speed control for the 120 W DC "
-            "return flywheel through a MOSFET stage, stepper indexing for the feeder, and limit "
-            "switch logic so the machine always knows where the chambers are.",
-            "A wireless remote gives start and stop from across the field, and the emergency "
-            "cut-offs kill motor power independently of the microcontroller.",
+        {"label": None, "track": "electronics-and-firmware", "paras": [
+            "One ESP32 runs everything. A wireless remote starts and stops it.",
         ], "frames": [("F", "assets/photos/robo-catcher-photography/working-on-electronics.jpg",
-                       "The team running the machine on the field", "Running it on the field", "03"),
+                       "The team running the machine on the field", "On the field", None),
                       ("F", "assets/photos/robo-catcher-photography/flywheel-full.jpg",
-                       "Return flywheel assembly", "Return flywheel, 120 W DC motor", "04")]},
+                       "Return flywheel assembly", "Return flywheel, 120 W DC motor", None)]},
         # the walkthrough's last stage links to #project-result
-        {"label": "The result", "anchor": "project-result", "list": [
+        {"label": None, "anchor": "project-result", "list": [
             "100% feed indexing on competition day: every ball delivered, no misses",
             "Under $700 total build cost against a $700 cap",
             "55 lb, one person portable, assembles with no tools",
             "1.5 hours continuous runtime on a single 12 V 20 Ah SLA battery",
         ], "frames": [("F", "assets/photos/shop-and-machine-photography/machine-field.jpg",
-                       "The finished machine on the field", "The finished machine, on the field", "05")]},
-        {"label": "What I learned", "strong": True, "paras": [
-            "The MATLAB torque study felt slow while teammates were already printing parts, and then "
-            "the feeder ran a full competition day without a single missed index. Analysis before "
-            "fabrication is cheaper than iteration after it.",
-            "If I built it again I would close the loop on flywheel RPM, so return speed holds "
-            "steady as the battery sags.",
+                       "The finished machine on the field", "The finished machine", None)]},
+        {"label": None, "track": "what-i-learned", "strong": True, "paras": [
+            "The MATLAB torque study felt slow while teammates were already printing parts. Then "
+            "the feeder ran a full competition day without a missed index.",
         ]},
     ],
     "next": ("CHARGER", "charger.html"),
@@ -741,26 +757,20 @@ CASES["charger"] = {
     "description": ("CHARGER won the Deployable Sensor Payload event at Battle of the Rockets 2026, with "
                     "custom payload electronics and five live telemetry channels."),
     "og_alt": "Render of the CHARGER rocket.",
-    "lede": ("The event asks for a rocket that puts a custom built sensor payload into a five "
-             "hundred foot window, drops it at apogee, sheds its nose cone partway down, and "
-             "streams five channels of telemetry to a handheld ground station until it lands. "
-             "We built CHARGER, and it won."),
+    "lede": ("A rocket that drops a sensor payload at apogee and streams five channels of "
+             "telemetry to a handheld ground station. We built CHARGER and it won."),
     "clip": "charger-square",
     "clip_ratio": "1 / 1",
     "brief": [
         ("Role", "Captain and chief engineer", ""),
-        ("Team", "Union College Rocket Team, twelve competing", ""),
-        ("Event", "Battle of the Rockets 2026", "Deployable Sensor Payload"),
+        ("Team", "Union College Rocket Team", ""),
+        ("Event", "Battle of the Rockets 2026", ""),
         ("Where", "Culpeper, Virginia, April 2026", ""),
         ("Result", "First place", ""),
         ("Advisers", "Scott Suriano, Ashok Ramasubramanian", ""),
     ],
     "brief_note": [
-        "There was no rocket team at Union College when I started. I founded it, ran it as captain "
-        "and chief engineer, trained new members through build labs, owned NAR and Tripoli "
-        "safety compliance for high power launches, and grew the budget by seven hundred percent "
-        "by writing funding proposals. The team was chartered as an official section of the "
-        "National Association of Rocketry.",
+        "There was no rocket team at Union College when I started. I founded it.",
         "Published by " + '<a href="https://www.union.edu/news/stories/202604/rocket-club-soars-new-heights-first-place-finish-national-competition" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-hairline)">Union College</a>' + " and by " + '<a href="https://www.rocketbattle.org/winners.html" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-hairline)">the competition organizer</a>' + ".",
     ],
     "sections": [
@@ -771,73 +781,34 @@ CASES["charger"] = {
             ("$716", "Total hardware cost"),
         ]},
         {"label": "The event", "paras": [
-            "The rocket flies a commercial G motor to between seven hundred and twelve hundred "
-            "feet, drops the payload at apogee, and at seventy five percent of peak altitude "
-            "the payload releases the nose cone, which has to reach the ground under fifteen "
+            "A G motor flies the rocket to 700-1,200 feet. On the way down the payload releases "
+            "the nose cone at 75 percent of peak altitude, and the nose cone has to land under 15 "
             "feet per second on its own.",
-            "With the nose cone gone the payload exposes a camera and films the ground until it "
-            "lands. Throughout, from the moment it goes on the pad, it transmits air pressure, "
-            "altitude, acceleration, temperature and rotation rate to a ground station that has "
-            "to plot all of it live and derive the descent rate as it happens.",
-        ]},
-        {"label": "Constraints", "cards": [
-            "Commercial G motor. Apogee at least seven hundred feet and no more than twelve hundred",
-            "Payload separates at apogee and descends at under fifteen feet per second",
-            "Nose cone released at seventy five percent of peak, and it must land gently on its own",
-            "Payload electronics must be custom designed. Commercial flight computers are not allowed",
-            "Five sensor channels transmitted at two hertz or better, from the pad until landing",
-            "Ground station portable, handheld antenna, two hours on battery, everything plotted live",
-        ]},
-        {"label": "Where the points are", "paras": [
-            "The flight is worth two hundred and fifteen points, plus a tenth of a point per "
-            "foot above seven hundred. Most of it sits on the data path rather than the rocket.",
-        ], "list": [
-            "Camera captures the ground from nose cone release until landing. 50 points",
-            "Ground station receives and displays telemetry live, at least ten packets after "
-            "liftoff. 30 points",
-            "Altitude, acceleration, rotation rate and temperature each plotted in real time. "
-            "20 points each",
-            "Descent rate calculated and displayed in real time. 20 points",
-            "Nose cone released at seventy five percent of peak altitude. 20 points",
-            "Apogee inside the window. 10 points, plus a tenth of a point per foot above seven "
-            "hundred",
-            "Payload deploys from the rocket at apogee. 5 points",
-        ]},
-        {"label": "The paperwork is scored too", "dark": True, "paras": [
-            "Flight points are added to the design review scores rather than compared against "
-            "them. A preliminary review is due in December and a critical review in March, both "
-            "presented live to judges and both scored.",
-            "Radio and antenna trades, a power budget, a software state list, flight "
-            "simulations, mass with the motor installed. The judges expect all of it written "
-            "down months before anything flies, and they score it twice.",
+            "With the nose cone gone, a camera on the payload films the ground until it lands.",
         ]},
         {"label": "The airframe", "paras": [
-            "Thirty seven inches, single stage, 2.63 inches across, four "
-            "trapezoidal balsa fins on a cardboard body tube. Centre of gravity "
-            "at 22 inches, stability margin 1.80 calibres.",
-            "The body tube is cardboard because the payload transmits "
-            "continuously from the pad to the ground. Carbon fibre would have "
-            "put a conductive shell around a 2.4 GHz antenna. Cardboard is "
-            "transparent at that frequency, so the radio set the airframe "
-            "material.",
+            "37 inches, single stage, "
+            + flag("charger-029", "Diameter: CAD measures 2.68 in. Confirm 2.63 or correct it.", "2.63")
+            + " inches across, four trapezoidal balsa fins on a cardboard body tube. Center of "
+            "gravity at 22 inches, stability margin 1.80 calibers.",
+            "Cardboard because the payload transmits from the pad on, and carbon fiber would put a "
+            "conductive shell around the 2.4 GHz antenna.",
             '<a href="../assets/charger-explorer/index.html" style="color: inherit; '
             'text-decoration: underline; text-underline-offset: 3px; '
-            'text-decoration-color: var(--line-hairline)">Explore in 3D</a>'
-            " to see all 28 components at their true stations.",
+            'text-decoration-color: var(--line-hairline)">Explore all 28 components in 3D</a>.',
         ], "ratio": "3 / 4", "cols": "minmax(0, 1fr) minmax(0, 1fr)", "frames": [
             ("F", "assets/photos/charger-rocket-photography/charger-pad-tall.jpg",
              "CHARGER on the launch rail before a flight", "On the rail", "01"),
             ("F", "assets/photos/charger-rocket-photography/charger-pad-close.jpg",
              "CHARGER standing on pad one", "Pad one", "02"),
         ]},
-        {"label": "Numbers that had to close", "paras": [
-            "An Aerotech G77R-7 at a thrust to weight ratio of 8.17, with a "
-            "G79 held as backup at 7.40. Simulated apogee 1,033 feet, targeted "
-            "mid window rather than near either limit. Descent 13.8 feet per "
-            "second under a 48 inch ripstop nylon canopy, against a limit "
-            "of 15.",
+        {"label": "The numbers", "paras": [
+            "Aerotech G77R-7, thrust to weight 8.17. Simulated apogee 1,033 feet. Descent 13.8 feet "
+            "per second under a 48 inch ripstop nylon canopy.",
         ], "list": [
-            "Length 37 in, maximum diameter 2.63 in, single stage",
+            "Length 37 in, maximum diameter "
+            + flag("charger-035", "Diameter: CAD measures 2.68 in. Confirm 2.63 or correct it.", "2.63")
+            + " in, single stage",
             "Four trapezoidal fins, root chord 2.76 in, height 2.36 in, sweep 2.17 in",
             "Stability margin 1.80 cal, centre of gravity at 22 in",
             "Aerotech G77R-7, thrust to weight 8.17, burn 1.25 s",
@@ -845,41 +816,21 @@ CASES["charger"] = {
             "Rail buttons at 2 in from the aft end and 22 in from the nose, near the CG",
             "Rocket $465.42, payload $250.53, ground station $0.00 from existing kit",
         ]},
-        {"label": "Two decisions the rules forced", "dark": True, "paras": [
-            "The rules do not accept a friction fit motor mount. There was no "
-            "retention design at the preliminary review, so I drew a screw-on "
-            "cap. The motor changed from a G80T to the G77R-7 in the same "
-            "period, once the mass budget settled and the simulation had a "
-            "real airframe rather than an estimate.",
-            "The rocket carries a commercial altimeter and does not use it for "
-            "recovery. The event bans commercial flight computers in the "
-            "payload, so every ejection charge fires off the team's own board "
-            "reading its own barometric sensor. The commercial unit is there "
-            "so a judge can read peak altitude off it after recovery, with "
-            "the power still on.",
+        {"label": "What the rules forced", "dark": True, "paras": [
+            "The event bans commercial flight computers in the payload, so every ejection charge "
+            "fires off our own board and barometric sensor. The commercial altimeter is only there "
+            "so a judge can read peak altitude after recovery.",
         ]},
-        {"label": "Where the margin was", "paras": [
-            "The shock cord attachment carries the whole rocket at the instant "
-            "the parachute opens. Peak simulated acceleration 24.4 feet per "
-            "second squared on a 2.2 pound rocket is 19 pounds of force through "
-            "an M3 screw with 0.11 square inches in shear. 1,641 psi against a "
-            "10,000 psi allowable, so six times margin.",
-        ], "strong": True},
         {"kind": "bleed", "src": "assets/photos/charger-rocket-photography/charger-pad-band.jpg",
          "alt": "CHARGER vertical on pad one at Battle of the Rockets, Culpeper, Virginia",
          "caption": "Pad one, Culpeper, Virginia, April 2026"},
         {"label": "Launch day", "paras": [
-            "Three attempts per team, and the range closes at four in the afternoon. Weather "
-            "can take the whole weekend, and if it does the awards are decided on the December "
-            "and March review scores alone.",
-            "We got two clean flights away on the first day while the weather held, then put up "
-            "the qualifying flight before noon on the second. One team member stands at the "
-            "launch control officer's position as mission control and nothing leaves the pad "
-            "until they say it does.",
+            "We got two clean flights away on the first day, then put up the qualifying flight "
+            "before noon on the second.",
         ], "strong": True},
         {"label": "The result", "dark": True, "paras": [
             "Final standings, published by "
-            + '<a href="https://www.union.edu/news/stories/202604/rocket-club-soars-new-heights-first-place-finish-national-competition" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--paper-a45)">Union College on 23 April 2026</a>' + " and listed by " + '<a href="https://www.rocketbattle.org/winners.html" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--paper-a45)">the competition organizer</a>' + ".",
+            + '<a href="https://www.union.edu/news/stories/202604/rocket-club-soars-new-heights-first-place-finish-national-competition" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--paper-a45)">Union College</a>' + ", April 23, 2026.",
         ], "list": [
             "Union College Rocket Club",
             "Chantilly Aerospace Club Team 3",
@@ -887,18 +838,10 @@ CASES["charger"] = {
             "Spring Grove Area High School Team 2",
             "George Mason University",
         ]},
-        {"label": "What I learned", "strong": True, "paras": [
-            "Competition rules allow only team members to work on any part of the entry: "
-            "design, simulation, build, repairs, launch. Advisers guide and mentors review, "
-            "but nobody outside the team touches the rocket.",
-            "That put the recruiting and the funding on the same critical path as the "
-            "airframe. The proposals paid for the hardware, the build labs produced twelve "
-            "people who could fly it, and the two design reviews forced the team to write "
-            "down exactly how the rocket worked before it flew.",
-        ]},
     ],
     "prev": ("Robo-Catcher", "robo-catcher.html"),
     "next": ("The bend fixture", "bend-fixture.html"),
+    "colophon": FULL_CREDIT,
 }
 
 
@@ -909,23 +852,17 @@ CASES["bend-fixture"] = {
     "description": ("A 3D printable 12 part three-point bend fixture, designed in SolidWorks 2025 for "
                     "specimens too delicate for commercial fixtures, with rebuilds automated in VBA."),
     "og_alt": "Blurred render of the three-point bend fixture.",
-    "lede": ("Commercial bend fixtures are built for metals and plastics and will damage a fragile "
-             "specimen before the test begins. SunThru needed one matched to its own samples, so I "
-             "designed a fully printable 12 part fixture built around gentle handling."),
+    "lede": ("Commercial bend fixtures will damage a fragile specimen before the test begins. I "
+             "designed a fully printable 12 part one for SunThru's samples."),
     "clip": "bend-fixture-blurred",
     "clip_ratio": "16 / 9",
     "clip_note": "IP protected",
+    "brief_label": None,
     "brief": [
-        ("Role", "Design engineer, solo", ""),
-        ("For", "SunThru, early stage hardware R&amp;D", ""),
-        ("Tools", "SolidWorks 2025, VBA macro automation, FDM printing", ""),
-        ("Timeline", "2026", ""),
         ("Status", "Base plate and gauge plate printed and in lab use", ""),
     ],
     "brief_note": [
-        "Renders are blurred here because the fixture is SunThru hardware. The engineering worth "
-        "describing is the parametric structure and the design for printing, neither of which needs "
-        "the geometry shown.",
+        "Renders are blurred because the fixture is SunThru hardware.",
     ],
     "sections": [
         {"kind": "stats", "stats": [
@@ -934,45 +871,23 @@ CASES["bend-fixture"] = {
             ("M3", "One hardware size throughout"),
             ("VBA", "Automated rebuilds"),
         ]},
-        {"label": "The problem", "paras": [
-            "Three-point bend testing is a standard way to measure flexural strength, but commercial "
-            "fixtures assume a specimen that can take being clamped. When the sample cannot, the "
-            "fixture itself becomes the thing that breaks it.",
-            "SunThru needed a fixture sized to its own samples, gentle enough not to pre-damage "
-            "them, and cheap enough to iterate on, which meant printing it in house.",
-        ]},
-        {"label": "Constraints", "cards": [
-            "Every part printable on the lab's FDM printer, no machined components",
-            "12 interlocking parts on one coordinate system, so dimension changes ripple predictably",
-            "Standard M3 hardware throughout, with printable cross-hole channels",
-            "Compliant contact geometry at the load nose and both supports",
-            "Cheap enough to reprint a part rather than rework it",
-            "Sized to the lab's own specimens rather than a standard",
-        ]},
         {"label": "Parametric part design", "paras": [
-            "A 12 part fixture with interlocked dimensions is a maintenance problem: change one "
-            "dimension by hand and eleven other parts silently stop fitting. Every part sits on a "
-            "shared coordinate system, and I automated the rebuilds with SolidWorks VBA so a "
-            "dimension change regenerates the affected parts consistently.",
-            "Each part's geometry is checked against its expected volume before it is accepted, which "
-            "catches a rebuild that succeeded but produced the wrong solid.",
+            "All 12 parts sit on one shared coordinate system. I automated the rebuilds with "
+            "SolidWorks VBA, so a dimension change regenerates the affected parts.",
         ]},
-        {"label": "Designed for the printer, not around it", "paras": [
-            "The parts are shaped the way the machine builds them: additive layer friendly geometry "
-            "throughout, and horizontal M3 cross-holes drawn as printable channels so nothing needs "
-            "support material or post-drilling.",
-            "One hardware size across the whole fixture means one driver, one drill, and no chance of "
-            "an assembly step needing something that is not on the bench.",
+        {"label": "Designed for printing", "paras": [
+            "Horizontal M3 cross-holes are drawn as printable channels, so nothing needs support "
+            "material or post-drilling. One hardware size across the whole fixture.",
         ], "strong": True},
-        {"label": "What I learned", "strong": True, "paras": [
-            "The decisions that held up were the ones that thought like the manufacturing process. "
-            "Geometry built up in layers the way the printer builds it, holes shaped for printability "
-            "instead of for drills, hardware chosen from one standard size.",
-            "Designing for the process beat designing around it.",
-        ]},
     ],
     "prev": ("CHARGER", "charger.html"),
     "next": ("Rudder pedals", "rudder-pedals.html"),
+    "colophon": (flag("bend-fixture-030",
+                      "The shortened credit just says 'Photographs by Paul Buckowski / Union College'. "
+                      "Does it still cover only the machine and team photos, and does the site-wide "
+                      "footer still need the CAD animation note?",
+                      "Photographs by Paul Buckowski / Union College.")
+                 + " Aircraft models are third-party, illustration only."),
 }
 
 
@@ -983,22 +898,14 @@ CASES["rudder-pedals"] = {
     "description": ("Three-axis flight sim rudder pedals with fighter style geometry, Hall effect sensing "
                     "and C++ USB HID firmware. Designed, printed, wired and programmed solo."),
     "og_alt": "Render of the flight sim rudder pedal mechanism.",
-    "lede": ("I fly ultralights, and consumer sim pedals never felt right: short throw, toy-like "
-             "centring, and potentiometers that get jittery as they wear. So I built my own, with "
-             "fighter style geometry, three axes, and sensing that cannot wear out."),
+    "lede": ("I fly ultralights and consumer sim pedals never felt right, so I built my own. "
+             "Fighter style geometry, three axes, Hall sensors instead of potentiometers."),
     "clip": "rudder-pedals-working",
     "clip_ratio": "16 / 9",
+    "brief_label": None,
     "brief": [
-        ("Role", "Design, print, wiring and firmware, solo", ""),
-        ("Type", "Personal project", ""),
-        ("Tools", "SolidWorks, FDM printing, Arduino Pro Micro, A1301 Hall sensors, C++", ""),
         ("Timeline", "2026", ""),
         ("Status", "In daily use at my sim", ""),
-    ],
-    "brief_note": [
-        "Rudder pedals do three jobs at once: yaw through the sliding pedal motion, plus independent "
-        "left and right toe brakes. Consumer hardware compresses all of that into short springy "
-        "travel measured by potentiometers.",
     ],
     "sections": [
         {"kind": "stats", "stats": [
@@ -1007,60 +914,35 @@ CASES["rudder-pedals"] = {
             ("USB HID", "No drivers, any simulator"),
             ("A1301", "Contactless Hall sensing"),
         ]},
-        {"label": "The problem", "paras": [
-            "Potentiometers drift, jitter and eventually wear out, because the measurement depends on "
-            "a wiper physically touching a track. On a control you stand on, that wear is not "
-            "hypothetical.",
-            "I wanted fighter style pedal geometry with sensing that reads the same on day one and "
-            "day one thousand.",
-        ]},
-        {"label": "Constraints", "cards": [
-            "Three independent axes, yaw plus left and right toe brakes, in one mechanism",
-            "Every structural part printable on a hobby FDM printer",
-            "No contact based sensing anywhere in the signal path",
-            "Recognised as a standard game controller by any PC, no drivers",
-            "Pedal geometry close to an F-15 or F-18 layout",
-            "Serviceable: a worn part can be reprinted, not replaced as an assembly",
-        ]},
-        {"label": "Mechanism first", "paras": [
-            "I designed the three-axis assembly in SolidWorks around fighter style pedal geometry and "
-            "printed it, iterating on pivot placement and return feel.",
-            "Rapid prototyping earns its name here. Pedal feel is subjective, and the fastest way to "
-            "evaluate a linkage is to stand on it.",
+        {"label": "Mechanism", "paras": [
+            "I designed it in SolidWorks and printed it, iterating on pivot placement and return feel.",
         ]},
         {"kind": "clip_band", "base": "rudder-pedals-mechanism",
          "caption": "The CAD assembly driven through its real linkage: yaw both ways, each toe brake, "
                     "then differential braking"},
-        {"label": "Sensing without touching", "paras": [
-            "Each axis is measured by an A1301 Hall effect sensor reading a magnet on the moving part. "
-            "No wiper, no contact, nothing to wear. The output is smooth and continuous, and it is "
-            "identical after a thousand hours.",
-            "That single component choice removes the entire failure mode that ruins potentiometer "
-            "based controls.",
+        {"label": "Sensing", "paras": [
+            "Each axis uses an A1301 Hall effect sensor reading a magnet on the moving part. No "
+            "contact, nothing to wear.",
         ], "frames": [("F", "assets/renders/rudder-pedals/a1301-hall-sensor.jpg",
                        "An A1301 Hall effect sensor in a TO-92 package",
-                       "The A1301 reads the magnet through the air gap, so nothing touches", "01")]},
-        {"label": "Firmware that gets out of the way", "paras": [
-            "The plan was a Teensy 2.0. The board that arrived was counterfeit and came with dead "
-            "pins, so I swapped to an Arduino Pro Micro: same ATmega32U4, same native USB, and the "
-            "firmware moved across unchanged.",
-            "It reads the three Hall sensors and enumerates as a standard USB HID gamepad, so every "
-            "simulator sees it the moment it is plugged in. No driver, no mapping utility.",
-            "I measured each axis's real travel on the bench, and the firmware maps those endpoints "
-            "onto the HID range and clamps anything past them. Rudder, left brake and right brake "
-            "go out as three independent axes at 100 Hz.",
+                       "A1301 Hall sensor and magnet", "01")]},
+        {"label": "Firmware", "paras": [
+            "The Pro Micro shows up as a standard USB gamepad. No driver needed.",
         ], "strong": True,
          "frames": [("F", "assets/renders/rudder-pedals/pro-micro.jpg",
                      "An Arduino Pro Micro board",
                      "The Pro Micro that replaced the counterfeit Teensy", "02")],
          "flip": True},
-        {"label": "What I learned", "strong": True, "paras": [
-            "The pedal feel comes from the linkage, but whether it is usable comes from the "
-            "firmware. Neither could be finished without the other.",
-        ]},
     ],
     "prev": ("The bend fixture", "bend-fixture.html"),
     "next": ("Therma-Shift", "therma-shift.html"),
+    "colophon": (flag("rudder-pedals-035",
+                      "The footer credits 'photographs of the machine and the team' to Paul Buckowski / "
+                      "Union College, which looks copied from another case page. Does that credit apply "
+                      "to the rudder pedals page, or should it come out?",
+                      "Photographs of the machine and the team by Paul Buckowski / Union College.")
+                 + " CAD animations rendered from the source assemblies. Aircraft models are "
+                 "third-party, illustration only."),
 }
 
 
@@ -1071,23 +953,20 @@ CASES["therma-shift"] = {
     "description": ("A dual mode thermoelectric coaster that heats or cools any mug or glass. Bench "
                     "validated to 11 C on the cold face at 12 V, with thermal runaway protection."),
     "og_alt": "Airflow illustration of the Therma-Shift coaster heat sink.",
-    "lede": ("A solid state desktop coaster that actively heats or cools any standard mug, glass or "
-             "can, with no proprietary drinkware. One Peltier module, closed loop control, and a "
-             "safety architecture designed for unattended desk use."),
+    "lede": "A solid state desktop coaster that heats or cools any mug, glass or can.",
     "clip": "therma-shift-airflow",
     "clip_aria": "Airflow illustration: air enters all bottom grille slots, passes through the heatsink fins, descends into the blower and exits the oval side vent. Heating and cooling use the same flow direction.",
     "clip_ratio": "4 / 3",
+    "brief_label": None,
     "brief": [
-        ("Role", "Design, thermal validation, firmware, solo", ""),
-        ("Built for", "SparkLab seed competition, March 2026", ""),
-        ("Tools", "TEC1-12703 Peltier, Arduino C++, NTC thermistors, DRV8871", ""),
-        ("Power", "USB-C Power Delivery", ""),
-        ("Status", "Thermal stack validated, closed loop electronics in progress", ""),
+        ("Built for", FlagValue("therma-shift-007",
+                                "Confirm the competition name and date (SparkLabs Seed Competition, "
+                                "March 2026) in the factual pass.",
+                                "SparkLabs seed competition, March 2026"), ""),
+        ("Status", "Thermal stack validated, electronics in progress", ""),
     ],
     "brief_note": [
-        "Existing options split into two bad camps: proprietary heated mugs that lock you into their "
-        "drinkware, and cheap USB warmers with no temperature regulation at all. The interesting "
-        "problem sits in between.",
+        "Heated mugs lock you into their cup. Cheap USB warmers have no temperature control.",
     ],
     "sections": [
         {"kind": "stats", "stats": [
@@ -1097,9 +976,7 @@ CASES["therma-shift"] = {
             ("&plusmn;2 &deg;F", "Closed loop target"),
         ]},
         {"label": "The problem", "paras": [
-            "One compact device that both heats and cools, works with whatever cup is already on the "
-            "desk, and can be trusted to run unattended. The last of those is the hard one: a heater "
-            "left alone on a desk is a fire risk if nothing independent is watching it.",
+            "The coaster has to run unattended on a desk.",
         ]},
         {"label": "Constraints", "cards": [
             "Universal: any mug, glass or can, the device adapts to the drinkware",
@@ -1110,23 +987,20 @@ CASES["therma-shift"] = {
             "No proprietary cup, ever",
         ]},
         {"label": "The design", "paras": [
-            "A thermoelectric module does both jobs: drive current one way and the top plate cools, "
-            "reverse it and the plate heats. The TEC1-12703 sits between an aluminium top plate and a "
-            "finned heatsink with a blower carrying away waste heat.",
-            "An NTC thermistor at the plate closes the loop, targeting about 2 degrees Fahrenheit "
-            "around setpoint, with the module driven through a DRV8871 H-bridge so firmware controls "
-            "both power and polarity.",
-            "Safety is layered the way my lab test rig is: the control loop regulates, and separate "
-            "firmware cutoffs watch for thermal runaway independently of it, so an unattended fault "
-            "shuts the device down.",
+            "A thermoelectric module heats or cools depending on current direction. The TEC1-12703 "
+            "sits between an aluminum top plate and a finned heatsink with a blower.",
+            "An NTC thermistor at the plate closes the loop, targeting about 2 degrees F around "
+            "setpoint.",
+            flag("therma-shift-021",
+                 "Are the independent firmware thermal-runaway cutoffs built and running yet, or still "
+                 "planned? The Where It Stands list says closed loop integration is in progress. If "
+                 "they are planned, reword in future tense or cut.",
+                 "Separate firmware cutoffs watch for thermal runaway independently of the control "
+                 "loop and shut the device down on a fault."),
         ]},
-        {"label": "Validate the physics before the electronics", "paras": [
-            "Before integrating any control loop I bench tested the bare thermal stack against a lab "
-            "supply with K-type thermocouples on both faces. At 12 V the cold face held 10.7 to 12 "
-            "degrees C with the heatsink at 53 to 56, reaching equilibrium in about five minutes.",
-            "A voltage sweep mapped cold face temperature against input power to find the efficient "
-            "operating window. Swapping the heatsink's stock adhesive pad for proper thermal paste "
-            "measurably improved performance: the interfaces matter as much as the module.",
+        {"label": "Bench test", "paras": [
+            "Before adding any control loop, I bench tested the bare thermal stack on a lab supply "
+            "with K-type thermocouples on both faces.",
         ], "strong": True},
         {"label": "Where it stands", "list": [
             "10.7 to 12 degrees C cold face at 12 V, steady state",
@@ -1137,6 +1011,10 @@ CASES["therma-shift"] = {
     ],
     "prev": ("Rudder pedals", "rudder-pedals.html"),
     "next": ("Robo-Catcher", "robo-catcher.html"),
+    "colophon": flag("therma-shift-028",
+                     "The footer is now per-page (CAD credit only). Confirm the other project pages get "
+                     "credits that match their own content in the factual pass.",
+                     "CAD animations rendered from the source assemblies."),
 }
 
 

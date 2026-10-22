@@ -108,3 +108,6 @@ html[data-card-theme="warm"] .depth-design .charger-launch-cue{background:#30282
 .website-footer > .site-display { flex-basis: 100%; }
 @media (max-width: 860px) { .site-display button { min-height: 44px; } }
 @media print { .site-display { display: none; } }
+/* Open copy questions for the owner (<mark class="flag">, listed by tools/check-flags.py):
+   a quiet dotted underline in the text colour of whatever theme is showing, not a highlight. */
+mark.flag { background: none; color: inherit; text-decoration: underline dotted currentColor; text-decoration-thickness: 1px; text-underline-offset: 0.2em; cursor: help; }

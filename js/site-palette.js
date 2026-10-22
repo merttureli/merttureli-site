@@ -67,7 +67,7 @@
         '<span class="site-display-label" id="' + id + '-motion">Motion</span>' +
         '<button type="button" role="switch" class="site-display-switch" data-motion-toggle aria-checked="true" aria-labelledby="' + id + '-motion"><span aria-hidden="true"></span><b>On</b></button>' +
       '</div>' +
-      '<p class="site-display-note">Daily picks one palette per day. Your choice stays saved on this device.</p>';
+      '<p class="site-display-note">Daily picks one palette per day. Your choice is saved on this device.</p>';
     el.addEventListener('click', e => {
       const p = e.target.closest('button[data-palette]');
       if (p) {

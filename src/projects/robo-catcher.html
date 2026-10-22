@@ -65,7 +65,7 @@
       <div style="display: flex; flex-direction: column; gap: var(--space-5)">
         <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" wide="true" hint-size="300px,16px">Case study / Senior capstone</x-import>
         <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="1" treatment="inverse" as="h1" hint-size="100%,140px">Robo-Catcher</x-import>
-        <p style="font-size: var(--fs-body-lg); line-height: var(--lh-body); color: var(--paper-a90); max-width: var(--measure)">Pitching machines are everywhere. Machines that catch the ball and return it do not exist at any price, so our capstone team built one for under $700. I co-led the feeding subsystem and owned all of the machine's electronics and firmware.</p>
+        <p style="font-size: var(--fs-body-lg); line-height: var(--lh-body); color: var(--paper-a90); max-width: var(--measure)">A machine that catches the ball and returns it. Our capstone team built it for under $700.</p>
         <div style="display: flex; gap: var(--space-4); flex-wrap: wrap; margin-top: var(--space-2)">
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="glass" variant="glass" trailing="→" href="../index.html#work" dc-props="{{ linkOnDark }}" hint-size="150px,44px">All work</x-import>
         </div>
@@ -78,20 +78,15 @@
 
   <section id="mechanism-tour" aria-label="Robo-Catcher mechanism walkthrough" style="padding:var(--space-8) var(--page-margin);scroll-margin-top:28px">
     <div style="max-width:var(--max-width);margin:0 auto">
-      <project-walkthrough project="robo-catcher"><p>Catch. Index. Return. Explore the three stages in the case study below.</p></project-walkthrough>
+      <project-walkthrough project="robo-catcher"></project-walkthrough>
     </div>
   </section>
 
   <section data-track="brief" style="position: relative; padding: var(--section-y) var(--page-margin) var(--space-9);">
     <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-7)">
-      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import data-depth-rule="true" data-heading="2" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Brief" right="01" hint-size="100%,14px"></x-import>
-      </div>
       <div data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-8); align-items: start">
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-6)"><x-import component-from-global-scope="MertTReliDesignSystem_56763c.SpecList" items="{{ brief }}" columns="minmax(64px,110px) minmax(0,1fr)" hint-size="100%%,260px"></x-import></div>
-        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-5)">      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Twelve of us split across three subsystems: capture, feeding and return. I co-led the 4 person feeding group and owned the machine's entire electrical and software system: motor drive, control firmware, wireless interface and safety logic.</p>
-      </div></div>
+        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-5)"></div>
       </div>
     </div>
   </section>
@@ -109,68 +104,35 @@
 
   <section style="position: relative; padding: var(--section-y) var(--page-margin) var(--section-y);">
     <div style="position: relative; max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-9)">
-      <div data-track="the-problem" style="display: flex; flex-direction: column; gap: var(--space-9)">
+      <div data-track="the-feeder" style="display: flex; flex-direction: column; gap: var(--space-9)">
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import data-depth-rule="true" data-heading="2" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="The problem" right="02" hint-size="100%,14px"></x-import>
-      </div>
-      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">A solo player can buy a machine that pitches, but someone still has to walk every ball back. We set out to close the loop: a machine that catches an incoming throw, feeds it internally and returns it, with nobody in the middle.</p>
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Nothing off the shelf does this at any price, and ours had to come in under a $700 cap.</p>
-      </div>
-      </div>
-      <div data-track="constraints" style="display: flex; flex-direction: column; gap: var(--space-9)">
-      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import data-depth-rule="true" data-heading="2" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Constraints" right="03" hint-size="100%,14px"></x-import>
-      </div>
-      <div data-reveal="1" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5)">
-        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">01</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Under $700 all in, with every actuator and driver chosen against that cap</span></div>
-        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">02</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Portable by one person: 55 lb finished, fits in a car trunk</span></div>
-        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">03</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Assembles at the field with no tools</span></div>
-        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">04</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Battery powered, a full practice session on one 12 V 20 Ah SLA battery</span></div>
-        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">05</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Safe around players: wireless emergency stop plus hardware cut-offs</span></div>
-        <div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">06</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Catch, index and return without a human touching the ball</span></div>
-      </div>
-      </div>
-      <div data-track="sizing-the-feeder-before-cutting-anything" style="display: flex; flex-direction: column; gap: var(--space-9)">
-      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import data-depth-rule="true" data-heading="2" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Sizing the feeder before cutting anything" right="04" hint-size="100%,14px"></x-import>
+        <x-import data-depth-rule="true" data-heading="2" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="The feeder" right="01" hint-size="100%,14px"></x-import>
       </div>
       <div data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: var(--space-8); align-items: start">
-        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-6)"><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr)); gap: var(--space-4)"><x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="../assets/photos/robo-catcher-photography/indexer-cross-section.jpg" alt="Indexer cross-section" ratio="3 / 2" caption="Chamber geometry self-centres the ball" index="02" hover-zoom="true" hint-size="100%,300px"></x-import><x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="../assets/photos/robo-catcher-photography/full-feeder.jpg" alt="The assembled feeder" ratio="3 / 2" caption="The assembled feeder" index="03" hover-zoom="true" hint-size="100%,300px"></x-import></div></div>
+        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-6)"><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr)); gap: var(--space-4)"><x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="../assets/photos/robo-catcher-photography/indexer-cross-section.jpg" alt="Indexer cross-section" ratio="3 / 2" caption="Chamber geometry" hover-zoom="true" hint-size="100%,300px"></x-import><x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="../assets/photos/robo-catcher-photography/full-feeder.jpg" alt="The assembled feeder" ratio="3 / 2" caption="The assembled feeder" hover-zoom="true" hint-size="100%,300px"></x-import></div></div>
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-5)">      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">The feeder is a rotating dual chamber indexer: catch a ball in one chamber, rotate 180 degrees, present it to the return flywheel. The failure mode that kills machines like this is a stall mid rotation.</p>
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">So before any parts were made I modelled the load case in MATLAB, a 0.19 kg ball lifted through 180 degrees of rotation, and sized the NEMA 17 stepper and TB6600 driver to a 1.8x torque safety factor.</p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">The feeder is a rotating dual chamber: catch a ball, rotate 180 degrees, hand it to the return flywheel.</p>
       </div></div>
       </div>
       </div>
       <div data-track="electronics-and-firmware" style="display: flex; flex-direction: column; gap: var(--space-9)">
-      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import data-depth-rule="true" data-heading="2" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="Electronics and firmware" right="05" hint-size="100%,14px"></x-import>
-      </div>
       <div data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: var(--space-8); align-items: start">
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-6)">      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Everything runs on one ESP32. The firmware handles PWM speed control for the 120 W DC return flywheel through a MOSFET stage, stepper indexing for the feeder, and limit switch logic so the machine always knows where the chambers are.</p>
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">A wireless remote gives start and stop from across the field, and the emergency cut-offs kill motor power independently of the microcontroller.</p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">One ESP32 runs everything. A wireless remote starts and stops it.</p>
       </div></div>
-        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-5)"><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr)); gap: var(--space-4)"><x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="../assets/photos/robo-catcher-photography/working-on-electronics.jpg" alt="The team running the machine on the field" ratio="3 / 2" caption="Running it on the field" index="03" hover-zoom="true" hint-size="100%,300px"></x-import><x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="../assets/photos/robo-catcher-photography/flywheel-full.jpg" alt="Return flywheel assembly" ratio="3 / 2" caption="Return flywheel, 120 W DC motor" index="04" hover-zoom="true" hint-size="100%,300px"></x-import></div></div>
+        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-5)"><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr)); gap: var(--space-4)"><x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="../assets/photos/robo-catcher-photography/working-on-electronics.jpg" alt="The team running the machine on the field" ratio="3 / 2" caption="On the field" hover-zoom="true" hint-size="100%,300px"></x-import><x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="../assets/photos/robo-catcher-photography/flywheel-full.jpg" alt="Return flywheel assembly" ratio="3 / 2" caption="Return flywheel, 120 W DC motor" hover-zoom="true" hint-size="100%,300px"></x-import></div></div>
       </div>
       </div>
       <div data-track="project-result" style="display: flex; flex-direction: column; gap: var(--space-9)">
-      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <span id="project-result" style="scroll-margin-top:30px"></span><x-import data-depth-rule="true" data-heading="2" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="The result" right="06" hint-size="100%,14px"></x-import>
-      </div>
+<span id="project-result" style="scroll-margin-top:30px"></span>
       <div data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: var(--space-8); align-items: start">
         <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-6)">      <div data-reveal="1"><div style="display: flex; flex-direction: column; max-width: var(--measure)"><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">01</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">100% feed indexing on competition day: every ball delivered, no misses</span></div><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">02</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">Under $700 total build cost against a $700 cap</span></div><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">03</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">55 lb, one person portable, assembles with no tools</span></div><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">04</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">1.5 hours continuous runtime on a single 12 V 20 Ah SLA battery</span></div></div></div></div>
-        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-5)"><x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="../assets/photos/shop-and-machine-photography/machine-field.jpg" alt="The finished machine on the field" ratio="16 / 9" caption="The finished machine, on the field" index="05" hover-zoom="true" hint-size="100%,300px"></x-import></div>
+        <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-5)"><x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="../assets/photos/shop-and-machine-photography/machine-field.jpg" alt="The finished machine on the field" ratio="16 / 9" caption="The finished machine" hover-zoom="true" hint-size="100%,300px"></x-import></div>
       </div>
       </div>
       <div data-track="what-i-learned" style="display: flex; flex-direction: column; gap: var(--space-9)">
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <x-import data-depth-rule="true" data-heading="2" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="What I learned" right="07" hint-size="100%,14px"></x-import>
-      </div>
-      <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">The MATLAB torque study felt slow while teammates were already printing parts, and then the feeder ran a full competition day without a single missed index. Analysis before fabrication is cheaper than iteration after it.</p>
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">If I built it again I would close the loop on flywheel RPM, so return speed holds steady as the battery sags.</p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">The MATLAB torque study felt slow while teammates were already printing parts. Then the feeder ran a full competition day without a missed index.</p>
       </div>
       </div>
     </div>
@@ -190,7 +152,7 @@
         <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Wordmark" name="MERT TURELI" size="md" hint-size="220px,20px"></x-import>
         <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="320px,16px">Austin, Texas / B.S. Mechanical Engineering, Union College, 2026</x-import>
       </div>
-      <p style="max-width: 96ch; font-family: var(--font-mono); font-size: var(--fs-meta-sm); line-height: 1.5; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-meta)">Photographs of the machine and the team by Paul Buckowski / Union College. CAD animations rendered from the source assemblies. Aircraft models are third-party, illustration only. / <a href="../privacy.html" style="color: var(--text-meta); text-decoration: underline; text-underline-offset: 3px">Privacy</a></p>
+      <p style="max-width: 96ch; font-family: var(--font-mono); font-size: var(--fs-meta-sm); line-height: 1.5; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-meta)">Photographs of the machine and the team by Paul Buckowski / Union College. Aircraft models are third-party, illustration only. / <a href="../privacy.html" style="color: var(--text-meta); text-decoration: underline; text-underline-offset: 3px">Privacy</a></p>
     </div>
   </footer>
 </div>
@@ -202,7 +164,6 @@ class Component extends DCLogic {
     return {
       nav: [
         { id: "work", label: "Work", href: "../index.html#work" },
-        { id: "experience", label: "Experience", href: "../index.html#experience" },
         { id: "beyond", label: "Beyond", href: "../index.html#beyond" },
         { id: "websites", label: "Websites", href: "../websites.html" },
         { id: "contact", label: "Contact", href: "../index.html#contact" },
@@ -215,10 +176,9 @@ class Component extends DCLogic {
       headerRow: { style: { padding: "0 max(var(--page-margin), calc((100% - var(--max-width)) / 2))" } },
       brief: [
         { label: "Role", value: "Feeding subsystem co-lead, all electronics and firmware" },
-        { label: "Team", value: "12 across capture, feeding and return" },
-        { label: "Tools", value: "ESP32, C++, MATLAB, NEMA 17 with TB6600, SolidWorks" },
+        { label: "Team", value: "12" },
         { label: "Build", value: "Laser cut HDF and 3D printed parts" },
-        { label: "Timeline", value: "2025, two academic terms" },
+        { label: "Timeline", value: "2025" },
       ],
     };
   }
