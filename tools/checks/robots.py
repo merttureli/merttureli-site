@@ -3,6 +3,7 @@
 FAIL
   - an HTML page under next/, studies/ or docs/ without <meta name="robots" content="noindex">
   - robots.txt does not Disallow /next/, /studies/ or /docs/ (when the folder exists)
+  - robots.txt does not Disallow /.claude/ while .nojekyll exists (Pages then serves dot folders)
   - a sitemap.xml URL that robots.txt disallows or whose page says noindex
 WARN
   - other non-page folders that exist but robots.txt allows (cards/, src/, tools/,
@@ -82,6 +83,8 @@ def run(ctx):
                 head = open(ctx.path(f), encoding="utf-8", errors="replace").read()
                 if not NOINDEX.search(head):
                     errors.append('%s: add <meta name="robots" content="noindex"> to <head>' % f)
+    if ".nojekyll" in files and any(f.startswith(".claude/") for f in files) and allowed(rl, "/.claude/"):
+        errors.append("robots.txt: add 'Disallow: /.claude/' (.nojekyll makes GitHub Pages serve it)")
     for folder in SOFT:
         if any(f.startswith(folder) for f in files) and allowed(rl, "/" + folder):
             warnings.append("robots.txt allows /%s (not site pages; consider 'Disallow: /%s')" % (folder, folder))
