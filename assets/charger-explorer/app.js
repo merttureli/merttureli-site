@@ -280,6 +280,13 @@ window.chargerExplorer={
   setInline,
   // Inline: show the hero rocket's pose right now (pose in this page's px).
   seat(pose){if(!data)return;if(hand)hand.done();setInline(true);heldView=heroView(pose);resize();},
+  // Inline, after the visitor turned the rocket: turn it back to the seated pose, so the home page's own
+  // rocket can take over again without a jump.
+  settle(pose,{duration=300}={}){
+    if(!data||!inline)return Promise.resolve();
+    interacted=false;
+    return runHand({from:heldView||viewNow(),to:()=>heroView(pose),duration});
+  },
   // Grow into the dialog: from the inline view (moved by shift, the page px the frame moved) or a hero
   // pose, to the explorer's opening view.
   expand(pose,{duration=700,keepView=false,shift=[0,0]}={}){

@@ -76,7 +76,7 @@
   <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SiteHeader" items="{{ nav }}" active="index" inverse="true" floating="true" dc-props="{{ headerRow }}" hint-size="100%,88px"></x-import>
 
   <main id="main">
-  <section class="on-dark depth-hero" style="position: relative; min-height: min(940px, 100vh); background: var(--ink-900); overflow: hidden; display: flex; flex-direction: column">
+  <section class="on-dark depth-hero" style="position: relative; min-height: min(940px, 100vh); background: var(--ink-900); overflow-x: clip; display: flex; flex-direction: column">
     <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Grain" blend="overlay" strength="normal" hint-size="100%,100%"></x-import>
     <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SocialRail" items="{{ social }}" inverse="true" fixed="true" hint-size="36px,120px"></x-import>
 
@@ -105,6 +105,36 @@
       <x-import component-from-global-scope="MertTReliDesignSystem_56763c.ScrollCue" inverse="true" shape="square" hint-size="72px,72px"></x-import>
     </div>
   </section>
+  <section id="charger" class="on-dark charger-feature">
+    <div class="charger-feature-grid">
+      <div class="charger-feature-head">
+        <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="01" hint-size="240px,16px">Airframe / Payload</x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="1" as="h2" treatment="inverse" hint-size="100%,150px">CHARGER</x-import>
+      </div>
+      <div class="charger-feature-body">
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" as="h3" hint-size="100%,60px">Deployable sensor payload</x-import>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="muted" hint-size="100%,16px">Union College Rocket Team, 2026 / Captain and chief engineer / First place</x-import>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">The competition entry that won its event at Battle of the Rockets 2026. I led the design and manufacture of the airframe and the deployable payload, and ran the team through design review, build, and launch day recovery.</p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">The win is published by both Union College and the competition organizer.</p>
+        <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SpecList" items="{{ chargerSpecs }}" hint-size="100%,140px"></x-import>
+        <div class="charger-feature-actions">
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="glass" variant="glass" trailing="→" href="projects/charger.html" hint-size="220px,44px">Read the case study</x-import>
+          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="link" variant="link" trailing="→" href="assets/charger-explorer/index.html" data-charger-open aria-haspopup="dialog" aria-controls="charger-explorer" dc-props="{{ linkOnDark }}" hint-size="180px,24px">Explore this rocket</x-import>
+        </div>
+      </div>
+      <div class="charger-feature-stage">
+        <div class="charger-seat" data-charger-seat data-track="charger-3d-inline">
+          <dialog id="charger-explorer" class="charger-dialog" aria-labelledby="charger-dialog-title"><span class="charger-dialog-bg" aria-hidden="true"></span>
+            <div class="charger-dialog-bar"><h2 id="charger-dialog-title">CHARGER <span>/ Interactive assembly</span></h2><button id="charger-close" type="button" aria-label="Close rocket explorer">Close <span aria-hidden="true">×</span></button></div>
+            <div class="charger-dialog-content"><iframe id="charger-frame" data-src="assets/charger-explorer/index.html?embed=1&amp;modal=1&amp;inline=1" title="Explore the CHARGER rocket and its components" allow="fullscreen"></iframe><p id="charger-launch-status" role="status">Opening CHARGER...</p></div>
+          </dialog>
+          <button type="button" class="charger-seat-expand" data-charger-expand data-track="charger-3d-expand" aria-haspopup="dialog" aria-controls="charger-explorer" aria-expanded="false" aria-label="Expand the CHARGER 3D explorer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M9 4H4v5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>Expand</button>
+        </div>
+      </div>
+    </div>
+    <div class="charger-shift" aria-hidden="true"></div>
+  </section>
+
 
   <section style="padding: var(--section-y) var(--page-margin)">
     <div style="max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-8)">
@@ -134,7 +164,7 @@
       <h2 class="visually-hidden">Work</h2>
       <article data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; padding-top: var(--space-7); border-top: 1px solid var(--line-hairline)">
         <div style="display: flex; flex-direction: column; gap: var(--space-5)">
-          <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="01" hint-size="240px,16px">Thermal / Instrumentation</x-import>
+          <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="02" hint-size="240px,16px">Thermal / Instrumentation</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" as="h3" hint-size="100%,60px">HOTBOX: thermal test bench</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="muted" hint-size="100%,16px">SunThru, 2026 / Design, electronics, firmware, safety systems</x-import>
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">The company needed to rank glazing samples by insulating performance and had no way to measure it. I designed and built the whole bench: the insulated test chamber, the sensor stack, the electronics, the firmware, and the safety system that lets it run unattended overnight.</p>
@@ -172,34 +202,12 @@
           </div>
         </div>
         <div style="display: flex; flex-direction: column; gap: var(--space-5)">
-          <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="02" hint-size="240px,16px">Mechanism / Electronics / Firmware</x-import>
+          <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="03" hint-size="240px,16px">Mechanism / Electronics / Firmware</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" as="h3" hint-size="100%,60px">Robo-Catcher</x-import>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="muted" hint-size="100%,16px">Senior capstone, 2025 / Twelve person team</x-import>
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">An automatic softball catching and return machine. I co-led the feeding subsystem and then took over all the electronics and firmware for the entire robot when the project needed someone to own it. That meant the flywheel drive, the stepper based feed indexing, the limit switch and interlock logic, wireless start and stop, and hardware emergency cutoffs wired independently of the microcontroller.</p>
           <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">It hit one hundred percent feed indexing reliability on competition day, came in under budget, and fits in a car trunk. The reliability number came from testing the indexing path to failure ahead of time and fixing what jammed, not from luck on the day.</p>
           <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="outline" variant="outline" trailing="→" href="projects/robo-catcher.html#mechanism-tour" hint-size="220px,44px">Walk through the mechanism</x-import>
-        </div>
-      </article>
-
-      <article data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; padding-top: var(--space-7); border-top: 1px solid var(--line-hairline)">
-        <div style="display: flex; flex-direction: column; gap: var(--space-5)">
-          <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="03" hint-size="240px,16px">Airframe / Payload</x-import>
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" as="h3" hint-size="100%,60px">Deployable sensor payload</x-import>
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="muted" hint-size="100%,16px">Union College Rocket Team, 2026 / Captain and chief engineer / First place</x-import>
-          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">The competition entry that won its event at Battle of the Rockets 2026. I led the design and manufacture of the airframe and the deployable payload, and ran the team through design review, build, and launch day recovery.</p>
-          <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display); max-width: var(--measure)">The win is published by both Union College and the competition organizer.</p>
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SpecList" items="{{ chargerSpecs }}" hint-size="100%,140px"></x-import>
-          <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="outline" variant="outline" trailing="→" href="projects/charger.html" hint-size="220px,44px">Read the case study</x-import>
-        </div>
-        <div style="min-width: 0">
-          <div class="charger-seat depth-stage" data-charger-seat data-track="charger-3d-inline">
-          <span class="seat-rocket" data-rocket-seat aria-hidden="true"><span class="rocket-shadow" data-rocket-shadow></span><span class="rocket-box is-built" data-rocket-box><img class="rocket-sat" src="assets/rocket/still.webp" alt="" width="216" height="1200" loading="lazy" decoding="async"></span></span>
-          <dialog id="charger-explorer" class="charger-dialog" aria-labelledby="charger-dialog-title"><span class="charger-dialog-bg" aria-hidden="true"></span>
-            <div class="charger-dialog-bar"><h2 id="charger-dialog-title">CHARGER <span>/ Interactive assembly</span></h2><button id="charger-close" type="button" aria-label="Close rocket explorer">Close <span aria-hidden="true">×</span></button></div>
-            <div class="charger-dialog-content"><iframe id="charger-frame" data-src="assets/charger-explorer/index.html?embed=1&amp;modal=1&amp;inline=1" title="Explore the CHARGER rocket and its components" allow="fullscreen"></iframe><p id="charger-launch-status" role="status">Opening CHARGER...</p></div>
-          </dialog>
-          <button type="button" class="charger-seat-expand" data-charger-expand data-track="charger-3d-expand" aria-haspopup="dialog" aria-controls="charger-explorer" aria-expanded="false" aria-label="Expand the CHARGER 3D explorer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M9 4H4v5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>Expand</button>
-          </div>
         </div>
       </article>
 
