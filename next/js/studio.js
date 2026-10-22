@@ -48,20 +48,21 @@
 
   let set = 0;
   window.__studio = { get lastSwap() { return lastSwap; } };
+  // heldSlot keeps showing word heldIdx while the other slots keep cycling.
+  let heldSlot = null, heldIdx = 0;
   const setWords = (n) => {
     set = (n + 3) % 3;
     slots.forEach((slot, si) => [...slot.children].forEach((w, i) => {
       w.style.transitionDelay = (si * 70) + 'ms';
-      w.classList.toggle('on', i === set);
+      w.classList.toggle('on', slot === heldSlot ? i === heldIdx : i === set);
     }));
   };
   setWords(0);
-  // The showreel holds the word set that carries the active project's name
-  // and brings that slot forward (see showreel/index.js).
-  let held = -1;
+  // The showreel holds the active project's name in its slot and brings that
+  // slot forward; the other slots keep cycling (see showreel/index.js).
   const words = {
-    hold(n) { held = n; if (n !== set) setWords(n); },
-    release() { held = -1; lastSwap = performance.now(); },
+    hold(slot, i) { if (heldSlot === slot && heldIdx === i) return; heldSlot = slot; heldIdx = i; setWords(set); },
+    release() { heldSlot = null; },
     focus(slot) { drift.classList.toggle('is-reel', !!slot); slots.forEach(s => s.classList.toggle('is-active', s === slot)); }
   };
 
@@ -85,7 +86,7 @@
         dispatchEvent(new CustomEvent('studio:scroll', { detail: p }));
         // words change as you scroll (every ~16% of the hero)
         const n = Math.floor(p * 6) % 3;
-        if (n !== set && p > 0.02 && held < 0) { setWords(n); lastSwap = now; }
+        if (n !== set && p > 0.02) { setWords(n); lastSwap = now; }
       }
       if (!reduced) {
         boost += (Math.min(Math.abs(dy) * 0.9, 24) - boost) * 0.08;
@@ -93,7 +94,7 @@
         if (itemW) { if (x <= -itemW) x += itemW; if (x > 0) x -= itemW; }
         track.style.transform = `translate3d(${x.toFixed(2)}px, 0, 0)`;
         // idle: keep the words changing slowly at the top of the page
-        if (held < 0 && now - lastSwap > 3800 && now - lastScrollAt > 1500) { setWords(set + 1); lastSwap = now; }
+        if (now - lastSwap > 3800 && now - lastScrollAt > 1500) { setWords(set + 1); lastSwap = now; }
       }
     }
     if (!reduced) parOn.forEach(el => {

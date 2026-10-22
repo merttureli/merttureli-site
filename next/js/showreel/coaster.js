@@ -15,7 +15,7 @@
 //   setFanSpeed(rps)        blower rotor revolutions per second for update().
 //   setShadowOpacity(a)     baked soft contact shadow under the shell (0..1, default 1). The decal is `shadow`; it rides
 //                           with the shell part, so hide it while the coaster is airborne.
-//   getParts()              [{ name, mesh, explode }] in build order. `mesh` is the part's Object3D (a Group), `explode`
+//   getParts()              [{ name, mesh, explode, win }] in build order (win = [start, end] arrival window in p). `mesh` is the part's Object3D (a Group), `explode`
 //                           the exploded-view offset (Vector3, metres) added to its assembled position at p = 0. The
 //                           vectors are live: tweak them and call setProgress again.
 //   parts                   { shell, topPlate, peltier, heatsink, blower, thermistor, board, screws } by name.
@@ -266,6 +266,31 @@ export default function create({ THREE = THREE_, renderer, quality = 'high' } = 
     topPlate.add(mesh(smooth(track(extrudeY(s, PT, -PT, c, low ? 3 : 4)), 35), mat.plate, 'plate'));
   }
 
+  // ------------------------------------------------------------------------------------------- temperature glow
+  // Status glow for the plate temperature: a soft halo hugging the plate edge (rides with the plate, the plate itself
+  // hides its centre) and a faint coloured pool on the ground under the shell. Both are hidden at neutral temperature.
+  const glowTex = (inner) => {
+    const n = 128, cv = document.createElement('canvas'); cv.width = cv.height = n;
+    const x = cv.getContext('2d'), img = x.createImageData(n, n);
+    for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+      const u = Math.abs(i + 0.5 - n / 2) / (n / 2), v = Math.abs(j + 0.5 - n / 2) / (n / 2);
+      const qx = Math.max(u - inner, 0), qy = Math.max(v - inner, 0), d = Math.hypot(qx, qy) / (1 - inner);
+      const a = Math.pow(Math.max(0, 1 - d), 2.2);
+      const o = (j * n + i) * 4; img.data[o] = img.data[o + 1] = img.data[o + 2] = 255; img.data[o + 3] = Math.round(a * 255);
+    }
+    x.putImageData(img, 0, 0);
+    const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; texs.push(t); return t;
+  };
+  const ringMat = new THREE.MeshBasicMaterial({ map: glowTex(0.62), color: 0xffffff, transparent: true, depthWrite: false, opacity: 0, toneMapped: false });
+  const poolMat = new THREE.MeshBasicMaterial({ map: glowTex(0.25), color: 0xffffff, transparent: true, depthWrite: false, opacity: 0, toneMapped: false });
+  mats.push(ringMat, poolMat);
+  const ring = mesh(track(new THREE.PlaneGeometry(PW * 1.42, PD * 1.42).rotateX(-Math.PI / 2).translate(0, -0.0004, 0)), ringMat, 'plateGlow');
+  topPlate.add(ring);
+  const pool = mesh(track(new THREE.PlaneGeometry(W * 2.3, D * 2.3).rotateX(-Math.PI / 2).translate(0, -H - 0.0009, 0)), poolMat, 'groundGlow');
+  pool.renderOrder = -2;
+  shell.add(pool);
+  ring.visible = pool.visible = false;
+
   // ------------------------------------------------------------------------------------------- screws (M3 countersunk)
   const screws = part('screws');
   // Two instanced draws for all four screws; setProgress spins each about its own axis as it lands.
@@ -386,14 +411,15 @@ export default function create({ THREE = THREE_, renderer, quality = 'high' } = 
   // ------------------------------------------------------------------------------------------- parts, explode, progress
   const order = [
     // name, part, explode offset, arrival window [start, end] in p, lateral-first (slides over the rim, then drops in)
-    ['shell', shell, [0, -0.112, 0], [0.00, 0.40]],
-    ['blower', blower, [0, -0.030, 0], [0.12, 0.50]],
-    ['board', board, [0.052, 0.046, 0.020], [0.18, 0.58], true],
-    ['heatsink', heatsink, [0, 0.004, 0], [0.28, 0.64]],
-    ['peltier', peltier, [0, 0.030, 0], [0.40, 0.74]],
-    ['thermistor', thermistor, [0.024, 0.040, 0.018], [0.50, 0.84], true],
-    ['topPlate', topPlate, [0, 0.056, 0], [0.56, 0.90]],
-    ['screws', screws, [0, 0.082, 0], [0.66, 1.00]],
+    // windows overlap only a little so each part reads as it seats (the showreel plays this over ~5 s)
+    ['shell', shell, [0, -0.112, 0], [0.00, 0.24]],
+    ['blower', blower, [0, -0.030, 0], [0.14, 0.36]],
+    ['board', board, [0.052, 0.046, 0.020], [0.26, 0.48], true],
+    ['heatsink', heatsink, [0, 0.004, 0], [0.38, 0.58]],
+    ['peltier', peltier, [0, 0.038, 0], [0.50, 0.70]],
+    ['thermistor', thermistor, [0.024, 0.048, 0.018], [0.60, 0.80], true],
+    ['topPlate', topPlate, [0, 0.064, 0], [0.68, 0.90]],
+    ['screws', screws, [0, 0.090, 0], [0.80, 1.00]],
   ];
   const parts = {}, list = [];
   for (const [name, obj, e, win, lat = false] of order) {
@@ -404,8 +430,8 @@ export default function create({ THREE = THREE_, renderer, quality = 'high' } = 
   let progress = 1;
   function setProgress(p) {
     progress = p = Math.min(1, Math.max(0, p));
-    for (const r of list) {
-      const t = Math.min(1, Math.max(0, (p - r.win[0]) / (r.win[1] - r.win[0])));
+    for (let i = 0; i < list.length; i++) {
+      const r = list[i], t = Math.min(1, Math.max(0, (p - r.win[0]) / (r.win[1] - r.win[0])));
       if (r.lat) {
         // lateral offset closes over the first 45 % of the window while the part stays high, then it drops in
         const kl = 1 - smoother(Math.min(1, t / 0.45)), kv = 1 - smoother(Math.max(0, (t - 0.3) / 0.7));
@@ -422,15 +448,23 @@ export default function create({ THREE = THREE_, renderer, quality = 'high' } = 
     peltier.visible = thermistor.visible = p < 1;
   }
 
-  // Plate temperature tint (pre-allocated colours, no per-call allocation).
-  const cNeutral = new THREE.Color(0xd3d7dd), cWarm = new THREE.Color(0xddcdb9), cCold = new THREE.Color(0xccd8e6);
-  const eWarm = new THREE.Color(0xff7a2e), eCold = new THREE.Color(0x8fc2ff), eTmp = new THREE.Color();
+  // Plate temperature as a clear status read (pre-allocated colours, no per-call allocation): neutral aluminium near
+  // 22 C, amber-orange (a touch warmer than the rocket's orange) when hot, icy blue when cold. Tint + modest emissive,
+  // with the metal turning more diffuse so the colour carries; plus the edge halo and ground pool above.
+  const cNeutral = new THREE.Color(0xd3d7dd), cWarm = new THREE.Color(0xd9692c), cCold = new THREE.Color(0x7fa6e0);
+  const eWarm = new THREE.Color(0xff5410), eCold = new THREE.Color(0x2a62ff);
+  const gWarm = new THREE.Color(0xf26a1e), gCold = new THREE.Color(0x4f86f0);
   const sstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
   function setPlateTemperature(c) {
-    const w = sstep(28, 66, c), k = sstep(20, 2, c);
+    const w = sstep(25, 52, c), k = sstep(20, 12, c);
     mat.plate.color.copy(cNeutral).lerp(cWarm, w).lerp(cCold, k);
-    mat.plate.emissive.copy(eTmp.setRGB(0, 0, 0)).lerp(eWarm, w * 0.05).lerp(eCold, k * 0.03);
-    mat.plate.roughness = 0.4 + k * 0.08;          // a cold plate looks a touch duller (faint mist)
+    if (w >= k) mat.plate.emissive.copy(eWarm).multiplyScalar(w * 0.3); else mat.plate.emissive.copy(eCold).multiplyScalar(k * 0.16);
+    mat.plate.metalness = 0.6 - 0.4 * Math.max(w, k);
+    mat.plate.roughness = 0.4 + k * 0.1;           // a cold plate looks a touch duller (faint mist)
+    const g = Math.max(w, k);
+    if (w >= k) { ringMat.color.copy(gWarm); poolMat.color.copy(gWarm); } else { ringMat.color.copy(gCold); poolMat.color.copy(gCold); }
+    ringMat.opacity = 0.85 * g; poolMat.opacity = 0.32 * g;
+    ring.visible = pool.visible = g > 0.004;
   }
   setPlateTemperature(22);
   setProgress(1);
@@ -443,7 +477,7 @@ export default function create({ THREE = THREE_, renderer, quality = 'high' } = 
     group, duration: 4.0, parts, triangles, shadow,
     setProgress,
     getProgress: () => progress,
-    getParts: () => list.map(({ name, mesh, explode }) => ({ name, mesh, explode })),
+    getParts: () => list.map(({ name, mesh, explode, win }) => ({ name, mesh, explode, win })),
     setPlateTemperature,
     setFanSpeed(rps) { fanSpeed = rps || 0; },
     setShadowOpacity(a) { shadowMat.opacity = 0.55 * Math.min(1, Math.max(0, a)); shadow.visible = a > 0.001; },
