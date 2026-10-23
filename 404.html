@@ -5,114 +5,62 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Not found · Mert Tureli</title>
 <meta name="robots" content="noindex">
+<meta name="theme-color" content="#e7e8ea">
 <link rel="icon" href="/assets/icons/favicon.ico" sizes="32x32">
 <link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
-<link rel="preload" href="/assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="/assets/fonts/martian-mono-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/fonts.css">
-<style>
-/* The not-found page. GitHub Pages serves this file for any path that does not
-   exist, so every reference here is absolute and nothing depends on the page
-   runtime, the design-system bundle or a CDN script. If the visitor got here
-   from a business card or an application form, the link is wrong and the
-   tracker records which one; the page's job is to hand them the work anyway. */
-:root{
-  --ink:#0A0A0A; --paper:#FFF;
-  --p90:rgba(255,255,255,.90); --p70:rgba(255,255,255,.70);
-  --p45:rgba(255,255,255,.45); --p14:rgba(255,255,255,.14);
-  --body:"Archivo","Helvetica Neue",Helvetica,Arial,sans-serif;
-  --display:"Archivo Display","Archivo","Helvetica Neue",Helvetica,Arial,sans-serif;
-  --mono:"Martian Mono",ui-monospace,Menlo,monospace;
-  --ease:cubic-bezier(.22,1,.36,1);
-}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--ink);color:var(--paper)}
-body{font-family:var(--body);-webkit-font-smoothing:antialiased;
-     padding:max(28px,env(safe-area-inset-top)) 24px
-             max(36px,env(safe-area-inset-bottom));
-     min-height:100svh;display:flex;flex-direction:column}
-.wrap{max-width:34rem;margin:0 auto;width:100%;display:flex;
-      flex-direction:column;gap:28px;flex:1}
-
-.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;
-         text-transform:uppercase;color:var(--p45);margin:0}
-h1{font-family:var(--display);font-size:clamp(36px,9vw,72px);font-weight:500;letter-spacing:-.035em;
-   line-height:.94;margin:10px 0 0;text-wrap:balance}
-
-.line{font-size:17px;line-height:1.55;color:var(--p90);margin:0;
-      padding:20px 0 0;border-top:1px solid var(--p14)}
-.line a{color:var(--paper);text-decoration:underline;
-        text-decoration-color:var(--p45);text-underline-offset:3px}
-.line a:hover{text-decoration-color:var(--paper)}
-
-/* the address that failed, filled in by script; hidden when script is off */
-.path{display:none;font-family:var(--mono);font-size:12px;letter-spacing:.04em;
-      color:var(--p45);margin:0;word-break:break-all}
-.path b{font-weight:500;color:var(--p70)}
-
-.links{display:flex;flex-direction:column;margin:0}
-.links a{display:flex;align-items:baseline;justify-content:space-between;gap:14px;
-         padding:15px 0;border-bottom:1px solid var(--p14);
-         color:var(--paper);text-decoration:none;font-size:16px;
-         transition:padding-left .24s var(--ease)}
-.links a:first-child{border-top:1px solid var(--p14)}
-.links a:hover{padding-left:8px}
-.links .k{font-family:var(--mono);font-size:11px;letter-spacing:.16em;
-          text-transform:uppercase;color:var(--p45);white-space:nowrap}
-
-.foot{margin-top:auto;padding-top:22px;display:flex;justify-content:space-between;
-      flex-wrap:wrap;gap:12px;font-family:var(--mono);font-size:11px;
-      letter-spacing:.08em;color:var(--p45)}
-.foot a{color:var(--p45);text-decoration:none}
-a:focus-visible{outline:1px solid var(--paper);outline-offset:3px}
-
-@media (prefers-reduced-motion:no-preference){
-  .wrap>*{animation:in .5s var(--ease) backwards}
-  .wrap>*:nth-child(2){animation-delay:.05s}
-  .wrap>*:nth-child(3){animation-delay:.10s}
-  .wrap>*:nth-child(4){animation-delay:.15s}
-  @keyframes in{from{opacity:0;transform:translateY(9px)}}
-}
-</style>
+<!-- GitHub Pages serves this file for any missing path, so every reference is root-absolute.
+     Studio look: tokens.css + pages.css. The live CHARGER (the hero's own rig) loads after first paint. -->
+<link rel="preload" href="/studies/shared/fonts/archivo-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/next/css/tokens.css">
+<link rel="stylesheet" href="/next/css/pages.css">
 </head>
 <body>
-<div class="wrap">
+<header class="ptop wrap">
+  <a class="wordmark" href="/" aria-label="Mert Tureli, home"><span class="wordmark__c">&copy;</span> Mert Tureli</a>
+  <span class="label">404 / Not found</span>
+</header>
 
-  <header>
-    <p class="eyebrow">404 / Not found</p>
-    <h1>Nothing at this address</h1>
-  </header>
-
-  <p class="line">
-    The page you asked for is not here. The address may have changed, or a link
-    on a card or an application form is wrong. If a link I gave you brought you
-    here, <a href="mailto:merttureli0@gmail.com?subject=Broken%20link%20on%20merttureli.com">email me</a>
-    and I will fix it.
-  </p>
-
-  <p class="path" id="path">Requested <b></b></p>
-
-  <nav class="links" aria-label="Where to go instead">
-    <a href="/">
-      <span>Home</span><span class="k">Mert Tureli</span>
-    </a>
-    <a href="/#work">
-      <span>The work</span><span class="k">6 projects</span>
-    </a>
-    <a href="/projects/charger.html">
-      <span>CHARGER</span><span class="k">Case study</span>
-    </a>
-    <a href="/assets/Mert-Tureli-Resume.pdf">
-      <span>Resume</span><span class="k">PDF</span>
-    </a>
-  </nav>
-
-  <div class="foot">
-    <span>Mert Tureli / Mechanical engineer / Austin, Texas</span>
-    <a href="/privacy.html">Privacy</a>
+<main class="nf wrap">
+  <div class="nf__hero">
+    <div class="nf__copy rise">
+      <h1 class="display nf__title">Nothing at this address</h1>
+      <p class="nf__line">This page is not here. If a link I gave you brought you here, <a href="mailto:merttureli0@gmail.com?subject=Broken%20link%20on%20merttureli.com">email me</a> and I will fix it.</p>
+      <p class="nf__path label" id="path">Requested <b></b></p>
+      <a class="pillbtn pillbtn--solid" href="/">Back home <span class="arrow" aria-hidden="true"></span></a>
+    </div>
+    <div class="nf__stage" data-lost aria-hidden="true">
+      <img class="nf__poster" src="/next/assets/img/charger-lost-440.webp" srcset="/next/assets/img/charger-lost-440.webp 440w, /next/assets/img/charger-lost-880.webp 880w" sizes="(max-width: 760px) 180px, 30vw" width="880" height="1100" alt="" decoding="async">
+      <canvas class="nf__canvas"></canvas>
+    </div>
   </div>
-</div>
+
+  <nav class="nf__go" aria-label="Where to go instead">
+    <div class="nf__group rise rise--2">
+      <span class="label">Sections</span>
+      <ul class="nf__list">
+        <li><a href="/#work"><span class="nf__name">Work</span><span class="arrow" aria-hidden="true"></span></a></li>
+        <li><a href="/#experience"><span class="nf__name">Experience</span><span class="arrow" aria-hidden="true"></span></a></li>
+        <li><a href="/websites.html"><span class="nf__name">Websites</span><span class="arrow" aria-hidden="true"></span></a></li>
+      </ul>
+    </div>
+    <div class="nf__group rise rise--3">
+      <span class="label">Projects</span>
+      <ul class="nf__list">
+        <li><a href="/projects/charger.html"><span class="nf__name">CHARGER</span><span class="arrow" aria-hidden="true"></span></a></li>
+        <li><a href="/projects/robo-catcher.html"><span class="nf__name">Robo-Catcher</span><span class="arrow" aria-hidden="true"></span></a></li>
+        <li><a href="/projects/rudder-pedals.html"><span class="nf__name">Rudder pedals</span><span class="arrow" aria-hidden="true"></span></a></li>
+        <li><a href="/projects/therma-shift.html"><span class="nf__name">Therma-Shift</span><span class="arrow" aria-hidden="true"></span></a></li>
+        <li><a href="/projects/bend-fixture.html"><span class="nf__name">Bend fixture</span><span class="arrow" aria-hidden="true"></span></a></li>
+      </ul>
+    </div>
+  </nav>
+</main>
+
+<footer class="pfoot wrap">
+  <span class="label">Mert Tureli / Austin, Texas</span>
+  <a class="link link--quiet" href="/privacy.html">Privacy</a>
+</footer>
 
 <script>
   (function () {
@@ -120,9 +68,29 @@ a:focus-visible{outline:1px solid var(--paper);outline-offset:3px}
     var b = p && p.querySelector("b");
     if (b) {
       b.textContent = location.pathname + location.search;
-      p.style.display = "block";
+      p.className += " is-set";
     }
   })();
+</script>
+<script type="module">
+  /* CHARGER, lost: the hero's rocket rig, loaded after load + idle so the text and links paint first.
+     No WebGL, Save-Data or reduced motion: the poster (the same render) stays. */
+  const box = document.querySelector("[data-lost]");
+  const rq = matchMedia("(prefers-reduced-motion: reduce)");
+  const saveData = navigator.connection && navigator.connection.saveData;
+  const canGL = (() => { try { const c = document.createElement("canvas"); return !!(c.getContext("webgl2") || c.getContext("webgl")); } catch (e) { return false; } })();
+  if (box && canGL && !saveData) {
+    let mounted = false;
+    const start = () => {
+      if (mounted || rq.matches) return;
+      mounted = true;
+      import("/next/js/lost-rocket.js").then(m => m.mountLost({ box }))
+        .catch(err => console.warn("3D rocket unavailable, keeping the still", err));
+    };
+    const later = () => (window.requestIdleCallback ? requestIdleCallback(start, { timeout: 1500 }) : setTimeout(start, 600));
+    if (document.readyState === "complete") later(); else addEventListener("load", later);
+    rq.addEventListener("change", () => { if (!rq.matches && document.readyState === "complete") start(); });
+  }
 </script>
 <script src="/js/analytics-config.js"></script>
 <script src="/js/track.js"></script>

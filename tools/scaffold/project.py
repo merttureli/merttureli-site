@@ -27,9 +27,10 @@ What it writes:
     content/projects.json          the slug added to "order"
     sitemap.xml                    a <url> line for /projects/<slug>.html
 
-It never writes src/projects/ or projects/ itself: run python3 tools/build.py
-(or pass --build). It prints the checklist of hand-written places (home card,
-Studio work list, share image) that a new project also needs. Running it again
+It never writes next/projects/ or projects/ itself: the page exists once the slug
+has a PRESENT entry and a place in ORDER in tools/build-studio-cases.py, then
+python3 tools/build.py (or --build) writes it. It prints the checklist of
+hand-written places (home tile, share image) that a new project also needs. Running it again
 for the same slug changes nothing that is already there.
 
 Interface for tools/new.py (role 8):
@@ -103,7 +104,8 @@ def _write(path, text, dry, root=REPO):
 def template(slug, title, nav_title):
     """A minimal case that builds. All copy is flagged for the owner."""
     def f(key, note):
-        return {"flag": "%s-%s" % (slug, key), "note": note, "text": "[TBD]"}
+        # an owner flag as HTML: tools/build-studio-cases.py writes rich strings as they are
+        return '<mark class="flag" data-flag="%s-%s" data-note="%s">[TBD]</mark>' % (slug, key, note)
     return {
         "nav_title": nav_title,
         "title": title,
@@ -119,7 +121,6 @@ def template(slug, title, nav_title):
         "sections": [
             {"label": "The problem", "paras": [[f("problem", "What problem the project solves.")]]},
         ],
-        # without a colophon the page reuses the home page's photo credit
         "colophon": [f("credits", "Footer credit line: who took the photos, what the renders are.")],
     }
 
@@ -178,22 +179,21 @@ def add_to_sitemap(root, slug, order, dry):
 CHECKLIST = """
 Next steps for {slug}:
   1. Write the copy in content/projects/{slug}.json (docs/recipes/content.md has
-     every field). Replace each {{"flag": ...}} with text as you answer it.
-  2. Add media: "clip" (assets/motion/<base>-poster.webp + webm, see
-     docs/recipes/media.md) or "hero_image", and "frames" in sections.
-  3. Share image: assets/og/case-{slug}-v1.png, 1200x630 (the build warns
-     until it exists).
-  4. python3 tools/build.py, then python3 tools/build.py --check.
-  5. Hand-written places that are NOT generated (python3 tools/new.py project
+     every field). Replace each <mark class="flag"> with text as you answer it.
+  2. Give it a page: add "{slug}" to ORDER and a PRESENT["{slug}"] entry (name,
+     meta, line, img, hero clip or still) in tools/build-studio-cases.py.
+  3. Add media: the hero clip (assets/motion/<base>-poster.webp + webm, see
+     docs/recipes/media.md) and "frames" in sections.
+  4. Share image: assets/og/case-{slug}-v1.png, 1200x630.
+  5. python3 tools/build.py writes next/projects/{slug}.html and the live
+     projects/{slug}.html; python3 tools/build.py --check proves them.
+  6. Hand-written places that are NOT generated (python3 tools/new.py project
      {slug} --where lists them for an existing project):
-       - home card: src/index.html, an <article> in <section id="work">
-       - Studio: next/index.html work list <li class="project">, stage <img>,
-         and the drift words (optional)
-       - assets/portfolio-foundation/project-stories.json (only if it gets a
-         walkthrough)
-       - 404.html, websites.html, resume PDF: only if they should mention it
-  6. Previous / Next on the neighboring cases changed: {neighbors}.
-     tools/build.py rebuilds them too.
+       - home tile: next/index.html, a <li class="tile"> in <ul class="bento">
+       - the hero drift words and a showreel actor (optional)
+       - 404.html, websites: only if they should mention it
+  7. The "Next project" card on the case before it in ORDER changes too
+     (content/projects.json order neighbors: {neighbors}).
 """
 
 
@@ -232,7 +232,7 @@ def scaffold(root, slug, title=None, nav_title=None, after=None, dry=False, buil
 
 # Generated files (never edit) and folders that only document or build things.
 SKIP_DIRS = {".git", "node_modules", "docs", "tools", ".claude", "_ds", "vx"}
-GENERATED = {"index.html", "projects"}
+GENERATED = {"index.html", "websites.html", "projects"}
 SCAN_EXT = (".html", ".js", ".json", ".xml", ".txt", ".webmanifest")
 
 
@@ -262,14 +262,14 @@ def where(root, slug, per_file=6, terms=None, footer=True):
     if footer:
         print("Source of truth for the case page: content/projects/%s.json (+ content/projects.json order)"
               % slug)
-        print("Generated, never edit: index.html, projects/, src/projects/")
+        print("Generated, never edit: index.html, websites.html, projects/, next/projects/")
     print("")
     results = []
     for dirpath, dirnames, filenames in os.walk(root):
         rel_dir = os.path.relpath(dirpath, root)
         dirnames[:] = sorted(d for d in dirnames if d not in SKIP_DIRS
                              and not (rel_dir == "." and d in GENERATED | {"content"})
-                             and not (rel_dir == "src" and d == "projects"))
+                             and not (rel_dir == "next" and d == "projects"))
         for name in sorted(filenames):
             if not name.endswith(SCAN_EXT) or (rel_dir == "." and name in GENERATED):
                 continue
@@ -282,7 +282,7 @@ def where(root, slug, per_file=6, terms=None, footer=True):
             if hits:
                 results.append((os.path.relpath(path, root), hits))
     # pages first, then Studio, then assets and scripts, then the prototypes
-    groups = [("Pages (hand-written)", lambda r: os.sep not in r or r.startswith("src" + os.sep)),
+    groups = [("Pages (hand-written)", lambda r: os.sep not in r),
               ("Studio (next/)", lambda r: r.startswith("next" + os.sep)),
               ("Design prototypes (studies/)", lambda r: r.startswith("studies" + os.sep)),
               ("Assets, scripts, other", lambda r: True)]
@@ -308,7 +308,7 @@ def where(root, slug, per_file=6, terms=None, footer=True):
     og = os.path.join(root, "assets", "og", "case-%s-v1.png" % slug)
     if footer:
         print("Share image: assets/og/case-%s-v1.png %s" % (slug, "exists" if os.path.exists(og) else "MISSING"))
-    print("Resume: assets/Mert-Tureli-Resume.pdf is a PDF, check it by hand.")
+    print("Case page presentation: PRESENT and ORDER in tools/build-studio-cases.py")
     if footer:
         owned = [p for p in _owned(root, slug) if os.path.exists(os.path.join(root, p))]
         if owned:
@@ -320,7 +320,7 @@ def where(root, slug, per_file=6, terms=None, footer=True):
 # ----------------------------------------------------------------- remove
 
 def _owned(root, slug):
-    return ["content/projects/%s.json" % slug, "src/projects/%s.html" % slug, "projects/%s.html" % slug]
+    return ["content/projects/%s.json" % slug, "next/projects/%s.html" % slug, "projects/%s.html" % slug]
 
 
 def remove(root, slug, dry=False, build=True):
@@ -369,8 +369,15 @@ def remove(root, slug, dry=False, build=True):
         "Named in hand-written places today (the sitemap line goes with --remove)" if dry
         else "Still named in hand-written places"))
     where(root, slug, terms=terms, footer=False)
+    cases_py = os.path.join(root, "tools", "build-studio-cases.py")
+    listed = os.path.exists(cases_py) and re.search(r'"%s"' % re.escape(slug), _read(cases_py))
+    if listed:
+        print("\nAlso take \"%s\" out of ORDER and PRESENT in tools/build-studio-cases.py, "
+              "then run python3 tools/build.py (it cannot build a case without its JSON)." % slug)
     if dry:
         print("\nDry run: nothing changed. Drop --dry-run to remove; the neighbors are then rebuilt.")
+        return 0
+    if listed:
         return 0
     if build and changed:
         sys.stdout.flush()
