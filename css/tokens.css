@@ -35,6 +35,8 @@
   /* Sizes off the _ds scale. */
   --fs-ui-mono: 11px;          /* mono UI text: browser-frame bars, index chips, "try" pills */
   --radius-card: 12px;         /* floating frames and cues: .websell-frame, .charger-launch-cue */
+  --radius-phone: 36px;        /* phone-width .websell-frame: the frame drawn as a phone body */
+  --radius-phone-screen: 29px; /* its .websell-screen: --radius-phone minus the 7px bezel */
 
   /* Fixed colors. */
   --color-live: #ff5a1f;       /* the "live" status dot in a browser frame */

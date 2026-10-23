@@ -26,48 +26,66 @@ Tokens behind these: `docs/design/site-tokens.md` (site), `docs/design/studio.md
 Never edit `index.html` or `projects/*.html` by hand: they are rebuilt from `src/` and `content/`.
 The "Built HTML (read only)" tab in the catalog shows what the build writes, for reference.
 
+## Find by what you want to change
+
+Same table as the top of [catalog.html](catalog.html#find).
+
+| I want to change | Look at | Edit here |
+|---|---|---|
+| Studio accent (the orange) | T06, T17 | `--signal`, `--signal-ink` in `next/css/tokens.css` |
+| Site colors | catalog Palette buttons | `css/site-palette.css` ([palette.md](../recipes/palette.md)) |
+| Site corner radius | S11 (panels) | frames and cues `--radius-card`, the phone frame `--radius-phone` in `css/tokens.css`; panels `--radius-lg` ([site-tokens.md](site-tokens.md), "Radius by component") |
+| Site nav links | S01 | `nav` in `src/index.html`; case pages `NAV` in `build-case.py` |
+| Studio nav links | T01, T02 | `.top__nav` and `.menu` in `next/index.html` |
+| A Studio project (text, specs, image) | T11 | `<li class="project">` and its stage `<img data-key>` in `next/index.html` |
+| Case study figures | S10 | `"kind": "stats"` in `content/projects/<slug>.json`, then build |
+| Add a Studio section with a component | T03 + T13, T09, T15 | `python3 tools/new.py section NAME`, paste the snippet into `NAME__body` ([new-page.md](../recipes/new-page.md)) |
+| Mark a line for the owner | S15 | `python3 tools/check-flags.py --next-id SLUG` ([flags.md](../recipes/flags.md)) |
+
+Catalog links by id work too: `catalog.html#T13` opens the Toolkit list.
+
 ## Index
 
-| # | Component | Used in | Source |
-|---|---|---|---|
-| S01 | [Site header](#s01-site-header) | home, case studies, websites | `SiteHeader`; `.ds-header` |
-| S02 | [Button](#s02-button) | everywhere | `Button` + `[data-depth-button]`; `.ds-button`; `.websell-cta` |
-| S03 | [Meta label and caption](#s03-meta-label-and-caption) | everywhere | `Meta`, `Caption`; `.ds-meta`, `.ds-index` |
-| S04 | [Section rule](#s04-section-rule) | home, case studies | `Rule` |
-| S05 | [Display heading and body](#s05-display-heading-and-body) | every title | `DisplayHeading`; `.ds-display`, `.ds-title`, `.ds-lead` |
-| S06 | [Spec list](#s06-spec-list) | home, case briefs | `SpecList` |
-| S07 | [Media frame](#s07-media-frame) | home work, case galleries | `MediaFrame` |
-| S08 | [Render stage](#s08-render-stage) | home work, case heroes | `.depth-stage` + `js/media-playback.js` |
-| S09 | [Work entry](#s09-work-entry) | home `#work` | composite |
-| S10 | [Stats band](#s10-stats-band) | case studies | `stats_band()` |
-| S11 | [Panels and ruled list](#s11-panels-and-ruled-list) | case studies | `cards()`, `bullets()` |
-| S12 | [Pills and skills belt](#s12-pills-and-skills-belt) | home | `.skills-belt*` |
-| S13 | [Hero chrome](#s13-hero-chrome) | home, case heroes | `Grain`, `SocialRail`, `Caption`, `ScrollCue` |
-| S14 | [Footer](#s14-footer) | all site pages | `Wordmark` + `Meta`; `.ds-footer` |
-| S15 | [Copy flag](#s15-copy-flag) | site copy under review | `mark.flag` |
-| T01 | [Top bar](#t01-top-bar) | Studio | `.top`, `.wordmark`, `.top__nav` |
-| T02 | [Menu button and panel](#t02-menu-button-and-panel) | Studio | `.menu-btn`, `.menu` |
-| T03 | [Label and section rule](#t03-label-and-section-rule) | Studio | `.label`, `.rule` |
-| T04 | [Display type and serif accent](#t04-display-type-and-serif-accent) | Studio | `.display`, `.serif`, `.manifesto` |
-| T05 | [Text link](#t05-text-link) | Studio | `.link` |
-| T06 | [Round button](#t06-round-button) | Studio | `.round` |
-| T07 | [Pill button](#t07-pill-button) | Studio | `.btn` |
-| T08 | [Status dot and pill](#t08-status-dot-and-pill) | Studio | `.dot`, `.pill` |
-| T09 | [Proof stats](#t09-proof-stats) | Studio | `.stats` |
-| T10 | [Doors](#t10-doors) | Studio | `.door`, `.arrow` |
-| T11 | [Project entry](#t11-project-entry) | Studio | `.project`, `.specs` |
-| T12 | [Experience rows](#t12-experience-rows) | Studio | `.rows`, `details` |
-| T13 | [Toolkit list](#t13-toolkit-list) | Studio | `.tools`, `.chips` |
-| T14 | [Photo scatter](#t14-photo-scatter) | Studio | `.scatter`, `.ph` |
-| T15 | [Steps and spec card](#t15-steps-and-spec-card) | Studio | `.steps`, `.spec-card` |
-| T16 | [Drift words](#t16-drift-words) | Studio | `.drift`, `.slot` |
-| T17 | [Name marquee](#t17-name-marquee) | Studio | `.marquee` |
-| T18 | [Feature link](#t18-feature-link) | Studio | `.explorer` |
-| T19 | [Footer](#t19-footer) | Studio | `.foot` |
+| # | Component | Used in | Source | Live |
+|---|---|---|---|---|
+| S01 | [Site header](#s01-site-header) | home, case studies, websites | `SiteHeader`; `.ds-header` | [catalog](catalog.html#site-header) |
+| S02 | [Button](#s02-button) | everywhere | `Button` + `[data-depth-button]`; `.ds-button`; `.websell-cta` | [catalog](catalog.html#site-button) |
+| S03 | [Meta label and caption](#s03-meta-label-and-caption) | everywhere | `Meta`, `Caption`; `.ds-meta`, `.ds-index` | [catalog](catalog.html#site-meta) |
+| S04 | [Section rule](#s04-section-rule) | home, case studies | `Rule` | [catalog](catalog.html#site-rule) |
+| S05 | [Display heading and body](#s05-display-heading-and-body) | every title | `DisplayHeading`; `.ds-display`, `.ds-title`, `.ds-lead` | [catalog](catalog.html#site-heading) |
+| S06 | [Spec list](#s06-spec-list) | home, case briefs | `SpecList` | [catalog](catalog.html#site-spec) |
+| S07 | [Media frame](#s07-media-frame) | home work, case galleries | `MediaFrame` | [catalog](catalog.html#site-media) |
+| S08 | [Render stage](#s08-render-stage) | home work, case heroes | `.depth-stage` + `js/media-playback.js` | [catalog](catalog.html#site-stage) |
+| S09 | [Work entry](#s09-work-entry) | home `#work` | composite | [catalog](catalog.html#site-work) |
+| S10 | [Stats band](#s10-stats-band) | case studies | `stats_band()` | [catalog](catalog.html#site-stats) |
+| S11 | [Panels and ruled list](#s11-panels-and-ruled-list) | case studies | `cards()`, `bullets()` | [catalog](catalog.html#site-lists) |
+| S12 | [Pills and skills belt](#s12-pills-and-skills-belt) | home | `.skills-belt*` | [catalog](catalog.html#site-belt) |
+| S13 | [Hero chrome](#s13-hero-chrome) | home, case heroes | `Grain`, `SocialRail`, `Caption`, `ScrollCue` | [catalog](catalog.html#site-chrome) |
+| S14 | [Footer](#s14-footer) | all site pages | `Wordmark` + `Meta`; `.ds-footer` | [catalog](catalog.html#site-footer) |
+| S15 | [Copy flag](#s15-copy-flag) | site copy under review | `mark.flag` | [catalog](catalog.html#site-flag) |
+| T01 | [Top bar](#t01-top-bar) | Studio | `.top`, `.wordmark`, `.top__nav` | [catalog](catalog.html#studio-top) |
+| T02 | [Menu button and panel](#t02-menu-button-and-panel) | Studio | `.menu-btn`, `.menu` | [catalog](catalog.html#studio-menu) |
+| T03 | [Label and section rule](#t03-label-and-section-rule) | Studio | `.label`, `.rule` | [catalog](catalog.html#studio-rule) |
+| T04 | [Display type and serif accent](#t04-display-type-and-serif-accent) | Studio | `.display`, `.serif`, `.manifesto` | [catalog](catalog.html#studio-display) |
+| T05 | [Text link](#t05-text-link) | Studio | `.link` | [catalog](catalog.html#studio-link) |
+| T06 | [Round button](#t06-round-button) | Studio | `.round` | [catalog](catalog.html#studio-round) |
+| T07 | [Pill button](#t07-pill-button) | Studio | `.btn` | [catalog](catalog.html#studio-btn) |
+| T08 | [Status dot and pill](#t08-status-dot-and-pill) | Studio | `.dot`, `.pill` | [catalog](catalog.html#studio-dot) |
+| T09 | [Proof stats](#t09-proof-stats) | Studio | `.stats` | [catalog](catalog.html#studio-stats) |
+| T10 | [Doors](#t10-doors) | Studio | `.door`, `.arrow` | [catalog](catalog.html#studio-door) |
+| T11 | [Project entry](#t11-project-entry) | Studio | `.project`, `.specs` | [catalog](catalog.html#studio-project) |
+| T12 | [Experience rows](#t12-experience-rows) | Studio | `.rows`, `details` | [catalog](catalog.html#studio-rows) |
+| T13 | [Toolkit list](#t13-toolkit-list) | Studio | `.tools`, `.chips` | [catalog](catalog.html#studio-chips) |
+| T14 | [Photo scatter](#t14-photo-scatter) | Studio | `.scatter`, `.ph` | [catalog](catalog.html#studio-photo) |
+| T15 | [Steps and spec card](#t15-steps-and-spec-card) | Studio | `.steps`, `.spec-card` | [catalog](catalog.html#studio-steps) |
+| T16 | [Drift words](#t16-drift-words) | Studio | `.drift`, `.slot` | [catalog](catalog.html#studio-drift) |
+| T17 | [Name marquee](#t17-name-marquee) | Studio | `.marquee` | [catalog](catalog.html#studio-marquee) |
+| T18 | [Feature link](#t18-feature-link) | Studio | `.explorer` | [catalog](catalog.html#studio-explorer) |
+| T19 | [Footer](#t19-footer) | Studio | `.foot` | [catalog](catalog.html#studio-foot) |
 
 ## Rules for both sites
 
-- Monochrome plus one accent. Site: no hue at all (the photos carry color). Studio: signal orange `#ff4f00` for one thing per view.
+- Monochrome plus one accent. Site: no hue at all (the photos carry color). Studio: the signal orange (`--signal` in `next/css/tokens.css`) for one thing per view.
 - Small mono caps for anything measured or filed; big display caps for titles; little in between.
 - Separators in labels are ` / `. Indices are zero-padded (`01`). No full stop on labels or captions.
 - Hover is the only state change: no press effect, no ripple. Focus always visible.

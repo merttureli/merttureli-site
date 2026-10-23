@@ -14,7 +14,7 @@ python3 tools/check.py --only flags   # same list as a WARN row, not fatal
 python3 tools/check.py --public       # flags FAIL: use before going public
 ```
 
-Exit 1 from `check-flags.py` is expected while flags are open. It scans the built pages: `index.html`, `websites.html`, `privacy.html`, `404.html`, `hi/index.html`, `photography-*.html`, `projects/*.html`. It does not scan Studio (`next/`).
+Exit 1 from `check-flags.py` is expected while flags are open. It scans every served `.html` git would commit, Studio (`next/`) included; it skips `src/`, `tools/`, `templates/`, `docs/`, `_ds/`, `cards/` and `.claude/`. It parses the HTML properly, so a note may contain `<`, `>` or markup.
 
 ## Add a flag
 
@@ -25,13 +25,22 @@ Exit 1 from `check-flags.py` is expected while flags are open. It scans the buil
 | Case study, a brief row value | `content/projects/<slug>.json`, `brief[].value` | `{"flag": "<slug>-NNN", "note": "Question?", "text": "text"}` then build |
 | Plain pages | the page file | the `<mark>` snippet above, no build |
 
-Id: `<page or slug>-<3 digits>`, unique. Pick the next free number:
+Id: `<page or slug>-<3 digits>`, unique. Get the next free one (scans sources and built pages):
 
 ```sh
-grep -rhoE '(data-flag="|"flag": ")[a-z-]+-[0-9]+' src/index.html content *.html hi | sed -E 's/.*"//' | sort -u
+python3 tools/check-flags.py --next-id rudder-pedals    # prints rudder-pedals-036
+python3 tools/check-flags.py --next-id home
 ```
 
-Write `data-note` as one question the owner can answer with a word or a number. Quote marks inside it: `&quot;` in HTML, `\"` in JSON (the build escapes the note). Flags are not allowed in `title`, `eyebrow`, `description`, `og_alt`.
+No related text on the page yet (the owner asks about something the page never mentions)? Put the flag at the end of
+the closest paragraph, with no `text`: it shows `[TBD]` in place until the owner answers.
+
+| Source | Snippet |
+|---|---|
+| Case JSON paragraph `"Text."` | `["Text. ", {"flag": "<slug>-NNN", "note": "Confirm the pedal travel angle"}]` (the string becomes a list; keep the trailing space) |
+| HTML | `Text. <mark class="flag" data-flag="home-NNN" data-note="...">[TBD]</mark>` |
+
+Write `data-note` as one question the owner can answer with a word or a number. If the owner gave the wording, keep it verbatim. Quote marks inside it: `&quot;` in HTML, `\"` in JSON (the build escapes the note). Flags are not allowed in `title`, `eyebrow`, `description`, `og_alt`.
 
 ## Resolve a flag
 

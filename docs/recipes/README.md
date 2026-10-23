@@ -13,7 +13,8 @@ From the repo history (136 commits to Oct 2026, by subject): handoff and merge c
 | Replace a photo, render, poster, clip or share image | [images-swap.md](images-swap.md) | `images` |
 | Make web sizes of a new image or video | [media.md](media.md) | `images` |
 | Change a project's facts everywhere | [content.md](content.md) | `add-project` |
-| Add a project or case study | [add-project.md](add-project.md) | `add-project` |
+| Add or remove a project or case study | [add-project.md](add-project.md) | `add-project` |
+| Find which field "summary", "card image", "title" means | [content.md](content.md#what-the-owners-words-mean) | |
 | Change email, phone, LinkedIn, location, resume | [contact.md](contact.md) | `contact-details` |
 | Change a page title, description, share image, sitemap | [meta.md](meta.md) | `edit-copy` |
 | Prove nothing broke | [checks.md](checks.md) | `verify-site` |
@@ -34,10 +35,10 @@ From the repo history (136 commits to Oct 2026, by subject): handoff and merge c
 | `python3 tools/build.py --check` | fail if generated pages do not match their sources |
 | `python3 tools/check.py` | the one check before every commit (build, links, JS, smoke; about a minute). `--fast` skips build and browser |
 | `python3 check-writing.py <page>` | house-style lint for copy |
-| `python3 tools/check-flags.py` | list open owner questions (exit 1 while any remain) |
+| `python3 tools/check-flags.py` | list open owner questions (exit 1 while any remain); `--next-id SLUG` for a new one |
 | `python3 tools/media.py ...` | image and video derivatives, `audit` |
 | `python3 tools/preview.py site\|studio` | artifact-ready copy for owner review |
-| `python3 tools/new.py <kind> <name>` | scaffolds: project, actor, page, section |
+| `python3 tools/new.py <kind> <name>` | scaffolds: project, actor, page, section; `project <slug> --where` / `--remove` |
 | `python3 tools/cad.py ...` | STEP to the site's 3D formats |
 
 Never hand edit `index.html`, `projects/*.html` or `src/projects/*.html`.

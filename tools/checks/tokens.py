@@ -145,7 +145,20 @@ def run(ctx):
     if not diff:
         return Result(PASS, "no CSS changed vs %s" % base)
     compare, pure, moved, unsafe = set(), [], [], []
+    token_moves, token_new = [], []
     for key, fam in FAMILIES.items():
+        # name the token values that moved, so a WARN says which edit caused it
+        for pat in fam["tokens"]:
+            for t in sorted(set(listed(ctx, None, pat)) | set(listed(ctx, base, pat))):
+                if t not in diff:
+                    continue
+                old_v, new_v = root_vars(read(ctx, base, t) or ""), root_vars(read(ctx, None, t) or "")
+                for name in sorted(set(old_v) | set(new_v)):
+                    if name not in old_v:
+                        token_new.append(name)
+                    elif old_v.get(name) != new_v.get(name):
+                        token_moves.append("token %s: %s -> %s (%s)" % (
+                            name, old_v[name], new_v.get(name, "removed"), t))
         mine = [f for f in diff if f.startswith(fam["dir"]) and "/" not in f[len(fam["dir"]):]]
         tok_files = set()
         for pat in fam["tokens"]:
@@ -168,10 +181,14 @@ def run(ctx):
                 if raw_new.count("var(%s)" % name) > raw_old.count("var(%s)" % name) and name in scoped:
                     unsafe.append("%s: newly uses %s, which is also set in a scope (palette, @media, .on-dark)"
                                   % (f, name))
+    extra = ["new tokens: " + ", ".join(token_new)] if token_new else []
     if not compare:
-        return Result(PASS, "only token files changed, no stylesheet uses differ")
+        return Result(PASS, "only token files changed, no stylesheet uses differ", token_moves + extra)
     if moved or unsafe:
-        details = moved + unsafe + ["A real style change is fine: prove the pages with python3 tools/check.py --only visual"]
-        return Result(WARN, "%d of %d changed stylesheets move values%s" % (
-            len(moved), len(compare), ", %d scoped token uses" % len(unsafe) if unsafe else ""), details)
-    return Result(PASS, "%d changed stylesheets are pure token renames vs %s" % (len(pure), base), pure)
+        details = token_moves + moved + unsafe + extra + [
+            "A real style change is fine: prove the pages with python3 tools/check.py --only visual"]
+        names = sorted(set(m.split()[1].rstrip(":") for m in token_moves))
+        return Result(WARN, "%d of %d changed stylesheets move values%s%s" % (
+            len(moved), len(compare), ", %d scoped token uses" % len(unsafe) if unsafe else "",
+            " (token values changed: %s)" % ", ".join(names) if names else ""), details)
+    return Result(PASS, "%d changed stylesheets are pure token renames vs %s" % (len(pure), base), pure + extra)

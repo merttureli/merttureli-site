@@ -8,7 +8,7 @@ The owner reviews work as a private claude.ai artifact: a copy of the site with 
 |---|---|
 | Whole site copy | `python3 tools/preview.py site --out <scratchpad>/site-pub` |
 | Studio copy (next/) | `python3 tools/preview.py studio --out <scratchpad>/studio-pub` |
-| Build and smoke test (Chromium, 390 + 1440) | add `--smoke --port <your port>` |
+| Build and smoke test (Chromium, 390 + 1440) | add `--smoke --port <your port>`. The port must be free: stop your own `http.server` on it first (`kill $(lsof -ti :PORT)`). If it is taken, the copy is still written and only the smoke is skipped (exit 2) |
 | Smoke other pages | add `--pages index.html,websites.html --shots <dir>` |
 | Look at it in a browser | add `--serve <your port>` (Ctrl-C stops it) |
 | Plan only, write nothing | add `--dry-run` |
@@ -18,15 +18,16 @@ The owner reviews work as a private claude.ai artifact: a copy of the site with 
 
 `--out` must be outside the repo. Put it under the Claude scratchpad: the publish tool only reads files from the working directory or the scratchpad. Re-running into the same `--out` replaces the old copy. A folder that is not a previous copy is refused.
 
-Exit codes: 0 ok, 1 smoke found console errors or failed requests, 2 bad input or a host rule broken.
+Exit codes: 0 ok, 1 smoke found console errors or failed requests, 2 bad input, a host rule broken or the port taken.
+The report also counts open owner flags in the copy: the owner sees them as dotted underlines, which is fine for a private review.
 
 ## Publish
 
 1. Build with `--smoke`. Read the report: unresolved references and `?query` links are listed.
 2. Open `<out>/.preview-plan.json`. `publish` is a list of Artifact tool calls. Each has `file_path` (the copy's `index.html`), `root` (the copy folder) and `files` (published path to source path, relative to `root`).
-3. Call 1: `Artifact` with `file_path`, `root`, `files` and an `icon`. It returns the artifact `url`.
+3. Call 1: `Artifact` with `file_path`, `root`, `files` and `icon` (the plan carries `"icon": "portfolio"`). It returns the artifact `url`.
 4. Calls 2 and later: the same, plus `url` from call 1. Files already published are kept.
-5. Give the owner the link. Studio: append `#reel-coaster` to open on the showreel.
+5. Give the owner the link. Studio: append `#reel-coaster` to open on the showreel, or `#reel-<key>` to open on one project (flags: [showreel-actor.md](showreel-actor.md)).
 
 To update a preview, rebuild into the same `--out` and repeat every call with the artifact's `url`.
 

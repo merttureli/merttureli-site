@@ -20,3 +20,7 @@ Add a new project:
 5. `python3 tools/build.py`, then the hand-written places listed in add-project.md (home card, Studio work list).
 6. `python3 check-writing.py projects/<slug>.html`, `python3 tools/check.py`.
 7. Preview for the owner (`preview-site` skill), then commit `content/`, `src/projects/`, `projects/`, `sitemap.xml` and media together.
+
+Remove a project (only when the owner asks):
+1. `python3 tools/new.py project <slug> --remove --dry-run` shows what goes: the `order` entry, the sitemap line, the case JSON and both generated pages. It also lists the hand-written places that still name it.
+2. Drop `--dry-run`: it removes them and rebuilds the neighbors. Clear the hand-written hits it printed, then `python3 tools/check.py`.

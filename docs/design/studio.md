@@ -33,36 +33,39 @@ Rules:
 
 ## Color
 
+Values live only in `next/css/tokens.css` (open it to see the hex). This page names the tokens and their roles,
+so changing a value never needs a doc edit.
+
 Light surfaces (the page):
 
-| Token | Value | Role |
-|---|---|---|
-| `--paper` | `#e7e8ea` | page background. Also `<meta name="theme-color">` in `next/index.html`: change both |
-| `--paper-2` | `#dcdee1` | raised panel: work frame, door hover fill, Beyond section, phone project media |
-| `--paper-3` | `#d0d3d7` | ghost words on paper, photo placeholder, chip separators |
-| `--ink` | `#121315` | text, dark sections, dark buttons |
-| `--ink-2` | `#1d1f22` | hover fill on dark doors |
-| `--ink-soft` | `#3a3d42` | body copy under headings |
-| `--muted` | `#676b72` | labels, quiet links, credits |
-| `--line` | `rgba(18, 19, 21, .16)` | hairlines on paper |
-| `--signal` | `#ff4f00` | the one accent: focus ring, hover fills, dots, active menu button. Use sparingly |
-| `--signal-ink` | `#b83700` | accent as text on paper (readable orange) |
-| `--live` | `#1f9d55` | "available" status dot |
-| `--pill-fill` | `rgba(255, 255, 255, .35)` | status pill background |
-| `--scrim` | `rgba(18, 19, 21, .3)` | behind the open menu |
-| `--shadow-soft`, `--shadow-clear` | `rgba(18, 19, 21, .13)`, `rgba(18, 19, 21, 0)` | hero contact shadow gradient |
+| Token | Role |
+|---|---|
+| `--paper` | page background. Also `<meta name="theme-color">` in `next/index.html`: change both |
+| `--paper-2` | raised panel: work frame, door hover fill, Beyond section, phone project media |
+| `--paper-3` | ghost words on paper, photo placeholder, chip separators |
+| `--ink` | text, dark sections, dark buttons |
+| `--ink-2` | hover fill on dark doors |
+| `--ink-soft` | body copy under headings |
+| `--muted` | labels, quiet links, credits |
+| `--line` | hairlines on paper |
+| `--signal` | the one accent: focus ring, hover fills, dots, active menu button. Use sparingly |
+| `--signal-ink` | accent as text on paper (readable orange) |
+| `--live` | "available" status dot |
+| `--pill-fill` | status pill background |
+| `--scrim` | behind the open menu |
+| `--shadow-soft`, `--shadow-clear` | hero contact shadow gradient |
 
 Paper on ink (dark surfaces: `.web`, `.door--dark`, `.explorer__link`, `.menu__panel`):
 
-| Token | Value | Role |
-|---|---|---|
-| `--line-dark` | `rgba(231, 232, 234, .16)` | hairlines on ink |
-| `--paper-soft-hi` | `.75` alpha | lead copy on ink (explorer sub) |
-| `--paper-soft` | `.7` alpha | body copy on ink (steps, menu foot) |
-| `--paper-muted` | `.55` alpha | labels on ink |
-| `--paper-muted-lo` | `.5` alpha | small labels on ink (menu label, spec card terms) |
-| `--paper-ring` | `.22` alpha | ring around the menu button |
-| `--paper-ghost` | `.14` alpha | outlined ghost word on ink |
+| Token | Role |
+|---|---|
+| `--line-dark` | hairlines on ink |
+| `--paper-soft-hi` | lead copy on ink (explorer sub) |
+| `--paper-soft` | body copy on ink (steps, menu foot) |
+| `--paper-muted` | labels on ink |
+| `--paper-muted-lo` | small labels on ink (menu label, spec card terms) |
+| `--paper-ring` | ring around the menu button |
+| `--paper-ghost` | outlined ghost word on ink |
 
 Dark section recipe: `background: var(--ink); color: var(--paper);`, labels `var(--paper-muted)`, body
 `var(--paper-soft)`, rules `.rule--dark` / `var(--hairline-dark)`, accent text `var(--signal)` (not `--signal-ink`).
@@ -193,10 +196,11 @@ These cannot be CSS tokens. Edit them in place (grep the name). Motion timers ar
 
 | Task | Do this |
 |---|---|
-| Change the accent | `--signal` (and `--signal-ink` for text on paper) in `tokens.css` |
+| Change the accent | `--signal` (and `--signal-ink` for text on paper) in `tokens.css`. That is the only place: studio.css and the catalog chrome (`docs/design/catalog/catalog.css` imports `tokens.css`) follow. Not included: the rocket livery in `hero3d.js` (its own 3D texture colors, change only if asked) and the frozen prototypes in `studies/` |
 | Change the page gray | `--paper` in `tokens.css` and `theme-color` in `next/index.html`; check `--paper-2`/`-3` still step |
 | Make a hover slower | change the role duration in `tokens.css` (motion.md lists which token each hover uses) |
 | Add a size, color or space | add it to the right group in `tokens.css`, then use `var(--name)` |
 | Add a dark section | section skeleton + the dark section recipe above, `.rule--dark` |
 | Add a drift word | add `<i>` to a `.slot` (three per slot), keep the first `<i>` text equal to the project's `word` if the showreel uses it |
-| Check nothing moved | `python3 tools/check.py --fast`; pixel diff with `tools/visual-regress` on `next/index.html` (migration doc has the command) |
+| Check nothing moved | `python3 tools/check.py --fast` (the `tokens` row names any token value that moved); pixels: `python3 tools/check.py --only visual --pages next/index.html` |
+| Add a section | `python3 tools/new.py section NAME` (studio is the default site), see docs/recipes/new-page.md |

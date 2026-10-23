@@ -18,7 +18,7 @@ Common options (every kind)
 Examples
     python3 tools/new.py actor robo-catcher
     python3 tools/new.py page speaking --title "Speaking" --dry-run
-    python3 tools/new.py section talks --site studio --number 07 --label Talks
+    python3 tools/new.py section talks --site studio --label Talks   # next free number
     python3 tools/new.py <kind> --help
 
 Recipes: docs/recipes/showreel-actor.md, docs/recipes/new-page.md, docs/recipes/add-project.md

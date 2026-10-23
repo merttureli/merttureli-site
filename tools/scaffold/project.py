@@ -13,8 +13,11 @@ Scaffold a new case study, or find every place a project is written down.
     --build          run python3 tools/build.py afterwards
     --root DIR       work on a copy of the repo instead of this one (tests)
 
-    python3 tools/scaffold/project.py <slug> --where   # list the hand-written
+    python3 tools/new.py project <slug> --where    # list the hand-written
                      places that name the project (home card, Studio, sitemap...)
+    python3 tools/new.py project <slug> --remove [--dry-run]   # undo the
+                     scaffold: order entry, sitemap line, case JSON, both
+                     generated pages, then rebuild the neighbors
     python3 tools/scaffold/project.py --format         # rewrite content/*.json
                      in the house layout (same data, tidy diff)
 
@@ -181,7 +184,7 @@ Next steps for {slug}:
   3. Share image: assets/og/case-{slug}-v1.png, 1200x630 (the build warns
      until it exists).
   4. python3 tools/build.py, then python3 tools/build.py --check.
-  5. Hand-written places that are NOT generated (python3 tools/scaffold/project.py
+  5. Hand-written places that are NOT generated (python3 tools/new.py project
      {slug} --where lists them for an existing project):
        - home card: src/index.html, an <article> in <section id="work">
        - Studio: next/index.html work list <li class="project">, stage <img>,
@@ -218,7 +221,9 @@ def scaffold(root, slug, title=None, nav_title=None, after=None, dry=False, buil
     neighbors = sorted({order[i - 1] if i > 0 else None,
                          order[(i + 1) % len(order)] if len(order) > 1 else None} - {None, slug})
     print(CHECKLIST.format(slug=slug, neighbors=", ".join(neighbors) or "none"))
+    print("Undo all of this: python3 tools/new.py project %s --remove --dry-run" % slug)
     if build and not dry:
+        sys.stdout.flush()  # keep this text above the build output when piped
         return subprocess.call([sys.executable, os.path.join(root, "tools", "build.py")], cwd=root)
     return 0
 
@@ -249,14 +254,16 @@ def _terms(root, slug):
     return sorted(set(terms), key=len, reverse=True)
 
 
-def where(root, slug, per_file=6):
+def where(root, slug, per_file=6, terms=None, footer=True):
     """Print file:line for every hand-written mention of a project."""
-    terms = _terms(root, slug)
+    terms = terms or _terms(root, slug)
     rx = re.compile("|".join(r"(?<![\w-])%s(?![\w-])" % re.escape(t) for t in terms))
     print("Searching for: " + ", ".join(terms))
-    print("Source of truth for the case page: content/projects/%s.json (+ content/projects.json order)"
-          % slug)
-    print("Generated, never edit: index.html, projects/, src/projects/\n")
+    if footer:
+        print("Source of truth for the case page: content/projects/%s.json (+ content/projects.json order)"
+              % slug)
+        print("Generated, never edit: index.html, projects/, src/projects/")
+    print("")
     results = []
     for dirpath, dirnames, filenames in os.walk(root):
         rel_dir = os.path.relpath(dirpath, root)
@@ -296,10 +303,79 @@ def where(root, slug, per_file=6):
                 print("         (+%d more)" % (len(hits) - per_file))
         print("")
     found = len(results)
+    if not found:
+        print("(no hits)")
     og = os.path.join(root, "assets", "og", "case-%s-v1.png" % slug)
-    print("Share image: assets/og/case-%s-v1.png %s" % (slug, "exists" if os.path.exists(og) else "MISSING"))
+    if footer:
+        print("Share image: assets/og/case-%s-v1.png %s" % (slug, "exists" if os.path.exists(og) else "MISSING"))
     print("Resume: assets/Mert-Tureli-Resume.pdf is a PDF, check it by hand.")
+    if footer:
+        owned = [p for p in _owned(root, slug) if os.path.exists(os.path.join(root, p))]
+        if owned:
+            print("Files the case owns (generated or scaffolded): %s" % ", ".join(owned))
+            print("Remove the case and its sitemap line: python3 tools/new.py project %s --remove --dry-run" % slug)
     return 0 if found else 1
+
+
+# ----------------------------------------------------------------- remove
+
+def _owned(root, slug):
+    return ["content/projects/%s.json" % slug, "src/projects/%s.html" % slug, "projects/%s.html" % slug]
+
+
+def remove(root, slug, dry=False, build=True):
+    """Undo scaffold(): order entry, sitemap line, case JSON, generated pages; rebuild neighbors."""
+    if not SLUG_RE.match(slug or ""):
+        raise SystemExit("error: slug %r: use lower-case words joined by hyphens" % slug)
+    index_path, _ = _content_paths(root)
+    if not os.path.exists(index_path):
+        raise SystemExit("error: %s not found. Is --root a copy of the site repo?" % index_path)
+    data = json.loads(_read(index_path))
+    owned = [p for p in _owned(root, slug) if os.path.exists(os.path.join(root, p))]
+    if slug not in data["order"] and not owned:
+        raise SystemExit("error: %s is not a project: not in content/projects.json order and no case files"
+                         % slug)
+    terms = _terms(root, slug)  # before the JSON goes, so the title is searched too
+    changed = 0
+    if slug in data["order"]:
+        data["order"].remove(slug)
+        _write(index_path, dump_json(data), dry, root)
+        changed += 1
+    sm = os.path.join(root, "sitemap.xml")
+    if os.path.exists(sm):
+        text = _read(sm)
+        lines = text.split("\n")
+        keep = [l for l in lines if "/projects/%s.html<" % slug not in l]
+        if len(keep) != len(lines):
+            if dry:
+                print("--- would remove from sitemap.xml ---\n" +
+                      "\n".join(l for l in lines if l not in keep))
+            else:
+                with io.open(sm, "w", encoding="utf-8", newline="\n") as f:
+                    f.write("\n".join(keep))
+                print("wrote sitemap.xml")
+            changed += 1
+    for rel in owned:
+        if dry:
+            print("would delete " + rel)
+        else:
+            os.remove(os.path.join(root, rel))
+            print("deleted " + rel)
+        changed += 1
+    og = "assets/og/case-%s-v1.png" % slug
+    if os.path.exists(os.path.join(root, og)):
+        print("left in place: %s (the scaffold never makes it; git rm it if nothing else uses it)" % og)
+    print("\n%s (clear these by hand; none is generated):" % (
+        "Named in hand-written places today (the sitemap line goes with --remove)" if dry
+        else "Still named in hand-written places"))
+    where(root, slug, terms=terms, footer=False)
+    if dry:
+        print("\nDry run: nothing changed. Drop --dry-run to remove; the neighbors are then rebuilt.")
+        return 0
+    if build and changed:
+        sys.stdout.flush()
+        return subprocess.call([sys.executable, os.path.join(root, "tools", "build.py")], cwd=root)
+    return 0
 
 
 # ----------------------------------------------------------------- format
@@ -335,6 +411,10 @@ def add_arguments(p):
     p.add_argument("--build", action="store_true", help="run tools/build.py afterwards")
     p.add_argument("--where", action="store_true",
                    help="list the hand-written places that name the project, write nothing")
+    p.add_argument("--remove", action="store_true",
+                   help="undo the scaffold for this slug (order, sitemap line, case JSON, generated pages),"
+                        " then rebuild; use --dry-run first")
+    p.add_argument("--no-build", action="store_true", help="with --remove: skip the rebuild")
     p.add_argument("--format", action="store_true",
                    help="rewrite content/*.json in the house layout")
     p.add_argument("--root", default=REPO, help=argparse.SUPPRESS)
@@ -351,6 +431,8 @@ def run(args):
         return 2
     if args.where:
         return where(root, args.name)
+    if args.remove:
+        return remove(root, args.name, args.dry_run, not args.no_build)
     return scaffold(root, args.name, args.title, args.nav_title, args.after, args.dry_run, args.build)
 
 

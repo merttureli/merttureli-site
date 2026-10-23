@@ -61,7 +61,7 @@ Rules: units meters, +Y up, origin at the footprint center. Never add lights, fo
 
 ## 4. Register it
 
-When the lab is green, one command adds the actor to the hero rotation (it keeps your edited files and only registers):
+When the lab is green, and only with the owner's go (a registered actor plays on the live Studio hero), one command adds the actor to the hero rotation (it keeps your edited files and only registers):
 
 ```sh
 python3 tools/new.py actor robo-catcher --register --dry-run   # shows what it would do
@@ -76,15 +76,29 @@ registerProject({ key: 'robo-catcher', word: 'Robo-Catcher', actor: ctx => impor
 
 Running it again is a no-op. It refuses a word that is not in the `.drift` markup (pass `--word` or `--force`). To take an actor out of the rotation, delete its line.
 
-It loads lazily, so a broken actor logs a warning and the hero keeps working. The `word` must match a `.drift` `<i>` in `next/index.html`; add one there if it is missing.
+It loads lazily, so a broken actor logs a warning, drops out of the rotation and the hero keeps working. The `word` must match a `.drift` `<i>` in `next/index.html`; add one there if it is missing.
+
+How the rotation works: each idle cycle plays the next registered project (rocket exit, that project's sequence, rocket return), in registration order, with its own drift word brought forward and its own framing. Only the project that plays next is built: on idle, while the hero is at REST, so its shaders and textures are ready before it is due and nothing compiles mid-reel. With more than two projects the one that just played is disposed (`dispose()`) and rebuilt when its turn comes round. A reel cut short by the visitor after the guest came on stage also hands over to the next project.
 
 ## 5. See it in the hero and prove nothing broke
 
 ```sh
-# http://127.0.0.1:8000/next/#reel-fast   (reel starts at once, 3x)
-# projects take turns, one per reel: press c after each reel to reach yours
-# console: __reel.seek(9) draws reel time 9 s; __reel.guest is the current actor
+# http://127.0.0.1:8000/next/#reel-robo-catcher        plays that project now (#reel-coaster = Therma-Shift)
+# http://127.0.0.1:8000/next/#reel-robo-catcher-fast   the same at 3x; #reel-fast plays the next one in the rotation at 3x
+# `c` on the hero plays the next project in the rotation
+# console: __reel.seek(9, 'robo-catcher') draws that reel at 9 s (do this rather than waiting for reels)
+#          __reel.project (playing), __reel.next, __reel.use('robo-catcher'), __reel.built
 python3 tools/check.py
+```
+
+Headless Playwright needs software WebGL and the four blocked hosts:
+
+```js
+const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+for (const h of ['clarity.ms', 'bing.com', 'workers.dev', 'formspree.io']) await context.route(`**/*${h}*/**`, r => r.abort());
+// page.goto('.../next/#reel-<key>'); await page.waitForFunction(() => window.__reel); await page.evaluate(() => __reel.seek(9, '<key>'))
 ```
 
 ## Interface reference
@@ -95,10 +109,11 @@ python3 tools/check.py
 |---|---|
 | `group` | added to the shared scene once |
 | `sequence` | `[[STATE, seconds], ...]`, placed between `ROCKET_EXIT` (2.1 s) and `ROCKET_RETURN` (2.6 s) |
-| `layout(frame)` | on every resize: `{ halfW, halfH, camera, w, h, free: {l,t,r,b}, avoid: [rects] }` in canvas px |
+| `layout(frame)` | before each of its reels and on resize while it plays: `{ halfW, halfH, camera, w, h, free: {l,t,r,b}, avoid: [rects] }` in canvas px (`avoid` holds its own drift word) |
 | `sample(T, states)` | every reel frame; `states[NAME] = { t0, t1 }` in reel seconds |
-| `beginAbort()`, `sampleAbort(u)` | visitor input mid-reel; u goes 0 to 1 over 1.5 s |
+| `beginAbort()`, `sampleAbort(u)` | visitor input mid-reel; u goes 0 to 1 over `abortSeconds` (optional member, default 1.5 s) |
 | `reset()` | back to rest, hidden |
 | `update(dt, time)` | every frame while `visible` (fans, particles) |
-| `prewarm(renderer, camera, scene)` | once before the first reel: compile shaders, upload textures |
+| `prewarm(renderer, camera, scene)` | once after it is built, on idle at REST: compile shaders, upload textures (no frame is drawn meanwhile; the hero then does one warm draw of the whole actor) |
 | `visible` | getter; false when nothing is on screen |
+| `dispose()` | optional; when the project is unloaded (more than two projects registered) |

@@ -133,6 +133,7 @@ Next steps (docs/recipes/showreel-actor.md):
   4. Register{" (done)" if register else ""}: python3 tools/new.py actor {key} --register
      adds this line to next/js/showreel/index.js, above the "More guests" comment:
        {line}
-     Projects take turns, one per reel: open /next/#reel-fast and press c after each reel to reach it.
+     Projects take turns, one per reel, in registration order. Play this one now: /next/#reel-{key}
+     (#reel-{key}-fast at 3x); __reel.seek(9, '{key}') draws its reel at 9 s.
   5. Prove nothing broke: python3 tools/check.py''')
     return 0

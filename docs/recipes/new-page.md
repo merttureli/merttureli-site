@@ -33,8 +33,9 @@ Not this command: a case study is `python3 tools/new.py project` ([add-project.m
 Prints a snippet to paste. It never edits a page.
 
 ```sh
-python3 tools/new.py section talks --site studio --number 07 --label Talks
+python3 tools/new.py section talks --label Talks                 # studio (default), next free number
 python3 tools/new.py section talks --site page --out /tmp/talks.html
+python3 tools/new.py section talks --site home --number 02       # home numbers are not a sequence: say it
 ```
 
 | `--site` | Paste into | Markup |
@@ -43,7 +44,27 @@ python3 tools/new.py section talks --site page --out /tmp/talks.html
 | `page` | `<main>` of `websites.html` or a page made with `new.py page` | `.section-head` + `.proof-list` |
 | `home` | `src/index.html` (the source; never edit root `index.html`), then `python3 tools/build.py` | design-system `Rule` + `DisplayHeading` |
 
-Every placeholder is a `<mark class="flag">`; replace them, renumber the sections after it if the numbers are visible, then `python3 tools/check.py`.
+Every placeholder is a `<mark class="flag">`; replace them, then `python3 tools/check.py`.
+
+### Where it goes and its number (Studio)
+
+| Studio today (`next/index.html`) | Label shown |
+|---|---|
+| hero (`<!-- 00 HERO -->`) | none |
+| proof + doors | `01 / Proof, measured` |
+| work, then the explorer band (unnumbered) | `02 / Selected work` |
+| experience | `03 / Experience` |
+| beyond | `04 / Beyond engineering` |
+| websites (dark) | `05 / Websites` |
+| contact (`<!-- 06 CONTACT -->`) | none |
+
+- `--number` defaults to the next free number (today `06`). Paste the section after `05 WEBSITES` and before the contact comment, then change that comment to the next number (`<!-- 07 CONTACT -->`); contact shows no number, so nothing visible moves.
+- Going between two sections instead: give it that slot's number and add one to every later `NN /` label and `<!-- NN -->` comment.
+- A body from an existing component (chips, stats, steps, doors): copy its snippet from [components.md](../design/components.md) (Studio T01 to T19, or the catalog's Copy button) into the `<div class="NAME__body" data-reveal>` the scaffold printed, replacing the `<p>`. Find the component by task in "Find by what you want to change" at the top of [catalog.html](../design/catalog.html).
+- The CSS stub uses tokens only (`--space-70-140`, `--text-l`, `--ink-soft`); a dark section adds `background: var(--ink); color: var(--paper);` and `.rule--dark` (see [studio.md](../design/studio.md)).
+- Nav: nothing links to the new section by itself. Add `<a href="#NAME">Label</a>` to the phone menu (`.menu`) if the owner wants it there; the top bar (`.top__nav`) holds only four links.
+
+Site pages (`--site page`) number from the `NN / Label` meta in `websites.html`; renumber the later ones the same way.
 
 ## Where the templates live
 

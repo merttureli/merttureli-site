@@ -202,6 +202,20 @@
   }
   buildNav();
 
+  // Component ids work as links: catalog.html#T13 (or #t13) goes to the T13 section.
+  function alias() {
+    const n = location.hash.slice(1).toUpperCase();
+    if (!/^[ST]\d\d$/.test(n)) return;
+    const c = document.querySelector('.c[data-n="' + n + '"]');
+    if (!c) return;
+    history.replaceState(null, '', '#' + c.id);
+    c.scrollIntoView();
+    // previews above it grow as they mount: land again once they settle
+    if (document.readyState !== 'complete') window.addEventListener('load', () => setTimeout(() => c.scrollIntoView(), 300), { once: true });
+  }
+  alias();
+  window.addEventListener('hashchange', alias);
+
   /* ------------------------------------------------------------- boot */
   const figs = [...document.querySelectorAll('figure.pv')];
   figs.forEach(buildPreview);
