@@ -4,8 +4,8 @@
     python3 tools/build-studio-cases.py              write next/projects/<slug>.html for every case
     python3 tools/build-studio-cases.py --check      exit 1 if a written page is out of date
     python3 tools/build-studio-cases.py --preview PUB
-        after `python3 tools/preview.py studio --out PUB`: copy the case pages into PUB/projects/
-        with their links rewritten for the standalone copy, and pull in the root assets they use.
+        build the pages, then run `python3 tools/preview.py studio --out PUB` (which copies every
+        page under next/, case pages included).
 
 Content stays single source: every word and number comes from content/projects/<slug>.json.
 This script only decides presentation (which clip is the hero, which list becomes the spec
@@ -26,7 +26,6 @@ import html
 import json
 import os
 import re
-import shutil
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -122,7 +121,7 @@ def video(vid, base, md, sm, poster, label=None, mode="view", alpha=True, ratio=
     style = (' style="--ratio: %s"' % ratio) if ratio else ""
     name = lambda n: "%s%s%s%s.webm" % (M, base, ("-%d" % n) if n else "", suf)
     return ('<video id="%s" class="clip" data-clip="%s" muted loop playsinline preload="none" poster="%s" %s%s>'
-            '<source data-src="%s" data-src-sm="%s" type="video/webm"></video>'
+            '<source data-src="%s" data-sm-src="%s" type="video/webm"></video>'
             % (vid, mode, poster, a, style, name(md), name(sm)))
 
 
@@ -285,9 +284,9 @@ def highlights(case):
 
 
 TOP_LINKS = [("Work", "../index.html#work"), ("Experience", "../index.html#experience"),
-             ("Websites", "../index.html#websites"), ("Contact", "../index.html#contact")]
+             ("Websites", "../websites.html"), ("Contact", "../index.html#contact")]
 MENU_LINKS = [("Work", "../index.html#work"), ("Experience", "../index.html#experience"),
-              ("Beyond", "../index.html#beyond"), ("Websites", "../index.html#websites"), ("Contact", "../index.html#contact")]
+              ("Beyond", "../index.html#beyond"), ("Websites", "../websites.html"), ("Contact", "../index.html#contact")]
 
 
 def page(case):
@@ -419,7 +418,7 @@ def page(case):
 <footer class="foot wrap">
   <div><p class="label">Version</p><p>2026 Studio</p></div>
   <div><p class="label">Local time</p><p data-clock>Austin</p></div>
-  <div><p class="label">Socials</p><p><a class="link" href="https://linkedin.com/in/merttureli" rel="noopener">LinkedIn</a> <a class="link" href="mailto:merttureli0@gmail.com">Email</a></p></div>
+  <div><p class="label">Socials</p><p><a class="link" href="https://linkedin.com/in/merttureli" rel="noopener">LinkedIn</a> <a class="link" href="mailto:merttureli0@gmail.com">Email</a> <a class="link" href="../websites.html">Websites</a></p></div>
   <p class="foot__credit">CAD renders from the source assemblies. Hand built, no framework.</p>
 </footer>
 
@@ -447,81 +446,20 @@ def build():
 
 
 def preview(pub):
-    """Copy the case pages into a tools/preview.py studio copy and re-root their links."""
-    if not os.path.isfile(os.path.join(pub, "index.html")):
-        sys.exit("build-studio-cases: %s has no index.html; run tools/preview.py studio --out %s first" % (pub, pub))
-    dst = os.path.join(pub, "projects")
-    os.makedirs(dst, exist_ok=True)
-    pulled = set()
-    for path, src in build().items():
-        out = src.replace("../../studies/shared/", "../shared/")
+    """Build the pages, then the standalone Studio copy. tools/preview.py studio now copies every
+    page under next/ (case pages included) and drops STEP files, so this is a shortcut for it."""
+    build_and_write()
+    import subprocess
+    sys.exit(subprocess.call([sys.executable, os.path.join(ROOT, "tools", "preview.py"), "studio", "--out", pub]))
 
-        def site(m):
-            ref = m.group(2)
-            rel = ref[len("../../assets/"):]
-            pulled.add(rel)
-            return m.group(1) + "../site/" + rel
-        out = re.sub(r'((?:src|href|poster|data-src|data-src-sm)=")(\.\./\.\./assets/[^"#]+)', site, out)
-        with open(os.path.join(dst, os.path.basename(path)), "w", encoding="utf-8") as f:
-            f.write(out)
-    for rel in sorted(pulled):
-        s = os.path.join(ROOT, "assets", rel)
-        d = os.path.join(pub, "site", rel)
-        if rel.endswith("/") or rel.endswith(".html"):
-            continue  # pages (the CHARGER explorer) are already in the copy when the home links them
-        if not os.path.isfile(s):
-            sys.exit("build-studio-cases: missing asset %s" % s)
-        os.makedirs(os.path.dirname(d), exist_ok=True)
-        if not os.path.isfile(d):
-            shutil.copy2(s, d)
-    # the artifact host refuses .step files: drop them (and the explorer's download link to them)
-    steps = []
-    for dirpath, _, names in os.walk(pub):
-        for nm in names:
-            if nm.lower().endswith(".step"):
-                fp = os.path.join(dirpath, nm)
-                steps.append(os.path.relpath(fp, pub).replace(os.sep, "/"))
-                os.remove(fp)
-    for dirpath, _, names in os.walk(pub):
-        for nm in names:
-            if nm.endswith(".html"):
-                fp = os.path.join(dirpath, nm)
-                src = open(fp, encoding="utf-8").read()
-                new = re.sub(r'<a href="[^"]*\.step"[^>]*>.*?</a>', "", src)
-                if new != src:
-                    open(fp, "w", encoding="utf-8").write(new)
-    # add the pages and pulled files to preview.py's publish plan, so the publish carries them
-    plan_path = os.path.join(pub, ".preview-plan.json")
-    if os.path.isfile(plan_path):
-        with open(plan_path, encoding="utf-8") as f:
-            plan = json.load(f)
-        known = set()
-        for call in plan.get("publish", []):
-            for st in steps:
-                if call.get("files", {}).pop(st, None) is not None:
-                    plan["files"] = plan.get("files", 0) - 1
-            known.update(call.get("files", {}))
-        if steps:
-            plan["uncommon_ext"] = [x for x in plan.get("uncommon_ext", []) if x != ".step"]
-        extra = ["projects/%s.html" % s for s in ORDER]
-        extra += ["site/" + r for r in sorted(pulled) if not r.endswith((".html", "/"))]
-        extra = [e for e in extra if e not in known]
-        if (extra or steps) and plan.get("publish"):
-            call = plan["publish"][-1]
-            for e in extra:
-                call["files"][e] = e
-            added = sum(os.path.getsize(os.path.join(pub, e)) for e in extra)
-            plan["files"] = plan.get("files", 0) + len(extra)
-            plan["bytes"] = plan.get("bytes", 0) + added
-            if plan.get("batches"):
-                plan["batches"][-1]["files"] += len(extra)
-                plan["batches"][-1]["bytes"] += added
-            if plan["batches"][-1]["files"] > 250 or plan["batches"][-1]["bytes"] > 60_000_000:
-                print("build-studio-cases: warning: the last publish batch is now over the per-call limit")
-            with open(plan_path, "w", encoding="utf-8") as f:
-                json.dump(plan, f, indent=2)
-        print("build-studio-cases: added %d files to %s, dropped %d .step" % (len(extra), plan_path, len(steps)))
-    print("build-studio-cases: %d case pages and %d assets into %s" % (len(ORDER), len(pulled), pub))
+
+def build_and_write():
+    for path, src in build().items():
+        old = open(path, encoding="utf-8").read() if os.path.isfile(path) else None
+        if old != src:
+            os.makedirs(OUT, exist_ok=True)
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(src)
 
 
 def main():

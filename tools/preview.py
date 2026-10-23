@@ -5,9 +5,11 @@
     python3 tools/preview.py studio [--out DIR] [--serve PORT | --smoke] [--dry-run]
 
 site    the whole current site (what GitHub Pages serves), entry index.html.
-studio  next/ as a standalone copy: index.html, css/, js/, assets/ (next/assets),
-        shared/ (studies/shared), site/ (root assets/ files the Studio links, pulled in
-        by reference, whole folder when the target is an .html page).
+studio  next/ as a standalone copy: every file under next/ at the copy root (index.html,
+        websites.html, projects/*.html, css/, js/, assets/ ...), shared/ (studies/shared),
+        and, pulled in by reference (whole folder when the target is an .html page):
+        site/ (root assets/), site/js/ (root js/), studies/ (the four design studies).
+        STEP files are left out (the host refuses them).
 
 The artifact host rules this applies to every copy:
   * top-level paths starting with "_" are rejected  -> "_ds/" becomes "ds/"
@@ -77,12 +79,16 @@ MODES = {
                   "next/index.html#reel-coaster"],
     },
     "studio": {
-        "roots": [("next/index.html", "index.html"), ("next/css/", "css/"), ("next/js/", "js/"),
-                  ("next/assets/", "assets/"), ("studies/shared/", "shared/")],
-        "pull": [("assets/", "site/")],
+        # every page under next/ (index.html, websites.html, projects/*.html, lab/...) at the copy root
+        "roots": [("next/", ""), ("studies/shared/", "shared/")],
+        # outside files the Studio links: root assets, the four design studies, root scripts
+        # (the websites page reuses the live inquiry form wiring in js/)
+        "pull": [("assets/", "site/"), ("studies/", "studies/"), ("js/", "site/js/")],
+        "exclude_ext": {".step"},   # the artifact host refuses STEP files
         "entry": "next/index.html",
         "doc_dir": "next/",
-        "smoke": ["index.html#reel-coaster", "site/charger-explorer/index.html"],
+        "smoke": ["index.html#reel-coaster", "websites.html", "projects/charger.html",
+                  "site/charger-explorer/index.html"],
     },
 }
 
@@ -145,7 +151,7 @@ CSS_IMPORT_RE = re.compile(r"""@import\s+(["'])([^"']+)\1""", re.I)
 JS_IMPORT_RE = re.compile(r"""(\bfrom\s*|\bimport\s*\(?\s*)(["'`])([^"'`\s]+)\2""")
 # new URL('x', import.meta.url) is relative to the script; new URL('x', document.baseURI) to the page
 NEW_URL_RE = re.compile(r"""new\s+URL\(\s*(["'`])([^"'`\s]+)\1\s*(,[^)]*)?\)""")
-JS_STR_RE = re.compile(r"""(["'`])((?:\.{0,2}/)?[\w@%~+-][\w@%~+./-]*\.(?:""" + ASSET_EXT +
+JS_STR_RE = re.compile(r"""(["'`])((?:(?:\.{1,2}/)+|/)?[\w@%~+-][\w@%~+./-]*\.(?:""" + ASSET_EXT +
                        r"""))((?:[?#][^"'`\s]*)?)\1""", re.I)
 SCRIPT_RE = re.compile(r"<script\b[^>]*>(.*?)</script>", re.I | re.S)
 STYLE_RE = re.compile(r"<style\b[^>]*>(.*?)</style>|\sstyle\s*=\s*([\"'])(.*?)\2", re.I | re.S)
@@ -269,10 +275,16 @@ class Build:
         self.issues = []         # (level, file, message)
         self.rewrites = {}       # copy path -> count
         self.queries = []
+        self.loaders = {}        # script -> folders of the pages that load it (directly or by import)
+
+    def skip(self, f):
+        return os.path.splitext(f)[1].lower() in self.cfg.get("exclude_ext", ())
 
     def map_roots(self):
         for src_pre, dst_pre in self.cfg["roots"]:
             for f in sorted(self.universe):
+                if self.skip(f):
+                    continue
                 if f == src_pre or (src_pre.endswith("/") or src_pre == "") and f.startswith(src_pre):
                     self.dst[f] = host_name(dst_pre + f[len(src_pre):])
 
@@ -291,7 +303,7 @@ class Build:
         else:
             group = [target]
         for f in sorted(group):
-            if f not in self.dst:
+            if f not in self.dst and not self.skip(f):
                 d = self.pull_target(f)
                 if d:
                     self.dst[f] = host_name(d)
@@ -304,6 +316,8 @@ class Build:
             pre = "" if target == "/" else target
             inside = any(s.startswith(pre) for s in self.dst)
             return (target, None) if inside else (None, "not in this copy")
+        if target and self.skip(target):
+            return None, "excluded from copy"
         if target and target not in self.dst and self.pull_target(target):
             return target, "pull"
         if target and target not in self.dst:
@@ -331,6 +345,17 @@ class Build:
                     if why == "pull" and not target.endswith("/"):
                         queue += [n for n in self.pull(target) if n.lower().endswith(tuple(TEXT_EXT))]
                     if target:
+                        # remember which pages load which scripts: a script's loose and
+                        # document-relative paths resolve against those pages' folders
+                        if target.endswith((".js", ".mjs")) and kind in ("nav", "file"):
+                            dirs = ({posixpath.dirname(f)} if f.endswith((".html", ".htm"))
+                                    else self.loaders.get(f, set()))
+                            known = self.loaders.setdefault(target, set())
+                            if not dirs <= known:
+                                known |= dirs
+                                if target in seen:   # rescan it with the new bases
+                                    seen.discard(target)
+                                    queue.append(target)
                         break
 
     def bases(self, f, kind):
@@ -338,9 +363,11 @@ class Build:
         doc = self.cfg["doc_dir"].rstrip("/")
         if kind in ("nav", "file") or f.endswith((".html", ".htm")):
             return [here]
+        pages = sorted(self.loaders.get(f, ()))
         if kind == "doc":
-            return [doc]
-        return [here] if here == doc else [here, doc]
+            return pages + [d for d in [doc] if d not in pages]
+        out = [here] + [d for d in pages if d != here]
+        return out if doc in out else out + [doc]
 
     def read(self, f):
         try:

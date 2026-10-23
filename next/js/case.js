@@ -11,7 +11,7 @@
   const navH = () => (lnav ? lnav.offsetHeight : 0);
 
   /* in-page anchors: scroll under the sticky product bar */
-  $$('a[href^="#"]').forEach(a => a.addEventListener('click', e => {
+  $$('a[href^="#"]:not([data-open-inquiry])').forEach(a => a.addEventListener('click', e => {
     const id = a.getAttribute('href');
     if (id.length < 2) return;
     const el = $(id);
