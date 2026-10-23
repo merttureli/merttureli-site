@@ -24,7 +24,13 @@ function css() {
 function prefetch() {
   if (!mod) {
     css();
-    mod = import('./explorer.js').then(m => { m.prefetch(); return m; });
+    mod = import('./explorer.js').then(m => {
+      m.prefetch();
+      // build the scene graph while the main thread is free (no renderer yet)
+      const idle = window.requestIdleCallback || (f => setTimeout(f, 300));
+      idle(() => { if (!ex) ex = m.createExplorer({ onRequestClose: requestClose, onClosed }); ex.warm().catch(() => {}); }, { timeout: 3000 });
+      return m;
+    });
     mod.catch(err => console.warn('[explorer] unavailable', err));
   }
   return mod;

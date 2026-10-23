@@ -152,20 +152,13 @@ export function createExplorer({ onRequestClose, onClosed }) {
   };
 
   // ---------------------------------------------------------------- build
-  function build() {
-    if (buildP) return buildP;
-    const t0 = performance.now();
-    buildP = (async () => {
+  // the scene graph (CPU only: decode, livery, part list). launch.js runs it on idle once the
+  // model is prefetched, so the first open only has the renderer and the shaders to make
+  let sceneP = null;
+  function warm() {
+    if (sceneP) return sceneP;
+    sceneP = (async () => {
       const [rocket, [data, heroMeta]] = await Promise.all([createRocket({ layout: 'land', base: ASSETS }), prefetch()]);
-      if (!renderer) {
-        renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, stencil: true, powerPreference: 'default' });
-        renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.75));
-        renderer.outputColorSpace = THREE.SRGBColorSpace;
-        renderer.setClearColor(0x000000, 0);
-        renderer.localClippingEnabled = true;
-        renderer.debug.checkShaderErrors = /[?&#]debug\b/.test(location.href);
-        canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); live.textContent = '3D paused. Close and open the explorer again to restore it.'; });
-      }
       scene = new THREE.Scene();
       addStudioLights(scene);
       camera = new THREE.PerspectiveCamera(FOV, 1, .01, 30);
@@ -226,8 +219,26 @@ export function createExplorer({ onRequestClose, onClosed }) {
       // numbering: nose to tail by station
       parts.sort((a, b) => b.center.y - a.center.y).forEach((P, i) => { P.n = i + 1; });
       buildList();
+    })();
+    sceneP.catch(() => { sceneP = null; });
+    return sceneP;
+  }
+  function build() {
+    if (buildP) return buildP;
+    const t0 = performance.now();
+    buildP = (async () => {
+      await warm();
+      if (!renderer) {
+        renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, stencil: true, powerPreference: 'default' });
+        renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.75));
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.setClearColor(0x000000, 0);
+        renderer.localClippingEnabled = true;
+        renderer.debug.checkShaderErrors = /[?&#]debug\b/.test(location.href);
+        canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); live.textContent = '3D paused. Close and open the explorer again to restore it.'; });
+      }
       layoutBase();
-      resize();
+      R = stageRect();
       // compile every variant now (opaque and ghosted parts, stencil passes, caps), not on first use
       const all = [];
       scene.traverse(o => { if (o.isMesh) { all.push([o, o.visible]); o.visible = true; } });
@@ -258,7 +269,7 @@ export function createExplorer({ onRequestClose, onClosed }) {
     renderer.renderLists.dispose();
     renderer.info.reset();
     scene = camera = pivot = model = cad = capMesh = stencilMat = null;
-    parts = []; byId = new Map(); buildP = null; S.built = false;
+    parts = []; byId = new Map(); buildP = sceneP = null; S.built = false;
     list.replaceChildren(); tags.replaceChildren();
   }
 
@@ -499,7 +510,8 @@ export function createExplorer({ onRequestClose, onClosed }) {
   function stepFly(now) {
     const F = fly;
     if (!F.t0) F.t0 = now;
-    const u = F.dur ? clamp01((now - F.t0) / F.dur) : 1, e = easeIO(u);
+    const pin = window.__cxFlyU;                      // debug and capture: hold the fly at this progress
+    const u = pin != null ? pin : F.dur ? clamp01((now - F.t0) / F.dur) : 1, e = easeIO(u);
     const to = typeof F.to === 'function' ? F.to() : F.to;
     if (to && F.from) applyPose(lerpPose(F.from, to, e));
     F.step && F.step(u, e);
@@ -544,7 +556,7 @@ export function createExplorer({ onRequestClose, onClosed }) {
     const dur = start ? OPEN_MS : still ? 0 : 360;
     groundAt(0, 0);
     let gRaf = 0;
-    const gStep = now => { const u = dur ? clamp01((now - t0) / dur) : 1; groundAt(u, easeIO(u)); gRaf = S.built ? 0 : requestAnimationFrame(gStep); };
+    const gStep = now => { const u = window.__cxFlyU != null ? window.__cxFlyU : dur ? clamp01((now - t0) / dur) : 1; groundAt(u, easeIO(u)); gRaf = S.built ? 0 : requestAnimationFrame(gStep); };
     if (dur) gRaf = requestAnimationFrame(gStep);
     try { await build(); } catch (err) {
       cancelAnimationFrame(gRaf);
@@ -643,7 +655,8 @@ export function createExplorer({ onRequestClose, onClosed }) {
     if (reel) reel.resume();
     // focus back to the tile (or wherever it was)
     const back = S.origin === 'tile' && S.tileEl ? S.tileEl : S.opener;
-    if (back && back.focus && back.isConnected) back.focus({ preventScroll: true });
+    const refocus = () => { if (back && back.focus && back.isConnected && document.activeElement !== back && S.phase === 'closed') back.focus({ preventScroll: true }); };
+    refocus(); requestAnimationFrame(refocus);   // the closing dialog can take focus back for one frame
     // keep warm: drop the full-screen buffers now, everything else after WARM_MS
     if (renderer) renderer.setSize(1, 1, false);
     clearTimeout(warmTimer);
@@ -654,11 +667,10 @@ export function createExplorer({ onRequestClose, onClosed }) {
   function waitOpen() { return new Promise(res => { const t = () => (S.phase === 'opening' ? setTimeout(t, 50) : res()); t(); }); }
   // the browser closed the dialog by itself (a second Esc while closing, for example)
   dialog.addEventListener('close', () => { if (S.phase !== 'closed') finish(); });
-  dialog.addEventListener('cancel', e => { e.preventDefault(); esc(); });
-  let escAt = 0;
+  // one Esc press can reach us as keydown and as the dialog's cancel: handle it once
+  let escKey = false;
+  dialog.addEventListener('cancel', e => { e.preventDefault(); if (!escKey) esc(); });
   function esc() {
-    if (performance.now() - escAt < 80) return;   // keydown and cancel both report one press
-    escAt = performance.now();
     if (S.tour) { endTour(true); return; }
     if (S.selected != null) { deselect(); return; }
     onRequestClose();
@@ -666,7 +678,7 @@ export function createExplorer({ onRequestClose, onClosed }) {
   closeBtn.addEventListener('click', () => onRequestClose());
   // keep page scrolling (and Lenis, which listens on window) out of the explorer
   for (const ev of ['wheel', 'keydown', 'pointerdown', 'touchstart']) dialog.addEventListener(ev, e => {
-    if (ev === 'keydown' && e.key === 'Escape') { e.preventDefault(); esc(); }
+    if (ev === 'keydown' && e.key === 'Escape') { e.preventDefault(); escKey = true; setTimeout(() => { escKey = false; }); esc(); }
     e.stopPropagation();
   }, { passive: ev !== 'keydown' });
 
@@ -900,7 +912,7 @@ export function createExplorer({ onRequestClose, onClosed }) {
 
   // ---------------------------------------------------------------- API
   return {
-    open, close,
+    open, close, warm,
     get isOpen() { return S.phase !== 'closed'; }, get phase() { return S.phase; }, get busy() { return raf !== 0 || !!fly; },
     stats, state: S, dispose,
     get view() { return { cur: { ...cur, target: cur.target.toArray(), orbit: cur.orbit.toArray() }, goal: { ...goal, pan: goal.pan.toArray(), orbit: goal.orbit.toArray() }, R, W, H, home: S.built ? homeDist(S.explode) : 0 }; },
