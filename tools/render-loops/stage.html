@@ -48,7 +48,7 @@ function segments(list) {
 }
 
 // Scale and move the actor's outer group so the union of `objects` over the loop fills `fill` of the frame,
-// centred on `at` (fractions of w, h). Perspective makes one pass approximate, so it runs three.
+// centered on `at` (fractions of w, h). Perspective makes one pass approximate, so it runs three.
 function fit(group, objects, fill, at, times) {
   const { camera } = api.engine, w = box.clientWidth, h = box.clientHeight, vw = api.engine.viewAt(0);
   const bbox = () => {
@@ -87,7 +87,7 @@ const LOOPS = {
     async setup() {
       const r = this.r = api.rocket, L = { ...LAYOUTS.land, dist: 2.0 }, { camera } = api.engine;
       applyCamera(camera, L);
-      // centre the airframe in the frame (the hero puts it left of centre, clear of the words)
+      // center the airframe in the frame (the hero puts it left of center, clear of the words)
       const w = box.clientWidth, h = box.clientHeight, vw = api.engine.viewAt(0);
       this.dx = 0; this.dy = 0; this.pose(0);
       const e = screenExtents([r.group], r.group, camera, w, h);
@@ -95,7 +95,7 @@ const LOOPS = {
       const cx = (o.x + 1) / 2 * w + (e.r - e.l) / 2, cy = (1 - o.y) / 2 * h + (e.d - e.u) / 2;
       const px = w * .5 - cx, py = h * .47 - cy;
       this.dx = px / w * 2 * vw.halfW; this.dy = -py / h * 2 * vw.halfH;
-      // .hero__shadow (left 24%, right 20%, top 62%, height 7%, rotate 24deg, blur 10px), scaled about the centre
+      // .hero__shadow (left 24%, right 20%, top 62%, height 7%, rotate 24deg, blur 10px), scaled about the center
       // by the same move-in so it stays under the airframe, and moved with it
       const k = LAYOUTS.land.dist / L.dist;
       Object.assign(shadowEl.style, { display: 'block', left: (50 - 26 * k) + '%', right: (50 - 30 * k) + '%', top: (50 + 12 * k) + '%', height: 7 * k + '%', transform: `translate(${px}px, ${py}px) rotate(24deg)`, filter: `blur(${10 * k * w / 1584}px)` });
@@ -124,8 +124,21 @@ const LOOPS = {
     },
     pose(t) {
       actor.sample(this.T, this.S);
-      this.yaw0 = this.yaw0 ?? this.view.rotation.y;
-      this.view.rotation.y = this.yaw0 + TAU * t / this.seconds;
+      const V = this.view, THREE = api.engine.THREE;
+      if (this.yaw0 === undefined) {
+        // the turntable axis: vertical through the machine's own center (not the view's origin), so it turns in place
+        this.yaw0 = V.rotation.y; this.pos0 = V.position.clone();
+        V.updateMatrixWorld(true);
+        const c = new THREE.Box3().setFromObject(actor.model.group).getCenter(new THREE.Vector3());
+        this.c = V.worldToLocal(c.clone());
+        this.c0 = V.parent.worldToLocal(c);
+      }
+      V.rotation.y = this.yaw0 + TAU * t / this.seconds;
+      V.position.copy(this.pos0);
+      V.updateMatrixWorld(true);
+      const now = V.parent.worldToLocal(V.localToWorld(this.c.clone()));
+      V.position.add(this.c0.clone().sub(now));
+      V.updateMatrixWorld(true);
       const a = TAU * this.turns * t / this.seconds;
       actor.model.setSpin(a, a);
     },

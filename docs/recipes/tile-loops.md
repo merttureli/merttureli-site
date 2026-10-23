@@ -36,8 +36,8 @@ The loops (each closes on itself: `pose(seconds)` equals `pose(0)`):
 
 | Key | Loop | Seconds |
 |---|---|---|
-| `charger` | the hero rocket (its own look, never adopted) in the hero's land framing, one full roll with the hero's bob and its CSS shadow | 8 |
-| `robo-catcher` | the reel's catch cycle, PITCH to the end of THROW; flywheels at a constant whole number of turns; starts with the ball in the net | 7.9 |
+| `charger` | the hero rocket (its own look, never adopted) in the hero's land framing, one slow full roll about its long axis so the livery passes by, with the hero's bob and its CSS shadow | 10 |
+| `robo-catcher` | a turntable like the old `assets/motion/robo-catcher-360-*` render: the assembled hero model (no ball) turns once about a vertical axis through its own center, seen from the hero's three-quarter view; flywheels idle at the hero's speed, rounded to whole turns | 12 |
 | `rudder-pedals` | assembled with springs and wiring: right, left, center, then each toe brake; a small sway; no aircraft | 6.4 |
 | `therma-shift` | mug lands and steams on the hot plate, swap, can chills and beads, can leaves and the plate returns to neutral; holds shortened; starts with the mug steaming | 11.4 |
 
