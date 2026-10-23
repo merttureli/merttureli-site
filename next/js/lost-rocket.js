@@ -8,11 +8,17 @@
 // (render it again with mountLost({ box, still: true }) if the pose changes),
 // so the switch from still to live is seamless. Reduced motion keeps the
 // poster; rendering stops while the stage is off screen or the tab is hidden.
-import { createEngine } from './showreel/engine.js';
+//
+// The rocket never leaves its stage: fit() samples the whole wander (five
+// minutes of it, pointer at every extreme) and frames the camera so every
+// pose stays inside the canvas with a margin. The stage itself sits beside
+// (desktop) or above (phone) the text in CSS, so the rocket never covers it.
+import { THREE, createEngine, screenExtents } from './showreel/engine.js';
 import { createRocket, applyCamera } from './hero3d.js';
 
 export const T0 = 0;                       // ms on the wander clock: the poster frame
-const LAYOUT = 'port', DIST = 3.35, SHIFT_Y = -.15; // hero portrait framing, pulled back a little for room to wander, centred
+const LAYOUT = 'port';                     // hero portrait framing (fit() then sets distance and shift)
+const MARGIN = .04;                        // share of the stage kept clear around every pose
 
 // Pose at wander time t (ms). Pure function of t and the pointer state.
 export function wander(rocket, t) {
@@ -26,16 +32,41 @@ export function wander(rocket, t) {
   g.rotation.y += s.sx * .22;              // nose toward the pointer (on top of the hero's own lean)
 }
 
+// Frame the camera so the union of every wander pose fits the canvas (w x h px)
+// with MARGIN on each side. Depends only on the aspect, so the poster matches.
+function fit(engine, rocket, w, h) {
+  const L = rocket.layout, cam = engine.camera, s = rocket.state, origin = new THREE.Object3D();
+  L.shiftX = 0; L.shiftY = 0;
+  for (let pass = 0; pass < 4; pass++) {
+    applyCamera(cam, L); cam.aspect = w / h; cam.updateProjectionMatrix();
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (const p of [-1, 0, 1]) for (const q of [-1, 0, 1]) {
+      s.px = s.sx = p; s.py = s.sy = q;
+      for (let t = 0; t <= 300000; t += 1500) {
+        wander(rocket, t);
+        const e = screenExtents([rocket.group], origin, cam, w, h);
+        x0 = Math.min(x0, -e.l); x1 = Math.max(x1, e.r); y0 = Math.min(y0, -e.u); y1 = Math.max(y1, e.d);
+      }
+    }
+    const unit = 2 * engine.viewAt(0).halfH / h;  // world units per px at the rocket's depth
+    L.shiftX -= (x0 + x1) / 2 * unit;
+    L.shiftY += (y0 + y1) / 2 * unit;
+    const k = Math.max((x1 - x0) / (w * (1 - 2 * MARGIN)), (y1 - y0) / (h * (1 - 2 * MARGIN)));
+    L.dist *= k;
+  }
+  applyCamera(cam, L); cam.aspect = w / h; cam.updateProjectionMatrix();
+  s.px = s.sx = s.py = s.sy = 0;
+}
+
 export async function mountLost({ box, base = '/next/assets/3d/', still = false, pixelRatio } = {}) {
   const canvas = box.querySelector('canvas');
   const engine = createEngine({ canvas, preserve: still, pixelRatio });
   const rocket = await createRocket({ layout: LAYOUT, base });
-  rocket.layout.dist = DIST;
-  rocket.layout.shiftY = SHIFT_Y;
   engine.scene.add(rocket.group);
   applyCamera(engine.camera, rocket.layout);
   const resize = () => engine.size(Math.max(1, box.clientWidth), Math.max(1, box.clientHeight));
   resize();
+  fit(engine, rocket, box.clientWidth || 4, box.clientHeight || 5);
   rocket.settle(T0);
   wander(rocket, T0);
   engine.render();

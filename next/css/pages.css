@@ -62,19 +62,19 @@ ol, ul { list-style: none; }
 
 /* ------------------------------------------------------------- 404 */
 .nf { padding-top: clamp(24px, 6vw, 96px); }
-.nf__hero { position: relative; }
+.nf__hero { display: grid; grid-template-columns: minmax(0, 1fr) clamp(200px, 26vw, 420px); column-gap: clamp(24px, 3vw, 56px); align-items: center; }
 .nf__copy { display: flex; flex-direction: column; align-items: flex-start; gap: clamp(18px, 2vw, 28px); }
-.nf__title { font-size: clamp(40px, 7.2vw, 132px); line-height: .88; letter-spacing: -.04em; max-width: 9.5em; }
+.nf__title { font-size: clamp(40px, 6.6vw, 124px); line-height: .88; letter-spacing: -.04em; max-width: 9.5em; }
 .nf__line { max-width: 44ch; font-size: clamp(17px, 1.5vw, 22px); line-height: 1.38; letter-spacing: -.01em; color: var(--ink-soft); }
 .nf__line a { color: inherit; text-decoration: underline; text-decoration-color: var(--line); text-decoration-thickness: 1px; text-underline-offset: 3px; transition: text-decoration-color var(--dur-400) var(--ease); }
 .nf__path { display: none; overflow-wrap: anywhere; }
 .nf__path b { font-weight: inherit; color: inherit; }
 .nf__path.is-set { display: block; }
 
-/* CHARGER, lost: the hero's rocket (next/js/lost-rocket.js) wandering beside the headline.
+/* CHARGER, lost: the hero's rocket (next/js/lost-rocket.js) wandering in its own column beside the
+   text (above it on phones). Its whole wander is framed inside the stage, so it never covers the text.
    The poster is the same render, so nothing jumps when the live canvas fades in. */
-.nf__copy { position: relative; z-index: 1; }
-.nf__stage { position: absolute; z-index: 0; right: 0; top: 50%; width: clamp(220px, 26vw, 420px); aspect-ratio: 4 / 5; translate: 0 -54%; pointer-events: none; }
+.nf__stage { position: relative; width: 100%; aspect-ratio: 4 / 5; pointer-events: none; }
 .nf__poster, .nf__canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .nf__poster { transition: opacity var(--dur-600) linear; }
 .nf__canvas { opacity: 0; transition: opacity var(--dur-800) linear; }
@@ -100,7 +100,7 @@ ol, ul { list-style: none; }
 @media (max-width: 760px) {
   body { font-size: var(--text-m); }
   .nf__hero { display: flex; flex-direction: column; }
-  .nf__stage { order: -1; position: relative; top: auto; width: 180px; margin: -44px -8px -46px auto; translate: none; }
+  .nf__stage { order: -1; width: 168px; margin: -18px -6px 10px auto; }
   .nf__go { grid-template-columns: minmax(0, 1fr); }
   .nf__copy .pillbtn { width: 100%; }
 }
@@ -172,32 +172,32 @@ ol, ul { list-style: none; }
 .slot:nth-child(5) { --t: 14s; animation-delay: -3s; }
 .slot:nth-child(6) { --t: 10s; animation-delay: -7s; }
 .slot:nth-child(7) { --t: 12.5s; animation-delay: -5s; }
-.slot:nth-child(8) { --t: 15s; animation-delay: -9s; }
-@keyframes float { from { translate: 0 0; } to { translate: 14px -18px; } }
+@keyframes float { from { translate: 0 0; } to { translate: var(--fx, 14px) var(--fy, -18px); } }
 /* the swap is the hero's rise and fade without its blur filter: a phone page gets transform and opacity only */
-.slot i { position: absolute; left: 0; top: 0; font-style: normal; opacity: 0; transform: translate3d(0, 18px, 0); transition: opacity var(--dur-900) var(--ease), transform var(--dur-1100) var(--ease); }
-.slot i.on { opacity: 1; transform: none; }
+/* out first, then in (never two words of a slot on screen at once); --stagger is set per slot by the page */
+.slot i { position: absolute; left: 0; top: 0; font-style: normal; opacity: 0; transform: translate3d(0, 18px, 0); transition: opacity var(--dur-400) var(--ease), transform var(--dur-400) var(--ease); transition-delay: var(--stagger, 0ms); }
+.slot i.on { opacity: 1; transform: none; transition-duration: var(--dur-900), var(--dur-1100); transition-delay: calc(var(--stagger, 0ms) + var(--dur-400)); }
 .slot i:first-child { position: relative; }
 .s-xl { font-size: clamp(30px, 3.9vw, 66px); font-weight: var(--display-weight); font-stretch: var(--display-stretch); letter-spacing: -.03em; line-height: 1; text-transform: uppercase; }
 .s-l { font-size: clamp(22px, 2.5vw, 40px); font-weight: 500; font-stretch: 100%; letter-spacing: -.02em; line-height: 1; }
 .s-m { font-family: var(--serif); font-style: italic; font-size: clamp(20px, 2vw, 32px); font-weight: 500; color: var(--ink-soft); }
 .s-s { font-family: var(--mono); font-size: var(--text-mono-m); font-stretch: var(--mono-stretch); text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
 /* far words: the blur is a text-shadow (painted once), not a filter (recomputed every frame while they float) */
-.slot.far { opacity: .5; scale: 1.4; transform-origin: 0 0; }
+.slot.far { opacity: .38; scale: 1.4; transform-origin: 0 0; }
 .slot.far i { color: transparent; text-shadow: 0 0 4px var(--ink); }
 .slot.far.s-m i { text-shadow: 0 0 4px var(--ink-soft); }
 @media (max-width: 760px) {
-  .hi { padding-top: max(22svh, 170px); }
-  .slot:nth-child(4), .slot:nth-child(6), .slot:nth-child(8) { display: none; }
-  .slot:nth-child(1) { --x: 5% !important; --y: 4svh !important; }
-  .slot:nth-child(2) { --x: 44% !important; --y: 2.5svh !important; }
-  .slot:nth-child(3) { --x: 60% !important; --y: 11svh !important; }
-  .slot:nth-child(7) { --x: 6% !important; --y: 12svh !important; }
-  .slot:nth-child(5) { --x: 34% !important; --y: 16.5svh !important; }
-  .s-xl { font-size: 28px; }
+  /* the card stays at the top and fills the screen: words peek out below it and, blurred, at its edges */
+  .slot:nth-child(4), .slot:nth-child(6), .slot:nth-child(7) { display: none; }
+  .slot:nth-child(1), .slot:nth-child(3) { --fx: 10px; --fy: 4px; } /* the strip under the card is ~30px: float sideways, not up */
+  .slot:nth-child(1) { --x: 6% !important; --y: calc(100svh - 30px) !important; }
+  .slot:nth-child(3) { --x: 64% !important; --y: calc(100svh - 30px) !important; }
+  .slot:nth-child(2) { --x: -22% !important; --y: 30svh !important; }
+  .slot:nth-child(5) { --x: 90% !important; --y: 58svh !important; }
+  .s-xl { font-size: 24px; }
   .s-l { font-size: 21px; }
-  .s-m { font-size: 20px; }
-  .slot.far { scale: 1.2; }
+  .s-m { font-size: 19px; }
+  .slot.far { scale: 2.2; opacity: .3; }
 }
 
 /* ---------------------------------------------- reduced motion */

@@ -35,7 +35,6 @@
   <span class="slot s-m far" style="--x:13%;--y:58%"><i class="on">Web</i><i>Photography</i><i>Websites</i></span>
   <span class="slot s-s" style="--x:75%;--y:86%"><i class="on">(Film)</i><i>(Cooking)</i><i>(Izmir to Austin)</i></span>
   <span class="slot s-l" style="--x:8%;--y:36%"><i class="on">Therma-Shift</i><i>ModuFly</i><i>Flight test</i></span>
-  <span class="slot s-l far" style="--x:71%;--y:66%"><i class="on">Bend fixture</i><i>CHARGER</i><i>Rudder pedals</i></span>
 </div>
 <main class="card rise">
   <div class="card__top">
@@ -64,7 +63,8 @@
     function show(n) {
       set = n % 3;
       slots.forEach(function (slot, si) {
-        [].forEach.call(slot.children, function (w, i) { w.style.transitionDelay = si * 70 + "ms"; w.classList.toggle("on", i === set); });
+        slot.style.setProperty("--stagger", si * 70 + "ms");
+        [].forEach.call(slot.children, function (w, i) { w.classList.toggle("on", i === set); });
       });
     }
     function run() {
