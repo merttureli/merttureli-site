@@ -44,7 +44,9 @@
 // #reel-coaster; the `c` key starts a session; #reel-fast at 3x
 // (#reel-<key>-fast both). window.__reel: project (playing), next, use(key),
 // seek(t, key) (that guest's first-of-session timeline), advance(dt) (the live
-// machine, handovers included), pause/resume.
+// machine, handovers included), pause/resume, hitRocket(clientX, clientY) (is the
+// REST rocket under that point; the CHARGER explorer opens from it). Fires
+// `reel:ready` (detail: window.__reel) once mounted.
 import { THREE, createEngine, createTimeline, ease, win, clamp01, lerp, placeInFrame, screenExtents } from './engine.js';
 import { createRocket, applyCamera } from '../hero3d.js';
 
@@ -607,7 +609,7 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
   // build a project in the background when the main thread is free
   function prepareSoon(p) {
     if (!p || cache.has(p.key)) return;
-    idleCb(() => { if (!reducedQ.matches && !cache.has(p.key)) prepare(p).catch(() => {}); }, { timeout: 2000 });
+    idleCb(() => { if (!reducedQ.matches && !paused && !cache.has(p.key)) prepare(p).catch(() => {}); }, { timeout: 2000 });
   }
   function use(c) {
     cur = c; guest = c.actor; guestP = c.p;
@@ -640,7 +642,7 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
     focus(name === 'REST' ? null : projectOf(name));
   }
   function startReel() {
-    if (mode !== 'rest' || reducedQ.matches) return;
+    if (mode !== 'rest' || reducedQ.matches || paused) return;
     const p = upNext();
     if (!p) return;
     const c = cache.get(p.key);
@@ -798,7 +800,7 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
   for (const ev of ['wheel', 'touchstart', 'pointerdown']) addEventListener(ev, interact, { passive: true });
   addEventListener('keydown', e => {
     if (e.key === 'c' && !e.metaKey && !e.ctrlKey && !e.altKey && !/input|textarea|select/i.test(e.target.tagName || '') && !e.target.isContentEditable) {
-      if (mode === 'rest' && visible) { flags.now = true; startReel(); }
+      if (mode === 'rest' && visible && !paused) { flags.now = true; startReel(); }
       return;
     }
     interact();
@@ -826,6 +828,7 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
   if (reducedQ.matches) still(); else kick();
 
   // debug and capture hooks
+  const hitRay = new THREE.Raycaster(), hitNdc = new THREE.Vector2();
   const api = window.__reel = {
     engine, rocket, stats, projects,
     get mode() { return mode; }, get state() { return stateName; }, get T() { return T; },
@@ -837,7 +840,16 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
     prepare: key => prepare(key ? projects[indexOf(key)] : upNext()),
     start() { flags.now = true; startReel(); }, abort: beginAbort,
     pause() { paused = true; if (raf) { cancelAnimationFrame(raf); raf = 0; } },
-    resume() { paused = false; kick(); },
+    resume() { paused = false; idle = 0; kick(); },
+    // is the resting rocket under this viewport point (the explorer opens from a click on it)
+    hitRocket(x, y) {
+      if (mode !== 'rest' || paused || !rocket.group.visible) return false;
+      const b = canvas.getBoundingClientRect();
+      if (x < b.left || x > b.right || y < b.top || y > b.bottom) return false;
+      hitNdc.set((x - b.left) / b.width * 2 - 1, (b.top - y) / b.height * 2 + 1);
+      hitRay.setFromCamera(hitNdc, engine.camera);
+      return hitRay.intersectObject(rocket.group, true).length > 0;
+    },
     // advance the live state machine by dt seconds and draw (capture, tests)
     advance(dt, time = performance.now() - t0) { tick(dt, time); render(); return mode + ':' + stateName; },
     get outgoing() { return out ? out.c.p.key : null; }, get holding() { return holding; },
@@ -855,6 +867,7 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
       return stateName;
     },
   };
+  dispatchEvent(new CustomEvent('reel:ready', { detail: api }));
   return api;
 }
 
