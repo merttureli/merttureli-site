@@ -78,15 +78,18 @@ const TOE = 14 * Math.PI / 180;   // toe brake travel
 // Build order, exploded offsets (model meters) and how far each part's fly-in
 // lags. Walls slide in sideways onto the supports, the sensor lever from behind,
 // the rods drop in behind the walls, the lever arms (with their pedals) last.
+// Two exploded layouts: `up` (levers and rods lifted) and `low` (levers lowered
+// outboard of the walls, rods pulled back); layout() takes whichever opens
+// wider in the free area without touching the word.
 const PARTS = {
-  core:   { explode: [0, -.03, 0], delay: 0 },
-  wallR:  { explode: [0, .005, -.07], delay: .08 },
-  wallL:  { explode: [0, .005, .07], delay: .12 },
-  rocker: { explode: [-.085, -.03, 0], delay: .18 },
-  rodR:   { explode: [-.05, .1, -.035], delay: .24 },
-  rodL:   { explode: [-.05, .1, .035], delay: .27 },
-  leverR: { explode: [.025, .12, -.1], delay: .3 },
-  leverL: { explode: [.025, .12, .1], delay: .34 },
+  core:   { explode: [0, -.03, 0], low: [0, -.04, 0], delay: 0 },
+  wallR:  { explode: [0, .005, -.07], low: [0, 0, -.07], delay: .08 },
+  wallL:  { explode: [0, .005, .07], low: [0, 0, .07], delay: .12 },
+  rocker: { explode: [-.085, -.03, 0], low: [-.08, -.035, 0], delay: .18 },
+  rodR:   { explode: [-.05, .1, -.035], low: [-.075, .01, -.03], delay: .24 },
+  rodL:   { explode: [-.05, .1, .035], low: [-.075, .01, .03], delay: .27 },
+  leverR: { explode: [.025, .12, -.1], low: [.035, -.075, -.085], delay: .3 },
+  leverL: { explode: [.025, .12, .1], low: [.035, -.075, .085], delay: .34 },
 };
 
 // ==================================================================== model
@@ -295,15 +298,26 @@ export async function createActor(ctx) {
   // A screen-space direction -> the same direction in view space.
   const inv = new THREE.Quaternion();
   const toView = (x, y, z) => new THREE.Vector3(x, y, z).normalize().applyQuaternion(inv.copy(view.quaternion).invert());
-  // Each part flies in along its own explode direction as seen on screen.
+  // Each part flies in (and out) along its own explode direction as seen on screen.
+  // `clear(x, y)` (optional) says whether a screen direction keeps the part off the word.
+  function flyDir(name, explode, clear) {
+    const e = explode.clone().applyQuaternion(view.quaternion);
+    if (e.lengthSq() < 1e-6 || name === 'core') e.set(-1, -.08, 0);  // the supports come in from the left
+    let a0 = Math.atan2(e.y, e.x), best = null;
+    for (const da of [0, .25, -.25, .5, -.5, .8, -.8, 1.1, -1.1, 1.5, -1.5]) {
+      const a = a0 + da, x = Math.cos(a), y = Math.sin(a);
+      if (y < -.36) continue;                                          // never up through (or down into) the marquee
+      if (!clear || clear(x, y)) { best = [x, y]; break; }
+    }
+    if (!best) { const y = Math.max(-.35, Math.sin(a0)); best = [(Math.cos(a0) < 0 ? -1 : 1) * Math.sqrt(1 - y * y), y]; }
+    return toView(best[0], best[1], .2);
+  }
   const parts = model.getParts().map((p, i) => {
     const mesh = p.mesh, wrap = new THREE.Group();
     mesh.parent.add(wrap); wrap.add(mesh);
-    const e = p.explode.clone().applyQuaternion(view.quaternion);
-    if (e.lengthSq() < 1e-6 || p.name === 'core') e.set(-1, -.3, 0);   // the supports come in from the left, never up through the marquee
-    const d = toView(e.x, e.y, .2 * Math.max(e.length(), .02));
+    const d = flyDir(p.name, p.explode);
     const axis = new THREE.Vector3(Math.sin(i * 2.1 + 1), Math.cos(i * 1.7), Math.sin(i * 3.3 + 2)).normalize();
-    return { name: p.name, mesh, wrap, axis, dir: d, explode: p.explode, ex0: p.explode.clone(), spin: (i % 2 ? -1 : 1) * (.5 + (i * .37) % .4), delay: p.delay, f: 1, f0: 1 };
+    return { name: p.name, mesh, wrap, axis, dir: d, explode: p.explode, ex0: p.explode.clone(), exLow: new THREE.Vector3(...PARTS[p.name].low), spin: (i % 2 ? -1 : 1) * (.5 + (i * .37) % .4), delay: p.delay, f: 1, f0: 1 };
   });
   const N = parts.length;
 
@@ -487,13 +501,55 @@ export async function createActor(ctx) {
     const ox = spot ? spot.x : w / 2, oy = spot ? spot.y : h / 2;
     stage.position.set((ox / w * 2 - 1) * halfW, (1 - oy / h * 2) * halfH, 0);
     dist = Math.hypot(halfW, halfH) * 1.3 / S;
-    // the exploded view may be wider than the assembly: shrink the offsets until it fits the free area
+    // the exploded view: shrink the offsets until every part stays inside the
+    // free area and clear of the focused word
     {
-      const ea = measure(1), e0 = measure(0), room = { l: ox - free.l, r: free.r - ox, u: oy - free.t, d: free.b - oy };
-      let c = 1;
-      for (const k of ['l', 'r', 'u', 'd']) if (e0[k] > room[k] && e0[k] > ea[k] + 1) c = Math.min(c, Math.max(0, room[k] - ea[k]) / (e0[k] - ea[k]));
-      c = Math.max(.2, c);
-      for (const P of parts) P.explode.copy(P.ex0).multiplyScalar(c);
+      // a part that already touches an edge or the word when assembled (placement
+      // rounding) is judged against where it sits assembled
+      const base = new Map();
+      const rectOf = P => { const e = screenExtents([P.mesh], stage, camera, w, h); return { l: ox - e.l, r: ox + e.r, t: oy - e.u, b: oy + e.d }; };
+      const over = (r, P) => {
+        const b = base.get(P) || 0;
+        let o = Math.max(0, free.l - r.l, r.r - free.r, free.t - r.t, r.b - free.b);
+        for (const a of avoid) o = Math.max(o, Math.min(a.r - r.l, r.r - a.l, a.b - r.t, r.b - a.t));
+        return o - b;
+      };
+      for (const P of parts) P.explode.set(0, 0, 0);
+      for (const y of [VIEW.drift, -VIEW.drift]) { v.p = 0; v.yaw = y; apply(); for (const P of parts) base.set(P, Math.max(base.get(P) || 0, over(rectOf(P), P))); }
+      // each part opens as far as it can on its own (its own scale), in both layouts
+      const partHits = P => {
+        for (const y of [VIEW.drift, -VIEW.drift]) { v.p = 0; v.yaw = y; apply(); if (over(rectOf(P), P) > 2) return true; }
+        return false;
+      };
+      const fit = key => {
+        const sc = new Map();
+        for (const P of parts) {
+          let c = 1;
+          for (; c > .25; c *= .88) { P.explode.copy(P[key]).multiplyScalar(c); if (!partHits(P)) break; }
+          c = Math.max(c, .25); sc.set(P, c); P.explode.set(0, 0, 0);
+        }
+        return sc;
+      };
+      const mean = m => [...m.values()].reduce((a, b) => a + b, 0) / m.size;
+      const up = fit('ex0'), low = mean(up) > .99 ? null : fit('exLow');
+      const pick = low && mean(low) > mean(up) + .05 ? low : up;
+      explodeKey = pick === up ? 'ex0' : 'exLow';
+      explodeScale = mean(pick);
+      for (const P of parts) P.explode.copy(P[explodeKey]).multiplyScalar(pick.get(P));
+      // flight paths (in and out) that do not sweep across the word: from the exploded spot to off screen
+      v.p = 0; v.yaw = 0; apply();
+      for (const P of parts) {
+        const r = rectOf(P), cx = (r.l + r.r) / 2, cy = (r.t + r.b) / 2, hw = (r.r - r.l) / 2, hh = (r.b - r.t) / 2;
+        const clear = (x, y) => {
+          for (let t = 0; t < 2 * Math.hypot(w, h); t += 12) {
+            const px = cx + x * t, py = cy - y * t;
+            if (px < -hw || px > w + hw || py < -hh || py > h + hh) return true;
+            for (const a of avoid) if (px - hw < a.r && px + hw > a.l && py - hh < a.b && py + hh > a.t) return false;
+          }
+          return true;
+        };
+        P.dir.copy(flyDir(P.name, P[explodeKey], clear));
+      }
     }
     // the assembled pedals' screen box (the aircraft passes clear of it)
     v.p = 1; v.yaw = 0; apply();
@@ -505,7 +561,7 @@ export async function createActor(ctx) {
     Object.assign(v, kv);
     apply();
   }
-  let lastLayout = null;
+  let lastLayout = null, explodeScale = 1, explodeKey = 'ex0';
 
   // ============================================================ the motion
   function sample(T, S) {
@@ -579,7 +635,7 @@ export async function createActor(ctx) {
   return {
     group: root, sequence: SEQUENCE, layout, sample, beginAbort, sampleAbort, abortSeconds: ABORT_S, reset, update, prewarm,
     get visible() { return stage.visible || flight.visible; },
-    model, accent: plane, parts, values: v, path, get frame() { return lastLayout; },
+    model, accent: plane, parts, values: v, path, get frame() { return lastLayout; }, get explodeScale() { return explodeScale; }, get explodeKey() { return explodeKey; },
     dispose() { model.dispose(); plane.dispose(); shadow.geometry.dispose(); shadow.material.map.dispose(); shadow.material.dispose(); root.removeFromParent(); },
   };
 }
