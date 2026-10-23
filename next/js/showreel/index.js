@@ -856,7 +856,7 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
     resume() { paused = false; idle = 0; kick(); },
     // is the resting rocket under this viewport point (the explorer opens from a click on it)
     hitRocket(x, y) {
-      if (mode !== 'rest' || paused || !rocket.group.visible) return false;
+      if (mode !== 'rest' || paused || intro || !rocket.group.visible) return false;
       const b = canvas.getBoundingClientRect();
       if (x < b.left || x > b.right || y < b.top || y > b.bottom) return false;
       hitNdc.set((x - b.left) / b.width * 2 - 1, (b.top - y) / b.height * 2 + 1);
