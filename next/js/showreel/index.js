@@ -15,28 +15,36 @@
 // The actor the factory resolves to:
 //   group                 added to the shared scene (engine.adopt() gives its
 //                         materials the studio environment)
-//   sequence              [[STATE, seconds], ...] played between ROCKET_EXIT
-//                         and ROCKET_RETURN; state windows reach sample() as
-//                         states[STATE] = { t0, t1 } in reel seconds
+//   sequence              [[STATE, seconds], ...] its part of the reel, after
+//                         ROCKET_EXIT (first guest of a session) or a short
+//                         HANDOVER lead-in (every later guest); state windows
+//                         reach sample() as states[STATE] = { t0, t1 }
 //   layout(frame)         size/place itself: { halfW, halfH, camera, w, h,
 //                         free: {l,t,r,b}, avoid: [rects] } (canvas px)
 //   sample(T, states)     pose everything as a pure function of reel time
 //   beginAbort()/sampleAbort(u)  leave gracefully from wherever it is, u 0..1
 //   reset(), update(dt, time), prewarm(renderer, camera, scene), visible
 //   dispose()             optional; called when a project is unloaded
-// Projects take turns, one per reel, in registration order. Only the project
-// that plays next is built: lazily, on idle, while the hero is at REST (never
-// mid-reel), so its shaders and textures are ready before it is due. With
-// more than two projects, the one that just played is disposed again. To add
+// The cycle: REST shows the rocket. After the idle delay the rocket exits once
+// and the guests then play back to back in registration order, round and
+// round: each guest's exit flows into the next guest's entry (a short overlap,
+// the next guest's HANDOVER lead-in), with no rocket in between. Any scroll or
+// input: the guest on stage leaves gracefully and the rocket returns to REST;
+// the next session resumes with the following guest. Each guest is built and
+// prewarmed the first time it is due, during the previous guest's calm middle
+// (never during a handover), and then kept for reuse (up to three guests;
+// beyond that, the one that just played is disposed), so a long idle session
+// stays flat and, after the first round, builds and compiles nothing. To add
 // one: write its actor, then registerProject() here before mountShowreel runs
 // (its word must exist in the .drift markup); `python3 tools/new.py actor
 // <key> --register` does both. HOTBOX and the bend fixture are never animated.
 //
-// Debug: #reel-<key> (or ?reel=<key>) plays that project now, e.g.
-// #reel-therma-shift, alias #reel-coaster; the `c` key plays the next one in
-// the rotation; #reel-fast plays the next one now at 3x (#reel-<key>-fast
-// both). window.__reel: project (playing), next, use(key), seek(t, key),
-// pause/resume/advance for capture.
+// Debug: #reel-<key> (or ?reel=<key>) starts a session now with that project
+// (the rotation continues after it), e.g. #reel-therma-shift, alias
+// #reel-coaster; the `c` key starts a session; #reel-fast at 3x
+// (#reel-<key>-fast both). window.__reel: project (playing), next, use(key),
+// seek(t, key) (that guest's first-of-session timeline), advance(dt) (the live
+// machine, handovers included), pause/resume.
 import { THREE, createEngine, createTimeline, ease, win, clamp01, lerp, placeInFrame, screenExtents } from './engine.js';
 import { createRocket, applyCamera } from '../hero3d.js';
 
@@ -45,7 +53,9 @@ const projects = [];
 export function registerProject(p) { projects.push(p); return p; }
 
 const HOME = { key: 'charger', word: 'CHARGER' };
-const EXIT = 'ROCKET_EXIT', RETURN = 'ROCKET_RETURN';
+const EXIT = 'ROCKET_EXIT', HANDOVER = 'HANDOVER';
+const LEAD = .7, OVERLAP = .55, HAND_AT = .5;   // next guest's lead-in; it starts at the latest OVERLAP s before the
+// end of the last guest's exit, or HAND_AT of the way into that exit, whichever is sooner
 const SPIN = 1.7; // extra roll (rad) the rocket picks up as it accelerates away
 
 // ======================================================= Therma-Shift actor
@@ -473,7 +483,9 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
   // Guests: key -> { p, actor, timeline, promise, failed, laidOut }. `turn` is
   // the index (in `projects`) of the project that plays next.
   const cache = new Map();
-  let turn = 0, pending = 0, warming = 0, layoutVersion = 0, abortT = 0;
+  let turn = 0, pending = 0, layoutVersion = 0;
+  let cur = null, out = null, holding = false;   // cache entry on stage; the outgoing one during a handover
+  const warmingGroups = new Set();
   let exitDist = 3, abortFrom = { fly: 0, spin: 0, wrap: false, delay: 0, guestS: 1.5 }, scrollP = 0, scrollSeen = false, ABORT = 2.2;
   let visible = true, raf = 0, slow = false, nSamples = 0, last = 0, paused = false;
   const samples = new Float32Array(60);
@@ -488,7 +500,8 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
     const ax = Math.abs(rocket.axis.x) || 1e-3, ay = Math.abs(rocket.axis.y) || 1e-3;
     exitDist = .75 + Math.min((vw.halfW + .2) / ax, (vw.halfH + .2) / ay);
     layoutVersion++;
-    if (guest) layoutActor(cache.get(guestP.key));
+    if (cur) layoutActor(cur);
+    if (out) layoutActor(out.c);
   }
   // The hero's free area (between the top bar and the marquee, inside the
   // viewport) and the focused word, in canvas-box pixels.
@@ -531,7 +544,7 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
     focused = w;
     if (words) { if (w) { words.hold(w.slot, w.set); words.focus(w.slot); } else { words.release(); words.focus(null); } }
   }
-  const projectOf = name => (name === EXIT || name === RETURN ? HOME.key : guestP ? guestP.key : null);
+  const projectOf = name => (name === EXIT ? HOME.key : guestP ? guestP.key : null);
 
   // ---- guests: the next project is built on idle so its reel starts without a hitch
   const indexOf = key => projects.findIndex(p => p.key === key);
@@ -558,11 +571,12 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
     c.promise = Promise.resolve().then(() => p.actor({ engine, quality })).then(async actor => {
       engine.scene.add(actor.group);
       c.actor = actor;
-      c.timeline = createTimeline([[EXIT, 2.1], ...actor.sequence, [RETURN, 2.6]]);
+      c.tFirst = createTimeline([[EXIT, 2.1], ...actor.sequence]);   // first guest of a session
+      c.tNext = createTimeline([[HANDOVER, LEAD], ...actor.sequence]);  // every later guest
       layoutActor(c);
-      // no frame is drawn while the actor poses for the shader compiler
-      warming++;
-      try { await actor.prewarm(engine.renderer, engine.camera, engine.scene); warmDraw(actor); } finally { warming--; }
+      // the actor poses for the shader compiler; it is hidden from the frames drawn meanwhile
+      warmingGroups.add(actor.group);
+      try { await actor.prewarm(engine.renderer, engine.camera, engine.scene); warmDraw(actor); } finally { warmingGroups.delete(actor.group); }
       actor.reset();
       pending--; nSamples = 0;
       return c;
@@ -589,28 +603,33 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
     r.setScissor(scissor); r.setScissorTest(had);
     for (let i = 0; i < changed.length; i += 3) { changed[i].visible = changed[i + 1]; changed[i].frustumCulled = changed[i + 2]; }
   }
-  // build the next project in the background, at REST only
-  function prepareNextOnIdle() {
-    idleCb(() => { if (mode === 'rest' && !reducedQ.matches) { const p = upNext(); if (p) prepare(p).catch(() => {}); } }, { timeout: 4000 });
+  const upAfter = c => projectAt(indexOf(c.p.key) + 1);
+  // build a project in the background when the main thread is free
+  function prepareSoon(p) {
+    if (!p || cache.has(p.key)) return;
+    idleCb(() => { if (!reducedQ.matches && !cache.has(p.key)) prepare(p).catch(() => {}); }, { timeout: 2000 });
   }
   function use(c) {
-    if (guest && guest !== c.actor) guest.reset();
-    guest = c.actor; guestP = c.p; timeline = c.timeline;
+    cur = c; guest = c.actor; guestP = c.p;
     layoutActor(c);
   }
-  // after a reel: the next project's turn; with more than two projects the
-  // one that just played is unloaded again (it is rebuilt when it comes round)
-  function nextTurn() {
-    if (!guestP) return;
-    turn = (indexOf(guestP.key) + 1) % projects.length;
-    const nxt = upNext();
-    if (projects.length > 2 && nxt && nxt.key !== guestP.key) {
-      const c = cache.get(guestP.key);
-      if (c && c.actor) { engine.scene.remove(c.actor.group); if (c.actor.dispose) c.actor.dispose(); }
-      cache.delete(guestP.key);
-      guest = null; guestP = null; timeline = null;
-    }
-    prepareNextOnIdle();
+  function unload(c) {
+    if (!c || !c.actor) return;
+    engine.scene.remove(c.actor.group);
+    if (c.actor.dispose) c.actor.dispose();
+    cache.delete(c.p.key);
+  }
+  // Keep built guests for reuse (no rebuild, no shader work once the rotation has been round once) up to
+  // MAX_BUILT; beyond that, keep only what is on stage and what plays next. Either way memory is bounded.
+  const MAX_BUILT = 3;
+  function trim() {
+    if ([...cache.values()].filter(c => c.actor).length <= MAX_BUILT) return;
+    const keep = new Set();
+    if (cur) keep.add(cur.p.key);
+    if (out) keep.add(out.c.p.key);
+    const nx = mode === 'rest' ? upNext() : cur && upAfter(cur);
+    if (nx) keep.add(nx.key);
+    for (const [k, c] of cache) if (!keep.has(k) && c.actor) unload(c);
   }
 
   // ---- states
@@ -626,32 +645,46 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
     if (!p) return;
     const c = cache.get(p.key);
     if (!c || !c.actor) { prepare(p).then(() => { if (mode === 'rest') startReel(); }).catch(() => { if (upNext()) startReel(); }); return; }
-    use(c);
+    use(c); timeline = c.tFirst; out = null; holding = false;
     mode = 'reel'; T = 0; idle = 0;
     kick();
   }
+  // the current guest is finishing: hand over to the next one (it is prewarmed by now; if it is not, the stage
+  // holds empty until it is, rather than compiling mid-transition)
+  function handover() {
+    const p = upAfter(cur), c = p && cache.get(p.key);
+    if (!c || !c.actor) {
+      if (p && !cache.has(p.key)) prepare(p).catch(() => {});
+      holding = true; return;
+    }
+    holding = false; loops++;
+    if (c === cur) { cur.actor.reset(); T = 0; timeline = c.tNext; return; }   // a single project: replay it
+    out = { c: cur, tl: timeline, T };
+    use(c); timeline = c.tNext; T = 0;
+  }
   function rocketAt(T) {
-    const S = timeline.states, e = S[EXIT], r = S[RETURN];
-    if (T < r.t0) {
+    const e = timeline.states[EXIT];
+    if (e) {
       const u = win(T, e.t0, e.t1);
       rocket.state.fly = exitDist * u * u * (1.6 * u - .6); // a breath back, then away nose first
       rocket.state.spin = SPIN * u * u;
-    } else {
-      const k = ease.outQuint(win(T, r.t0, r.t1));
-      rocket.state.fly = -exitDist * (1 - k);                // glides back in from behind
-      rocket.state.spin = -SPIN * (1 - k);
-    }
+    } else { rocket.state.fly = exitDist; rocket.state.spin = SPIN; }
+  }
+  function onStage() {                                       // has the current guest come on stage?
+    const lead = timeline.list[0];
+    return T > lead.t1 - (lead.name === HANDOVER ? .2 : 0);
   }
   function beginAbort() {
     if (mode !== 'reel') return;
-    mode = 'abort'; A = 0; abortT = T;
+    mode = 'abort'; A = 0;
+    cur.wasOnStage = onStage();
     const f = rocket.state.fly;
     abortFrom.wrap = f > exitDist * .55;                    // gone far enough: come back from behind
     abortFrom.fly = abortFrom.wrap ? -exitDist : f;
     abortFrom.spin = abortFrom.wrap ? -SPIN : rocket.state.spin;
     // the rocket comes back only once the guest's parts have cleared the frame
     abortFrom.guestS = guest.abortSeconds || 1.5;
-    abortFrom.delay = abortFrom.wrap ? (guest.visible ? abortFrom.guestS * .8 : .3) : 0;
+    abortFrom.delay = abortFrom.wrap ? (guest.visible || out ? abortFrom.guestS * .8 : .3) : 0;
     ABORT = Math.max(abortFrom.guestS, abortFrom.delay + 1.7, abortFrom.wrap ? 0 : 1.3);
     guest.beginAbort();
     focus(null);
@@ -663,14 +696,20 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
     rocket.state.fly = abortFrom.fly * (1 - k);
     rocket.state.spin = abortFrom.spin * (1 - k);
   }
+  function finishOut() { if (out) { out.c.actor.reset(); out = null; trim(); } }
   function toRest() {
     const was = mode;
-    mode = 'rest'; T = 0; A = 0; idle = 0;
+    finishOut();
+    mode = 'rest'; T = 0; A = 0; idle = 0; holding = false;
     rocket.state.fly = 0; rocket.state.spin = 0;
     if (guest) guest.reset();
     setState('REST');
-    // a reel that ran (or was cut short once the guest was on stage) hands over to the next project
-    if (timeline && (was === 'reel' || (was === 'abort' && abortT > timeline.states[EXIT].t1))) nextTurn();
+    // resume with the guest after the one that was on stage (or the same one, if it had not come on yet)
+    if (cur) {
+      turn = cur.wasOnStage === false ? indexOf(cur.p.key) : (indexOf(cur.p.key) + 1) % projects.length;
+      cur.wasOnStage = undefined;
+    }
+    if (was !== 'rest') { cur = null; guest = null; guestP = null; timeline = null; trim(); prepareSoon(upNext()); }
   }
   let shadowO = 1;
   function syncDom() {
@@ -691,10 +730,23 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
         if (idle > wait && c && c.actor) startReel();
       }
     }
+    if (mode !== 'rest' && out) {                            // the last guest's exit plays out under the handover
+      out.T += dt * speed;
+      if (out.T >= out.tl.total) finishOut(); else out.c.actor.sample(out.T, out.tl.states);
+    }
     if (mode === 'reel') {
-      T += dt * speed;
-      if (T >= timeline.total) { loops++; toRest(); }
-      else { setState(timeline.at(T).name); rocketAt(T); guest.sample(T, timeline.states); }
+      if (!holding) T += dt * speed;
+      // hand over part-way into the guest's exit: the next guest's parts fly in from off screen while the last
+      // guest's leave, so the stage is never empty (or as soon as the stage has cleared, if that comes first)
+      const lastSt = timeline.list[timeline.list.length - 1];
+      if (!holding && (T >= Math.min(timeline.total - OVERLAP, lastSt.t0 + lastSt.dur * HAND_AT) || (T > lastSt.t0 + .2 && !guest.visible))) handover();
+      else if (holding) handover();
+      if (!holding || T < timeline.total) {
+        const tt = Math.min(T, timeline.total - 1e-4);
+        setState(timeline.at(tt).name); rocketAt(tt); guest.sample(tt, timeline.states);
+      }
+      // build the guest after this one during this one's calm middle
+      if (!out && T > timeline.total * .3) { const nx = upAfter(cur); if (nx && !cache.has(nx.key) && !pending) prepare(nx).catch(() => {}); }
     } else if (mode === 'abort') {
       A += dt * Math.max(1, speed * .75);
       if (A >= ABORT) toRest(); else sampleAbort(A);
@@ -702,6 +754,7 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
     if (mode !== 'rest' || rocket.state.fly) syncDom();
     rocket.pose(time);
     if (guest && guest.visible) guest.update(dt, time);
+    if (out && out.c.actor.visible) out.c.actor.update(dt, time);
   }
   function frame(now) {
     raf = 0;
@@ -717,10 +770,19 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
     const a = performance.now();
     tick(dt, now - t0);
     const b = performance.now();
-    if (!warming) engine.render();
+    render();
     const c = performance.now();
     if (mode !== 'rest') { stats.frames++; stats.tick += b - a; stats.render += c - b; if (c - a > stats.max) { stats.max = c - a; stats.maxAt = stateName + '@' + T.toFixed(2); } }
     if (!slow || mode !== 'rest') raf = requestAnimationFrame(frame);
+  }
+  // draw, keeping any actor that is posing for the shader compiler out of the frame
+  function render() {
+    if (warmingGroups.size) {
+      const vis = [];
+      for (const g of warmingGroups) { vis.push(g.visible); g.visible = false; }
+      engine.render();
+      let i = 0; for (const g of warmingGroups) g.visible = vis[i++];
+    } else engine.render();
   }
   function kick() { if (!raf && !paused && !reducedQ.matches) { last = 0; raf = requestAnimationFrame(frame); } }
   function still() { rocket.settle(performance.now() - t0); engine.render(); }
@@ -760,7 +822,7 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
   }).observe(box);
 
   // warm the guest up once the page has settled, so the first reel is smooth
-  if (!reducedQ.matches) prepareNextOnIdle();
+  if (!reducedQ.matches) prepareSoon(upNext());
   if (reducedQ.matches) still(); else kick();
 
   // debug and capture hooks
@@ -777,13 +839,16 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
     pause() { paused = true; if (raf) { cancelAnimationFrame(raf); raf = 0; } },
     resume() { paused = false; kick(); },
     // advance the live state machine by dt seconds and draw (capture, tests)
-    advance(dt, time = performance.now() - t0) { tick(dt, time); engine.render(); return mode + ':' + stateName; },
+    advance(dt, time = performance.now() - t0) { tick(dt, time); render(); return mode + ':' + stateName; },
+    get outgoing() { return out ? out.c.p.key : null; }, get holding() { return holding; },
     // jump to reel time t (seconds) and draw one frame synchronously
     // (key: play that project's reel; default: the one playing, else the next)
     async seek(t, key, time = performance.now() - t0) {
       const p = key ? projects[indexOf(key)] : (guestP && mode !== 'rest' ? guestP : upNext());
       const c = await prepare(p);
-      if (guest !== c.actor) use(c);
+      if (out) finishOut();
+      if (guest && guest !== c.actor) guest.reset();
+      use(c); timeline = c.tFirst; holding = false;
       mode = 'reel'; T = Math.min(t, timeline.total - 1e-3);
       setState(timeline.at(T).name); rocketAt(T); guest.sample(T, timeline.states); syncDom();
       rocket.pose(time); guest.update(1 / 60, time); engine.render();
