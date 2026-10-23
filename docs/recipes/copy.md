@@ -41,7 +41,7 @@ python3 tools/check.py              # one command that proves nothing broke
 
 `check-writing.py` must print no hits for the page you touched. `tools/check.py` must show no FAIL (WARN for open flags is fine).
 
-Never run `python3 tools/build.py --help`: build.py has no help flag, so it runs a full build.
+`python3 tools/build.py --help` prints the usage without building.
 
 ## 4. Commit
 

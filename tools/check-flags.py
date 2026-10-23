@@ -47,6 +47,9 @@ def text(fragment):
 
 
 def main():
+    if sys.argv[1:2] in (["-h"], ["--help"]):
+        print(__doc__.strip())
+        return 0
     total = 0
     for page in pages():
         path = os.path.join(ROOT, page)

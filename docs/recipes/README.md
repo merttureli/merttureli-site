@@ -40,6 +40,6 @@ From the repo history (136 commits to Oct 2026, by subject): handoff and merge c
 | `python3 tools/new.py <kind> <name>` | scaffolds: project, actor, page, section |
 | `python3 tools/cad.py ...` | STEP to the site's 3D formats |
 
-Never hand edit `index.html`, `projects/*.html` or `src/projects/*.html`. Never run `python3 tools/build.py --help`: it has no help flag and runs a full build.
+Never hand edit `index.html`, `projects/*.html` or `src/projects/*.html`.
 
-Design systems behind the pages: [../design/](../design/).
+Design systems behind the pages: [../design/](../design/). All docs and tools: [../README.md](../README.md).
