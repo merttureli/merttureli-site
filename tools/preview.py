@@ -74,6 +74,7 @@ MODES = {
     "site": {
         "roots": [("", "")],
         "pull": [],
+        "exclude_ext": {".step"},   # the artifact host refuses STEP files
         "entry": "index.html",
         "doc_dir": "",
         "smoke": ["index.html", "index.html#reel-coaster", "websites.html", "projects/charger.html",
