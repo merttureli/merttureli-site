@@ -1,0 +1,51 @@
+/* PAGE NAVIGATION: the move from one page to the next (every Studio page, the case pages and the
+   plain pages 404, privacy and hi). Pairs with next/js/nav.js, which is loaded in the <head>.
+   Each page's <head> starts with <style>@view-transition{navigation:auto}html{background:#e7e8ea}</style>:
+   the opt-in is inline because Chrome decides at the new page's first rendering opportunity, which
+   can come before a linked stylesheet is parsed (the transition was skipped about half the time),
+   and the background matches the first screen so nothing flashes white before the CSS arrives.
+   Docs: docs/design/motion.md (Page transitions).
+
+   1. Cross-document view transition: the old page crossfades into the new one. The snapshots
+      blend, so a dark or white screen eases into the grey paper instead of snapping.
+   2. Shared media: nav.js names the clicked album photo or work tile media on the old page and
+      the hero photo or stage media on the new one, so the picture grows into its place.
+   3. Entrance: the new page's first block rises a little (fresh navigations only; also the whole
+      effect in browsers without view transitions).
+   Reduced motion: a short crossfade, no growing, no rise. */
+
+@view-transition { navigation: auto; }   /* also inline in each <head>, see above */
+
+/* 1. the page crossfade */
+::view-transition-old(root),
+::view-transition-new(root) { animation-duration: var(--dur-400); animation-timing-function: linear; }
+
+/* 2. shared media: nav-photo (album photo to the Beyond hero) with nav-cap (its caption pill),
+      nav-media (work tile to the case stage) */
+::view-transition-group(nav-photo),
+::view-transition-group(nav-cap),
+::view-transition-group(nav-media) { animation-duration: var(--dur-700); animation-timing-function: var(--ease); }
+::view-transition-old(nav-photo),
+::view-transition-new(nav-photo),
+::view-transition-old(nav-media),
+::view-transition-new(nav-media) { height: 100%; animation-duration: var(--dur-400); animation-timing-function: linear; }
+/* the album crop and the hero crop of the same photo do not line up, so their blend is kept short */
+::view-transition-old(nav-photo),
+::view-transition-new(nav-photo) { animation-duration: var(--dur-300); }
+::view-transition-group(nav-photo) { border-radius: var(--radius-tile); overflow: clip; }
+::view-transition-old(nav-photo),
+::view-transition-new(nav-photo) { object-fit: cover; }
+::view-transition-old(nav-media),
+::view-transition-new(nav-media) { object-fit: contain; }
+
+/* 3. entrance: nav.js sets html.nav-enter on a fresh navigation and drops it when media is shared.
+   Same rise as .rise in pages.css; the plain pages already rise with it, so they are left out. */
+@keyframes nav-rise { from { opacity: .35; translate: 0 14px; } }
+html.nav-enter main:not(.rise) > :first-child:not(.rise, :has(.rise)) { animation: nav-rise var(--dur-1100) var(--ease) backwards; }
+
+@media (prefers-reduced-motion: reduce) {
+  html.nav-enter main:not(.rise) > :first-child:not(.rise, :has(.rise)) { animation: none; }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation-duration: var(--dur-250) !important; }
+}

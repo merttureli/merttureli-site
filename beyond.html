@@ -4,6 +4,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>@view-transition{navigation:auto}html{background:#e7e8ea}</style>
 <link rel="canonical" href="https://merttureli.com/beyond.html">
 <link rel="icon" href="/assets/icons/favicon.ico" sizes="32x32">
 <link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml">
@@ -19,15 +20,18 @@
 <meta property="og:image:alt" content="Mert Tureli, mechanical engineer in Austin, Texas, beside a render of the CHARGER rocket.">
 <meta name="twitter:card" content="summary_large_image">
 <script src="studies/shared/study.js"></script>
+<script src="next/js/nav.js"></script>
 <title>Beyond engineering · Mert Tureli</title>
 <meta name="description" content="I fly ultralights, make short films, shoot photographs and cook the food I grew up with.">
 <meta name="theme-color" content="#e7e8ea">
 <link rel="preload" href="studies/shared/fonts/archivo-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="studies/shared/fonts/martian-mono-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" as="image" imagesrcset="next/assets/img/beyond/balloon-480.webp 480w, next/assets/img/beyond/balloon-960.webp 960w, next/assets/img/beyond/balloon-1280.webp 1280w, next/assets/img/beyond/balloon-1920.webp 1920w" imagesizes="(max-width: 1680px) 94vw, 1584px" fetchpriority="high">
 <link rel="stylesheet" href="next/css/tokens.css">
 <link rel="stylesheet" href="next/css/studio.css">
 <link rel="stylesheet" href="next/css/showcase.css">
 <link rel="stylesheet" href="next/css/beyond.css">
+<link rel="stylesheet" href="next/css/nav.css">
 </head>
 <body class="case beyondpage">
 <a class="skip" href="#main">Skip to content</a>
@@ -74,6 +78,8 @@
 <!-- HERO ----------------------------------------------------------------- -->
 <section class="bhero" id="overview" aria-labelledby="beyond-title">
   <div class="wrap">
+    <!-- The home album's wide photo, opened up: nav.js grows the clicked album photo into this one (nav.css). -->
+    <figure class="bhero__photo"><img src="next/assets/img/beyond/balloon-1280.webp" srcset="next/assets/img/beyond/balloon-480.webp 480w, next/assets/img/beyond/balloon-960.webp 960w, next/assets/img/beyond/balloon-1280.webp 1280w, next/assets/img/beyond/balloon-1920.webp 1920w" sizes="(max-width: 1680px) 94vw, 1584px" alt="Hot air balloon over open country at sunrise" width="1920" height="1080" fetchpriority="high"><figcaption class="label">Segovia / Aerial</figcaption></figure>
     <div class="rule"><span class="label">Beyond engineering</span><span class="label hide-s">Izmir / New York / Austin</span></div>
     <h1 id="beyond-title" class="bhero__title">Beyond engineering</h1>
     <div class="bhero__row">

@@ -116,6 +116,21 @@ a.tile__link:focus-visible .tile__go { transform: rotate(-45deg); background: va
 .album__ph img { width: 100%; height: 100%; object-fit: cover; transition: transform var(--dur-1400) var(--ease); }
 .album__ph figcaption { position: absolute; left: 14px; bottom: 14px; padding: 6px 11px; border-radius: var(--radius-pill); background: var(--glass); color: var(--ink); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 @media (hover: hover) { .album__ph:hover img { transform: scale(1.04); } }
+/* every photo opens the Beyond page; the wide one carries the tag. nav.js grows the clicked photo into
+   the Beyond hero (nav.css). The caption lets clicks through to the link under it. */
+.album__ph { transition: transform var(--dur-700) var(--ease), box-shadow var(--dur-700) var(--ease); }
+.album__go { display: block; width: 100%; height: 100%; }
+.album__ph figcaption { pointer-events: none; }
+.album__tag { position: absolute; right: 14px; bottom: 14px; display: inline-flex; align-items: center; gap: 10px; padding: 6px 12px; border-radius: var(--radius-pill); background: var(--ink); color: var(--paper); transition: background var(--dur-400) var(--ease), color var(--dur-400) var(--ease); }
+.album__tag .arrow { width: 14px; }
+.album__tag .arrow::after { width: 7px; height: 7px; top: -3px; }
+@media (hover: hover) {
+  .album__ph:has(.album__go):hover { transform: translateY(-4px); box-shadow: var(--shadow-tile-hi); }
+  .album__ph:hover .album__tag { background: var(--signal); color: var(--ink); }
+}
+.album__ph:has(.album__go:focus-visible) { transform: translateY(-4px); box-shadow: var(--shadow-tile-hi); outline: 2px solid var(--signal); outline-offset: 4px; }
+.album__go:focus-visible { outline: none; }
+.album__go:focus-visible .album__tag { background: var(--signal); color: var(--ink); }
 .album__ph--wide { grid-column: span 6; }
 .album__notes { grid-column: span 6; grid-row: span 2; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: var(--bento-gap); }
 .note { display: flex; flex-direction: column; justify-content: space-between; gap: 14px; padding: clamp(18px, 1.8vw, 26px); border-radius: var(--radius-tile-s); background: var(--tile); box-shadow: var(--shadow-tile); }
@@ -343,6 +358,8 @@ a.tile__link:focus-visible .tile__go { transform: rotate(-45deg); background: va
   .album { grid-template-columns: 1fr 1fr; grid-auto-rows: auto; gap: 10px; }
   .album__ph { grid-column: span 1; grid-row: auto; aspect-ratio: 4 / 5; }
   .album__ph--wide { grid-column: 1 / -1; aspect-ratio: 16 / 10; }
+  .album__tag { right: 10px; bottom: 10px; padding: 5px 10px; }
+  .album__ph--wide figcaption { left: 10px; bottom: 10px; }
   .album__notes { grid-column: 1 / -1; grid-row: auto; grid-template-columns: 1fr; grid-template-rows: none; gap: 10px; }
 
   .web { margin: 0 8px; border-radius: 24px; }
@@ -415,4 +432,5 @@ a.tile__link:focus-visible .tile__go { transform: rotate(-45deg); background: va
 
 @media (prefers-reduced-motion: reduce) {
   .tile:hover, .nextp__card:hover { transform: none; }
+  .album__ph:hover, .album__ph:has(.album__go:focus-visible) { transform: none; }
 }
