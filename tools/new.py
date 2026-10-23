@@ -6,8 +6,8 @@
 
 Kinds
     actor     showreel project actor: next/js/showreel/<name>.js + next/lab/<name>.html
-    page      plain HTML page: <name>.html in the websites.html or privacy.html layout
-    section   section snippet for next/index.html, websites-style pages or src/index.html
+    page      old-design HTML page (a Studio page: docs/recipes/new-page.md)
+    section   section snippet for next/index.html (studio) or an old-design page (page)
     project   a new project's content (tools/scaffold/project.py, owned by the content system)
 
 Common options (every kind)

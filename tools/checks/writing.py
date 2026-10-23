@@ -10,8 +10,8 @@ MODES = {"fast", "default", "full"}
 
 # Pages whose prose is the site's copy. Always checked: it takes under a second.
 PUBLIC = ("index.html", "websites.html", "privacy.html", "404.html", "hi/index.html",
-          "photography-gallery.html", "photography-lab.html", "next/index.html")
-SKIP_PREFIX = ("tools/", "templates/", "src/", "node_modules/", "_ds/")
+          "photography-gallery.html", "photography-lab.html", "next/index.html", "next/websites.html")
+SKIP_PREFIX = ("tools/", "templates/", "node_modules/", "_ds/")
 
 
 def targets(ctx):

@@ -4,8 +4,10 @@
     python3 tools/preview.py site   [--out DIR] [--serve PORT | --smoke] [--dry-run]
     python3 tools/preview.py studio [--out DIR] [--serve PORT | --smoke] [--dry-run]
 
-site    the whole current site (what GitHub Pages serves), entry index.html.
-studio  next/ as a standalone copy: every file under next/ at the copy root (index.html,
+site    the live site, exactly what GitHub Pages serves (the Studio home, websites and case
+        pages built from next/, plus the old-design pages in docs/transition.md), entry
+        index.html. Run python3 tools/build.py first if next/ changed.
+studio  next/ as a standalone copy (the Studio sources, noindex, before build.py publishes them): every file under next/ at the copy root (index.html,
         websites.html, projects/*.html, css/, js/, assets/ ...), shared/ (studies/shared),
         and, pulled in by reference (whole folder when the target is an .html page):
         site/ (root assets/), site/js/ (root js/), studies/ (the four design studies).
@@ -74,9 +76,9 @@ MODES = {
         "pull": [],
         "entry": "index.html",
         "doc_dir": "",
-        "smoke": ["index.html", "websites.html", "projects/charger.html", "privacy.html",
-                  "hi/index.html", "studies/studio/index.html", "assets/charger-explorer/index.html",
-                  "next/index.html#reel-coaster"],
+        "smoke": ["index.html", "index.html#reel-coaster", "websites.html", "projects/charger.html",
+                  "projects/therma-shift.html", "privacy.html", "hi/index.html",
+                  "assets/charger-explorer/index.html"],
     },
     "studio": {
         # every page under next/ (index.html, websites.html, projects/*.html, lab/...) at the copy root

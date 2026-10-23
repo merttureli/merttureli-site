@@ -54,6 +54,9 @@ function livery() {
   return tex;
 }
 
+// Resolved from this module, not the page, so the live root pages (which load next/js/) find the model too.
+const MODEL_BASE = new URL('../assets/3d/', import.meta.url).href;
+
 async function loadModel(base) {
   const [meta, buf] = await Promise.all([
     fetch(base + 'charger-hero.json').then(r => r.json()),
@@ -86,7 +89,7 @@ async function loadModel(base) {
 // The rocket actor: framing, sway, pointer parallax and the scroll roll/lift,
 // plus `fly` (offset along the airframe axis, + is nose first) and `spin`
 // (extra roll) for the showreel to fly it out and back.
-export async function createRocket({ layout = 'land', base = 'assets/3d/' } = {}) {
+export async function createRocket({ layout = 'land', base = MODEL_BASE } = {}) {
   await document.fonts.load('800 40px Archivo').catch(() => {});
   const L = { ...LAYOUTS[layout] };
   const outer = new THREE.Group(), tilt = new THREE.Group(), roll = new THREE.Group();
@@ -114,7 +117,7 @@ export async function createRocket({ layout = 'land', base = 'assets/3d/' } = {}
 export function applyCamera(camera, L) { camera.fov = L.fov; camera.position.set(0, 0, L.dist); camera.updateProjectionMatrix(); }
 
 // Standalone still/loop of the rocket alone (poster renders, other studies).
-export async function createHero({ canvas, layout = 'land', base = 'assets/3d/', preserve = false, pixelRatio }) {
+export async function createHero({ canvas, layout = 'land', base = MODEL_BASE, preserve = false, pixelRatio }) {
   const engine = createEngine({ canvas, preserve, pixelRatio });
   const rocket = await createRocket({ layout, base });
   engine.scene.add(rocket.group);

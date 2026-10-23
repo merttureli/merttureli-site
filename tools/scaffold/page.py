@@ -1,7 +1,10 @@
-"""new.py page <name>: a plain HTML page in the current site's conventions.
+"""new.py page <name>: a plain HTML page in the OLD design (docs/transition.md lists this).
+
+For a Studio page: copy next/websites.html to next/<name>.html, then add one line to PAGES in
+tools/build.py (docs/recipes/new-page.md).
 
 Styles
-  site   (default) the websites.html chrome: header + phone menu, sections, dark footer, analytics
+  site   (default) the old websites page chrome: header + phone menu, sections, dark footer, analytics
   plain  the privacy.html layout: one readable column, no chrome
 Pages start noindex with flagged placeholder copy; --index drops noindex.
 """
@@ -11,7 +14,7 @@ import os
 
 from common import REPO, ScaffoldError, check_key, render, resolve_root, write_files, title_from_key
 
-DESCRIPTION = 'plain HTML page: <name>.html in the websites.html (site) or privacy.html (plain) layout'
+DESCRIPTION = 'old-design HTML page: <name>.html in the old websites (site) or privacy.html (plain) layout'
 
 
 def ds_dir():
@@ -42,7 +45,7 @@ def run(args):
             raise ScaffoldError(f'--dir {sub}: pages there are generated or belong to another system; '
                                 'see docs/recipes/new-page.md')
     rel = f'{sub}/{key}.html' if sub else f'{key}.html'
-    if not sub and key in {'index', '404', 'privacy', 'websites'}:
+    if not sub and key in {'index', '404', 'privacy', 'websites', 'beyond'}:
         raise ScaffoldError(f'{rel} is an existing page')
     title = args.title or title_from_key(key)
     up = '../' * (sub.count('/') + 1) if sub else ''

@@ -322,6 +322,7 @@ def page(case):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
+<link rel="canonical" href="https://merttureli.com/projects/{slug}.html">
 <script src="../../studies/shared/study.js"></script>
 <title>{esc(title)}</title>
 <meta name="description" content="{esc(strip_tags(case["description"]))}">
@@ -352,7 +353,6 @@ def page(case):
       {menu_nav}
     </nav>
     <div class="menu__foot">
-      <a href="../../assets/Mert-Tureli-Resume.pdf">Resume (PDF)</a>
       <a href="https://linkedin.com/in/merttureli" rel="noopener">LinkedIn</a>
       <a href="mailto:merttureli0@gmail.com">merttureli0@gmail.com</a>
     </div>

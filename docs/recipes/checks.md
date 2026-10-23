@@ -37,20 +37,21 @@ there means the pixels were NOT checked: never report such a run as proof.
 
 | Name | Mode | FAILs when | Fix |
 |---|---|---|---|
-| `build` | default | `index.html` or `projects/*.html` differ from `src/` + `build-case.py` | edit the source, run `python3 tools/build.py`, commit both |
+| `build` | default | `index.html`, `websites.html`, `projects/*.html` or `next/projects/*.html` differ from what `tools/build.py` makes of `next/`, `content/` and `tools/build-studio-cases.py` | edit the source, run `python3 tools/build.py`, commit both |
 | `writing` | fast | `check-writing.py` flags a tic on a public page or any changed `.html` | rewrite the sentence; rules are at the top of `check-writing.py` |
 | `flags` | fast | only with `--public`: any `<mark class="flag">` left (else WARN) | [flags.md](flags.md) |
 | `links` | fast | a local `href`, `src`, `srcset`, `poster`, `data-*` path, CSS `url()`, JS `import`, sitemap `<loc>` or `https://merttureli.com/...` URL points at a missing file, escapes the repo, or at a file git ignores | fix the path, or `git add` the file |
 | `js` | fast | `node --check` fails on a `.js` file or an inline `<script>` | the line is in the message |
 | `json` | fast | a `.json` file or inline `ld+json` / `importmap` does not parse | |
-| `robots` | fast | a page under `next/`, `studies/`, `docs/` lacks `<meta name="robots" content="noindex">`; robots.txt does not `Disallow` those folders (or `/.claude/` while `.nojekyll` exists); a sitemap URL is disallowed or noindex | add the meta tag / robots.txt line |
+| `robots` | fast | a page under `next/`, `studies/`, `docs/` lacks `<meta name="robots" content="noindex">` or robots.txt lets crawlers fetch it (or `/.claude/` while `.nojekyll` exists); robots.txt blocks a CSS, JS, font or image a sitemap page loads; a sitemap URL is disallowed or noindex | add the meta tag / robots.txt line |
 | `tokens` | fast | never (WARN only): a stylesheet in `css/` or `next/css/` changed vs `--base` and its values move once every `var(--token)` is expanded, or it newly uses a token that a palette, `@media` or `.on-dark` also sets | expected for a real style change: prove it with `--only visual`; for a token rename, fix the token |
+| `transition` | fast | never (WARN only): lists the open items in `docs/transition.md` and every live page link to an old-design page on it | do the item, then delete its line |
 | `smoke` | default | console error, uncaught error, failed or 4xx local request, or a page that does not load in 30 s, at 390 and 1440; a `next/lab/` page whose `window.labReport.ok` is false (the actor lab's interface checks) | the page, width and URL are in the message |
 | `visual` | full | a screen differs from `--base` (default HEAD) or a gate changes (h1 count, console errors, external hosts) on a page not named in `--expect-change` | the differing screens are listed first with their diff PNG; open them, then fix or rerun with `--expect-change PAGE` |
 
 WARNs: open flags; a CSS diff that is not a pure token rename; a JS string that looks like an asset path but resolves nowhere
 (it may be built at runtime); robots.txt allowing non-page folders (`templates/`,
-`content/`, `cards/`, `src/`, `tools/`); external request failures in the smoke.
+`content/`, `cards/`, `tools/`); external request failures in the smoke; the old-design items in `docs/transition.md`.
 
 ## Common jobs
 

@@ -5,8 +5,8 @@
  * sitting off the right edge of a phone screen with no handler attached to it.
  * This wires it to a full-screen overlay built from the header's own links, so
  * every header link stays reachable on a phone instead of being hidden by
- * css/mobile.css with nowhere else to go. The overlay also offers Email and
- * Resume, which the header does not carry.
+ * css/mobile.css with nowhere else to go. The overlay also offers Email,
+ * which the header does not carry.
  *
  * The overlay is a modal dialog: opening it moves focus inside, Tab is trapped,
  * Escape closes it, the page behind is inert, and focus returns to the trigger
@@ -37,7 +37,6 @@
   }
   var EXTRA_LINKS = [
     { href: "mailto:merttureli0@gmail.com", text: "Email" },
-    { href: siteUrl("assets/Mert-Tureli-Resume.pdf"), text: "Resume (PDF)" },
   ];
 
   var menu = null;
