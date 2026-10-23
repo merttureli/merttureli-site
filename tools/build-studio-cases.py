@@ -474,6 +474,32 @@ def preview(pub):
         os.makedirs(os.path.dirname(d), exist_ok=True)
         if not os.path.isfile(d):
             shutil.copy2(s, d)
+    # add the pages and pulled files to preview.py's publish plan, so the publish carries them
+    plan_path = os.path.join(pub, ".preview-plan.json")
+    if os.path.isfile(plan_path):
+        with open(plan_path, encoding="utf-8") as f:
+            plan = json.load(f)
+        known = set()
+        for call in plan.get("publish", []):
+            known.update(call.get("files", {}))
+        extra = ["projects/%s.html" % s for s in ORDER]
+        extra += ["site/" + r for r in sorted(pulled) if not r.endswith((".html", "/"))]
+        extra = [e for e in extra if e not in known]
+        if extra and plan.get("publish"):
+            call = plan["publish"][-1]
+            for e in extra:
+                call["files"][e] = e
+            added = sum(os.path.getsize(os.path.join(pub, e)) for e in extra)
+            plan["files"] = plan.get("files", 0) + len(extra)
+            plan["bytes"] = plan.get("bytes", 0) + added
+            if plan.get("batches"):
+                plan["batches"][-1]["files"] += len(extra)
+                plan["batches"][-1]["bytes"] += added
+            if plan["batches"][-1]["files"] > 250 or plan["batches"][-1]["bytes"] > 60_000_000:
+                print("build-studio-cases: warning: the last publish batch is now over the per-call limit")
+            with open(plan_path, "w", encoding="utf-8") as f:
+                json.dump(plan, f, indent=2)
+        print("build-studio-cases: added %d files to %s" % (len(extra), plan_path))
     print("build-studio-cases: %d case pages and %d assets into %s" % (len(ORDER), len(pulled), pub))
 
 

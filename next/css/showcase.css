@@ -5,6 +5,9 @@
    Values come from tokens.css ("showcase" group). */
 
 /* ----------------------------------------------------------- shared bits */
+/* the round button lives in .top (its own stacking context): lift .top over the open menu so the close button stays on top */
+body:has(.menu:not([hidden])) .top { z-index: calc(var(--z-menu) + 1); }
+body:has(.menu:not([hidden])) .top__nav { visibility: hidden; }
 .menu__panel { top: 10px; right: 10px; bottom: 10px; width: min(460px, calc(100% - 20px)); border-radius: var(--radius-tile); }
 .pillbtn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 54px; padding: 0 26px; border-radius: var(--radius-pill); border: 1px solid var(--line); background: var(--tile); color: var(--ink); font-size: var(--text-m); font-weight: 520; letter-spacing: -.005em; white-space: nowrap; transition: background var(--dur-400) var(--ease), color var(--dur-400) var(--ease), border-color var(--dur-400) var(--ease), transform var(--dur-600) var(--ease); }
 .pillbtn--solid { background: var(--ink); border-color: var(--ink); color: var(--paper); }
@@ -120,9 +123,10 @@ a.tile__link:focus-visible .tile__go { transform: rotate(-45deg); background: va
 .close .foot { border-top: 0; }
 
 /* =================================================== CASE (product) PAGES */
-.case .top { position: relative; }
+.case .top { position: relative; z-index: auto; }  /* no stacking context: the fixed menu button sits above the sticky bar and the menu */
 .case .menu-btn { transform: scale(1); }
-@media (min-width: 761px) { .case .menu-btn:not([aria-expanded="true"]) { transform: scale(0); } .case .menu-btn.is-shown { transform: scale(1); } }
+/* desktop: the sticky product bar is the navigation, so the round menu button stays hidden */
+@media (min-width: 761px) { .case .menu-btn { display: none; } }
 
 /* local nav: sticky product bar */
 .lnav { position: sticky; top: 0; z-index: var(--z-top); background: var(--glass); -webkit-backdrop-filter: saturate(1.6) blur(18px); backdrop-filter: saturate(1.6) blur(18px); border-bottom: 1px solid var(--glass-line); }
@@ -340,6 +344,7 @@ a.tile__link:focus-visible .tile__go { transform: rotate(-45deg); background: va
   .stage__card { aspect-ratio: 4 / 4.4; border-radius: 26px; }
   .stage__card--wide { aspect-ratio: 4 / 3.6; }
   .stage__media { inset: 10% 2% 14%; }
+  .stage__media video { scale: 1.22; }
   .stage__idx { left: 16px; top: 14px; }
   .stage__cap { left: 16px; bottom: 16px; right: 120px; font-size: var(--text-mono-xs); }
   .clip-toggle { right: 12px; bottom: 12px; }
