@@ -13,7 +13,7 @@ Page:
 
 Section:
 1. `python3 tools/new.py section <name> --site studio|page|home --number 07 --label "Label"`. It prints the snippet; paste it into `next/index.html`, a websites-style page, or `src/index.html` (then `python3 tools/build.py`).
-2. Studio CSS stub: while the showreel branch is open, do not edit `next/css/studio.css`; hand the stub to the owner.
+2. Studio CSS stub: paste it at the end of `next/css/studio.css`, using tokens from `next/css/tokens.css` (no new literals).
 
 Then:
 1. Fill the copy (`edit-copy` rules) and media (`images` skill). Reuse existing classes and tokens; no new colors or sizes.

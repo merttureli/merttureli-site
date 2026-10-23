@@ -1,7 +1,7 @@
 # Studio tokens migration (studio.css -> tokens.css)
 
 Moves every literal in `next/css/studio.css` onto the tokens in `next/css/tokens.css`, with zero visible change.
-Apply it only AFTER the showreel branch has merged (it also edits `studio.css` and `studio.js`).
+**Applied** on opt/systems after the showreel round 2 merge (0 pixel diff at 390 and 1440, `#reel-coaster` clean). Kept as the record; rerunning it is a no-op.
 
 ## Apply (one command, run from the repo root)
 

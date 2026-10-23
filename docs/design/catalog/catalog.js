@@ -31,7 +31,7 @@
       css: ['css/fonts.css', ...TOKENS, 'css/interaction-polish.css', 'css/websites.css', 'css/site-palette.css'],
       bg: { paper: ['var(--surface-page)', ''], dark: ['var(--ink-900)', 'on-dark'], sunken: ['var(--surface-sunken)', ''] } },
     studio: { base: '../../next/', html: '', body: '', palette: false,
-      css: ['css/studio.css'],
+      css: ['css/tokens.css', 'css/studio.css'],
       bg: { paper: ['var(--paper)', ''], paper2: ['var(--paper-2)', ''], ink: ['var(--ink)', 'is-ink'] } }
   };
   // css/tokens.css needs no entry: css/fonts.css @imports it.

@@ -11,9 +11,9 @@ The Studio site is `next/index.html` + `next/css/studio.css` + `next/js/studio.j
 | `docs/design/3d.md` | 3D look: materials, lights, units, budgets |
 | `docs/design/studio-tokens-migration.md` | the one-time move of `studio.css` literals onto tokens |
 
-**Status.** `tokens.css` exists but is not linked yet. Until the migration runs, `studio.css` still has its own
-`:root` block (same names, same values) and literals. After it runs, `studio.css` has no color literals and links
-`css/tokens.css` first. Either way, new CSS uses the tokens below.
+**Status.** Migrated: `next/index.html` links `css/tokens.css` before `css/studio.css`, and `studio.css` has no
+`:root` block and no color literals. New CSS uses the tokens below. `python3 tools/check.py --only tokens` proves a
+later token rename moved no value.
 
 ## Use a token
 

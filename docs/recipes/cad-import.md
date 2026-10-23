@@ -89,7 +89,7 @@ All are meters, +Y up. Artifact previews rename `.bin` to `.bin.wasm` and `.glb`
 
 ## Swap the procedural Therma-Shift coaster for the real CAD
 
-Only after the showreel branch is merged (another session owns `next/js/showreel/` now).
+The showreel round 2 is merged, so this is open. It changes the live Studio hero: get the owner's go first.
 
 ```sh
 python3 tools/cad.py inspect THERMA.step                     # fix the "match" patterns in tools/cad/maps/therma-shift.json

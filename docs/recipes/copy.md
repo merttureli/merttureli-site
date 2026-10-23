@@ -16,7 +16,7 @@ A hit in a generated file means you edit its source instead:
 | `projects/<slug>.html` or `src/projects/<slug>.html` | yes | `content/projects/<slug>.json` (fields: [content.md](content.md)) | `python3 tools/build.py` |
 | `websites.html`, `privacy.html`, `404.html`, `hi/index.html`, `photography-*.html` | no | the file itself | nothing |
 | `next/index.html` (Studio, incl. the hero drift words in `data-drift`) | no | the file itself | nothing |
-| `next/js/studio.js` (Studio clock text "in Austin") | no | do not edit while the showreel branch is open; note it for the owner | |
+| `next/js/studio.js` (Studio clock text "in Austin") | no | plain JS string in `next/js/studio.js`; edit in place | |
 | `studies/<name>/` | no | the study files. They are frozen prototypes: change only on request | |
 | `js/mobile-nav.js` (phone menu Email and Resume links) | no | the file itself | nothing |
 | `cards/` | no | print business cards, not served to visitors | |

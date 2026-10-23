@@ -3,8 +3,8 @@
    next/css/studio.css uses, in one place. Values are exactly the literals
    studio.css used before, so swapping a literal for its token changes nothing.
    Docs: docs/design/studio.md (what each token is for), docs/design/motion.md.
-   Load order: this file, then studio.css. Not linked yet: the steps are in
-   docs/design/studio-tokens-migration.md. Media queries cannot read var():
+   Load order: this file, then studio.css (both linked from next/index.html;
+   history in docs/design/studio-tokens-migration.md). Media queries cannot read var():
    the breakpoints are listed at the bottom as a comment. */
 :root {
   color-scheme: light;

@@ -19,7 +19,7 @@ The filter hides generated pages (`index.html`, `projects/`, `src/projects/`): t
 | Email | `src/index.html`, `404.html`, `privacy.html`, `websites.html`, `hi/index.html`, `hi/mert-tureli.vcf`, `js/mobile-nav.js`, `js/website-inquiry.js`, `next/index.html` |
 | Phone | `hi/index.html`, `hi/mert-tureli.vcf` (and print cards in `cards/cards.html`) |
 | LinkedIn | `src/index.html`, `build-case.py` (case footer), `hi/index.html`, `hi/mert-tureli.vcf`, `next/index.html` |
-| Location (Austin) | `src/index.html`, `404.html`, `websites.html`, `hi/index.html`, `hi/mert-tureli.vcf`, `next/index.html`, `next/js/studio.js` (clock; do not edit while the showreel branch is open) |
+| Location (Austin) | `src/index.html`, `404.html`, `websites.html`, `hi/index.html`, `hi/mert-tureli.vcf`, `next/index.html`, `next/js/studio.js` (clock text) |
 | Resume link | `src/index.html`, `404.html`, `js/mobile-nav.js`, `next/index.html` |
 
 `studies/*/` are frozen design prototypes with their own copies; change them only if the owner asks. `cards/` is print artwork, not served to visitors.

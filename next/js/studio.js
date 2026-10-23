@@ -112,7 +112,7 @@
       const inner = el.querySelector('.round__in, span:not(.menu-btn__lines)');
       const strength = el.classList.contains('round') ? 0.38 : 0.28;
       let r = null;
-      el.addEventListener('pointerenter', () => { r = el.getBoundingClientRect(); el.style.transition = 'transform .25s cubic-bezier(.16,1,.3,1)'; if (inner) inner.style.transition = 'transform .25s cubic-bezier(.16,1,.3,1)'; });
+      el.addEventListener('pointerenter', () => { r = el.getBoundingClientRect(); el.style.transition = 'transform var(--dur-250) var(--ease)'; if (inner) inner.style.transition = 'transform var(--dur-250) var(--ease)'; });
       el.addEventListener('pointermove', e => {
         if (!r) r = el.getBoundingClientRect();
         const mx = e.clientX - (r.left + r.width / 2), my = e.clientY - (r.top + r.height / 2);
@@ -121,7 +121,7 @@
       });
       el.addEventListener('pointerleave', () => {
         r = null;
-        el.style.transition = 'transform .9s cubic-bezier(.34,1.56,.64,1)';
+        el.style.transition = 'transform var(--dur-900) var(--ease-back)';
         el.style.transform = '';
         if (inner) { inner.style.transition = el.style.transition; inner.style.transform = ''; }
       });

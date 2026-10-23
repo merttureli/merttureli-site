@@ -16,7 +16,7 @@ Studio is the owner's next design, served at `/next/`, `noindex` and `Disallow`e
 | Images | `next/assets/img/<name>-<width>.webp` | make them with [media.md](media.md) |
 | Fonts | `studies/shared/fonts/` (linked as `../studies/shared/fonts/`) | |
 
-Until the showreel branch merges, do not edit `next/css/studio.css`, `next/js/studio.js`, `next/js/hero3d.js` or `next/js/showreel/*`. Text and markup in `next/index.html` are fine.
+The showreel round 2 is merged, so every Studio file is editable. If another session is working on the showreel, leave `next/js/showreel/*` and `next/js/hero3d.js` to it. Colors, sizes and timings come from `next/css/tokens.css` ([studio.md](../design/studio.md)).
 
 ## Check and show
 
