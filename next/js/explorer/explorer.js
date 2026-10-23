@@ -21,7 +21,8 @@
 // group toggles, an explode slider (along the body axis: sections slide apart, each
 // part keeps its true station in its section) and a section cut (a clipping plane
 // through the body axis with solid stencil caps). Tap a part for its card: the text is
-// part-stories.js, unchanged. A five stop tour plays on the first open of a visit.
+// part-stories.js, unchanged. The Tour button plays an optional five stop tour (not
+// offered with reduced motion: no fly and no tour then).
 import * as THREE from '../three.module.min.js';
 import { addStudioLights, ease, clamp01, lerp, win } from '../showreel/engine.js';
 import { createRocket, LAYOUTS } from '../hero3d.js';
@@ -130,14 +131,13 @@ export function createExplorer({ onRequestClose, onClosed }) {
     phase: 'closed', origin: 'tile', tileEl: null, built: false,
     explode: 0, explodeGoal: 0, cutOn: false, cutT: 0, labels: true,
     groups: Object.fromEntries(GROUPS.map(g => [g[0], true])),
-    selected: null, toured: false, tour: null, sheetOpen: false,
+    selected: null, tour: null, sheetOpen: false,
   };
-  try { S.toured = sessionStorage.getItem('cx-toured') === '1'; } catch (e) { /* private mode */ }
   const stats = { opens: 0, firstFrameMs: 0, openMs: 0, buildMs: 0, frames: 0, frameMs: [], cpuMs: [], cold: true };
 
   let renderer = null, scene = null, camera = null, pivot = null, model = null, cad = null;
   let capMesh = null, stencilMat = null, parts = [], byId = new Map(), raf = 0, last = 0, warmTimer = 0, buildP = null;
-  let fly = null, R = { x: 0, y: 0, w: 1, h: 1 }, W = 1, H = 1, scissor = null;
+  let fly = null, R = { x: 0, y: 0, w: 1, h: 1 }, Rg = null, W = 1, H = 1, scissor = null;   // R: the frame drawn in; Rg: where it is heading
   const clipPlane = new THREE.Plane(new THREE.Vector3(0, 0, -1), 1e3), modelPlane = new THREE.Plane(), cutNormal = new THREE.Vector3(0, 0, -1);
   const qBase = new THREE.Quaternion(), qTmp = new THREE.Quaternion(), qRoll = new THREE.Quaternion(), Y = new THREE.Vector3(0, 1, 0);
   const V = new THREE.Vector3(), V2 = new THREE.Vector3(), TGT = new THREE.Vector3(), M = new THREE.Matrix4(), BOX = new THREE.Box3();
@@ -388,6 +388,10 @@ export function createExplorer({ onRequestClose, onClosed }) {
     if (!fly) {
       // view: damp toward the goal
       const kv = damp(dt, 7);
+      if (Rg) {
+        const off = Math.abs(R.x - Rg.x) + Math.abs(R.y - Rg.y) + Math.abs(R.w - Rg.w) + Math.abs(R.h - Rg.h);
+        if (off > .5) { R = lerpRect(R, Rg, kv); moving = true; } else R = { ...Rg };
+      }
       const prevD = cur.dist;
       if (cur.orbit.angleTo(goal.orbit) > 1e-4) { cur.orbit.slerp(goal.orbit, kv); moving = true; } else cur.orbit.copy(goal.orbit);
       if (Math.abs(cur.roll - goal.roll) > 1e-4) { cur.roll = lerp(cur.roll, goal.roll, kv); moving = true; } else cur.roll = goal.roll;
@@ -421,9 +425,12 @@ export function createExplorer({ onRequestClose, onClosed }) {
   function stageRect() {
     W = innerWidth; H = innerHeight;
     if (mobile()) {
+      // between the title and the sheet, or the part card when one is up (it sits on the sheet)
       const top = 74, sheetTop = panel.getBoundingClientRect().top || H - 150;
       dialog.style.setProperty('--cx-sheet', Math.round(H - sheetTop) + 'px');
-      return { x: 0, y: top, w: W, h: Math.max(140, sheetTop - top - 8) };
+      const cardTop = card.hidden ? 0 : card.getBoundingClientRect().top;
+      const bottom = cardTop > top + 160 ? cardTop : sheetTop;
+      return { x: 0, y: top, w: W, h: Math.max(140, bottom - top - 8) };
     }
     const left = panel.getBoundingClientRect().left || W - 380;
     return { x: 0, y: 0, w: Math.max(200, left - 12), h: H };
@@ -431,8 +438,7 @@ export function createExplorer({ onRequestClose, onClosed }) {
   function resize() {
     if (!S.built) return;
     layoutBase();
-    const r = stageRect();
-    if (!fly) R = r;
+    Rg = stageRect();
     if (S.phase !== 'closed') renderer.setSize(W, H, false);
     invalidate();
   }
@@ -477,7 +483,7 @@ export function createExplorer({ onRequestClose, onClosed }) {
     return { q, p, target: new THREE.Vector3(), dist: r.engine.camera.position.z, camRoll: 0, R: { x: b.left, y: b.top, w: b.width, h: b.height } };
   }
   function homePose() {
-    R = stageRect();
+    R = stageRect(); Rg = { ...R };
     goal.orbit.identity(); goal.roll = ROLL0; goal.zoom = 1; goal.pan.set(0, 0, 0); goal.focus = null;
     cur.orbit.identity(); cur.roll = ROLL0;
     const q = new THREE.Quaternion().copy(qBase).multiply(qRoll.setFromAxisAngle(Y, ROLL0));
@@ -592,7 +598,6 @@ export function createExplorer({ onRequestClose, onClosed }) {
     S.phase = 'open';
     stats.openMs = Math.round(performance.now() - t0);
     invalidate();
-    if (!S.toured) startTour();
   }
 
   function resetState() {
@@ -602,6 +607,7 @@ export function createExplorer({ onRequestClose, onClosed }) {
     for (const c of chips) c.setAttribute('aria-pressed', 'true');
     for (const P of parts) { P.visible = true; P.ghost = 1; P.opacity = 1; P.li.hidden = false; }
     S.selected = null; hideCard(); setSheet(false);
+    tourBtn.hidden = reducedQ.matches;
   }
 
   async function close() {
@@ -679,8 +685,17 @@ export function createExplorer({ onRequestClose, onClosed }) {
   // keep page scrolling (and Lenis, which listens on window) out of the explorer
   for (const ev of ['wheel', 'keydown', 'pointerdown', 'touchstart']) dialog.addEventListener(ev, e => {
     if (ev === 'keydown' && e.key === 'Escape') { e.preventDefault(); escKey = true; setTimeout(() => { escKey = false; }); esc(); }
+    if (ev === 'keydown' && e.key === 'Tab') trapTab(e);
     e.stopPropagation();
   }, { passive: ev !== 'keydown' });
+
+  // focus trap: Tab cycles through the dialog's own controls and never reaches the browser bar
+  function trapTab(e) {
+    const els = [...dialog.querySelectorAll('button, input, [tabindex="0"]')].filter(el => !el.disabled && el.tabIndex >= 0 && el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden');
+    if (!els.length) return;
+    const i = els.indexOf(document.activeElement), last = els.length - 1;
+    if (e.shiftKey ? i <= 0 : i === last || i < 0) { e.preventDefault(); els[e.shiftKey ? last : 0].focus(); }
+  }
 
   // ---------------------------------------------------------------- selection and card
   function partFacingRoll(P) {
@@ -723,10 +738,12 @@ export function createExplorer({ onRequestClose, onClosed }) {
     cardRole.textContent = s.role; cardMatRow.hidden = !s.material; cardMat.textContent = s.material || '';
     card.hidden = false; hint.hidden = true;
     card.scrollTop = 0;
-    if (mobile()) setSheet(false);
+    if (mobile()) { setSheet(false); relayout(); }
     if (focusIt) cardTitle.focus({ preventScroll: true });
   }
-  function hideCard() { card.hidden = true; hint.hidden = false; }
+  function hideCard() { const was = !card.hidden; card.hidden = true; hint.hidden = false; if (was && mobile()) relayout(); }
+  // phones: the frame shrinks above the card, after it has laid out
+  const relayout = () => { if (S.built && S.phase !== 'closed') requestAnimationFrame(resize); };
   cardX.addEventListener('click', () => { const P = byId.get(S.selected); deselect(); if (P && P.btn && !mobile()) P.btn.focus({ preventScroll: true }); });
 
   // ---------------------------------------------------------------- controls
@@ -745,7 +762,7 @@ export function createExplorer({ onRequestClose, onClosed }) {
   }
   cutBtn.addEventListener('click', () => { endTour(true); setCut(!S.cutOn); });
   labelsBtn.addEventListener('click', () => { S.labels = !S.labels; labelsBtn.setAttribute('aria-pressed', String(S.labels)); invalidate(); });
-  tourBtn.addEventListener('click', () => startTour(true));
+  tourBtn.addEventListener('click', () => startTour());
   resetBtn.addEventListener('click', () => {
     endTour(true); deselect();
     goal.orbit.identity(); goal.roll = ROLL0; goal.zoom = 1; goal.pan.set(0, 0, 0);
@@ -765,6 +782,8 @@ export function createExplorer({ onRequestClose, onClosed }) {
     syncGroups();
   });
   function setSheet(open) {
+    // phones: the open sheet and the part card share the space above it, so the card steps aside
+    if (mobile() && S.selected != null && !S.tour) card.hidden = open;
     S.sheetOpen = open; panel.classList.toggle('is-open', open);
     grab.setAttribute('aria-expanded', String(open)); grab.textContent = open ? 'Fewer controls' : 'More controls';
     if (S.built && S.phase !== 'closed') requestAnimationFrame(resize);
@@ -876,10 +895,8 @@ export function createExplorer({ onRequestClose, onClosed }) {
 
   // ---------------------------------------------------------------- tour
   let tourTimer = 0;
-  function startTour(force = false) {
-    if (S.phase !== 'open' || (!force && S.toured)) return;
-    S.toured = true;
-    try { sessionStorage.setItem('cx-toured', '1'); } catch (e) { /* private mode */ }
+  function startTour() {
+    if (S.phase !== 'open' || reducedQ.matches) return;
     deselect();
     goal.orbit.identity(); goal.zoom = 1; goal.pan.set(0, 0, 0);
     S.explodeGoal = 0; explode.value = '0'; explodeOut.value = '0%';
@@ -917,7 +934,7 @@ export function createExplorer({ onRequestClose, onClosed }) {
     stats, state: S, dispose,
     get view() { return { cur: { ...cur, target: cur.target.toArray(), orbit: cur.orbit.toArray() }, goal: { ...goal, pan: goal.pan.toArray(), orbit: goal.orbit.toArray() }, R, W, H, home: S.built ? homeDist(S.explode) : 0 }; },
     get parts() { return parts.map(P => ({ id: P.id, n: P.n, label: P.story.label, group: P.group, visible: P.visible, center: P.center.toArray().map(v => +v.toFixed(3)), size: P.box.getSize(new THREE.Vector3()).toArray().map(v => +v.toFixed(3)), meshes: P.meshes.length })); },
-    select: id => select(id), deselect, setCut, startTour: () => startTour(true), endTour: () => endTour(true),
+    select: id => select(id), deselect, setCut, startTour: () => startTour(), endTour: () => endTour(true),
     setExplode(v) { explode.value = String(Math.round(v * 100)); explode.dispatchEvent(new Event('input')); },
     screenOf(id) { const P = byId.get(id); if (!P || !camera) return null; setPose(); partWorldCenter(P, V).project(camera); return { x: (V.x + 1) / 2 * W, y: (1 - V.y) / 2 * H }; },
     info() { return renderer ? { calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, programs: renderer.info.programs.length, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures } : null; },
