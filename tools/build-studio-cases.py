@@ -113,7 +113,7 @@ def heading_of(sec):
     if sec.get("anchor") == "project-result":
         return "The result"
     if sec.get("track"):
-        t = sec["track"].replace("-", " ")
+        t = re.sub(r"\bi\b", "I", sec["track"].replace("-", " "))   # "what-i-learned" -> "What I learned"
         return t[:1].upper() + t[1:]
     return ""
 
