@@ -27,7 +27,7 @@ The report also counts open owner flags in the copy: the owner sees them as dott
 2. Open `<out>/.preview-plan.json`. `publish` is a list of Artifact tool calls. Each has `file_path` (the copy's `index.html`), `root` (the copy folder) and `files` (published path to source path, relative to `root`).
 3. Call 1: `Artifact` with `file_path`, `root`, `files` and `icon` (the plan carries `"icon": "portfolio"`). It returns the artifact `url`.
 4. Calls 2 and later: the same, plus `url` from call 1. Files already published are kept.
-5. Give the owner the link. Studio: append `#reel-coaster` to open on the showreel.
+5. Give the owner the link. Studio: append `#reel-coaster` to open on the showreel, or `#reel-<key>` to open on one project (flags: [showreel-actor.md](showreel-actor.md)).
 
 To update a preview, rebuild into the same `--out` and repeat every call with the artifact's `url`.
 

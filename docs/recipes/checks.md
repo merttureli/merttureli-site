@@ -60,6 +60,7 @@ WARNs: open flags; a CSS diff that is not a pure token rename; a JS string that 
 | Pixel-check the Studio | `python3 tools/check.py --only visual --pages next/index.html` (one palette; masks the hero canvas and the clock) |
 | Mark a visible change as intended | `python3 tools/check.py --full --expect-change index.html,next/index.html` |
 | Run a showreel lab's interface checks | `python3 tools/check.py --only smoke --pages next/lab/<key>.html` (FAILs unless `labReport.ok`) |
+| Smoke one showreel project in the hero | `python3 tools/check.py --only smoke --pages next/#reel-<key>` (flags in [showreel-actor.md](showreel-actor.md)) |
 | See which pages the smoke loaded | add `-v` (prints the page list and the external hosts) |
 | Smoke a new page | `python3 tools/check.py --only smoke --pages mypage.html` |
 | Keep the smoke screenshots | `python3 tools/check.py --only smoke --out /tmp/check-out` (PNGs in `smoke/`) |

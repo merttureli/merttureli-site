@@ -181,7 +181,7 @@ Do not add Lenis to the current site: `rocket-flight.js` and the explorer hand-o
 | Abort to rest | `showreel/index.js`: `ABORT = 2.2` | any scroll, wheel, touch, pointer or key; guest leaves over 1.5 s |
 | Therma-Shift reel | `showreel/index.js`: `ST.sequence` | enter 2.4, assemble 2 to 3.2, mug 1.8, warm 4.4, swap 2.8, chill 4.8, explode 2.0 s |
 | Rocket idle sway | `hero3d.js`: `pose()` | sway `sin(t * .00032) * .32` rad, bob `.012`, pointer smoothing `.06` |
-| Debug | URL hash | `#reel-coaster` starts the reel now, `#reel-fast` runs it 3x; key `c`; `window.__reel` |
+| Debug | URL hash | `#reel-<key>` plays that project now (`#reel-coaster` = Therma-Shift), `#reel-<key>-fast` at 3x, `#reel-fast` the next one in the rotation at 3x; key `c` plays the next; `window.__reel` (`seek(t, key)`, `project`, `use(key)`); see docs/recipes/showreel-actor.md |
 
 ## How do I
 

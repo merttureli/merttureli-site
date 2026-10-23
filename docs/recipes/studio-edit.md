@@ -25,7 +25,7 @@ python3 tools/check.py --only links,js,robots,smoke --pages next/,next/#reel-coa
 python3 tools/preview.py studio --serve 8000    # local look at the artifact copy
 ```
 
-Publish the copy for the owner with [preview.md](preview.md). Add `#reel-coaster` to the URL to start the showreel at once (`#reel-fast` runs it at 3x).
+Publish the copy for the owner with [preview.md](preview.md). Add `#reel-coaster` to the URL to start the showreel at once, or `#reel-<key>` for one project (`-fast` suffix or `#reel-fast` for 3x; all flags in [showreel-actor.md](showreel-actor.md)).
 
 ## Keep in step
 

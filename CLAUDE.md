@@ -38,7 +38,7 @@ Python 3 stdlib + Node/Playwright tooling, no framework. All docs and tools: [do
 | Show the owner a preview | `python3 tools/preview.py site\|studio --out <scratchpad dir>` | [preview](docs/recipes/preview.md) |
 | Add a page or section | `python3 tools/new.py page\|section <name>` | [new-page](docs/recipes/new-page.md) |
 | Edit the Studio | tokens in `next/css/tokens.css` | [studio-edit](docs/recipes/studio-edit.md) |
-| Add a showreel project | `python3 tools/new.py actor <key>`, later `--register` (only with the owner's go: it goes live in the Studio hero) | [showreel-actor](docs/recipes/showreel-actor.md) |
+| Add a showreel project | `python3 tools/new.py actor <key>`, later `--register` (only with the owner's go: it goes live in the Studio hero); see it at `next/#reel-<key>` | [showreel-actor](docs/recipes/showreel-actor.md) |
 | Bring in a STEP file | `python3 tools/cad.py inspect\|import X.step` | [cad-import](docs/recipes/cad-import.md) |
 | Palette, contact, meta, tracking, release | see the recipe | [recipes index](docs/recipes/README.md) |
 

@@ -12,6 +12,6 @@ Detail: `docs/recipes/preview.md`.
 3. Optional look: `--serve <your port>` instead of `--smoke`; open it at 390 and 1440 (Studio also with `#reel-coaster`). Stop the server when done.
 4. Open `<out>/.preview-plan.json` (or rerun with `--json`). Its `publish` list holds the exact Artifact calls, each with `file_path`, `root` and `files`.
 5. Call 1: the Artifact tool with `file_path`, `root`, `files` and `icon` (all four are in the plan's first call); it returns the `url`. Calls 2 and later: the same plus that `url`. Do not restyle or edit the copy.
-6. Give the owner the link (Studio: append `#reel-coaster` to start the showreel).
+6. Give the owner the link (Studio: append `#reel-coaster` to start the showreel, or `#reel-<key>` for one project, e.g. a new actor).
 
 Update an existing preview: rebuild into the same `--out`, then repeat every call in the plan with the artifact's `url`.
