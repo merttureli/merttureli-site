@@ -43,8 +43,6 @@ STYLE = re.compile(r"(?:^|;)\s*(?:color|font-family|font-style|font)\s*:", re.I)
 ALLOW = [
     ("index.html", "tile", "work tiles and .tile--explorer: remove when the tiles and explorer areas land"),
     ("next/index.html", "tile", "work tiles and .tile--explorer: remove when the tiles and explorer areas land"),
-    ("projects/*.html", None, "case pages: remove when the case area (tools/build-studio-cases.py) lands"),
-    ("next/projects/*.html", None, "case pages: remove when the case area (tools/build-studio-cases.py) lands"),
 ]
 
 
