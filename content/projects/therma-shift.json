@@ -13,11 +13,7 @@
   "brief": [
     {
       "label": "Built for",
-      "value": {
-        "flag": "therma-shift-007",
-        "note": "Confirm the competition name and date (SparkLabs Seed Competition, March 2026) in the factual pass.",
-        "text": "SparkLabs seed competition, March 2026"
-      }
+      "value": "SparkLabs seed competition, March 2026"
     },
     {"label": "Status", "value": "Thermal stack validated, electronics in progress"}
   ],
@@ -52,11 +48,7 @@
         "A thermoelectric module heats or cools depending on current direction. The TEC1-12703 sits between an aluminum top plate and a finned heatsink with a blower.",
         "An NTC thermistor at the plate closes the loop, targeting about 2 degrees F around setpoint.",
         [
-          {
-            "flag": "therma-shift-021",
-            "note": "Are the independent firmware thermal-runaway cutoffs built and running yet, or still planned? The Where It Stands list says closed loop integration is in progress. If they are planned, reword in future tense or cut.",
-            "text": "Separate firmware cutoffs watch for thermal runaway independently of the control loop and shut the device down on a fault."
-          }
+          "Separate firmware cutoffs watch for thermal runaway independently of the control loop and shut the device down on a fault."
         ]
       ]
     },
@@ -78,10 +70,6 @@
     }
   ],
   "colophon": [
-    {
-      "flag": "therma-shift-028",
-      "note": "The footer is now per-page (CAD credit only). Confirm the other project pages get credits that match their own content in the factual pass.",
-      "text": "CAD animations rendered from the source assemblies."
-    }
+    "CAD animations rendered from the source assemblies."
   ]
 }

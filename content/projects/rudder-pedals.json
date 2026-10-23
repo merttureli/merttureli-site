@@ -64,11 +64,6 @@
     }
   ],
   "colophon": [
-    {
-      "flag": "rudder-pedals-035",
-      "note": "The footer credits 'photographs of the machine and the team' to Paul Buckowski / Union College, which looks copied from another case page. Does that credit apply to the rudder pedals page, or should it come out?",
-      "text": "Photographs of the machine and the team by Paul Buckowski / Union College."
-    },
-    " CAD animations rendered from the source assemblies. Aircraft models are third-party, illustration only."
+    "CAD animations rendered from the source assemblies. Aircraft models are third-party, illustration only."
   ]
 }
