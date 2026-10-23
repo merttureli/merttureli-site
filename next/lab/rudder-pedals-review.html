@@ -92,7 +92,7 @@
 <header class="head">
   <p class="eyebrow mono">Review <b>/</b> Rudder pedals</p>
   <h1>Pedal assembly</h1>
-  <p class="lede">The STEP assembly with the springs, screws, magnets, Hall sensors, wiring and controller board added. Orange marks are added parts. Drag to orbit, scroll to zoom, shift-drag to pan.</p>
+  <p class="lede">The STEP assembly with the springs, screws, magnets, Hall sensors, wiring and ESP controller board added. Orange marks are added parts. Drag to orbit, scroll to zoom, shift-drag to pan.</p>
 </header>
 
 <aside class="panel" aria-label="Controls">
@@ -113,21 +113,24 @@
     <button class="chip added" data-g="board" aria-pressed="true"><span class="dot"></span>Board</button>
     <button class="chip added" data-g="screws" aria-pressed="true"><span class="dot"></span>Anchor screws</button>
     <button class="chip" data-g="walls" aria-pressed="true"><span class="dot"></span>Side walls</button>
+    <button class="chip" data-g="levers" aria-pressed="true"><span class="dot"></span>Lever arms</button>
+    <button class="chip" data-g="pedals" aria-pressed="true"><span class="dot"></span>Pedals</button>
   </div>
   <h2 class="mono">Parts</h2>
   <ul class="parts" id="parts"></ul>
-  <p class="note" id="note">Springs and wires hide while the view is exploded.</p>
+  <p class="note" id="note">Springs and wires hide while the view is exploded. The board and the center sensor sit inside the frame: turn the side walls off to see them.</p>
   <h2 class="mono">What I assumed</h2>
   <ol class="assume">
+    <li>The left side is the reference. Every added part on the right is the mirror of the left across the center plane; only the right brake spring stays hooked on the right lever's own screw and the right pedal's own clevis pin.</li>
     <li>Centering springs hook into the 6 mm hole under each lever's top bar, right above the adjustment holes, and onto a screw in the wall's column of nine holes. I put the screw in hole 5 (the STEP has it in hole 1).</li>
     <li>Spring sizes are my picks: centering 24 coils, 8.3 mm outside, 1.1 mm wire; brake 13 coils, 5.9 mm outside, 0.9 mm wire.</li>
-    <li>Brake springs run from a small eye screw on the lever's vertical inner edge to the pin through the pedal's clevis, square to the pin. The eye screw is not in the STEP.</li>
-    <li>A toe brake tips the pedal back up to 12 degrees on its hinge bolt, which moves the magnet away from the sensor.</li>
-    <li>Magnets are 10 x 3 mm nickel discs. The round pockets measure 10.2 mm across and 2.8 mm deep.</li>
-    <li>The left Hall sensor sits at the bottom of the slit in the left lever. The right lever in the STEP has no slit (it looks like an older version), so its sensor sits at the mirrored spot.</li>
-    <li>Each sensor has three wires (red, black, signal) that run up the slit, out through the notch and down the lever, then hang in a slack loop to the frame. The right side's wires pass through the inner slot of each wall and across between the walls.</li>
-    <li>The controller board is a 50 x 34 mm perfboard with the Pro Micro on headers, on standoffs on the left wall's outer face below the lever. Its place and size are my guess.</li>
-    <li>The magnet holder on the sensor lever suggests a third Hall sensor for the rudder axis. I did not add one.</li>
+    <li>Brake springs hook on the existing screw at the top of each lever's vertical side and on the pin through the pedal's clevis.</li>
+    <li>At rest each pedal leans forward on its hinge until its boss lies on the lever, so the magnet's face is flush with the lever's inner face. That is 21 degrees forward of the pedal's pose in the STEP. A full toe brake tips it back 16 degrees.</li>
+    <li>Pedal magnets are 10 x 3 mm nickel discs. The round pockets measure 10.2 mm across and 2.8 mm deep.</li>
+    <li>The left Hall sensor sits at the bottom of the slit in the left lever, facing the magnet.</li>
+    <li>The center sensor: two 10 x 3 mm discs in the round slots under the holder's flaps (11 mm across), and a third A1301 between them, face up, held by its legs in the pocket of the back middle support.</li>
+    <li>The controller is an ESP board on a 50 x 34 mm perfboard, inside the frame on the back face of the front middle support, with one 3-pin connector per sensor. The ESP board's size and the board's place are my guess.</li>
+    <li>Pedal sensor wires run up the slit, out through the notch and down the lever, hang in a slack loop into the wall's inner slot, then run inside the frame to the board. The center sensor's wires run along the back support's pocket and under the holder.</li>
     <li>Full rudder swings each lever about 11 degrees (the sensor lever 20 degrees).</li>
   </ol>
 </aside>
@@ -205,7 +208,7 @@ function applyOrbit(k) {
 // ---- mechanism state
 const state = { drive: +(hash.get('rudder') || 0), toeL: 0, toeR: 0, explode: +(hash.get('explode') || 0), playing: false, t0: 0 };
 if (hash.has('toe')) { const [l, r] = hash.get('toe').split(',').map(Number); state.toeL = l || 0; state.toeR = r || 0; }
-const shown = { springs: true, sensors: true, wiring: true, board: true, screws: true, walls: true };
+const shown = { springs: true, sensors: true, wiring: true, board: true, screws: true, walls: true, levers: true, pedals: true };
 function pose() {
   model.setProgress(1 - state.explode);
   model.setDrive(state.drive); model.setToe(state.toeL, state.toeR);
@@ -218,6 +221,8 @@ function setGroup(name, on) {
   shown[name] = on;
   if (name === 'sensors') { D.show('sensors', on); D.show('magnets', on); }
   else if (name === 'walls') for (const w of [model.parts.wallR, model.parts.wallL]) for (const c of w.children) { if (!c.userData.detail) c.visible = on; }
+  else if (name === 'levers') for (const w of [model.parts.leverR, model.parts.leverL]) for (const c of w.children) { if (c.isMesh && !c.userData.detail) c.visible = on; }
+  else if (name === 'pedals') for (const S of ['R', 'L']) for (const c of model.parts['lever' + S].getObjectByName('pedal' + S).children) { if (c.isMesh && !c.userData.detail) c.visible = on; }
   else D.show(name, on);
   model.refresh(); updateList(); dirty = true;
 }
@@ -232,7 +237,7 @@ const CADL = [
   ['Right side wall', 'wallR', [678.1, 40, 1219], ''],
   ['Middle supports', 'core', [672.2, 150, 1264.5], 'front and back plates'],
   ['Sensor lever', 'rocker', [543.1, 103.2, 1300], 'rocks on the center bolt'],
-  ['Center magnet holder', 'rocker', [594, 99.4, 1265.8], 'rudder axis magnet (no sensor modeled)'],
+  ['Center magnet holder', 'rocker', [594, 99.4, 1265.8], 'holds the two center magnets under its flaps'],
   ['Left link rod', 'rodL', [544, 176, 1334.3], ''],
   ['Right link rod', 'rodR', [544, 165, 1194.8], ''],
 ];
@@ -267,8 +272,9 @@ function labelWorld(L, out) {
 // from the rear and above; right-side parts mirror across the middle
 const VIEWS = [
   ['Centering spring', -.85, 1.15, .34], ['Brake spring', -1.45, 1.0, .26], ['Disc magnet', -1.5708, 1.22, .19], ['Hall sensor', -1.5708, 1.22, .19],
-  ['Anchor screw', -1.2, 1.2, .24], ['Controller board', -.3, 1.22, .26], ['Sensor connectors', -.3, 1.12, .18],
-  ['Left sensor wires', -.55, 1.05, .42], ['Right sensor wires', -.55, 1.0, .5],
+  ['Anchor screw', -1.2, 1.2, .24], ['ESP controller board', -.75, 1.3, .3, 'inside'], ['Sensor connectors', -.75, 1.25, .22, 'inside'],
+  ['Center magnets', 0, 1.95, .2, 'inside'], ['Center Hall sensor', 0, 1.95, .18, 'inside'],
+  ['Left sensor wires', -.55, 1.05, .42], ['Right sensor wires', -.55, 1.0, .5], ['Center sensor wires', -.6, 1.6, .3, 'inside'],
 ];
 let focused = null;
 function focusOn(L) {
@@ -277,6 +283,9 @@ function focusOn(L) {
   if (!labelsOn) setLabels(true);
   labelWorld(L, tmp); goal.target.copy(tmp);
   const v = VIEWS.find(([k]) => L.name.startsWith(k));
+  if (v && v[4] === 'inside' && shown.walls) {   // parts inside the frame: take the side walls away
+    const chip = document.querySelector('#chips .chip[data-g="walls"]'); chip.setAttribute('aria-pressed', false); setGroup('walls', false);
+  }
   if (v) {
     const right = /right/i.test(L.name);
     let th = right ? Math.PI - v[1] : v[1];
@@ -346,7 +355,7 @@ requestAnimationFrame(frame);
 const info = () => `${model.triangles.toLocaleString('en-US')} triangles (${model.cadTriangles.toLocaleString('en-US')} from the STEP, ${D.triangles.toLocaleString('en-US')} added) · ${renderer.info.render.calls} draw calls`;
 renderer.render(scene, camera);
 $('foot').textContent = info();
-window.review = { model, labels, state, orbit, goal, pose, focusOn, setLabels, setGroup, render() { applyOrbit(1); renderer.render(scene, camera); placeTags(); }, info, errors };
+window.review = { model, labels, state, orbit, goal, pose, focusOn, setLabels, setGroup, view(th, ph, r, L) { if (L) labelWorld(L, goal.target); Object.assign(goal, { theta: th, phi: ph, r }); applyOrbit(1); }, render() { applyOrbit(1); renderer.render(scene, camera); placeTags(); }, info, errors };
 window.reviewReady = true;
 </script>
 </body>
