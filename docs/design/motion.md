@@ -181,8 +181,9 @@ Do not add Lenis to the current site: `rocket-flight.js` and the explorer hand-o
 | Rocket exit / return | `showreel/index.js`: `[EXIT, 2.1]`, `[RETURN, 2.6]`, `SPIN = 1.7` | 2.1 s out, 2.6 s back, 1.7 rad extra roll |
 | Abort to rest | `showreel/index.js`: `ABORT = 2.2` | any scroll, wheel, touch, pointer or key; guest leaves over 1.5 s |
 | Therma-Shift reel | `showreel/index.js`: `ST.sequence` | enter 2.4, assemble 2 to 3.2, mug 1.8, warm 4.4, swap 2.8, chill 4.8, explode 2.0 s |
+| Hero intro (fly-in) | `hero3d.js`: `INTRO`, `createIntro()` | with motion on, the poster waits (`html.hero-fly`, set in the page head); the live rocket starts off screen, already placed, and flies in along its axis in `fly: 1.25` s (outQuart), extra roll `spin: -.9` settling to 0; motor burn = the G77R curve time-scaled to the flight, then a `.55` s ember and a wisp; skipped when the hero is off screen at load; `studio.js` shows the poster if nothing is live 6 s after load. Reduced motion: the poster (object-fit: cover, identical to the REST frame), no flight |
 | Rocket idle sway | `hero3d.js`: `pose()` | sway `sin(t * .00032) * .32` rad, bob `.012`, pointer smoothing `.06` |
-| Debug | URL hash | `#reel-<key>` plays that project now (`#reel-coaster` = Therma-Shift), `#reel-<key>-fast` at 3x, `#reel-fast` the next one in the rotation at 3x; key `c` plays the next; `window.__reel` (`seek(t, key)`, `project`, `use(key)`); see docs/recipes/showreel-actor.md |
+| Debug | URL hash | `#reel-<key>` plays that project now (`#reel-coaster` = Therma-Shift), `#reel-<key>-fast` at 3x, `#reel-fast` the next one in the rotation at 3x, `#reel-smoke` the intro with its smoke trail (combines with the others); key `c` plays the next; `window.__reel` (`seek(t, key)`, `project`, `use(key)`); see docs/recipes/showreel-actor.md |
 
 ## How do I
 

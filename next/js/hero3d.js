@@ -1,6 +1,7 @@
 // CHARGER hero object: the real flight-model exterior, rendered live.
-// Loaded only after the page is idle. The poster <img> stays underneath, so
-// a missing or slow WebGL simply leaves the identical still in place.
+// Loaded only after the page is idle. The poster <img> is the identical still
+// (object-fit: cover); with motion on it waits while the live rocket flies in
+// (createIntro), and studio.js shows it if WebGL is missing or slow.
 // The rocket is one actor in the shared showreel scene (showreel/engine.js
 // owns the renderer, camera and lights; showreel/index.js the sequence).
 import * as THREE from './three.module.min.js';
@@ -152,8 +153,12 @@ export function createIntro(rocket, { scene, smoke = null } = {}) {
     flame.world.visible = false;
     done = true;
   }
+  let lastTime = -1;
   function step(dt, time, exitDist) {
     if (done) return false;
+    // the flight keeps to the wall clock on slow frames (the loop caps dt at 64 ms), up to 120 ms a frame
+    if (lastTime >= 0 && time > lastTime) dt = Math.min(.12, (time - lastTime) / 1000);
+    lastTime = time;
     t += dt;
     const u = Math.min(1, t / D);
     if (flying) {
