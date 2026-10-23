@@ -43,14 +43,8 @@ STYLE = re.compile(r"(?:^|;)\s*(?:color|font-family|font-style|font)\s*:", re.I)
 ALLOW = [
     ("index.html", "tile", "work tiles and .tile--explorer: remove when the tiles and explorer areas land"),
     ("next/index.html", "tile", "work tiles and .tile--explorer: remove when the tiles and explorer areas land"),
-    ("index.html", "beyond2", "beyond section: remove when the beyond area lands"),
-    ("next/index.html", "beyond2", "beyond section: remove when the beyond area lands"),
-    ("beyond.html", None, "Beyond page (next/beyond.html): remove when the beyond area lands"),
-    ("next/beyond.html", None, "Beyond page (next/beyond.html): remove when the beyond area lands"),
     ("projects/*.html", None, "case pages: remove when the case area (tools/build-studio-cases.py) lands"),
     ("next/projects/*.html", None, "case pages: remove when the case area (tools/build-studio-cases.py) lands"),
-    ("404.html", None, "404: remove when the pages area lands"),
-    ("hi/index.html", None, "/hi/: remove when the pages area lands"),
 ]
 
 
