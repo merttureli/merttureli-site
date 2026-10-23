@@ -8,8 +8,10 @@
    browser carries it natively. Once it is seated the explorer (assets/charger-explorer/integration.js)
    takes its place, drawn the same way, so the swap does not show.
 
-   Native scroll only: one requestAnimationFrame per scroll event, nothing when idle, and the canvas
-   draws only when the roll or its size changes. Reduced motion (the system setting or the site's
+   On a desktop, Lenis smooths the wheel and the rocket is placed in the same frame the page moves, so
+   the flight never trails the page; touch keeps native scrolling. While it is on screen the rocket
+   sways slowly about its axis, fading out before the seat. The canvas draws only when the roll or its
+   size changes. Reduced motion (the system setting or the site's
    Display switch, followed live): no build, no flight and no roll; the rocket rests in the hero and,
    once the page is scrolled toward CHARGER, fades over to the seat, where the explorer fades in. */
 (() => {
@@ -19,7 +21,7 @@
   const box = hero.querySelector('[data-rocket-box]'), shadow = hero.querySelector('[data-rocket-shadow]');
   // World height the rocket canvas shows: assets/rocket/rig.js VIEW.frame.
   const FRAME = (.5707 + .6102) * 1.04;
-  const DPR = Math.min(window.devicePixelRatio || 1, 1.5);
+  const DPR = Math.min(window.devicePixelRatio || 1, 2);
   const reduceQuery = matchMedia('(prefers-reduced-motion: reduce)');
   const motionOn = () => (window.PortfolioDisplay ? window.PortfolioDisplay.motion() : !reduceQuery.matches);
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -32,6 +34,7 @@
   let pose = null, seated = false, handed = false, pinned = false, loadRequested = false;
   let ticking = false, relayoutAfterClose = false, stillAt = '', stillTimer = 0;
   let settling = false, catchFrom = null, catchAt = 0, loadTimer = 0, lastScrollAt = 0;
+  let curU = 0, lenis = null, onScreen = true;
 
   /* ---------- poster: sharper copy once it is decoded ---------- */
   // The inlined poster is 800 px tall. When the rocket stays still (reduced motion) the full still is
@@ -223,6 +226,7 @@
     }
     const hold = pinned;
     const u = hold ? 1 : clamp(y / landY, 0, 1);
+    curU = u;
     pose = u === 1 ? seatPoseAbs() : poseAt(u, y);
     if (catchFrom && !hold) {
       const t = (performance.now() - catchAt) / 240;
@@ -233,7 +237,7 @@
     shadow.style.opacity = u === 0 ? '' : (pose.shadow * .6).toFixed(3);
     // within 2 px of the seat counts as seated (scroll positions are whole or device pixels)
     setSeated(hold || y >= landY - 2);
-    if (!handed) drawRoll(pose.roll);
+    if (!handed) drawRoll(pose.roll + sway(performance.now()));
     stats.phase = u === 0 ? 'rest' : handed ? 'explorer' : seated ? 'seated' : 'flight';
   }
   const request = () => { if (!ticking) { ticking = true; requestAnimationFrame(frame); } };
@@ -269,6 +273,7 @@
     }
     handed = false; seated = false; pinned = false; box.classList.remove('is-handed');
     host()?.unseat();
+    setSmooth();
     measure(); lastRoll = NaN; frame();
   }
   document.addEventListener('portfolio:motion', applyMotion);
@@ -300,7 +305,35 @@
   beltSpeed();
   document.fonts?.ready.then(beltSpeed);
 
+  /* ---------- smooth wheel and a live rocket ---------- */
+  const SWAY = 16; // degrees either way, about the airframe axis
+  const fineWheel = matchMedia('(hover: hover) and (pointer: fine)');
+  function sway(now) { return live && !still ? SWAY * Math.sin(now * .00032) * (1 - smooth(curU)) : 0; }
+  function setSmooth() {
+    const want = !still && fineWheel.matches && !!window.Lenis;
+    if (want && !lenis) { lenis = new window.Lenis({ lerp: .11, wheelMultiplier: 1, smoothWheel: true }); lenis.on('scroll', frame); }
+    else if (!want && lenis) { lenis.destroy(); lenis = null; }
+  }
+  const near = new Set();
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(es => { es.forEach(e => (e.isIntersecting ? near.add(e.target) : near.delete(e.target))); onScreen = near.size > 0; });
+    io.observe(hero.closest('section') || hero); io.observe(seat);
+  }
+  function loop(now) {
+    if (lenis) {
+      // The explorer dialog pins the body; Lenis waits until it closes.
+      const busy = host()?.busy;
+      if (busy && !lenis.isStopped) lenis.stop();
+      else if (!busy && lenis.isStopped) lenis.start();
+      lenis.raf(now);
+    }
+    if (onScreen && live && !still && !handed && !document.hidden && curU < 1) drawRoll((pose ? pose.roll : 0) + sway(now));
+    requestAnimationFrame(loop);
+  }
+  fineWheel.addEventListener?.('change', setSmooth);
+
   /* ---------- go ---------- */
+  setSmooth(); requestAnimationFrame(loop);
   measure(); frame();
   const goLive = () => { sharpStill(); (window.requestIdleCallback ? requestIdleCallback(startLive, { timeout: 1200 }) : setTimeout(startLive, 200)); preloadWhenIdle(); };
   if (document.readyState === 'complete') goLive(); else addEventListener('load', goLive, { once: true });
