@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rudder pedals review</title>
+<meta name="robots" content="noindex">
+<meta name="description" content="Review viewer for the rudder pedal assembly: orbit, move the mechanism, show or hide the added parts.">
+<link rel="preload" href="../../studies/shared/fonts/archivo-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../../studies/shared/fonts/martian-mono-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../css/tokens.css">
+<!-- Owner review page for the rudder pedal assembly (CAD plus the parts added in the
+     detail pass). Plain three.js from next/js, no other libraries. Hash: #shot hides the
+     panel, #labels opens with labels on, #explode=0.5, #rudder=-1, #toe=1,0, #focus=<n>. -->
+<style>
+  @font-face { font-family: Archivo; src: url(../../studies/shared/fonts/archivo-var.woff2) format('woff2'); font-weight: 100 900; font-stretch: 62% 125%; font-display: swap; }
+  @font-face { font-family: 'Martian Mono'; src: url(../../studies/shared/fonts/martian-mono-var.woff2) format('woff2'); font-weight: 100 800; font-stretch: 75% 112.5%; font-display: swap; }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--paper); color: var(--ink); overflow: hidden; }
+  body { font: 400 var(--text-s)/1.45 var(--display); -webkit-font-smoothing: antialiased; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+  canvas.drag { cursor: grabbing; }
+  .mono { font-family: var(--mono); font-stretch: var(--mono-stretch); letter-spacing: var(--mono-tracking); text-transform: uppercase; }
+
+  .head { position: fixed; top: var(--gutter); left: var(--gutter); max-width: min(520px, calc(100vw - 2 * var(--gutter))); pointer-events: none; z-index: 2; }
+  .eyebrow { font-size: var(--text-mono-m); color: var(--muted); margin: 0 0 10px; }
+  .eyebrow b { color: var(--signal-ink); font-weight: 500; }
+  h1 { margin: 0; font-weight: var(--display-weight); font-stretch: var(--display-stretch); font-size: clamp(30px, 4.2vw, 64px); line-height: .92; letter-spacing: -.02em; text-transform: uppercase; }
+  .lede { margin: 12px 0 0; max-width: 38ch; color: var(--ink-soft); font-size: var(--text-s); }
+
+  .panel { position: fixed; top: var(--gutter); right: var(--gutter); width: 340px; max-height: calc(100vh - 2 * var(--gutter)); overflow: auto; z-index: 3;
+    background: var(--glass); backdrop-filter: blur(14px) saturate(1.1); -webkit-backdrop-filter: blur(14px) saturate(1.1);
+    border: 1px solid var(--glass-line); border-radius: var(--radius-tile-s); box-shadow: var(--shadow-tile); padding: 18px 18px 14px; }
+  .panel h2 { margin: 18px 0 10px; font-size: var(--text-mono-s); color: var(--muted); font-weight: 500; }
+  .panel h2:first-child { margin-top: 0; }
+  .row { display: grid; grid-template-columns: 92px 1fr 44px; align-items: center; gap: 10px; margin: 8px 0; font-size: var(--text-xs); }
+  .row output { font-family: var(--mono); font-size: var(--text-mono-xs); color: var(--muted); text-align: right; }
+  input[type=range] { width: 100%; accent-color: var(--ink); }
+  .btns { display: flex; flex-wrap: wrap; gap: 8px; }
+  button, .chip { font: 500 var(--text-mono-xs)/1 var(--mono); font-stretch: var(--mono-stretch); letter-spacing: var(--mono-tracking); text-transform: uppercase;
+    border: 1px solid var(--line); background: var(--tile); color: var(--ink); border-radius: var(--radius-pill); padding: 9px 13px; cursor: pointer; transition: background var(--dur-250) var(--ease), color var(--dur-250) var(--ease), border-color var(--dur-250) var(--ease); }
+  button.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  button[aria-pressed="true"], .chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .chip[aria-pressed="false"] { color: var(--muted); background: transparent; }
+  .chip .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 7px; vertical-align: 0; background: currentColor; opacity: .9; }
+  .chip.added .dot { background: var(--signal); }
+  @media (hover: hover) { button:hover, .chip:hover { border-color: var(--ink); } }
+  button:focus-visible, .chip:focus-visible, input:focus-visible, .parts li:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+
+  .parts { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 2px; }
+  .parts li { display: grid; grid-template-columns: 26px 1fr; gap: 8px; padding: 7px 6px; border-radius: var(--radius-tile-xs); cursor: pointer; }
+  .parts li[hidden] { display: none; }
+  @media (hover: hover) { .parts li:hover { background: var(--tile-2); } }
+  .parts li.on { background: var(--tile); box-shadow: inset 0 0 0 1px var(--line); }
+  .parts .n { font: 500 var(--text-mono-xs)/20px var(--mono); text-align: center; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--ink); }
+  .parts .added .n, .parts li.added .n { border-color: var(--signal); color: var(--signal-ink); }
+  .parts b { display: block; font-weight: 600; font-size: var(--text-xs); line-height: 1.3; }
+  .parts span { display: block; font-size: var(--text-2xs); color: var(--muted); line-height: 1.35; }
+  .note { margin: 14px 0 0; font-size: var(--text-2xs); color: var(--muted); }
+  .assume { margin: 0; padding: 0 0 0 18px; display: grid; gap: 8px; font-size: var(--text-2xs); color: var(--ink-soft); line-height: 1.45; }
+  .assume li::marker { font-family: var(--mono); font-size: var(--text-mono-xs); color: var(--signal-ink); }
+
+  .tags { position: fixed; inset: 0; pointer-events: none; z-index: 1; }
+  .tag { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); pointer-events: auto; cursor: pointer;
+    font: 500 10px/18px var(--mono); text-align: center; width: 20px; height: 20px; border-radius: 50%; background: var(--tile); color: var(--ink); border: 1px solid var(--ink); box-shadow: 0 2px 8px var(--shadow-soft); }
+  .tag.added { border-color: var(--signal); color: var(--signal-ink); }
+  .tag.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .tag.added.on { background: var(--signal); color: #fff; border-color: var(--signal); }
+  .tag .tip { position: absolute; left: 26px; top: -1px; white-space: nowrap; padding: 2px 8px; border-radius: var(--radius-pill); background: var(--ink); color: var(--paper); font-size: 10px; letter-spacing: .02em; opacity: 0; transform: translateX(-4px); transition: opacity var(--dur-250) var(--ease), transform var(--dur-250) var(--ease); pointer-events: none; text-transform: none; }
+  .tag:hover .tip, .tag.on .tip { opacity: 1; transform: none; }
+  .tags.off .tag { display: none; }
+
+  .foot { position: fixed; left: var(--gutter); bottom: var(--gutter); z-index: 2; font-size: var(--text-mono-xs); color: var(--muted); pointer-events: none; }
+  body.shot .panel, body.shot .foot, body.shot .head { display: none; }
+
+  @media (max-width: 760px) {
+    .head { top: 14px; left: 16px; right: 16px; }
+    h1 { font-size: 30px; }
+    .lede { display: none; }
+    .panel { top: auto; bottom: 0; right: 0; left: 0; width: auto; max-height: 46vh; border-radius: var(--radius-tile-s) var(--radius-tile-s) 0 0; padding: 14px 16px 12px; }
+    .panel .grab { display: block; width: 36px; height: 4px; border-radius: 4px; background: var(--line); margin: -4px auto 10px; }
+    .foot { display: none; }
+  }
+  .panel .grab { display: none; }
+  @media (max-width: 760px) { .panel .grab { display: block; } }
+</style>
+</head>
+<body>
+<canvas id="c" aria-label="Rudder pedal assembly, drag to orbit, scroll or pinch to zoom"></canvas>
+<div class="tags off" id="tags" aria-hidden="true"></div>
+
+<header class="head">
+  <p class="eyebrow mono">Review <b>/</b> Rudder pedals</p>
+  <h1>Pedal assembly</h1>
+  <p class="lede">The STEP assembly with the springs, screws, magnets, Hall sensors, wiring and controller board added. Orange marks are added parts. Drag to orbit, scroll to zoom, shift-drag to pan.</p>
+</header>
+
+<aside class="panel" aria-label="Controls">
+  <span class="grab" aria-hidden="true"></span>
+  <h2 class="mono">Motion</h2>
+  <div class="btns"><button class="primary" id="play" aria-pressed="false">Play motion</button><button id="center">Center</button></div>
+  <div class="row"><label for="rudder">Rudder</label><input id="rudder" type="range" min="-1" max="1" step="0.01" value="0"><output id="rudderv">0</output></div>
+  <div class="row"><label for="toeL">Left toe</label><input id="toeL" type="range" min="0" max="1" step="0.01" value="0"><output id="toeLv">0</output></div>
+  <div class="row"><label for="toeR">Right toe</label><input id="toeR" type="range" min="0" max="1" step="0.01" value="0"><output id="toeRv">0</output></div>
+  <h2 class="mono">View</h2>
+  <div class="row"><label for="explode">Exploded</label><input id="explode" type="range" min="0" max="1" step="0.01" value="0"><output id="explodev">0</output></div>
+  <div class="btns"><button id="labels" aria-pressed="false">Labels</button><button id="reset">Reset view</button></div>
+  <h2 class="mono">Show</h2>
+  <div class="btns" id="chips">
+    <button class="chip added" data-g="springs" aria-pressed="true"><span class="dot"></span>Springs</button>
+    <button class="chip added" data-g="sensors" aria-pressed="true"><span class="dot"></span>Sensors and magnets</button>
+    <button class="chip added" data-g="wiring" aria-pressed="true"><span class="dot"></span>Wiring</button>
+    <button class="chip added" data-g="board" aria-pressed="true"><span class="dot"></span>Board</button>
+    <button class="chip added" data-g="screws" aria-pressed="true"><span class="dot"></span>Anchor screws</button>
+    <button class="chip" data-g="walls" aria-pressed="true"><span class="dot"></span>Side walls</button>
+  </div>
+  <h2 class="mono">Parts</h2>
+  <ul class="parts" id="parts"></ul>
+  <p class="note" id="note">Springs and wires hide while the view is exploded.</p>
+  <h2 class="mono">What I assumed</h2>
+  <ol class="assume">
+    <li>Centering springs hook into the 6 mm hole under each lever's top bar, right above the adjustment holes, and onto a screw in the wall's column of nine holes. I put the screw in hole 5 (the STEP has it in hole 1).</li>
+    <li>Spring sizes are my picks: centering 24 coils, 8.3 mm outside, 1.1 mm wire; brake 13 coils, 5.9 mm outside, 0.9 mm wire.</li>
+    <li>Brake springs run from a small eye screw on the lever's vertical inner edge to the pin through the pedal's clevis, square to the pin. The eye screw is not in the STEP.</li>
+    <li>A toe brake tips the pedal back up to 12 degrees on its hinge bolt, which moves the magnet away from the sensor.</li>
+    <li>Magnets are 10 x 3 mm nickel discs. The round pockets measure 10.2 mm across and 2.8 mm deep.</li>
+    <li>The left Hall sensor sits at the bottom of the slit in the left lever. The right lever in the STEP has no slit (it looks like an older version), so its sensor sits at the mirrored spot.</li>
+    <li>Each sensor has three wires (red, black, signal) that run up the slit, out through the notch and down the lever, then hang in a slack loop to the frame. The right side's wires pass through the inner slot of each wall and across between the walls.</li>
+    <li>The controller board is a 50 x 34 mm perfboard with the Pro Micro on headers, on standoffs on the left wall's outer face below the lever. Its place and size are my guess.</li>
+    <li>The magnet holder on the sensor lever suggests a third Hall sensor for the rudder axis. I did not add one.</li>
+    <li>Full rudder swings each lever about 11 degrees (the sensor lever 20 degrees).</li>
+  </ol>
+</aside>
+<p class="foot mono" id="foot">loading</p>
+
+<script type="module">
+import { THREE, createEngine, ease } from '../js/showreel/engine.js';
+import { createModel, actionPose, ACTION_SECONDS } from '../js/showreel/rudder-pedals.js';
+
+const $ = id => document.getElementById(id);
+const hash = new URLSearchParams(location.hash.slice(1));
+const errors = [];
+addEventListener('error', e => errors.push(String(e.message || e)));
+addEventListener('unhandledrejection', e => errors.push(String(e.reason && e.reason.message || e.reason)));
+if (hash.has('shot')) document.body.classList.add('shot');
+
+const canvas = $('c');
+const engine = createEngine({ canvas, preserve: true });
+const { renderer, scene, camera } = engine;
+camera.near = .01; camera.far = 20; camera.fov = 26;
+const model = createModel({ THREE, quality: 'high' });
+scene.add(model.group);
+engine.adopt(model.group);
+const D = model.details;
+
+// soft contact shadow on the paper ground
+{
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const g = c.getContext('2d'), grd = g.createRadialGradient(64, 64, 6, 64, 64, 62);
+  grd.addColorStop(0, 'rgba(0,0,0,.42)'); grd.addColorStop(.5, 'rgba(0,0,0,.16)'); grd.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = grd; g.fillRect(0, 0, 128, 128);
+  const tex = new THREE.CanvasTexture(c);
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(.5, .34), new THREE.MeshBasicMaterial({ map: tex, color: 0x1a1c20, transparent: true, depthWrite: false }));
+  m.rotation.x = -Math.PI / 2; m.position.y = .0004; m.renderOrder = -1; scene.add(m);
+}
+
+// ---- orbit (drag), zoom (wheel, pinch), pan (shift-drag, two fingers)
+const HOME = { theta: .62, phi: 1.12, r: 1.3, target: new THREE.Vector3(0, .13, 0) };
+const orbit = { theta: HOME.theta, phi: HOME.phi, r: HOME.r, target: HOME.target.clone() };
+const goal = { theta: orbit.theta, phi: orbit.phi, r: orbit.r, target: orbit.target.clone() };
+let dirty = true;
+const ptrs = new Map();
+let panMode = false, lastPinch = 0;
+canvas.addEventListener('pointerdown', e => { canvas.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); panMode = e.shiftKey || e.button === 2; canvas.classList.add('drag'); });
+canvas.addEventListener('pointerup', e => { ptrs.delete(e.pointerId); if (!ptrs.size) canvas.classList.remove('drag'); lastPinch = 0; });
+canvas.addEventListener('pointercancel', e => { ptrs.delete(e.pointerId); lastPinch = 0; });
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+const panBy = (dx, dy) => {
+  const right = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0), up = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 1);
+  const k = goal.r * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * 2 / canvas.clientHeight;
+  goal.target.addScaledVector(right, -dx * k).addScaledVector(up, dy * k);
+};
+canvas.addEventListener('pointermove', e => {
+  const p = ptrs.get(e.pointerId); if (!p) return;
+  const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
+  if (ptrs.size === 2) {
+    const [a, b] = [...ptrs.values()], d = Math.hypot(a.x - b.x, a.y - b.y);
+    if (lastPinch) goal.r = clampR(goal.r * lastPinch / d);
+    lastPinch = d; panBy(dx / 2, dy / 2);
+  } else if (panMode) panBy(dx, dy);
+  else { goal.theta -= dx * .008; goal.phi = Math.max(.12, Math.min(1.62, goal.phi - dy * .008)); }
+  dirty = true;
+});
+const clampR = r => Math.max(.12, Math.min(3, r));
+canvas.addEventListener('wheel', e => { e.preventDefault(); goal.r = clampR(goal.r * Math.exp(e.deltaY * .0012)); dirty = true; }, { passive: false });
+function applyOrbit(k) {
+  orbit.theta += (goal.theta - orbit.theta) * k; orbit.phi += (goal.phi - orbit.phi) * k; orbit.r += (goal.r - orbit.r) * k;
+  orbit.target.lerp(goal.target, k);
+  const s = Math.sin(orbit.phi);
+  camera.position.set(orbit.target.x + orbit.r * s * Math.sin(orbit.theta), orbit.target.y + orbit.r * Math.cos(orbit.phi), orbit.target.z + orbit.r * s * Math.cos(orbit.theta));
+  camera.lookAt(orbit.target);
+  return Math.abs(goal.theta - orbit.theta) + Math.abs(goal.phi - orbit.phi) + Math.abs(goal.r - orbit.r) / orbit.r + orbit.target.distanceTo(goal.target) > 1e-4;
+}
+
+// ---- mechanism state
+const state = { drive: +(hash.get('rudder') || 0), toeL: 0, toeR: 0, explode: +(hash.get('explode') || 0), playing: false, t0: 0 };
+if (hash.has('toe')) { const [l, r] = hash.get('toe').split(',').map(Number); state.toeL = l || 0; state.toeR = r || 0; }
+const shown = { springs: true, sensors: true, wiring: true, board: true, screws: true, walls: true };
+function pose() {
+  model.setProgress(1 - state.explode);
+  model.setDrive(state.drive); model.setToe(state.toeL, state.toeR);
+  const g = state.explode < .002 ? 1 : 0;
+  model.setGrow(g, g);
+  model.refresh();
+  dirty = true;
+}
+function setGroup(name, on) {
+  shown[name] = on;
+  if (name === 'sensors') { D.show('sensors', on); D.show('magnets', on); }
+  else if (name === 'walls') for (const w of [model.parts.wallR, model.parts.wallL]) for (const c of w.children) { if (!c.userData.detail) c.visible = on; }
+  else D.show(name, on);
+  model.refresh(); updateList(); dirty = true;
+}
+
+// ---- labels: the CAD parts and every added part
+const CADL = [
+  ['Left lever arm', 'leverL', [600, 248, 1344.5], 'swings on its top pivot bolt'],
+  ['Right lever arm', 'leverR', [600, 238, 1184.5], 'swings on its top pivot bolt'],
+  ['Left pedal', 'pedalL', [612, 186, 1400], 'tips back on its hinge bolt (toe brake)'],
+  ['Right pedal', 'pedalR', [618, 182, 1130], 'tips back on its hinge bolt (toe brake)'],
+  ['Left side wall', 'wallL', [678.1, 40, 1309], 'nine adjustment holes, four slots, two support slits'],
+  ['Right side wall', 'wallR', [678.1, 40, 1219], ''],
+  ['Middle supports', 'core', [672.2, 150, 1264.5], 'front and back plates'],
+  ['Sensor lever', 'rocker', [543.1, 103.2, 1300], 'rocks on the center bolt'],
+  ['Center magnet holder', 'rocker', [594, 99.4, 1265.8], 'rudder axis magnet (no sensor modeled)'],
+  ['Left link rod', 'rodL', [544, 176, 1334.3], ''],
+  ['Right link rod', 'rodR', [544, 165, 1194.8], ''],
+];
+const ORDERS = { springs: 1, sensors: 2, magnets: 2, wiring: 3, board: 4, screws: 5 };
+const labels = [
+  ...D.labels.map(L => ({ ...L, added: true, show: L.group === 'magnets' ? 'sensors' : L.group })),
+  ...CADL.map(([name, part, cad, note]) => {
+    const obj = part.startsWith('pedal') ? model.parts['lever' + part.slice(5)].getObjectByName(part) : model.parts[part];
+    return { name, note, obj, at: model.localOf(obj, cad), added: false, show: part.startsWith('wall') ? 'walls' : null };
+  }),
+].sort((a, b) => (b.added - a.added) || ((ORDERS[a.group] || 9) - (ORDERS[b.group] || 9)));
+labels.forEach((L, i) => { L.n = i + 1; });
+const tags = $('tags'), list = $('parts');
+for (const L of labels) {
+  const t = document.createElement('div'); t.className = 'tag' + (L.added ? ' added' : ''); t.textContent = L.n;
+  const tip = document.createElement('span'); tip.className = 'tip'; tip.textContent = L.name; t.append(tip);
+  t.addEventListener('click', () => focusOn(L));
+  tags.append(t); L.tag = t;
+  const li = document.createElement('li'); li.tabIndex = 0; li.className = L.added ? 'added' : '';
+  li.innerHTML = `<span class="n">${L.n}</span><div><b></b><span></span></div>`;
+  li.querySelector('b').textContent = L.name; li.querySelector('div span').textContent = L.note || (L.added ? 'added part' : 'from the STEP');
+  li.addEventListener('click', () => focusOn(L)); li.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); focusOn(L); } });
+  list.append(li); L.li = li;
+}
+function updateList() { for (const L of labels) { const vis = !L.show || shown[L.show]; L.li.hidden = !vis; L.vis = vis; } }
+const tmp = new THREE.Vector3();
+function labelWorld(L, out) {
+  if (L.spring || L.wire) { D.labelPoint(L, out); return out.applyMatrix4(model.group.matrixWorld); }
+  return out.copy(L.at).applyMatrix4(L.obj.matrixWorld);
+}
+// where to look from for each added part (theta, phi, distance): past the pedals,
+// from the rear and above; right-side parts mirror across the middle
+const VIEWS = [
+  ['Centering spring', -.85, 1.15, .34], ['Brake spring', -1.45, 1.0, .26], ['Disc magnet', -1.5708, 1.22, .19], ['Hall sensor', -1.5708, 1.22, .19],
+  ['Anchor screw', -1.2, 1.2, .24], ['Controller board', -.3, 1.22, .26], ['Sensor connectors', -.3, 1.12, .18],
+  ['Left sensor wires', -.55, 1.05, .42], ['Right sensor wires', -.55, 1.0, .5],
+];
+let focused = null;
+function focusOn(L) {
+  focused = L;
+  for (const x of labels) { x.tag.classList.toggle('on', x === L); x.li.classList.toggle('on', x === L); }
+  if (!labelsOn) setLabels(true);
+  labelWorld(L, tmp); goal.target.copy(tmp);
+  const v = VIEWS.find(([k]) => L.name.startsWith(k));
+  if (v) {
+    const right = /right/i.test(L.name);
+    let th = right ? Math.PI - v[1] : v[1];
+    while (th - orbit.theta > Math.PI) th -= 2 * Math.PI;
+    while (th - orbit.theta < -Math.PI) th += 2 * Math.PI;
+    goal.theta = th; goal.phi = v[2]; goal.r = clampR(v[3]);
+  } else goal.r = clampR(L.added ? .32 : .5);
+  dirty = true;
+}
+let labelsOn = false;
+function setLabels(on) { labelsOn = on; $('labels').setAttribute('aria-pressed', on); tags.classList.toggle('off', !on); dirty = true; }
+function placeTags() {
+  if (!labelsOn) return;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  for (const L of labels) {
+    if (!L.vis) { L.tag.style.display = 'none'; continue; }
+    labelWorld(L, tmp).project(camera);
+    if (tmp.z > 1) { L.tag.style.display = 'none'; continue; }
+    L.tag.style.display = '';
+    L.tag.style.transform = `translate(${((tmp.x + 1) / 2 * w).toFixed(1)}px, ${((1 - tmp.y) / 2 * h).toFixed(1)}px) translate(-50%, -50%)`;
+  }
+}
+
+// ---- controls
+const bind = (id, key, fmt = v => v.toFixed(2)) => {
+  const el = $(id), out = $(id + 'v');
+  const set = v => { state[key] = v; el.value = v; out.textContent = fmt(v); };
+  el.addEventListener('input', () => { stopPlay(); set(+el.value); pose(); });
+  set(state[key]);
+  return set;
+};
+const setRudder = bind('rudder', 'drive'), setToeL = bind('toeL', 'toeL'), setToeR = bind('toeR', 'toeR'), setExplode = bind('explode', 'explode');
+$('labels').addEventListener('click', () => setLabels(!labelsOn));
+$('reset').addEventListener('click', () => { Object.assign(goal, { theta: HOME.theta, phi: HOME.phi, r: HOME.r }); goal.target.copy(HOME.target); focused = null; for (const x of labels) { x.tag.classList.remove('on'); x.li.classList.remove('on'); } dirty = true; });
+$('center').addEventListener('click', () => { stopPlay(); setRudder(0); setToeL(0); setToeR(0); pose(); });
+for (const chip of document.querySelectorAll('#chips .chip')) chip.addEventListener('click', () => { const on = chip.getAttribute('aria-pressed') !== 'true'; chip.setAttribute('aria-pressed', on); setGroup(chip.dataset.g, on); });
+function stopPlay() { state.playing = false; $('play').setAttribute('aria-pressed', false); $('play').textContent = 'Play motion'; }
+$('play').addEventListener('click', () => {
+  if (state.playing) return stopPlay();
+  state.playing = true; state.t0 = performance.now(); setExplode(0);
+  $('play').setAttribute('aria-pressed', true); $('play').textContent = 'Pause';
+});
+
+// ---- render on demand
+function size() { engine.size(canvas.clientWidth, canvas.clientHeight); dirty = true; }
+addEventListener('resize', size);
+size();
+const mobile = () => innerWidth <= 760;
+if (mobile()) { HOME.r = 1.95; HOME.target.set(0, -.04, 0); goal.r = orbit.r = HOME.r; goal.target.copy(HOME.target); orbit.target.copy(HOME.target); }
+pose(); updateList();
+if (hash.has('labels')) setLabels(true);
+applyOrbit(1);
+function frame(now) {
+  let anim = false;
+  if (state.playing) {
+    const u = ((now - state.t0) / 1000 + .4) % (ACTION_SECONDS + .6);
+    const p = actionPose(Math.min(u, ACTION_SECONDS));
+    setRudder(p.drive); setToeL(p.toeL); setToeR(p.toeR); pose(); anim = true;
+  }
+  if (applyOrbit(.18)) anim = true;
+  if (dirty || anim) { renderer.render(scene, camera); placeTags(); dirty = false; }
+  requestAnimationFrame(frame);
+}
+renderer.render(scene, camera);
+if (hash.has('focus')) { const L = labels[+hash.get('focus') - 1]; if (L) { focusOn(L); applyOrbit(1); } }
+requestAnimationFrame(frame);
+const info = () => `${model.triangles.toLocaleString('en-US')} triangles (${model.cadTriangles.toLocaleString('en-US')} from the STEP, ${D.triangles.toLocaleString('en-US')} added) · ${renderer.info.render.calls} draw calls`;
+renderer.render(scene, camera);
+$('foot').textContent = info();
+window.review = { model, labels, state, orbit, goal, pose, focusOn, setLabels, setGroup, render() { applyOrbit(1); renderer.render(scene, camera); placeTags(); }, info, errors };
+window.reviewReady = true;
+</script>
+</body>
+</html>

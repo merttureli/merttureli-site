@@ -1,22 +1,29 @@
 // Rudder pedals: a showreel project actor (the owner's pedal assembly from CAD
 // and a small light aircraft that answers it). Recipe: docs/recipes/showreel-actor.md
 //
-// The story (about 16 s): the eight CAD part groups fly in from off screen into
+// The story (about 18 s): the eight CAD part groups fly in from off screen into
 // an exploded view and assemble (middle supports, side walls, sensor lever,
-// link rods, then each lever arm with its pedal). The pedals then work right,
-// left, right, left through their real travel: each lever arm swings on its
-// top pivot bolt, its rear end drives the link rod, the rods rock the sensor
-// lever about its center bolt, so one pedal goes forward as the other comes
-// back. The linkage is solved from the CAD joint positions every frame, not
-// keyframed. Far behind, a small generic high-wing light aircraft (procedural,
-// matte, no markings) crosses the hero: it yaws and banks with the pedals a
-// beat later and weaves clear of the focused drift word and the pedals. Then
-// the pedals center, the assembly opens and the parts leave.
+// link rods, then each lever arm with its pedal); the springs hook on and the
+// sensor wires run to the controller board. The pedals then work right, left,
+// right, left through their real travel: each lever arm swings on its top
+// pivot bolt, its rear end drives the link rod, the rods rock the sensor lever
+// about its center bolt, so one pedal goes forward as the other comes back and
+// the centering springs stretch and relax. Then each toe brake is pressed: the
+// pedal tips back on its hinge, the brake spring stretches and the pedal's disc
+// magnet moves off its Hall sensor. The linkage is solved from the CAD joint
+// positions every frame, not keyframed. Behind, a small generic high-wing light
+// aircraft (procedural, matte, no markings) flies a real 3D path that comes
+// nearer and recedes: it yaws and banks with the pedals a beat later, never
+// crosses the focused drift word, the marquee or the pedals. Then the pedals
+// center, the assembly opens and the parts leave.
 //
 //   createModel({ THREE, quality })  -> the CAD assembly (next/assets/3d/rudder-pedals.*,
 //     imported by `python3 tools/cad.py import` with tools/cad/maps/rudder-pedals.json)
-//     group, height, footprint, triangles, getParts(), parts, setProgress(p), setDrive(x), setToe(l, r)
-//   createAccent({ THREE, quality }) -> the light aircraft: group, setProp(angle), dispose()
+//     plus the parts the STEP does not carry (createDetails: springs, anchor screws,
+//     magnets, Hall sensors, wiring, controller board)
+//     group, height, footprint, triangles, getParts(), parts, details, setProgress(p),
+//     setDrive(x), setToe(l, r), setGrow(g), refresh()
+//   createAccent({ THREE, quality }) -> the light aircraft: group, setProp(angle), setHaze(k), dispose()
 //   createActor(ctx)                 -> the reel actor (interface at the top of showreel/index.js)
 //
 // Units meters, +Y up, model origin at the center of its footprint on the
@@ -36,7 +43,7 @@ const CAD = await fetchCadMesh(new URL('../../assets/3d/rudder-pedals.json', imp
 export const SEQUENCE = [
   ['RUDDER_PEDALS_ENTER', 2.4],     // parts fly in from off screen into the exploded view
   ['RUDDER_PEDALS_ASSEMBLE', 2.5],  // exploded -> assembled, in build order
-  ['RUDDER_PEDALS_ACTION', 9.0],    // pedals work right/left; the aircraft crosses behind
+  ['RUDDER_PEDALS_ACTION', 10.6],   // pedals work right/left, then each toe brake; the aircraft flies behind
   ['RUDDER_PEDALS_EXIT', 2.4],      // pedals centered, the assembly opens, parts leave
 ];
 const [ENTER, ASSEMBLE, ACTION, EXIT] = SEQUENCE.map(s => s[0]);
@@ -44,9 +51,16 @@ const [ENTER, ASSEMBLE, ACTION, EXIT] = SEQUENCE.map(s => s[0]);
 // Pedal program in ACTION seconds: [time, drive], drive -1 = left pedal fully
 // forward (left rudder), +1 = right. Eased between keys (feet push, hold, ease off).
 const PROGRAM = [[0, 0], [.55, 0], [1.25, .85], [2.15, .85], [2.95, -1], [4.15, -1], [4.95, .9], [5.9, .9], [6.6, -.45], [7.35, -.45], [8.05, 0]];
+// Toe brakes in ACTION seconds: [time, amount] (0 released, 1 full), the left
+// pedal first, then the right, each pressed, held and let go.
+const TOE_L = [[8.15, 0], [8.6, 1], [9.0, 1], [9.35, 0]];
+const TOE_R = [[9.25, 0], [9.7, 1], [10.05, 1], [10.4, 0]];
 // Aircraft: in ACTION seconds it enters (off screen) and leaves (off screen),
-// how far it lags the pedals, yaw rate per unit drive, bank and rudder yaw.
-const FLIGHT = { t0: .15, t1: 10.1, lag: .28, turn: 1.0, bank: .62, yaw: .14, tilt: 1.15, depth: -1.4 };
+// how far it lags the pedals, yaw rate per unit drive, bank and rudder yaw. It
+// flies between `near` and `far` (world z, behind the pedals at z = 0); its span
+// on screen at the nearest point is `spanNear` x the short side (clamped, px).
+const FLIGHT = { t0: .15, t1: 9.9, lag: .28, turn: 1.15, bank: .62, yaw: .14, near: -.45, far: -3.1, spanNear: [.13, 52, 100], haze: .42 };
+const PAPER = 0xe7e8ea;   // the Studio paper ground (tokens.css --paper): distant aircraft fade toward it
 
 // ================================================================= the look
 // Colors follow the owner's mechanism render (assets/motion/rudder-pedals-mechanism.mp4):
@@ -73,7 +87,7 @@ const CADP = {
   hingeR: [671.98, 113.57], hingeL: [660.64, 113.57],               // pedal hinge bolts (axis z)
 };
 const PHI = 20 * Math.PI / 180;   // sensor lever travel each way (the levers swing about 11 degrees)
-const TOE = 14 * Math.PI / 180;   // toe brake travel
+const TOE = 12 * Math.PI / 180;   // toe brake travel (the pedal tips back on its hinge bolt)
 
 // Build order, exploded offsets (model meters) and how far each part's fly-in
 // lags. Walls slide in sideways onto the supports, the sensor lever from behind,
@@ -161,8 +175,20 @@ export function createModel({ THREE: T = THREE } = {}) {
     });
   }
   function setProgress(p) { prog = p; place(); }
+  // the parts the STEP does not carry (springs, screws, magnets, sensors, wiring, board)
+  const baseOf = obj => { const r = list.find(r => r.mesh === obj); if (r) return r.base; return list.find(r => r.mesh === obj.parent).base.clone().add(obj.position); };
+  const details = createDetails(T, { P, toM, base: baseOf, m });
+  let toeL = 0, toeR = 0, drive = 0, gS = 1, gW = 1, lastKey = '';
+  function refresh() {
+    const key = `${drive.toFixed(5)},${toeL.toFixed(5)},${toeR.toFixed(5)},${prog.toFixed(5)},${gS.toFixed(4)},${gW.toFixed(4)}`;
+    if (key === lastKey) return;
+    lastKey = key;
+    details.setGrow(gS, gW);
+    details.update();
+  }
   function setDrive(x) {
-    const s = solve(-Math.max(-1, Math.min(1, x)) * PHI);
+    drive = Math.max(-1, Math.min(1, x));
+    const s = solve(-drive * PHI);
     P.rocker.rotation.x = s.a;
     sides.forEach((side, i) => {
       side.lever.rotation.z = s.d[i];
@@ -175,16 +201,368 @@ export function createModel({ THREE: T = THREE } = {}) {
     place();
   }
   // toe brakes: each pedal tips back about its hinge bolt (0..1)
-  function setToe(l, r) { pedalL.rotation.z = -TOE * clamp01(l); pedalR.rotation.z = -TOE * clamp01(r); }
-  setDrive(0); setProgress(1);
+  function setToe(l, r) { toeL = clamp01(l); toeR = clamp01(r); pedalL.rotation.z = TOE * toeL; pedalR.rotation.z = TOE * toeR; }
+  // springs hook on and wires run to the board: 0 none, 1 all (springs, wires may differ)
+  function setGrow(s, w = s) { gS = s; gW = w; }
+  setDrive(0); setProgress(1); refresh();
   const size = new T.Vector3(); new T.Box3().setFromObject(m.group).getSize(size);
   return {
-    group: m.group, height: size.y, footprint: Math.max(size.x, size.z), triangles: m.triangles,
-    parts: P, materials: m.materials,
+    group: m.group, height: size.y, footprint: Math.max(size.x, size.z), triangles: m.triangles + details.triangles,
+    cadTriangles: m.triangles, parts: P, materials: m.materials, details, toM,
+    // a STEP point (mm, CAD pose) in the local space of a part or pedal (labels, review page)
+    localOf(obj, cad) { const w = toM(...cad), b = baseOf(obj); return new T.Vector3(w[0] - b.x, w[1] - b.y, w[2] - b.z); },
     getParts: () => list.map(({ name, mesh, explode }) => ({ name, mesh, explode, delay: PARTS[name].delay })),
-    setProgress, setDrive, setToe, solve,
+    setProgress, setDrive, setToe, setGrow, refresh, solve,
     update() {},
-    dispose: m.dispose,
+    dispose() { details.dispose(); m.dispose(); },
+  };
+}
+
+// ================================================================= details
+// Parts the STEP does not carry, placed from its geometry (STEP mm, CAD pose of
+// each lever; every assumption is listed in the owner's review page):
+//   centering springs  each lever's rear (the 6 mm hole under its top bar, right
+//                      above the adjustment holes) to a screw in the wall's column
+//                      of nine M3 holes (x 571.6, y 105.8 to 153.8, 6 mm apart)
+//   anchor screws      M3 x 20 socket heads in the middle hole of each column
+//   brake springs      the pin through each pedal's clevis to an eye on the lever's
+//                      vertical inner edge, along the line square to the pin
+//   magnets            10 x 3 mm discs in the round pockets of the pedal bosses
+//   Hall sensors       A1301 (TO-92) in the left lever's slit facing the magnet;
+//                      the right lever (an older version) has no slit, so its
+//                      sensor sits at the mirrored spot
+//   wiring             three wires per sensor (red, black, signal) up the slit,
+//                      out through the notch, down the lever, a slack loop to the
+//                      frame; the right side goes through a slot in each wall
+//   controller board   a 50 x 34 perfboard with a Pro Micro on the left wall's
+//                      outer face, below the lever
+const DET = {
+  hole: { x: 571.6, y0: 105.8, step: 6, n: 9, k: 4 },
+  screw: { R: { head: 1191.5, tip: 1214.5, hook: 1198.0 }, L: { head: 1337.5, tip: 1314.5, hook: 1331.0 } },
+  springTop: { R: [562.5, 221.7, 1194.5], L: [562.3, 231.0, 1334.5] },
+  pin: { R: [613.6, 166.6, 1185.6], L: [607.7, 171.7, 1343.5] },
+  pinAxis: { R: [-.51, .86, 0], L: [-.43, .9, 0] },
+  eye: { R: [651.1, 188.8, 1185.6], L: [646.8, 190.4, 1343.0] },
+  magnet: { R: { c: [643.97, 129.82, 1195.6], n: [.91, .41, 0] }, L: { c: [634.5, 132.2, 1333.5], n: [.95, .32, 0] }, d: 10, t: 3 },
+  sensor: { R: [654.3, 134.1, 1194.6], L: [645.8, 138.3, 1334.5] },
+  board: { x0: 590, x1: 640, y0: 24, y1: 58, back: 1329.5, t: 1.6 },
+  // wire routes: lever part (lever-local, CAD pose), then a slack loop, then the
+  // part fixed to the frame (ends at the board connector)
+  wires: {
+    L: { lever: [[645.8, 153.6, 1334.5], [646.4, 166, 1334.5], [647.2, 173.5, 1337.5], [647.6, 173.5, 1345.4], [648.2, 160, 1345.7], [647.6, 125, 1345.7], [645.6, 103.5, 1345.9]],
+         fixed: [[634.6, 64, 1345.4], [633.9, 57.5, 1343.6], [633.9, 55.2, 1341.4]], slack: 1.22, out: 1, color: 0xd8a21b },
+    R: { lever: [[654.3, 148.6, 1194.6], [653.8, 152.5, 1192.4], [653.3, 152.5, 1187.0], [652.9, 150, 1183.6], [652.7, 132, 1183.5], [655.6, 117.5, 1183.4]],
+         fixed: [[634.6, 90, 1203.6], [634.6, 89.4, 1212], [634.6, 88.6, 1234.5], [634.6, 86.4, 1264.5], [634.6, 88.6, 1294.5], [634.6, 89, 1316], [634.6, 85, 1326.6], [633.4, 75, 1331.5], [628.6, 64.5, 1339.5], [624.9, 57.5, 1343.6], [624.9, 55.2, 1341.4]], slack: 1.28, out: -1, color: 0x2f8a4a },
+  },
+};
+const DLOOK = {
+  spring: { color: 0x8f959d, roughness: .36, metalness: .85 },
+  magnet: { color: 0xc6c9ce, roughness: .34, metalness: .8 },
+  parts: { color: 0xffffff, roughness: .5, metalness: .25, vertexColors: true },
+  wire: { color: 0xffffff, roughness: .55, metalness: 0, vertexColors: true },
+  board: { color: 0xffffff, roughness: .62, metalness: 0 },
+};
+const C = { black: 0x18191c, tin: 0xb9bdc3, darkMetal: 0x2c2e33, blue: 0x1d4f8c, chip: 0x141518, silver: 0xc9ccd1, gold: 0xb8954a, green: 0x2f5a46, red: 0xb3261e, wireBlack: 0x1f2023 };
+
+function createDetails(T, { P, toM, base, m }) {
+  const mm = v => v / 1000;
+  const V = (a) => new T.Vector3(...a);
+  const local = (obj, cad) => { const w = toM(...cad); const b = base(obj); return new T.Vector3(w[0] - b.x, w[1] - b.y, w[2] - b.z); };
+  const groups = {}, geos = [], mats = {}, labels = [];
+  const mat = (k) => mats[k] || (mats[k] = new T.MeshStandardMaterial({ ...DLOOK[k], side: T.DoubleSide }));
+  const group = name => (groups[name] = groups[name] || Object.assign(new T.Group(), { name: 'detail:' + name }));
+  let tris = 0;
+  // ---- small merged parts with vertex colors, one mesh per parent
+  function bake(list) {
+    const flat = list.map(({ g, color }) => { const n = g.index ? g.toNonIndexed() : g; if (n.attributes.uv) n.deleteAttribute('uv'); n.userData.color = color; return n; });
+    const count = flat.reduce((s, g) => s + g.attributes.position.count, 0);
+    const pos = new Float32Array(count * 3), nrm = new Float32Array(count * 3), col = new Float32Array(count * 3), c = new T.Color();
+    let o = 0;
+    for (const g of flat) {
+      pos.set(g.attributes.position.array, o * 3); nrm.set(g.attributes.normal.array, o * 3);
+      c.setHex(g.userData.color, T.SRGBColorSpace);
+      for (let i = 0; i < g.attributes.position.count; i++) col.set([c.r, c.g, c.b], (o + i) * 3);
+      o += g.attributes.position.count;
+    }
+    for (const { g } of list) g.dispose();
+    const out = new T.BufferGeometry();
+    out.setAttribute('position', new T.BufferAttribute(pos, 3));
+    out.setAttribute('normal', new T.BufferAttribute(nrm, 3));
+    out.setAttribute('color', new T.BufferAttribute(col, 3));
+    out.computeBoundingSphere();
+    geos.push(out); tris += count / 3;
+    return out;
+  }
+  const o3 = new T.Object3D(), Y = new T.Vector3(0, 1, 0);
+  // geometry placed at `at` (meters, parent space) with its +Y along `dir`
+  function put(g, at, dir = null, spin = 0) {
+    o3.position.copy(at); o3.quaternion.identity();
+    if (dir) o3.quaternion.setFromUnitVectors(Y, dir.clone().normalize());
+    if (spin) o3.quaternion.multiply(new T.Quaternion().setFromAxisAngle(Y, spin));
+    o3.scale.set(1, 1, 1); o3.updateMatrix();
+    return g.applyMatrix4(o3.matrix);
+  }
+  const box = (w, h, d) => new T.BoxGeometry(mm(w), mm(h), mm(d));
+  const cyl = (r, h, s = 12) => new T.CylinderGeometry(mm(r), mm(r), mm(h), s, 1);
+  function addMesh(parent, list, key, groupName, name) {
+    const mesh = new T.Mesh(bake(list), mat(key));
+    mesh.name = name; mesh.userData.detail = groupName;
+    const g = group(groupName); if (!g.parent) m.group.add(g);
+    parent.add(mesh); (g.userData.meshes = g.userData.meshes || []).push(mesh);
+    return mesh;
+  }
+
+  // ---- anchor screws in the adjustment holes (parent: the side walls)
+  const holeY = DET.hole.y0 + DET.hole.step * DET.hole.k;
+  for (const S of ['R', 'L']) {
+    const wall = P['wall' + S], d = DET.screw[S], out = Math.sign(d.head - d.tip);   // out: toward the lever
+    const headTop = local(wall, [DET.hole.x, holeY, d.head]), tip = local(wall, [DET.hole.x, holeY, d.tip]);
+    const axis = headTop.clone().sub(tip).normalize();
+    const L = headTop.distanceTo(tip);
+    const list = [
+      { g: put(cyl(1.5, (L - mm(3)) * 1000, 10), tip.clone().addScaledVector(axis, (L - mm(3)) / 2), axis), color: C.darkMetal },
+      { g: put(cyl(2.75, 3, 14), headTop.clone().addScaledVector(axis, -mm(1.5)), axis), color: C.darkMetal },
+    ];
+    addMesh(wall, list, 'parts', 'screws', 'anchorScrew' + S);
+    labels.push({ group: 'screws', name: `Anchor screw (${S === 'L' ? 'left' : 'right'})`, note: `M3 x 20 in adjustment hole ${DET.hole.k + 1} of ${DET.hole.n}`, obj: wall, at: headTop.clone() });
+    void out;
+  }
+
+  // ---- magnets in the pedal pockets (parent: the pedal subs)
+  const pedal = { R: P.leverR.getObjectByName('pedalR'), L: P.leverL.getObjectByName('pedalL') };
+  for (const S of ['R', 'L']) {
+    const ped = pedal[S], g = DET.magnet[S];
+    const at = local(ped, g.c);
+    const mesh = new T.Mesh(put(cyl(DET.magnet.d / 2, DET.magnet.t, 20), at, V(g.n)), mat('magnet'));
+    geos.push(mesh.geometry); tris += 80;
+    mesh.name = 'magnet' + S; mesh.userData.detail = 'magnets';
+    ped.add(mesh); (group('magnets').userData.meshes = group('magnets').userData.meshes || []).push(mesh);
+    labels.push({ group: 'magnets', name: `Disc magnet (${S === 'L' ? 'left' : 'right'} pedal)`, note: '10 x 3 mm, nickel plated, in the round pocket', obj: ped, at });
+  }
+  if (!groups.magnets.parent) m.group.add(groups.magnets);
+
+  // ---- Hall sensors (TO-92 UA: 4.0 x 3.0 x 1.52, legs 15 mm) and the brake spring eyes (parent: the levers)
+  for (const S of ['R', 'L']) {
+    const lever = P['lever' + S], c = local(lever, DET.sensor[S]);
+    const list = [{ g: put(box(1.52, 3.0, 4.0), c), color: C.black }];
+    for (const dz of [-1.27, 0, 1.27]) list.push({ g: put(box(.42, 15, .42), c.clone().add(new T.Vector3(mm(.2), mm(1.5 + 7.5), mm(dz)))), color: C.tin });
+    const eye = local(lever, DET.eye[S]);
+    list.push({ g: put(cyl(.9, 4.5, 8), eye.clone().add(new T.Vector3(-mm(1.6), 0, 0)), new T.Vector3(1, 0, 0)), color: C.darkMetal });
+    list.push({ g: put(new T.TorusGeometry(mm(1.6), mm(.45), 5, 10), eye.clone().add(new T.Vector3(-mm(4.4), 0, 0)), new T.Vector3(0, 0, 1)), color: C.darkMetal });
+    addMesh(lever, list, 'parts', 'sensors', 'sensor' + S);
+    labels.push({ group: 'sensors', name: `Hall sensor (${S === 'L' ? 'left' : 'right'} lever)`, note: S === 'L' ? 'A1301 in the slit, facing the magnet' : 'A1301; no slit in this lever version, placed by mirror', obj: lever, at: c.clone() });
+  }
+
+  // ---- controller board on the left wall's outer face (parent: wallL)
+  {
+    const wall = P.wallL, b = DET.board, z0 = b.back, z1 = b.back + b.t;
+    const cx = (b.x0 + b.x1) / 2, cy = (b.y0 + b.y1) / 2;
+    const at = (x, y, z) => local(wall, [x, y, z]);
+    const list = [
+      { g: put(box(b.x1 - b.x0, b.y1 - b.y0, b.t), at(cx, cy, (z0 + z1) / 2)), color: C.green },
+    ];
+    for (const [x, y] of [[b.x0 + 3, b.y0 + 3], [b.x1 - 3, b.y0 + 3], [b.x0 + 3, b.y1 - 3], [b.x1 - 3, b.y1 - 3]]) {
+      list.push({ g: put(cyl(2.2, z0 - 1324.5, 6), at(x, y, (1324.5 + z0) / 2), new T.Vector3(0, 0, 1)), color: C.tin });
+      list.push({ g: put(cyl(2.4, 1.6, 10), at(x, y, z1 + .8), new T.Vector3(0, 0, 1)), color: C.darkMetal });
+    }
+    // Pro Micro on two header strips, USB toward the rear (-x)
+    const pz = z1 + 2.5, px = 607, py = 38.5;
+    list.push({ g: put(box(30.5, 2.5, 2.5), at(px, py - 7.62, z1 + 1.25)), color: C.black });
+    list.push({ g: put(box(30.5, 2.5, 2.5), at(px, py + 7.62, z1 + 1.25)), color: C.black });
+    list.push({ g: put(box(33, 18, 1.6), at(px, py, pz + .8)), color: C.blue });
+    list.push({ g: put(box(7, 7, 1), at(px + 3, py, pz + 2.1)), color: C.chip });
+    list.push({ g: put(box(3, 3, 1.2), at(px - 7, py + 4, pz + 2.2)), color: C.chip });
+    list.push({ g: put(box(2.6, 2.6, 1.2), at(px - 7, py - 3.5, pz + 2.2)), color: C.chip });
+    list.push({ g: put(box(5.6, 7.6, 2.8), at(px - 15.2, py, pz + 3.0)), color: C.silver });
+    for (let i = 0; i < 12; i++) for (const sy of [-7.62, 7.62]) list.push({ g: put(box(.9, .9, .9), at(px - 14 + i * 2.54, py + sy, pz + 2.05)), color: C.gold });
+    // sensor connectors (3-pin housings) near the top edge
+    for (const x of [633.9, 624.9]) {
+      list.push({ g: put(box(7.62, 2.54, 8), at(x, 55.2, z1 + 4.6)), color: C.black });
+      for (const dx of [-2.54, 0, 2.54]) list.push({ g: put(box(.64, .64, 2.6), at(x + dx, 55.2, z1 + 1.3)), color: C.gold });
+    }
+    addMesh(wall, list, 'parts', 'board', 'boardBody');
+    // perfboard top: tinned pads on a 2.54 mm grid
+    const cv = document.createElement('canvas'); cv.width = 256; cv.height = 176;
+    const g2 = cv.getContext('2d'); g2.fillStyle = '#2f5a46'; g2.fillRect(0, 0, 256, 176);
+    const sx = 256 / (b.x1 - b.x0), sy = 176 / (b.y1 - b.y0);
+    g2.fillStyle = '#b9b49d';
+    for (let x = 2.5; x < b.x1 - b.x0; x += 2.54) for (let y = 2.5; y < b.y1 - b.y0; y += 2.54) { g2.beginPath(); g2.arc(x * sx, y * sy, 3.1, 0, 7); g2.fill(); }
+    g2.fillStyle = '#1d2a24';
+    for (let x = 2.5; x < b.x1 - b.x0; x += 2.54) for (let y = 2.5; y < b.y1 - b.y0; y += 2.54) { g2.beginPath(); g2.arc(x * sx, y * sy, 1.2, 0, 7); g2.fill(); }
+    const tex = new T.CanvasTexture(cv); tex.colorSpace = T.SRGBColorSpace; tex.anisotropy = 4;
+    const topMat = new T.MeshStandardMaterial({ ...DLOOK.board, map: tex });
+    mats.boardTop = topMat;
+    const top = new T.Mesh(new T.PlaneGeometry(mm(b.x1 - b.x0), mm(b.y1 - b.y0)), topMat);
+    top.position.copy(at(cx, cy, z1 + .02)); top.name = 'boardTop'; top.userData.detail = 'board';
+    geos.push(top.geometry); tris += 2;
+    wall.add(top); groups.board.userData.meshes.push(top);
+    labels.push({ group: 'board', name: 'Controller board', note: 'Pro Micro on a 50 x 34 perfboard, standoffs to the left wall', obj: wall, at: at(px, py, pz + 3) });
+    labels.push({ group: 'board', name: 'Sensor connectors', note: 'one 3-pin connector per pedal', obj: wall, at: at(629.4, 55.2, z1 + 8.6) });
+  }
+
+  // ---- springs: one dynamic tube geometry for all four
+  const SPRINGS = [
+    { key: 'centerR', a: { obj: P.leverR, p: local(P.leverR, DET.springTop.R) }, b: { obj: P.wallR, p: local(P.wallR, [DET.hole.x, holeY, DET.screw.R.hook]) }, coils: 24, R: 3.6, r: .55, name: 'Centering spring (right)' },
+    { key: 'centerL', a: { obj: P.leverL, p: local(P.leverL, DET.springTop.L) }, b: { obj: P.wallL, p: local(P.wallL, [DET.hole.x, holeY, DET.screw.L.hook]) }, coils: 24, R: 3.6, r: .55, name: 'Centering spring (left)' },
+    { key: 'brakeR', a: { obj: P.leverR, p: local(P.leverR, DET.eye.R).add(new T.Vector3(-mm(4.4), 0, 0)) }, b: { obj: pedal.R, p: local(pedal.R, DET.pin.R) }, coils: 13, R: 2.5, r: .45, name: 'Brake spring (right)' },
+    { key: 'brakeL', a: { obj: P.leverL, p: local(P.leverL, DET.eye.L).add(new T.Vector3(-mm(4.4), 0, 0)) }, b: { obj: pedal.L, p: local(pedal.L, DET.pin.L) }, coils: 13, R: 2.5, r: .45, name: 'Brake spring (left)' },
+  ];
+  const PER = 8, RAD = 4;
+  let nv = 0, ni = 0;
+  for (const s of SPRINGS) { s.M = s.coils * PER + 1; s.v0 = nv; nv += s.M * RAD; ni += (s.M - 1) * RAD * 6; }
+  const sg = new T.BufferGeometry();
+  const sPos = new T.BufferAttribute(new Float32Array(nv * 3), 3).setUsage(T.DynamicDrawUsage);
+  const sNrm = new T.BufferAttribute(new Float32Array(nv * 3), 3).setUsage(T.DynamicDrawUsage);
+  const sIdx = new Uint32Array(ni);
+  { let k = 0; for (const s of SPRINGS) for (let i = 0; i < s.M - 1; i++) for (let j = 0; j < RAD; j++) {
+    const a = s.v0 + i * RAD + j, b = s.v0 + i * RAD + (j + 1) % RAD, c = a + RAD, d = b + RAD;
+    sIdx.set([a, c, b, b, c, d], k); k += 6;
+  } }
+  sg.setAttribute('position', sPos); sg.setAttribute('normal', sNrm); sg.setIndex(new T.BufferAttribute(sIdx, 1));
+  const springMesh = new T.Mesh(sg, mat('spring')); springMesh.name = 'springs'; springMesh.frustumCulled = false;
+  group('springs').add(springMesh); m.group.add(groups.springs);
+  geos.push(sg); tris += ni / 3;
+  for (const s of SPRINGS) labels.push({ group: 'springs', name: s.name, note: s.key.startsWith('center') ? '24 coils, 8.3 mm outside, hooked on the anchor screw' : '13 coils, 5.9 mm outside, lever eye to the pedal clevis pin', spring: s });
+
+  // ---- wires: one dynamic tube geometry, vertex colors, three per sensor
+  const WR = [];
+  for (const S of ['L', 'R']) {
+    const w = DET.wires[S], lever = P['lever' + S];
+    const ctrl = w.lever.length + 5 + w.fixed.length;           // control points: lever, 5 loop points, fixed
+    const SEG = 5, M = (ctrl - 1) * SEG + 1;
+    const fixed = w.fixed.map(c => V(toM(...c)));
+    const pts = Array.from({ length: ctrl }, () => new T.Vector3());
+    WR.push({ S, lever, lp: w.lever.map(c => local(lever, c)), fixed, ctrl, SEG, M, pts, slack: w.slack, out: w.out, colors: [C.red, C.wireBlack, w.color], len: 0 });
+  }
+  const WRAD = 3;
+  let wv = 0, wi = 0;
+  for (const r of WR) { r.v0 = wv; wv += r.M * WRAD * 3; wi += (r.M - 1) * WRAD * 6 * 3; }
+  const wg = new T.BufferGeometry();
+  const wPos = new T.BufferAttribute(new Float32Array(wv * 3), 3).setUsage(T.DynamicDrawUsage);
+  const wNrm = new T.BufferAttribute(new Float32Array(wv * 3), 3).setUsage(T.DynamicDrawUsage);
+  const wCol = new Float32Array(wv * 3), wIdx = new Uint32Array(wi);
+  { let k = 0; const c = new T.Color();
+    for (const r of WR) for (let wj = 0; wj < 3; wj++) {
+      const v0 = r.v0 + wj * r.M * WRAD;
+      c.setHex(r.colors[wj], T.SRGBColorSpace);
+      for (let i = 0; i < r.M * WRAD; i++) wCol.set([c.r, c.g, c.b], (v0 + i) * 3);
+      for (let i = 0; i < r.M - 1; i++) for (let j = 0; j < WRAD; j++) {
+        const a = v0 + i * WRAD + j, b = v0 + i * WRAD + (j + 1) % WRAD;
+        wIdx.set([a, a + WRAD, b, b, a + WRAD, b + WRAD], k); k += 6;
+      }
+    } }
+  wg.setAttribute('position', wPos); wg.setAttribute('normal', wNrm); wg.setAttribute('color', new T.BufferAttribute(wCol, 3)); wg.setIndex(new T.BufferAttribute(wIdx, 1));
+  const wireMesh = new T.Mesh(wg, mat('wire')); wireMesh.name = 'wires'; wireMesh.frustumCulled = false;
+  group('wiring').add(wireMesh); m.group.add(groups.wiring);
+  geos.push(wg); tris += wi / 3;
+  labels.push({ group: 'wiring', name: 'Left sensor wires', note: 'red, black, yellow signal; slack loop to the board', wire: WR[0], frac: .58 });
+  labels.push({ group: 'wiring', name: 'Right sensor wires', note: 'red, black, green signal; through a wall slot on each side', wire: WR[1], frac: .5 });
+
+  // ---- updates (model space): springs and wires follow their anchors
+  const inv = new T.Matrix4(), A = new T.Vector3(), B = new T.Vector3(), ax = new T.Vector3(), u = new T.Vector3(), wv3 = new T.Vector3(), p = new T.Vector3(), t = new T.Vector3(), n1 = new T.Vector3(), n2 = new T.Vector3(), q = new T.Vector3(), tmp = new T.Vector3();
+  const toModel = (obj, lp, out) => out.copy(lp).applyMatrix4(obj.matrixWorld).applyMatrix4(inv);
+  const center = [];   // scratch centerline
+  function tube(attrPos, attrNrm, v0, line, M, rad, radial, frame) {
+    // frame: 'axis' (springs, normals square to the spring axis) or 'transport' (wires)
+    for (let i = 0; i < M; i++) {
+      const a = line[Math.max(0, i - 1)], b = line[Math.min(M - 1, i + 1)];
+      t.subVectors(b, a); if (t.lengthSq() < 1e-14) t.copy(ax); t.normalize();
+      if (frame === 'axis') { n1.crossVectors(t, ax); if (n1.lengthSq() < 1e-6) n1.copy(u); n1.normalize(); }
+      else { if (i === 0) { n1.crossVectors(t, tmp.set(0, 0, 1)); if (n1.lengthSq() < 1e-4) n1.crossVectors(t, tmp.set(0, 1, 0)); } n1.addScaledVector(t, -n1.dot(t)).normalize(); }
+      n2.crossVectors(t, n1).normalize();
+      const c = line[i];
+      for (let j = 0; j < radial; j++) {
+        const ang = j / radial * Math.PI * 2, cs = Math.cos(ang), sn = Math.sin(ang);
+        q.copy(n1).multiplyScalar(cs).addScaledVector(n2, sn);
+        const k = v0 + i * radial + j;
+        attrNrm.setXYZ(k, q.x, q.y, q.z);
+        attrPos.setXYZ(k, c.x + q.x * rad, c.y + q.y * rad, c.z + q.z * rad);
+      }
+    }
+  }
+  const sLine = [];
+  function updateSprings(grow) {
+    for (const s of SPRINGS) {
+      toModel(s.a.obj, s.a.p, A); toModel(s.b.obj, s.b.p, B);
+      ax.subVectors(B, A); const L = ax.length(); ax.normalize();
+      u.crossVectors(ax, Math.abs(ax.z) < .9 ? tmp.set(0, 0, 1) : tmp.set(1, 0, 0)).normalize(); wv3.crossVectors(ax, u);
+      const R = mm(s.R), taper = .5 / s.coils, gl = Math.max(1e-4, grow);
+      for (let i = 0; i < s.M; i++) {
+        const sp = Math.min(i / (s.M - 1), gl), th = sp * s.coils * Math.PI * 2;
+        const rr = R * ease.inOutSine(clamp01(Math.min(sp, 1 - sp) / taper));
+        (sLine[i] = sLine[i] || new T.Vector3()).copy(A).addScaledVector(ax, L * sp).addScaledVector(u, rr * Math.cos(th)).addScaledVector(wv3, rr * Math.sin(th));
+      }
+      s.length = L;
+      tube(sPos, sNrm, s.v0, sLine, s.M, mm(s.r), RAD, 'axis');
+    }
+    sPos.needsUpdate = sNrm.needsUpdate = true;
+  }
+  const wLine = [], off = [];
+  function catmull(P0, P1, P2, P3, tt, out) {
+    const t2 = tt * tt, t3 = t2 * tt;
+    return out.set(
+      .5 * (2 * P1.x + (-P0.x + P2.x) * tt + (2 * P0.x - 5 * P1.x + 4 * P2.x - P3.x) * t2 + (-P0.x + 3 * P1.x - 3 * P2.x + P3.x) * t3),
+      .5 * (2 * P1.y + (-P0.y + P2.y) * tt + (2 * P0.y - 5 * P1.y + 4 * P2.y - P3.y) * t2 + (-P0.y + 3 * P1.y - 3 * P2.y + P3.y) * t3),
+      .5 * (2 * P1.z + (-P0.z + P2.z) * tt + (2 * P0.z - 5 * P1.z + 4 * P2.z - P3.z) * t2 + (-P0.z + 3 * P1.z - 3 * P2.z + P3.z) * t3));
+  }
+  const g = new T.Vector3(0, -1, 0), chord = new T.Vector3(), bulge = new T.Vector3();
+  function updateWires(grow) {
+    for (const r of WR) {
+      let k = 0;
+      for (const lp of r.lp) toModel(r.lever, lp, r.pts[k++]);
+      const E = r.pts[k - 1], F = r.fixed[0];
+      chord.subVectors(F, E); const Lc = chord.length(); chord.normalize();
+      if (!r.len) r.len = Lc * r.slack;
+      const sag = Math.sqrt(Math.max(0, 3 * Lc * (r.len - Lc) / 8));
+      bulge.copy(g).addScaledVector(chord, -g.dot(chord)).addScaledVector(tmp.set(0, 0, r.out), .8);
+      bulge.addScaledVector(chord, -bulge.dot(chord)).normalize();
+      for (let j = 1; j <= 5; j++) { const tt = j / 6; r.pts[k++].copy(E).addScaledVector(chord, Lc * tt).addScaledVector(bulge, 4 * sag * tt * (1 - tt)); }
+      for (const f of r.fixed) r.pts[k++].copy(f);
+      // smooth through the control points
+      let i = 0;
+      for (let c = 0; c < r.ctrl - 1; c++) for (let s2 = 0; s2 < r.SEG; s2++) catmull(r.pts[Math.max(0, c - 1)], r.pts[c], r.pts[c + 1], r.pts[Math.min(r.ctrl - 1, c + 2)], s2 / r.SEG, (wLine[i] = wLine[i] || new T.Vector3())), i++;
+      (wLine[i] = wLine[i] || new T.Vector3()).copy(r.pts[r.ctrl - 1]);
+      // grow from the sensor toward the board: points past `grow` collapse onto the last grown one
+      const last = Math.max(0, Math.floor(grow * (r.M - 1)));
+      for (let j = last + 1; j < r.M; j++) wLine[j].copy(wLine[last]);
+      // three wires side by side, offset along a transported frame
+      for (let wj = 0; wj < 3; wj++) {
+        const d = (wj - 1) * mm(1.15);
+        n1.set(0, 0, 0);
+        for (let j = 0; j < r.M; j++) {
+          const a = wLine[Math.max(0, j - 1)], b = wLine[Math.min(r.M - 1, j + 1)];
+          t.subVectors(b, a); if (t.lengthSq() < 1e-14) t.set(0, 1, 0); t.normalize();
+          if (j === 0) { n1.crossVectors(t, tmp.set(0, 0, 1)); if (n1.lengthSq() < 1e-4) n1.crossVectors(t, tmp.set(1, 0, 0)); }
+          n1.addScaledVector(t, -n1.dot(t)); if (n1.lengthSq() < 1e-10) n1.set(1, 0, 0); n1.normalize();
+          (off[j] = off[j] || new T.Vector3()).copy(wLine[j]).addScaledVector(n1, d);
+        }
+        tube(wPos, wNrm, r.v0 + wj * r.M * WRAD, off, r.M, mm(.45), WRAD, 'transport');
+      }
+    }
+    wPos.needsUpdate = wNrm.needsUpdate = true;
+  }
+  let growS = 1, growW = 1;
+  const shown = { springs: true, wiring: true, screws: true, magnets: true, sensors: true, board: true };
+  function update() {
+    m.group.updateMatrixWorld(true);
+    inv.copy(m.group.matrixWorld).invert();
+    groups.springs.visible = shown.springs && growS > .001; groups.wiring.visible = shown.wiring && growW > .001;
+    if (groups.springs.visible) updateSprings(growS);
+    if (groups.wiring.visible) updateWires(growW);
+  }
+  // a label's anchor in model space
+  function labelPoint(L, out) {
+    m.group.updateMatrixWorld(true); inv.copy(m.group.matrixWorld).invert();
+    if (L.spring) { toModel(L.spring.a.obj, L.spring.a.p, A); toModel(L.spring.b.obj, L.spring.b.p, B); return out.copy(A).lerp(B, .5); }
+    if (L.wire) { const r = L.wire; return out.copy(r.pts[Math.floor(r.ctrl * L.frac)] || r.pts[0]); }
+    return toModel(L.obj, L.at, out);
+  }
+  return {
+    groups, labels, labelPoint, update, springs: SPRINGS, wires: WR,
+    setGrow(s, w = s) { growS = clamp01(s); growW = clamp01(w); },
+    get triangles() { return Math.round(tris); },
+    show(name, on) { const g = groups[name]; if (!g) return; shown[name] = on; g.visible = on; for (const mesh of g.userData.meshes || []) mesh.visible = on; },
+    dispose() { for (const x of geos) x.dispose(); for (const k in mats) { if (mats[k].map) mats[k].map.dispose(); mats[k].dispose(); } },
   };
 }
 
@@ -240,9 +618,18 @@ export function createAccent({ THREE: T = THREE, quality = 'high' } = {}) {
   const disc = new T.Mesh(discGeo, discMat); disc.position.z = .372; group.add(disc);
   const bladeGeo = box(.21, .016, .006), blade = new T.Mesh(bladeGeo, mats[1]); blade.position.z = .37; group.add(blade);
   geos.push(discGeo, bladeGeo); mats.push(discMat);
+  // distance haze: the colors fade toward the paper ground (no fog, no transparency)
+  const baseCol = mats.slice(0, 3).map(m => m.color.clone()), paper = new T.Color(PAPER);
+  let lastHaze = -1;
   return {
     group, span: 1.08,
     setProp(a) { blade.rotation.z = a; },
+    setHaze(k) {
+      if (Math.abs(k - lastHaze) < .004) return;
+      lastHaze = k;
+      mats.slice(0, 3).forEach((m, i) => m.color.copy(baseCol[i]).lerp(paper, k));
+      discMat.opacity = .14 * (1 - k);
+    },
     dispose() { for (const g of geos) g.dispose(); for (const m of mats) m.dispose(); },
   };
 }
@@ -262,15 +649,19 @@ function mergeGeometries(T, list) {
   return out;
 }
 
-// pedal drive at ACTION time u (pure)
-function driveAt(u) {
-  if (u <= PROGRAM[0][0]) return PROGRAM[0][1];
-  for (let i = 1; i < PROGRAM.length; i++) {
-    const [t1, v1] = PROGRAM[i], [t0, v0] = PROGRAM[i - 1];
+// eased key interpolation at time u: keys [[t, v], ...] (pure)
+function keyed(K, u) {
+  if (u <= K[0][0]) return K[0][1];
+  for (let i = 1; i < K.length; i++) {
+    const [t1, v1] = K[i], [t0, v0] = K[i - 1];
     if (u < t1) return lerp(v0, v1, ease.inOutSine((u - t0) / (t1 - t0)));
   }
-  return PROGRAM[PROGRAM.length - 1][1];
+  return K[K.length - 1][1];
 }
+const driveAt = u => keyed(PROGRAM, u);   // pedal drive at ACTION time u
+// the mechanism's pose at ACTION time u (review page "play motion")
+export const ACTION_SECONDS = SEQUENCE[2][1];
+export function actionPose(u) { return { drive: driveAt(u), toeL: keyed(TOE_L, u), toeR: keyed(TOE_R, u) }; }
 
 // ==================================================================== actor
 export async function createActor(ctx) {
@@ -321,132 +712,128 @@ export async function createActor(ctx) {
   });
   const N = parts.length;
 
-  const REST = { p: 0, drive: 0, toeL: 0, toeR: 0, shadow: 0, yaw: 0, fly: -1, flyExtra: 0, flyOut: 0, flyFade: 0 };
+  const REST = { p: 0, drive: 0, toeL: 0, toeR: 0, growS: 0, growW: 0, shadow: 0, yaw: 0, fly: -1, flyExtra: 0, flyOut: 0, flyFade: 0 };
   const v = { ...REST }, a0 = { ...REST };
   let dist = 2;
   const q = new THREE.Quaternion(), tmp = new THREE.Vector3(), piv = new THREE.Vector3();
 
-  // ---- the flight path, built per layout in screen px, stored in world units
-  // Heading follows the pedals a beat later: psi' = -turn * drive(t - lag).
+  // ---- the flight path: a real 3D path behind the pedals, fitted per layout.
+  // Its shape is the pedal program integrated once (heading rate = -turn x
+  // drive, a beat later) in the horizontal plane; a candidate places it in the
+  // scene: travel direction (a rotation keeps every turn's sense), speed, the
+  // depth and height where it enters off one side. It must enter and leave off
+  // screen, stay between `near` and `far`, between the top bar and the marquee,
+  // and never touch the focused word. It is always deeper than the pedals, so
+  // it can only pass behind them (kept short). Then: long on screen, a real
+  // change of depth (it comes nearer and recedes), close to the word.
   const DT = 1 / 30, NS = Math.ceil((FLIGHT.t1 - FLIGHT.t0) / DT) + 1;
   const unit = { x: new Float32Array(NS), y: new Float32Array(NS), psi: new Float32Array(NS) };
-  function integrate() {
+  {
     let x = 0, y = 0, psi = 0;
     for (let i = 0; i < NS; i++) {
       unit.x[i] = x; unit.y[i] = y; unit.psi[i] = psi;
-      const u = FLIGHT.t0 + i * DT;
-      psi += -FLIGHT.turn * driveAt(u - FLIGHT.lag) * DT;
+      psi += -FLIGHT.turn * driveAt(FLIGHT.t0 + i * DT - FLIGHT.lag) * DT;
       x += Math.cos(psi) * DT; y += Math.sin(psi) * DT;
     }
-    return { x: unit.x.slice(), y: unit.y.slice(), psi: unit.psi.slice() };
   }
-  const path = { wx: new Float32Array(NS), wy: new Float32Array(NS), wz: 0, scale: .05, speed: 0, ok: false };
-  const ndc = new THREE.Vector3(), ray = new THREE.Vector3();
+  const path = { x: new Float32Array(NS), y: new Float32Array(NS), z: new Float32Array(NS), scale: .05, speed: 0, ok: false, camZ: 2.2, dNear: 2.6, dFar: 5.3 };
+  const mvp = new THREE.Matrix4();
 
   function fitFlight(F, objBox) {
     const { camera, w, h, free, avoid } = F;
     camera.updateMatrixWorld();
-    // world size of one px at the flight depth
-    const depth = FLIGHT.depth;
-    const unproject = (px, py, out) => {
-      ndc.set(px / w * 2 - 1, 1 - py / h * 2, .5).unproject(camera);
-      ray.copy(ndc).sub(camera.position).normalize();
-      const t = (depth - camera.position.z) / ray.z;
-      out.copy(camera.position).addScaledVector(ray, t);
-      return out;
-    };
-    const a = unproject(0, h / 2, new THREE.Vector3()), b = unproject(w, h / 2, new THREE.Vector3());
-    const wpp = (b.x - a.x) / w;                             // world units per px at the flight depth
-    const spanPx = Math.max(42, Math.min(72, Math.min(w, h) * .07));
-    path.scale = spanPx * wpp / plane.span;
-    const m = spanPx * .75;                                  // keep-out radius around the aircraft, px
+    mvp.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+    const e = mvp.elements, pr = { x: 0, y: 0, d: 0 };
+    const proj = (x, y, z) => { const W = e[3] * x + e[7] * y + e[11] * z + e[15]; pr.x = ((e[0] * x + e[4] * y + e[8] * z + e[12]) / W + 1) / 2 * w; pr.y = (1 - (e[1] * x + e[5] * y + e[9] * z + e[13]) / W) / 2 * h; pr.d = W; return pr; };
+    const camZ = camera.position.z, tanH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)), k1 = h / 2 / tanH;   // px per world unit at distance 1
+    const halfW = d => d * tanH * camera.aspect;
+    const dNear = camZ - FLIGHT.near, dFar = camZ - FLIGHT.far;
+    const [fr, lo, hi] = FLIGHT.spanNear, spanNearPx = Math.max(lo, Math.min(hi, fr * Math.min(w, h)));
+    const span = spanNearPx * dNear / k1;                          // aircraft span, world units
+    path.scale = span / plane.span; path.camZ = camZ; path.dNear = dNear; path.dFar = dFar;
+    const margin = d => span * k1 / d * .7;                         // keep-out radius, px
+    const wr = avoid[0] || null;
     let best = null;
-    // The path's shape comes from the pedal program (integrated once); a
-    // candidate places it on screen: travel direction (a rotation keeps every
-    // turn's sense), speed and the off-screen point where it enters. It must
-    // enter and leave off screen (through the sides: it stays between the top
-    // bar and the marquee) and never touch the word. Then: as little
-    // time as possible behind the pedals or outside the free band, close to
-    // the word and around it (on more than one side), long on screen.
-    const U = integrate(), fh = free.b - free.t;
-    const wr = avoid[0] || null, wc = wr ? { x: (wr.l + wr.r) / 2, y: (wr.t + wr.b) / 2 } : null;
-    const big = Math.max(w, h), STEP = 3, edge = Math.max(14, (w + h) / 60);
-    const starts = [];
-    for (let y = 0; y <= h; y += edge) starts.push([-m, y], [w + m, y]);
-    for (let x = 0; x <= w; x += edge) starts.push([x, -m], [x, h + m]);
-    const out = (x, y, k) => x < -k || x > w + k || y < -k || y > h + k;
+    const fh = free.b - free.t, STEP = 3, zMid = (FLIGHT.near + FLIGHT.far) / 2;
     for (let r = 0; r < 24; r++) {
       const rho = r * Math.PI / 12, c = Math.cos(rho), n = Math.sin(rho);
-      for (const sp of [.09, .12, .15, .18]) {
-        const sx = sp * big;
-        const ex = sx * (c * U.x[NS - 1] - n * U.y[NS - 1]), ey = -sx * (n * U.x[NS - 1] + c * U.y[NS - 1]);
-        const dx0 = c * Math.cos(U.psi[0]) - n * Math.sin(U.psi[0]), dy0 = -(n * Math.cos(U.psi[0]) + c * Math.sin(U.psi[0]));
-        for (const [X0, Y0] of starts) {
-          if (!out(X0 + ex, Y0 + ey, m * .8)) continue;                     // must leave the screen
-          if ((X0 < 0 && dx0 <= 0) || (X0 > w && dx0 >= 0) || (Y0 < 0 && dy0 <= 0) || (Y0 > h && dy0 >= 0)) continue;  // and head in
-          let clear = Infinity, nearWord = Infinity, hidden = 0, band = 0, seen = 0, amin = Infinity, amax = -Infinity, bad = false;
-          for (let i = 0; i < NS; i += STEP) {
-            const px = X0 + sx * (c * U.x[i] - n * U.y[i]), py = Y0 - sx * (n * U.x[i] + c * U.y[i]);
-            if (out(px, py, 0)) continue;
-            seen++;
-            if (py < free.t + m * .4 || py > free.b - m * .4) { bad = true; break; }   // never over the top bar or the marquee
-            if (py < free.t + m || py > free.b - m) band++;
-            if (wr) {
-              const d = rectDist(wr, px, py);
-              if (d < m) { bad = true; break; }
-              nearWord = Math.min(nearWord, d);
-              if (d < 4 * m) { const a = Math.atan2(py - wc.y, (px - wc.x) * .5); amin = Math.min(amin, a); amax = Math.max(amax, a); }
+      if (Math.abs(c) < .25) continue;                                // must enter across a side
+      for (const sp of [.8, 1, 1.3, 1.7, 2.2]) {
+        const s = sp * 2 * halfW(camZ - zMid) / 8.5;               // world units per second
+        // the path's own depth span decides where it can sit
+        let zr0 = Infinity, zr1 = -Infinity;
+        for (let i = 0; i < NS; i += STEP) { const dz = -s * (n * unit.x[i] + c * unit.y[i]); zr0 = Math.min(zr0, dz); zr1 = Math.max(zr1, dz); }
+        const zA = FLIGHT.far - zr0, zB = FLIGHT.near - zr1;
+        if (zA > zB) continue;
+        for (let iz = 0; iz < 4; iz++) {
+          const z0 = zA + (zB - zA) * (iz + .5) / 4, d0 = camZ - z0;
+          const x0 = (c > 0 ? -1 : 1) * (halfW(d0) + span * 1.2);
+          for (const fy of [.12, .3, .5, .7, .88]) for (const climb of [-1, 0, 1]) {
+            const y0 = (h / 2 - (free.t + fh * fy)) / k1 * d0;
+            const vy = climb * .55 * fh / k1 * d0 / (FLIGHT.t1 - FLIGHT.t0);   // a gentle climb or descent across the flight
+            let seen = 0, hidden = 0, dMin = Infinity, dMax = 0, yMin = Infinity, yMax = -Infinity, nearWord = Infinity, bad = false, endOut = false;
+            for (let i = 0; i < NS; i += STEP) {
+              const P = proj(x0 + s * (c * unit.x[i] - n * unit.y[i]), y0 + vy * i * DT, z0 - s * (n * unit.x[i] + c * unit.y[i]));
+              const m = margin(P.d);
+              if (P.x < -m || P.x > w + m || P.y < -m || P.y > h + m) { if (i + STEP >= NS) endOut = true; continue; }
+              seen++;
+              if (P.y < free.t + m * .45 || P.y > free.b - m * .45) { bad = true; break; }
+              if (wr) { const dd = rectDist(wr, P.x, P.y); if (dd < m) { bad = true; break; } nearWord = Math.min(nearWord, dd - m); }
+              if (objBox && rectDist(objBox, P.x, P.y) < m * .35) hidden++;   // passes behind the pedals (it is always deeper than they are)
+              dMin = Math.min(dMin, P.d); dMax = Math.max(dMax, P.d); yMin = Math.min(yMin, P.y); yMax = Math.max(yMax, P.y);
             }
-            if (objBox && rectDist(objBox, px, py) < m * .5) hidden++;
+            if (!bad && !endOut) {   // the last sample must be off screen too
+              const P = proj(x0 + s * (c * unit.x[NS - 1] - n * unit.y[NS - 1]), y0 + vy * (NS - 1) * DT, z0 - s * (n * unit.x[NS - 1] + c * unit.y[NS - 1])), m = margin(P.d);
+              endOut = P.x < -m || P.x > w + m || P.y < -m || P.y > h + m;
+            }
+            if (bad || !endOut || seen < 10) continue;
+            const vis = seen / Math.ceil(NS / STEP), depth = clamp01((dMax / dMin - 1) / .7), close = clamp01((dNear * 1.5 - dMin) / (dNear * .5));
+            const rise = clamp01((yMax - yMin) / (.3 * fh));             // seen from above or below, the turns read as curves
+            const score = 150 * vis + 110 * depth + 50 * close + 90 * rise - 260 * hidden / seen - .25 * Math.abs(Math.min(nearWord, 600) - 60) + (c > 0 ? 6 : 0) - 5 * Math.abs(sp - 1) / .25;
+            if (!best || score > best.score) best = { score, x0, y0, vy, z0, c, n, s, vis, dMin, dMax, nearWord, hidden: hidden / seen, rise };
           }
-          if (bad || seen < 8) continue;
-          const vis = seen / Math.ceil(NS / STEP), around = amax > amin ? Math.min(Math.PI, amax - amin) : 0;
-          const score = -350 * hidden / seen - 700 * band / seen + 150 * vis + 30 * around - .4 * Math.abs(Math.min(nearWord, 1e3) - 2.2 * m) - 10 * Math.abs(sp - .12) / .03;
-          if (!best || score > best.score) best = { score, X0, Y0, c, n, sx, clear: nearWord - m, around, hidden: hidden / seen, band: band / seen, vis };
         }
       }
     }
     path.ok = !!best;
     if (!best) return;
-    const p = new THREE.Vector3();
     for (let i = 0; i < NS; i++) {
-      const px = best.X0 + best.sx * (best.c * U.x[i] - best.n * U.y[i]), py = best.Y0 - best.sx * (best.n * U.x[i] + best.c * U.y[i]);
-      unproject(px, py, p);
-      path.wx[i] = p.x; path.wy[i] = p.y;
+      path.x[i] = best.x0 + best.s * (best.c * unit.x[i] - best.n * unit.y[i]);
+      path.y[i] = best.y0 + best.vy * i * DT;
+      path.z[i] = best.z0 - best.s * (best.n * unit.x[i] + best.c * unit.y[i]);
     }
-    path.wz = depth;
-    path.speed = best.sx * wpp;                              // world units per second along the path (for the exit run)
-    path.clear = best.clear; path.around = best.around; path.hidden = best.hidden; path.band = best.band; path.vis = best.vis;
+    path.speed = best.s; path.climb = best.vy;
+    Object.assign(path, { vis: best.vis, near: best.dMin, far: best.dMax, clear: best.nearWord, hidden: best.hidden, rise: best.rise });
   }
 
   // aircraft pose at flight time s (seconds since FLIGHT.t0); past the end it keeps going straight
-  const e1 = new THREE.Vector3(1, 0, 0), e2 = new THREE.Vector3(), nrm = new THREE.Vector3(), fwd = new THREE.Vector3(), up = new THREE.Vector3(), side = new THREE.Vector3(), mtx = new THREE.Matrix4();
-  e2.set(0, Math.cos(FLIGHT.tilt), -Math.sin(FLIGHT.tilt)); nrm.crossVectors(e1, e2);
+  const fwd = new THREE.Vector3(), up = new THREE.Vector3(), side = new THREE.Vector3(), mtx = new THREE.Matrix4();
   function posePlane(s, extra = 0, fade = 0) {
     const fi = s / DT, i = Math.max(0, Math.min(NS - 2, Math.floor(fi))), k = clamp01(fi - i);
-    let x = lerp(path.wx[i], path.wx[i + 1], k), y = lerp(path.wy[i], path.wy[i + 1], k);
-    // screen-space heading from the stored path (perspective-correct), extended straight past the end
-    const dx = path.wx[i + 1] - path.wx[i], dy = path.wy[i + 1] - path.wy[i], L = Math.hypot(dx, dy) || 1;
+    let x = lerp(path.x[i], path.x[i + 1], k), y = lerp(path.y[i], path.y[i + 1], k), z = lerp(path.z[i], path.z[i + 1], k);
+    const pitch = Math.atan2(path.climb || 0, path.speed || 1);
+    const dx = path.x[i + 1] - path.x[i], dz = path.z[i + 1] - path.z[i], L = Math.hypot(dx, dz) || 1;
     const over = Math.max(0, s - (NS - 1) * DT) + extra;
-    x += dx / L * path.speed * over; y += dy / L * path.speed * over;
-    const d = driveAt(FLIGHT.t0 + s - FLIGHT.lag * .6);
-    const heading = Math.atan2(dy, dx) - FLIGHT.yaw * d;        // rudder yaws the nose into the turn
-    fwd.copy(e1).multiplyScalar(Math.cos(heading)).addScaledVector(e2, Math.sin(heading));
-    side.crossVectors(fwd, nrm);                                  // right wing
+    x += dx / L * path.speed * over; z += dz / L * path.speed * over; y += (path.climb || 0) * over;
+    const heading = Math.atan2(-dz, dx) - FLIGHT.yaw * driveAt(FLIGHT.t0 + s - FLIGHT.lag * .6);   // rudder yaws the nose into the turn
+    fwd.set(Math.cos(heading) * Math.cos(pitch), Math.sin(pitch), -Math.sin(heading) * Math.cos(pitch));
+    side.set(Math.sin(heading), 0, Math.cos(heading));                // right wing (level)
     const bank = FLIGHT.bank * driveAt(FLIGHT.t0 + s - FLIGHT.lag);
-    up.copy(nrm).multiplyScalar(Math.cos(bank)).addScaledVector(side, Math.sin(bank));
+    up.crossVectors(side, fwd).normalize().multiplyScalar(Math.cos(bank)).addScaledVector(side, Math.sin(bank));
     side.crossVectors(up, fwd);                                   // local +X (left wing)
     mtx.makeBasis(side, up, fwd);
     plane.group.quaternion.setFromRotationMatrix(mtx);
-    plane.group.position.set(x, y, path.wz);
+    plane.group.position.set(x, y, z);
     plane.group.scale.setScalar(path.scale * (1 - .9 * fade));
     plane.setProp((s + extra) * 47);
+    plane.setHaze(FLIGHT.haze * clamp01((path.camZ - z - path.dNear) / (path.dFar - path.dNear)));
   }
 
   function apply() {
     model.setProgress(v.p);
     model.setDrive(v.drive);
     model.setToe(v.toeL, v.toeR);
+    model.setGrow(v.growS, v.growW);
     view.rotation.y = VIEW.y + v.yaw;
     let any = false;
     for (const P of parts) {
@@ -462,6 +849,7 @@ export async function createActor(ctx) {
     const fl = path.ok && v.fly >= 0 && v.flyOut < 1;
     flight.visible = fl;
     if (fl) posePlane(v.fly, v.flyExtra, v.flyFade);
+    model.refresh();   // springs and wires follow their anchors (only when something moved)
   }
 
   // Framing: size the assembly to a share of the hero's free area, clear of
@@ -580,7 +968,12 @@ export async function createActor(ctx) {
     v.p = ease.inOutSine(win(T, A.t0 - .15, A.t1 - .1)) * (1 - open);
     const u = T - X.t0;
     v.drive = T >= X.t0 && T <= X.t1 ? driveAt(u) : 0;
-    v.toeL = v.toeR = 0;
+    v.toeL = T >= X.t0 && T <= X.t1 ? keyed(TOE_L, u) : 0;
+    v.toeR = T >= X.t0 && T <= X.t1 ? keyed(TOE_R, u) : 0;
+    // springs hook on as the last parts land, then the wires run to the board; both let go before the assembly opens
+    const off = 1 - ease.inOutSine(win(T, O.t0, O.t0 + .3));
+    v.growS = ease.inOutSine(win(T, A.t1 - .35, A.t1 + .35)) * off;
+    v.growW = ease.inOutSine(win(T, A.t1 - .1, A.t1 + 1.0)) * off;
     v.yaw = VIEW.drift * (2 * win(T, E.t0, O.t1) - 1);                 // a slow turn across the whole act
     v.fly = u >= FLIGHT.t0 && u <= FLIGHT.t1 ? u - FLIGHT.t0 : -1;
     v.flyOut = 0; v.flyExtra = 0; v.flyFade = 0;
@@ -602,9 +995,10 @@ export async function createActor(ctx) {
       P.f = lerp(P.f0, Math.max(P.f0, 1.05), ease.inCubic(win(u, r, Math.min(1, r + .7))));
       fin += clamp01(1 - P.f);
     }
-    v.p = a0.p * (1 - ease.outCubic(win(u, 0, .45)));
+    v.p = a0.p * (1 - ease.outCubic(win(u, .1, .5)));
     v.drive = a0.drive * (1 - ease.outCubic(win(u, 0, .35)));
-    v.toeL = v.toeR = 0;
+    v.toeL = a0.toeL * (1 - ease.outCubic(win(u, 0, .3))); v.toeR = a0.toeR * (1 - ease.outCubic(win(u, 0, .3)));
+    v.growS = a0.growS * (1 - ease.inOutSine(win(u, 0, .16))); v.growW = a0.growW * (1 - ease.inOutSine(win(u, 0, .16)));
     v.yaw = a0.yaw;
     v.fly = a0.fly;
     v.flyExtra = a0.fly >= 0 ? ease.inQuad(u) * ABORT_S * 3 : 0;
@@ -617,7 +1011,7 @@ export async function createActor(ctx) {
   async function prewarm(renderer, camera, scene) {
     const hidden = [];
     for (const P of parts) P.f = 0;
-    Object.assign(v, { p: 1, drive: 0, shadow: 1, fly: 1 });
+    Object.assign(v, { p: 1, drive: 0, shadow: 1, fly: 1, growS: 1, growW: 1 });
     apply();
     root.traverse(o => { if (!o.visible) { hidden.push(o); o.visible = true; } });
     try { await renderer.compileAsync(root, camera, scene); } catch (e) { /* compiles on first draw instead */ }
