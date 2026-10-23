@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab / Geometry · Mert Tureli VX</title>
+<meta name="robots" content="noindex">
+<meta name="description" content="Test bench for the field study's geometry module: the CHARGER radius profile and fin planform measured from the CAD assembly, and the lattice solid mask built from them.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230A0A0A'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='26' font-weight='600' fill='%23FFFFFF'%3EMT%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../css/tokens.css">
+<script type="importmap">{"imports":{"three":"../../assets/charger-explorer/vendor/three.module.js"}}</script>
+<style>
+  /* --livery-text: the livery orange lifted for small text (5.75:1 on ink-900; #D63B08 is 4.23:1); strokes and fills keep var(--livery) */
+  :root { --livery-text: #EC5B2A; }
+  body { background: var(--ink-900); color: var(--paper-a90); }
+  .gm-skip { position: absolute; left: 16px; top: -48px; z-index: 5; padding: 8px 12px; background: var(--paper); color: var(--ink-900); font: 12px/1.4 var(--font-mono); letter-spacing: var(--ls-caps); text-transform: uppercase; border-radius: var(--radius-xs); }
+  .gm-skip:focus { top: 12px; }
+  .gm-wrap { max-width: var(--max-width); margin: 0 auto; padding: 0 clamp(16px, 4vw, 56px) 96px; }
+  .gm-head { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 12px 24px; padding: 28px 0 24px; border-bottom: 1px solid var(--paper-a18); }
+  .gm-head .eyebrow { grid-column: 1 / -1; color: var(--paper-a70); }
+  .gm-head h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(36px, 5.2vw, 84px); line-height: var(--lh-display); letter-spacing: var(--ls-display); text-transform: uppercase; color: var(--paper); }
+  .gm-head nav { display: flex; gap: 20px; font: 11px/1.4 var(--font-mono); letter-spacing: var(--ls-caps); text-transform: uppercase; }
+  .gm-head nav a { color: var(--paper-a70); text-decoration: none; border-bottom: 1px solid var(--paper-a18); padding-bottom: 2px; }
+  .gm-head nav a:hover { color: var(--paper); border-color: var(--paper); }
+  .gm-sub { grid-column: 1 / -1; max-width: 72ch; font-size: var(--fs-body-sm); line-height: 1.55; color: var(--paper-a70); }
+
+  .gm-bench { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 32px; padding-top: 28px; }
+  .gm-main { min-width: 0; display: grid; gap: 28px; align-content: start; }
+  .gm-h2 { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; align-items: baseline; margin-bottom: 10px; font: 11px/1.4 var(--font-mono); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); }
+  .gm-h2 h2 { font: inherit; color: var(--paper); }
+  .gm-h2 span { color: var(--paper-a70); }
+
+  .gm-frame { position: relative; background: var(--ink-800); border: 1px solid var(--paper-a18); border-radius: var(--radius-xs); }
+  .gm-frame canvas.gm-mask { width: 100%; height: auto; aspect-ratio: 1024 / 320; image-rendering: pixelated; }
+  .gm-frame canvas.gm-over { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .gm-legend { display: flex; flex-wrap: wrap; gap: 6px 22px; margin: 10px 0 0; padding: 0; list-style: none; font: 10px/1.5 var(--font-mono); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); }
+  .gm-legend b { font-weight: 400; color: var(--paper); }
+  .gm-legend i { display: inline-block; width: 9px; height: 9px; margin-right: 7px; vertical-align: -1px; border-radius: 1px; }
+  .gm-key-solid { background: #6B6B6B; } .gm-key-rim { background: var(--livery); } .gm-key-fluid { background: var(--ink-800); outline: 1px solid var(--paper-a18); }
+
+  .gm-insets { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .gm-insets figure { min-width: 0; }
+  .gm-insets canvas { width: 100%; aspect-ratio: 16 / 9; background: var(--ink-800); border: 1px solid var(--paper-a18); border-radius: var(--radius-xs); }
+  .gm-insets figcaption, .gm-fig figcaption { margin-top: 8px; font: 10px/1.5 var(--font-mono); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); }
+  .gm-insets figcaption b, .gm-fig figcaption b { font-weight: 400; color: var(--paper); }
+
+  .gm-panel { align-self: start; position: sticky; top: 16px; display: grid; gap: 18px; padding: 18px; background: var(--ink-800); border: 1px solid var(--paper-a18); border-radius: var(--radius-sm); }
+  .gm-panel h2 { font: 11px/1.4 var(--font-mono); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper); padding-bottom: 8px; border-bottom: 1px solid var(--paper-a18); }
+  .gm-field { display: grid; gap: 8px; font: 10px/1.4 var(--font-mono); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); }
+  .gm-field .gm-row { display: flex; justify-content: space-between; gap: 12px; }
+  .gm-field output { color: var(--paper); }
+  .gm-field input[type="range"] { width: 100%; accent-color: var(--livery); margin: 0; }
+  .gm-field select { width: 100%; font: 11px/1.4 var(--font-mono); letter-spacing: .06em; color: var(--paper); background: var(--ink-900); border: 1px solid var(--paper-a18); border-radius: var(--radius-xs); padding: 7px 8px; }
+  .gm-seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; }
+  .gm-btn { font: 10px/1 var(--font-mono); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); border: 1px solid var(--paper-a18); border-radius: var(--radius-xs); padding: 9px 6px; min-height: 32px; background: transparent; }
+  .gm-btn:hover { color: var(--paper); border-color: var(--paper-a45); }
+  .gm-btn[aria-pressed="true"] { color: var(--ink-900); background: var(--paper); border-color: var(--paper); }
+  .gm-check { display: flex; align-items: center; gap: 10px; font: 10px/1.4 var(--font-mono); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); cursor: pointer; }
+  .gm-check input { accent-color: var(--livery); width: 14px; height: 14px; margin: 0; }
+
+  .gm-state { display: grid; gap: 0; margin: 0; font: 10px/1.5 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; }
+  .gm-state div { display: grid; grid-template-columns: max-content minmax(0, 1fr) 34px; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--paper-a08); }
+  .gm-state dt { color: var(--paper-a70); }
+  .gm-state dd { margin: 0; min-width: 0; color: var(--paper); text-align: right; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .gm-state .gm-t { text-align: right; color: var(--paper-a70); }
+  .gm-state .gm-bad dd { color: var(--livery-text); }
+
+  .gm-low { display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; margin-top: 48px; padding-top: 28px; border-top: 1px solid var(--paper-a18); }
+  .gm-tablebox { overflow-x: auto; border: 1px solid var(--paper-a18); border-radius: var(--radius-xs); }
+  .gm-table { width: 100%; border-collapse: collapse; font: 11px/1.45 var(--font-mono); font-variant-numeric: tabular-nums; }
+  .gm-table th { font-weight: 400; font-size: 10px; letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); text-align: right; padding: 9px 12px; border-bottom: 1px solid var(--paper-a18); white-space: nowrap; }
+  .gm-table th:first-child, .gm-table td:first-child { text-align: left; }
+  .gm-table td { padding: 8px 12px; text-align: right; color: var(--paper); border-bottom: 1px solid var(--paper-a08); white-space: nowrap; }
+  .gm-table td:first-child { color: var(--paper-a90); white-space: normal; min-width: 150px; }
+  .gm-table tr:last-child td { border-bottom: 0; }
+  .gm-table .gm-dim { color: var(--paper-a70); }
+  .gm-table .gm-off { color: var(--livery-text); }
+  .gm-tag { display: inline-block; margin-left: 6px; padding: 1px 4px 0; font: 9px/1.4 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--paper-a70); border: 1px solid var(--paper-a18); border-radius: var(--radius-xs); vertical-align: 1px; white-space: nowrap; }
+  .gm-notes { display: grid; gap: 8px; margin-top: 12px; max-width: 80ch; font-size: var(--fs-body-sm); line-height: 1.55; color: var(--paper-a70); }
+  .gm-notes p { margin: 0; }
+
+  .gm-drawings { display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px; }
+  .gm-fig canvas { width: 100%; background: var(--ink-800); border: 1px solid var(--paper-a18); border-radius: var(--radius-xs); }
+  #draw { aspect-ratio: 3 / 1; } #detail { aspect-ratio: 4 / 3; }
+  .gm-files { font: 10px/1.6 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--paper-a70); }
+  .gm-files b { font-weight: 400; color: var(--paper); }
+
+  @media (max-width: 1100px) { .gm-drawings { grid-template-columns: 1fr; } }
+  @media (max-width: 859.98px) {
+    .gm-bench { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+    .gm-panel { position: static; }
+    .gm-insets { grid-template-columns: 1fr; }
+    .gm-head { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    .gm-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+    .gm-table tr { display: grid; grid-template-columns: 1fr 1fr 1.25fr; column-gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--paper-a08); }
+    .gm-table tr:last-child { border-bottom: 0; }
+    .gm-table td { display: block; padding: 0; border: 0; text-align: left; white-space: normal; }
+    .gm-table td:first-child { grid-column: 1 / -1; margin-bottom: 6px; min-width: 0; }
+    .gm-table td.gm-mm, .gm-table .gm-sep { display: none; }
+    .gm-table td span:not(.gm-tag):not(.gm-sep) { display: block; }
+    .gm-table td[data-label]::before { content: attr(data-label); display: block; margin-bottom: 2px; font-size: 9px; letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); }
+  }
+  @media (forced-colors: active) { .gm-btn[aria-pressed="true"] { outline: 2px solid CanvasText; } }
+</style>
+</head>
+<body class="on-dark">
+<a class="gm-skip" href="#controls">Skip to the controls</a>
+<div class="gm-wrap">
+  <header class="gm-head">
+    <p class="eyebrow">CHARGER / FIELD STUDY 01 / LAB / GEOMETRY</p>
+    <h1>Section geometry</h1>
+    <nav aria-label="Lab navigation"><a href="./">Lab index</a><a href="../">VX</a></nav>
+    <p class="gm-sub">The pitch-plane section the lattice flies through, measured from the CAD assembly: outer radius every 2 mm from the nose tip to the screw cap, Fin 1 projected onto its own plane, and the solid mask built from signed distances at cell centres.</p>
+  </header>
+
+  <div class="gm-bench">
+    <main class="gm-main" id="main">
+      <section aria-labelledby="hSection">
+        <div class="gm-h2"><h2 id="hSection">Mask / <span id="capView">through fins</span></h2><span id="capGrid">1024 x 320 cells</span></div>
+        <div class="gm-frame">
+          <canvas class="gm-mask" id="mask" width="1024" height="320" role="img" aria-label="Lattice solid mask, loading"></canvas>
+          <canvas class="gm-over" id="over" aria-hidden="true"></canvas>
+        </div>
+        <ul class="gm-legend" id="legend">
+          <li><i class="gm-key-solid"></i>Solid</li>
+          <li><i class="gm-key-rim"></i>Boundary cell</li>
+          <li><i class="gm-key-fluid"></i>Fluid</li>
+          <li>Nose col <b id="lgNose">-</b> <span class="gm-tag">SIM</span></li>
+          <li>CG col <b id="lgCg">-</b> <span class="gm-tag">PAGE</span></li>
+          <li>Tail col <b id="lgTail">-</b> <span class="gm-tag">SIM</span></li>
+          <li>Axis row <b id="lgAxis">-</b> <span class="gm-tag">SIM</span></li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="hZoom">
+        <div class="gm-h2"><h2 id="hZoom">Cells at the surface</h2><span>CAD outline / cell centres / outward normals</span></div>
+        <div class="gm-insets">
+          <figure><canvas id="zNose" role="img" aria-label="Nose tip, magnified"></canvas><figcaption><b>Nose tip</b> / <span id="zNoseCap">-</span></figcaption></figure>
+          <figure><canvas id="zFin" role="img" aria-label="Fin 1, magnified"></canvas><figcaption><b id="zFinName">Fin 1</b> / <span id="zFinCap">-</span></figcaption></figure>
+        </div>
+      </section>
+    </main>
+
+    <aside class="gm-panel" id="controls" aria-label="Section controls" tabindex="-1">
+      <h2>Controls</h2>
+      <label class="gm-field" for="finScale"><span class="gm-row">Fin scale <output aria-live="off" id="oFin" for="finScale">1.00</output></span>
+        <input id="finScale" type="range" min="0" max="1.5" step="0.05" value="1"></label>
+      <div class="gm-seg" role="group" aria-label="Fin scale presets">
+        <button class="gm-btn" type="button" data-fin="0">None</button>
+        <button class="gm-btn" type="button" data-fin="0.5">Half</button>
+        <button class="gm-btn" type="button" data-fin="1">Full</button>
+      </div>
+      <div class="gm-field"><span id="viewLabel">Section</span>
+        <div class="gm-seg" role="group" aria-labelledby="viewLabel">
+          <button class="gm-btn" type="button" data-view="through" aria-pressed="true">Through fins</button>
+          <button class="gm-btn" type="button" data-view="between" aria-pressed="false">Between fins</button>
+        </div>
+      </div>
+      <label class="gm-field" for="cols">Grid
+        <select id="cols"><option value="1024">1024 x 320 / tier 3</option><option value="768">768 x 240 / tier 2</option><option value="512">512 x 160 / tier 1</option></select></label>
+      <label class="gm-check"><input id="normals" type="checkbox" checked> Boundary normals</label>
+
+      <h2>State</h2>
+      <dl class="gm-state" id="state"><div><dt>Geometry</dt><dd>loading</dd><span class="gm-t"></span></div></dl>
+    </aside>
+  </div>
+
+  <div class="gm-low">
+    <section aria-labelledby="hMeasure">
+      <div class="gm-h2"><h2 id="hMeasure">CAD versus page</h2><span>Inches / CAD measured here / PAGE from projects/charger.html</span></div>
+      <div class="gm-tablebox">
+        <table class="gm-table" id="table">
+          <thead><tr><th scope="col">Item</th><th scope="col">CAD</th><th scope="col">CAD mm</th><th scope="col">PAGE</th><th scope="col">CAD minus PAGE</th></tr></thead>
+          <tbody><tr><td colspan="5" class="gm-dim">Measuring</td></tr></tbody>
+        </table>
+      </div>
+      <div class="gm-notes" id="notes"></div>
+    </section>
+
+    <section aria-labelledby="hDrawing">
+      <div class="gm-h2"><h2 id="hDrawing">Half section / sectionPolygons in metres</h2><span id="capDraw">-</span></div>
+      <div class="gm-drawings">
+        <figure class="gm-fig"><canvas id="draw" role="img" aria-label="Section outline of CHARGER with overall dimensions"></canvas><figcaption><b>Section</b> / outline and dimensions from the measured profile <span class="gm-tag">CAD</span>, Fins 1 and 3 in plane, Fins 2 and 4 edge-on along the axis, rail buttons on the Fin 3 side, CG at 22 in <span class="gm-tag">PAGE</span></figcaption></figure>
+        <figure class="gm-fig"><canvas id="detail" role="img" aria-label="Fin 1 planform with measured dimensions"></canvas><figcaption><b>Detail A</b> / Fin 1 planform, convex hull of part 6, dimensions in mm <span class="gm-tag">CAD</span></figcaption></figure>
+      </div>
+    </section>
+
+    <p class="gm-files"><b>Module</b> / geom / js/geom/geom.js, geom-measure.js, geom-cad.js (baked by geom-bake.mjs) / reads assets/charger-explorer/assembly.json and assembly.bin through js/stage/loader.js</p>
+  </div>
+</div>
+
+<script type="module">
+import { loadFieldGeometry, getBakedGeometry, IN_M, PAGE_FIGURES, SPAN_FRACTION, NOSE_COL_FRACTION, FIN_SCALE_MAX } from '../js/geom/geom.js';
+
+const $ = (id) => document.getElementById(id);
+const CG_PAGE_M = PAGE_FIGURES.cgFromNoseIn * IN_M; // PAGE: CG 22 in from the nose
+const COL = { bg: '#0A0A0A', fluid: '#141414', solid: '#6B6B6B', rim: '#D63B08', paper: '#FFFFFF', p90: 'rgba(255,255,255,.9)', p70: 'rgba(255,255,255,.7)', p45: 'rgba(255,255,255,.45)', p18: 'rgba(255,255,255,.18)', p08: 'rgba(255,255,255,.08)' };
+const MONO = '"IBM Plex Mono", ui-monospace, Menlo, monospace';
+const f = (v, d = 2) => (Number.isFinite(v) ? v.toFixed(d) : '-');
+const TAG = (t) => `<span class="gm-tag">${t}</span>`;
+/* text followed by its source tag (FIELD: every number carries its tag) */
+function tagged(el, text, tag) {
+  const s = document.createElement('span'); s.className = 'gm-tag'; s.textContent = tag;
+  el.replaceChildren(document.createTextNode(text), s);
+}
+const params = new URLSearchParams(location.search);
+
+const state = {
+  geometry: getBakedGeometry(),        // draw from the baked copy at once, swap to the live measurement when it lands
+  finScale: clampNum(params.get('fins'), 0, FIN_SCALE_MAX, 1),
+  view: params.get('view') === 'between' ? 'between' : 'through',
+  cols: [512, 768, 1024].includes(Number(params.get('cols'))) ? Number(params.get('cols')) : 1024,
+  normals: params.get('normals') !== '0',
+  section: null,
+  loading: true,
+};
+function clampNum(v, lo, hi, dflt) { const n = Number(v); return v != null && Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : dflt; }
+
+/* ---------- controls ---------- */
+const finInput = $('finScale'), oFin = $('oFin'), colsSel = $('cols'), normalsBox = $('normals');
+finInput.value = String(state.finScale); colsSel.value = String(state.cols); normalsBox.checked = state.normals;
+const listeners = [];
+const on = (el, ev, fn) => { el.addEventListener(ev, fn); listeners.push(() => el.removeEventListener(ev, fn)); };
+on(finInput, 'input', () => { state.finScale = Number(finInput.value); schedule(); });
+for (const b of document.querySelectorAll('[data-fin]')) on(b, 'click', () => { state.finScale = Number(b.dataset.fin); finInput.value = b.dataset.fin; schedule(); });
+for (const b of document.querySelectorAll('[data-view]')) on(b, 'click', () => { state.view = b.dataset.view; schedule(); });
+on(colsSel, 'change', () => { state.cols = Number(colsSel.value); schedule(); });
+on(normalsBox, 'change', () => { state.normals = normalsBox.checked; schedule(false); });
+
+/* One rebuild per frame at most, only when something changed: no loop. */
+let raf = 0, rebuild = true;
+function schedule(geometryChanged = true) {
+  rebuild = rebuild || geometryChanged;
+  if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); });
+}
+
+/* ---------- render ---------- */
+function render() {
+  const g = state.geometry;
+  if (rebuild || !state.section) state.section = g.buildSection({ cols: state.cols, finScale: state.finScale, view: state.view, cgM: CG_PAGE_M });
+  rebuild = false;
+  const s = state.section;
+  oFin.value = f(state.finScale);
+  for (const b of document.querySelectorAll('[data-fin]')) b.setAttribute('aria-pressed', String(Math.abs(Number(b.dataset.fin) - state.finScale) < 1e-9));
+  for (const b of document.querySelectorAll('[data-view]')) b.setAttribute('aria-pressed', String(b.dataset.view === state.view));
+  $('capView').textContent = state.view === 'through' ? 'through fins' : 'between fins';
+  tagged($('capGrid'), `${s.cols} x ${s.rows} cells / ${f(s.cellM * 1000, 4)} mm per cell`, 'SIM');
+  $('lgNose').textContent = f(s.xNoseCol, 2);
+  $('lgCg').textContent = f(s.cgCell.x, 2);
+  $('lgTail').textContent = f(s.xNoseCol + g.refs.length / s.cellM, 2);
+  $('lgAxis').textContent = f(s.axisRow, 1);
+  drawMask(s); drawOverlay(s); drawInsets(s); drawSection(g); drawDetail(g);
+  writeState(g, s);
+  label(s);
+}
+
+function drawMask(s) {
+  const cv = $('mask');
+  if (cv.width !== s.cols || cv.height !== s.rows) { cv.width = s.cols; cv.height = s.rows; }
+  const ctx = cv.getContext('2d');
+  if (!ctx) return;
+  const img = ctx.createImageData(s.cols, s.rows), d = img.data;
+  const rim = new Uint8Array(s.cols * s.rows);
+  for (const b of s.boundary) rim[b.row * s.cols + b.col] = 1;
+  for (let r = 0; r < s.rows; r++) {
+    const y = s.rows - 1 - r; // row index grows along +y (up); canvas rows grow down
+    for (let c = 0; c < s.cols; c++) {
+      const i = r * s.cols + c, o = (y * s.cols + c) * 4;
+      const [R, G, B] = rim[i] ? [214, 59, 8] : s.mask[i] ? [107, 107, 107] : ((c % 64 === 0 || r % 64 === 0) ? [27, 27, 27] : [20, 20, 20]);
+      d[o] = R; d[o + 1] = G; d[o + 2] = B; d[o + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+function sizeCanvas(cv) {
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const w = Math.max(1, Math.round(cv.clientWidth * dpr)), h = Math.max(1, Math.round(cv.clientHeight * dpr));
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+  const ctx = cv.getContext('2d');
+  if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, w: cv.clientWidth, h: cv.clientHeight };
+}
+
+function drawOverlay(s) {
+  const { ctx, w, h } = sizeCanvas($('over'));
+  if (!ctx) return;
+  ctx.clearRect(0, 0, w, h);
+  const k = w / s.cols; // css px per cell
+  const X = (x) => x * k, Y = (y) => h - y * k;
+  // axis
+  ctx.strokeStyle = COL.p18; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(0, Y(s.axisRow)); ctx.lineTo(w, Y(s.axisRow)); ctx.stroke(); ctx.setLineDash([]);
+  // column marks: nose, CG (PAGE), tail
+  const marks = [['NOSE', s.xNoseCol, 'SIM'], ['CG', s.cgCell.x, 'PAGE'], ['TAIL', s.xNoseCol + state.geometry.refs.length / s.cellM, 'SIM']];
+  ctx.font = `10px ${MONO}`; ctx.textBaseline = 'top';
+  for (const [name, x, tag] of marks) {
+    ctx.strokeStyle = name === 'CG' ? COL.rim : COL.p45;
+    ctx.beginPath(); ctx.moveTo(X(x) + .5, 0); ctx.lineTo(X(x) + .5, 10); ctx.moveTo(X(x) + .5, h - 10); ctx.lineTo(X(x) + .5, h); ctx.stroke();
+    if (w >= 640) {
+      ctx.fillStyle = COL.p70; ctx.textAlign = name === 'TAIL' ? 'right' : 'left';
+      ctx.fillText(`${name} ${f(x, 1)} ${tag}`, X(x) + (name === 'TAIL' ? -5 : 5), 6);
+    }
+  }
+  // CG symbol on the axis: circle with alternating filled quadrants
+  const cx = X(s.cgCell.x), cy = Y(s.cgCell.y), rr = Math.max(3, Math.min(7, 4 * k));
+  ctx.fillStyle = COL.paper; ctx.strokeStyle = COL.paper; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(cx, cy, rr, 0, Math.PI * 2); ctx.fillStyle = COL.bg; ctx.fill(); ctx.stroke();
+  ctx.fillStyle = COL.paper;
+  for (const a of [0, Math.PI]) { ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, rr, a - Math.PI / 2, a); ctx.closePath(); ctx.fill(); }
+  // 64-cell ticks along the bottom edge
+  ctx.strokeStyle = COL.p18;
+  for (let c = 0; c <= s.cols; c += 64) { ctx.beginPath(); ctx.moveTo(X(c) + .5, h); ctx.lineTo(X(c) + .5, h - 4); ctx.stroke(); }
+  if (w >= 640) { ctx.fillStyle = COL.p70; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillText('64-CELL TICKS / ROW INDEX UP = BODY +X', 6, h - 6); }
+  // boundary normals at low zoom: one in every few cells along the contour
+  if (state.normals) {
+    const stride = Math.max(1, Math.ceil((w < 640 ? 11 : 8) / k)), len = Math.max(3, Math.min(10, 3.5 * k));
+    ctx.strokeStyle = COL.p90; ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (const b of s.boundary) {
+      const pick = Math.abs(b.ny) >= Math.abs(b.nx) ? b.col % stride === 0 : b.row % stride === 0;
+      if (!pick) continue;
+      const x0 = X(b.col + .5), y0 = Y(b.row + .5);
+      ctx.moveTo(x0, y0); ctx.lineTo(x0 + b.nx * len, y0 - b.ny * len);
+    }
+    ctx.stroke();
+  }
+}
+
+/* A magnified window [c0, c1) x [r0, r1) of the section, with the exact outline. */
+function drawZoom(cv, s, c0, c1, r0, r1) {
+  const { ctx, w, h } = sizeCanvas(cv);
+  if (!ctx) return 0;
+  ctx.fillStyle = COL.fluid; ctx.fillRect(0, 0, w, h);
+  const k = Math.min(w / (c1 - c0), h / (r1 - r0));
+  const ox = (w - (c1 - c0) * k) / 2, oy = (h - (r1 - r0) * k) / 2;
+  const X = (x) => ox + (x - c0) * k, Y = (y) => h - oy - (y - r0) * k;
+  const rim = new Set(s.boundary.map(b => b.row * s.cols + b.col));
+  for (let r = Math.max(0, Math.floor(r0)); r < Math.min(s.rows, Math.ceil(r1)); r++) {
+    for (let c = Math.max(0, Math.floor(c0)); c < Math.min(s.cols, Math.ceil(c1)); c++) {
+      const i = r * s.cols + c;
+      if (!s.mask[i]) continue;
+      ctx.fillStyle = rim.has(i) ? COL.rim : COL.solid;
+      ctx.fillRect(X(c), Y(r + 1), k + .5, k + .5);
+    }
+  }
+  if (k >= 5) {
+    ctx.strokeStyle = COL.p08; ctx.lineWidth = 1; ctx.beginPath();
+    for (let c = Math.ceil(c0); c <= c1; c++) { ctx.moveTo(Math.round(X(c)) + .5, 0); ctx.lineTo(Math.round(X(c)) + .5, h); }
+    for (let r = Math.ceil(r0); r <= r1; r++) { ctx.moveTo(0, Math.round(Y(r)) + .5); ctx.lineTo(w, Math.round(Y(r)) + .5); }
+    ctx.stroke();
+    // cell centres, where the signed distance is sampled, once they are far enough apart to read
+    ctx.fillStyle = k >= 10 ? COL.p18 : 'transparent';
+    if (k >= 10) for (let r = Math.ceil(r0); r < r1; r++) for (let c = Math.ceil(c0); c < c1; c++) ctx.fillRect(X(c + .5) - .75, Y(r + .5) - .75, 1.5, 1.5);
+  }
+  // exact polygons, metres to cells
+  ctx.strokeStyle = COL.paper; ctx.lineWidth = 1.25;
+  for (const p of s.polygons) {
+    ctx.beginPath();
+    p.points.forEach(([sx, sy], j) => { const q = s.toCell(sx, sy); j ? ctx.lineTo(X(q.x), Y(q.y)) : ctx.moveTo(X(q.x), Y(q.y)); });
+    ctx.closePath(); ctx.stroke();
+  }
+  if (state.normals) {
+    ctx.strokeStyle = COL.paper; ctx.fillStyle = COL.paper; ctx.lineWidth = 1;
+    const len = k * 0.9;
+    for (const b of s.boundary) {
+      if (b.col + 1 < c0 || b.col > c1 || b.row + 1 < r0 || b.row > r1) continue;
+      const x0 = X(b.col + .5), y0 = Y(b.row + .5), x1 = x0 + b.nx * len, y1 = y0 - b.ny * len;
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+      if (k >= 9) { // arrow head
+        const a = Math.atan2(y1 - y0, x1 - x0), hl = Math.min(5, k * .3);
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1 - hl * Math.cos(a - .45), y1 - hl * Math.sin(a - .45)); ctx.lineTo(x1 - hl * Math.cos(a + .45), y1 - hl * Math.sin(a + .45)); ctx.closePath(); ctx.fill();
+      }
+    }
+  }
+  return k;
+}
+
+function drawInsets(s) {
+  const g = state.geometry;
+  // nose: 40 x 22.5 mm window from just ahead of the tip, centred on the axis
+  const nw = 0.040 / s.cellM, nh = nw * 9 / 16, nx0 = s.xNoseCol - nw * 0.12;
+  const kn = drawZoom($('zNose'), s, nx0, nx0 + nw, s.axisRow - nh / 2, s.axisRow + nh / 2);
+  tagged($('zNoseCap'), `${f(nw, 0)} x ${f(nh, 0)} cells / x${f(kn, 1)}`, 'SIM');
+  // Fin 1 (upper): its scaled planform plus a margin; at fin scale 0, the tail
+  const fin = g.fin, sLE = fin.rootLeadingEdgeFromNose, kf = state.finScale;
+  let sA, sB, yA, yB;
+  if (state.view === 'through' && kf > 0) {
+    sA = sLE - 0.012; sB = sLE + kf * (fin.root + fin.tipTrailingEdgeAft) + 0.012;
+    yA = fin.rootRadius - 0.014; yB = fin.rootRadius + kf * fin.span + 0.010;
+    $('zFinName').textContent = 'Fin 1';
+  } else {
+    sA = g.features.bodyTubeEnd - 0.075; sB = g.refs.length + 0.012; yA = 0.006; yB = g.refs.radius + 0.012;
+    $('zFinName').textContent = state.view === 'between' ? 'Tail, between fins' : 'Tail, no fins';
+  }
+  // pad the window to the inset aspect (16:9) in cells
+  let c0 = s.toCell(sA).x, c1 = s.toCell(sB).x, r0 = s.toCell(0, yA).y, r1 = s.toCell(0, yB).y;
+  const wantH = (c1 - c0) * 9 / 16, wantW = (r1 - r0) * 16 / 9;
+  if (r1 - r0 < wantH) { const m = (wantH - (r1 - r0)) / 2; r0 -= m; r1 += m; } else { const m = (wantW - (c1 - c0)) / 2; c0 -= m; c1 += m; }
+  const kz = drawZoom($('zFin'), s, c0, c1, r0, r1);
+  tagged($('zFinCap'), `${f(c1 - c0, 0)} x ${f(r1 - r0, 0)} cells / x${f(kz, 1)}`, 'SIM');
+}
+
+/* ---------- drawings in metres ---------- */
+function dimLine(ctx, x0, y0, x1, y1, text, { side = -1, ext = 0 } = {}) {
+  ctx.strokeStyle = COL.p45; ctx.fillStyle = COL.p70; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+  const a = Math.atan2(y1 - y0, x1 - x0), hl = 5;
+  for (const [px, py, dir] of [[x0, y0, 1], [x1, y1, -1]]) {
+    ctx.beginPath(); ctx.moveTo(px, py);
+    ctx.lineTo(px + dir * hl * Math.cos(a) - hl * .35 * Math.sin(a), py + dir * hl * Math.sin(a) + hl * .35 * Math.cos(a));
+    ctx.lineTo(px + dir * hl * Math.cos(a) + hl * .35 * Math.sin(a), py + dir * hl * Math.sin(a) - hl * .35 * Math.cos(a));
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.save(); ctx.translate((x0 + x1) / 2, (y0 + y1) / 2);
+  let ang = a; if (ang > Math.PI / 2 || ang < -Math.PI / 2) ang += Math.PI;
+  ctx.rotate(ang); ctx.font = `10px ${MONO}`; ctx.textAlign = 'center'; ctx.textBaseline = side < 0 ? 'bottom' : 'top';
+  ctx.fillStyle = COL.p90; ctx.fillText(text, 0, side < 0 ? -4 : 4); ctx.restore();
+}
+function strokePolys(ctx, polys, X, Y, fillFin = true) {
+  for (const p of polys) {
+    ctx.beginPath();
+    p.points.forEach(([sx, sy], j) => (j ? ctx.lineTo(X(sx), Y(sy)) : ctx.moveTo(X(sx), Y(sy))));
+    ctx.closePath();
+    const bodyLike = p.kind === 'body' || p.kind === 'button'; // rail buttons are airframe, not fin
+    ctx.fillStyle = bodyLike ? 'rgba(255,255,255,.07)' : (fillFin ? 'rgba(214,59,8,.28)' : 'transparent');
+    ctx.fill();
+    ctx.strokeStyle = bodyLike ? COL.p90 : COL.rim; ctx.lineWidth = 1.25; ctx.stroke();
+  }
+}
+
+function drawSection(g) {
+  const { ctx, w, h } = sizeCanvas($('draw'));
+  if (!ctx) return;
+  ctx.fillStyle = COL.fluid; ctx.fillRect(0, 0, w, h);
+  const polys = g.sectionPolygons({ finScale: state.finScale, view: state.view });
+  const L = g.refs.length, padX = 22, k = (w - 2 * padX) / (L * 1.04), cy = h * 0.46;
+  const X = (sx) => padX + sx * k, Y = (sy) => cy - sy * k;
+  ctx.strokeStyle = COL.p18; ctx.setLineDash([6, 3, 1, 3]); ctx.beginPath(); ctx.moveTo(8, cy); ctx.lineTo(w - 8, cy); ctx.stroke(); ctx.setLineDash([]);
+  strokePolys(ctx, polys, X, Y);
+  // CG (PAGE 22 in)
+  const gx = X(CG_PAGE_M), r = 5;
+  ctx.beginPath(); ctx.arc(gx, cy, r, 0, Math.PI * 2); ctx.fillStyle = COL.bg; ctx.fill(); ctx.strokeStyle = COL.paper; ctx.stroke();
+  ctx.fillStyle = COL.paper;
+  for (const a of [0, Math.PI]) { ctx.beginPath(); ctx.moveTo(gx, cy); ctx.arc(gx, cy, r, a - Math.PI / 2, a); ctx.closePath(); ctx.fill(); }
+  // overall length and body diameter
+  const yDim = Math.min(h - 26, Y(-(g.fin.rootRadius + g.fin.span)) + 22);
+  ctx.strokeStyle = COL.p18; ctx.beginPath(); ctx.moveTo(X(0) + .5, cy); ctx.lineTo(X(0) + .5, yDim + 4); ctx.moveTo(X(L) - .5, Y(-g.profile.radiusAt(L))); ctx.lineTo(X(L) - .5, yDim + 4); ctx.stroke();
+  const wide = w >= 520;
+  dimLine(ctx, X(0), yDim, X(L), yDim, `${f(L * 1000, 1)} MM / ${f(L / IN_M, 2)} IN${wide ? '' : ` / D ${f(g.refs.diameter * 1000, 1)}`} CAD`, { side: 1 });
+  if (wide) {
+    const sx = X(g.refs.noseExposedLength + 0.16);
+    dimLine(ctx, sx, Y(g.refs.radius) - 1, sx, Y(-g.refs.radius) + 1, `D ${f(g.refs.diameter * 1000, 1)}`, { side: -1 });
+  }
+  ctx.font = `10px ${MONO}`; ctx.fillStyle = COL.p70; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  if (wide) ctx.fillText(`CG ${PAGE_FIGURES.cgFromNoseIn} IN PAGE`, gx + 8, cy + 6);
+  tagged($('capDraw'), `${polys.length} polygons / ${polys.reduce((n, p) => n + p.points.length, 0)} vertices`, 'SIM');
+}
+
+function drawDetail(g) {
+  const { ctx, w, h } = sizeCanvas($('detail'));
+  if (!ctx) return;
+  ctx.fillStyle = COL.fluid; ctx.fillRect(0, 0, w, h);
+  const fin = g.fin, sLE = fin.rootLeadingEdgeFromNose, R0 = fin.rootRadius;
+  // the fin at full CAD scale; the body edge as the datum
+  const sA = sLE - 0.014, sB = sLE + fin.root + fin.tipTrailingEdgeAft + 0.014, yA = R0 - 0.022, yB = R0 + fin.span + 0.020;
+  const k = Math.min((w - 24) / (sB - sA), (h - 24) / (yB - yA));
+  const ox = (w - (sB - sA) * k) / 2, oy = (h - (yB - yA) * k) / 2;
+  const X = (sx) => ox + (sx - sA) * k, Y = (sy) => h - oy - (sy - yA) * k;
+  // body datum
+  ctx.fillStyle = 'rgba(255,255,255,.07)'; ctx.fillRect(0, Y(R0), w, h - Y(R0));
+  ctx.strokeStyle = COL.p90; ctx.lineWidth = 1.25; ctx.beginPath(); ctx.moveTo(0, Y(R0)); ctx.lineTo(X(g.features.bodyTubeEnd), Y(R0)); ctx.stroke();
+  ctx.strokeStyle = COL.p45; ctx.beginPath(); ctx.moveTo(X(g.features.bodyTubeEnd), Y(R0)); ctx.lineTo(X(g.features.bodyTubeEnd), h); ctx.stroke();
+  const hull = fin.hull.map(([sx, hh]) => [sx, R0 + hh]);
+  strokePolys(ctx, [{ kind: 'fin', points: hull }], X, Y);
+  const rootTE = sLE + fin.root, tipLE = sLE + fin.sweep, tipTE = tipLE + fin.tip, yTip = R0 + fin.span;
+  const mm = (m) => f(m * 1000, 2);
+  // root chord below the datum, tip chord above the tip, span on the right, sweep above
+  dimLine(ctx, X(sLE), Y(R0) + 18, X(rootTE), Y(R0) + 18, `ROOT ${mm(fin.root)}`, { side: 1 });
+  dimLine(ctx, X(tipLE), Y(yTip) - 12, X(tipTE), Y(yTip) - 12, `TIP ${mm(fin.tip)}`, { side: -1 });
+  const xs = X(tipTE) + 14;
+  dimLine(ctx, xs, Y(R0), xs, Y(yTip), `SPAN ${mm(fin.span)}`, { side: -1 });
+  dimLine(ctx, X(sLE), Y(yTip) + 16, X(tipLE), Y(yTip) + 16, `SWEEP ${mm(fin.sweep)}`, { side: 1 });
+  ctx.strokeStyle = COL.p18; ctx.beginPath();
+  ctx.moveTo(X(sLE) + .5, Y(R0)); ctx.lineTo(X(sLE) + .5, Y(yTip) + 10);
+  ctx.moveTo(X(rootTE) + .5, Y(R0)); ctx.lineTo(X(rootTE) + .5, Y(R0) + 22);
+  ctx.moveTo(X(tipTE), Y(yTip)); ctx.lineTo(xs + 4, Y(yTip));
+  ctx.stroke();
+  ctx.font = `10px ${MONO}`; ctx.fillStyle = COL.p70; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.fillText(`T ${mm(fin.thickness)} / ROOT LE ${f(sLE * 1000, 1)} AFT OF NOSE TIP`, 10, 10);
+}
+
+/* ---------- readouts ---------- */
+function writeState(g, s) {
+  const rows = [
+    // the baked copy is the same CAD measurement (geom-measure.js via geom-bake.mjs), so the tag stays CAD either way
+    ['Geometry', g.source === 'cad-live' ? 'CAD live' : 'CAD baked', 'CAD'],
+    ['Live load', g.error ? `failed: ${String(g.error).slice(0, 96)}` : (g.source === 'cad-live' ? 'ok' : (state.loading ? 'pending' : '-')), '', !!g.error],
+    ['Measure', g.source === 'cad-live' ? `${f(g.timing.measureMs, 0)} ms` : (state.loading ? 'loading' : 'skipped'), 'SIM'],
+    ['Live vs baked dr', g.check ? `${f(g.check.maxRadiusDiffM * 1e6, 2)} um` : '-', 'SIM', !!(g.check && g.check.stale)],
+    ['Profile samples', `${g.profile.samples} / ${f(g.profile.step * 1000, 0)} mm`, 'CAD'],
+    ['Length', `${f(g.refs.length * 1000, 1)} mm`, 'CAD'],
+    ['Diameter', `${f(g.refs.diameter * 1000, 2)} mm`, 'CAD'],
+    ['Nose cone', `${f(g.refs.noseLength * 1000, 1)} mm`, 'CAD'],
+    ['Nose, exposed', `${f(g.refs.noseExposedLength * 1000, 1)} mm`, 'CAD'],
+    ['Grid', `${s.cols} x ${s.rows}`, 'SIM'],
+    ['Cell', `${f(s.cellM * 1000, 4)} mm`, 'SIM'],
+    ['Span of width', `${f(SPAN_FRACTION * 100, 0)} %`, 'SIM'],
+    ['D cells', f(s.dCells, 2), 'SIM'],
+    ['Nose col', `${f(s.xNoseCol, 2)} = ${NOSE_COL_FRACTION} cols`, 'SIM'],
+    ['CG col at 22 in', f(s.cgCell.x, 2), 'PAGE'],
+    ['Solid cells', String(s.stats.solid), 'SIM'],
+    ['Boundary cells', String(s.stats.boundary), 'SIM'],
+    ['Boundary links', String(s.stats.links), 'SIM'],
+    ['Stray fixed', `${s.stats.cleaned.specks} / ${s.stats.cleaned.pinholes} / ${s.stats.cleaned.pockets}`, 'SIM', s.stats.cleaned.specks + s.stats.cleaned.pinholes + s.stats.cleaned.pockets > 0],
+    ['Mirror check', state.mirrorDiff == null ? '-' : `${state.mirrorDiff} cells differ`, 'SIM', state.mirrorDiff > 0],
+    ['Asymmetric cells', s.stats.asymmetric && s.view === 'through' && s.buttons ? `${s.stats.asymmetric} / buttons` : String(s.stats.asymmetric), 'SIM'],
+    ['Build', `${f(s.stats.ms, 1)} ms / ${s.stats.edges} edges`, 'SIM'],
+  ];
+  const dl = $('state');
+  dl.replaceChildren(...rows.map(([k, v, t, bad]) => {
+    const d = document.createElement('div'); if (bad) d.className = 'gm-bad';
+    const dt = document.createElement('dt'); dt.textContent = k;
+    const dd = document.createElement('dd'); dd.textContent = v;
+    const tg = document.createElement('span'); tg.className = 'gm-t'; tg.textContent = t;
+    d.append(dt, dd, tg); return d;
+  }));
+}
+
+function writeTable(g) {
+  const tb = $('table').tBodies[0];
+  const labels = [null, 'CAD', null, 'PAGE', 'CAD minus PAGE'];
+  const row = (cells) => {
+    const tr = document.createElement('tr');
+    cells.forEach(([html, cls], j) => {
+      const td = document.createElement('td'); td.innerHTML = html;
+      td.className = [cls, j === 2 ? 'gm-mm' : ''].filter(Boolean).join(' ');
+      if (labels[j]) td.dataset.label = labels[j];
+      tr.append(td);
+    });
+    return tr;
+  };
+  const tag = (t) => `<span class="gm-tag">${t}</span>`;
+  const rows = g.page.map(r => {
+    const off = r.deltaPct != null && Math.abs(r.deltaPct) > 2;
+    return row([
+      [r.label],
+      [`${f(r.cadIn, 3)} in${tag('CAD')}`],
+      [f(r.cadMm, 2), 'gm-dim'],
+      [r.pageIn == null ? 'not stated' : `${f(r.pageIn, 2)} in${tag('PAGE')}`, r.pageIn == null ? 'gm-dim' : ''],
+      [r.deltaIn == null ? '-' : `<span>${r.deltaIn >= 0 ? '+' : ''}${f(r.deltaIn, 3)} in</span><span class="gm-sep"> / </span><span>${r.deltaPct >= 0 ? '+' : ''}${f(r.deltaPct, 1)} %</span>`, r.deltaIn == null ? 'gm-dim' : (off ? 'gm-off' : '')],
+    ]);
+  });
+  rows.push(row([['Fin count'], [`4${tag('CAD')}`], ['-', 'gm-dim'], [`${PAGE_FIGURES.finCount}${tag('PAGE')}`], ['four is final', 'gm-dim']]));
+  tb.replaceChildren(...rows);
+  const by = Object.fromEntries(g.page.map(r => [r.key, r]));
+  const notes = $('notes');
+  // every interpolated value below is a number formatted by f() or a module constant, never user input
+  const within = Math.max(Math.abs(by.finRoot.deltaIn), Math.abs(by.finSweep.deltaIn));
+  const buttons = g.features.railButtonBounds || [];
+  const paras = [
+    `Fin 1 measured as a trapezoid: root chord ${f(by.finRoot.cadMm, 2)} mm${TAG('CAD')} and leading-edge sweep ${f(by.finSweep.cadMm, 2)} mm${TAG('CAD')} agree with the page's ${PAGE_FIGURES.finRootIn} in${TAG('PAGE')} and ${PAGE_FIGURES.finSweepIn} in${TAG('PAGE')} to within ${f(within, 3)} in${TAG('SIM')}. The span is ${f(by.finHeight.cadMm, 2)} mm (${f(by.finHeight.cadIn, 3)} in)${TAG('CAD')}, ${f(Math.abs(by.finHeight.deltaIn), 3)} in${TAG('SIM')} short of the page's ${PAGE_FIGURES.finHeightIn} in${TAG('PAGE')} height. The tip trailing edge sits ${f(g.fin.tipTrailingEdgeAft * 1000, 1)} mm${TAG('CAD')} aft of the root trailing edge.`,
+    `The assembly is ${f(by.length.cadIn, 2)} in${TAG('CAD')} from nose tip to screw cap against the page's ${PAGE_FIGURES.lengthIn} in${TAG('PAGE')} for the three-fin design review; its body diameter is ${f(by.diameter.cadIn, 3)} in${TAG('CAD')} against ${PAGE_FIGURES.diameterIn} in${TAG('PAGE')}. The study takes shape from the CAD and mass and CG from the page.`,
+    `Nose length: refs.noseLength is the nose cone part with its shoulder, ${f(g.refs.noseLength * 1000, 1)} mm${TAG('CAD')}, the value the flight model takes. The exposed nose, from the tip to the forward edge of the upper tube where the measured radius first reaches ${f(g.refs.radius * 1000, 1)} mm${TAG('CAD')}, is ${f(g.refs.noseExposedLength * 1000, 1)} mm${TAG('CAD')}, exported as refs.noseExposedLength.`,
+  ];
+  if (buttons.length) paras.push(`The rail buttons (parts ${buttons.map(b => b.id).join(' and ')}) stand ${f((buttons[0].rOut - buttons[0].rIn) * 1000, 1)} mm${TAG('CAD')} proud of the tube on the Fin 3 side, ${buttons.map(b => f((b.sFwd + b.sAft) / 2 * 1000, 1)).join(' and ')} mm${TAG('CAD')} aft of the nose tip. They are one-sided, so the radius profile leaves them out; the through-fins section carries each as the rectangle of its part bounds${TAG('CAD')} (rectangular shape${TAG('EST')}) and is not mirrored where they are. The between-fins plane misses them.`);
+  notes.replaceChildren(...paras.map(h => { const p = document.createElement('p'); p.innerHTML = h; return p; }));
+}
+
+let labelTimer = 0, labelAt = 0, labelText = '';
+function label(s) {
+  labelText = `Lattice solid mask, ${s.cols} by ${s.rows} cells, ${s.view === 'through' ? 'through the fins' : 'between the fins'}, fin scale ${f(s.finScale)}: ${s.stats.solid} solid cells, ${s.stats.boundary} boundary cells, nose at column ${f(s.xNoseCol, 1)}.`;
+  const wait = Math.max(0, 1000 - (performance.now() - labelAt)); // at most once per second
+  clearTimeout(labelTimer);
+  labelTimer = setTimeout(() => { labelAt = performance.now(); $('mask').setAttribute('aria-label', labelText); }, wait);
+}
+
+/* independent full evaluation (no mirroring) against the mirrored build */
+function mirrorCheck(g) {
+  let diff = 0;
+  for (const cols of [512, 768, 1024]) for (const view of ['through', 'between']) {
+    const a = g.buildSection({ cols, view, finScale: state.finScale }), b = g.buildSection({ cols, view, finScale: state.finScale, mirror: false });
+    for (let i = 0; i < a.mask.length; i++) if (a.mask[i] !== b.mask[i]) diff++;
+  }
+  return diff;
+}
+
+/* ---------- lifecycle ---------- */
+const ro = new ResizeObserver(() => schedule(false));
+ro.observe($('over')); ro.observe($('zNose')); ro.observe($('draw'));
+writeTable(state.geometry);
+render();
+const abort = new AbortController();
+loadFieldGeometry({ signal: abort.signal }).then((geometry) => {
+  // the baked copy is the shared getBakedGeometry() singleton: not ours to destroy
+  state.geometry = geometry; state.loading = false;
+  state.mirrorDiff = mirrorCheck(geometry);
+  writeTable(geometry);
+  schedule();
+  window.__geom = { geometry, get section() { return state.section; } }; // lab handle for probes
+}).catch((err) => { if (err && err.name !== 'AbortError') console.warn('geom lab:', err); });
+let tornDown = false;
+addEventListener('pagehide', (e) => {
+  // back/forward cache: the page is frozen and restored as it was, so keep the controls bound
+  if (e.persisted || tornDown) return;
+  tornDown = true;
+  abort.abort(); ro.disconnect(); cancelAnimationFrame(raf); clearTimeout(labelTimer);
+  for (const off of listeners) off();
+  if (state.geometry !== getBakedGeometry()) state.geometry.destroy(); // only the geometry the lab loaded itself
+});
+</script>
+</body>
+</html>

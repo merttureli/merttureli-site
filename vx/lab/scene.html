@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lab / Scene · Mert Tureli VX</title>
+<meta name="robots" content="noindex">
+<meta name="description" content="Test bench for the CHARGER field study scene: the published CAD rocket in its livery, the lattice slice plane on a test card, CG and CP markers, force arrows, the exhaust, camera presets and the flick interaction.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230A0A0A'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='26' font-weight='600' fill='%23FFFFFF'%3EMT%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/scene.css">
+<script type="importmap">{"imports":{"three":"../../assets/charger-explorer/vendor/three.module.js"}}</script>
+<style>
+  /* lab layout only (the module's own hooks are in ../css/scene.css) */
+  body { background: var(--ink-900); color: var(--paper); }
+  .lab { min-height: 100svh; display: grid; grid-template-rows: auto minmax(0, 1fr); }
+  .lab-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-2) var(--space-5); padding: var(--space-4) var(--page-margin); border-bottom: 1px solid var(--paper-a18); }
+  .lab-head h1 { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps-wide); text-transform: uppercase; font-weight: 400; color: var(--paper); }
+  .lab-head p { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); }
+  .lab-head nav { display: flex; gap: var(--space-5); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; }
+  .lab-head nav a { color: var(--paper-a70); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out); }
+  .lab-head nav a:hover { color: var(--paper); border-bottom-color: var(--paper); }
+  .lab-body { display: grid; grid-template-columns: minmax(0, 1fr) 320px; min-height: 0; height: calc(100svh - var(--lab-head, 58px)); }
+  .lab-stage { min-height: 0; }
+  .lab-panel { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4) var(--space-5) var(--space-6); border-left: 1px solid var(--paper-a18); overflow: auto; min-height: 0; }
+  .lab-panel h2 { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps-wide); text-transform: uppercase; font-weight: 400; color: var(--paper-a70); margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--paper-a18); }
+  .lab-panel h2:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+  .row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px var(--space-3); align-items: center; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); }
+  .row input[type="range"], .row select { grid-column: 1 / -1; width: 100%; accent-color: var(--livery); margin: 0; min-height: 24px; }
+  .row select { background: var(--ink-800); color: var(--paper); border: 1px solid var(--paper-a18); border-radius: var(--radius-xs); font: inherit; padding: 4px 6px; }
+  .row output { text-align: right; color: var(--paper); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .row output small { font-size: inherit; color: var(--paper-a70); margin-left: 6px; }
+  .row input[type="checkbox"] { justify-self: end; accent-color: var(--livery); width: 16px; height: 16px; margin: 0; }
+  .group { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 32px; padding: 0 var(--space-3); border: 1px solid var(--paper-a45); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper); transition: background var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out); }
+  .btn:hover, .btn[aria-pressed="true"] { background: var(--paper); color: var(--ink-900); }
+  .note { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.06em; line-height: 1.6; color: var(--paper-a70); }
+  .readout { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.04em; line-height: 1.6; color: var(--paper-a70); white-space: pre-wrap; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; margin: 0; }
+  .readout b { color: var(--paper); font-weight: 400; }
+  .sc-skip { position: absolute; left: 8px; top: -48px; z-index: 10; padding: 8px 12px; background: var(--paper); color: var(--ink-900); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; text-decoration: none; }
+  .sc-skip:focus { top: 8px; }
+  .sc-skip:focus-visible { outline: 2px solid var(--livery); outline-offset: 2px; }
+  .readout em { font-style: normal; color: var(--livery); }
+  @media (max-width: 860px) {
+    .lab-body { display: block; height: auto; }
+    .lab-stage { height: 64svh; min-height: 340px; }
+    .lab-panel { border-left: 0; border-top: 1px solid var(--paper-a18); overflow: visible; }
+  }
+</style>
+</head>
+<body class="on-dark">
+<a class="sc-skip" href="#controls">Skip to the controls</a>
+<div class="lab">
+  <header class="lab-head" id="head">
+    <h1>LAB / FIELD / SCENE</h1>
+    <p>CAD rocket / lattice slice / markers / camera / flick</p>
+    <nav aria-label="Lab navigation"><a href="../">VX</a><a href="/">Production site</a></nav>
+  </header>
+
+  <div class="lab-body">
+    <section class="lab-stage sc-stage" aria-label="Scene bench">
+      <canvas id="scene" class="sc-canvas" aria-label="CHARGER field scene, loading"></canvas>
+      <div class="sc-ticks" aria-hidden="true"><i></i></div>
+      <p class="sc-hint" id="hint"><b>Drag the rocket</b> to flick it / drag space to orbit / wheel to zoom</p>
+      <p class="sc-fallback" id="fallback" hidden><b>No WebGL2 / scene off</b><span>The page draws the 2D fallback here (panel/fallback.js).</span></p>
+    </section>
+
+    <aside class="lab-panel" id="controls" tabindex="-1" aria-label="Scene controls">
+      <h2>Checks</h2>
+      <div class="group">
+        <button class="btn" id="check15" type="button">Alpha +15 check</button>
+        <button class="btn" id="pad" type="button">On the pad</button>
+        <button class="btn" id="script" type="button" aria-pressed="false">Test motion</button>
+      </div>
+      <p class="note">Test motion is a scripted state, not flight data. Lab inputs below are hand-set (EST).</p>
+
+      <h2>Flight state</h2>
+      <label class="row" for="x">x downrange <output aria-live="off" id="oX" for="x"></output><input id="x" aria-label="x downrange, metres" type="range" min="-3" max="3" step="0.01" value="0"></label>
+      <label class="row" for="y">y ref station <output aria-live="off" id="oY" for="y"></output><input id="y" aria-label="y reference station, metres" type="range" min="0" max="330" step="0.05" value="0.62"></label>
+      <label class="row" for="theta">theta pitch <output aria-live="off" id="oTheta" for="theta"></output><input id="theta" aria-label="theta pitch, degrees" type="range" min="-45" max="45" step="0.5" value="0"></label>
+      <label class="row" for="alpha">alpha <output aria-live="off" id="oAlpha" for="alpha"></output><input id="alpha" aria-label="alpha, degrees" type="range" min="-35" max="35" step="0.5" value="0"></label>
+      <label class="row" for="v">v airspeed <output aria-live="off" id="oV" for="v"></output><input id="v" aria-label="v airspeed, metres per second" type="range" min="0" max="120" step="1" value="0"></label>
+      <label class="row" for="thrust">thrust <output aria-live="off" id="oThrust" for="thrust"></output><input id="thrust" aria-label="thrust, newtons" type="range" min="0" max="120" step="1" value="0"></label>
+      <label class="row" for="N">N normal force <output aria-live="off" id="oN" for="N"></output><input id="N" aria-label="N normal force, newtons" type="range" min="-25" max="25" step="0.1" value="0"></label>
+
+      <h2>Airframe</h2>
+      <label class="row" for="fins">Fin scale <output aria-live="off" id="oFins" for="fins"></output><input id="fins" aria-label="Fin scale" type="range" min="0" max="1.5" step="0.05" value="1"></label>
+      <div class="group" role="group" aria-label="Fin presets">
+        <button class="btn" type="button" data-fins="0">None</button>
+        <button class="btn" type="button" data-fins="0.5">Half</button>
+        <button class="btn" type="button" data-fins="1">Full</button>
+      </div>
+      <label class="row" for="cg">CG from nose <output aria-live="off" id="oCg" for="cg"></output><input id="cg" aria-label="CG from nose, inches" type="range" min="15" max="30" step="0.1" value="22"></label>
+      <label class="row" for="cp">CP from nose <output aria-live="off" id="oCp" for="cp"></output><input id="cp" aria-label="CP from nose, inches" type="range" min="15" max="40" step="0.1" value="27"></label>
+      <label class="row">Lattice CP ring <input id="cplOn" type="checkbox" checked></label>
+      <label class="row" for="cpl">Lattice CP offset <output aria-live="off" id="oCpl" for="cpl"></output><input id="cpl" aria-label="Lattice CP offset, inches" type="range" min="-4" max="4" step="0.1" value="-0.6"></label>
+      <label class="row" for="rail">Rail length <output aria-live="off" id="oRail" for="rail"></output><input id="rail" aria-label="Rail length, inches" type="range" min="36" max="96" step="1" value="72"></label>
+      <label class="row" for="launch">Launch angle <output aria-live="off" id="oLaunch" for="launch"></output><input id="launch" aria-label="Launch angle, degrees" type="range" min="-10" max="10" step="0.5" value="0"></label>
+
+      <h2>View</h2>
+      <div class="group" role="group" aria-label="Camera preset">
+        <button class="btn" type="button" data-cam="side" aria-pressed="true">Side</button>
+        <button class="btn" type="button" data-cam="quarter" aria-pressed="false">Quarter</button>
+        <button class="btn" type="button" data-cam="chase" aria-pressed="false">Chase</button>
+        <button class="btn" type="button" data-cam="pad" aria-pressed="false">Pad</button>
+      </div>
+      <div class="group" role="group" aria-label="Slice section">
+        <button class="btn" type="button" data-slice="through" aria-pressed="true">Through fins</button>
+        <button class="btn" type="button" data-slice="between" aria-pressed="false">Between fins</button>
+      </div>
+      <label class="row">Slice test card <input id="sliceOn" type="checkbox" checked></label>
+      <label class="row">Slice ramp <select id="view"><option value="smoke">Smoke</option><option value="pressure">Pressure</option><option value="vorticity">Vorticity</option><option value="speed">Speed</option></select></label>
+      <label class="row">Markers <input id="markers" type="checkbox" checked></label>
+      <label class="row">Toy flick response <input id="toy" type="checkbox"></label>
+      <label class="row">Tier <select id="tier"><option value="auto">Auto (governor)</option><option value="3">T3 full</option><option value="2">T2 reduced</option><option value="1">T1 minimal</option><option value="0">T0 static</option></select></label>
+
+      <h2>Readout</h2>
+      <pre class="readout" id="readout">waiting for the scene</pre>
+    </aside>
+  </div>
+</div>
+
+<script type="module">
+import { governor } from '../js/core/governor.js';
+import { createScene, padPose, PAD, CG_DEFAULT_M, FLICK_GAIN, FLICK_MAX } from '../js/scene/scene.js';
+import { defaultDomain } from '../js/scene/slice.js';
+import { createTestCard } from '../js/scene/scene-testcard.js';
+
+const $ = (id) => document.getElementById(id);
+const IN = 0.0254, FT = 0.3048, LBF = 0.2248089, DEG = Math.PI / 180;   // STD conversions
+const q = new URLSearchParams(location.search);
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+document.documentElement.style.setProperty('--lab-head', `${$('head').offsetHeight}px`);
+new ResizeObserver(() => document.documentElement.style.setProperty('--lab-head', `${$('head').offsetHeight}px`)).observe($('head'));
+
+if (q.has('tier')) { const t = +q.get('tier'); if (t >= 0 && t <= 3) { governor.pin(t); $('tier').value = String(t); } }
+const scene = createScene($('scene'), { tier: governor.tier });
+if (scene.fallback) {
+  $('fallback').hidden = false; $('hint').hidden = true;
+  $('readout').textContent = `fallback  ${scene.fallback}\nThe scene resolved to a safe no-op object; every setter is inert.`;
+}
+const offTier = governor.subscribe(({ tier }) => scene.setTier(tier));
+
+// lab inputs (hand-set, EST)
+const S = { x: 0, y: 0.70, theta: 0, alpha: 0, v: 0, thrust: 0, N: 0, fins: 1, cg: 22, cp: 27, cplOn: true, cpl: -0.6, rail: 72, launch: 0 };
+const params = { x: 'x', y: 'y', theta: 'theta', alpha: 'alpha', v: 'v', thrust: 'thrust', N: 'N', fins: 'fins', cg: 'cg', cp: 'cp', cpl: 'cpl', rail: 'rail', launch: 'launch' };
+for (const [k, p] of Object.entries(params)) if (q.has(p) && Number.isFinite(+q.get(p))) S[k] = +q.get(p);
+// the reference station (x, y) refers to stays at the PAGE CG, as the flight model's liftoff CG station;
+// the CG slider then moves the CG marker along the body without moving the airframe
+const XREF = CG_DEFAULT_M;
+{ const p0 = padPose({ xref: XREF, launchAngle: S.launch * DEG }); if (!q.has('y')) S.y = p0.y; if (!q.has('x')) S.x = p0.x; if (!q.has('theta') && q.has('launch')) S.theta = S.launch; }
+const toy = { on: !reduced, rate: 0, offset: 0, raf: 0, last: 0 };
+$('toy').checked = toy.on;
+const card = createTestCard({ cols: 512, rows: 160 });
+const domain = defaultDomain({ cols: 512, rows: 160 });
+let sliceView = q.get('slice') === 'between' ? 'between' : 'through';
+let sliceOn = q.get('slice') !== 'off';
+
+const fmt = (v, d) => v.toFixed(d);
+const sg = (v, d) => (v >= 0 ? '+' : '-') + Math.abs(v).toFixed(d);
+function outputs() {
+  $('oX').innerHTML = `${sg(S.x, 2)} m<small>${sg(S.x / FT, 1)} ft</small>`;
+  $('oY').innerHTML = `${fmt(S.y, 2)} m<small>${fmt(S.y / FT, 0)} ft</small>`;
+  $('oTheta').textContent = `${sg(S.theta, 1)} deg`;
+  $('oAlpha').textContent = `${sg(S.alpha, 1)} deg`;
+  $('oV').innerHTML = `${fmt(S.v, 0)} m/s<small>${fmt(S.v / FT, 0)} ft/s</small>`;
+  $('oThrust').innerHTML = `${fmt(S.thrust, 0)} N<small>${fmt(S.thrust * LBF, 1)} lbf</small>`;
+  $('oN').innerHTML = `${sg(S.N, 1)} N<small>${sg(S.N * LBF, 2)} lbf</small>`;
+  $('oFins').textContent = `${fmt(S.fins, 2)}`;
+  $('oCg').textContent = `${fmt(S.cg, 1)} in`;
+  $('oCp').textContent = `${fmt(S.cp, 1)} in`;
+  $('oCpl').textContent = `${sg(S.cpl, 1)} in`;
+  $('oRail').innerHTML = `${fmt(S.rail, 0)} in<small>${fmt(S.rail * IN, 2)} m</small>`;
+  $('oLaunch').textContent = `${sg(S.launch, 1)} deg`;
+  for (const k of ['x', 'y', 'theta', 'alpha', 'v', 'thrust', 'N', 'fins', 'cg', 'cp', 'cpl', 'rail', 'launch']) if (document.activeElement !== $(k)) $(k).value = S[k];
+  $('cplOn').checked = S.cplOn;
+}
+function push() {
+  const th = (S.theta + toy.offset) * DEG, al = (S.alpha + toy.offset) * DEG;
+  scene.setFlight(
+    { x: S.x, y: S.y, theta: th, alpha: al, v: S.v, airspeed: S.v, thrust: S.thrust, N: S.N, phase: 'lab' },
+    { xcg: S.cg * IN, xref: XREF, xcp: S.cp * IN, xcpLattice: S.cplOn ? (S.cp + S.cpl) * IN : NaN,
+      tags: { xcg: 'EST', xcp: 'EST', xcpLattice: 'EST', margin: 'EST', alpha: 'EST', N: 'EST', thrust: 'EST', y: 'EST', v: 'EST' } });
+  drawCard();
+}
+let cardKey = '';
+function drawCard() {
+  if (!sliceOn) { scene.setSliceTexture(null); cardKey = ''; return; }
+  const key = [S.alpha + toy.offset, S.fins, sliceView, !!scene.cad].join('|');
+  if (key === cardKey) return;
+  cardKey = key;
+  card.draw({ alpha: (S.alpha + toy.offset) * DEG, finScale: S.fins, view: sliceView, domain, cad: scene.cad });
+  scene.setSliceTexture(card.texture, domain);
+}
+for (const k of ['x', 'y', 'theta', 'alpha', 'v', 'thrust', 'N', 'cg', 'cp', 'cpl']) $(k).addEventListener('input', () => { S[k] = +$(k).value; stopScript(); outputs(); push(); });
+$('fins').addEventListener('input', () => { S.fins = +$('fins').value; scene.setFinScale(S.fins); outputs(); push(); });
+document.querySelectorAll('[data-fins]').forEach(b => b.addEventListener('click', () => { S.fins = +b.dataset.fins; scene.setFinScale(S.fins); outputs(); push(); }));
+$('cplOn').addEventListener('change', () => { S.cplOn = $('cplOn').checked; push(); });
+for (const k of ['rail', 'launch']) $(k).addEventListener('input', () => { S[k] = +$(k).value; scene.setRail(S.rail * IN, S.launch * DEG); outputs(); });
+function setCam(name) { scene.setCamera(name); document.querySelectorAll('[data-cam]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.cam === name))); }
+document.querySelectorAll('[data-cam]').forEach(b => b.addEventListener('click', () => setCam(b.dataset.cam)));
+function setSlice(v) { sliceView = v; scene.setSliceView(v); document.querySelectorAll('[data-slice]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.slice === v))); push(); }
+document.querySelectorAll('[data-slice]').forEach(b => b.addEventListener('click', () => setSlice(b.dataset.slice)));
+$('sliceOn').addEventListener('change', () => { sliceOn = $('sliceOn').checked; push(); });
+$('view').addEventListener('change', () => scene.setView($('view').value));
+$('markers').addEventListener('change', () => scene.setMarkers($('markers').checked));
+$('toy').addEventListener('change', () => { toy.on = $('toy').checked; if (!toy.on) { toy.rate = 0; toy.offset = 0; push(); } });
+$('tier').addEventListener('change', () => { const v = $('tier').value; governor.pin(v === 'auto' ? null : +v); });
+$('check15').addEventListener('click', () => { stopScript(); Object.assign(S, { x: 0, theta: 15, alpha: 15, v: 60, thrust: 0, N: 12 }); S.y = 40; setCam('side'); outputs(); push(); });
+$('pad').addEventListener('click', () => { stopScript(); const p = padPose({ xref: XREF, launchAngle: S.launch * DEG }); Object.assign(S, { x: p.x, y: p.y, theta: S.launch, alpha: 0, v: 0, thrust: 0, N: 0 }); outputs(); push(); });
+
+/* Toy response to a flick (lab only, EST): a damped pitch oscillator,
+   theta'' = -w^2 theta - 2 zeta w theta', w = 2 pi 1.2 rad/s, zeta = 0.15,
+   added to the hand-set theta and alpha so the impulse is visible. Not the flight model. */
+const TOY_W = 2 * Math.PI * 1.2, TOY_Z = 0.15;
+function toyStep(now) {
+  toy.raf = 0;
+  const dt = toy.last ? Math.min(0.05, (now - toy.last) / 1000) : 1 / 60; toy.last = now;
+  let th = toy.offset * DEG, w = toy.rate;
+  for (let i = 0; i < 4; i++) { const h = dt / 4; const a = -TOY_W * TOY_W * th - 2 * TOY_Z * TOY_W * w; w += a * h; th += w * h; }
+  toy.rate = w; toy.offset = th / DEG;
+  push(); outputs();
+  if (Math.abs(toy.offset) > 0.02 || Math.abs(toy.rate) > 0.002) toy.raf = requestAnimationFrame(toyStep); else { toy.offset = 0; toy.rate = 0; toy.last = 0; push(); }
+}
+let lastFlick = null;
+scene.onFlick((rate) => {
+  lastFlick = { rate, at: performance.now() };
+  if (toy.on) { toy.rate += rate; if (!toy.raf) { toy.last = 0; toy.raf = requestAnimationFrame(toyStep); } }
+});
+
+/* Scripted test motion (not flight data): 1.25 s at 70 m/s^2 with 77 N of thrust,
+   a coast with a decaying wobble, the camera on chase. */
+const script = { raf: 0, t0: 0 };
+function scriptStep(now) {
+  const t = (now - script.t0) / 1000;
+  const burn = 1.25, a = 70;
+  const p0 = padPose({ xref: XREF });
+  const vb = a * burn, yb = 0.5 * a * burn * burn;
+  const y = t < burn ? 0.5 * a * t * t : yb + vb * (t - burn) - 0.5 * 14 * (t - burn) ** 2;
+  const v = t < burn ? a * t : Math.max(0, vb - 14 * (t - burn));
+  const wob = t > 0.3 ? 6 * Math.exp(-0.9 * (t - 0.3)) * Math.sin(2 * Math.PI * 1.4 * (t - 0.3)) : 0;
+  Object.assign(S, { x: 0.15 * t * t, y: p0.y + y, theta: wob * 0.6 + 1.5 * Math.min(1, t / 3), alpha: wob, v, thrust: t < burn ? 77 : 0, N: 0.9 * wob * Math.min(1, v / 40) });
+  outputs(); push();
+  if (t < 6.5) script.raf = requestAnimationFrame(scriptStep); else stopScript();
+}
+function stopScript() { if (script.raf) cancelAnimationFrame(script.raf); script.raf = 0; $('script').setAttribute('aria-pressed', 'false'); }
+$('script').addEventListener('click', () => {
+  if (script.raf) { stopScript(); return; }
+  $('script').setAttribute('aria-pressed', 'true'); setCam('chase'); script.t0 = performance.now(); script.raf = requestAnimationFrame(scriptStep);
+});
+
+// URL state
+if (q.get('cam')) setCam(q.get('cam'));
+if (q.get('markers') === '0') { $('markers').checked = false; scene.setMarkers(false); }
+if (q.get('view')) { $('view').value = q.get('view'); scene.setView(q.get('view')); }
+if (sliceView === 'between') setSlice('between');
+$('sliceOn').checked = sliceOn;
+scene.setFinScale(S.fins);
+scene.setRail(S.rail * IN, S.launch * DEG);
+outputs(); push();
+scene.ready.then((ok) => {
+  cardKey = ''; push();
+  if (q.get('check') === '15') $('check15').click();
+  if (q.get('script') === '1' && !reduced) $('script').click();
+});
+
+// readout, 4 Hz (not a live region)
+const tick = () => {
+  if (scene.fallback) return;
+  const s = scene.stats, sign = scene.checkSign();
+  const v = (a) => a.map(n => sg(n, 3)).join(' ');
+  const pass = sign && sign.pass;
+  const dq = lastFlick ? `${sg(lastFlick.rate / DEG, 1)} deg/s` : 'none yet';
+  $('readout').innerHTML =
+`<b>SCENE</b>   ${s.built ? 'model built' : scene.error ? 'model failed' : 'loading model'} / loop ${s.loop}
+renderer  ${s.size.width} x ${s.size.height} css px / dpr ${s.dpr} / tier ${s.tier}${s.reduced ? ' / reduced motion' : ''}
+draw      ${s.calls} calls / ${s.triangles} tris / ${s.ms.toFixed(1)} ms cpu / ${s.frames} frames
+camera    ${s.camera.mode}${s.camera.transitioning ? ' (moving)' : ''} / ${s.camera.distance.toFixed(2)} m / fov ${s.camera.fov.toFixed(1)} deg
+slice     ${s.slice.visible ? 'on' : 'off'} / ${s.slice.view} / ${s.slice.domain.cols} x ${s.slice.domain.rows} cells / ${(s.slice.domain.cellM * 1000).toFixed(2)} mm per cell
+          ${s.slice.size.widthM.toFixed(3)} x ${s.slice.size.heightM.toFixed(3)} m / nose col ${s.slice.domain.xNoseCol.toFixed(1)}
+
+<b>SIGN CHECK</b>  alpha ${sg((S.alpha + toy.offset), 1)} deg / theta ${sg((S.theta + toy.offset), 1)} deg
+grid inflow (cos a, sin a) in world   ${v(sign.slice)}
+v_air from the flight convention      ${v(sign.arrow)}
+wind arrow as drawn                   ${v(sign.drawnArrow)}
+${sign.view === 'through' ? `dot ${sign.dot.toFixed(5)}` : `between view, 45 deg out of the pitch plane: signs ${sign.sameSide ? 'agree' : 'differ'}`}  ${pass ? '<b>PASS</b>' : '<em>FAIL</em>'}  air arrives from body ${S.alpha + toy.offset > 0 ? '-x' : S.alpha + toy.offset < 0 ? '+x' : 'nose'} side
+
+<b>FLICK</b>   ${s.flick.count} released / last ${dq}${s.flick.dragging ? ` / dragging ${sg(s.flick.preview / DEG, 0)} deg/s` : ''}
+gain ${FLICK_GAIN} 1/s / clamp ${(FLICK_MAX / DEG).toFixed(0)} deg/s (EST)
+
+<b>PAD</b>     flight origin ${(PAD.standM / IN).toFixed(1)} in above ground / rail ${(PAD.railProfileM / IN).toFixed(2)} in 1010 at ${(PAD.railOffsetM * 1000).toFixed(1)} mm (EST)
+CG default ${(CG_DEFAULT_M / IN).toFixed(1)} in from the nose (PAGE)`;
+};
+const readoutTimer = setInterval(tick, 250);
+tick();
+addEventListener('pagehide', () => { clearInterval(readoutTimer); stopScript(); offTier(); scene.destroy(); card.dispose(); });
+window.__scene = scene;
+</script>
+</body>
+</html>

@@ -3,699 +3,349 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Mert Tureli · VX</title>
-<meta name="description" content="The experimental build of merttureli.com: the CHARGER flight model rendered live from the published assembly inside a page wind-tunnel simulation, with every live number measured from this page in your browser.">
+<title>CHARGER field study · Mert Tureli VX</title>
+<meta name="description" content="CHARGER, the Union College Rocket Team's 2026 entry, launched again in slow motion: a Barrowman rigid-body flight model and a lattice Boltzmann section through the pitch plane, every number tagged with its source.">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#0A0A0A">
 <link rel="canonical" href="https://merttureli.com/vx/">
-<meta property="og:title" content="Mert Tureli · VX">
-<meta property="og:description" content="Mechanical engineer in Austin, Texas. The experimental build: CHARGER rendered live from the flight model, scroll-driven station by station.">
+<meta property="og:title" content="CHARGER field study · Mert Tureli">
+<meta property="og:description" content="A slow-motion replay of CHARGER's launch: the pitch motion from Barrowman's method, the air on the fins from a lattice Boltzmann section, every number tagged with its source.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://merttureli.com/vx/">
 <meta property="og:image" content="https://merttureli.com/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230A0A0A'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='26' font-weight='600' fill='%23FFFFFF'%3EMT%3C/text%3E%3C/svg%3E">
-<script>document.documentElement.classList.replace('no-js','js');</script>
+<script>document.documentElement.classList.replace('no-js', 'js');</script>
 <link rel="preload" as="font" type="font/ttf" crossorigin href="../assets/charger-explorer/fonts/SpaceGrotesk-var.ttf">
 <link rel="preload" as="font" type="font/ttf" crossorigin href="../assets/charger-explorer/fonts/IBMPlexMono-Regular.ttf">
-<link rel="preload" as="image" href="../assets/motion/charger-painted-wide-poster.png" fetchpriority="high">
+<script type="importmap">{"imports":{"three":"../assets/charger-explorer/vendor/three.module.js"}}</script>
 <link rel="modulepreload" href="js/main.js">
 <link rel="modulepreload" href="js/core/bus.js">
 <link rel="modulepreload" href="js/core/governor.js">
-<link rel="modulepreload" href="js/core/scroll.js">
-<link rel="modulepreload" href="js/core/media.js">
-<link rel="modulepreload" href="js/boot.js">
-<link rel="modulepreload" href="js/plotter.js">
-<script type="importmap">{"imports":{"three":"../assets/charger-explorer/vendor/three.module.js"}}</script>
+<link rel="modulepreload" href="js/flight/flight.js">
+<link rel="modulepreload" href="js/flight/barrowman.js">
+<link rel="modulepreload" href="js/data/motor-g77r.js">
+<link rel="modulepreload" href="js/geom/geom.js">
+<link rel="modulepreload" href="js/geom/geom-cad.js">
+<link rel="modulepreload" href="js/geom/geom-measure.js">
+<link rel="modulepreload" href="js/panel/panel.js">
+<link rel="modulepreload" href="js/panel/controls.js">
+<link rel="modulepreload" href="js/panel/chart.js">
+<link rel="modulepreload" href="js/panel/format.js">
+<link rel="modulepreload" href="js/panel/fallback.js">
 <link rel="stylesheet" href="css/tokens.css">
-<link rel="stylesheet" href="css/boot.css">
-<link rel="stylesheet" href="css/stage.css">
-<link rel="stylesheet" href="css/tunnel.css">
-<link rel="stylesheet" href="css/callouts.css">
-<link rel="stylesheet" href="css/instruments.css">
-<link rel="stylesheet" href="css/telemetry.css">
-<link rel="stylesheet" href="css/console.css">
-<link rel="stylesheet" href="css/hid.css">
-<link rel="stylesheet" href="css/contact-sheet.css">
-<link rel="stylesheet" href="css/dimension.css">
-<link rel="stylesheet" href="css/timeline.css">
-<link rel="stylesheet" href="css/vx.css">
-<link rel="stylesheet" href="css/mobile.css">
-<noscript><style>#boot{display:none}</style></noscript>
+<link rel="stylesheet" href="css/panel.css">
+<link rel="stylesheet" href="css/scene.css">
+<link rel="stylesheet" href="css/field.css">
 <script type="module" src="js/main.js"></script>
 </head>
 <body>
+<a class="fd-skip" href="#main">Skip to the flight stage</a>
+<a class="fd-skip" href="#study">Skip to the method and runs</a>
 
-<div id="boot" class="bt" role="dialog" aria-label="Loading">
-  <button class="bt-skip" type="button">Skip</button>
-  <p class="bt-facts"><span><b>Mert Tureli</b> / Mechanical engineer / Austin, Texas / B.S. Mechanical Engineering, Union College, 2026</span> <a href="../assets/Mert-Tureli-Resume.pdf">Resume (PDF)</a> <a href="mailto:merttureli0@gmail.com">Email</a> <a href="https://linkedin.com/in/merttureli">LinkedIn</a> <a href="../hi/mert-tureli.vcf">Save contact (VCF)</a></p>
-</div>
-
-<a class="skip-link" href="#main">Skip to content</a>
-
-<header class="vx-header" data-dim-more="HEADER" data-dim-basic="88px" data-dim-side="height">
-  <a class="wordmark" href="#pad">Mert Tureli <span>/ VX</span></a>
-  <nav class="vx-nav" aria-label="Sections">
-    <a href="#03-charger">Charger</a>
-    <a href="#ladder">Events</a>
-    <a href="#01-hotbox">Sheets</a>
-    <a href="#experience">Crew</a>
-    <a href="#beyond">Off range</a>
-    <a href="#contact">Comms</a>
-  </nav>
-  <div class="vx-tools">
-    <button id="tel-toggle" class="tool tool-tel" type="button" aria-expanded="true" aria-controls="telemetry">Telemetry</button>
-    <button id="reader-toggle" class="tool" type="button" aria-pressed="false">Reading mode</button>
-    <button class="tool tool-console" type="button" data-console-open aria-label="Open the console (slash, Ctrl K or Cmd K)">&gt;_</button>
-    <a class="tool" href="lab/">Lab</a>
-    <a class="tool tool-site" href="/"><span class="tool-site-long">The production site</span><span class="tool-site-short" aria-hidden="true">Site</span> <span aria-hidden="true">→</span></a>
-  </div>
+<header class="fd-head on-dark">
+  <h1 class="fd-title"><span>CHARGER</span> <span class="fd-sep" aria-hidden="true">/</span> <span>FIELD STUDY 01</span><span class="fd-title-x"> <span class="fd-sep" aria-hidden="true">/</span> PITCH PLANE</span></h1>
+  <dl class="fd-meta">
+    <div class="fd-m fd-m-engine"><dt>ENGINE</dt><dd data-h="engine">BARROWMAN 3-DOF / LBM D2Q9</dd></div>
+    <div class="fd-m fd-m-grid"><dt>GRID</dt><dd data-h="grid">LATTICE PENDING</dd></div>
+    <div class="fd-m fd-m-tier"><dt>TIER</dt><dd data-h="tier">T3</dd></div>
+    <div class="fd-m fd-m-rate"><dt>RATE</dt><dd data-h="rate">1/8 AUTO</dd></div>
+    <div class="fd-m fd-m-tc"><dt>FLIGHT TIME</dt><dd data-h="tc">T+00.000</dd></div>
+  </dl>
+  <nav class="fd-nav" aria-label="Page"><a href="#runs">Runs</a><a href="lab/">Lab</a><a href="/">Site</a></nav>
 </header>
 
-<div id="telemetry-dock" class="tel-dock on-dark">
-  <div id="telemetry"></div>
-</div>
-
 <main id="main" tabindex="-1">
-
-  <section id="range" class="range on-dark" data-station="CHARGER" data-index="01" aria-label="CHARGER on the pad and the stack walk">
-    <div class="range-sticky" id="range-sticky">
-      <div class="scene" id="scene">
-        <canvas id="tunnel" class="tn-canvas" aria-hidden="true"></canvas>
-        <img id="poster" class="st-poster" src="../assets/motion/charger-painted-wide-poster.png" width="1280" height="720" alt="Painted render of CHARGER: orange livery with dark red bands and the CHARGER / UCRC / 2026 lettering, on a plain background" fetchpriority="high" decoding="async">
-        <canvas id="stage" class="st-canvas" role="img" aria-label="CHARGER flight model, rendered live from the published assembly, station by station as the page scrolls"></canvas>
-        <svg id="leaders" class="st-overlay" aria-hidden="true" focusable="false"></svg>
-        <div id="callouts"></div>
-        <div class="st-ticks" id="ticks" aria-hidden="true"><i></i></div>
-        <p class="st-flag" id="stage-flag" hidden>No WebGL / poster</p>
-        <button id="load3d" class="load3d" type="button" hidden>Load 3D / 2.5 MB</button>
+  <section class="fd-stage on-dark" id="stage" tabindex="-1" aria-label="Flight stage: the 3D replay with the flow section, the flight panel and the strip chart">
+    <div class="pn-viewport fd-viewport">
+      <canvas class="sc-canvas" id="scene" aria-label="CHARGER on the launch rail, loading"></canvas>
+      <div class="sc-ticks" aria-hidden="true"><i></i></div>
+      <div class="fd-cap" data-cap>
+        <p class="fd-cap-l" data-cap-flow>FLOW / LATTICE PENDING</p>
+        <p class="fd-cap-l fd-cap-dim" data-cap-note>2D PITCH-PLANE SECTION / NOT TIME-ACCURATE</p>
       </div>
-
-      <i class="margin-probe" data-dim="PAGE MARGIN" data-dim-side="width" aria-hidden="true"></i>
-      <div id="pad" class="pad-copy">
-        <p class="eyebrow pad-eyebrow">Mechanical engineer / Austin, Texas</p>
-        <h1 class="display-1 pad-title" data-dim="DISPLAY HEADING"><span>Mert</span> <span>Tureli</span></h1>
-        <p class="pad-thesis">I design, build, and test hardware end to end, from CAD and drawings through electronics and firmware to the test rig that proves it works.</p>
-        <div class="pad-ctas">
-          <a class="btn btn-glass" href="#03-charger">See the work <span aria-hidden="true">→</span></a>
-          <a class="btn btn-link" href="../assets/Mert-Tureli-Resume.pdf">Resume (PDF) <span aria-hidden="true">→</span></a>
-        </div>
+      <div class="fd-badges" data-badges hidden>
+        <p class="fd-badge" data-badge-hold hidden></p>
+        <p class="fd-badge" data-badge-gust hidden><span data-badge-gust-t></span> <button type="button" class="fd-badge-x" data-disarm>Disarm</button></p>
+        <p class="fd-badge" data-badge-flow hidden><span>FLOW PAUSED</span> <button type="button" class="fd-badge-x" data-resume>Resume flow</button></p>
       </div>
-
-      <p class="st-caption pad-caption" id="stage-caption"><b>CHARGER</b> / rendered from the flight model, thirty internal components at their true stations / <span id="stage-state">pad view</span></p>
-
-      <p class="tunnel-label meta-sm"><b>Tunnel</b> / page simulation / not flight data / <span id="tunnel-readout">off</span></p>
-      <div class="stage-bar" id="stage-bar" data-dim-more="STAGE BAR" data-dim-basic="56px" data-dim-side="height">
-        <div class="stage-bar-ranges">
-          <label class="range-control"><span>Progress</span><input id="progress-range" type="range" min="0" max="1" step="0.001" value="0" aria-describedby="progress-out"><output id="progress-out">0.000</output></label>
-          <label class="range-control range-explode"><span>Explode</span><input id="explode-range" type="range" min="0" max="1" step="0.01" value="0"><output id="explode-out">0.00</output></label>
-          <button id="explode-auto" class="chip" type="button" aria-pressed="true">Auto</button>
+      <p class="fd-status" data-status>LOADING THE CAD ASSEMBLY</p>
+      <p class="sc-hint" data-hint>DRAG THE ROCKET TO FLICK IT / DRAG SPACE TO ORBIT / L LAUNCH</p>
+      <noscript>
+        <div class="fd-noscript">
+          <img src="../assets/motion/charger-painted-wide-poster.png" width="1280" height="720" alt="CHARGER rendered from the CAD assembly in its orange livery with dark red bands.">
+          <p>The replay runs in the browser and needs JavaScript. The method, the configuration and the runs below read without it.</p>
         </div>
-        <div class="stage-bar-links">
-          <a href="../assets/charger-explorer/cad/charger-hybrid.step" download><span class="bar-verb">Download </span>STEP (3.1 MB)</a>
-          <a href="../assets/charger-explorer/assembly.glb" download><span class="bar-verb">Download </span>GLB (2.0 MB)</a>
-          <a href="../assets/charger-explorer/index.html"><span class="bar-verb">Open the </span>explorer <span aria-hidden="true">→</span></a>
-        </div>
-      </div>
+      </noscript>
     </div>
+  </section>
 
-    <div id="03-charger" class="range-anchor" aria-hidden="true"></div>
+  <section class="fd-lede" id="study" aria-labelledby="lede-h" tabindex="-1">
+    <div class="fd-wrap">
+      <p class="eyebrow fd-eyebrow">Field study 01 / CHARGER / Union College Rocket Team / 2026</p>
+      <h2 class="display-1 fd-lede-h" id="lede-h">What the<br>fins do</h2>
+      <div class="fd-lede-grid">
+        <p class="fd-lede-p">CHARGER won the Deployable Sensor Payload event at Battle of the Rockets 2026&nbsp;<span class="tag">PAGE</span>. This page launches it again in slow motion. A rigid-body flight model computes the pitch motion with Barrowman's stability method, and a lattice Boltzmann section through the pitch plane shows the air meeting the fins at an angle of attack. A gust or a crosswind tips the nose; the fins, aft of the centre of gravity, push it back.</p>
+        <dl class="fd-keys" aria-label="Keyboard shortcuts while the stage is in view">
+          <div><dt>L</dt><dd>Launch</dd></div>
+          <div><dt>Space</dt><dd>Pause</dd></div>
+          <div><dt>R</dt><dd>Reset</dd></div>
+          <div><dt>G</dt><dd>Fire the gust</dd></div>
+          <div><dt>1 to 4</dt><dd>Smoke, pressure, vorticity, speed</dd></div>
+          <div><dt>Arrows</dt><dd>Flick, with the 3D view focused</dd></div>
+        </dl>
+      </div>
+      <ol class="fd-index">
+        <li><a href="#method"><span class="fd-index-n">01</span><span>Method</span></a></li>
+        <li><a href="#configuration"><span class="fd-index-n">02</span><span>Configuration</span></a></li>
+        <li><a href="#runs"><span class="fd-index-n">03</span><span>Runs</span></a></li>
+      </ol>
+    </div>
+  </section>
 
-    <div class="range-static inner">
-      <p class="eyebrow">03 / Airframe / Payload</p>
-      <h2 class="display-3">Deployable sensor payload</h2>
-      <p class="meta">Union College Rocket Team, 2026 / Captain and chief engineer / First place</p>
-      <p class="body">The competition entry that won its event at Battle of the Rockets 2026. I led the design and manufacture of the airframe and the deployable payload, and ran the team through design review, build, and launch day recovery.</p>
-      <p class="body strong">The win is published by both Union College and the competition organizer.</p>
-      <dl class="spec">
-        <div><dt>Event</dt><dd>Battle of the Rockets 2026</dd></div>
-        <div><dt>Result</dt><dd>First place</dd></div>
-        <div><dt>Role</dt><dd>Captain, chief engineer</dd></div>
-        <div><dt>Scope</dt><dd>Airframe and deployable payload</dd></div>
+  <section class="fd-sec" id="method" aria-labelledby="method-h">
+    <div class="fd-wrap">
+      <header class="fd-sec-head">
+        <p class="eyebrow">01 / Method</p>
+        <h2 class="display-2" id="method-h">Method</h2>
+        <p class="fd-sec-intro">Two models, two jobs. The flight model flies the rocket. The lattice shows the air and measures the force on the section as a cross-check. Every number carries its source.</p>
+      </header>
+      <dl class="fd-legend" aria-label="Source tags">
+        <div><dt class="tag">PAGE</dt><dd>published on merttureli.com</dd></div>
+        <div><dt class="tag">CAD</dt><dd>measured from the assembly</dd></div>
+        <div><dt class="tag">EST</dt><dd>estimated here, with the reason given</dd></div>
+        <div><dt class="tag">FIT</dt><dd>fitted to a published figure</dd></div>
+        <div><dt class="tag">SIM</dt><dd>computed live in this tab</dd></div>
+        <div><dt class="tag">STD</dt><dd>textbook constant or method, reference named</dd></div>
       </dl>
-      <p><a class="btn btn-outline" href="../projects/charger.html">Read the case study <span aria-hidden="true">→</span></a></p>
-      <h3 class="meta stations-head">Stations / nose to tail / from the explorer's part stories</h3>
-      <ol class="stations" id="stations">
-        <li><span class="idx">01</span><b>Nose cone</b><ul><li><span>00</span>Nose cone <em>Light enough to recover on its own.</em></li></ul></li>
-        <li><span class="idx">02</span><b>Camera</b><ul><li><span>17</span>Camera holder <em>Holding the camera in place.</em></li><li><span>15</span>Camera <em>A view from the rocket.</em></li><li><span>14</span>Camera mount <em>Camera support and nose-cone separation.</em></li></ul></li>
-        <li><span class="idx">03</span><b>PCB stack</b><ul><li><span>23</span>Top PCB holder <em>Locating the electronics.</em></li><li><span>24</span>Middle PCB holder <em>Locating the electronics.</em></li><li><span>25</span>Bottom PCB holder <em>Locating the electronics.</em></li><li><span>01</span>Upper body tube <em>The structure around the payload.</em></li></ul></li>
-        <li><span class="idx">04</span><b>Battery</b><ul><li><span>13</span>Battery <em>Power on board.</em></li><li><span>10</span>Rail button 1 <em>Guided before free flight.</em></li></ul></li>
-        <li><span class="idx">05</span><b>Coupler</b><ul><li><span>21</span>Wooden rod 1 <em>Support through the assembly.</em></li><li><span>27</span>Wooden rod 2 <em>Support through the assembly.</em></li><li><span>28</span>Wooden rod 3 <em>Support through the assembly.</em></li><li><span>29</span>Wooden rod 4 <em>Support through the assembly.</em></li><li><span>16</span>Internal coupler <em>Joining the body sections.</em></li><li><span>20</span>Antenna <em>The onboard antenna.</em></li><li><span>22</span>Antenna holder <em>Keeping the antenna in position.</em></li></ul></li>
-        <li><span class="idx">06</span><b>Altimeter</b><ul><li><span>26</span>Lower shock-cord mount <em>Connecting recovery to the airframe.</em></li><li><span>12</span>Altimeter <em>A record of the flight.</em></li><li><span>02</span>Lower body tube <em>The structure around the motor.</em></li></ul></li>
-        <li><span class="idx">07</span><b>Motor</b><ul><li><span>11</span>Rail button 2 <em>Guided before free flight.</em></li><li><span>05</span>Motor <em>The source of thrust.</em></li><li><span>18</span>Motor mount <em>A motor mount you can replace.</em></li><li><span>06</span>Fin 1 <em>Stability in flight.</em></li><li><span>07</span>Fin 2 <em>Stability in flight.</em></li><li><span>08</span>Fin 3 <em>Stability in flight.</em></li><li><span>09</span>Fin 4 <em>Stability in flight.</em></li></ul></li>
-        <li><span class="idx">08</span><b>Screw cap</b><ul><li><span>19</span>Motor screw cap <em>Securing the motor from the rear.</em></li></ul></li>
+      <ol class="fd-method">
+        <li class="fd-mi">
+          <h3 class="fd-mi-h"><span class="fd-mi-n">01</span>Flight model</h3>
+          <div class="fd-mi-b">
+            <p>A planar rigid body with three degrees of freedom (downrange, altitude, pitch), integrated with fourth-order Runge-Kutta at a fixed 1 ms step&nbsp;<span class="tag">SIM</span>. Normal-force slopes and centres of pressure for the ogive nose and the four trapezoidal fins follow Barrowman (1967), with the fin-body interference factor 1 + R / (s + R)&nbsp;<span class="tag">STD</span>. At large angles of attack the normal force uses sin α and adds body lift, 1.1 (A<sub>plan</sub> / A<sub>ref</sub>) sin² α at the planform centroid, as OpenRocket does&nbsp;<span class="tag">STD</span>.</p>
+            <p>Pitch damping sums C<sub>Nα</sub> (x − x<sub>cg</sub>)² over the nose and the fins and adds jet damping from the motor's mass flow (Mandell, Caporaso and Bengen, <cite>Topics in Advanced Model Rocketry</cite>)&nbsp;<span class="tag">STD</span>. Thrust is the AeroTech G77R curve from its published RASP file&nbsp;<span class="tag">STD</span>. Drag is one coefficient, <span data-k="cd">0.6339</span>&nbsp;<span class="tag">FIT</span>, found by bisection so that the still-air apogee equals the page's 1,033 ft&nbsp;<span class="tag">PAGE</span>.</p>
+          </div>
+        </li>
+        <li class="fd-mi">
+          <h3 class="fd-mi-h"><span class="fd-mi-n">02</span>Flow section</h3>
+          <div class="fd-mi-b">
+            <p>A two-dimensional lattice Boltzmann model, D2Q9 with BGK collision (Chen and Doolen 1998) and a Smagorinsky subgrid model with C = 0.12 (Hou, Sterling, Chen and Doolen 1996)&nbsp;<span class="tag">STD</span>, runs on the graphics card in this tab. The rocket's section through the pitch plane is the solid. Its walls use halfway bounce-back with the moving-wall term, so the body's pitch rate reaches the air (Ladd 1994)&nbsp;<span class="tag">STD</span>. The air arrives at the flight model's angle of attack.</p>
+            <p>To stay stable with a relaxation time τ<sub>0</sub> barely above 0.5 (0.504 at tier 3, set for a lattice Reynolds number of 3,000 at an inflow of 0.10 lattice units)&nbsp;<span class="tag">EST</span> the engine adds a regularised collision (Latt and Chopard 2006) and a positivity limiter (Brownlee, Gorban and Levesley 2007)&nbsp;<span class="tag">STD</span>, absorbing layers along the edges, and extra viscosity where the local speed passes 0.15 lattice units and for the first 2,000 steps after a reset&nbsp;<span class="tag">EST</span>. The outflow edges hold the density at 1 and extrapolate the rest (Guo, Zheng and Shi 2002)&nbsp;<span class="tag">STD</span>. Until those first steps are over and the inflow has reached the flight's angle, the panel's lattice readouts show a dash.</p>
+            <p>Force and moment on the section come from momentum exchange at the wall links. The panel prints the lattice's centre of pressure and moment coefficient next to Barrowman's. They are a cross-check, not an input: the flight model flies the rocket. A lab toggle (open the page with <code>?lab</code>) hands the pitching moment to the lattice instead.</p>
+          </div>
+        </li>
+        <li class="fd-mi">
+          <h3 class="fd-mi-h"><span class="fd-mi-n">03</span>What the section is not</h3>
+          <div class="fd-mi-b">
+            <p>It is a 2D slice of a body of revolution. In 2D the air cannot pass around the body, only over and under it, so the section overstates the body's share of the lift, and the fins act as plates of unlimited span. The lattice viscosity is set for a Reynolds number of 3,000 at an inflow u<sub>in</sub> of 0.10 lattice units&nbsp;<span class="tag">EST</span>. Since Re = u<sub>in</sub> D / ν, the Reynolds number follows the inflow: 900 on the pad, about 2,800 at CHARGER's peak airspeed of 87.5 m/s&nbsp;<span class="tag">SIM</span>. The real rocket at 70 m/s is near 3 × 10⁵ (diameter 68 mm&nbsp;<span class="tag">CAD</span>, ν = 1.46 × 10⁻⁵ m²/s, the International Standard Atmosphere at sea level and 15 °C&nbsp;<span class="tag">STD</span>).</p>
+            <p>So the lattice's centre of pressure and moment coefficient are 2D section values. In 2D the long body lifts like a wing along its whole length, with the centre of pressure near its front quarter (thin-airfoil theory, Anderson, <cite>Fundamentals of Aerodynamics</cite>)&nbsp;<span class="tag">STD</span>. At 5° and above, the top and bottom edges of the domain, 0.16 of its width from the axis of a body 0.66 of its width long, also confine the flow and raise the pressure on the windward side: at 5° the section's C<sub>n</sub> is 17 to 32&nbsp;<span class="tag">SIM</span>, where an unconfined flat plate of the same length gives 2π sin α L / D = 9.5&nbsp;<span class="tag">STD</span>. Nor does the held flow settle. Held at 5° on the 512 × 160 grid, once developed (after about 2,300 steps), the section's centre of pressure swings between about 9 and 21 in from the nose with a period of about 4,000 steps, several seconds of screen time on a graphics card, always ahead of the CG (21.6 in from the nose at that instant), with C<sub>m</sub> +6 to +79 about it, where Barrowman gives 33.1 in and a restoring moment&nbsp;<span class="tag">SIM</span>. The panel's lattice C<sub>m</sub> is taken about the live CG, which moves forward as the propellant burns, as Barrowman's moment is. The lattice CP shows a dash below 1° of inflow angle, where the section's small offset from the rail buttons (C<sub>n</sub> about −0.1 to −0.4 at 0°) would make it meaningless&nbsp;<span class="tag">SIM</span>. The lab toggle that lets the lattice moment fly the rocket therefore makes it diverge; it shows what a 2D section would do, not what CHARGER does.</p>
+            <p>Inflow speed in lattice units is u<sub>in</sub> = 0.03 + 0.05 V / (70 m/s), held between 0.03 and 0.10&nbsp;<span class="tag">EST</span>. The 0.03 floor keeps the smoke moving on the pad, so the air there is not still. The inflow angle is held within ±35°&nbsp;<span class="tag">EST</span>: on the pad in a crosswind, and through the finless loop, the section shows 35° while the flight model reports more, and the stage says so.</p>
+          </div>
+        </li>
+        <li class="fd-mi">
+          <h3 class="fd-mi-h"><span class="fd-mi-n">04</span>Slow motion</h3>
+          <div class="fd-mi-b">
+            <p>The replay runs at 1/8 of real time until 3 s after burnout, then at real time; the rate buttons in the panel override it&nbsp;<span class="tag">EST</span>. The flight model is stepped by screen time multiplied by the rate, so its events keep their real timing while frames take under 0.25 s; a longer frame advances it by 0.25 s times the rate. The lattice runs up to 24 steps per 60 Hz frame at tier 3&nbsp;<span class="tag">EST</span>, fewer on faster displays and fewer when frames run long (the engine sheds steps to stay inside its 48 ms budget), whatever the playback rate, so the flow is a quasi-steady picture at the current angle of attack, not a time-accurate film of the flight.</p>
+          </div>
+        </li>
+        <li class="fd-mi">
+          <h3 class="fd-mi-h"><span class="fd-mi-n">05</span>The rocket here and in the case study</h3>
+          <div class="fd-mi-b">
+            <p>The CAD assembly is <span data-k="lengthIn">46.49</span> in long with four fins&nbsp;<span class="tag">CAD</span>. The case study describes a 37 in design with three fins and a stability margin of 1.80 cal at a 22 in CG&nbsp;<span class="tag">PAGE</span>. Four fins is the final configuration. Shape and dimensions here come from the CAD, the mass from the page (2.2 lb)&nbsp;<span class="tag">PAGE</span>, and the CG defaults to the page's 22 in from the nose&nbsp;<span class="tag">PAGE</span>.</p>
+            <p>The margin shown here is recomputed for the CAD airframe: <span data-k="margin0">4.15</span> cal at the page CG&nbsp;<span class="tag">SIM</span>. The 1.80 cal is the design-review figure for the three-fin design, not a result of this study. The CAD fin root chord (<span data-k="finRootIn">2.76</span> in) and sweep (<span data-k="finSweepIn">2.17</span> in) match the page&nbsp;<span class="tag">CAD</span>; the CAD span is <span data-k="finSpanIn">2.17</span> in against the page's 2.36 in height&nbsp;<span class="tag">PAGE</span>.</p>
+          </div>
+        </li>
+        <li class="fd-mi">
+          <h3 class="fd-mi-h"><span class="fd-mi-n">06</span>What the runs show</h3>
+          <div class="fd-mi-b">
+            <p>With full fins the nose turns into the wind and the angle of attack settles within about a second&nbsp;<span class="tag">SIM</span>. With half fins the static margin is <span data-k="marginHalf0">−0.35</span> cal at liftoff, which is unstable&nbsp;<span class="tag">SIM</span>; the CG moves forward as the propellant burns, and the margin is <span data-k="marginHalfBo">+0.14</span> cal at burnout&nbsp;<span class="tag">SIM</span>.</p>
+            <p>Without fins the margin is <span data-k="marginNone0">−6.63</span> cal&nbsp;<span class="tag">SIM</span>. The rocket does not tumble end over end: it pitches over and loops. Body lift acts at the planform centroid, <span data-k="centroidIn">24.42</span> in from the nose, behind the 22 in CG&nbsp;<span class="tag">SIM</span>, so the finless airframe settles at a high angle of attack, 20 to 30°, and flies a loop to an apogee near <span data-k="apogeeNone">340</span> ft&nbsp;<span class="tag">SIM</span>.</p>
+          </div>
+        </li>
+        <li class="fd-mi">
+          <h3 class="fd-mi-h"><span class="fd-mi-n">07</span>Checks</h3>
+          <div class="fd-mi-b">
+            <p>The flight model passes its tests under node (<code>node vx/js/flight/flight.test.mjs</code>): the four-fin C<sub>Nα</sub> and CP against a hand computation, the ogive nose CP at 0.466 of its length, the restoring sign of the moment, the still-air apogee within 1 percent of 1,033 ft after the fit, rail exit against its prediction, energy and NaN guards, determinism, and the lattice toggle (the lattice moment replaces Barrowman's through a 10 Hz low-pass, Barrowman's stays until a lattice moment arrives, and pitch damping is not added twice).</p>
+            <p>The lattice's gate is a cylinder 24 cells across in a 512 × 192 grid at a Reynolds number of 100, run for 20,000 steps. An unconfined cylinder at that Reynolds number sheds at a Strouhal number of about 0.164 (Williamson 1996, <cite>Annual Review of Fluid Mechanics</cite> 28), and blockage raises both its drag and its shedding frequency (Sahin and Owens 2004, <cite>Physics of Fluids</cite> 16); for 12 percent blockage the gate takes a drag coefficient of 1.35 to 1.55 and a Strouhal number of 0.16 to 0.18&nbsp;<span class="tag">STD</span>. Measured here: <span class="fd-slot" data-slot="lattice-validation">a drag coefficient of 1.450 (standard deviation 0.010 over the last 5,000 steps) and a Strouhal number of 0.169 (a lift period of 2,833 steps from 4 zero crossings), after 20,000 steps</span>&nbsp;<span class="tag">SIM</span>, both inside the ranges. The run was headless Chromium on software rendering (SwiftShader) at 99 steps per second; it repeats in the <a href="lab/lattice.html?validate=cylinder">lattice lab</a>. Frame and step rates measured under software rendering are not representative of a graphics card.</p>
+          </div>
+        </li>
       </ol>
     </div>
   </section>
 
-  <section id="ladder" class="section on-paper" data-station="EVENTS" data-index="02">
-    <div class="inner">
-      <header class="sec-head">
-        <p class="eyebrow">03 / CHARGER / flight events / 02</p>
-        <h2 class="display-2">Flight events</h2>
+  <section class="fd-sec fd-sec-alt" id="configuration" aria-labelledby="config-h">
+    <div class="fd-wrap">
+      <header class="fd-sec-head">
+        <p class="eyebrow">02 / Configuration</p>
+        <h2 class="display-2" id="config-h">Configuration</h2>
+        <p class="fd-sec-intro">The study's defaults. The panel's sliders change the live flight; these rows stay at the defaults. SIM rows are recomputed when the page loads.</p>
       </header>
-      <div class="ladder-grid">
-        <div class="ladder-copy pin">
-          <p class="body-lg">The event asks for a rocket that puts a custom built sensor payload into a five hundred foot window, drops it at apogee, sheds its nose cone partway down, and streams five channels of telemetry to a handheld ground station until it lands. We built CHARGER, and it won.</p>
-          <p class="body">The rocket flies a commercial G motor to between seven hundred and twelve hundred feet, drops the payload at apogee, and at seventy five percent of peak altitude the payload releases the nose cone, which has to reach the ground under fifteen feet per second on its own.</p>
-          <p class="body">With the nose cone gone the payload exposes a camera and films the ground until it lands. Throughout, from the moment it goes on the pad, it transmits air pressure, altitude, acceleration, temperature and rotation rate to a ground station that has to plot all of it live and derive the descent rate as it happens.</p>
-          <ul class="figures" aria-label="Figures from the case study">
-            <li><b>1st</b><span>Deployable Sensor Payload event</span></li>
-            <li><b>1.80 cal</b><span>Stability margin, 37 inch airframe</span></li>
-            <li><b>13.8 ft/s</b><span>Descent, against a 15 ft/s limit</span></li>
-            <li><b>$716</b><span>Total hardware cost</span></li>
-          </ul>
-          <figure class="plate photo">
-            <img loading="lazy" decoding="async" src="../assets/photos/video/nose-cone-ejection-test.jpg" width="520" height="293" alt="Ejection charge test on a field: the rocket lying on the grass between orange cones, the charge's smoke at the nose, a video still">
-            <figcaption class="meta-sm">Nose cone ejection test / video still</figcaption>
-          </figure>
-          <p><a class="btn btn-outline" href="../projects/charger.html">Read the case study <span aria-hidden="true">→</span></a></p>
-        </div>
-        <div id="ladder-root" class="ladder-root"></div>
-      </div>
-      <div id="ladder-log" class="ladder-log"></div>
-    </div>
-  </section>
+      <div class="fd-table-wrap">
+        <table class="fd-table">
+          <caption class="sr-only">Every input and derived number of the study with its unit and source tag</caption>
+          <thead><tr><th scope="col">Item</th><th scope="col">Value</th><th scope="col">Tag</th><th scope="col">Source or note</th></tr></thead>
+          <tbody>
+            <tr class="fd-tr-group"><th scope="rowgroup" colspan="4">Airframe, measured from the CAD</th></tr>
+            <tr><th scope="row">Length, nose tip to screw cap</th><td><span data-k="lengthIn">46.49</span> in</td><td><span class="tag">CAD</span></td><td><span data-k="lengthMm">1180.9</span> mm, assembly.json and assembly.bin</td></tr>
+            <tr><th scope="row">Body diameter</th><td><span data-k="diameterIn">2.677</span> in</td><td><span class="tag">CAD</span></td><td><span data-k="diameterMm">68.0</span> mm</td></tr>
+            <tr><th scope="row">Nose cone, ogive, shoulder included</th><td><span data-k="noseIn">9.13</span> in</td><td><span class="tag">CAD</span></td><td>exposed length <span data-k="noseExposedIn">7.87</span> in</td></tr>
+            <tr><th scope="row">Fins</th><td>4</td><td><span class="tag">CAD</span></td><td>parts 6 to 9, at 90° intervals</td></tr>
+            <tr><th scope="row">Fin root chord</th><td><span data-k="finRootIn">2.76</span> in</td><td><span class="tag">CAD</span></td><td>page 2.76 in</td></tr>
+            <tr><th scope="row">Fin tip chord</th><td><span data-k="finTipIn">1.18</span> in</td><td><span class="tag">CAD</span></td><td>not stated on the page</td></tr>
+            <tr><th scope="row">Fin span</th><td><span data-k="finSpanIn">2.17</span> in</td><td><span class="tag">CAD</span></td><td>page height 2.36 in</td></tr>
+            <tr><th scope="row">Fin leading-edge sweep</th><td><span data-k="finSweepIn">2.17</span> in</td><td><span class="tag">CAD</span></td><td>page 2.17 in</td></tr>
+            <tr><th scope="row">Fin thickness</th><td><span data-k="finThickIn">0.125</span> in</td><td><span class="tag">CAD</span></td><td></td></tr>
+            <tr><th scope="row">Fin root leading edge from the nose</th><td><span data-k="finLeIn">42.18</span> in</td><td><span class="tag">CAD</span></td><td></td></tr>
 
-  <section id="decisions" class="section on-dark" data-station="DECISIONS" data-index="03">
-    <div class="inner">
-      <header class="sec-head">
-        <p class="eyebrow">Two decisions the rules forced / 03</p>
-        <h2 class="display-2">Two decisions</h2>
-      </header>
-      <div class="decisions-grid">
-        <div class="decisions-copy pin">
-          <ol class="notes">
-            <li><span class="idx">01</span><p>The rules do not accept a friction fit motor mount. There was no retention design at the preliminary review, so I drew a screw-on cap. The motor changed from a G80T to the G77R-7 in the same period, once the mass budget settled and the simulation had a real airframe rather than an estimate.</p></li>
-            <li><span class="idx">02</span><p>The rocket carries a commercial altimeter and does not use it for recovery. The event bans commercial flight computers in the payload, so every ejection charge fires off the team's own board reading its own barometric sensor. The commercial unit is there so a judge can read peak altitude off it after recovery, with the power still on.</p></li>
-          </ol>
-          <p class="eyebrow">Where the margin was</p>
-          <p class="body strong">The shock cord attachment carries the whole rocket at the instant the parachute opens. Peak simulated acceleration 24.4 feet per second squared on a 2.2 pound rocket is 19 pounds of force through an M3 screw with 0.11 square inches in shear. 1,641 psi against a 10,000 psi allowable, so six times margin.</p>
-        </div>
-        <div class="decisions-media">
-          <figure class="plate photo">
-            <img loading="lazy" decoding="async" src="../assets/photos/3d-model-renders/shockcord-beauty-render.jpg" width="520" height="650" alt="Render of the shock cord attachment: a flat plate with five holes, on black">
-            <figcaption class="meta-sm">Shock cord attachment / render</figcaption>
-          </figure>
-          <figure class="plate photo">
-            <img loading="lazy" decoding="async" src="../assets/photos/3d-model-renders/shockcord-shot-sheet.jpg" width="520" height="394" alt="Shot guide for the shock cord attachment: six frames of the plate at scroll progress 0.00 to 1.00 on one dark sheet">
-            <figcaption class="meta-sm">Shock cord attachment / shot sheet</figcaption>
-          </figure>
-        </div>
-      </div>
-    </div>
-  </section>
+            <tr class="fd-tr-group"><th scope="rowgroup" colspan="4">Case study figures, three-fin design review</th></tr>
+            <tr><th scope="row">Length</th><td>37 in</td><td><span class="tag">PAGE</span></td><td>single stage</td></tr>
+            <tr><th scope="row">Maximum diameter</th><td>2.63 in</td><td><span class="tag">PAGE</span></td><td></td></tr>
+            <tr><th scope="row">Fins</th><td>3</td><td><span class="tag">PAGE</span></td><td>trapezoidal, root chord 2.76 in, height 2.36 in, sweep 2.17 in</td></tr>
+            <tr><th scope="row">Stability margin</th><td>1.80 cal</td><td><span class="tag">PAGE</span></td><td>at a 22 in CG; the three-fin figure, not this study's result</td></tr>
+            <tr><th scope="row">Simulated apogee</th><td>1,033 ft</td><td><span class="tag">PAGE</span></td><td>the drag fit's target</td></tr>
+            <tr><th scope="row">Motor</th><td>AeroTech G77R-7</td><td><span class="tag">PAGE</span></td><td>thrust to weight 8.17, burn 1.25 s</td></tr>
+            <tr><th scope="row">Rail buttons</th><td>2 in, 22 in</td><td><span class="tag">PAGE</span></td><td>from the aft end and from the nose; 13 in apart on the 37 in airframe</td></tr>
 
-  <section id="weekend" class="section on-paper" data-station="WEEKEND" data-index="04">
-    <div class="inner">
-      <header class="sec-head">
-        <p class="eyebrow">Launch day / Pad one, Culpeper, Virginia, April 2026 / 04</p>
-        <h2 class="display-2">Launch weekend</h2>
-      </header>
-      <div class="weekend-grid">
-        <div class="weekend-copy pin">
-          <p class="body strong">Three attempts per team, and the range closes at four in the afternoon. Weather can take the whole weekend, and if it does the awards are decided on the December and March review scores alone.</p>
-          <p class="body strong">We got two clean flights away on the first day while the weather held, then put up the qualifying flight before noon on the second. One team member stands at the launch control officer's position as mission control and nothing leaves the pad until they say it does.</p>
-          <div class="photo-row">
-            <figure class="plate photo">
-              <img loading="lazy" decoding="async" src="../assets/photos/video/rocket-launch.jpg" width="520" height="292" alt="An ignition flash at night on snow, lighting the bare trees, a video still">
-              <figcaption class="meta-sm">Ignition / video still</figcaption>
-            </figure>
-            <figure class="plate photo">
-              <img loading="lazy" decoding="async" src="../assets/photos/charger-rocket-photography/charger-pad-tall.jpg" width="520" height="693" alt="CHARGER on the launch rail before a flight">
-              <figcaption class="meta-sm">On the rail / 01</figcaption>
-            </figure>
-            <figure class="plate photo">
-              <img loading="lazy" decoding="async" src="../assets/photos/charger-rocket-photography/charger-pad-close.jpg" width="520" height="693" alt="CHARGER standing on pad one">
-              <figcaption class="meta-sm">Pad one / 02</figcaption>
-            </figure>
-          </div>
-          <p class="eyebrow">The result</p>
-          <p class="body">Final standings, published by <a href="https://www.union.edu/news/stories/202604/rocket-club-soars-new-heights-first-place-finish-national-competition" target="_blank" rel="noopener">Union College on 23 April 2026</a> and listed by <a href="https://www.rocketbattle.org/winners.html" target="_blank" rel="noopener">the competition organizer</a>.</p>
-          <ol class="standings">
-            <li><span class="idx">01</span>Union College Rocket Club</li>
-            <li><span class="idx">02</span>Chantilly Aerospace Club Team 3</li>
-            <li><span class="idx">03</span>Thomas Jefferson High School</li>
-            <li><span class="idx">04</span>Spring Grove Area High School Team 2</li>
-            <li><span class="idx">05</span>George Mason University</li>
-          </ol>
-        </div>
-        <div id="timeline-root" class="timeline-root"></div>
+            <tr class="fd-tr-group"><th scope="rowgroup" colspan="4">Mass and motor</th></tr>
+            <tr><th scope="row">Mass at liftoff</th><td>2.2 lb</td><td><span class="tag">PAGE</span></td><td><span data-k="massKg">0.998</span> kg, motor loaded</td></tr>
+            <tr><th scope="row">CG from the nose at liftoff</th><td>22.00 in</td><td><span class="tag">PAGE</span></td><td>the panel's CG slider starts here</td></tr>
+            <tr><th scope="row">CG from the nose at burnout</th><td><span data-k="cgBoIn">20.67</span> in</td><td><span class="tag">EST</span></td><td>propellant as a point mass at the motor's mid-length</td></tr>
+            <tr><th scope="row">Pitch inertia at liftoff</th><td><span data-k="inertia">0.127</span> kg m²</td><td><span class="tag">EST</span></td><td>airframe as a uniform slender rod, propellant as a point mass</td></tr>
+            <tr><th scope="row">Motor total impulse</th><td><span data-k="impulse">101.7</span> N s</td><td><span class="tag">STD</span></td><td>integral of the RASP curve, thrustcurve.org via OpenRocket</td></tr>
+            <tr><th scope="row">Motor burn time</th><td><span data-k="burn">1.277</span> s</td><td><span class="tag">STD</span></td><td>last curve sample; the page gives 1.25 s</td></tr>
+            <tr><th scope="row">Propellant mass</th><td><span data-k="propG">59.1</span> g</td><td><span class="tag">STD</span></td><td>RASP file</td></tr>
+            <tr><th scope="row">Mean thrust to weight</th><td><span data-k="tw">8.14</span></td><td><span class="tag">SIM</span></td><td>page 8.17</td></tr>
+
+            <tr class="fd-tr-group"><th scope="rowgroup" colspan="4">Aerodynamics, Barrowman</th></tr>
+            <tr><th scope="row">Nose normal-force slope</th><td><span data-k="noseCna">2.00</span> /rad</td><td><span class="tag">STD</span></td><td>Barrowman 1967</td></tr>
+            <tr><th scope="row">Nose CP from the nose</th><td><span data-k="noseXcpIn">4.26</span> in</td><td><span class="tag">SIM</span></td><td>0.466 of the ogive length&nbsp;<span class="tag">STD</span></td></tr>
+            <tr><th scope="row">Four fins, normal-force slope</th><td><span data-k="finCna">5.47</span> /rad</td><td><span class="tag">SIM</span></td><td>interference factor <span data-k="kfb">1.382</span></td></tr>
+            <tr><th scope="row">Fin CP from the nose</th><td><span data-k="finXcpIn">43.64</span> in</td><td><span class="tag">SIM</span></td><td></td></tr>
+            <tr><th scope="row">Total normal-force slope</th><td><span data-k="cna">7.47</span> /rad</td><td><span class="tag">SIM</span></td><td></td></tr>
+            <tr><th scope="row">CP from the nose</th><td><span data-k="xcpIn">33.10</span> in</td><td><span class="tag">SIM</span></td><td></td></tr>
+            <tr><th scope="row">Static margin at liftoff</th><td><span data-k="margin0">4.15</span> cal</td><td><span class="tag">SIM</span></td><td>at the page CG</td></tr>
+            <tr><th scope="row">Static margin at burnout</th><td><span data-k="marginBo">4.64</span> cal</td><td><span class="tag">SIM</span></td><td></td></tr>
+            <tr><th scope="row">Body planform centroid</th><td><span data-k="centroidIn">24.42</span> in</td><td><span class="tag">SIM</span></td><td>where body lift acts at large α</td></tr>
+            <tr><th scope="row">Drag coefficient</th><td><span data-k="cd">0.6339</span></td><td><span class="tag">FIT</span></td><td>to the 1,033 ft apogee&nbsp;<span class="tag">PAGE</span>, fitted 2026-10-22</td></tr>
+            <tr><th scope="row">Pitch natural frequency at 98 ft/s</th><td><span data-k="fn30">0.92</span> Hz</td><td><span class="tag">SIM</span></td><td>linearised pitch equation, liftoff mass</td></tr>
+            <tr><th scope="row">Damping ratio at 98 ft/s</th><td><span data-k="zeta30">0.094</span></td><td><span class="tag">SIM</span></td><td></td></tr>
+
+            <tr class="fd-tr-group"><th scope="rowgroup" colspan="4">Launch and air</th></tr>
+            <tr><th scope="row">Rail length</th><td>72 in</td><td><span class="tag">EST</span></td><td>a 6 ft rail; slider 36 to 94 in</td></tr>
+            <tr><th scope="row">Launch angle</th><td>0°</td><td><span class="tag">EST</span></td><td>a vertical rail; slider ±10°</td></tr>
+            <tr><th scope="row">Wind</th><td>0 mph</td><td><span class="tag">EST</span></td><td>still air by default; slider 0 to 20 mph, uniform with height</td></tr>
+            <tr><th scope="row">Rail exit speed</th><td><span data-k="railV">46.6</span> ft/s</td><td><span class="tag">SIM</span></td><td>forward button at the rail top</td></tr>
+            <tr><th scope="row">Still-air apogee</th><td><span data-k="apogee">1033</span> ft</td><td><span class="tag">SIM</span></td><td>equal to the page's figure by the drag fit</td></tr>
+            <tr><th scope="row">Air density</th><td>1.225 kg/m³</td><td><span class="tag">STD</span></td><td>sea-level ISA, constant with height</td></tr>
+            <tr><th scope="row">Gravity</th><td>9.80665 m/s²</td><td><span class="tag">STD</span></td><td>standard gravity, 3rd CGPM (1901), as in the ISA</td></tr>
+            <tr><th scope="row">Gust shape</th><td>0.5 s</td><td><span class="tag">EST</span></td><td>one-minus-cosine pulse</td></tr>
+
+            <tr class="fd-tr-group"><th scope="rowgroup" colspan="4">Lattice</th></tr>
+            <tr><th scope="row">Grid, tiers 3 / 2 / 1</th><td>1024 × 320 / 768 × 240 / 512 × 160</td><td><span class="tag">EST</span></td><td>tier 0 runs no lattice</td></tr>
+            <tr><th scope="row">Steps per frame, tiers 3 / 2 / 1</th><td>24 / 16 / 8</td><td><span class="tag">EST</span></td><td>per 60 Hz frame, shed under load</td></tr>
+            <tr><th scope="row">Cell size at tier 3</th><td><span data-k="cellMm">1.747</span> mm</td><td><span class="tag">SIM</span></td><td>body <span data-k="dCells">38.9</span> cells across</td></tr>
+            <tr><th scope="row">Reynolds number</th><td>900 to 2,800</td><td><span class="tag">SIM</span></td><td>u<sub>in</sub> D / ν, from the pad to the 87.5 m/s peak; set for 3,000 at u<sub>in</sub> 0.10&nbsp;<span class="tag">EST</span>; the real rocket is near 3 × 10⁵ at 70 m/s</td></tr>
+            <tr><th scope="row">Smagorinsky constant</th><td>0.12</td><td><span class="tag">STD</span></td><td>Hou, Sterling, Chen and Doolen 1996</td></tr>
+            <tr><th scope="row">Inflow speed</th><td>0.03 to 0.10</td><td><span class="tag">EST</span></td><td>lattice units, 0.03 + 0.05 V / (70 m/s)</td></tr>
+            <tr><th scope="row">Inflow angle limit</th><td>±35°</td><td><span class="tag">EST</span></td><td></td></tr>
+            <tr><th scope="row">Live</th><td><span data-k="latLive">pending</span></td><td><span class="tag">SIM</span></td><td>grid, steps per second and precision while it runs</td></tr>
+            <tr><th scope="row">CAD measurement</th><td><span data-k="geomCheck">baked copy</span></td><td><span class="tag">CAD</span></td><td data-k="geomCheckNote">re-measured from the assembly when the 3D view has loaded it</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </section>
 
-  <section id="01-hotbox" class="section sheet on-paper" data-station="HOTBOX" data-index="05" aria-labelledby="t-hotbox">
-    <div class="inner">
-      <div class="zone-ticks" aria-hidden="true"><i>A</i><i>B</i><i>C</i><i>D</i><i>E</i><i>F</i><i>G</i><i>H</i></div>
-      <div class="title-block" data-dim-more="TITLE BLOCK" data-dim-side="height">
-        <div class="tb-cell tb-title"><span class="tb-k">Title</span><span class="tb-v">HOTBOX: thermal test bench</span></div>
-        <div class="tb-cell"><span class="tb-k">Sheet</span><span class="tb-v">01 of 05</span></div>
-        <div class="tb-cell"><span class="tb-k">Org / year</span><span class="tb-v">SunThru / 2026</span></div>
-        <div class="tb-cell tb-role"><span class="tb-k">Role</span><span class="tb-v">Design, electronics, firmware, safety systems</span></div>
-        <div class="tb-cell"><span class="tb-k">Rev</span><span class="tb-v">A</span></div>
-      </div>
-      <header class="sec-head sheet-head">
-        <p class="eyebrow">01 / Thermal / Instrumentation</p>
-        <h2 id="t-hotbox" class="display-3">HOTBOX: thermal test bench</h2>
+  <section class="fd-sec" id="runs" aria-labelledby="runs-h">
+    <div class="fd-wrap">
+      <header class="fd-sec-head">
+        <p class="eyebrow">03 / Runs</p>
+        <h2 class="display-2" id="runs-h">Runs</h2>
+        <p class="fd-sec-intro">Each run sets the panel, resets the rocket on the pad and launches it. CG 22 in&nbsp;<span class="tag">PAGE</span>, rail 72 in&nbsp;<span class="tag">EST</span>, launch angle 0°&nbsp;<span class="tag">EST</span>. The wind speeds and the gust are chosen here&nbsp;<span class="tag">EST</span>. The results are flown in this tab when the page loads&nbsp;<span class="tag">SIM</span>.</p>
       </header>
-      <div class="sheet-grid">
-        <div class="sheet-notes">
-          <h3 class="meta">Notes</h3>
-          <ol class="notes">
-            <li><span class="idx">01</span><p>The company needed to rank glazing samples by insulating performance and had no way to measure it. I designed and built the whole bench: the insulated test chamber, the sensor stack, the electronics, the firmware, and the safety system that lets it run unattended overnight.</p></li>
-            <li><span class="idx">02</span><p>The measurement approach was the interesting decision. Rather than inferring performance from heater power, the rig reads actual heat flow through the sample with a calibrated sensor, and it will not accept a result until the readings have held steady for a full hour. The safety design is layered and redundant, because a heater running all night with nobody watching is a real hazard and not a theoretical one.</p></li>
-            <li><span class="idx">03</span><p class="strong">It was built for roughly a quarter of what a comparable commercial unit was quoted at, and the same electronics and firmware scale to a larger chamber for full size windows.</p></li>
-          </ol>
-          <table class="parts">
-            <caption class="meta">Measurement / parts list</caption>
-            <thead><tr><th scope="col">No.</th><th scope="col">Item</th><th scope="col">Value</th></tr></thead>
-            <tbody>
-              <tr><td>01</td><td>Measures</td><td>Heat flow through the sample</td></tr>
-              <tr><td>02</td><td>Sensor</td><td>Calibrated heat flux</td></tr>
-              <tr><td>03</td><td>Accepts</td><td>One hour of steady readings</td></tr>
-              <tr><td>04</td><td>Safety</td><td>Layered, redundant, unattended</td></tr>
-              <tr><td>05</td><td>Cost</td><td>About a quarter of the quote</td></tr>
-              <tr><td>06</td><td>Scales</td><td>Full size window chamber</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="sheet-media pin">
-          <div class="media-cell plate dark" style="--ratio: 16 / 9">
-            <video data-stream poster="../assets/motion/hotbox-blurred-poster.jpg" width="1280" height="720" muted loop playsinline preload="none" disablepictureinpicture controlslist="nodownload noremoteplayback" aria-label="Blurred render, SunThru proprietary hardware, intentionally blurred"><source data-src="../assets/motion/hotbox-blurred-alpha.webm" type="video/webm"><source data-src="../assets/motion/hotbox-blurred.mp4" type="video/mp4"></video>
-            <span class="pill ip-pill">IP protected</span>
-          </div>
-          <p class="meta-sm media-note">Blurred render / SunThru proprietary hardware / no case study page</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="02-robo-catcher" class="section sheet on-paper" data-station="CATCHER" data-index="06" aria-labelledby="t-robo">
-    <div class="inner">
-      <div class="zone-ticks" aria-hidden="true"><i>A</i><i>B</i><i>C</i><i>D</i><i>E</i><i>F</i><i>G</i><i>H</i></div>
-      <div class="title-block">
-        <div class="tb-cell tb-title"><span class="tb-k">Title</span><span class="tb-v">Robo-Catcher</span></div>
-        <div class="tb-cell"><span class="tb-k">Sheet</span><span class="tb-v">02 of 05</span></div>
-        <div class="tb-cell"><span class="tb-k">Org / year</span><span class="tb-v">Senior capstone / 2025</span></div>
-        <div class="tb-cell tb-role"><span class="tb-k">Role</span><span class="tb-v">Twelve person team / feeding co-lead, all electronics and firmware</span></div>
-        <div class="tb-cell"><span class="tb-k">Rev</span><span class="tb-v">A</span></div>
-      </div>
-      <header class="sec-head sheet-head">
-        <p class="eyebrow">02 / Mechanism / Electronics / Firmware</p>
-        <h2 id="t-robo" class="display-3">Robo-Catcher</h2>
-      </header>
-      <div class="sheet-grid sheet-grid-wide">
-        <div class="sheet-notes pin">
-          <h3 class="meta">Notes</h3>
-          <ol class="notes">
-            <li><span class="idx">01</span><p>An automatic softball catching and return machine. I co-led the feeding subsystem and then took over all the electronics and firmware for the entire robot when the project needed someone to own it. That meant the flywheel drive, the stepper based feed indexing, the limit switch and interlock logic, wireless start and stop, and hardware emergency cutoffs wired independently of the microcontroller.</p></li>
-            <li><span class="idx">02</span><p class="strong">It hit one hundred percent feed indexing reliability on competition day, came in under budget, and fits in a car trunk. The reliability number came from testing the indexing path to failure ahead of time and fixing what jammed, not from luck on the day.</p></li>
-          </ol>
-          <p><a class="btn btn-outline" href="../projects/robo-catcher.html">Read the case study <span aria-hidden="true">→</span></a></p>
-          <figure class="plate photo crew-photo">
-            <img loading="lazy" decoding="async" src="../assets/photos/shop-and-machine-photography/uc-team.jpg" width="520" height="346" alt="The Robo-Catcher capstone team around the net frame and ramps on the Union College field">
-            <figcaption class="meta-sm">The capstone team / Photograph Paul Buckowski / Union College</figcaption>
-          </figure>
-        </div>
-        <div class="sheet-media">
-          <div class="media-cell plate dark" style="--ratio: 16 / 9">
-            <video data-stream data-coarse-poster poster="../assets/motion/robo-catcher-360-poster.png" width="1920" height="1080" muted loop playsinline preload="none" aria-label="Robo-Catcher, the full 84 part assembly turning on a turntable, CAD animation"><source data-src="../assets/motion/robo-catcher-360-alpha.webm" type="video/webm"><source data-src="../assets/motion/robo-catcher-360.mp4" type="video/mp4"></video>
-          </div>
-          <p class="meta-sm media-note"><b>02</b> / Full 84 part assembly. Net, ramps, indexer, flywheel thrower</p>
-          <div class="photo-row three">
-            <figure class="plate photo">
-              <img loading="lazy" decoding="async" src="../assets/photos/robo-catcher-photography/indexer-cross-section.jpg" width="457" height="450" alt="Cross section of the dual-chamber indexer, the softball feed path cut open to show the chambers">
-              <figcaption class="meta-sm">Indexer / cross section</figcaption>
-            </figure>
-            <figure class="plate photo">
-              <img loading="lazy" decoding="async" src="../assets/photos/robo-catcher-photography/working-on-electronics.jpg" width="520" height="599" alt="Two team members crouched over one of the Robo-Catcher's units on the field, one holding a softball, the rest of the team behind">
-              <figcaption class="meta-sm">Running it on the field</figcaption>
-            </figure>
-            <figure class="plate photo">
-              <img loading="lazy" decoding="async" src="../assets/photos/shop-and-machine-photography/machine-field.jpg" width="520" height="650" alt="Robo-Catcher on the field">
-              <figcaption class="meta-sm">On the field / Photograph Paul Buckowski / Union College</figcaption>
-            </figure>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="04-bend-fixture" class="section sheet on-paper" data-station="FIXTURE" data-index="07" aria-labelledby="t-bend">
-    <div class="inner">
-      <div class="zone-ticks" aria-hidden="true"><i>A</i><i>B</i><i>C</i><i>D</i><i>E</i><i>F</i><i>G</i><i>H</i></div>
-      <div class="title-block">
-        <div class="tb-cell tb-title"><span class="tb-k">Title</span><span class="tb-v">Custom three-point bend fixture and data logger</span></div>
-        <div class="tb-cell"><span class="tb-k">Sheet</span><span class="tb-v">03 of 05</span></div>
-        <div class="tb-cell"><span class="tb-k">Org / year</span><span class="tb-v">SunThru / 2026</span></div>
-        <div class="tb-cell tb-role"><span class="tb-k">Role</span><span class="tb-v">Solo design</span></div>
-        <div class="tb-cell"><span class="tb-k">Rev</span><span class="tb-v">A</span></div>
-      </div>
-      <header class="sec-head sheet-head">
-        <p class="eyebrow">04 / Design for manufacture</p>
-        <h2 id="t-bend" class="display-3">Custom three-point bend fixture and data logger</h2>
-      </header>
-      <div class="sheet-grid">
-        <div class="sheet-notes">
-          <h3 class="meta">Notes</h3>
-          <ol class="notes">
-            <li><span class="idx">01</span><p>Aerogel is too fragile for off the shelf flexural test fixtures, so I designed one. It is fully 3D printable, built from interlocking parts on a shared coordinate system, and sized for the lab's samples with gentle repeatable clamping. It is in use for flexural characterization.</p></li>
-            <li><span class="idx">02</span><p class="strong">A small, clean example of design for manufacture, and of solving a problem by making the tool rather than buying it.</p></li>
-          </ol>
-          <table class="parts">
-            <caption class="meta">Build / parts list</caption>
-            <thead><tr><th scope="col">No.</th><th scope="col">Item</th><th scope="col">Value</th></tr></thead>
-            <tbody>
-              <tr><td>01</td><td>Printing</td><td>Fully 3D printable</td></tr>
-              <tr><td>02</td><td>Build</td><td>Interlocking parts, one coordinate system</td></tr>
-              <tr><td>03</td><td>Sized for</td><td>The lab's aerogel samples</td></tr>
-              <tr><td>04</td><td>Clamping</td><td>Gentle and repeatable</td></tr>
-              <tr><td>05</td><td>Status</td><td>In use for characterization</td></tr>
-            </tbody>
-          </table>
-          <p><a class="btn btn-outline" href="../projects/bend-fixture.html">Read the case study <span aria-hidden="true">→</span></a></p>
-        </div>
-        <div class="sheet-media pin">
-          <div class="media-cell plate dark" style="--ratio: 16 / 9">
-            <video data-stream poster="../assets/motion/bend-fixture-blurred-poster.jpg" width="1280" height="720" muted loop playsinline preload="none" disablepictureinpicture controlslist="nodownload noremoteplayback" aria-label="Blurred render, SunThru proprietary hardware, intentionally blurred"><source data-src="../assets/motion/bend-fixture-blurred-alpha.webm" type="video/webm"><source data-src="../assets/motion/bend-fixture-blurred.mp4" type="video/mp4"></video>
-            <span class="pill ip-pill">IP protected</span>
-          </div>
-          <p class="meta-sm media-note">Blurred render / SunThru proprietary hardware</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="05-rudder-pedals" class="section sheet on-paper" data-station="PEDALS" data-index="08" aria-labelledby="t-pedals">
-    <div class="inner">
-      <div class="zone-ticks" aria-hidden="true"><i>A</i><i>B</i><i>C</i><i>D</i><i>E</i><i>F</i><i>G</i><i>H</i></div>
-      <div class="title-block">
-        <div class="tb-cell tb-title"><span class="tb-k">Title</span><span class="tb-v">Flight sim rudder pedals</span></div>
-        <div class="tb-cell"><span class="tb-k">Sheet</span><span class="tb-v">04 of 05</span></div>
-        <div class="tb-cell"><span class="tb-k">Org / year</span><span class="tb-v">Personal project / 2026</span></div>
-        <div class="tb-cell tb-role"><span class="tb-k">Role</span><span class="tb-v">Solo / mechanism design to USB HID firmware</span></div>
-        <div class="tb-cell"><span class="tb-k">Rev</span><span class="tb-v">A</span></div>
-      </div>
-      <header class="sec-head sheet-head">
-        <p class="eyebrow">05 / Mechanism / Firmware</p>
-        <h2 id="t-pedals" class="display-3">Flight sim rudder pedals</h2>
-      </header>
-      <div class="sheet-grid sheet-grid-wide">
-        <div class="sheet-notes pin">
-          <h3 class="meta">Notes</h3>
-          <ol class="notes">
-            <li><span class="idx">01</span><p>A three axis fighter style rudder and toe brake set, designed in CAD and 3D printed, using contactless magnetic sensing so there is nothing to wear out. I wrote the USB HID firmware myself, so it is plug and play in any simulator with no drivers, custom calibration, and its own deadzone logic.</p></li>
-            <li><span class="idx">02</span><p class="strong">A solo project that goes all the way from mechanism design to firmware, and it connects to the flying.</p></li>
-          </ol>
-          <div class="photo-row two">
-            <figure class="plate photo">
-              <img loading="lazy" decoding="async" src="../assets/renders/rudder-pedals/a1301-hall-sensor.jpg" width="1600" height="900" alt="Render of the A1301 Hall effect sensor in a TO-92 package, the contactless sensing element of the pedals">
-              <figcaption class="meta-sm">A1301 Hall-effect sensor / render</figcaption>
-            </figure>
-            <figure class="plate photo">
-              <img loading="lazy" decoding="async" src="../assets/renders/rudder-pedals/pro-micro.jpg" width="1600" height="900" alt="Render of the Pro Micro microcontroller board that runs the USB HID firmware">
-              <figcaption class="meta-sm">Pro Micro / render</figcaption>
-            </figure>
-          </div>
-          <p><a class="btn btn-outline" href="../projects/rudder-pedals.html">Read the case study <span aria-hidden="true">→</span></a></p>
-        </div>
-        <div class="sheet-media">
-          <div class="media-cell plate dark" style="--ratio: 4 / 3">
-            <video data-stream poster="../assets/motion/rudder-pedals-working-poster.png" width="1920" height="1080" muted loop playsinline preload="none" aria-label="The rudder pedals working: the rudder bar and both toe brakes moving, CAD animation"><source data-src="../assets/motion/rudder-pedals-working-alpha.webm" type="video/webm"><source data-src="../assets/motion/rudder-pedals-working.mp4" type="video/mp4"></video>
-          </div>
-          <figure class="plate photo">
-            <img loading="lazy" decoding="async" src="../assets/photos/rudder-pedal-photography/pedals-hero.jpg" width="520" height="346" alt="The built rudder pedal assembly, one pedal unit with its toe brake">
-            <figcaption class="meta-sm">Built hardware</figcaption>
-          </figure>
-        </div>
-      </div>
-      <div class="hid-wrap">
-        <p class="meta-sm hid-lead">HID bench / plug any controller in and press a button / the page reads it through the Gamepad API, nothing leaves the browser</p>
-        <div id="hid-root"></div>
-      </div>
-    </div>
-  </section>
-
-  <section id="06-therma-shift" class="section sheet on-paper" data-station="COASTER" data-index="09" aria-labelledby="t-therma">
-    <div class="inner">
-      <div class="zone-ticks" aria-hidden="true"><i>A</i><i>B</i><i>C</i><i>D</i><i>E</i><i>F</i><i>G</i><i>H</i></div>
-      <div class="title-block">
-        <div class="tb-cell tb-title"><span class="tb-k">Title</span><span class="tb-v">Therma-Shift coaster</span></div>
-        <div class="tb-cell"><span class="tb-k">Sheet</span><span class="tb-v">05 of 05</span></div>
-        <div class="tb-cell"><span class="tb-k">Org / year</span><span class="tb-v">Personal project / 2026</span></div>
-        <div class="tb-cell tb-role"><span class="tb-k">Role</span><span class="tb-v">Solo / thermal core, control electronics</span></div>
-        <div class="tb-cell"><span class="tb-k">Rev</span><span class="tb-v">A</span></div>
-      </div>
-      <header class="sec-head sheet-head">
-        <p class="eyebrow">06 / Thermal / Control electronics</p>
-        <h2 id="t-therma" class="display-3">Therma-Shift coaster</h2>
-      </header>
-      <div class="sheet-grid">
-        <div class="sheet-notes">
-          <h3 class="meta">Notes</h3>
-          <ol class="notes">
-            <li><span class="idx">01</span><p>A solid state coaster that actively heats or cools any mug or glass, built for a seed competition. Closed loop temperature control with thermal runaway cutoffs, in an aluminum topped form factor designed to work with drinkware people already own rather than a proprietary cup.</p></li>
-            <li><span class="idx">02</span><p class="strong">I bench validated the thermal core before integrating the control electronics.</p></li>
-          </ol>
-          <p><a class="btn btn-outline" href="../projects/therma-shift.html">Read the case study <span aria-hidden="true">→</span></a></p>
-        </div>
-        <div class="sheet-media">
-          <div class="media-cell plate dark" style="--ratio: 5 / 4">
-            <video data-stream poster="../assets/motion/therma-shift-360-noflow-poster.png" width="1920" height="1080" muted loop playsinline preload="none" aria-label="Therma-Shift coaster turning on a turntable, CAD animation"><source data-src="../assets/motion/therma-shift-360-noflow-alpha.webm" type="video/webm"><source data-src="../assets/motion/therma-shift-360-noflow.mp4" type="video/mp4"></video>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="experience" class="section on-dark" data-station="CREW" data-index="10">
-    <div class="inner">
-      <header class="sec-head">
-        <p class="eyebrow">Crew log / Rev A – D / 10</p>
-        <h2 class="display-2">Experience</h2>
-      </header>
-      <div class="crew">
-        <article class="crew-entry">
-          <div class="crew-head">
-            <p class="eyebrow">Rev D</p>
-            <h3 class="title-1">Engineering intern</h3>
-            <p class="meta strong">SunThru</p>
-            <p class="meta">Schenectady, NY / June 2026 to September 2026</p>
-          </div>
-          <div class="crew-body">
-            <p class="body">SunThru is a Union College spin-out developing silica aerogel inserts that give double pane windows triple pane performance. I worked on both prototypes and production equipment.</p>
-            <p class="body">On the product: I built and tested the company's first full in-house prototype units and led validation work on thermal performance and optical clarity. I produced toleranced drawings for machine-shop quotes and managed component sourcing under tight lead times.</p>
-            <p class="body">On the equipment: I supported bring-up of a PLC automation system, including ladder logic, panel wiring, instrumentation, and structured test procedures on live hardware.</p>
-            <p class="body muted">I also led sourcing for a replacement production blower on a one week deadline, which involved specifying the requirement, working the manufacturer's rep, catching a power spec mismatch against the site's actual supply, and raising material compatibility questions before anyone ordered anything.</p>
-          </div>
-        </article>
-        <article class="crew-entry">
-          <div class="crew-head">
-            <p class="eyebrow">Rev C</p>
-            <h3 class="title-1">Founder and president</h3>
-            <p class="meta strong">Union College Rocket Team</p>
-            <p class="meta">Schenectady, NY / August 2023 to June 2026</p>
-          </div>
-          <div class="crew-body">
-            <p class="body">Started the team from nothing and built it to competition standard. Led the twelve person competition team as captain, trained new members through build labs, and owned safety compliance for high power launches. Grew the team budget by seven hundred percent by writing funding proposals, which paid for the airframe.</p>
-            <p class="body strong">The team won first place at Battle of the Rockets 2026 in the Deployable Sensor Payload event, and was chartered as an official section of the National Association of Rocketry.</p>
-          </div>
-        </article>
-        <article class="crew-entry">
-          <div class="crew-head">
-            <p class="eyebrow">Rev B</p>
-            <h3 class="title-1">Founder</h3>
-            <p class="meta strong">ModuFly</p>
-            <p class="meta">Schenectady, NY / September 2024 to January 2026</p>
-          </div>
-          <div class="crew-body">
-            <p class="body">Co-founded a startup around a modular interlocking rocket system for STEM education. Raised $70,000 in seed funding, starting with a $10,000 prize at the SparkLabs competition and then a further $60,000 from private investors. Led R&amp;D and production, and ran hands-on rocketry workshops teaching design and troubleshooting to more than twenty high school students.</p>
-          </div>
-        </article>
-        <article class="crew-entry">
-          <div class="crew-head">
-            <p class="eyebrow">Rev A</p>
-            <h3 class="title-1">Design engineer and materials intern</h3>
-            <p class="meta strong">TASECS</p>
-            <p class="meta">Ankara, Turkey / Summer 2024</p>
-          </div>
-          <div class="crew-body">
-            <p class="body">Aerospace thermal management. Designed high efficiency HVAC valve components, ran material stress and fatigue analysis supporting two national fighter and jet trainer programs, and selected aerospace grade materials for printed prototypes, including cooling upgrades for high ambient temperature operation.</p>
-            <div class="photo-row two">
-              <div class="media-cell plate dark" style="--ratio: 16 / 9">
-                <video data-stream poster="../assets/motion/kaan-360-poster.png" width="1920" height="1080" muted loop playsinline preload="none" aria-label="Third-party aircraft model turning on a turntable, illustration only"><source data-src="../assets/motion/kaan-360-alpha.webm" type="video/webm"><source data-src="../assets/motion/kaan-360.mp4" type="video/mp4"></video>
-              </div>
-              <div class="media-cell plate dark" style="--ratio: 16 / 9">
-                <video data-stream poster="../assets/motion/hurjet-360-poster.png" width="1920" height="1080" muted loop playsinline preload="none" aria-label="Third-party aircraft model turning on a turntable, illustration only"><source data-src="../assets/motion/hurjet-360-alpha.webm" type="video/webm"><source data-src="../assets/motion/hurjet-360.mp4" type="video/mp4"></video>
-              </div>
-            </div>
-            <p class="meta-sm media-note">Third-party aircraft models, illustration only</p>
-          </div>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <section id="skills" class="section on-paper" data-station="SKILLS" data-index="11">
-    <div class="inner">
-      <header class="sec-head">
-        <p class="eyebrow">What I work with / 11</p>
-        <h2 class="display-2">What I work with</h2>
-      </header>
-      <div class="skills">
-        <div class="skill-group"><p class="meta strong"><span class="idx">01</span>Design and CAD</p><ul class="pills"><li>SolidWorks / expert</li><li>Macro and API automation</li><li>GD&amp;T to ASME Y14.5</li><li>Tolerance stack-up</li><li>Design for manufacture</li><li>Design for assembly</li><li>Shop drawings for quoting</li><li>AutoCAD</li><li>CATIA</li><li>Revit</li></ul></div>
-        <div class="skill-group"><p class="meta strong"><span class="idx">02</span>Controls and automation</p><ul class="pills"><li>PLC ladder logic</li><li>Control panel wiring</li><li>Hardware termination</li><li>4-20 mA instrumentation</li><li>Pressure transducers</li><li>Thermocouples</li><li>PID control</li><li>I/O documentation</li><li>Fault troubleshooting</li></ul></div>
-        <div class="skill-group"><p class="meta strong"><span class="idx">03</span>Electronics and firmware</p><ul class="pills"><li>C++</li><li>ESP32</li><li>Teensy</li><li>Embedded data acquisition</li><li>Closed loop control firmware</li><li>USB HID</li><li>Hall effect sensors</li><li>Thermistors</li><li>Digital temperature sensors</li><li>Heat flux sensors</li></ul></div>
-        <div class="skill-group"><p class="meta strong"><span class="idx">04</span>Analysis</p><ul class="pills"><li>FEA</li><li>CFD</li><li>MATLAB</li><li>Heat transfer</li><li>Thermal analysis</li><li>HVAC load calculation</li><li>Stress analysis</li><li>Fatigue analysis</li></ul></div>
-        <div class="skill-group"><p class="meta strong"><span class="idx">05</span>Fabrication</p><ul class="pills"><li>3D printing / FDM</li><li>3D printing / SLA</li><li>Laser cutting</li><li>Milling</li><li>Lathe</li><li>Rapid prototyping</li><li>Bench assembly</li><li>Calibration</li></ul></div>
-        <div class="skill-group"><p class="meta strong"><span class="idx">06</span>Software</p><ul class="pills"><li>Python</li><li>JavaScript</li><li>HTML</li><li>CSS</li></ul><p class="body-sm muted">This site's predecessor was hand built with no framework.</p></div>
-        <div class="skill-group"><p class="meta strong"><span class="idx">07</span>Languages</p><ul class="pills"><li>Turkish / native</li><li>English / professional</li><li>German / intermediate</li><li>Spanish / beginner</li></ul></div>
-      </div>
-    </div>
-  </section>
-
-  <section id="beyond" class="section on-dark beyond" data-station="OFF RANGE" data-index="12">
-    <div class="beyond-plate plate dark">
-      <video data-stream poster="../assets/motion/balloon-segovia-poster.jpg" width="1920" height="1080" muted loop playsinline preload="none" aria-label="Aerial shot of a hot air balloon over open country at sunrise"><source data-src="../assets/motion/balloon-segovia.mp4" type="video/mp4"></video>
-      <span class="scrim" aria-hidden="true"></span>
-      <div class="beyond-plate-copy inner">
-        <p class="eyebrow">Off range / Beyond engineering / 12</p>
-        <h2 class="display-2">Beyond engineering</h2>
-        <p class="body-lg on-photo"><b>01 / Piloting</b> Licensed ultralight pilot, certified through the Turkish civil aviation authority. The rudder pedals came out of the same interest.</p>
-      </div>
-    </div>
-    <div class="inner beyond-body">
-      <div class="beyond-grid">
-        <div class="beyond-col">
-          <p class="meta strong"><span class="idx">02</span>Filmmaking</p>
-          <p class="body">Three short films screened at the Robert College Film Festival in 2022, made while in high school in Istanbul. One of them, a solo project, was nominated in three technical categories: cinematography, editing, and sound design. Entirely self taught.</p>
-          <ul class="slates" aria-label="Film slates">
-            <li><span>Short 01</span><b>Robert College Film Festival / 2022 / screened</b></li>
-            <li><span>Short 02</span><b>Robert College Film Festival / 2022 / screened</b></li>
-            <li><span>Short 03 / solo</span><b>Robert College Film Festival / 2022 / screened / nominated / cinematography / editing / sound design</b></li>
-          </ul>
-          <p class="meta-sm muted">The shorts are not published on this site.</p>
-        </div>
-        <div class="beyond-col about">
-          <figure class="cutout">
-            <img loading="lazy" decoding="async" src="../assets/portrait/mert-cutout.png" width="616" height="768" alt="Mert Tureli, head-and-shoulders cut-out portrait">
-            <figcaption class="meta-sm">Portrait</figcaption>
-          </figure>
-          <div class="about-copy">
-            <p class="body-lg">I grew up in Izmir and came to New York for the degree. Outside of engineering I fly, make short films, shoot photography, cook, and travel as much as I can get away with.</p>
-            <p class="body">I am a mechanical engineer who does not stop at the mechanical part. Most of my work has the same shape: something needs to exist, nobody has built it yet, and the fastest way to find out if it works is to design it, wire it, write the firmware, and then build the rig that measures it.</p>
-            <dl class="spec">
-              <div><dt>Title</dt><dd>Mechanical engineer</dd></div>
-              <div><dt>Based</dt><dd>Austin, Texas</dd></div>
-              <div><dt>From</dt><dd>Izmir, Turkey</dd></div>
-              <div><dt>Degree</dt><dd>B.S. Mechanical Engineering <span class="muted">/ Union College, 2026</span></dd></div>
-            </dl>
-          </div>
-        </div>
-      </div>
-      <div class="photography">
-        <p class="meta strong"><span class="idx">03</span>Photography</p>
-        <p class="body">An ongoing thing rather than a project.</p>
-        <div id="contact-sheet" class="contact-sheet-root"></div>
-        <noscript><p class="meta-sm muted">The contact sheet needs scripts. The frames are in the photography lab.</p></noscript>
-        <p><a class="btn btn-outline on-dark" href="../photography-lab.html">The corridor <span aria-hidden="true">→</span></a></p>
-      </div>
-      <div class="beyond-grid">
-        <div class="beyond-col"><p class="meta strong"><span class="idx">04</span>Cooking</p><p class="body">I cook most days, mostly the food I grew up with in Izmir.</p></div>
-        <div class="beyond-col"><p class="meta strong"><span class="idx">05</span>Travelling</p><p class="body">I grew up in Izmir, moved to New York for the degree, and travel whenever there is room to. The camping and the vlogging fit in here.</p></div>
-      </div>
-    </div>
-  </section>
-
-  <section id="recognition" class="section on-paper" data-station="AWARDS" data-index="13">
-    <div class="inner">
-      <header class="sec-head">
-        <p class="eyebrow">Recognition / 13</p>
-        <h2 class="display-2">Recognition</h2>
-      </header>
-      <ol class="recognition">
-        <li><span class="idx">01</span><p>First place, Battle of the Rockets 2026, Deployable Sensor Payload, as captain and chief engineer <a class="meta source-link" href="https://www.union.edu/news/stories/202604/rocket-club-soars-new-heights-first-place-finish-national-competition" target="_blank" rel="noopener">Union College</a></p></li>
-        <li><span class="idx">02</span><p>Founded the Union College Rocket Team and grew its budget by seven hundred percent</p></li>
-        <li><span class="idx">03</span><p>Raised $70,000 in seed funding for ModuFly, a $10,000 SparkLabs competition prize plus $60,000 from private investors</p></li>
-        <li><span class="idx">04</span><p>Three film nominations at the Robert College Film Festival 2022 for a single solo short</p></li>
+      <ol class="fd-runs">
+        <li class="fd-run" data-run="full">
+          <p class="fd-run-n">01</p>
+          <h3 class="fd-run-h" id="run-full-h">Full fins</h3>
+          <p class="fd-run-s">Four fins at CAD size, a 5 mph crosswind.</p>
+          <dl class="fd-run-r">
+            <div><dt>Margin at liftoff</dt><dd><span data-r="margin0">+4.15</span> cal&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>AOA at rail exit</dt><dd><span data-r="alphaRail">+8.9</span>°&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Under 2°&nbsp;AOA, after rail&nbsp;exit</dt><dd><span data-r="settle">0.22</span> s&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Apogee</dt><dd><span data-r="apogee">1028</span> ft&nbsp;<span class="tag">SIM</span></dd></div>
+          </dl>
+          <p class="fd-run-w">Watch the nose turn into the wind, overshoot a little, and hold.</p>
+          <button type="button" class="fd-run-b" data-run-go="full" aria-describedby="run-full-h">Launch run 01</button>
+        </li>
+        <li class="fd-run" data-run="half">
+          <p class="fd-run-n">02</p>
+          <h3 class="fd-run-h" id="run-half-h">Half fins</h3>
+          <p class="fd-run-s">Span and chords halved about the root leading edge, the same breeze.</p>
+          <dl class="fd-run-r">
+            <div><dt>Margin at liftoff</dt><dd><span data-r="margin0">−0.35</span> cal&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Margin at burnout</dt><dd><span data-r="marginBo">+0.14</span> cal&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Under 2°&nbsp;AOA, after rail&nbsp;exit</dt><dd><span data-r="settle">0.42</span> s&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Apogee</dt><dd><span data-r="apogee">1033</span> ft&nbsp;<span class="tag">SIM</span></dd></div>
+          </dl>
+          <p class="fd-run-w">Negative margin at small angles. Above about 3.5° at liftoff&nbsp;<span class="tag">SIM</span> the body lift behind the CG turns the nose back, and the margin turns positive at T+<span data-r="marginUp">0.87</span>&nbsp;s&nbsp;<span class="tag">SIM</span> as the CG moves forward.</p>
+          <button type="button" class="fd-run-b" data-run-go="half" aria-describedby="run-half-h">Launch run 02</button>
+        </li>
+        <li class="fd-run" data-run="none">
+          <p class="fd-run-n">03</p>
+          <h3 class="fd-run-h" id="run-none-h">No fins</h3>
+          <p class="fd-run-s">Fins removed, the same breeze.</p>
+          <dl class="fd-run-r">
+            <div><dt>Margin at liftoff</dt><dd><span data-r="margin0">−6.63</span> cal&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Peak AOA, ascent</dt><dd><span data-r="peakAlpha">28.6</span>°&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Pitch past 60°</dt><dd>T+<span data-r="theta60">1.62</span>&nbsp;s&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Apogee</dt><dd><span data-r="apogee">342</span> ft&nbsp;<span class="tag">SIM</span></dd></div>
+          </dl>
+          <p class="fd-run-w">The nose falls away from the wind, the rocket pitches over and loops.</p>
+          <button type="button" class="fd-run-b" data-run-go="none" aria-describedby="run-none-h">Launch run 03</button>
+        </li>
+        <li class="fd-run" data-run="wind">
+          <p class="fd-run-n">04</p>
+          <h3 class="fd-run-h" id="run-wind-h">Crosswind 10 mph</h3>
+          <p class="fd-run-s">Full fins, a steady 10 mph crosswind.</p>
+          <dl class="fd-run-r">
+            <div><dt>AOA at rail exit</dt><dd><span data-r="alphaRail">+17.5</span>°&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Pitch at T+1 s</dt><dd><span data-r="theta1">−8.7</span>°&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Apogee</dt><dd><span data-r="apogee">1014</span> ft&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Upwind at apogee</dt><dd><span data-r="upwind">165</span> ft&nbsp;<span class="tag">SIM</span></dd></div>
+          </dl>
+          <p class="fd-run-w">Weathercocking: the fins turn the nose upwind, so the rocket climbs into the wind.</p>
+          <button type="button" class="fd-run-b" data-run-go="wind" aria-describedby="run-wind-h">Launch run 04</button>
+        </li>
+        <li class="fd-run" data-run="gust">
+          <p class="fd-run-n">05</p>
+          <h3 class="fd-run-h" id="run-gust-h">Gust at rail exit</h3>
+          <p class="fd-run-s">Full fins, still air, an 11.2 mph (5 m/s) gust fired as the forward button leaves the rail.</p>
+          <dl class="fd-run-r">
+            <div><dt>Peak AOA</dt><dd><span data-r="peakAlpha">7.25</span>°&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Under 2°&nbsp;AOA, after the&nbsp;gust</dt><dd><span data-r="settle">0.72</span> s&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Frequency at 98&nbsp;ft/s</dt><dd><span data-r="fn">0.92</span> Hz&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Apogee</dt><dd><span data-r="apogee">1027</span> ft&nbsp;<span class="tag">SIM</span></dd></div>
+          </dl>
+          <p class="fd-run-w">One wobble, damped. This is the disturbance the flight model's tests use.</p>
+          <button type="button" class="fd-run-b" data-run-go="gust" aria-describedby="run-gust-h">Launch run 05</button>
+        </li>
       </ol>
     </div>
   </section>
-
-  <section id="websites" class="section websites on-paper" data-station="WEBSITES" data-index="14" aria-labelledby="website-entry-title">
-    <div class="inner websites-inner">
-      <div>
-        <p class="eyebrow">Websites / Design &amp; development</p>
-        <h2 id="website-entry-title" class="display-3">Like what you see?<br><span>Let's build yours.</span></h2>
-      </div>
-      <div class="websites-copy">
-        <p class="body-lg">Your work, your business, your next idea. Let's give it a website people want to explore.</p>
-        <p class="body">This page is the demonstration.</p>
-        <p class="websites-links"><a class="btn btn-outline" href="../websites.html">A website for you <span aria-hidden="true">↗</span></a> <a class="btn btn-link" href="../websites.html#inquiry">Start an inquiry <span aria-hidden="true">→</span></a></p>
-      </div>
-    </div>
-  </section>
-
-  <section id="contact" class="section on-dark" data-station="COMMS" data-index="15">
-    <div class="inner contact-grid">
-      <div class="contact-copy pin">
-        <p class="eyebrow">Comms / Contact</p>
-        <h2 class="display-2">Get in touch</h2>
-        <p class="body-lg">Based in Austin, Texas. For a conversation about engineering, photography, or something interesting you are building, get in touch.</p>
-        <p><a class="btn btn-outline" href="https://linkedin.com/in/merttureli">LinkedIn <span aria-hidden="true">→</span></a></p>
-        <div class="rows">
-          <a class="row" href="../assets/Mert-Tureli-Resume.pdf"><span class="k">Resume</span><span>Mert Tureli, PDF</span></a>
-          <a class="row" href="https://linkedin.com/in/merttureli"><span class="k">LinkedIn</span><span>linkedin.com/in/merttureli</span></a>
-          <a class="row" href="mailto:merttureli0@gmail.com"><span class="k">Email</span><span>merttureli0@gmail.com</span></a>
-          <a class="row" href="../hi/mert-tureli.vcf"><span class="k">Contact</span><span>Save contact, VCF</span></a>
-        </div>
-      </div>
-      <div class="contact-manifest">
-        <p class="eyebrow">Build manifest / this page, measured now / SRC: resource timing</p>
-        <div id="build-manifest" class="manifest">
-          <table class="manifest-table">
-            <caption class="sr-only">Every script and stylesheet this page loaded, with its transfer size and, for scripts, its load duration, read from Resource Timing in your browser</caption>
-            <thead><tr><th scope="col">File</th><th scope="col">Transfer</th><th scope="col">Duration</th></tr></thead>
-            <tbody id="manifest-body"><tr><td colspan="3" class="muted">Measured by main.js from Resource Timing once scripts run. Nothing is sent anywhere.</td></tr></tbody>
-          </table>
-          <p id="manifest-foot" class="meta-sm muted">Stored locally: vx-boot-v1, vx-tier, vx-reader. This session: vx-console-history. No analytics.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
 </main>
 
-<footer class="vx-footer on-dark">
-  <div class="inner">
-    <p class="facts meta-sm"><b>Mert Tureli</b> / Mechanical engineer / Austin, Texas / B.S. Mechanical Engineering, Union College, 2026 <a href="../assets/Mert-Tureli-Resume.pdf">Resume (PDF)</a> <a href="mailto:merttureli0@gmail.com">Email</a> <a href="https://linkedin.com/in/merttureli">LinkedIn</a> <a href="../hi/mert-tureli.vcf">Save contact (VCF)</a></p>
-    <p class="credit meta-sm">Photographs of the machine and the team by Paul Buckowski / Union College. CAD animations rendered from the source assemblies. Aircraft models are third-party, illustration only. / <a href="../privacy.html">Privacy</a></p>
-    <p class="measured meta-sm">Every live number on this page is measured from this page in your browser. Nothing is sent anywhere.</p>
-    <p class="footer-links meta-sm"><a href="/">The production site <span aria-hidden="true">→</span></a> <a href="lab/">Lab <span aria-hidden="true">→</span></a> <a href="../privacy.html">Privacy</a></p>
+<footer class="fd-foot on-dark">
+  <div class="fd-wrap fd-foot-in">
+    <p class="fd-foot-who">Mert Tureli / Austin, Texas / B.S. Mechanical Engineering, Union College, 2026</p>
+    <nav class="fd-foot-nav" aria-label="Elsewhere">
+      <a href="https://merttureli.com/">merttureli.com</a>
+      <a href="../projects/charger.html">The CHARGER case study</a>
+      <a href="lab/">The labs</a>
+    </nav>
+    <p class="fd-foot-note">No analytics. Every SIM number is computed in this tab; nothing leaves it.</p>
   </div>
 </footer>
-
-<aside id="rail" aria-label="Instrument rail"></aside>
-<div id="sheet" class="sheet-root" hidden></div>
-<svg id="dimensions" aria-hidden="true" focusable="false"></svg>
-
-<dialog id="keys" class="keys on-dark" aria-labelledby="keys-title">
-  <div class="keys-head"><p id="keys-title" class="meta">Keys / every shortcut on this page</p><button class="chip" type="button" data-keys-close>Close</button></div>
-  <dl class="keys-list">
-    <div><dt>/</dt><dd>Open the console</dd></div>
-    <div><dt>Ctrl K / Cmd K</dt><dd>Open the console from anywhere</dd></div>
-    <div><dt>?</dt><dd>This sheet</dd></div>
-    <div><dt>J / K</dt><dd>Next and previous section</dd></div>
-    <div><dt>1 to 4</dt><dd>Tunnel view: smoke, velocity, pressure, vorticity</dd></div>
-    <div><dt>F</dt><dd>Freeze and release the tunnel</dd></div>
-    <div><dt>Tab</dt><dd>Walk the callouts; a focused callout moves the stage to its station</dd></div>
-    <div><dt>I / O</dt><dd>Mark in and out on the contact sheet</dd></div>
-    <div><dt>Esc</dt><dd>Close any sheet or dialog</dd></div>
-  </dl>
-  <p class="meta-sm muted">Single keys are off while you type in a field.</p>
-</dialog>
-
-<div id="announce" class="sr-only" aria-live="polite"></div>
 </body>
 </html>
