@@ -238,7 +238,7 @@ details[open] .row__plus::after { transform: rotate(0deg); }
 .web { background: var(--ink); color: var(--paper); padding: var(--space-70-140) 0; }
 .web .label { color: var(--paper-muted); }
 .web .rule .label:last-child { display: inline-flex; gap: 9px; align-items: center; color: var(--paper); }
-.display--web { font-size: clamp(46px, 8.6vw, 150px); }
+.display--web { font-size: clamp(46px, 7.6vw, 134px); text-wrap: balance; }
 .web__grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: clamp(28px, 5vw, 80px); margin-top: var(--space-40-90); }
 .web__lead { font-size: clamp(18px, 1.6vw, 24px); line-height: 1.35; letter-spacing: -.01em; max-width: 30ch; }
 .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: var(--hairline-dark); }
