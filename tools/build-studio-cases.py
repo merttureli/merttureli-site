@@ -362,9 +362,11 @@ def page(case):
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>@view-transition{{navigation:auto}}html{{background:#e7e8ea}}</style>
 <meta name="robots" content="noindex">
 <link rel="canonical" href="https://merttureli.com/projects/{slug}.html">
 <script src="../../studies/shared/study.js"></script>
+<script src="../js/nav.js"></script>
 <title>{esc(title)}</title>
 <meta name="description" content="{esc(strip_tags(case["description"]))}">
 <meta name="theme-color" content="#e7e8ea">
@@ -373,6 +375,7 @@ def page(case):
 <link rel="stylesheet" href="../css/tokens.css">
 <link rel="stylesheet" href="../css/studio.css">
 <link rel="stylesheet" href="../css/showcase.css">
+<link rel="stylesheet" href="../css/nav.css">
 </head>
 <body class="case">
 <a class="skip" href="#main">Skip to content</a>

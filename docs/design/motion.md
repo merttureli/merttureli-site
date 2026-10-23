@@ -181,8 +181,25 @@ Do not add Lenis to the current site: `rocket-flight.js` and the explorer hand-o
 | Rocket exit / return | `showreel/index.js`: `[EXIT, 2.1]`, `[RETURN, 2.6]`, `SPIN = 1.7` | 2.1 s out, 2.6 s back, 1.7 rad extra roll |
 | Abort to rest | `showreel/index.js`: `ABORT = 2.2` | any scroll, wheel, touch, pointer or key; guest leaves over 1.5 s |
 | Therma-Shift reel | `showreel/index.js`: `ST.sequence` | enter 2.4, assemble 2 to 3.2, mug 1.8, warm 4.4, swap 2.8, chill 4.8, explode 2.0 s |
+| Hero intro (fly-in) | `hero3d.js`: `INTRO`, `createIntro()` | with motion on, the poster waits (`html.hero-fly`, set in the page head); the live rocket starts off screen, already placed, and flies in along its axis in `fly: 1.25` s (outQuart), extra roll `spin: -.9` settling to 0; motor burn = the G77R curve time-scaled to the flight, then a `.55` s ember and a wisp; skipped when the hero is off screen at load; `studio.js` shows the poster if nothing is live 6 s after load. Reduced motion: the poster (object-fit: cover, identical to the REST frame), no flight |
 | Rocket idle sway | `hero3d.js`: `pose()` | sway `sin(t * .00032) * .32` rad, bob `.012`, pointer smoothing `.06` |
-| Debug | URL hash | `#reel-<key>` plays that project now (`#reel-coaster` = Therma-Shift), `#reel-<key>-fast` at 3x, `#reel-fast` the next one in the rotation at 3x; key `c` plays the next; `window.__reel` (`seek(t, key)`, `project`, `use(key)`); see docs/recipes/showreel-actor.md |
+| Debug | URL hash | `#reel-<key>` plays that project now (`#reel-coaster` = Therma-Shift), `#reel-<key>-fast` at 3x, `#reel-fast` the next one in the rotation at 3x, `#reel-smoke` the intro with its smoke trail (combines with the others); key `c` plays the next; `window.__reel` (`seek(t, key)`, `project`, `use(key)`); see docs/recipes/showreel-actor.md |
+
+## Page transitions
+
+`next/css/nav.css` + `next/js/nav.js`, on every page built from next/ (home, websites, beyond, the case pages
+from `tools/build-studio-cases.py`) and on 404, privacy and hi. `nav.js` loads in the `<head>` (not deferred).
+
+| What | How |
+|---|---|
+| Opt-in | `<style>@view-transition{navigation:auto}html{background:#e7e8ea}</style>` first in each `<head>`: Chrome decides at the new page's first render, which can come before a linked stylesheet (the transition was skipped about half the time), and the inline background matches the first screen so nothing flashes |
+| Page crossfade | `::view-transition-old/new(root)`, `--dur-400` linear; the grey paper eases instead of snapping |
+| Shared photo | `nav.js` names the clicked album photo (home) and `.bhero__photo img` (beyond) `nav-photo`, with the caption pill as `nav-cap`; the group moves over `--dur-700 --ease` |
+| Shared case media | the clicked `.tile__media` or `.nextp__media` and the first case `.stage__media` or `.stage__live` (live 3D stage) are `nav-media` |
+| Back / Forward | only the link we left from, and only when its image has loaded; else the plain crossfade |
+| Entrance | `html.nav-enter` on a fresh navigation: the first block of `<main>` rises (`--dur-1100`); dropped when a picture is shared; also the whole effect where view transitions are missing |
+| Land at the top | a fresh navigation (Navigation Timing `navigate`) goes to the top, or to the `#hash` target; `back_forward` and `reload` keep the browser's restore. Inside a frame whose host page scrolls (a preview can size its frame to the page, and the host keeps its own scroll across our navigations) `scrollIntoView` brings the frame's top into view |
+| Reduced motion | no rise, no shared pictures, every view transition `--dur-250` |
 
 ## How do I
 

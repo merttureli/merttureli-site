@@ -48,7 +48,7 @@
 // REST rocket under that point; the CHARGER explorer opens from it). Fires
 // `reel:ready` (detail: window.__reel) once mounted.
 import { THREE, createEngine, createTimeline, ease, win, clamp01, lerp, placeInFrame, screenExtents } from './engine.js';
-import { createRocket, applyCamera } from '../hero3d.js';
+import { createRocket, applyCamera, createIntro } from '../hero3d.js';
 
 // ---------------------------------------------------------------- registry
 const projects = [];
@@ -460,13 +460,14 @@ function parseFlags() {
   for (const m of location.hash.matchAll(/reel-([a-z0-9-]+)/g)) tokens.push(m[1]);
   const q = new URLSearchParams(location.search).get('reel');
   if (q) tokens.push(...q.split(','));
-  let fast = false, key = null;
+  let fast = false, key = null, smoke = false;
   for (let t of tokens) {
     if (t === 'fast') { fast = true; continue; }
+    if (t === 'smoke') { smoke = true; continue; }   // #reel-smoke: the intro leaves a smoke trail (flame.js)
     if (t.endsWith('-fast')) { fast = true; t = t.slice(0, -5); }
     key = ALIASES[t] || t;
   }
-  return { now: fast || !!key, fast, key };
+  return { now: fast || !!key, fast, key, smoke };
 }
 
 export async function mountShowreel({ box, drift = null, words = null, idleSeconds = 8 }) {
@@ -523,7 +524,15 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
   }
   rocket.pose(0); // sets the axis
   resize();
+  // INTRO: with motion on (html.hero-fly, set in the page head; the poster waits for it), the rocket starts off
+  // screen, already placed for REST, and flies in on a lit motor (hero3d.js createIntro). Not when the hero is
+  // off screen at load.
+  const hb = box.getBoundingClientRect();
+  let intro = !reducedQ.matches && document.documentElement.classList.contains('hero-fly') && hb.bottom > 0 && hb.top < innerHeight
+    ? createIntro(rocket, { scene: engine.scene, smoke: flags.smoke ? { host: box.parentElement, box, camera: engine.camera } : null }) : null;
+  if (intro) { intro.prewarm(engine.renderer, engine.camera, engine.scene); intro.start(exitDist); if (shadowEl) shadowEl.style.opacity = 0; }
   rocket.settle(0);
+  if (intro) rocket.group.visible = false;
   engine.render();
   box.classList.add('is-live');
 
@@ -722,8 +731,9 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
 
   // ---- per-frame
   function tick(dt, time) {
+    if (intro && !intro.step(dt, time, exitDist)) { intro.dispose(); intro = null; syncDom(); }
     if (mode === 'rest') {
-      const eligible = !reducedQ.matches && scrollP < .03 && (!slow || flags.now);
+      const eligible = !reducedQ.matches && scrollP < .03 && (!slow || flags.now) && !(intro && intro.busy);
       if (eligible) {
         idle += dt;
         const wait = (flags.now && loops === 0 ? .6 : loops ? idleSeconds * 1.5 : idleSeconds) / speed;
@@ -753,7 +763,7 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
       A += dt * Math.max(1, speed * .75);
       if (A >= ABORT) toRest(); else sampleAbort(A);
     }
-    if (mode !== 'rest' || rocket.state.fly) syncDom();
+    if (mode !== 'rest' || rocket.state.fly || intro) syncDom();
     rocket.pose(time);
     if (guest && guest.visible) guest.update(dt, time);
     if (out && out.c.actor.visible) out.c.actor.update(dt, time);
@@ -764,7 +774,7 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
     const dt = last ? Math.min(.064, (now - last) / 1000) : 1 / 60;
     // slow devices: in REST give up the loop and draw single frames on scroll.
     // Judged on the median of 60 frames after load has settled.
-    if (last && mode === 'rest' && !flags.now && !slow && !pending && now - t0 > 2500 && !window.__reelNoSlowGuard) {
+    if (last && mode === 'rest' && !flags.now && !slow && !pending && !intro && now - t0 > 2500 && !window.__reelNoSlowGuard) {
       samples[nSamples++] = now - last;
       if (nSamples === samples.length) { samples.sort(); if (samples[30] > 38) slow = true; nSamples = 0; }
     }
@@ -814,13 +824,16 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
   new IntersectionObserver(e => { visible = e[0].isIntersecting; if (visible) kick(); }, { threshold: 0 }).observe(box);
   document.addEventListener('visibilitychange', kick);
   reducedQ.addEventListener('change', () => {
-    if (reducedQ.matches) { toRest(); syncDom(); if (raf) { cancelAnimationFrame(raf); raf = 0; } requestAnimationFrame(still); }
+    if (reducedQ.matches) { if (intro) { intro.dispose(); intro = null; } toRest(); syncDom(); if (raf) { cancelAnimationFrame(raf); raf = 0; } requestAnimationFrame(still); }
     else kick();
   });
+  // re-place in the same frame: setSize clears the canvas, so draw now rather than paint one empty frame, and
+  // pose at the current time (pose(0) would snap the sway for a frame)
   new ResizeObserver(() => {
-    if (layoutName() !== current) { current = layoutName(); rocket.setLayout(current); applyCamera(engine.camera, rocket.layout); rocket.pose(0); }
+    if (layoutName() !== current) { current = layoutName(); rocket.setLayout(current); applyCamera(engine.camera, rocket.layout); }
     resize();
     if (slow || reducedQ.matches) still();
+    else { rocket.pose(performance.now() - t0); render(); }
   }).observe(box);
 
   // warm the guest up once the page has settled, so the first reel is smooth

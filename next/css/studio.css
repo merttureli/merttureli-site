@@ -98,7 +98,9 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .hero__stage { position: relative; flex: 1 1 auto; min-height: 260px; z-index: 2; }
 .hero__object { position: absolute; z-index: 2; left: 50%; top: 50%; width: min(112vw, 176vh); aspect-ratio: 16 / 9; transform: translate(-50%, -44%); pointer-events: none; }
 .hero__poster, .hero__canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-.hero__poster { object-fit: contain; transition: opacity var(--dur-600) linear; }
+/* cover, not contain: the poster is rendered with the live camera (fixed vertical field of view), so a box
+   narrower than the poster crops it exactly like the canvas does and the still matches the REST frame */
+.hero__poster { object-fit: cover; transition: opacity var(--dur-600) linear; }
 .hero__canvas { opacity: 0; transition: opacity var(--dur-800) linear; }
 .hero__object.is-live .hero__canvas { opacity: 1; }
 .hero__object.is-live .hero__poster { opacity: 0; transition-delay: var(--dur-500); }
@@ -393,3 +395,12 @@ details[open] .row__plus::after { transform: rotate(0deg); }
 .drift.is-reel .slot.is-active sup { color: var(--signal-ink); transition: color var(--dur-1000) var(--ease); }
 .hero__shadow { transition: opacity var(--dur-250) linear; }
 @media (prefers-reduced-motion: reduce) { .drift.is-reel .slot { filter: none; scale: none; } }
+/* Hero intro (html.hero-fly, set in the page head when motion is on): the live rocket flies in on its lit motor,
+   so the poster and its shadow wait, and the canvas shows at once (the rocket starts off screen). studio.js
+   removes the class if the 3D cannot start, and the poster fades in. */
+.hero-fly .hero__poster { opacity: 0; }
+.hero-fly .hero__object:not(.is-live) .hero__shadow { opacity: 0; }
+.hero-fly .hero__canvas { transition: none; }
+/* #reel-smoke: the intro's smoke trail, under the drift words, faded out before the marquee */
+.hero__smoke { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; pointer-events: none; filter: blur(6px);
+  -webkit-mask-image: linear-gradient(#000 86%, transparent); mask-image: linear-gradient(#000 86%, transparent); }
