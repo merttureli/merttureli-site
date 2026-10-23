@@ -555,7 +555,7 @@ export function createExplorer({ onRequestClose, onClosed }) {
       if (groundFrom) {
         const g = lerpRect(groundFrom, fullRect(), e);
         scissor = u < 1 ? g : null;
-        setGround(u < 1 ? g : null, 28 * (1 - e), clamp01(u / .14) * (1 - easeIO(win(u, .3, .85))));
+        setGround(u < 1 ? g : null, 28 * (1 - e), 1 - easeIO(win(u, .3, .85)));   // starts as the ink tile, turns to paper
       } else setGround(null, 0, 0, fade ? 1 : clamp01(u / .45));
       if (u > .62) dialog.classList.add('is-ui');
     };
