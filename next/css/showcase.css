@@ -373,6 +373,8 @@ a.tile__link:focus-visible .tile__go { transform: rotate(-45deg); background: va
   .nextp__name { font-size: 15vw; }
 }
 
+@media print { [data-reveal] { animation: none !important; } }
+
 @media (prefers-reduced-motion: reduce) {
   .tile:hover, .nextp__card:hover { transform: none; }
 }

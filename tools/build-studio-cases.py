@@ -258,7 +258,7 @@ def specs(case, p):
     col = "".join(col) if isinstance(col, list) else col
     col = ('<p class="specsheet__colophon">%s</p>' % fix(col.strip())) if col.strip() else ""
     return ('<div class="specsheet" data-reveal>\n  <div class="specsheet__head"><span class="label">Tech specs</span>'
-            '<p class="specsheet__name">%s</p><img class="specsheet__img" src="%s" alt="" loading="lazy" decoding="async"></div>\n'
+            '<p class="specsheet__name">%s</p><img class="specsheet__img" src="%s" alt="" decoding="async" fetchpriority="low"></div>\n'
             '  <div><dl>%s</dl>%s</div>\n</div>' % (esc(p["name"]), p["img"], dl, col))
 
 
@@ -410,7 +410,7 @@ def page(case):
         <span class="nextp__line">{esc(np_["line"])}</span>
         <span class="pillbtn pillbtn--solid">See {esc(np_["name"])} <span class="arrow" aria-hidden="true"></span></span>
       </span>
-      <span class="nextp__media"><img src="{np_["img"]}" alt="" loading="lazy" decoding="async"></span>
+      <span class="nextp__media"><img src="{np_["img"]}" alt="" decoding="async" fetchpriority="low"></span>
     </a>
     <p class="nextp__more"><a class="link" href="../index.html#work">All work</a><a class="link" href="mailto:merttureli0@gmail.com">Get in touch</a><a class="link link--quiet" href="../index.html">Studio home</a></p>
   </div>
@@ -474,6 +474,22 @@ def preview(pub):
         os.makedirs(os.path.dirname(d), exist_ok=True)
         if not os.path.isfile(d):
             shutil.copy2(s, d)
+    # the artifact host refuses .step files: drop them (and the explorer's download link to them)
+    steps = []
+    for dirpath, _, names in os.walk(pub):
+        for nm in names:
+            if nm.lower().endswith(".step"):
+                fp = os.path.join(dirpath, nm)
+                steps.append(os.path.relpath(fp, pub).replace(os.sep, "/"))
+                os.remove(fp)
+    for dirpath, _, names in os.walk(pub):
+        for nm in names:
+            if nm.endswith(".html"):
+                fp = os.path.join(dirpath, nm)
+                src = open(fp, encoding="utf-8").read()
+                new = re.sub(r'<a href="[^"]*\.step"[^>]*>.*?</a>', "", src)
+                if new != src:
+                    open(fp, "w", encoding="utf-8").write(new)
     # add the pages and pulled files to preview.py's publish plan, so the publish carries them
     plan_path = os.path.join(pub, ".preview-plan.json")
     if os.path.isfile(plan_path):
@@ -481,11 +497,16 @@ def preview(pub):
             plan = json.load(f)
         known = set()
         for call in plan.get("publish", []):
+            for st in steps:
+                if call.get("files", {}).pop(st, None) is not None:
+                    plan["files"] = plan.get("files", 0) - 1
             known.update(call.get("files", {}))
+        if steps:
+            plan["uncommon_ext"] = [x for x in plan.get("uncommon_ext", []) if x != ".step"]
         extra = ["projects/%s.html" % s for s in ORDER]
         extra += ["site/" + r for r in sorted(pulled) if not r.endswith((".html", "/"))]
         extra = [e for e in extra if e not in known]
-        if extra and plan.get("publish"):
+        if (extra or steps) and plan.get("publish"):
             call = plan["publish"][-1]
             for e in extra:
                 call["files"][e] = e
@@ -499,7 +520,7 @@ def preview(pub):
                 print("build-studio-cases: warning: the last publish batch is now over the per-call limit")
             with open(plan_path, "w", encoding="utf-8") as f:
                 json.dump(plan, f, indent=2)
-        print("build-studio-cases: added %d files to %s" % (len(extra), plan_path))
+        print("build-studio-cases: added %d files to %s, dropped %d .step" % (len(extra), plan_path, len(steps)))
     print("build-studio-cases: %d case pages and %d assets into %s" % (len(ORDER), len(pulled), pub))
 
 
