@@ -320,11 +320,11 @@ if (uCondAmount > 0.001) {
   vec3 misted = base + (uCondMistColor - base) * (0.045 * cMist + 0.1 * cGrain);
   // a drop is a small lens: it shows the scene upside down (dark table at its top, bright sky at its
   // bottom), a thin dark rim where light is totally reflected, and a bright caustic near the bottom
-  float ring = mix(1.0, 0.55, smoothstep(0.72, 1.0, cQ) * cDetail);
+  float ring = mix(1.0, 0.47, smoothstep(0.72, 1.0, cQ) * cDetail);
   float lowGlow = smoothstep(0.15, -0.75, cD.y) * (1.0 - smoothstep(0.75, 1.0, cQ));
   float topDark = smoothstep(-0.1, 0.8, cD.y);
   float caustic = (1.0 - smoothstep(0.0, 0.38, length(cD - vec2(0.12, -0.5))));
-  vec3 dropCol = base * ring * mix(1.0, 0.72, topDark * cDetail);
+  vec3 dropCol = base * ring * mix(1.0, 0.64, topDark * cDetail);
   dropCol += (uCondMistColor * 0.55 + base * 0.45) * (0.16 * lowGlow + 0.35 * caustic) * cDetail;
   dropCol = mix(base + (uCondMistColor - base) * 0.05, dropCol, cDetail);
   vec3 col = mix(misted, base * 0.97, cTrail);

@@ -136,17 +136,17 @@ export function createTimeline(steps) {
 // Find where to put an actor's origin (px, in the canvas box) so its screen
 // extents `ext` ({l, r, u, d} px around the origin) sit inside `free`
 // ({l, t, r, b}) without touching any `avoid` rect, as close to `prefer` as
-// possible. Runs on resize only.
-export function placeInFrame({ ext, free, avoid = [], prefer, step = 8 }) {
+// possible; `test(x, y)`, if given, can veto a spot. Runs on resize only.
+export function placeInFrame({ ext, free, avoid = [], prefer, step = 8, test = null, wy = 1.4 }) {
   let best = null, bd = Infinity;
   for (let y = free.t + ext.u; y <= free.b - ext.d; y += step) {
     for (let x = free.l + ext.l; x <= free.r - ext.r; x += step) {
       const L = x - ext.l, R = x + ext.r, T = y - ext.u, B = y + ext.d;
       let hit = false;
       for (const a of avoid) if (L < a.r && R > a.l && T < a.b && B > a.t) { hit = true; break; }
-      if (hit) continue;
-      const d = (x - prefer.x) ** 2 + (y - prefer.y) ** 2 * 1.4;
-      if (d < bd) { bd = d; best = { x, y }; }
+      if (hit || (test && !test(x, y))) continue;
+      const d = (x - prefer.x) ** 2 + (y - prefer.y) ** 2 * wy;
+      if (d < bd) { bd = d; best = { x, y, d }; }
     }
   }
   return best;

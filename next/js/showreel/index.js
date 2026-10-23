@@ -52,9 +52,9 @@ const SPIN = 1.7; // extra roll (rad) the rocket picks up as it accelerates away
 // Loads the specialists' modules; anything missing or broken falls back to
 // the PLACEHOLDER factories at the bottom of this file, which share the API.
 async function loadModules() {
-  const [c, p, f] = await Promise.allSettled([import('./coaster.js'), import('./props.js'), import('./fx.js')]);
+  const [c, p, f, k] = await Promise.allSettled([import('./coaster.js'), import('./props.js'), import('./fx.js'), import('./cable.js')]);
   const pick = (r, name) => { if (r.status === 'fulfilled') return r.value; console.info(`[reel] ${name}.js not available, using placeholder`, r.reason && r.reason.message); return null; };
-  return { coaster: pick(c, 'coaster'), props: pick(p, 'props'), fx: pick(f, 'fx') };
+  return { coaster: pick(c, 'coaster'), props: pick(p, 'props'), fx: pick(f, 'fx'), cable: pick(k, 'cable') };
 }
 function safe(label, real, fallback) {
   if (real) { try { const v = real(); if (v) return v; } catch (e) { console.warn(`[reel] ${label} failed, using placeholder`, e); } }
@@ -88,6 +88,10 @@ async function createThermaShift(ctx) {
   stage.add(view);
   view.rotation.set(.4, -.62, 0);
   view.add(coaster.group, mug.group, can.group);
+  // the USB-C cable that plugs in after assembly (only with the CAD coaster, which knows where its port is);
+  // its rope is simulated once, here, and baked
+  const cable = coaster.port && mods.cable ? safe('cable', () => mods.cable.createCable({ THREE, quality, port: coaster.port, ground: -coaster.height, box: coaster.caseBounds }), () => null) : null;
+  if (cable) view.add(cable.group);
   mug.group.add(steam.group);
   steam.group.position.y = mug.coffeeY || .074;
   mug.group.rotation.y = .9; can.group.rotation.y = -.4;
@@ -164,7 +168,9 @@ async function createThermaShift(ctx) {
   for (let r = 1; r < byTop.length; r++) byTop[r].fs = Math.max(byTop[r].fs, byTop[r - 1].fs + LAG);
 
   const ST = {
-    sequence: [['COASTER_ENTER', 3.0], ['ASSEMBLE', 5.0], ['MUG_DROP', 1.9], ['WARM', 6.5], ['SWAP', 3.2], ['CHILL', 7.0], ['CAN_EXIT', 1.7], ['BEAT', 1.3], ['EXPLODE', 3.4]],
+    sequence: cable
+      ? [['COASTER_ENTER', 3.0], ['ASSEMBLE', 5.0], ['PLUG', 2.4], ['MUG_DROP', 1.9], ['WARM', 6.2], ['SWAP', 3.2], ['CHILL', 6.6], ['CAN_EXIT', 1.7], ['UNPLUG', 1.6], ['BEAT', 1.0], ['EXPLODE', 3.4]]
+      : [['COASTER_ENTER', 3.0], ['ASSEMBLE', 5.0], ['MUG_DROP', 1.9], ['WARM', 6.5], ['SWAP', 3.2], ['CHILL', 7.0], ['CAN_EXIT', 1.7], ['BEAT', 1.3], ['EXPLODE', 3.4]],
   };
   const v = { p: 0, mugY: 1, canY: 1, mugArc: 0, canArc: 0, temp: 22, steam: 0, cond: 0, wet: 0, fan: 0, shadow: 0 }; // live values
   const a0 = { ...v };                                                        // captured at abort
@@ -183,16 +189,37 @@ async function createThermaShift(ctx) {
     for (const P of parts) P.f = 0;
     v.p = 1; v.canY = 0; v.mugY = 1; v.canArc = 0; apply();
     const ext = screenExtents([coaster.group, can.group], stage, camera, w, h);
+    // where the cable leaves the port, relative to the origin on screen (px at this scale): the spot must leave the
+    // cable a clear run from the port to the left edge, above the marquee and clear of the word
+    let portOff = null;
+    if (cable) {
+      stage.updateMatrixWorld(true);
+      const o = new THREE.Vector3().setFromMatrixPosition(stage.matrixWorld).project(camera);
+      const q = coaster.port.position.clone().addScaledVector(coaster.port.normal, 0.03).applyMatrix4(view.matrixWorld).project(camera);
+      portOff = { x: (q.x - o.x) / 2 * w, y: -(q.y - o.y) / 2 * h };
+    }
     parts.forEach((P, i) => { P.f = keep[i]; }); v.p = kp; v.canY = kc; v.mugY = km; v.canArc = ka;
     const fw = free.r - free.l, fh = free.b - free.t;
     const k0 = Math.min(fh * (narrow ? .56 : .84) / (ext.u + ext.d), fw * (narrow ? .8 : .4) / (ext.l + ext.r));
     const prefer = { x: free.l + fw * (narrow ? .5 : .54), y: free.t + fh * .5 };
-    let spot = null, k = k0;
-    for (let i = 0; i < 5 && !spot; i++, k *= .9) {
+    // with the cable, weigh each size's best spot against shrinking (a centred, slightly smaller product beats one
+    // pushed to the edge); without it, the largest size that fits wins as before
+    let spot = null, k = k0, bestCost = Infinity, bestK = k0;
+    for (let i = 0; i < 5 && (portOff || !spot); i++, k *= .9) {
       const e = { l: ext.l * k, r: ext.r * k, u: ext.u * k, d: ext.d * k };
-      spot = placeInFrame({ ext: e, free, avoid, prefer: { x: prefer.x - (e.r - e.l) / 2, y: prefer.y - (e.d - e.u) / 2 } });
+      const kk = k, left = (F.vp ? F.vp.l : 0) - 10;
+      const test = portOff && (avoid.length || F.vp) ? (x, y) => {
+        const px = x + portOff.x * kk, py = y + portOff.y * kk;
+        if (py > free.b - 14) return false;
+        for (const r of avoid) if (py > r.t - 30 && py < r.b + 30 && r.r + 30 > left && r.l - 30 < px) return false;
+        return true;
+      } : null;
+      const s1 = placeInFrame({ ext: e, free, avoid, test, wy: test ? .5 : 1.4, prefer: { x: prefer.x - (e.r - e.l) / 2, y: prefer.y - (e.d - e.u) / 2 } });
+      if (!portOff) { spot = s1; continue; }
+      const cost = s1 ? s1.d + (1 - k / k0) ** 2 * 6e5 : Infinity;
+      if (cost < bestCost) { bestCost = cost; spot = s1; bestK = k; }
     }
-    k /= spot ? .9 : 1;
+    if (portOff) k = bestK; else k /= spot ? .9 : 1;
     S *= k;
     stage.scale.setScalar(S);
     const ox = spot ? spot.x : w / 2, oy = spot ? spot.y : h / 2;
@@ -214,6 +241,50 @@ async function createThermaShift(ctx) {
     lift = -((want - centre) / h * 2 * halfH) / S;
     parts.forEach((P, i) => { P.f = keep[i]; }); v.p = kp;
     apply();
+    if (cable) anchorCable(F);
+  }
+
+  // The cable's far end: just beyond the nearest edge of the viewport, along the shortest run from the port that
+  // stays clear of the drift word and above the marquee (leftward: away from the coaster's faces). Resize-time only.
+  function anchorCable(F) {
+    const { camera, w, h, free, avoid, vp } = F;
+    stage.updateMatrixWorld(true);
+    const M = view.matrixWorld, inv = new THREE.Matrix4().copy(M).invert();
+    const p = coaster.port.position.clone().addScaledVector(coaster.port.normal, 0.03).applyMatrix4(M).project(camera);
+    const sx = (p.x + 1) / 2 * w, sy = (1 - p.y) / 2 * h;
+    const edge = vp || { l: 0, t: 0, r: w, b: h };
+    const hits = (x0, y0, x1, y1, r) => {          // segment against rect (Liang-Barsky)
+      let t0 = 0, t1 = 1; const dx = x1 - x0, dy = y1 - y0;
+      for (const [pp, q] of [[-dx, x0 - r.l], [dx, r.r - x0], [-dy, y0 - r.t], [dy, r.b - y0]]) {
+        if (pp === 0) { if (q < 0) return false; continue; }
+        const t = q / pp; if (pp < 0) { if (t > t1) return false; if (t > t0) t0 = t; } else { if (t < t0) return false; if (t < t1) t1 = t; }
+      }
+      return true;
+    };
+    // a pixel to a point on the ground plane (coaster space)
+    const gy = -coaster.height, ndc = new THREE.Vector3();
+    const ground = (x, y) => {
+      ndc.set(x / w * 2 - 1, 1 - y / h * 2, -1);
+      const a0 = ndc.clone().unproject(camera).applyMatrix4(inv), a1 = ndc.clone().setZ(1).unproject(camera).applyMatrix4(inv);
+      return a0.lerp(a1, (gy - a0.y) / (a1.y - a0.y));
+    };
+    const from = coaster.port.position.clone().setY(gy);
+    // level or slightly up the page first (away from the text and the marquee); down the page only if nothing else fits
+    let best = null;
+    for (const a of [180, 174, 168, 162, 156, 150, 144, 186, 192, 198, 204, 212, 220]) {
+      if (best && a > 180) break;
+      const dx = Math.cos(a * Math.PI / 180), dy = -Math.sin(a * Math.PI / 180);
+      let t = Infinity;
+      if (dx < 0) t = Math.min(t, (edge.l - sx) / dx); if (dx > 0) t = Math.min(t, (edge.r - sx) / dx);
+      if (dy < 0) t = Math.min(t, (edge.t - sy) / dy); if (dy > 0) t = Math.min(t, (edge.b - sy) / dy);
+      const ex = sx + dx * t, ey = sy + dy * t;
+      if (ey > free.b - 8) continue;                                   // would cross the marquee
+      if (avoid.some(r => hits(sx, sy, ex, ey, { l: r.l - 30, r: r.r + 30, t: r.t - 30, b: r.b + 30 }))) continue;
+      // score by the real run on the ground (a short screen run up the page is a long one into the distance)
+      const pt = ground(sx + dx * (t + 70), sy + dy * (t + 70)), len = pt.distanceTo(from);
+      if (!best || len < best.len) best = { len, pt };
+    }
+    cable.bake(best ? best.pt : ground(edge.l - 70, sy));
   }
 
   function apply() {
@@ -273,19 +344,30 @@ async function createThermaShift(ctx) {
     v.fan = Math.round(20 * win(T, W.t0, W.t0 + 1) * (1 - win(T, CE.t0, CE.t1))) / 20;
     v.shadow = Math.min(fin / n, 1 - fout / n) * (.35 + .65 * v.p);
     apply();
+    // the cable: plugged in after ASSEMBLE (its bake runs on into MUG_DROP while it settles), resting until the can
+    // has gone, pulled out and away in UNPLUG, gone before EXPLODE
+    if (cable) {
+      const PL = S.PLUG, UP = S.UNPLUG;
+      if (T < PL.t0 || T >= UP.t1) cable.hide();
+      else if (T < UP.t0) cable.showIn(T - PL.t0);
+      else cable.showOut(T - UP.t0);
+    }
   }
 
   // Abort: props lift away first, then the coaster un-builds and its parts
   // leave in the same top-down order and on the same paths as EXPLODE.
   const ABORT_S = 2.4;
+  let lag = 0;     // with the cable plugged in, it leaves first and the coaster waits a beat
   function beginAbort() {
     Object.assign(a0, v);
+    lag = cable && cable.visible ? .12 : 0;
+    if (lag) cable.capture();
     for (const P of parts) {
       P.f0 = P.f;
       if (a0.p <= .001) P.us = (P.top / Math.max(1, n - 1)) * .34;  // still arriving: leave top-down now
       else {
         if (P.a >= a0.p) P.us = 0;                                    // already free (or flying): keep going
-        else P.us = .14 + .4 * Math.acos(1 - 2 * (1 - P.a / a0.p)) / Math.PI;  // free once un-built
+        else P.us = .14 + lag + .4 * Math.acos(1 - 2 * (1 - P.a / a0.p)) / Math.PI;  // free once un-built
       }
     }
     for (let r = 1; r < byTop.length; r++) byTop[r].us = Math.max(byTop[r].us, byTop[r - 1].us + .045);
@@ -298,7 +380,8 @@ async function createThermaShift(ctx) {
       P.f = lerp(P.f0, Math.max(P.f0, 1.05), ease.inQuad(win(u, P.us, Math.min(1, P.us + .38))));
       fin += clamp01(1 - P.f);
     }
-    v.p = a0.p * (1 - ease.inOutSine(win(u, .14, .54)));
+    v.p = a0.p * (1 - ease.inOutSine(win(u, .14 + lag, .54 + lag)));
+    if (lag) cable.showAway(win(u, 0, .4));
     const k = ease.inOutCubic(win(u, 0, .5));
     v.mugY = lerp(a0.mugY, Math.max(a0.mugY, 1), k); v.mugArc = a0.mugArc + k * k;
     v.canY = lerp(a0.canY, Math.max(a0.canY, 1), k); v.canArc = a0.canArc + k * k;
@@ -313,6 +396,7 @@ async function createThermaShift(ctx) {
     const hidden = [];
     for (const P of parts) P.f = 0;
     Object.assign(v, { p: 1, mugY: 0, canY: 0, temp: 55, steam: 1, cond: 1, wet: 1, fan: 0, shadow: 1 });
+    if (cable) cable.showIn(cable.plugIn.duration);
     apply();
     stage.traverse(o => { if (!o.visible) { hidden.push(o); o.visible = true; } });
     try { await renderer.compileAsync(stage, camera, scene); } catch (e) { /* compiles on first draw instead */ }
@@ -331,7 +415,7 @@ async function createThermaShift(ctx) {
     v.temp = 11; apply();
     reset();
   }
-  function reset() { for (const P of parts) P.f = 1; Object.assign(v, { p: 0, mugY: 1, canY: 1, mugArc: 0, canArc: 0, temp: 22, steam: 0, cond: 0, wet: 0, fan: 0, shadow: 0 }); apply(); }
+  function reset() { if (cable) cable.hide(); for (const P of parts) P.f = 1; Object.assign(v, { p: 0, mugY: 1, canY: 1, mugArc: 0, canArc: 0, temp: 22, steam: 0, cond: 0, wet: 0, fan: 0, shadow: 0 }); apply(); }
   function update(dt, time) {
     if (!stage.visible) return;
     if (steam.group.visible && steam.update) steam.update(dt, time);
@@ -344,10 +428,10 @@ async function createThermaShift(ctx) {
   reset();
   engine.adopt(stage);
   return {
-    group: stage, sequence: ST.sequence, layout, sample, prewarm, abortSeconds: ABORT_S, values: v, coaster, debugParts: parts, beginAbort, sampleAbort, reset, update,
+    group: stage, sequence: ST.sequence, layout, sample, prewarm, abortSeconds: ABORT_S, values: v, coaster, cable, debugParts: parts, beginAbort, sampleAbort, reset, update,
     get visible() { return stage.visible; },
     modules: { coaster: !!mods.coaster, props: !!mods.props, fx: !!mods.fx },
-    dispose() { for (const m of [coaster, mug, can, steam, ring, cond]) m && m.dispose && m.dispose(); if (shadow) { shadow.geometry.dispose(); shadow.material.map.dispose(); shadow.material.dispose(); } },
+    dispose() { for (const m of [coaster, mug, can, steam, ring, cond, cable]) m && m.dispose && m.dispose(); if (shadow) { shadow.geometry.dispose(); shadow.material.map.dispose(); shadow.material.dispose(); } },
   };
 }
 
@@ -419,7 +503,8 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
     const avoid = [];
     const w = key && wordFor.get(key);
     if (w) { const r = w.slot.getBoundingClientRect(), m = 22; avoid.push({ l: r.left - b.left - m, r: r.right - b.left + m * 1.6, t: r.top - b.top - m, b: r.bottom - b.top + m }); }
-    return { halfW: vw.halfW, halfH: vw.halfH, camera: engine.camera, w: b.width, h: b.height, free, avoid };
+    const vp = { l: Math.max(0, -b.left), r: Math.min(b.width, innerWidth - b.left), t: Math.max(0, -b.top), b: Math.min(b.height, innerHeight - b.top) };
+    return { halfW: vw.halfW, halfH: vw.halfH, camera: engine.camera, w: b.width, h: b.height, free, avoid, vp };
   }
   rocket.pose(0); // sets the axis
   resize();

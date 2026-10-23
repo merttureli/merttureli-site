@@ -92,22 +92,22 @@ Put specific patterns above generic ones (`*blower*rotor*` above `*blower*`, `*b
 
 All are meters, +Y up. Artifact previews rename `.bin` to `.bin.wasm` and `.glb` to `.glb.wasm`; `cadmesh.js` tries `.bin.wasm` by itself when `.bin` is missing.
 
-## Swap the procedural Therma-Shift coaster for the real CAD
+## Therma-Shift coaster (done, Oct 2026)
 
-The showreel round 2 is merged, so this is open. It changes the live Studio hero: get the owner's go first.
+`next/js/showreel/coaster.js` is built from the owner's `ThermaShift_FULL assembly.STEP` (16 parts, mm) with
+`tools/cad/maps/therma-shift.json` -> `next/assets/3d/therma-shift.json/.bin` (about 22k triangles, 8 parts). Notes for a re-import:
+
+- The STEP has the whole assembly turned 33 degrees about Y. `coaster.js` turns every part back (`TURN`) so the port
+  face (USB-C slot, vent slot, button hole) looks along +Z, and puts the plate top centre at the origin.
+- The STEP has no button (it was added last): `coaster.js` models it (hex nut, satin barrel, black cap) from the
+  turntable videos and seats it in the round hole. `PORT` and `BUTTON` in `coaster.js` are measured on the CAD.
+- `coaster.port` and `coaster.caseBounds` feed the USB-C cable (`next/js/showreel/cable.js`), which plugs in after
+  assembly. The procedural stand-in is kept in git history.
 
 ```sh
-python3 tools/cad.py inspect THERMA.step                     # fix the "match" patterns in tools/cad/maps/therma-shift.json
-python3 tools/cad.py import THERMA.step --map tools/cad/maps/therma-shift.json --dry-run
 python3 tools/cad.py import THERMA.step --map tools/cad/maps/therma-shift.json     # -> next/assets/3d/therma-shift.*
-python3 tools/cad.py loader                                  # -> next/js/cad/cadmesh.js
-cp next/js/showreel/coaster.js <scratchpad>/coaster-procedural.js   # keep the old one to compare
-cp tools/cad/actor-adapter.js next/js/showreel/coaster.js
-# look: http://127.0.0.1:PORT/next/#reel-coaster ; console: __reel.seek(6)
-python3 tools/check.py
+# look: http://127.0.0.1:PORT/next/lab/coaster.html and /next/#reel-therma-shift ; console: __reel.seek(12, 'therma-shift')
 ```
-
-`actor-adapter.js` keeps the coaster API that `index.js` uses: the same 8 part names, arrival windows, lateral-first board and thermistor, plate temperature tint, blower `rotor` spin, Peltier and thermistor hidden when assembled, plate top at y = 0. It loads the model at module top level, so a missing file makes `import('./coaster.js')` fail and the hero falls back to its placeholder. Rehearsed end to end on a synthetic Z-up coaster STEP: 0 console errors in the real reel.
 
 ## Robo-Catcher, rudder pedals (scaffolded actors)
 

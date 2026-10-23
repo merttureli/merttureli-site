@@ -1,0 +1,441 @@
+{
+ "format": "cadmesh",
+ "version": 1,
+ "name": "therma-shift",
+ "bin": "therma-shift.bin",
+ "units": "m",
+ "up": "+y",
+ "generator": "tools/cad.py",
+ "source": {
+  "file": "ThermaShift_FULL assembly.STEP",
+  "unit": "mm",
+  "sha1": "f28532ce8064",
+  "up": "y",
+  "origin": "center",
+  "quality": "medium",
+  "deflection_mm": 0.0513,
+  "angle_rad": 0.4
+ },
+ "center": [
+  0.0,
+  0.0,
+  -0.0
+ ],
+ "scale": 0.0597652,
+ "bounds": [
+  [
+   -0.059765,
+   -0.016157,
+   -0.05904
+  ],
+  [
+   0.059765,
+   0.016157,
+   0.05904
+  ]
+ ],
+ "triangles": 21640,
+ "bytes": 341216,
+ "parts": [
+  {
+   "name": "shell",
+   "label": "Case",
+   "cad": [
+    "CASE bottom"
+   ],
+   "material": {
+    "key": "matteShell",
+    "color": "#6d717c",
+    "roughness": 0.74,
+    "metalness": 0
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    0.0,
+    -0.002407,
+    0.0
+   ],
+   "explode": [
+    0.0,
+    -0.06,
+    0.0
+   ],
+   "triangles": 5836,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": "matteShell",
+      "color": "#6d717c",
+      "roughness": 0.74,
+      "metalness": 0
+     },
+     "triangles": 5836,
+     "pos": [
+      0,
+      5940
+     ],
+     "nrm": 35640,
+     "idx": [
+      53460,
+      17508,
+      16
+     ]
+    }
+   ]
+  },
+  {
+   "name": "blower",
+   "label": "Fan",
+   "cad": [
+    "FAN"
+   ],
+   "material": {
+    "key": "fanPlastic",
+    "color": "#2a2c31",
+    "roughness": 0.62,
+    "metalness": 0
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    0.0,
+    -0.009157,
+    0.0
+   ],
+   "explode": [
+    0.0,
+    -0.008,
+    0.0
+   ],
+   "triangles": 1252,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": "fanPlastic",
+      "color": "#2a2c31",
+      "roughness": 0.62,
+      "metalness": 0
+     },
+     "triangles": 1252,
+     "pos": [
+      88476,
+      1324
+     ],
+     "nrm": 96420,
+     "idx": [
+      100392,
+      3756,
+      16
+     ]
+    }
+   ]
+  },
+  {
+   "name": "board",
+   "label": "Electronics (ESP32-C3, 2x DRV8871, buck, USB-C PD)",
+   "cad": [
+    "esp32c3supermini",
+    "12V USBC",
+    "5V Buck Converter",
+    "DRV8871-1",
+    "DRV8871-2"
+   ],
+   "material": {
+    "key": "pcb",
+    "color": "#6aa592",
+    "roughness": 0.55,
+    "metalness": 0.05
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    0.001111,
+    -0.002608,
+    0.001945
+   ],
+   "explode": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "triangles": 4056,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": "pcb",
+      "color": "#6aa592",
+      "roughness": 0.55,
+      "metalness": 0.05
+     },
+     "triangles": 4056,
+     "pos": [
+      107904,
+      4286
+     ],
+     "nrm": 133620,
+     "idx": [
+      146480,
+      12168,
+      16
+     ]
+    }
+   ]
+  },
+  {
+   "name": "heatsink",
+   "label": "Heatsink",
+   "cad": [
+    "Heat Sink",
+    "SPACER^FULL assembly"
+   ],
+   "material": {
+    "key": "heatsink",
+    "color": "#c0c5cd",
+    "roughness": 0.42,
+    "metalness": 0.6
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    0.0,
+    0.001785,
+    -0.0
+   ],
+   "explode": [
+    0.0,
+    0.012,
+    0.0
+   ],
+   "triangles": 7832,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": "heatsink",
+      "color": "#c0c5cd",
+      "roughness": 0.42,
+      "metalness": 0.6
+     },
+     "triangles": 7832,
+     "pos": [
+      170816,
+      9160
+     ],
+     "nrm": 225776,
+     "idx": [
+      253256,
+      23496,
+      16
+     ]
+    }
+   ]
+  },
+  {
+   "name": "peltier",
+   "label": "Peltier module (TEC, 40 x 40 x 3.6)",
+   "cad": [
+    "PELTIER 40X40X3.6"
+   ],
+   "material": {
+    "key": "ceramic",
+    "color": "#c4874f",
+    "roughness": 0.74,
+    "metalness": 0
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    0.0,
+    0.009527,
+    0.0
+   ],
+   "explode": [
+    0.0,
+    0.024,
+    0.0
+   ],
+   "triangles": 12,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": "ceramic",
+      "color": "#c4874f",
+      "roughness": 0.74,
+      "metalness": 0
+     },
+     "triangles": 12,
+     "pos": [
+      300248,
+      24
+     ],
+     "nrm": 300392,
+     "idx": [
+      300464,
+      36,
+      16
+     ]
+    }
+   ]
+  },
+  {
+   "name": "topPlate",
+   "label": "Aluminium plate (6061, 1.5 mm)",
+   "cad": [
+    "1.5 MM80X80 6061"
+   ],
+   "material": {
+    "key": "satinAluminum",
+    "color": "#d3d7dd",
+    "roughness": 0.4,
+    "metalness": 0.6
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    0.0,
+    0.012077,
+    0.0
+   ],
+   "explode": [
+    0.0,
+    0.036,
+    0.0
+   ],
+   "triangles": 12,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": "satinAluminum",
+      "color": "#d3d7dd",
+      "roughness": 0.4,
+      "metalness": 0.6
+     },
+     "triangles": 12,
+     "pos": [
+      300536,
+      24
+     ],
+     "nrm": 300680,
+     "idx": [
+      300752,
+      36,
+      16
+     ]
+    }
+   ]
+  },
+  {
+   "name": "lid",
+   "label": "Lid ring",
+   "cad": [
+    "CASE upper"
+   ],
+   "material": {
+    "key": "matteShell",
+    "color": "#6d717c",
+    "roughness": 0.74,
+    "metalness": 0
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    0.0,
+    0.014057,
+    -0.0
+   ],
+   "explode": [
+    0.0,
+    0.048,
+    0.0
+   ],
+   "triangles": 1232,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": "matteShell",
+      "color": "#6d717c",
+      "roughness": 0.74,
+      "metalness": 0
+     },
+     "triangles": 1232,
+     "pos": [
+      300824,
+      1288
+     ],
+     "nrm": 308552,
+     "idx": [
+      312416,
+      3696,
+      16
+     ]
+    }
+   ]
+  },
+  {
+   "name": "screws",
+   "label": "Screws (M2 x 6)",
+   "cad": [
+    "socket head cap screw_am_B18.3.1M - 2 x 0.4 x 6 Hex SHCS -- 6NHX-1",
+    "socket head cap screw_am_B18.3.1M - 2 x 0.4 x 6 Hex SHCS -- 6NHX-2",
+    "socket head cap screw_am_B18.3.1M - 2 x 0.4 x 6 Hex SHCS -- 6NHX-3",
+    "socket head cap screw_am_B18.3.1M - 2 x 0.4 x 6 Hex SHCS -- 6NHX-4"
+   ],
+   "material": {
+    "key": "steel",
+    "color": "#bfc3c8",
+    "roughness": 0.34,
+    "metalness": 0.9
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    0.0,
+    0.012157,
+    -0.0
+   ],
+   "explode": [
+    0.0,
+    0.06,
+    0.0
+   ],
+   "triangles": 1408,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": "steel",
+      "color": "#bfc3c8",
+      "roughness": 0.34,
+      "metalness": 0.9
+     },
+     "triangles": 1408,
+     "pos": [
+      319808,
+      1440
+     ],
+     "nrm": 328448,
+     "idx": [
+      332768,
+      4224,
+      16
+     ]
+    }
+   ]
+  }
+ ]
+}
