@@ -27,8 +27,9 @@ NAME = "typeset"
 TITLE = "no font, style or color switch inside a sentence (live + next/ pages)"
 MODES = {"fast", "default", "full"}
 
-PAGES = ("index.html", "websites.html", "privacy.html", "404.html", "hi/index.html",
+PAGES = ("index.html", "websites.html", "beyond.html", "privacy.html", "404.html", "hi/index.html",
          "photography-gallery.html", "photography-lab.html", "next/index.html", "next/websites.html",
+         "next/beyond.html",
          "projects/*.html", "next/projects/*.html")
 CSS = ("next/css/*.css", "css/*.css")
 TEXT = {"h1", "h2", "h3", "h4", "h5", "h6", "p", "li", "dt", "dd", "figcaption", "a"}
@@ -44,6 +45,8 @@ ALLOW = [
     ("next/index.html", "tile", "work tiles and .tile--explorer: remove when the tiles and explorer areas land"),
     ("index.html", "beyond2", "beyond section: remove when the beyond area lands"),
     ("next/index.html", "beyond2", "beyond section: remove when the beyond area lands"),
+    ("beyond.html", None, "Beyond page (next/beyond.html): remove when the beyond area lands"),
+    ("next/beyond.html", None, "Beyond page (next/beyond.html): remove when the beyond area lands"),
     ("projects/*.html", None, "case pages: remove when the case area (tools/build-studio-cases.py) lands"),
     ("next/projects/*.html", None, "case pages: remove when the case area (tools/build-studio-cases.py) lands"),
     ("404.html", None, "404: remove when the pages area lands"),
