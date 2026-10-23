@@ -75,7 +75,7 @@ html[data-card-theme="warm"] .depth-design .charger-launch-cue{background:#30282
 }
 .site-display button:hover { border-color: var(--text-meta); }
 .site-display button[aria-pressed="true"] { border-color: var(--text-display); }
-.site-display button:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.site-display button:focus-visible { outline: var(--focus-ring-width) solid currentColor; outline-offset: 3px; }
 .site-display i {
  width: 12px; height: 12px; flex: none; display: block; border-radius: 50%;
  background: var(--swatch); box-shadow: 0 0 0 1px var(--line-strong);
@@ -97,7 +97,7 @@ html[data-card-theme="warm"] .depth-design .charger-launch-cue{background:#30282
  margin-top: var(--space-6); flex-direction: column; align-items: flex-start; gap: var(--space-4);
  color: var(--paper); --text-display: var(--paper); --text-meta: var(--paper-a70); --line-hairline: var(--paper-a18); --line-strong: var(--paper);
 }
-#mt-menu .site-display button { min-height: 44px; }
+#mt-menu .site-display button { min-height: var(--touch-target); }
 #mt-menu .site-display-note { flex-basis: auto; }
 /* The menu is taller with the control in it; let it scroll on short phones. */
 #mt-menu:has(.site-display) { overflow-y: auto; justify-content: safe center; padding-block: 72px 32px; }
@@ -106,7 +106,7 @@ html[data-card-theme="warm"] .depth-design .charger-launch-cue{background:#30282
 /* websites.html: its footer is a single flex row; give the control its own line. */
 .website-footer:has(> .site-display) { flex-wrap: wrap; }
 .website-footer > .site-display { flex-basis: 100%; }
-@media (max-width: 860px) { .site-display button { min-height: 44px; } }
+@media (max-width: 860px) { .site-display button { min-height: var(--touch-target); } }
 @media print { .site-display { display: none; } }
 /* Open copy questions for the owner (<mark class="flag">, listed by tools/check-flags.py):
    a quiet dotted underline in the text colour of whatever theme is showing, not a highlight. */

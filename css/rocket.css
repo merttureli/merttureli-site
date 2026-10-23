@@ -120,8 +120,8 @@
     var(--paper) 100%);
 }
 .charger-seat-expand {
-  position: absolute; right: 12px; bottom: 12px; z-index: 3;
-  display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 16px 0 12px;
+  position: absolute; right: var(--space-3); bottom: var(--space-3); z-index: 3;
+  display: inline-flex; align-items: center; gap: 10px; min-height: var(--touch-target); padding: 0 var(--space-4) 0 var(--space-3);
   border: 1px solid var(--paper-a45, #ffffff73); border-radius: var(--radius-pill, 999px);
   background: color-mix(in srgb, var(--ink-900, #0a0a0a) 70%, transparent);
   -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
@@ -130,7 +130,7 @@
   transition: background var(--t-hover, .24s), color var(--t-hover, .24s), transform var(--t-hover, .24s);
 }
 .charger-seat-expand svg { flex: none; }
-.charger-seat-expand:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+.charger-seat-expand:focus-visible { outline: var(--focus-ring-width) solid currentColor; outline-offset: var(--focus-ring-offset); }
 @media (hover: hover) and (pointer: fine) {
   .charger-seat-expand:hover { background: var(--paper, #fff); color: var(--ink-900, #0a0a0a); }
 }
@@ -175,7 +175,7 @@
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
   mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
 }
-.skills-belt:focus-visible { outline: 2px solid var(--text-display, #0a0a0a); outline-offset: 6px; }
+.skills-belt:focus-visible { outline: var(--focus-ring-width) solid var(--text-display, #0a0a0a); outline-offset: 6px; }
 .skills-belt-track { display: flex; width: max-content; animation: skills-belt var(--belt-duration, 90s) linear infinite; }
 .skills-belt-list { display: flex; align-items: center; gap: var(--space-2); margin: 0; padding: 0 var(--space-2) 0 0; list-style: none; flex: none; }
 .skills-belt-list > li { display: inline-flex; flex: none; }

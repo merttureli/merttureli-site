@@ -70,7 +70,7 @@
   padding: 12px 18px 12px 12px;
   border: 1px solid #ffffff24;
   border-top-color: #ffffff54;
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   background: linear-gradient(135deg, #363a3deb, #161819f5);
   box-shadow: inset 0 1px #ffffff0a, 0 8px 20px #0005, 0 1px 2px #0006;
   transition: transform var(--t-hover);
@@ -128,7 +128,7 @@
 }
 .depth-panel {
   background: linear-gradient(145deg, var(--depth-panel-a), var(--depth-panel-b)) !important;
-  border-radius: 20px !important;
+  border-radius: var(--radius-lg) !important;
   box-shadow: inset 0 1px 0 #fff, inset 1px 0 0 #ffffffa6, 0 1px 2px #00000012, 0 12px 24px -18px #00000038;
   outline: 1px solid #00000009;
 }
@@ -141,7 +141,7 @@
   box-shadow: inset 0 1px #ffffff24, 0 4px 8px #0002;
 }
 .depth-design [data-depth-button="outline"] { box-shadow: inset 0 1px #ffffff70, 0 3px 4px -3px #0003; }
-.depth-design [data-depth-button]:focus-visible { outline: 2px solid currentColor; outline-offset: 5px; }
+.depth-design [data-depth-button]:focus-visible { outline: var(--focus-ring-width) solid currentColor; outline-offset: 5px; }
 .depth-design [data-depth-button]:focus-visible > span:last-child { transform: translateX(3px) !important; }
 .depth-design [data-depth-button="link"]::after {
   content: ""; position: absolute; inset: auto 0 -1px; height: 1px;

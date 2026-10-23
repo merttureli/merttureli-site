@@ -8,7 +8,7 @@ Served by GitHub Pages from the root of `main`.
 
 1. Edit the source:
    - the home page: `src/index.html`
-   - a case study: its data in `build-case.py`
+   - a case study: its data in `content/projects/<slug>.json` (order in `content/projects.json`; `build-case.py` turns it into HTML)
 2. Build: `python3 tools/build.py`
 3. Commit the source and the regenerated `index.html` and `projects/*.html` together.
 
@@ -37,3 +37,6 @@ Other pages (`websites.html`, `privacy.html`, `404.html`, `hi/`, ...) are
 plain HTML and are edited directly.
 
 Before committing copy changes, run `python3 check-writing.py`.
+
+Every other job (checks, previews, images, scaffolds, 3D, design system): start at
+`CLAUDE.md` and `docs/README.md`.

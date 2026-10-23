@@ -1,0 +1,33 @@
+{
+  "_doc": "Therma-Shift coaster, ready for the owner's STEP. The 8 names are fixed: they are coaster.js getParts() names and the keys of PART_DIRS in next/js/showreel/index.js. explode_mm copies coaster.js; 'order' is coaster.js build order. The match patterns are GUESSES at the CAD names: run inspect first and fix them. Rules are tried top to bottom and the first match wins, so specific patterns (blower housing) sit above generic ones (housing). Origin 'top' puts the highest point at y=0 (coaster.js puts the plate top there; if screw heads stand proud, use 'keep' and offset in the actor).",
+  "name": "therma-shift",
+  "out": "next/assets/3d/",
+  "formats": [
+    "cadmesh"
+  ],
+  "up": "y",
+  "origin": "top",
+  "quality": "medium",
+  "unmatched": "keep",
+  "order": [
+    "shell",
+    "blower",
+    "board",
+    "heatsink",
+    "peltier",
+    "thermistor",
+    "topPlate",
+    "screws"
+  ],
+  "parts": [
+    {"match": ["*blower*rotor*", "*fan*rotor*", "*impeller*", "*blade*"], "name": "blower", "sub": "rotor", "material": "bladePlastic"},
+    {"match": ["*blower*", "*fan*"], "name": "blower", "label": "Blower", "material": "fanPlastic", "explode_mm": [0, -30, 0]},
+    {"match": ["*thermistor*", "*ntc*", "*sensor*"], "name": "thermistor", "label": "Thermistor", "material": "epoxy", "explode_mm": [24, 40, 18]},
+    {"match": ["*peltier*", "*tec*"], "name": "peltier", "label": "Peltier module", "material": "ceramic", "explode_mm": [0, 30, 0]},
+    {"match": ["*heatsink*", "*heat*sink*", "*sink*"], "name": "heatsink", "label": "Heatsink", "material": "heatsink", "explode_mm": [0, 4, 0]},
+    {"match": ["*pcb*", "*board*", "*controller*"], "name": "board", "label": "Control board", "material": "pcb", "explode_mm": [52, 46, 20]},
+    {"match": ["*screw*", "*bolt*", "*m3*", "*m2*"], "name": "screws", "label": "Screws", "material": "steel", "explode_mm": [0, 82, 0], "deflection": 0.1, "angle": 0.8},
+    {"match": ["*plate*", "*top*"], "name": "topPlate", "label": "Top plate", "material": "satinAluminum", "explode_mm": [0, 56, 0]},
+    {"match": ["*shell*", "*housing*", "*base*", "*enclosure*"], "name": "shell", "label": "Shell", "material": "matteShell", "explode_mm": [0, -112, 0]}
+  ]
+}

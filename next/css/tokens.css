@@ -1,0 +1,107 @@
+/* STUDIO design tokens (next/).
+   Every color, type voice, spacing step, layer, radius and motion value that
+   next/css/studio.css uses, in one place. Values are exactly the literals
+   studio.css used before, so swapping a literal for its token changes nothing.
+   Docs: docs/design/studio.md (what each token is for), docs/design/motion.md.
+   Load order: this file, then studio.css (both linked from next/index.html;
+   history in docs/design/studio-tokens-migration.md). Media queries cannot read var():
+   the breakpoints are listed at the bottom as a comment. */
+:root {
+  color-scheme: light;
+
+  /* color: light surfaces (the page) */
+  --paper: #e7e8ea;
+  --paper-2: #dcdee1;
+  --paper-3: #d0d3d7;
+  --ink: #121315;
+  --ink-2: #1d1f22;
+  --ink-soft: #3a3d42;
+  --muted: #676b72;
+  --line: rgba(18, 19, 21, .16);
+  --signal: #ff4f00;     /* international orange, the rocket's own color */
+  --signal-ink: #b83700;
+  --live: #1f9d55;
+  --pill-fill: rgba(255, 255, 255, .35);
+  --scrim: rgba(18, 19, 21, .3);
+  --shadow-soft: rgba(18, 19, 21, .13);
+  --shadow-clear: rgba(18, 19, 21, 0);
+
+  /* color: paper on ink (dark surfaces) */
+  --line-dark: rgba(231, 232, 234, .16);
+  --paper-soft-hi: rgba(231, 232, 234, .75);
+  --paper-soft: rgba(231, 232, 234, .7);
+  --paper-muted: rgba(231, 232, 234, .55);
+  --paper-muted-lo: rgba(231, 232, 234, .5);
+  --paper-ring: rgba(231, 232, 234, .22);
+  --paper-ghost: rgba(231, 232, 234, .14);
+
+  /* type: three voices */
+  --display: Archivo, 'Arial Narrow', sans-serif;
+  --mono: 'Martian Mono', ui-monospace, monospace;
+  --serif: 'Bodoni Moda', 'Didot', serif;
+  --display-stretch: 112%;
+  --display-weight: 760;
+  --mono-stretch: 87.5%;
+  --mono-tracking: .02em;
+
+  /* type: fixed sizes (fluid headings keep their clamp() in the component) */
+  --text-l: 17px;
+  --text-m: 16px;
+  --text-s: 15px;
+  --text-xs: 14px;
+  --text-2xs: 13px;
+  --text-mono-l: 12px;
+  --text-mono-m: 11px;
+  --text-mono-s: 10.5px;
+  --text-mono-xs: 10px;
+
+  /* space: the name is the min and max of the fluid range */
+  --gutter: clamp(16px, 3.2vw, 48px);
+  --space-14-28: clamp(14px, 2vw, 28px);
+  --space-20-40: clamp(20px, 3vw, 40px);
+  --space-40-70: clamp(40px, 5vw, 70px);
+  --space-40-90: clamp(40px, 6vw, 90px);
+  --space-50-90: clamp(50px, 6vw, 90px);
+  --space-70-140: clamp(70px, 9vw, 140px);
+  --space-80-160: clamp(80px, 10vw, 160px);
+  --wrap-max: 1680px;
+
+  /* layers (page level; hero internals use 1 to 4 locally) */
+  --z-top: 20;
+  --z-menu: 30;
+  --z-menu-btn: 40;
+  --z-skip: 100;
+
+  /* shape */
+  --radius-pill: 999px;
+  --radius-focus: 2px;
+  --hairline: 1px solid var(--line);
+  --hairline-dark: 1px solid var(--line-dark);
+
+  /* motion: see docs/design/motion.md */
+  --ease: cubic-bezier(.16, 1, .3, 1);
+  --ease-io: cubic-bezier(.65, 0, .35, 1);
+  --ease-back: cubic-bezier(.34, 1.56, .64, 1);
+  --dur-250: .25s;
+  --dur-300: .3s;
+  --dur-400: .4s;
+  --dur-450: .45s;
+  --dur-500: .5s;
+  --dur-600: .6s;
+  --dur-700: .7s;
+  --dur-800: .8s;
+  --dur-900: .9s;
+  --dur-1000: 1s;
+  --dur-1100: 1.1s;
+  --dur-1200: 1.2s;
+  --dur-1400: 1.4s;
+  --dur-1600: 1.6s;
+  --dur-2400: 2.4s;
+}
+
+/* Breakpoints (copy the number into @media):
+   phone   (max-width: 760px)
+   tablet  (max-width: 1100px)
+   hover   (hover: hover)                      wrap every :hover rule
+   fine    (hover: hover) and (pointer: fine)  magnetic buttons (studio.js)
+   motion  (prefers-reduced-motion: reduce)    see motion.md */

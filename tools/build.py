@@ -5,11 +5,13 @@ Build the served pages from their sources.
     python3 tools/build.py            # rebuild everything
     python3 tools/build.py --check    # rebuild into a temp dir, diff against the
                                       # committed pages, exit 1 on any difference
-    python3 tools/build.py --serve    # preview the runtime templates on :8000
+    python3 tools/build.py --serve [PORT]  # preview the runtime templates on :8000
+    python3 tools/build.py --help     # this text
 
 Sources (edit these):
     src/index.html       the home page, an <x-dc> runtime template
-    build-case.py        the case studies, as data; writes src/projects/*.html
+    content/projects/    the case studies, as JSON (order in content/projects.json)
+    build-case.py        turns that data into src/projects/*.html
 
 Output (commit these, never edit them by hand):
     index.html, projects/*.html   static HTML rendered from src/ in Chromium by
@@ -99,6 +101,15 @@ def serve(port=8000):
 
 def main():
     args = sys.argv[1:]
+    if "-h" in args or "--help" in args:
+        print(__doc__.strip())
+        return 0
+    known = {"--check", "--serve"}
+    unknown = [a for i, a in enumerate(args)
+               if a not in known and not (i and args[i - 1] == "--serve" and a.isdigit())]
+    if unknown:
+        sys.stderr.write("tools/build.py: unknown argument %s (see --help)\n" % " ".join(unknown))
+        return 2
     if "--check" in args:
         return check()
     if "--serve" in args:

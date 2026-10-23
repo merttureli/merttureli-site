@@ -344,6 +344,8 @@ async function createThermaShift(ctx) {
 }
 
 registerProject({ key: 'therma-shift', word: 'Therma-Shift', actor: createThermaShift });
+// More guests: `python3 tools/new.py actor <key> --register` adds one
+// registerProject(...) line just above this comment (docs/recipes/showreel-actor.md).
 
 // ================================================================== mount
 function parseFlags() {
