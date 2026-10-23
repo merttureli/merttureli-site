@@ -5,9 +5,11 @@
     python3 tools/preview.py studio [--out DIR] [--serve PORT | --smoke] [--dry-run]
 
 site    the whole current site (what GitHub Pages serves), entry index.html.
-studio  next/ as a standalone copy: index.html, css/, js/, assets/ (next/assets),
-        shared/ (studies/shared), site/ (root assets/ files the Studio links, pulled in
-        by reference, whole folder when the target is an .html page).
+studio  next/ as a standalone copy: every file under next/ at the copy root (index.html,
+        websites.html, projects/*.html, css/, js/, assets/ ...), shared/ (studies/shared),
+        and, pulled in by reference (whole folder when the target is an .html page):
+        site/ (root assets/), site/js/ (root js/), studies/ (the four design studies).
+        STEP files are left out (the host refuses them).
 
 The artifact host rules this applies to every copy:
   * top-level paths starting with "_" are rejected  -> "_ds/" becomes "ds/"
@@ -77,12 +79,16 @@ MODES = {
                   "next/index.html#reel-coaster"],
     },
     "studio": {
-        "roots": [("next/index.html", "index.html"), ("next/css/", "css/"), ("next/js/", "js/"),
-                  ("next/assets/", "assets/"), ("studies/shared/", "shared/")],
-        "pull": [("assets/", "site/")],
+        # every page under next/ (index.html, websites.html, projects/*.html, lab/...) at the copy root
+        "roots": [("next/", ""), ("studies/shared/", "shared/")],
+        # outside files the Studio links: root assets, the four design studies, root scripts
+        # (the websites page reuses the live inquiry form wiring in js/)
+        "pull": [("assets/", "site/"), ("studies/", "studies/"), ("js/", "site/js/")],
+        "exclude_ext": {".step"},   # the artifact host refuses STEP files
         "entry": "next/index.html",
         "doc_dir": "next/",
-        "smoke": ["index.html#reel-coaster", "site/charger-explorer/index.html"],
+        "smoke": ["index.html#reel-coaster", "websites.html", "projects/charger.html",
+                  "site/charger-explorer/index.html"],
     },
 }
 
@@ -270,9 +276,14 @@ class Build:
         self.rewrites = {}       # copy path -> count
         self.queries = []
 
+    def skip(self, f):
+        return os.path.splitext(f)[1].lower() in self.cfg.get("exclude_ext", ())
+
     def map_roots(self):
         for src_pre, dst_pre in self.cfg["roots"]:
             for f in sorted(self.universe):
+                if self.skip(f):
+                    continue
                 if f == src_pre or (src_pre.endswith("/") or src_pre == "") and f.startswith(src_pre):
                     self.dst[f] = host_name(dst_pre + f[len(src_pre):])
 
@@ -291,7 +302,7 @@ class Build:
         else:
             group = [target]
         for f in sorted(group):
-            if f not in self.dst:
+            if f not in self.dst and not self.skip(f):
                 d = self.pull_target(f)
                 if d:
                     self.dst[f] = host_name(d)
@@ -304,6 +315,8 @@ class Build:
             pre = "" if target == "/" else target
             inside = any(s.startswith(pre) for s in self.dst)
             return (target, None) if inside else (None, "not in this copy")
+        if target and self.skip(target):
+            return None, "excluded from copy"
         if target and target not in self.dst and self.pull_target(target):
             return target, "pull"
         if target and target not in self.dst:
