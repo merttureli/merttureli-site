@@ -1,18 +1,21 @@
 /* Lab bench for the lattice engine (vx/lab/lattice.html). Owns its renderer
    and canvas, builds analytic sections, draws lattice.texture with an overlay,
    and runs the validation gates headless:
-     ?validate=cylinder   cylinder D 24 cells in 512 x 192 at Re 100 (FIELD.md section 4)
-     ?validate=stability  rocket stand-in, tier 3 grid, alpha 15 deg, u_in 0.10, Re 3000
+     ?validate=cylinder   cylinder D 24 cells at Re 100, 16 D behind the inflow edge in 768 x 192, run to
+                          saturated shedding (&layout=contract: FIELD.md's 512 x 192, 5.3 D behind it)
+     ?validate=stability  rocket stand-in, tier 3 grid, alpha 15 deg, the top inflow that runs (U_REF 0.05)
+                          at the page's tau0 (Re 1500 there)
      ?validate=bench      steps per second at tiers 3, 2 and 1
      ?validate=destroy    counts targets, materials, textures and programs before and after destroy()
    Each writes JSON into <pre id="validate"> and to console.log with the prefix
    LATTICE_VALIDATE. Options: &steps=N, &re=N, &reg=1, &alpha=deg, &u=lu, &neq=1 (stability: inflow
-   cells at the neighbour density).
+   cells at the neighbor density), &layout=far|contract (cylinder).
    Nothing here listens to the pointer for the flow; the controls are inputs. */
 import * as THREE from 'three';
 import { bus } from '../core/bus.js';
 import { governor } from '../core/governor.js';
 import { createLattice, TIERS, VIEWS, RE_TARGET, U_REF, SMAGORINSKY_C, MACH_FLOOR } from './lattice.js';
+import { analyseUnsteady } from '../validation/l2-analysis.js';
 
 const DEG = Math.PI / 180;
 
@@ -51,9 +54,9 @@ export function rocketSection({ cols, rows }) {
   }
   return { mask, cols, rows, dCells: D, cgCell: [x0 + ROCKET.cgL * L, axis], xNose: x0, length: L, label: 'ROCKET STAND-IN' };
 }
-/* Flat plate, chord 0.2 cols, two cells thick, centre at 0.38 cols. The
+/* Flat plate, chord 0.2 cols, two cells thick, center at 0.38 cols. The
    incidence phi turns the chord to (cos phi, -sin phi): the same sense as alpha.
-   Moment centre at the quarter chord. */
+   Moment center at the quarter chord. */
 export function plateSection({ cols, rows, incidenceDeg = 0 }) {
   const c = 0.2 * cols, t = 2, cx = 0.38 * cols, cy = rows / 2, p = incidenceDeg * DEG;
   const ax = Math.cos(p), ay = -Math.sin(p);
@@ -77,7 +80,7 @@ export function cylinderSection({ cols, rows, d = rows / 8, cx = 0.25 * cols, cy
 
 /* ------------------------------------------------------------- display */
 /* Draws lattice.texture to the lab canvas as stored (display-referred values,
-   no colour conversion) and hatches the solid where the view's alpha is 0. */
+   no color conversion) and hatches the solid where the view's alpha is 0. */
 const DISPLAY_VERT = `precision highp float;
 in vec3 position;
 void main() { gl_Position = vec4(position.xy, 0.0, 1.0); }`;
@@ -126,61 +129,83 @@ function mean(a) { return a.length ? a.reduce((s, v) => s + v, 0) / a.length : N
 /* fixed decimals as a number; null for null, undefined or a non-finite value */
 const round = (v, d) => (v === null || v === undefined || !Number.isFinite(v) ? null : +v.toFixed(d));
 
-/* Cylinder gate. A 4 degree inflow for the first 1,500 steps breaks the
-   symmetry so the shedding starts inside the run (stated in the result). */
-export async function validateCylinder(renderer, { steps = 20000, chunk = 50, onProgress, onFrame, smagorinsky = SMAGORINSKY_C } = {}) {
-  const cols = 512, rows = 192, D = 24, u = 0.05, re = 100;
+/* Cylinder gate (FIELD.md section 4, revised after validation track L2). A cylinder of
+   diameter 24 cells at Re 100 (u 0.05, tau0 0.536), a 4 degree inflow for the first 1,500
+   steps to break the symmetry, then run until the shedding has saturated and averaged over
+   whole saturated lift cycles (vx/js/validation/l2-analysis.js, analyseUnsteady: the last
+   up to 10 cycles whose mean drag is within 0.2 percent and lift amplitude within 5 percent
+   of the last three). Two layouts:
+     'far' (default): 768 x 192, center 16 D behind the inflow edge, 16 D ahead of the outflow
+       edge, 8 D tall (12.5 percent blockage);
+     'contract': FIELD.md's 512 x 192 with the center at column 128, 5.3 D behind the inflow edge.
+   Why: track L2 measured that the inflow edge, which fixes u and rho, raises the drag of a body
+   close to it (C_D +4.6 percent and St +3.2 percent at 8 D against 16 D, falling off as about
+   distance^-2.1), while the open lateral edges move it by at most 1.4 percent between 8 and 32 D
+   of height, so blockage-based ranges do not apply; and that the contract layout's 20,000-step
+   run stopped before the shedding saturated (printed C_D 1.4504, St 0.1694; saturated 1.4731,
+   0.1720, C_L amplitude 0.359). The references are unconfined 2D values at Re 100 (Parvar et al.
+   2023, arXiv:2303.09262, Table 1: C_D 1.314 to 1.325 (Kravchenko et al. 1999, Qu et al. 2013,
+   Posdziech and Grundmann 2007, Sivakumar et al.), St 0.164 to 0.165 (Posdziech and Grundmann
+   2007, Kravchenko et al. 1999, Qu et al. 2013, Williamson 1996), C_L amplitude 0.314 to 0.322
+   (their rms values times sqrt 2)); the tolerances, 5 percent on C_D and St and 15 percent on
+   the lift amplitude, were set by track L2 before its runs. What remains at D 24 is the
+   staircase wall (about +3 percent in C_D against D 48, track L2 section 4) and the inflow edge
+   at 16 D (about +1.4 percent). */
+export const CYLINDER_REF = Object.freeze({
+  re: 100, cd: 1.320, cdRange: [1.314, 1.325], st: 0.165, stRange: [0.164, 0.165], clAmp: 0.318, clAmpRange: [0.314, 0.322],
+  tol: { cd: 0.05, st: 0.05, clAmp: 0.15 },
+  source: 'unconfined 2D, Re 100: Parvar et al. 2023 (arXiv:2303.09262) Table 1, listing Kravchenko et al. 1999, Qu et al. 2013, Posdziech and Grundmann 2007, Sivakumar et al., Williamson 1996',
+});
+const CYLINDER_LAYOUTS = Object.freeze({
+  far: Object.freeze({ cols: 768, rows: 192, cx: 384 }),
+  contract: Object.freeze({ cols: 512, rows: 192, cx: 128 }),
+});
+export async function validateCylinder(renderer, { steps = 60000, chunk = 50, onProgress, onFrame, smagorinsky = SMAGORINSKY_C, layout = 'far' } = {}) {
+  const lay = CYLINDER_LAYOUTS[layout] || CYLINDER_LAYOUTS.far;
+  const { cols, rows, cx } = lay;
+  const D = 24, u = 0.05, re = 100;
   const KICK_STEPS = 1500, KICK_DEG = 4;
-  const lat = createLattice(renderer, { cols, rows, tier: 3, autoResetOnNaN: false });
+  const lat = createLattice(renderer, { cols, rows, tier: 3, fixedGrid: true, autoResetOnNaN: false });
   await lat.ready;
   if (lat.fallback) { lat.destroy(); return { case: 'cylinder', error: lat.fallback }; }
-  const cx = 128, cy = rows / 2 + 0.3;
+  const cy = rows / 2 + 0.3;
   lat.setSection(cylinderSection({ cols, rows, d: D, cx, cy }));
   lat.setSmagorinsky(smagorinsky);
   lat.setViscosity({ re, uRef: u });
   lat.setInflow(u, KICK_DEG * DEG);
   lat.reset();
   const t0 = performance.now();
+  const q = 0.5 * u * u;
   const samples = [];
   for (let s = 0; s < steps; s += chunk) {
     if (s >= KICK_STEPS) lat.setInflow(u, 0);
     lat.step(Math.min(chunk, steps - s));
     const f = await lat.sampleForce();
-    if (f && f.finite !== undefined) samples.push({ t: f.step - f.steps / 2, end: f.step, fx: f.fx, fy: f.fy, finite: f.finite });
+    if (f && f.finite !== undefined) samples.push({ t: f.step - f.steps / 2, end: f.step, cd: f.fx / (q * D), cl: f.fy / (q * D), finite: f.finite });
     if ((s / chunk) % 10 === 0) { lat.render(); onFrame?.(lat); onProgress?.(s + chunk, steps); await yieldTask(); }
   }
   const wall = (performance.now() - t0) / 1000;
-  const q = 0.5 * u * u;
-  const avgFrom = steps - Math.min(5000, Math.floor(steps / 4));
-  const tail = samples.filter((p) => p.end > avgFrom && p.t >= KICK_STEPS);
-  const cd = mean(tail.map((p) => p.fx)) / (q * D);
-  const cdStd = Math.sqrt(mean(tail.map((p) => (p.fx / (q * D) - cd) ** 2)));
-  const liftFrom = Math.max(KICK_STEPS + 2000, Math.floor(steps * 0.4));
-  const lift = samples.filter((p) => p.t >= liftFrom);
-  const fyMean = mean(lift.map((p) => p.fy));
-  const ups = [];
-  for (let i = 1; i < lift.length; i++) {
-    const a = lift[i - 1].fy - fyMean, b = lift[i].fy - fyMean;
-    if (a < 0 && b >= 0) ups.push(lift[i - 1].t + (lift[i].t - lift[i - 1].t) * (-a / (b - a)));
-  }
-  const period = ups.length > 1 ? (ups[ups.length - 1] - ups[0]) / (ups.length - 1) : NaN;
-  const st = D / (period * u);
-  const clTail = samples.filter((p) => p.end > avgFrom).map((p) => p.fy / (q * D));
-  const clAmp = clTail.length ? (Math.max(...clTail) - Math.min(...clTail)) / 2 : NaN;
+  const a = analyseUnsteady(samples, { D, u, kickSteps: KICK_STEPS, avgCycles: 10 });
+  const err = (v, r) => (Number.isFinite(v) ? (v - r) / r : NaN);
+  const eCd = err(a.cdMean, CYLINDER_REF.cd), eSt = err(a.st, CYLINDER_REF.st), eCl = err(a.clAmp, CYLINDER_REF.clAmp);
   const finite = samples.every((p) => p.finite);
   const probe = await lat.check();
   const result = {
-    case: 'cylinder', grid: [cols, rows], dCells: D, centre: [cx, cy], uIn: u, re, tau0: +lat.stats.tau0.toFixed(5), smagorinsky,
+    case: 'cylinder', layout: layout in CYLINDER_LAYOUTS ? layout : 'far', grid: [cols, rows], dCells: D, centre: [cx, cy],
+    upstreamD: +(cx / D).toFixed(2), downstreamD: +((cols - cx) / D).toFixed(2), heightD: +(rows / D).toFixed(2), blockage: +(D / rows).toFixed(3),
+    uIn: u, re, tau0: +lat.stats.tau0.toFixed(5), smagorinsky,
     regularised: lat.stats.regularised, positivity: lat.stats.positive, absorbingEdges: lat.stats.sponge, machFloor: lat.stats.machK,
     precision: lat.stats.precision, steps, sampleWindowSteps: chunk,
     perturbation: `alpha ${KICK_DEG} deg for the first ${KICK_STEPS} steps`,
-    cd: +cd.toFixed(4), cdStd: +cdStd.toFixed(4), cdWindow: [avgFrom, steps],
-    st: +st.toFixed(4), periodSteps: +period.toFixed(1), liftCrossings: ups.length, liftWindow: [liftFrom, steps], clAmplitude: +clAmp.toFixed(4),
-    literature: { cd: [1.35, 1.55], st: [0.16, 0.18], note: '2D, Re 100, about 12 percent blockage (FIELD.md section 4)' },
-    cdInRange: cd >= 1.35 && cd <= 1.55, stInRange: st >= 0.16 && st <= 0.18,
+    cd: a.cdMean, st: a.st, clAmplitude: a.clAmp, periodSteps: a.periodSteps, saturated: a.saturated, cyclesUsed: a.cyclesUsed, cyclesTotal: a.cyclesTotal,
+    window: a.window, cycleSpread: a.cycleSpread, settle: { clAmp95: a.settle.clAmp95, cdMean1pct: a.settle.cdMean1pct },
+    reference: CYLINDER_REF,
+    error: { cd: round(eCd, 4), st: round(eSt, 4), clAmplitude: round(eCl, 4) },
+    pass: { cd: Math.abs(eCd) <= CYLINDER_REF.tol.cd, st: Math.abs(eSt) <= CYLINDER_REF.tol.st, clAmplitude: Math.abs(eCl) <= CYLINDER_REF.tol.clAmp, saturated: !!a.saturated },
     finite, field: probe, wallSeconds: +wall.toFixed(1), stepsPerSecond: Math.round(steps / wall),
-    liftTrace: samples.filter((p, i) => i % 4 === 3).map((p) => [Math.round(p.t), +(p.fy / (q * D)).toFixed(3)]),
+    liftTrace: samples.filter((p, i) => i % 8 === 7).map((p) => [Math.round(p.t), +p.cl.toFixed(3)]),
   };
+  result.passed = finite && result.pass.cd && result.pass.st && result.pass.clAmplitude && result.pass.saturated;
   lat.destroy();
   return result;
 }
@@ -237,7 +262,7 @@ export async function validateBench(renderer, { seconds = 4, onProgress, draw } 
     await lat.ready;
     if (lat.fallback) { lat.destroy(); rows.push({ tier, error: lat.fallback }); continue; }
     lat.setSection(rocketSection);
-    lat.setInflow(0.08, 8 * DEG);
+    lat.setInflow(0.05, 8 * DEG);
     lat.reset();
     lat.step(4); await lat.sync();
     let n = 8, sps = 0;
@@ -274,7 +299,7 @@ export async function validateDestroy(renderer) {
   const lat = createLattice(renderer, { tier: 2, autoResetOnNaN: false });
   await lat.ready;
   lat.setSection(rocketSection);
-  lat.setInflow(0.08, 10 * DEG);
+  lat.setInflow(0.05, 10 * DEG);
   lat.reset();
   for (let i = 0; i < 6; i++) { lat.frame(1 / 60); await nextFrame(); }
   await lat.sampleForce();
@@ -314,7 +339,7 @@ export function mountLab(doc = document) {
 
   /* ---------- state ---------- */
   const state = {
-    shape: query.get('shape') || 'rocket', alphaDeg: query.has('alpha') ? Number(query.get('alpha')) : 10, uIn: query.has('u') ? Number(query.get('u')) : 0.08,
+    shape: query.get('shape') || 'rocket', alphaDeg: query.has('alpha') ? Number(query.get('alpha')) : 10, uIn: query.has('u') ? Number(query.get('u')) : 0.05,
     re: query.has('re') ? Number(query.get('re')) : RE_TARGET, rate: 0, incidence: 0, view: VIEWS.includes(query.get('view')) ? query.get('view') : 'smoke',
     tierMode: query.has('tier') ? String(query.get('tier')) : 'auto', spf: 0, running: !reduced, reg: query.get('reg') !== '0', smag: true,
   };
@@ -462,7 +487,7 @@ export function mountLab(doc = document) {
     cctx.lineWidth = 1;
   }
 
-  const fmt = (v, d = 3) => (v === null || v === undefined || !Number.isFinite(v) ? '–' : v.toFixed(d));
+  const fmt = (v, d = 3) => (v === null || v === undefined || !Number.isFinite(v) ? '--' : v.toFixed(d));
   let lastReadout = 0, lastAria = 0;
   function drawReadout(force = false) {
     const now = performance.now();
@@ -473,24 +498,25 @@ export function mountLab(doc = document) {
     const xcpCal = f && f.xcpCells !== null && current ? (f.xcpCells - current.xNose) / d : null;
     const lines = [
       `ENGINE    D2Q9 / ONE PULL PASS / MRT x3 / ${s.precision.toUpperCase()}`,
-      `MODEL     BGK + SMAGORINSKY C ${s.smagorinsky.toFixed(2)} (STD HOU 1996)${s.regularised ? ' / REGULARISED (STD LATT 2006)' : ''}`,
-      `STABILISE ${[s.positive ? 'POSITIVITY (STD BROWNLEE 2007)' : '', s.machK > 0 ? 'TAU FLOOR ABOVE |U| 0.15 (EST)' : '', s.sponge ? 'ABSORBING EDGES (EST)' : ''].filter(Boolean).join(' / ') || 'OFF'}`,
-      `EDGES     INFLOW ${s.inflowNeq ? 'U_IN AT THE NEIGHBOUR DENSITY (STD GUO 2002)' : 'EQUILIBRIUM AT RHO 1 AND U_IN'} / OUTFLOW ZERO GRADIENT, RHO 1`,
+      `MODEL     BGK + SMAGORINSKY C ${s.smagorinsky.toFixed(2)} (STD HOU 1996)${s.regularised ? ' / REGULARIZED (STD LATT 2006)' : ''}`,
+      `STABILIZE ${[s.positive ? 'POSITIVITY (STD BROWNLEE 2007)' : '', s.machK > 0 ? 'TAU FLOOR ABOVE |U| 0.15 (EST)' : '', s.sponge ? 'ABSORBING EDGES (EST)' : ''].filter(Boolean).join(' / ') || 'OFF'}`,
+      `EDGES     INFLOW ${s.inflowNeq ? 'U_IN AT THE NEIGHBOR DENSITY (STD GUO 2002)' : 'EQUILIBRIUM AT RHO 1 AND U_IN'} / OUTFLOW ZERO GRADIENT, RHO 1, REGULARIZED (STD LATT 2008)`,
+      `BODY RATE ${s.bodyRate === 'wall' ? 'MOVING WALL (STD LADD 1994), TANGENTIAL WALLS ONLY' : 'BODY FRAME: ROTATING FREE STREAM + CORIOLIS, CENTRIFUGAL, EULER (STD GUO 2002 FORCING)'}`,
       `GRID      ${g.cols} x ${g.rows} CELLS / DYE ${s.dye[0]} x ${s.dye[1]} / TIER ${lattice.tier} / ${lattice.stepsPerFrame || (TIERS[lattice.tier] || TIERS[0]).steps} STEPS PER FRAME${lattice.stepsPerFrame ? ' (SET)' : ''}`,
-      `RATE      ${s.stepsPerSecond === null ? '–' : s.stepsPerSecond} STEPS/S / ${fmt(s.msPerFrame, 1)} MS PER FRAME / ${fmt(s.issueMs, 2)} MS ISSUE / ${s.shed} SHED (SIM)`,
-      `FLOW      U_IN ${fmt(s.uIn)} LU${Math.abs(s.uNow - s.uIn) > 5e-4 ? ` (RAMPING, ${fmt(s.uNow)})` : ''} / ALPHA ${fmt(s.alphaDeg, 1)} DEG / TAU0 ${fmt(s.tau0, 5)}${s.tauNow > s.tau0 + 1e-5 ? ` (START-UP ${fmt(s.tauNow, 3)})` : ''} / NU ${fmt(s.nu, 5)} / RE ${fmt(s.re, 0)} (SIM)`,
-      `SECTION   ${current ? current.label : '–'} / D ${fmt(d, 1)} CELLS / ${lattice.stats.dCells ? '' : 'NO SOLID / '}CG ${current ? fmt(current.cgCell[0], 1) : '–'} CELLS${state.shape === 'rocket' ? ' (PAGE 22 IN ON THE CAD LENGTH)' : ''}`,
+      `RATE      ${s.stepsPerSecond === null ? '--' : s.stepsPerSecond} STEPS/S / ${fmt(s.msPerFrame, 1)} MS PER FRAME / ${fmt(s.issueMs, 2)} MS ISSUE / ${s.shed} SHED (SIM)`,
+      `FLOW      U_IN ${fmt(s.uIn)} LU${s.uRequested > s.uIn + 1e-9 ? ` (CAPPED AT ${fmt(s.speedCap, 2)}, ASKED ${fmt(s.uRequested)})` : ''}${Math.abs(s.uNow - s.uIn) > 5e-4 ? ` (RAMPING, ${fmt(s.uNow)})` : ''} / ALPHA ${fmt(s.alphaDeg, 1)} DEG / TAU0 ${fmt(s.tau0, 5)}${s.tauNow > s.tau0 + 1e-5 ? ` (START-UP ${fmt(s.tauNow, 3)})` : ''} / NU ${fmt(s.nu, 5)} / RE ${fmt(s.re, 0)} (SIM)`,
+      `SECTION   ${current ? current.label : '--'} / D ${fmt(d, 1)} CELLS / ${lattice.stats.dCells ? '' : 'NO SOLID / '}CG ${current ? fmt(current.cgCell[0], 1) : '--'} CELLS${state.shape === 'rocket' ? ' (PAGE 22 IN ON THE CAD LENGTH)' : ''}`,
       f ? `FORCE     FX ${fmt(f.fx, 5)} / FY ${fmt(f.fy, 5)} / MZ ${fmt(f.mz, 4)} LU / MEAN OF ${f.steps} STEPS / ${f.links} LINKS / AGE ${fmt(f.age_ms, 0)} MS (SIM)`
-        : 'FORCE     – (FIRST READBACK AFTER 100 MS OF RUNNING)',
-      f ? `COEFF     CN ${fmt(f.cn)} / CM ${fmt(f.cm)} / CD ${fmt(f.cd)} / CL ${fmt(f.cl)} / XCP ${f.xcpCells === null ? (f.cn === null ? '– (NO INFLOW)' : !f.developed ? '– (FLOW NOT DEVELOPED)' : Math.abs(f.alpha) < Math.PI / 180 ? '– (|ALPHA| < 1°)' : Math.abs(f.cn) < 1 ? '– (|CN| < 1)' : '– (OFF THE BODY)') : `${fmt(f.xcpCells, 1)} CELLS = ${fmt(xcpCal, 2)} CAL FROM THE NOSE`} (SIM, 2D SECTION)`
-        : 'COEFF     –',
+        : 'FORCE     -- (FIRST READBACK AFTER 100 MS OF RUNNING)',
+      f ? `COEFF     CN ${fmt(f.cn)} / CM ${fmt(f.cm)} / CD ${fmt(f.cd)} / CL ${fmt(f.cl)} / XCP ${f.xcpCells === null ? (f.cn === null ? '-- (NO INFLOW)' : !f.developed ? '-- (FLOW NOT DEVELOPED)' : Math.abs(f.alpha) < Math.PI / 180 ? '-- (|ALPHA| < 1°)' : Math.abs(f.cn) < 1 ? '-- (|CN| < 1)' : '– (OFF THE BODY)') : `${fmt(f.xcpCells, 1)} CELLS = ${fmt(xcpCal, 2)} CAL FROM THE NOSE`} (SIM, 2D SECTION)`
+        : 'COEFF     --',
       `STATE     STEP ${s.steps} / ${state.running ? 'RUNNING' : 'PAUSED'} / VIEW ${state.view.toUpperCase()} / NAN RESETS ${s.nanResets}${s.lost ? ' / CONTEXT LOST' : ''}${lattice.fallback ? ` / FALLBACK ${lattice.fallback.toUpperCase()}` : ''}`,
     ];
     if (lattice.fallback) {
       lines.splice(3, lines.length - 3,
-        `GRID      – / LATTICE OFF (${lattice.fallback.toUpperCase()})`,
-        `REQUESTED ${current ? current.label : '–'} / ALPHA ${fmt(state.alphaDeg, 1)} DEG / U_IN ${fmt(state.uIn)} LU / RE ${fmt(state.re, 0)} AT U_IN 0.10 / VIEW ${state.view.toUpperCase()}`,
-        'FORCE     – (NO LATTICE)');
+        `GRID      -- / LATTICE OFF (${lattice.fallback.toUpperCase()})`,
+        `REQUESTED ${current ? current.label : '--'} / ALPHA ${fmt(state.alphaDeg, 1)} DEG / U_IN ${fmt(state.uIn)} LU / RE ${fmt(state.re, 0)} AT U_IN ${fmt(U_REF, 2)} / VIEW ${state.view.toUpperCase()}`,
+        'FORCE     -- (NO LATTICE)');
     }
     readout.textContent = lines.join('\n');
     if (now - lastAria > 2000) {
@@ -563,7 +589,10 @@ export function mountLab(doc = document) {
   ctl.alpha = bindRange('alpha', (v) => `${v.toFixed(1)}°`, (v) => { state.alphaDeg = v; lattice.setInflow(state.uIn, v * DEG); redraw(); });
   ctl.u = bindRange('uin', (v) => v.toFixed(3), (v) => { state.uIn = v; lattice.setInflow(v, state.alphaDeg * DEG); redraw(); });
   ctl.re = bindRange('re', (v) => v.toFixed(0), (v) => { state.re = v; lattice.setViscosity({ re: v, uRef: U_REF }); redraw(); });
-  ctl.rate = bindRange('rate', (v) => (v ? `${v.toFixed(1)}e-4` : '0'), (v) => { state.rate = v; lattice.setBodyRate(v * 1e-4); });
+  /* body rate: a spinning cylinder is a wall moving along itself (moving-wall mode); the rocket and the
+     plate turn as a whole (body frame), see lattice.js setBodyRate */
+  const rateMode = () => (state.shape === 'cylinder' ? 'wall' : 'frame');
+  ctl.rate = bindRange('rate', (v) => (v ? `${v.toFixed(1)}e-4` : '0'), (v) => { state.rate = v; lattice.setBodyRate(v * 1e-4, rateMode()); });
   ctl.inc = bindRange('incidence', (v) => `${v.toFixed(1)}°`, (v) => { state.incidence = v; if (state.shape === 'plate') { lattice.setSection(builder); sectionNow(); redraw(); } });
   ctl.spf = bindRange('spf', (v) => (v ? String(v) : 'TIER'), (v) => { state.spf = v; lattice.stepsPerFrame = v || null; drawReadout(true); });
   ctl.alpha.set(state.alphaDeg); ctl.u.set(state.uIn); ctl.re.set(state.re);
@@ -582,6 +611,7 @@ export function mountLab(doc = document) {
     $('incidence-row').hidden = name !== 'plate';
     hist.length = 0; lastForceStep = -1;
     lattice.setSection(builder); sectionNow();
+    lattice.setBodyRate(state.rate * 1e-4, rateMode());
     lattice.reset();
     redraw();
   }
@@ -694,7 +724,7 @@ export function mountLab(doc = document) {
     };
     let result;
     try {
-      if (kind === 'cylinder') result = await validateCylinder(renderer, { steps: num('steps', 20000), onProgress: progress, onFrame: stageDraw, smagorinsky: num('c', SMAGORINSKY_C) });
+      if (kind === 'cylinder') result = await validateCylinder(renderer, { steps: num('steps', 60000), onProgress: progress, onFrame: stageDraw, smagorinsky: num('c', SMAGORINSKY_C), layout: query.get('layout') || 'far' });
       else if (kind === 'stability') result = await validateStability(renderer, { steps: num('steps', 20000), re: num('re', RE_TARGET), uIn: num('u', U_REF), alphaDeg: num('alpha', 15), reg: query.get('reg') !== '0', machK: query.has('mach') ? num('mach', 0) : null, positive: query.get('pos') !== '0', sponge: query.get('sponge') !== '0', inflowNeq: query.get('neq') === '1', tier: num('tier', 3), onProgress: progress, onFrame: stageDraw });
       else if (kind === 'bench') result = await validateBench(renderer, { seconds: num('seconds', 4), onProgress: progress, draw: stageDraw });
       else if (kind === 'destroy') result = await validateDestroy(renderer);

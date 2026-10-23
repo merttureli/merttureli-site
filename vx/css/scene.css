@@ -14,14 +14,15 @@
 .sc-canvas:focus-visible { outline: 1px solid var(--paper-a70, rgba(255,255,255,.7)); outline-offset: -6px; }
 .sc-canvas[data-scene="fallback"], .sc-canvas[data-scene="destroyed"] { visibility: hidden; }
 
-.sc-ticks { position: absolute; inset: var(--space-3, 12px); pointer-events: none; z-index: 2; }
+/* C2-12: the ticks and the hint keep clear of a landscape notch (env(safe-area-inset-*), 0 elsewhere) */
+.sc-ticks { position: absolute; inset: var(--space-3, 12px) max(var(--space-3, 12px), env(safe-area-inset-right, 0px)) var(--space-3, 12px) max(var(--space-3, 12px), env(safe-area-inset-left, 0px)); pointer-events: none; z-index: 2; }
 .sc-ticks::before, .sc-ticks::after, .sc-ticks > i::before, .sc-ticks > i::after { content: ""; position: absolute; width: 14px; height: 14px; border: 0 solid var(--paper-a45, rgba(255,255,255,.45)); }
 .sc-ticks::before { left: 0; top: 0; border-left-width: 1px; border-top-width: 1px; }
 .sc-ticks::after { right: 0; top: 0; border-right-width: 1px; border-top-width: 1px; }
 .sc-ticks > i::before { left: 0; bottom: 0; border-left-width: 1px; border-bottom-width: 1px; }
 .sc-ticks > i::after { right: 0; bottom: 0; border-right-width: 1px; border-bottom-width: 1px; }
 
-.sc-hint { position: absolute; left: calc(var(--space-3, 12px) + 22px); bottom: calc(var(--space-3, 12px) + 6px); right: calc(var(--space-3, 12px) + 22px); z-index: 2; margin: 0; pointer-events: none;
+.sc-hint { position: absolute; left: calc(max(var(--space-3, 12px), env(safe-area-inset-left, 0px)) + 22px); bottom: calc(var(--space-3, 12px) + 6px); right: calc(max(var(--space-3, 12px), env(safe-area-inset-right, 0px)) + 22px); z-index: 2; margin: 0; pointer-events: none;
   font-family: var(--font-mono, monospace); font-size: var(--fs-meta-sm, 10px); letter-spacing: var(--ls-caps, .18em); text-transform: uppercase; line-height: 1.5; color: var(--paper-a70, rgba(255,255,255,.7)); }
 /* an ink plate behind the text only, as the canvas labels have, so the ladder, the rail and the plume never run through the letters */
 .sc-hint { width: fit-content; margin-left: -6px; padding: 1px 6px; background: rgba(10, 10, 10, .92); }

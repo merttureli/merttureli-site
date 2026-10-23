@@ -3,24 +3,32 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>CHARGER field study · Mert Tureli VX</title>
+<title>CHARGER field study · Mert Tureli</title>
 <meta name="description" content="CHARGER, the Union College Rocket Team's 2026 entry, launched again in slow motion: a Barrowman rigid-body flight model and a lattice Boltzmann section through the pitch plane, every number tagged with its source.">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#0A0A0A">
 <link rel="canonical" href="https://merttureli.com/vx/">
 <meta property="og:title" content="CHARGER field study · Mert Tureli">
-<meta property="og:description" content="A slow-motion replay of CHARGER's launch: the pitch motion from Barrowman's method, the air on the fins from a lattice Boltzmann section, every number tagged with its source.">
+<meta property="og:description" content="CHARGER won the Deployable Sensor Payload event at Battle of the Rockets 2026. Here it flies again from the CAD, in slow motion, with and without its four fins.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://merttureli.com/vx/">
-<meta property="og:image" content="https://merttureli.com/assets/og-cover.png">
+<meta property="og:image" content="https://merttureli.com/vx/og-field.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The CHARGER field study's stage: the title plate WHAT THE FINS DO beside the rocket on its launch rail.">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://merttureli.com/vx/og-field.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230A0A0A'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='26' font-weight='600' fill='%23FFFFFF'%3EMT%3C/text%3E%3C/svg%3E">
 <script>document.documentElement.classList.replace('no-js', 'js');</script>
+<!-- the render-blocking stylesheets first, so first paint does not wait behind the preloads (C1-5) -->
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/panel.css">
+<link rel="stylesheet" href="css/scene.css">
+<link rel="stylesheet" href="css/field.css">
 <link rel="preload" as="font" type="font/ttf" crossorigin href="../assets/charger-explorer/fonts/SpaceGrotesk-var.ttf">
 <link rel="preload" as="font" type="font/ttf" crossorigin href="../assets/charger-explorer/fonts/IBMPlexMono-Regular.ttf">
 <script type="importmap">{"imports":{"three":"../assets/charger-explorer/vendor/three.module.js"}}</script>
+<!-- the page's static module graph -->
 <link rel="modulepreload" href="js/main.js">
 <link rel="modulepreload" href="js/core/bus.js">
 <link rel="modulepreload" href="js/core/governor.js">
@@ -35,40 +43,80 @@
 <link rel="modulepreload" href="js/panel/chart.js">
 <link rel="modulepreload" href="js/panel/format.js">
 <link rel="modulepreload" href="js/panel/fallback.js">
-<link rel="stylesheet" href="css/tokens.css">
-<link rel="stylesheet" href="css/panel.css">
-<link rel="stylesheet" href="css/scene.css">
-<link rel="stylesheet" href="css/field.css">
+<link rel="modulepreload" href="js/story.js">
+<!-- the 3D scene's chain, imported by main.js once WebGL2 is confirmed: fetched now, in parallel, instead of one hop at a time (C1-6) -->
+<link rel="modulepreload" href="../assets/charger-explorer/vendor/three.module.js">
+<link rel="modulepreload" href="../assets/charger-explorer/vendor/three.core.js">
+<link rel="modulepreload" href="js/scene/scene.js">
+<link rel="modulepreload" href="js/scene/camera.js">
+<link rel="modulepreload" href="js/scene/slice.js">
+<link rel="modulepreload" href="js/scene/markers.js">
+<link rel="modulepreload" href="js/scene/exhaust.js">
+<link rel="modulepreload" href="js/scene/trail.js">
+<link rel="modulepreload" href="js/scene/polyline.js">
+<link rel="modulepreload" href="js/scene/director.js">
+<link rel="modulepreload" href="js/stage/loader.js">
+<link rel="modulepreload" href="js/stage/explode.js">
+<link rel="modulepreload" href="js/data/stations.js">
+<link rel="modulepreload" href="../assets/charger-explorer/vendor/OrbitControls.js">
+<link rel="modulepreload" href="../assets/charger-explorer/livery.js">
+<link rel="modulepreload" href="../assets/charger-explorer/part-stories.js">
 <script type="module" src="js/main.js"></script>
 </head>
 <body>
 <a class="fd-skip" href="#main">Skip to the flight stage</a>
-<a class="fd-skip" href="#study">Skip to the method and runs</a>
+<a class="fd-skip" href="#study">Skip to the runs and the method</a>
 
 <header class="fd-head on-dark">
-  <h1 class="fd-title"><span>CHARGER</span> <span class="fd-sep" aria-hidden="true">/</span> <span>FIELD STUDY 01</span><span class="fd-title-x"> <span class="fd-sep" aria-hidden="true">/</span> PITCH PLANE</span></h1>
-  <dl class="fd-meta">
-    <div class="fd-m fd-m-engine"><dt>ENGINE</dt><dd data-h="engine">BARROWMAN 3-DOF / LBM D2Q9</dd></div>
-    <div class="fd-m fd-m-grid"><dt>GRID</dt><dd data-h="grid">LATTICE PENDING</dd></div>
-    <div class="fd-m fd-m-tier"><dt>TIER</dt><dd data-h="tier">T3</dd></div>
-    <div class="fd-m fd-m-rate"><dt>RATE</dt><dd data-h="rate">1/8 AUTO</dd></div>
-    <div class="fd-m fd-m-tc"><dt>FLIGHT TIME</dt><dd data-h="tc">T+00.000</dd></div>
-  </dl>
-  <nav class="fd-nav" aria-label="Page"><a href="#runs">Runs</a><a href="lab/">Lab</a><a href="/">Site</a></nav>
+  <p class="fd-title"><a class="fd-mark" href="/">Mert Tureli</a><span class="fd-title-x"> <span class="fd-sep" aria-hidden="true">/</span> CHARGER field study 01</span></p>
+  <p class="fd-clock"><span class="fd-clock-tc" data-h="tc" aria-label="Flight time">T+00.000</span> <span class="fd-sep" aria-hidden="true">/</span> <span class="fd-clock-r" aria-label="Playback rate"><span data-h="rate">1/8</span><span class="fd-clock-m" data-h="mode"> AUTO</span></span></p>
+  <nav class="fd-nav" aria-label="Page"><a href="../projects/charger.html">Case study</a><a href="#runs">Runs</a><a href="/">Site</a></nav>
 </header>
 
 <main id="main" tabindex="-1">
-  <section class="fd-stage on-dark" id="stage" tabindex="-1" aria-label="Flight stage: the 3D replay with the flow section, the flight panel and the strip chart">
+  <section class="fd-stage on-dark" id="stage" data-plate-up tabindex="-1" aria-label="Flight stage: the 3D replay with the flow section, the flight panel and the strip chart">
     <div class="pn-viewport fd-viewport">
       <canvas class="sc-canvas" id="scene" aria-label="CHARGER on the launch rail, loading"></canvas>
       <div class="sc-ticks" aria-hidden="true"><i></i></div>
       <div class="fd-cap" data-cap>
+        <div class="fd-plate" data-plate>
+          <p class="fd-plate-eye"><span class="fd-nw">Field study 01 <span class="fd-sep" aria-hidden="true">/</span></span> <span class="fd-nw">CHARGER <span class="fd-sep" aria-hidden="true">/</span></span> <span class="fd-nw">Union College Rocket Team <span class="fd-sep" aria-hidden="true">/</span></span> <span class="fd-nw">2026</span></p>
+          <h1 class="fd-plate-h">What the <br>fins do</h1>
+          <p class="fd-plate-p">A gust tips the nose. The fins, behind the balance point, push it back. Watch it with fins, then without.</p>
+          <p class="fd-plate-by"><span class="fd-nw">Mert Tureli <span class="fd-sep" aria-hidden="true">/</span></span> <span class="fd-nw">Captain and chief engineer <span class="fd-sep" aria-hidden="true">/</span></span> <span class="fd-nw-w"><span class="fd-nw">First place,</span> <span class="fd-nw">Battle of the Rockets 2026&nbsp;<span class="tag">PAGE</span></span></span></p>
+          <div class="fd-plate-act">
+            <button type="button" class="fd-end-b fd-end-b-p" data-launch="fins">Watch with fins</button>
+            <button type="button" class="fd-end-b" data-launch="nofins">Without fins</button>
+          </div>
+        </div>
+        <div class="fd-end" data-end role="group" aria-label="Paused at apogee" hidden>
+          <p class="fd-end-eye"><span>Paused at apogee</span> <span class="fd-sep" aria-hidden="true">/</span> <span data-end-cond>Full fins&nbsp;/ still air&nbsp;/ gust 11.2&nbsp;mph EST at rail exit</span></p>
+          <dl class="fd-end-figs">
+            <div><dt>Apogee</dt><dd><span class="fd-end-n" data-end-apogee>1030</span><span class="fd-end-u">ft</span>&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt data-end-second-label>Straight again after the gust (under&nbsp;2°)</dt><dd><span class="fd-end-n"><span data-end-second-pre></span><span data-end-second>0.59</span></span><span class="fd-end-u">s</span>&nbsp;<span class="tag">SIM</span></dd></div>
+          </dl>
+          <div class="fd-end-act">
+            <button type="button" class="fd-end-b fd-end-b-p" data-end-replay>Replay</button>
+            <button type="button" class="fd-end-b" data-end-fins>Without fins</button>
+            <a class="fd-end-b" href="../projects/charger.html" data-end-case>The case study</a>
+            <button type="button" class="fd-end-q" data-end-continue>Continue past apogee</button>
+          </div>
+          <p class="fd-end-plate" data-end-plate hidden></p>
+          <p class="sr-only" role="status" data-end-status></p>
+        </div>
+        <p class="fd-cap-l fd-cap-story" data-story-cap aria-live="polite" aria-atomic="true" data-empty></p>
+        <div class="fd-beats" data-beats role="group" aria-label="Step the replay beat by beat" hidden>
+          <button type="button" class="fd-badge-x" data-beat="prev">Previous beat</button>
+          <button type="button" class="fd-badge-x" data-beat="next">Next beat</button>
+        </div>
         <p class="fd-cap-l" data-cap-flow>FLOW / LATTICE PENDING</p>
-        <p class="fd-cap-l fd-cap-dim" data-cap-note>2D PITCH-PLANE SECTION / NOT TIME-ACCURATE</p>
+        <p class="fd-cap-l fd-cap-key" data-cap-key data-view="pressure" hidden><span class="fd-key fd-key-pressure"><span class="fd-key-i"><i class="fd-sw fd-sw-hi" aria-hidden="true"></i>Orange <span class="fd-sep" aria-hidden="true">/</span> air pressing harder</span> <span class="fd-key-i"><i class="fd-sw fd-sw-lo" aria-hidden="true"></i>Gray <span class="fd-sep" aria-hidden="true">/</span> pressing less</span></span><span class="fd-key fd-key-smoke"><span class="fd-key-i"><i class="fd-sw fd-sw-smoke" aria-hidden="true"></i>White lines <span class="fd-sep" aria-hidden="true">/</span> smoke carried by the air</span></span></p>
+        <p class="fd-cap-l fd-cap-dim" data-cap-note>A FLAT 2D SLICE OF THE AIR / <span class="fd-nw">NOT TIME-ACCURATE</span></p>
       </div>
       <div class="fd-badges" data-badges hidden>
+        <p class="fd-slate" data-slate hidden></p>
         <p class="fd-badge" data-badge-hold hidden></p>
-        <p class="fd-badge" data-badge-gust hidden><span data-badge-gust-t></span> <button type="button" class="fd-badge-x" data-disarm>Disarm</button></p>
+        <p class="fd-badge" data-badge-gust hidden><span data-badge-gust-t id="fd-gust-t"></span> <button type="button" class="fd-badge-x" data-disarm aria-describedby="fd-gust-t">Disarm</button></p>
         <p class="fd-badge" data-badge-flow hidden><span>FLOW PAUSED</span> <button type="button" class="fd-badge-x" data-resume>Resume flow</button></p>
       </div>
       <p class="fd-status" data-status>LOADING THE CAD ASSEMBLY</p>
@@ -76,7 +124,7 @@
       <noscript>
         <div class="fd-noscript">
           <img src="../assets/motion/charger-painted-wide-poster.png" width="1280" height="720" alt="CHARGER rendered from the CAD assembly in its orange livery with dark red bands.">
-          <p>The replay runs in the browser and needs JavaScript. The method, the configuration and the runs below read without it.</p>
+          <p>The replay runs in the browser and needs JavaScript. The runs, the method and the configuration below read without it.</p>
         </div>
       </noscript>
     </div>
@@ -84,23 +132,138 @@
 
   <section class="fd-lede" id="study" aria-labelledby="lede-h" tabindex="-1">
     <div class="fd-wrap">
-      <p class="eyebrow fd-eyebrow">Field study 01 / CHARGER / Union College Rocket Team / 2026</p>
-      <h2 class="display-1 fd-lede-h" id="lede-h">What the<br>fins do</h2>
+      <h2 class="eyebrow fd-eyebrow fd-lede-h" id="lede-h">Field study 01 / CHARGER / Union College Rocket Team / 2026</h2>
       <div class="fd-lede-grid">
-        <p class="fd-lede-p">CHARGER won the Deployable Sensor Payload event at Battle of the Rockets 2026&nbsp;<span class="tag">PAGE</span>. This page launches it again in slow motion. A rigid-body flight model computes the pitch motion with Barrowman's stability method, and a lattice Boltzmann section through the pitch plane shows the air meeting the fins at an angle of attack. A gust or a crosswind tips the nose; the fins, aft of the centre of gravity, push it back.</p>
-        <dl class="fd-keys" aria-label="Keyboard shortcuts while the stage is in view">
-          <div><dt>L</dt><dd>Launch</dd></div>
-          <div><dt>Space</dt><dd>Pause</dd></div>
-          <div><dt>R</dt><dd>Reset</dd></div>
-          <div><dt>G</dt><dd>Fire the gust</dd></div>
-          <div><dt>1 to 4</dt><dd>Smoke, pressure, vorticity, speed</dd></div>
-          <div><dt>Arrows</dt><dd>Flick, with the 3D view focused</dd></div>
+        <p class="fd-lede-p">I founded the Union College Rocket Team and led it as captain and chief engineer. CHARGER, the team's 2026 rocket, dropped a sensor payload at apogee, streamed five channels of telemetry to a handheld ground station, and won the Deployable Sensor Payload event at Battle of the Rockets 2026&nbsp;<span class="tag">PAGE</span>. This page flies it again from the CAD, in slow motion, with and without its four fins.</p>
+        <dl class="fd-brief" aria-label="CHARGER in brief, from the case study">
+          <div><dt>Role</dt><dd>Captain and chief engineer&nbsp;<span class="tag">PAGE</span></dd></div>
+          <div><dt>Team</dt><dd>Union College Rocket Team&nbsp;<span class="tag">PAGE</span></dd></div>
+          <div><dt>Event</dt><dd>Battle of the Rockets 2026&nbsp;<span class="tag">PAGE</span></dd></div>
+          <div><dt>Result</dt><dd>First place, Deployable Sensor Payload event&nbsp;<span class="tag">PAGE</span></dd></div>
         </dl>
+        <figure class="fd-fig fd-fig-lede fd-figure-slot" data-slot="lede-figure" data-fig="lede">
+          <!-- bake:lede --><svg data-sig="5bf95b3b" class="fd-fig-svg fd-fig-lede" viewBox="0 0 340 400" width="340" height="400" role="img" aria-labelledby="fdfig-lede-fins-nofins-t fdfig-lede-fins-nofins-d" data-scale-px-per-ft="0.27667"><title id="fdfig-lede-fins-nofins-t">Flight paths to apogee, with fins and without</title><desc id="fdfig-lede-fins-nofins-d">Full fins: up to 1030 ft, 59 ft upwind at apogee. No fins: it turns over and reaches 212 ft, 81 ft downrange. Still air and the same 11.2 mph gust at rail exit (EST), both flown with this page's model (SIM). Downrange and altitude at equal scale.</desc><g class="fd-fig-grid" aria-hidden="true"><line x1="48" y1="298.7" x2="328" y2="298.7"/><line x1="48" y1="243.3" x2="328" y2="243.3"/><line x1="48" y1="188" x2="328" y2="188"/><line x1="48" y1="132.7" x2="328" y2="132.7"/><line x1="48" y1="77.3" x2="328" y2="77.3"/><line x1="48" y1="22" x2="328" y2="22"/><line x1="48" y1="22" x2="48" y2="354"/><line x1="158.7" y1="22" x2="158.7" y2="354"/><line x1="214" y1="22" x2="214" y2="354"/><line x1="269.3" y1="22" x2="269.3" y2="354"/><line x1="324.7" y1="22" x2="324.7" y2="354"/></g><g class="fd-fig-ax" aria-hidden="true"><text x="42" y="302.2" text-anchor="end">200</text><text x="42" y="246.8" text-anchor="end">400</text><text x="42" y="191.5" text-anchor="end">600</text><text x="42" y="136.2" text-anchor="end">800</text><text x="42" y="80.8" text-anchor="end">1000</text><text x="42" y="25.5" text-anchor="end">1200</text><text x="48" y="369" text-anchor="middle">−200</text><text x="103.3" y="369" text-anchor="middle">0</text><text x="158.7" y="369" text-anchor="middle">200</text><text x="214" y="369" text-anchor="middle">400</text><text x="269.3" y="369" text-anchor="middle">600</text><text x="324.7" y="369" text-anchor="middle">800</text><text x="48" y="13">Altitude, ft</text><text x="48" y="394">Downrange, ft, equal scale</text></g><g class="fd-fig-ground" aria-hidden="true"><line x1="48" y1="354" x2="328" y2="354"/><line x1="103.3" y1="349" x2="103.3" y2="359"/></g><g class="fd-fig-s" data-series="fins" data-fin-scale="1" data-apogee-ft="1030.3" data-x-ft="-58.9"><path class="fd-fig-line" d="M103.3 354L103.3 354L103.3 353.9L103.3 353.6L103.3 353.2L103.3 352.6L103.3 351.8L103.3 350.9L103.3 349.8L103.3 348.5L103.4 347L103.4 345.3L103.4 343.5L103.4 341.4L103.3 339.1L103.3 336.7L103.2 334L103.1 331.2L103 328.1L102.8 324.9L102.7 321.6L102.5 318L102.4 314.3L102.3 310.5L102.1 306.6L102 302.6L101.8 298.7L101.7 294.8L101.5 290.9L101.4 287.1L101.3 283.4L101.1 279.7L101 276L100.8 272.4L100.7 268.8L100.6 265.3L100.4 261.8L100.3 258.4L100.2 255L100 251.6L99.9 248.3L99.8 245L99.6 241.8L99.5 238.6L99.4 235.4L99.2 232.3L99.1 229.2L99 226.1L98.8 223.1L98.7 220.2L98.6 217.2L98.5 214.3L98.3 211.5L98.2 208.6L98.1 205.8L98 203.1L97.8 200.3L97.7 197.7L97.6 195L97.5 192.4L97.4 189.8L97.2 187.2L97.1 184.7L97 182.2L96.9 179.8L96.8 177.3L96.6 175L96.5 172.6L96.4 170.3L96.3 168L96.2 165.7L96.1 163.5L95.9 161.2L95.8 159.1L95.7 156.9L95.6 154.8L95.5 152.7L95.4 150.7L95.3 148.6L95.2 146.6L95 144.7L94.9 142.7L94.8 140.8L94.7 138.9L94.6 137.1L94.5 135.2L94.4 133.4L94.3 131.7L94.2 129.9L94.1 128.2L94 126.5L93.8 124.8L93.7 123.2L93.6 121.6L93.5 120L93.4 118.4L93.3 116.9L93.2 115.4L93.1 113.9L93 112.5L92.9 111L92.8 109.6L92.7 108.2L92.6 106.9L92.5 105.6L92.4 104.3L92.3 103L92.2 101.7L92.1 100.5L92 99.3L91.9 98.1L91.8 97L91.7 95.8L91.6 94.7L91.5 93.6L91.4 92.6L91.3 91.6L91.2 90.5L91.1 89.6L91 88.6L90.9 87.7L90.8 86.7L90.7 85.9L90.6 85L90.5 84.1L90.4 83.3L90.3 82.5L90.2 81.7L90.1 81L90 80.3L89.9 79.6L89.8 78.9L89.7 78.2L89.6 77.6L89.5 77L89.4 76.4L89.3 75.8L89.2 75.3L89.1 74.8L89 74.3L88.9 73.8L88.8 73.3L88.7 72.9L88.7 72.5L88.6 72.1L88.5 71.7L88.4 71.4L88.3 71.1L88.2 70.8L88.1 70.5L88 70.3L87.9 70L87.8 69.8L87.7 69.6L87.6 69.5L87.6 69.3L87.5 69.2L87.4 69.1L87.3 69L87.2 69L87.1 69L87 69"/><circle class="fd-fig-dot" cx="87" cy="69" r="4"/><g class="fd-fig-lab" transform="translate(99 69)"><line class="fd-fig-sw" x1="0" y1="-23" x2="16" y2="-23"/><text class="fd-fig-name" x="22" y="-19">Full fins</text><text class="fd-fig-n" x="0" y="15">1030</text><text class="fd-fig-u" x="100" y="15">ft</text><rect class="fd-fig-tag" x="124" y="3.5" width="30" height="15" rx="2"/><text class="fd-fig-tagt" x="139" y="14.5" text-anchor="middle">SIM</text></g></g><g class="fd-fig-s fd-fig-off" data-series="nofins" data-fin-scale="0" data-apogee-ft="211.8" data-x-ft="81.1"><path class="fd-fig-line" d="M103.3 354L103.3 354L103.3 353.9L103.3 353.6L103.3 353.2L103.3 352.6L103.3 351.8L103.3 350.9L103.3 349.8L103.3 348.5L103.4 347L103.4 345.3L103.4 343.5L103.5 341.4L103.7 339.1L103.9 336.7L104.3 334.1L104.8 331.4L105.7 328.8L106.7 326.5L107.8 324.6L108.7 323L109.5 321.5L110.1 320.1L110.6 318.5L111.2 317L111.8 315.5L112.4 314.2L112.9 312.9L113.5 311.7L114 310.7L114.4 309.6L114.9 308.6L115.4 307.6L115.8 306.7L116.2 305.9L116.7 305L117.1 304.3L117.5 303.6L117.9 302.9L118.2 302.2L118.6 301.6L119 301L119.4 300.5L119.7 300L120.1 299.5L120.4 299L120.7 298.6L121.1 298.2L121.4 297.9L121.7 297.5L122 297.2L122.4 296.9L122.7 296.7L123 296.4L123.3 296.2L123.6 296L123.9 295.9L124.2 295.7L124.5 295.6L124.7 295.5L125 295.5L125.3 295.4L125.6 295.4L125.8 295.4"/><circle class="fd-fig-dot" cx="125.8" cy="295.4" r="4"/><g class="fd-fig-lab" transform="translate(137.8 295.4)"><line class="fd-fig-sw" x1="0" y1="-23" x2="16" y2="-23"/><text class="fd-fig-name" x="22" y="-19">No fins</text><text class="fd-fig-n" x="0" y="15">212</text><text class="fd-fig-u" x="76.5" y="15">ft</text><rect class="fd-fig-tag" x="100.5" y="3.5" width="30" height="15" rx="2"/><text class="fd-fig-tagt" x="115.5" y="14.5" text-anchor="middle">SIM</text></g></g></svg><!-- /bake:lede -->
+          <figcaption class="fd-fig-cap">Still air, the same 11.2&nbsp;mph gust at rail exit&nbsp;<span class="tag">EST</span>&nbsp;<span class="fd-sep" aria-hidden="true">/</span> both flown with this page's model&nbsp;<span class="tag">SIM</span></figcaption>
+        </figure>
+        <p class="fd-lede-t">A rigid-body flight model computes the pitch motion with Barrowman's stability method, and a lattice Boltzmann section through the pitch plane shows the air meeting the fins at an angle of attack. A gust or a crosswind tips the nose; the fins, aft of the center of gravity, push it back.</p>
       </div>
       <ol class="fd-index">
-        <li><a href="#method"><span class="fd-index-n">01</span><span>Method</span></a></li>
-        <li><a href="#configuration"><span class="fd-index-n">02</span><span>Configuration</span></a></li>
-        <li><a href="#runs"><span class="fd-index-n">03</span><span>Runs</span></a></li>
+        <li><a href="#runs"><span class="fd-index-n">01</span><span>Runs</span></a></li>
+        <li><a href="#appendix"><span class="fd-index-n">02</span><span>How it was computed</span></a></li>
+        <li><a href="#words"><span class="fd-index-n">03</span><span>Words used here</span></a></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="fd-sec" id="runs" aria-labelledby="runs-h">
+    <div class="fd-wrap">
+      <header class="fd-sec-head">
+        <p class="eyebrow">01 / Runs</p>
+        <h2 class="display-2" id="runs-h">Runs</h2>
+        <p class="fd-sec-intro">Five runs: three fin sizes in the same breeze, then two kinds of air with full fins. Each run sets the panel, resets the rocket on the pad and launches it. CG <span data-k="cgIn">27.17</span> in, the CAD estimate (Method 05)&nbsp;<span class="tag">EST</span>, rail 72 in&nbsp;<span class="tag">EST</span>, launch angle 0°&nbsp;<span class="tag">EST</span>. The wind speeds and the gust are chosen here&nbsp;<span class="tag">EST</span>. The results are flown in this tab when the page loads&nbsp;<span class="tag">SIM</span>.</p>
+      </header>
+      <ol class="fd-runs">
+        <li class="fd-run" data-run="full">
+          <p class="fd-run-n">01</p>
+          <h3 class="fd-run-h" id="run-full-h">Full fins</h3>
+          <div class="fd-run-w">
+            <p class="fd-run-lead">Watch the nose turn into the wind, overshoot a little, and hold.</p>
+          </div>
+          <p class="fd-run-s">Four fins at CAD size, a 5 mph crosswind.</p>
+          <figure class="fd-fig fd-fig-card" data-fig="full"><!-- bake:sketch:full --><svg data-sig="e51266cd" class="fd-fig-svg fd-fig-card" viewBox="0 0 200 156" width="200" height="156" role="img" aria-labelledby="fdfig-card-full-t fdfig-card-full-d" data-scale-px-per-ft="0.10909"><title id="fdfig-card-full-t">Run path to apogee: full fins, 5 mph crosswind</title><desc id="fdfig-card-full-d">Up to 1030 ft, 56 ft upwind at apogee (SIM). Downrange and altitude at equal scale, the same axes on every run.</desc><g class="fd-fig-grid" aria-hidden="true"><line x1="32" y1="75.5" x2="194" y2="75.5"/><line x1="32" y1="20.9" x2="194" y2="20.9"/><line x1="113.8" y1="10" x2="113.8" y2="130"/><line x1="168.4" y1="10" x2="168.4" y2="130"/></g><g class="fd-fig-ax" aria-hidden="true"><text x="26" y="79" text-anchor="end">500</text><text x="26" y="24.4" text-anchor="end">1000</text><text x="32" y="149">ft, equal scale</text></g><g class="fd-fig-ground" aria-hidden="true"><line x1="32" y1="130" x2="194" y2="130"/><line x1="59.3" y1="125" x2="59.3" y2="135"/></g><g class="fd-fig-s" data-series="full" data-fin-scale="1" data-apogee-ft="1030.2" data-x-ft="-56.1"><path class="fd-fig-line" d="M59.3 130L59.3 130L59.3 129.9L59.3 129.8L59.3 129.7L59.3 129.4L59.3 129.2L59.3 128.8L59.3 128.3L59.3 127.8L59.3 127.2L59.3 126.6L59.3 125.8L59.3 125L59.3 124.1L59.2 123.2L59.2 122.1L59.2 121L59.2 119.8L59.1 118.5L59.1 117.2L59 115.8L58.9 114.4L58.9 112.8L58.8 111.3L58.7 109.7L58.7 108.2L58.6 106.6L58.5 105.1L58.5 103.6L58.4 102.1L58.3 100.7L58.3 99.2L58.2 97.8L58.2 96.4L58.1 95L58 93.6L58 92.3L57.9 90.9L57.9 89.6L57.8 88.3L57.7 87L57.7 85.7L57.6 84.5L57.6 83.2L57.5 82L57.5 80.8L57.4 79.6L57.4 78.4L57.3 77.2L57.2 76.1L57.2 74.9L57.1 73.8L57.1 72.7L57 71.6L57 70.5L56.9 69.4L56.9 68.3L56.8 67.3L56.8 66.3L56.7 65.2L56.7 64.2L56.6 63.2L56.6 62.3L56.5 61.3L56.5 60.3L56.4 59.4L56.4 58.5L56.4 57.5L56.3 56.6L56.3 55.7L56.2 54.9L56.2 54L56.1 53.1L56.1 52.3L56 51.5L56 50.6L56 49.8L55.9 49L55.9 48.2L55.8 47.5L55.8 46.7L55.7 45.9L55.7 45.2L55.7 44.5L55.6 43.7L55.6 43L55.5 42.3L55.5 41.6L55.5 41L55.4 40.3L55.4 39.6L55.3 39L55.3 38.4L55.3 37.7L55.2 37.1L55.2 36.5L55.2 35.9L55.1 35.3L55.1 34.8L55 34.2L55 33.6L55 33.1L54.9 32.6L54.9 32L54.9 31.5L54.8 31L54.8 30.5L54.8 30L54.7 29.6L54.7 29.1L54.6 28.7L54.6 28.2L54.6 27.8L54.5 27.3L54.5 26.9L54.5 26.5L54.4 26.1L54.4 25.7L54.4 25.4L54.3 25L54.3 24.6L54.3 24.3L54.2 23.9L54.2 23.6L54.2 23.3L54.2 23L54.1 22.7L54.1 22.4L54.1 22.1L54 21.8L54 21.5L54 21.3L53.9 21L53.9 20.8L53.9 20.6L53.8 20.3L53.8 20.1L53.8 19.9L53.8 19.7L53.7 19.5L53.7 19.3L53.7 19.2L53.6 19L53.6 18.9L53.6 18.7L53.6 18.6L53.5 18.5L53.5 18.3L53.5 18.2L53.4 18.1L53.4 18L53.4 18L53.4 17.9L53.3 17.8L53.3 17.8L53.3 17.7L53.3 17.7L53.2 17.7L53.2 17.6L53.2 17.6L53.2 17.6L53.2 17.6"/><circle class="fd-fig-dot" cx="53.2" cy="17.6" r="3"/><g class="fd-fig-lab" transform="translate(61.2 18)"><text class="fd-fig-cn" x="0" y="4">1030 ft</text><rect class="fd-fig-tag" x="56.1" y="-6.5" width="26" height="14" rx="2"/><text class="fd-fig-tagt" x="69.1" y="3.6" text-anchor="middle">SIM</text></g></g></svg><!-- /bake:sketch:full --><figcaption class="fd-fig-cap">Path to apogee, 5&nbsp;mph crosswind&nbsp;<span class="tag">EST</span>&nbsp;<span class="fd-sep" aria-hidden="true">/</span> flown in this tab&nbsp;<span class="tag">SIM</span></figcaption></figure>
+          <dl class="fd-run-r">
+            <div><dt>Margin at liftoff</dt><dd><span data-r="margin0">+2.16</span> cal&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>AOA at rail exit</dt><dd><span data-r="alphaRail">+9.6</span>°&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Under 2°&nbsp;AOA, after rail&nbsp;exit</dt><dd><span data-r="settle">0.28</span> s&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Apogee</dt><dd><span data-r="apogee">1030</span> ft&nbsp;<span class="tag">SIM</span></dd></div>
+          </dl>
+          <button type="button" class="fd-run-b" data-run-go="full" aria-describedby="run-full-h">Launch run 01</button>
+        </li>
+        <li class="fd-run" data-run="half">
+          <p class="fd-run-n">02</p>
+          <h3 class="fd-run-h" id="run-half-h">Half fins</h3>
+          <div class="fd-run-w">
+            <p class="fd-run-lead">Watch too little fin: at this CG the margin stays negative through the burn, and the rocket tumbles.</p>
+          </div>
+          <p class="fd-run-s">Span and chords halved about the root leading edge, the same breeze.</p>
+          <figure class="fd-fig fd-fig-card" data-fig="half"><!-- bake:sketch:half --><svg data-sig="fb232856" class="fd-fig-svg fd-fig-card" viewBox="0 0 200 156" width="200" height="156" role="img" aria-labelledby="fdfig-card-half-t fdfig-card-half-d" data-scale-px-per-ft="0.10909"><title id="fdfig-card-half-t">Run path to apogee: half fins, 5 mph crosswind</title><desc id="fdfig-card-half-d">Up to 265 ft, 123 ft downrange at apogee (SIM). Downrange and altitude at equal scale, the same axes on every run.</desc><g class="fd-fig-grid" aria-hidden="true"><line x1="32" y1="75.5" x2="194" y2="75.5"/><line x1="32" y1="20.9" x2="194" y2="20.9"/><line x1="113.8" y1="10" x2="113.8" y2="130"/><line x1="168.4" y1="10" x2="168.4" y2="130"/></g><g class="fd-fig-ax" aria-hidden="true"><text x="26" y="79" text-anchor="end">500</text><text x="26" y="24.4" text-anchor="end">1000</text><text x="32" y="149">ft, equal scale</text></g><g class="fd-fig-ground" aria-hidden="true"><line x1="32" y1="130" x2="194" y2="130"/><line x1="59.3" y1="125" x2="59.3" y2="135"/></g><g class="fd-fig-s" data-series="half" data-fin-scale="0.5" data-apogee-ft="264.7" data-x-ft="123.1"><path class="fd-fig-line" d="M59.3 130L59.3 130L59.3 129.9L59.3 129.8L59.3 129.7L59.3 129.4L59.3 129.2L59.3 128.8L59.3 128.3L59.3 127.8L59.3 127.2L59.3 126.6L59.3 125.8L59.3 125L59.3 124.1L59.4 123.2L59.4 122.1L59.5 121L59.6 119.8L59.7 118.6L59.9 117.3L60.2 115.9L60.6 114.7L61.1 113.5L61.7 112.6L62.1 111.8L62.6 111L63 110.3L63.4 109.7L63.8 109.1L64.1 108.6L64.5 108L64.8 107.5L65.2 107L65.5 106.6L65.8 106.2L66.1 105.8L66.4 105.4L66.7 105.1L66.9 104.8L67.2 104.5L67.4 104.2L67.7 103.9L68 103.6L68.2 103.4L68.5 103.2L68.7 103L68.9 102.8L69.1 102.6L69.4 102.4L69.6 102.2L69.8 102.1L70 102L70.2 101.8L70.4 101.7L70.6 101.6L70.8 101.5L71 101.4L71.2 101.4L71.4 101.3L71.6 101.3L71.8 101.2L72 101.2L72.2 101.2L72.4 101.1L72.6 101.1L72.7 101.1"/><circle class="fd-fig-dot" cx="72.7" cy="101.1" r="3"/><g class="fd-fig-lab" transform="translate(80.7 101.1)"><text class="fd-fig-cn" x="0" y="4">265 ft</text><rect class="fd-fig-tag" x="48.8" y="-6.5" width="26" height="14" rx="2"/><text class="fd-fig-tagt" x="61.8" y="3.6" text-anchor="middle">SIM</text></g></g></svg><!-- /bake:sketch:half --><figcaption class="fd-fig-cap">Path to apogee, 5&nbsp;mph crosswind&nbsp;<span class="tag">EST</span>&nbsp;<span class="fd-sep" aria-hidden="true">/</span> flown in this tab&nbsp;<span class="tag">SIM</span></figcaption></figure>
+          <div class="fd-run-rw">
+            <dl class="fd-run-r">
+              <div><dt>Margin at liftoff</dt><dd><span data-r="margin0">−2.41</span> cal&nbsp;<span class="tag">SIM</span></dd></div>
+              <div><dt>Margin at burnout</dt><dd><span data-r="marginBo">−2.03</span> cal&nbsp;<span class="tag">SIM</span></dd></div>
+              <div><dt>Pitch past 60°</dt><dd>T+<span data-r="theta60">1.09</span>&nbsp;s&nbsp;<span class="tag">SIM</span></dd></div>
+              <div><dt>Apogee</dt><dd><span data-r="apogee">265</span> ft&nbsp;<span class="tag">SIM</span></dd></div>
+            </dl>
+            <p class="fd-run-x">Negative margin at liftoff and at burnout. The body lift acts ahead of this CG as well (Method 06), so nothing turns the nose back.</p>
+          </div>
+          <button type="button" class="fd-run-b" data-run-go="half" aria-describedby="run-half-h">Launch run 02</button>
+        </li>
+        <li class="fd-run" data-run="none">
+          <p class="fd-run-n">03</p>
+          <h3 class="fd-run-h" id="run-none-h">No fins</h3>
+          <div class="fd-run-w">
+            <p class="fd-run-lead"><mark class="flag" data-flag="vx-loop" data-note="The page said the finless rocket loops. At the CAD CG estimate (27.17 in) the current flight model has it tumble end over end, to about 220 ft (the path sketch on Run 03); at the case study's 22 in CG it pitched over and arced away downwind. Approve this wording or reword it.">The nose falls away from the wind, and the rocket tumbles end over end.</mark></p>
+          </div>
+          <p class="fd-run-s">Fins removed, the same breeze.</p>
+          <figure class="fd-fig fd-fig-card" data-fig="none"><!-- bake:sketch:none --><svg data-sig="8d77c486" class="fd-fig-svg fd-fig-card" viewBox="0 0 200 156" width="200" height="156" role="img" aria-labelledby="fdfig-card-none-t fdfig-card-none-d" data-scale-px-per-ft="0.10909"><title id="fdfig-card-none-t">Run path to apogee: no fins, 5 mph crosswind</title><desc id="fdfig-card-none-d">Up to 223 ft, 88 ft downrange at apogee (SIM). Downrange and altitude at equal scale, the same axes on every run.</desc><g class="fd-fig-grid" aria-hidden="true"><line x1="32" y1="75.5" x2="194" y2="75.5"/><line x1="32" y1="20.9" x2="194" y2="20.9"/><line x1="113.8" y1="10" x2="113.8" y2="130"/><line x1="168.4" y1="10" x2="168.4" y2="130"/></g><g class="fd-fig-ax" aria-hidden="true"><text x="26" y="79" text-anchor="end">500</text><text x="26" y="24.4" text-anchor="end">1000</text><text x="32" y="149">ft, equal scale</text></g><g class="fd-fig-ground" aria-hidden="true"><line x1="32" y1="130" x2="194" y2="130"/><line x1="59.3" y1="125" x2="59.3" y2="135"/></g><g class="fd-fig-s fd-fig-off" data-series="none" data-fin-scale="0" data-apogee-ft="222.6" data-x-ft="87.7"><path class="fd-fig-line" d="M59.3 130L59.3 130L59.3 129.9L59.3 129.8L59.3 129.7L59.3 129.4L59.3 129.2L59.3 128.8L59.3 128.3L59.3 127.8L59.3 127.2L59.3 126.6L59.3 125.8L59.3 125L59.4 124.1L59.4 123.2L59.5 122.1L59.7 121L60 119.9L60.4 118.9L60.8 118.1L61.2 117.3L61.5 116.7L61.8 116.1L62 115.5L62.2 114.8L62.5 114.2L62.7 113.7L62.9 113.2L63.2 112.7L63.4 112.2L63.6 111.8L63.8 111.4L64 111L64.1 110.6L64.3 110.2L64.5 109.9L64.7 109.6L64.9 109.3L65 109L65.2 108.7L65.4 108.5L65.5 108.2L65.7 108L65.8 107.8L66 107.6L66.2 107.4L66.3 107.2L66.5 107L66.6 106.9L66.8 106.7L66.9 106.6L67.1 106.5L67.2 106.4L67.3 106.2L67.5 106.2L67.6 106.1L67.8 106L67.9 105.9L68 105.9L68.2 105.8L68.3 105.8L68.4 105.8L68.6 105.7L68.7 105.7L68.8 105.7"/><circle class="fd-fig-dot" cx="68.8" cy="105.7" r="3"/><g class="fd-fig-lab" transform="translate(76.8 105.7)"><text class="fd-fig-cn" x="0" y="4">223 ft</text><rect class="fd-fig-tag" x="48.8" y="-6.5" width="26" height="14" rx="2"/><text class="fd-fig-tagt" x="61.8" y="3.6" text-anchor="middle">SIM</text></g></g></svg><!-- /bake:sketch:none --><figcaption class="fd-fig-cap">Path to apogee, 5&nbsp;mph crosswind&nbsp;<span class="tag">EST</span>&nbsp;<span class="fd-sep" aria-hidden="true">/</span> flown in this tab&nbsp;<span class="tag">SIM</span></figcaption></figure>
+          <dl class="fd-run-r">
+            <div><dt>Margin at liftoff</dt><dd><span data-r="margin0">−8.78</span> cal&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Peak AOA, ascent</dt><dd><span data-r="peakAlpha">179.9</span>°&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Pitch past 60°</dt><dd>T+<span data-r="theta60">0.90</span>&nbsp;s&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Apogee</dt><dd><span data-r="apogee">223</span> ft&nbsp;<span class="tag">SIM</span></dd></div>
+          </dl>
+          <button type="button" class="fd-run-b" data-run-go="none" aria-describedby="run-none-h">Launch run 03</button>
+        </li>
+        <li class="fd-run" data-run="wind">
+          <p class="fd-run-n">04</p>
+          <h3 class="fd-run-h" id="run-wind-h">Crosswind 10&nbsp;mph</h3>
+          <div class="fd-run-w">
+            <p class="fd-run-lead">Weathercocking: the fins turn the nose upwind, so the rocket climbs into the wind.</p>
+          </div>
+          <p class="fd-run-s">Full fins, a steady 10 mph crosswind.</p>
+          <figure class="fd-fig fd-fig-card" data-fig="wind"><!-- bake:sketch:wind --><svg data-sig="94b34909" class="fd-fig-svg fd-fig-card" viewBox="0 0 200 156" width="200" height="156" role="img" aria-labelledby="fdfig-card-wind-t fdfig-card-wind-d" data-scale-px-per-ft="0.10909"><title id="fdfig-card-wind-t">Run path to apogee: full fins, 10 mph crosswind</title><desc id="fdfig-card-wind-d">Up to 1023 ft, 98 ft upwind at apogee (SIM). Downrange and altitude at equal scale, the same axes on every run.</desc><g class="fd-fig-grid" aria-hidden="true"><line x1="32" y1="75.5" x2="194" y2="75.5"/><line x1="32" y1="20.9" x2="194" y2="20.9"/><line x1="113.8" y1="10" x2="113.8" y2="130"/><line x1="168.4" y1="10" x2="168.4" y2="130"/></g><g class="fd-fig-ax" aria-hidden="true"><text x="26" y="79" text-anchor="end">500</text><text x="26" y="24.4" text-anchor="end">1000</text><text x="32" y="149">ft, equal scale</text></g><g class="fd-fig-ground" aria-hidden="true"><line x1="32" y1="130" x2="194" y2="130"/><line x1="59.3" y1="125" x2="59.3" y2="135"/></g><g class="fd-fig-s" data-series="wind" data-fin-scale="1" data-apogee-ft="1023.2" data-x-ft="-98.4"><path class="fd-fig-line" d="M59.3 130L59.3 130L59.3 129.9L59.3 129.8L59.3 129.7L59.3 129.4L59.3 129.2L59.3 128.8L59.3 128.3L59.3 127.8L59.3 127.2L59.3 126.6L59.3 125.8L59.3 125L59.3 124.1L59.3 123.2L59.2 122.1L59.2 121L59.1 119.8L59 118.6L58.9 117.2L58.8 115.8L58.7 114.4L58.6 112.9L58.5 111.3L58.4 109.8L58.2 108.2L58.1 106.7L58 105.2L57.9 103.7L57.8 102.2L57.6 100.8L57.5 99.3L57.4 97.9L57.3 96.5L57.2 95.1L57.1 93.8L57 92.4L56.9 91.1L56.8 89.8L56.7 88.5L56.6 87.2L56.5 85.9L56.4 84.6L56.3 83.4L56.2 82.2L56.1 81L56 79.8L55.9 78.6L55.8 77.4L55.7 76.3L55.6 75.1L55.5 74L55.4 72.9L55.3 71.8L55.2 70.7L55.1 69.6L55 68.6L54.9 67.6L54.8 66.5L54.8 65.5L54.7 64.5L54.6 63.5L54.5 62.5L54.4 61.6L54.3 60.6L54.3 59.7L54.2 58.8L54.1 57.9L54 57L53.9 56.1L53.8 55.2L53.8 54.3L53.7 53.5L53.6 52.6L53.5 51.8L53.5 51L53.4 50.2L53.3 49.4L53.2 48.6L53.2 47.8L53.1 47.1L53 46.3L52.9 45.6L52.9 44.9L52.8 44.2L52.7 43.4L52.7 42.8L52.6 42.1L52.5 41.4L52.4 40.7L52.4 40.1L52.3 39.4L52.2 38.8L52.2 38.2L52.1 37.6L52 37L52 36.4L51.9 35.8L51.8 35.3L51.8 34.7L51.7 34.1L51.7 33.6L51.6 33.1L51.5 32.6L51.5 32.1L51.4 31.6L51.3 31.1L51.3 30.6L51.2 30.1L51.2 29.7L51.1 29.2L51 28.8L51 28.3L50.9 27.9L50.9 27.5L50.8 27.1L50.7 26.7L50.7 26.3L50.6 26L50.6 25.6L50.5 25.2L50.5 24.9L50.4 24.6L50.4 24.2L50.3 23.9L50.2 23.6L50.2 23.3L50.1 23L50.1 22.7L50 22.5L50 22.2L49.9 21.9L49.9 21.7L49.8 21.5L49.8 21.2L49.7 21L49.7 20.8L49.6 20.6L49.6 20.4L49.5 20.2L49.5 20.1L49.4 19.9L49.4 19.7L49.3 19.6L49.3 19.5L49.2 19.3L49.2 19.2L49.1 19.1L49.1 19L49 18.9L49 18.8L48.9 18.7L48.9 18.6L48.8 18.6L48.8 18.5L48.8 18.5L48.7 18.4L48.7 18.4L48.6 18.4L48.6 18.4L48.5 18.4L48.5 18.4"/><circle class="fd-fig-dot" cx="48.5" cy="18.4" r="3"/><g class="fd-fig-lab" transform="translate(56.5 18.4)"><text class="fd-fig-cn" x="0" y="4">1023 ft</text><rect class="fd-fig-tag" x="56.1" y="-6.5" width="26" height="14" rx="2"/><text class="fd-fig-tagt" x="69.1" y="3.6" text-anchor="middle">SIM</text></g></g></svg><!-- /bake:sketch:wind --><figcaption class="fd-fig-cap">Path to apogee, 10&nbsp;mph crosswind&nbsp;<span class="tag">EST</span>&nbsp;<span class="fd-sep" aria-hidden="true">/</span> flown in this tab&nbsp;<span class="tag">SIM</span></figcaption></figure>
+          <dl class="fd-run-r">
+            <div><dt>AOA at rail exit</dt><dd><span data-r="alphaRail">+18.7</span>°&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Pitch at T+1 s</dt><dd><span data-r="theta1">−7.2</span>°&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Apogee</dt><dd><span data-r="apogee">1023</span> ft&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Upwind at apogee</dt><dd><span data-r="upwind">98</span> ft&nbsp;<span class="tag">SIM</span></dd></div>
+          </dl>
+          <button type="button" class="fd-run-b" data-run-go="wind" aria-describedby="run-wind-h">Launch run 04</button>
+        </li>
+        <li class="fd-run" data-run="gust">
+          <p class="fd-run-n">05</p>
+          <h3 class="fd-run-h" id="run-gust-h">Gust at rail exit</h3>
+          <div class="fd-run-w">
+            <p class="fd-run-lead">One wobble, damped. This is the disturbance the flight model's tests use.</p>
+          </div>
+          <p class="fd-run-s">Full fins, still air, an 11.2 mph (5 m/s) gust fired as the forward button leaves the rail.</p>
+          <figure class="fd-fig fd-fig-card" data-fig="gust"><!-- bake:sketch:gust --><svg data-sig="41596e22" class="fd-fig-svg fd-fig-card" viewBox="0 0 200 156" width="200" height="156" role="img" aria-labelledby="fdfig-card-gust-t fdfig-card-gust-d" data-scale-px-per-ft="0.10909"><title id="fdfig-card-gust-t">Run path to apogee: full fins, still air, 11.2 mph gust at rail exit</title><desc id="fdfig-card-gust-d">Up to 1030 ft, 59 ft upwind at apogee (SIM). Downrange and altitude at equal scale, the same axes on every run.</desc><g class="fd-fig-grid" aria-hidden="true"><line x1="32" y1="75.5" x2="194" y2="75.5"/><line x1="32" y1="20.9" x2="194" y2="20.9"/><line x1="113.8" y1="10" x2="113.8" y2="130"/><line x1="168.4" y1="10" x2="168.4" y2="130"/></g><g class="fd-fig-ax" aria-hidden="true"><text x="26" y="79" text-anchor="end">500</text><text x="26" y="24.4" text-anchor="end">1000</text><text x="32" y="149">ft, equal scale</text></g><g class="fd-fig-ground" aria-hidden="true"><line x1="32" y1="130" x2="194" y2="130"/><line x1="59.3" y1="125" x2="59.3" y2="135"/></g><g class="fd-fig-s" data-series="gust" data-fin-scale="1" data-apogee-ft="1030.3" data-x-ft="-58.9"><path class="fd-fig-line" d="M59.3 130L59.3 130L59.3 129.9L59.3 129.8L59.3 129.7L59.3 129.4L59.3 129.2L59.3 128.8L59.3 128.3L59.3 127.8L59.3 127.2L59.3 126.6L59.3 125.8L59.3 125L59.3 124.1L59.3 123.2L59.2 122.1L59.2 121L59.1 119.8L59.1 118.5L59 117.2L59 115.8L58.9 114.4L58.9 112.8L58.8 111.3L58.7 109.7L58.7 108.2L58.6 106.7L58.6 105.1L58.5 103.6L58.5 102.2L58.4 100.7L58.3 99.3L58.3 97.8L58.2 96.4L58.2 95L58.1 93.7L58.1 92.3L58 91L58 89.6L57.9 88.3L57.9 87L57.8 85.7L57.8 84.5L57.7 83.2L57.7 82L57.6 80.8L57.6 79.6L57.5 78.4L57.5 77.2L57.4 76.1L57.4 74.9L57.3 73.8L57.3 72.7L57.2 71.6L57.2 70.5L57.1 69.4L57.1 68.4L57 67.3L57 66.3L56.9 65.3L56.9 64.2L56.8 63.3L56.8 62.3L56.7 61.3L56.7 60.3L56.6 59.4L56.6 58.5L56.5 57.6L56.5 56.6L56.5 55.8L56.4 54.9L56.4 54L56.3 53.1L56.3 52.3L56.2 51.5L56.2 50.6L56.1 49.8L56.1 49L56 48.2L56 47.5L56 46.7L55.9 45.9L55.9 45.2L55.8 44.5L55.8 43.7L55.7 43L55.7 42.3L55.7 41.6L55.6 41L55.6 40.3L55.5 39.6L55.5 39L55.4 38.4L55.4 37.7L55.4 37.1L55.3 36.5L55.3 35.9L55.2 35.3L55.2 34.8L55.2 34.2L55.1 33.6L55.1 33.1L55 32.6L55 32L55 31.5L54.9 31L54.9 30.5L54.8 30L54.8 29.6L54.8 29.1L54.7 28.6L54.7 28.2L54.6 27.8L54.6 27.3L54.6 26.9L54.5 26.5L54.5 26.1L54.4 25.7L54.4 25.3L54.4 25L54.3 24.6L54.3 24.3L54.2 23.9L54.2 23.6L54.2 23.3L54.1 23L54.1 22.7L54 22.4L54 22.1L54 21.8L53.9 21.5L53.9 21.3L53.9 21L53.8 20.8L53.8 20.5L53.7 20.3L53.7 20.1L53.7 19.9L53.6 19.7L53.6 19.5L53.6 19.3L53.5 19.2L53.5 19L53.4 18.8L53.4 18.7L53.4 18.6L53.3 18.4L53.3 18.3L53.3 18.2L53.2 18.1L53.2 18L53.2 17.9L53.1 17.9L53.1 17.8L53.1 17.8L53 17.7L53 17.7L52.9 17.6L52.9 17.6L52.9 17.6L52.8 17.6"/><circle class="fd-fig-dot" cx="52.8" cy="17.6" r="3"/><g class="fd-fig-lab" transform="translate(60.8 18)"><text class="fd-fig-cn" x="0" y="4">1030 ft</text><rect class="fd-fig-tag" x="56.1" y="-6.5" width="26" height="14" rx="2"/><text class="fd-fig-tagt" x="69.1" y="3.6" text-anchor="middle">SIM</text></g></g></svg><!-- /bake:sketch:gust --><figcaption class="fd-fig-cap">Path to apogee, still air, 11.2&nbsp;mph gust at rail exit&nbsp;<span class="tag">EST</span>&nbsp;<span class="fd-sep" aria-hidden="true">/</span> flown in this tab&nbsp;<span class="tag">SIM</span></figcaption></figure>
+          <dl class="fd-run-r">
+            <div><dt>Peak AOA</dt><dd><span data-r="peakAlpha">8.01</span>°&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Under 2°&nbsp;AOA, after the&nbsp;gust</dt><dd><span data-r="settle">0.59</span> s&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Frequency at 98&nbsp;ft/s</dt><dd><span data-r="fn">0.69</span> Hz&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Apogee</dt><dd><span data-r="apogee">1030</span> ft&nbsp;<span class="tag">SIM</span></dd></div>
+          </dl>
+          <button type="button" class="fd-run-b" data-run-go="gust" aria-describedby="run-gust-h">Launch run 05</button>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="fd-sec fd-sec-alt fd-appendix" id="appendix" aria-labelledby="appendix-h">
+    <div class="fd-wrap">
+      <header class="fd-sec-head">
+        <p class="eyebrow">02 / Appendix</p>
+        <h2 class="display-2" id="appendix-h">How it was computed</h2>
+      </header>
+      <ol class="fd-limits" aria-label="Three limits of this study">
+        <li class="fd-limit"><h3 class="fd-limit-h">A 2D slice, not 3D</h3><p>In the slice the air can only pass over and under the body, not around it, so the slice overstates the body's share of the lift.</p></li>
+        <li class="fd-limit"><h3 class="fd-limit-h">Slow motion, not a film of the flow</h3><p>The lattice shows a steady picture of the air at the current angle of attack. Its timing does not follow the replay.</p></li>
+        <li class="fd-limit"><h3 class="fd-limit-h">A Reynolds number over 100 times too low</h3><p>The lattice runs at 900 to 1,500&nbsp;<span class="tag">SIM</span>; the real rocket flies near 3 × 10⁵ at 70 m/s&nbsp;<span class="tag">EST</span>. So the lattice shows the air; it does not check the flight model, which flies the rocket.</p></li>
+      </ol>
+      <ol class="fd-index fd-index-sub">
+        <li><a href="#method"><span class="fd-index-n">A</span><span>Method</span></a></li>
+        <li><a href="#configuration"><span class="fd-index-n">B</span><span>Configuration</span></a></li>
       </ol>
     </div>
   </section>
@@ -108,9 +271,9 @@
   <section class="fd-sec" id="method" aria-labelledby="method-h">
     <div class="fd-wrap">
       <header class="fd-sec-head">
-        <p class="eyebrow">01 / Method</p>
+        <p class="eyebrow">Appendix A / Method</p>
         <h2 class="display-2" id="method-h">Method</h2>
-        <p class="fd-sec-intro">Two models, two jobs. The flight model flies the rocket. The lattice shows the air and measures the force on the section as a cross-check. Every number carries its source.</p>
+        <p class="fd-sec-intro">Two models, two jobs. The flight model flies the rocket. The lattice shows the air; its forces belong to a 2D section and are not comparable with the rocket's (Method 03). Every number carries its source.</p>
       </header>
       <dl class="fd-legend" aria-label="Source tags">
         <div><dt class="tag">PAGE</dt><dd>published on merttureli.com</dd></div>
@@ -124,51 +287,66 @@
         <li class="fd-mi">
           <h3 class="fd-mi-h"><span class="fd-mi-n">01</span>Flight model</h3>
           <div class="fd-mi-b">
-            <p>A planar rigid body with three degrees of freedom (downrange, altitude, pitch), integrated with fourth-order Runge-Kutta at a fixed 1 ms step&nbsp;<span class="tag">SIM</span>. Normal-force slopes and centres of pressure for the ogive nose and the four trapezoidal fins follow Barrowman (1967), with the fin-body interference factor 1 + R / (s + R)&nbsp;<span class="tag">STD</span>. At large angles of attack the normal force uses sin α and adds body lift, 1.1 (A<sub>plan</sub> / A<sub>ref</sub>) sin² α at the planform centroid, as OpenRocket does&nbsp;<span class="tag">STD</span>.</p>
-            <p>Pitch damping sums C<sub>Nα</sub> (x − x<sub>cg</sub>)² over the nose and the fins and adds jet damping from the motor's mass flow (Mandell, Caporaso and Bengen, <cite>Topics in Advanced Model Rocketry</cite>)&nbsp;<span class="tag">STD</span>. Thrust is the AeroTech G77R curve from its published RASP file&nbsp;<span class="tag">STD</span>. Drag is one coefficient, <span data-k="cd">0.6339</span>&nbsp;<span class="tag">FIT</span>, found by bisection so that the still-air apogee equals the page's 1,033 ft&nbsp;<span class="tag">PAGE</span>.</p>
+            <p>A planar rigid body with three degrees of freedom (downrange, altitude, pitch), integrated with fourth-order Runge-Kutta at a fixed 1 ms step&nbsp;<span class="tag">SIM</span>. Normal-force slopes and centers of pressure for the ogive nose and the four trapezoidal fins follow Barrowman (1967), with the fin-body interference factor 1 + R / (s + R)&nbsp;<span class="tag">STD</span>. At large angles of attack the normal force uses sin α and adds body lift, 1.1 (A<sub>plan</sub> / A<sub>ref</sub>) sin² α at the planform centroid, as OpenRocket does&nbsp;<span class="tag">STD</span>.</p>
+            <p>Pitch damping sums C<sub>Nα</sub> (x − x<sub>cg</sub>)² over the nose and the fins (Mandell, Caporaso and Bengen, <cite>Topics in Advanced Model Rocketry</cite>) and adds jet damping from the motor's mass flow with the variable-mass term (Thomson 1961)&nbsp;<span class="tag">STD</span>. The fin slope is incompressible; at the peak Mach number of 0.26 the compressible form gives 1.3 percent more&nbsp;<span class="tag">SIM</span>. Thrust is the AeroTech G77R curve from its published RASP file&nbsp;<span class="tag">STD</span>. Drag is one coefficient, <span data-k="cd">0.6339</span>&nbsp;<span class="tag">FIT</span>, found by bisection so that the still-air apogee equals the page's 1,033 ft&nbsp;<span class="tag">PAGE</span>. That apogee was simulated for the 37 in design, and there is no flight data, so the absolute apogee is not known; a component drag estimate for the CAD airframe gives 0.44 to 0.66 and 1,027 to 1,159 ft&nbsp;<span class="tag">SIM</span>. Apogee moves about 4.2 percent for 3 percent of motor impulse, 5.6 percent for 5 percent of mass and 3.2 percent for 10 percent of the drag coefficient&nbsp;<span class="tag">SIM</span>.</p>
           </div>
         </li>
         <li class="fd-mi">
           <h3 class="fd-mi-h"><span class="fd-mi-n">02</span>Flow section</h3>
           <div class="fd-mi-b">
-            <p>A two-dimensional lattice Boltzmann model, D2Q9 with BGK collision (Chen and Doolen 1998) and a Smagorinsky subgrid model with C = 0.12 (Hou, Sterling, Chen and Doolen 1996)&nbsp;<span class="tag">STD</span>, runs on the graphics card in this tab. The rocket's section through the pitch plane is the solid. Its walls use halfway bounce-back with the moving-wall term, so the body's pitch rate reaches the air (Ladd 1994)&nbsp;<span class="tag">STD</span>. The air arrives at the flight model's angle of attack.</p>
-            <p>To stay stable with a relaxation time τ<sub>0</sub> barely above 0.5 (0.504 at tier 3, set for a lattice Reynolds number of 3,000 at an inflow of 0.10 lattice units)&nbsp;<span class="tag">EST</span> the engine adds a regularised collision (Latt and Chopard 2006) and a positivity limiter (Brownlee, Gorban and Levesley 2007)&nbsp;<span class="tag">STD</span>, absorbing layers along the edges, and extra viscosity where the local speed passes 0.15 lattice units and for the first 2,000 steps after a reset&nbsp;<span class="tag">EST</span>. The outflow edges hold the density at 1 and extrapolate the rest (Guo, Zheng and Shi 2002)&nbsp;<span class="tag">STD</span>. Until those first steps are over and the inflow has reached the flight's angle, the panel's lattice readouts show a dash.</p>
-            <p>Force and moment on the section come from momentum exchange at the wall links. The panel prints the lattice's centre of pressure and moment coefficient next to Barrowman's. They are a cross-check, not an input: the flight model flies the rocket. A lab toggle (open the page with <code>?lab</code>) hands the pitching moment to the lattice instead.</p>
+            <p>A two-dimensional lattice Boltzmann model, D2Q9 with BGK collision (Chen and Doolen 1998) and a Smagorinsky subgrid model with C = 0.12 (Hou, Sterling, Chen and Doolen 1996)&nbsp;<span class="tag">STD</span>, runs on the graphics card in this tab. The rocket's section through the pitch plane is the solid, and its walls use halfway bounce-back. The flow is computed in the body's own frame: the walls stay at rest, the free stream at the edges turns with the body, and the body's pitch rate reaches the air as the Coriolis, centrifugal and Euler forces of a turning frame, added by Guo forcing (Guo, Zheng and Shi 2002)&nbsp;<span class="tag">STD</span>. The air arrives at the flight model's angle of attack.</p>
+            <details class="fd-more">
+              <summary>How the solver stays stable</summary>
+              <p>To stay stable with a relaxation time τ<sub>0</sub> barely above 0.5 (0.504 at tier 3, set for a lattice Reynolds number of 1,500 at an inflow of 0.05 lattice units, the fastest the engine runs)&nbsp;<span class="tag">EST</span> the engine adds a regularized collision (Latt and Chopard 2006) and a positivity limiter (Brownlee, Gorban and Levesley 2007)&nbsp;<span class="tag">STD</span>, absorbing layers along the edges, and extra viscosity where the local speed passes 0.15 lattice units and for the first 2,000 steps after a reset&nbsp;<span class="tag">EST</span>. The outflow edges hold the density at 1, take the velocity of the cell inside and keep only the regularized part of its non-equilibrium (Latt, Chopard, Malaspinas, Deville and Michler 2008)&nbsp;<span class="tag">STD</span>. The section's forces count as developed once those steps are over, the inflow has reached the flight's angle and the air has traveled 1.5 body lengths since the last reset, about 10,100 steps at tier 1 at 0.05 lattice units&nbsp;<span class="tag">SIM</span>; until then the lab's lattice readouts show a dash. At the 0.05 cap the cells along the walls run at 10 to 25 percent more than the set viscosity, an effective Reynolds number of 1,200 to 1,360&nbsp;<span class="tag">SIM</span>.</p>
+            </details>
+            <p>Force and moment on the section come from momentum exchange at the wall links. They describe a 2D section, not the rocket (Method 03), so the panel shows them only on the lab view of this page (<code>?lab</code>), as means over one pass of the air along the body, labeled 2D SECTION ONLY / NOT COMPARABLE. The flight model flies the rocket. A lab toggle hands the pitching moment to the lattice instead; it shows what a 2D section would do and is not quantitative.</p>
           </div>
         </li>
         <li class="fd-mi">
           <h3 class="fd-mi-h"><span class="fd-mi-n">03</span>What the section is not</h3>
           <div class="fd-mi-b">
-            <p>It is a 2D slice of a body of revolution. In 2D the air cannot pass around the body, only over and under it, so the section overstates the body's share of the lift, and the fins act as plates of unlimited span. The lattice viscosity is set for a Reynolds number of 3,000 at an inflow u<sub>in</sub> of 0.10 lattice units&nbsp;<span class="tag">EST</span>. Since Re = u<sub>in</sub> D / ν, the Reynolds number follows the inflow: 900 on the pad, about 2,800 at CHARGER's peak airspeed of 87.5 m/s&nbsp;<span class="tag">SIM</span>. The real rocket at 70 m/s is near 3 × 10⁵ (diameter 68 mm&nbsp;<span class="tag">CAD</span>, ν = 1.46 × 10⁻⁵ m²/s, the International Standard Atmosphere at sea level and 15 °C&nbsp;<span class="tag">STD</span>).</p>
-            <p>So the lattice's centre of pressure and moment coefficient are 2D section values. In 2D the long body lifts like a wing along its whole length, with the centre of pressure near its front quarter (thin-airfoil theory, Anderson, <cite>Fundamentals of Aerodynamics</cite>)&nbsp;<span class="tag">STD</span>. At 5° and above, the top and bottom edges of the domain, 0.16 of its width from the axis of a body 0.66 of its width long, also confine the flow and raise the pressure on the windward side: at 5° the section's C<sub>n</sub> is 17 to 32&nbsp;<span class="tag">SIM</span>, where an unconfined flat plate of the same length gives 2π sin α L / D = 9.5&nbsp;<span class="tag">STD</span>. Nor does the held flow settle. Held at 5° on the 512 × 160 grid, once developed (after about 2,300 steps), the section's centre of pressure swings between about 9 and 21 in from the nose with a period of about 4,000 steps, several seconds of screen time on a graphics card, always ahead of the CG (21.6 in from the nose at that instant), with C<sub>m</sub> +6 to +79 about it, where Barrowman gives 33.1 in and a restoring moment&nbsp;<span class="tag">SIM</span>. The panel's lattice C<sub>m</sub> is taken about the live CG, which moves forward as the propellant burns, as Barrowman's moment is. The lattice CP shows a dash below 1° of inflow angle, where the section's small offset from the rail buttons (C<sub>n</sub> about −0.1 to −0.4 at 0°) would make it meaningless&nbsp;<span class="tag">SIM</span>. The lab toggle that lets the lattice moment fly the rocket therefore makes it diverge; it shows what a 2D section would do, not what CHARGER does.</p>
-            <p>Inflow speed in lattice units is u<sub>in</sub> = 0.03 + 0.05 V / (70 m/s), held between 0.03 and 0.10&nbsp;<span class="tag">EST</span>. The 0.03 floor keeps the smoke moving on the pad, so the air there is not still. The inflow angle is held within ±35°&nbsp;<span class="tag">EST</span>: on the pad in a crosswind, and through the finless loop, the section shows 35° while the flight model reports more, and the stage says so.</p>
+            <p>It is a 2D slice of a body of revolution. In 2D the air cannot pass around the body, only over and under it, so the section overstates the body's share of the lift, and the fins act as plates of unlimited span. The lattice viscosity is set for a Reynolds number of 1,500 at an inflow u<sub>in</sub> of 0.05 lattice units&nbsp;<span class="tag">EST</span>. Since Re = u<sub>in</sub> D / ν, the Reynolds number follows the inflow: 900 on the pad, rising to 1,500 at 0.05 lattice units, the fastest inflow the engine runs, which the flight reaches at 28 m/s&nbsp;<span class="tag">SIM</span>. The real rocket at 70 m/s is near 3 × 10⁵ (diameter 68 mm&nbsp;<span class="tag">CAD</span>, ν = 1.46 × 10⁻⁵ m²/s, the International Standard Atmosphere at sea level and 15 °C&nbsp;<span class="tag">STD</span>).</p>
+            <details class="fd-more">
+              <summary>What the section's numbers mean</summary>
+              <p>So the lattice's center of pressure and moment coefficient are 2D section values. In 2D the long body lifts like a wing along its whole length, with the center of pressure near its front quarter (thin-airfoil theory, Anderson, <cite>Fundamentals of Aerodynamics</cite>)&nbsp;<span class="tag">STD</span>. Measured on both page grids at 2 to 15°, the section's center of pressure sat 15 to 18 in from the nose, ahead of the CG, where Barrowman puts it at 29 to 33 in (<span data-k="xcpIn">32.94</span> in at small angles)&nbsp;<span class="tag">SIM</span>. A finer grid or a taller domain did not move it, and neither a slender-body nor a finite-wing correction closed the gap&nbsp;<span class="tag">SIM</span>. Taken as a 3D coefficient, the section's normal force was 16 to 35 times Barrowman's, and the page's domain, 0.47 rocket lengths tall, raised it about 1.7 times against a domain 3.2 times taller&nbsp;<span class="tag">SIM</span>. The section's pitch damping has the right sign, but at 1,380 to 2,010 against Barrowman's 445 it is not the rocket's; a pitching flat plate in the same body frame got 0.38 of its lift slope per unit of pitch rate, where theory gives 0.5&nbsp;<span class="tag">SIM</span>. One cell inside the inflow edge the air arrives at 97.9 and 96.3 percent of the inflow speed at 5 and 10°, so the section's coefficients read about 4 and 8 percent low&nbsp;<span class="tag">SIM</span>. Single readings scatter by about 22 percent in C<sub>n</sub> and 66 percent in C<sub>m</sub>, so the lab rows show means over one pass of the air along the body&nbsp;<span class="tag">SIM</span>. The lab's lattice C<sub>m</sub> is taken about the live CG, which moves forward as the propellant burns, as Barrowman's moment is. The lattice CP shows a dash below 1° of inflow angle, where the section's small offset from the rail buttons (C<sub>n</sub> about −0.1 to −0.4 at 0°) would make it meaningless&nbsp;<span class="tag">SIM</span>. The lab toggle that lets the lattice moment fly the rocket therefore makes it diverge; it shows what a 2D section would do, not what CHARGER does.</p>
+            </details>
+            <p>The page asks for an inflow in lattice units of u<sub>in</sub> = 0.03 + 0.05 V / (70 m/s), held between 0.03 and 0.10&nbsp;<span class="tag">EST</span>. The engine runs the flow at 0.05 at most and, when the page asks for more, scales the body's pitch rate down in the same ratio, so the reduced pitch rate q D / V is kept&nbsp;<span class="tag">EST</span>. The 0.03 floor keeps the smoke moving on the pad, so the air there is not still. The inflow angle is held within ±35°&nbsp;<span class="tag">EST</span>: on the pad in a crosswind, and <mark class="flag" data-flag="vx-loop" data-note="The page said the finless rocket loops. At the CAD CG estimate (27.17 in) the current flight model has it tumble end over end, to about 220 ft (the path sketch on Run 03); at the case study's 22 in CG it pitched over and arced away downwind. Approve this wording or reword it.">as the finless rocket tumbles</mark>, the section shows 35° while the flight model reports more, and the stage says so.</p>
           </div>
         </li>
         <li class="fd-mi">
           <h3 class="fd-mi-h"><span class="fd-mi-n">04</span>Slow motion</h3>
           <div class="fd-mi-b">
-            <p>The replay runs at 1/8 of real time until 3 s after burnout, then at real time; the rate buttons in the panel override it&nbsp;<span class="tag">EST</span>. The flight model is stepped by screen time multiplied by the rate, so its events keep their real timing while frames take under 0.25 s; a longer frame advances it by 0.25 s times the rate. The lattice runs up to 24 steps per 60 Hz frame at tier 3&nbsp;<span class="tag">EST</span>, fewer on faster displays and fewer when frames run long (the engine sheds steps to stay inside its 48 ms budget), whatever the playback rate, so the flow is a quasi-steady picture at the current angle of attack, not a time-accurate film of the flight.</p>
+            <p>The replay changes speed with the flight. It runs at 1/8 of real time on the rail&nbsp;<span class="tag">EST</span>. From just before rail exit it slows to a rate chosen so that the wobble, from rail exit until the angle of attack stays under 2°, takes about 12 s on screen, held between 1/32 and 1/8&nbsp;<span class="tag">EST</span>: <span data-k="rampSlow">1/20</span> for the default launch&nbsp;<span class="tag">SIM</span>. At the first swing of the nose it stops for 1.5 s, marked HOLD, and it is back at real time by about T+1.6 s&nbsp;<span class="tag">EST</span>. For a rocket that turns over, the slow part runs until the pitch passes 60°&nbsp;<span class="tag">EST</span>. The replay pauses at apogee. The header shows the true rate at every moment, and the rate buttons in the panel override it. The flight model is stepped by screen time multiplied by the rate, so its events keep their real timing while frames take under 0.25 s; a longer frame advances it by 0.25 s times the rate. The lattice runs up to 24 steps per 60 Hz frame at tier 3&nbsp;<span class="tag">EST</span>, fewer on faster displays and fewer when frames run long (the engine sheds steps to stay inside its 48 ms budget), whatever the playback rate, so the flow is a quasi-steady picture at the current angle of attack, not a time-accurate film of the flight.</p>
           </div>
         </li>
         <li class="fd-mi">
           <h3 class="fd-mi-h"><span class="fd-mi-n">05</span>The rocket here and in the case study</h3>
           <div class="fd-mi-b">
-            <p>The CAD assembly is <span data-k="lengthIn">46.49</span> in long with four fins&nbsp;<span class="tag">CAD</span>. The case study describes a 37 in design with three fins and a stability margin of 1.80 cal at a 22 in CG&nbsp;<span class="tag">PAGE</span>. Four fins is the final configuration. Shape and dimensions here come from the CAD, the mass from the page (2.2 lb)&nbsp;<span class="tag">PAGE</span>, and the CG defaults to the page's 22 in from the nose&nbsp;<span class="tag">PAGE</span>.</p>
-            <p>The margin shown here is recomputed for the CAD airframe: <span data-k="margin0">4.15</span> cal at the page CG&nbsp;<span class="tag">SIM</span>. The 1.80 cal is the design-review figure for the three-fin design, not a result of this study. The CAD fin root chord (<span data-k="finRootIn">2.76</span> in) and sweep (<span data-k="finSweepIn">2.17</span> in) match the page&nbsp;<span class="tag">CAD</span>; the CAD span is <span data-k="finSpanIn">2.17</span> in against the page's 2.36 in height&nbsp;<span class="tag">PAGE</span>.</p>
+            <p>The case study and the CAD assembly agree on four trapezoidal fins, a body 2.68 in across, the fin root chord (2.76 in) and sweep (2.17 in)&nbsp;<span class="tag">PAGE</span>; the CAD measures the body at <span data-k="diameterIn">2.677</span> in, the root chord at <span data-k="finRootIn">2.76</span> in and the sweep at <span data-k="finSweepIn">2.17</span> in&nbsp;<span class="tag">CAD</span>. Shape and dimensions here come from the CAD, the mass from the page (<mark class="flag" data-flag="vx-mass" data-note="The case study stated a 2.2 lb rocket until the copy cut of 2026-10-22 and no longer does. Is 2.2 lb with the motor still the liftoff mass, and may this page keep quoting it?">2.2 lb</mark>)&nbsp;<span class="tag">PAGE</span>. Four differences remain.</p>
+            <ul class="fd-mi-list">
+              <li><b>Length.</b> The CAD assembly is <span data-k="lengthIn">46.49</span> in from nose tip to screw cap&nbsp;<span class="tag">CAD</span>; the case study gives 37 in&nbsp;<span class="tag">PAGE</span>. <mark class="flag" data-flag="vx-length" data-note="Which length is current: 37 in (the case study) or 46.49 in (the CAD assembly)?">Which one is current is an open question; until it is settled, this page states both and takes the shape from the CAD.</mark></li>
+              <li><b>CG.</b> The case study gives 22 in from the nose for its 37 in design&nbsp;<span class="tag">PAGE</span>. Every part-wise estimate of the CAD airframe at the page mass puts it at <span data-k="cgLoIn">27.09</span> to <span data-k="cgHiIn">27.24</span> in&nbsp;<span class="tag">EST</span>, and this page flies <span data-k="cgIn">27.17</span> in&nbsp;<span class="tag">EST</span>. The shape here is the CAD's, and the 22 in CG belongs to the 37 in design, so the CG is the CAD's estimate too. <mark class="flag" data-flag="vx-cg" data-note="Which CG should this page fly? It now flies the CAD estimate, 27.17 in from the nose (27.09 to 27.24 in at 2.2 lb), because the case study's 22 in belongs to the 37 in design. A CG measured on the built rocket, motor loaded, would replace it.">Until CHARGER's CG is measured, this page flies the estimate; the panel's CG slider moves it.</mark></li>
+              <li><b>Stability margin.</b> At the CG estimate the margin is <span data-k="margin0">2.16</span> cal&nbsp;<span class="tag">SIM</span>, <span data-k="marginCadLo">2.01</span> to <span data-k="marginCadHi">2.47</span> cal over the estimate's density scenarios&nbsp;<span class="tag">SIM</span>; at the case study's 22 in it would be <span data-k="marginPage0">4.09</span> cal&nbsp;<span class="tag">SIM</span>. The case study gives 1.80 cal at 22 in for its 37 in airframe&nbsp;<span class="tag">PAGE</span>; that is the case study's figure, not a result of this study.</li>
+              <li><b>Fin height.</b> The CAD fin span is <span data-k="finSpanIn">2.17</span> in&nbsp;<span class="tag">CAD</span>, against the case study's 2.36 in height&nbsp;<span class="tag">PAGE</span>.</li>
+            </ul>
           </div>
         </li>
         <li class="fd-mi">
           <h3 class="fd-mi-h"><span class="fd-mi-n">06</span>What the runs show</h3>
           <div class="fd-mi-b">
-            <p>With full fins the nose turns into the wind and the angle of attack settles within about a second&nbsp;<span class="tag">SIM</span>. With half fins the static margin is <span data-k="marginHalf0">−0.35</span> cal at liftoff, which is unstable&nbsp;<span class="tag">SIM</span>; the CG moves forward as the propellant burns, and the margin is <span data-k="marginHalfBo">+0.14</span> cal at burnout&nbsp;<span class="tag">SIM</span>.</p>
-            <p>Without fins the margin is <span data-k="marginNone0">−6.63</span> cal&nbsp;<span class="tag">SIM</span>. The rocket does not tumble end over end: it pitches over and loops. Body lift acts at the planform centroid, <span data-k="centroidIn">24.42</span> in from the nose, behind the 22 in CG&nbsp;<span class="tag">SIM</span>, so the finless airframe settles at a high angle of attack, 20 to 30°, and flies a loop to an apogee near <span data-k="apogeeNone">340</span> ft&nbsp;<span class="tag">SIM</span>.</p>
+            <p>With full fins the nose turns into the wind and the angle of attack settles within about a second&nbsp;<span class="tag">SIM</span>. With half fins the static margin is <span data-k="marginHalf0">−2.41</span> cal at liftoff, which is unstable&nbsp;<span class="tag">SIM</span>; the CG moves forward as the propellant burns, but the margin is still <span data-k="marginHalfBo">−2.03</span> cal at burnout, and the rocket tumbles&nbsp;<span class="tag">SIM</span>.</p>
+            <p>Without fins the margin is <span data-k="marginNone0">−8.78</span> cal&nbsp;<span class="tag">SIM</span>. Body lift acts at the planform centroid, <span data-k="centroidIn">24.22</span> in from the nose&nbsp;<span class="tag">SIM</span>, ahead of the <span data-k="cgIn">27.17</span> in CG as well, so nothing turns the nose back: <mark class="flag" data-flag="vx-loop" data-note="The page said the finless rocket loops. At the CAD CG estimate (27.17 in) the current flight model has it tumble end over end, to about 220 ft (the path sketch on Run 03); at the case study's 22 in CG it pitched over and arced away downwind. Approve this wording or reword it.">the rocket tumbles end over end, to an apogee near <span data-k="apogeeNone">220</span> ft</mark>&nbsp;<span class="tag">SIM</span>. At the case study's 22 in CG the centroid sat behind the CG, and the finless airframe settled at 20 to 30° and arced over instead&nbsp;<span class="tag">SIM</span>, so which of the two CHARGER would do depends on its CG (Method 05).</p>
           </div>
         </li>
         <li class="fd-mi">
           <h3 class="fd-mi-h"><span class="fd-mi-n">07</span>Checks</h3>
           <div class="fd-mi-b">
-            <p>The flight model passes its tests under node (<code>node vx/js/flight/flight.test.mjs</code>): the four-fin C<sub>Nα</sub> and CP against a hand computation, the ogive nose CP at 0.466 of its length, the restoring sign of the moment, the still-air apogee within 1 percent of 1,033 ft after the fit, rail exit against its prediction, energy and NaN guards, determinism, and the lattice toggle (the lattice moment replaces Barrowman's through a 10 Hz low-pass, Barrowman's stays until a lattice moment arrives, and pitch damping is not added twice).</p>
-            <p>The lattice's gate is a cylinder 24 cells across in a 512 × 192 grid at a Reynolds number of 100, run for 20,000 steps. An unconfined cylinder at that Reynolds number sheds at a Strouhal number of about 0.164 (Williamson 1996, <cite>Annual Review of Fluid Mechanics</cite> 28), and blockage raises both its drag and its shedding frequency (Sahin and Owens 2004, <cite>Physics of Fluids</cite> 16); for 12 percent blockage the gate takes a drag coefficient of 1.35 to 1.55 and a Strouhal number of 0.16 to 0.18&nbsp;<span class="tag">STD</span>. Measured here: <span class="fd-slot" data-slot="lattice-validation">a drag coefficient of 1.450 (standard deviation 0.010 over the last 5,000 steps) and a Strouhal number of 0.169 (a lift period of 2,833 steps from 4 zero crossings), after 20,000 steps</span>&nbsp;<span class="tag">SIM</span>, both inside the ranges. The run was headless Chromium on software rendering (SwiftShader) at 99 steps per second; it repeats in the <a href="lab/lattice.html?validate=cylinder">lattice lab</a>. Frame and step rates measured under software rendering are not representative of a graphics card.</p>
+            <p>Both models were checked against published references, closed forms and an independent code (<a href="lab/validation.html">lab: Validation</a>). The flight model's Barrowman terms matched the 1966 equations to 1e-6&nbsp;<span class="tag">SIM</span> and Centuri's JAVELIN worked example to 0.12 percent&nbsp;<span class="tag">SIM</span>. RocketPy 1.13.0, a six-degree-of-freedom code flown with the same inputs at the case study's 22 in CG, landed within 0.006 percent of the apogee&nbsp;<span class="tag">SIM</span> and within 0.02° of the weathercock angle in a crosswind of 10 mph&nbsp;<span class="tag">EST</span>&nbsp;<span class="tag">SIM</span>. That checks the arithmetic, not the inputs: the CG this page flies is a part-wise estimate of the CAD airframe, <span data-k="cgIn">27.17</span> in&nbsp;<span class="tag">EST</span>, not a measurement, and the drag coefficient is fitted to a simulated apogee, not to flight data. The lattice reproduced channel flow at second order in the grid spacing&nbsp;<span class="tag">SIM</span>. With domain and grid effects removed, a cylinder at a Reynolds number of 100&nbsp;<span class="tag">STD</span> gave a drag coefficient of 1.318 and a Strouhal number of 0.161&nbsp;<span class="tag">SIM</span>, against 1.320 and 0.165 in published 2D results (Parvar et al. 2023, Table 1)&nbsp;<span class="tag">STD</span>. The gate, a cylinder 24 cells across placed 16 diameters behind the inflow edge of a 768 × 192 grid&nbsp;<span class="tag">EST</span>, read <span class="fd-slot" data-slot="lattice-validation">1.369 and 0.164</span> once its shedding had saturated&nbsp;<span class="tag">SIM</span>; in the original 512 × 192 layout, 5.3 diameters behind the edge, it read 1.473 and 0.172, 11.6 and 4.2 percent high&nbsp;<span class="tag">SIM</span>. The side edges are open, so blockage corrections do not apply, and the staircase walls leave a grid error of several percent on a body 16 to 39 cells across&nbsp;<span class="tag">SIM</span>. The rocket's section did not agree with Barrowman: its center of pressure sat 15 to 18 in from the nose&nbsp;<span class="tag">SIM</span>, ahead of the CG, where Barrowman puts it at 29 to 33 in&nbsp;<span class="tag">SIM</span>, and no standard 3D correction closed the gap. So the section shows the air, and its forces are not a check on the flight model. The runs used software rendering (SwiftShader) and float32 CPU copies of the lattice step, so their speeds say nothing about a graphics card.</p>
+            <p><b>Validation.</b> The <a href="lab/validation.html">validation lab</a> lists all 351 cases, each with its reference and source, the error, the tolerance set before the run and the result: 230 passed, 91 failed and 30 were informational. The 105 cases measured again after the fixes count at their new result; the rest are from before the fixes. Most of the fails are in the lattice tracks: the cylinder at the page's own grid and domain, and the rocket's 2D section against the 3D rocket.</p>
+            <details class="fd-more">
+              <summary>The flight model's tests</summary>
+              <p>The flight model passes its tests under node (<code>node vx/js/flight/flight.test.mjs</code>): the four-fin C<sub>Nα</sub> and CP against a hand computation, the ogive nose CP at 0.466 of its length, the restoring sign of the moment, the still-air apogee within 1 percent of 1,033 ft after the fit, rail exit against its prediction, energy and NaN guards, determinism, and the lattice toggle (the lattice moment replaces Barrowman's through a 10 Hz low-pass, Barrowman's stays until a lattice moment arrives, and pitch damping is not added twice).</p>
+            </details>
           </div>
         </li>
       </ol>
@@ -178,7 +356,7 @@
   <section class="fd-sec fd-sec-alt" id="configuration" aria-labelledby="config-h">
     <div class="fd-wrap">
       <header class="fd-sec-head">
-        <p class="eyebrow">02 / Configuration</p>
+        <p class="eyebrow">Appendix B / Configuration</p>
         <h2 class="display-2" id="config-h">Configuration</h2>
         <p class="fd-sec-intro">The study's defaults. The panel's sliders change the live flight; these rows stay at the defaults. SIM rows are recomputed when the page loads.</p>
       </header>
@@ -199,20 +377,21 @@
             <tr><th scope="row">Fin thickness</th><td><span data-k="finThickIn">0.125</span> in</td><td><span class="tag">CAD</span></td><td></td></tr>
             <tr><th scope="row">Fin root leading edge from the nose</th><td><span data-k="finLeIn">42.18</span> in</td><td><span class="tag">CAD</span></td><td></td></tr>
 
-            <tr class="fd-tr-group"><th scope="rowgroup" colspan="4">Case study figures, three-fin design review</th></tr>
+            <tr class="fd-tr-group"><th scope="rowgroup" colspan="4">Case study figures</th></tr>
             <tr><th scope="row">Length</th><td>37 in</td><td><span class="tag">PAGE</span></td><td>single stage</td></tr>
-            <tr><th scope="row">Maximum diameter</th><td>2.63 in</td><td><span class="tag">PAGE</span></td><td></td></tr>
-            <tr><th scope="row">Fins</th><td>3</td><td><span class="tag">PAGE</span></td><td>trapezoidal, root chord 2.76 in, height 2.36 in, sweep 2.17 in</td></tr>
-            <tr><th scope="row">Stability margin</th><td>1.80 cal</td><td><span class="tag">PAGE</span></td><td>at a 22 in CG; the three-fin figure, not this study's result</td></tr>
+            <tr><th scope="row">Maximum diameter</th><td>2.68 in</td><td><span class="tag">PAGE</span></td><td></td></tr>
+            <tr><th scope="row">Fins</th><td>4</td><td><span class="tag">PAGE</span></td><td>trapezoidal, root chord 2.76 in, height 2.36 in, sweep 2.17 in</td></tr>
+            <tr><th scope="row">CG from the nose</th><td>22 in</td><td><span class="tag">PAGE</span></td><td>for the 37 in design; this page flies the CAD estimate (Mass and motor)</td></tr>
+            <tr><th scope="row">Stability margin</th><td>1.80 cal</td><td><span class="tag">PAGE</span></td><td>at a 22 in CG; the case study's figure, not this study's result</td></tr>
             <tr><th scope="row">Simulated apogee</th><td>1,033 ft</td><td><span class="tag">PAGE</span></td><td>the drag fit's target</td></tr>
             <tr><th scope="row">Motor</th><td>AeroTech G77R-7</td><td><span class="tag">PAGE</span></td><td>thrust to weight 8.17, burn 1.25 s</td></tr>
             <tr><th scope="row">Rail buttons</th><td>2 in, 22 in</td><td><span class="tag">PAGE</span></td><td>from the aft end and from the nose; 13 in apart on the 37 in airframe</td></tr>
 
             <tr class="fd-tr-group"><th scope="rowgroup" colspan="4">Mass and motor</th></tr>
-            <tr><th scope="row">Mass at liftoff</th><td>2.2 lb</td><td><span class="tag">PAGE</span></td><td><span data-k="massKg">0.998</span> kg, motor loaded</td></tr>
-            <tr><th scope="row">CG from the nose at liftoff</th><td>22.00 in</td><td><span class="tag">PAGE</span></td><td>the panel's CG slider starts here</td></tr>
-            <tr><th scope="row">CG from the nose at burnout</th><td><span data-k="cgBoIn">20.67</span> in</td><td><span class="tag">EST</span></td><td>propellant as a point mass at the motor's mid-length</td></tr>
-            <tr><th scope="row">Pitch inertia at liftoff</th><td><span data-k="inertia">0.127</span> kg m²</td><td><span class="tag">EST</span></td><td>airframe as a uniform slender rod, propellant as a point mass</td></tr>
+            <tr><th scope="row">Mass at liftoff</th><td>2.2 lb</td><td><span class="tag">PAGE</span></td><td><span data-k="massKg">0.998</span> kg, motor loaded; <mark class="flag" data-flag="vx-mass" data-note="The case study stated a 2.2 lb rocket until the copy cut of 2026-10-22 and no longer does. Is 2.2 lb with the motor still the liftoff mass, and may this page keep quoting it?">the case study no longer states this figure</mark></td></tr>
+            <tr><th scope="row">CG from the nose at liftoff</th><td><span data-k="cgIn">27.17</span> in</td><td><span class="tag">EST</span></td><td>part-wise estimate of the CAD airframe at the page mass, <span data-k="cgLoIn">27.09</span> to <span data-k="cgHiIn">27.24</span> in; the panel's CG slider starts here. <mark class="flag" data-flag="vx-cg" data-note="Which CG should this page fly? It now flies the CAD estimate, 27.17 in from the nose (27.09 to 27.24 in at 2.2 lb), because the case study's 22 in belongs to the 37 in design. A CG measured on the built rocket, motor loaded, would replace it.">The case study's 22 in belongs to its 37 in design.</mark></td></tr>
+            <tr><th scope="row">CG from the nose at burnout</th><td><span data-k="cgBoIn">26.17</span> in</td><td><span class="tag">EST</span></td><td>propellant as a point mass at the motor's mid-length</td></tr>
+            <tr><th scope="row">Pitch inertia at liftoff</th><td><span data-k="inertia">0.119</span> kg m²</td><td><span class="tag">EST</span></td><td>airframe as a uniform slender rod, propellant as a point mass; a part-wise CAD estimate at the same mass and CG is 17 to 26 percent lower, so the pitch frequency may read 7 to 11 percent low</td></tr>
             <tr><th scope="row">Motor total impulse</th><td><span data-k="impulse">101.7</span> N s</td><td><span class="tag">STD</span></td><td>integral of the RASP curve, thrustcurve.org via OpenRocket</td></tr>
             <tr><th scope="row">Motor burn time</th><td><span data-k="burn">1.277</span> s</td><td><span class="tag">STD</span></td><td>last curve sample; the page gives 1.25 s</td></tr>
             <tr><th scope="row">Propellant mass</th><td><span data-k="propG">59.1</span> g</td><td><span class="tag">STD</span></td><td>RASP file</td></tr>
@@ -220,131 +399,103 @@
 
             <tr class="fd-tr-group"><th scope="rowgroup" colspan="4">Aerodynamics, Barrowman</th></tr>
             <tr><th scope="row">Nose normal-force slope</th><td><span data-k="noseCna">2.00</span> /rad</td><td><span class="tag">STD</span></td><td>Barrowman 1967</td></tr>
-            <tr><th scope="row">Nose CP from the nose</th><td><span data-k="noseXcpIn">4.26</span> in</td><td><span class="tag">SIM</span></td><td>0.466 of the ogive length&nbsp;<span class="tag">STD</span></td></tr>
+            <tr><th scope="row">Nose CP from the nose</th><td><span data-k="noseXcpIn">3.67</span> in</td><td><span class="tag">SIM</span></td><td>0.466 of the ogive length&nbsp;<span class="tag">STD</span></td></tr>
             <tr><th scope="row">Four fins, normal-force slope</th><td><span data-k="finCna">5.47</span> /rad</td><td><span class="tag">SIM</span></td><td>interference factor <span data-k="kfb">1.382</span></td></tr>
             <tr><th scope="row">Fin CP from the nose</th><td><span data-k="finXcpIn">43.64</span> in</td><td><span class="tag">SIM</span></td><td></td></tr>
             <tr><th scope="row">Total normal-force slope</th><td><span data-k="cna">7.47</span> /rad</td><td><span class="tag">SIM</span></td><td></td></tr>
-            <tr><th scope="row">CP from the nose</th><td><span data-k="xcpIn">33.10</span> in</td><td><span class="tag">SIM</span></td><td></td></tr>
-            <tr><th scope="row">Static margin at liftoff</th><td><span data-k="margin0">4.15</span> cal</td><td><span class="tag">SIM</span></td><td>at the page CG</td></tr>
-            <tr><th scope="row">Static margin at burnout</th><td><span data-k="marginBo">4.64</span> cal</td><td><span class="tag">SIM</span></td><td></td></tr>
-            <tr><th scope="row">Body planform centroid</th><td><span data-k="centroidIn">24.42</span> in</td><td><span class="tag">SIM</span></td><td>where body lift acts at large α</td></tr>
-            <tr><th scope="row">Drag coefficient</th><td><span data-k="cd">0.6339</span></td><td><span class="tag">FIT</span></td><td>to the 1,033 ft apogee&nbsp;<span class="tag">PAGE</span>, fitted 2026-10-22</td></tr>
-            <tr><th scope="row">Pitch natural frequency at 98 ft/s</th><td><span data-k="fn30">0.92</span> Hz</td><td><span class="tag">SIM</span></td><td>linearised pitch equation, liftoff mass</td></tr>
-            <tr><th scope="row">Damping ratio at 98 ft/s</th><td><span data-k="zeta30">0.094</span></td><td><span class="tag">SIM</span></td><td></td></tr>
+            <tr><th scope="row">CP from the nose</th><td><span data-k="xcpIn">32.94</span> in</td><td><span class="tag">SIM</span></td><td></td></tr>
+            <tr><th scope="row">Static margin at liftoff</th><td><span data-k="margin0">2.16</span> cal</td><td><span class="tag">SIM</span></td><td>at the CG estimate; <span data-k="marginCadLo">2.01</span> to <span data-k="marginCadHi">2.47</span> over its spread&nbsp;<span class="tag">SIM</span>, <span data-k="marginPage0">4.09</span> at the case study's 22 in</td></tr>
+            <tr><th scope="row">Static margin at burnout</th><td><span data-k="marginBo">2.53</span> cal</td><td><span class="tag">SIM</span></td><td></td></tr>
+            <tr><th scope="row">Body planform centroid</th><td><span data-k="centroidIn">24.22</span> in</td><td><span class="tag">SIM</span></td><td>where body lift acts at large α</td></tr>
+            <tr><th scope="row">Drag coefficient</th><td><span data-k="cd">0.6339</span></td><td><span class="tag">FIT</span></td><td>to the 1,033 ft apogee&nbsp;<span class="tag">PAGE</span>, fitted 2026-10-22; a component estimate for the CAD airframe gives 0.44 to 0.66&nbsp;<span class="tag">SIM</span>; there is no flight data</td></tr>
+            <tr><th scope="row">Pitch natural frequency at 98 ft/s</th><td><span data-k="fn30">0.69</span> Hz</td><td><span class="tag">SIM</span></td><td>two-degree-of-freedom short period (pitch with the turning of the flight path), liftoff mass</td></tr>
+            <tr><th scope="row">Damping ratio at 98 ft/s</th><td><span data-k="zeta30">0.165</span></td><td><span class="tag">SIM</span></td><td>two-degree-of-freedom short period, within 0.1 percent of the simulated decay at constant speed in the validation; the one-degree-of-freedom form (Mandell) leaves out the path's turning and reads lower</td></tr>
 
             <tr class="fd-tr-group"><th scope="rowgroup" colspan="4">Launch and air</th></tr>
             <tr><th scope="row">Rail length</th><td>72 in</td><td><span class="tag">EST</span></td><td>a 6 ft rail; slider 36 to 94 in</td></tr>
             <tr><th scope="row">Launch angle</th><td>0°</td><td><span class="tag">EST</span></td><td>a vertical rail; slider ±10°</td></tr>
             <tr><th scope="row">Wind</th><td>0 mph</td><td><span class="tag">EST</span></td><td>still air by default; slider 0 to 20 mph, uniform with height</td></tr>
-            <tr><th scope="row">Rail exit speed</th><td><span data-k="railV">46.6</span> ft/s</td><td><span class="tag">SIM</span></td><td>forward button at the rail top</td></tr>
+            <tr><th scope="row">Rail exit speed</th><td><span data-k="railV">43.3</span> ft/s</td><td><span class="tag">SIM</span></td><td>forward button at the rail top, with the CAD's rail buttons, 24.59 and 41.94 in from the nose&nbsp;<span class="tag">CAD</span>; the case study's stations would give <span data-k="railVPage">46.4</span> ft/s</td></tr>
             <tr><th scope="row">Still-air apogee</th><td><span data-k="apogee">1033</span> ft</td><td><span class="tag">SIM</span></td><td>equal to the page's figure by the drag fit</td></tr>
-            <tr><th scope="row">Air density</th><td>1.225 kg/m³</td><td><span class="tag">STD</span></td><td>sea-level ISA, constant with height</td></tr>
+            <tr><th scope="row">Air density</th><td>1.225 kg/m³</td><td><span class="tag">STD</span></td><td>sea-level ISA, constant with height; the ISA's fall with height would add 0.38 percent, 3.9 ft, to the apogee&nbsp;<span class="tag">SIM</span></td></tr>
             <tr><th scope="row">Gravity</th><td>9.80665 m/s²</td><td><span class="tag">STD</span></td><td>standard gravity, 3rd CGPM (1901), as in the ISA</td></tr>
             <tr><th scope="row">Gust shape</th><td>0.5 s</td><td><span class="tag">EST</span></td><td>one-minus-cosine pulse</td></tr>
+            <tr><th scope="row">Default launch</th><td>gust 11.2 mph</td><td><span class="tag">EST</span></td><td>still air and full fins, the gust fired at rail exit, as in run 05; the replay pauses at apogee</td></tr>
 
-            <tr class="fd-tr-group"><th scope="rowgroup" colspan="4">Lattice</th></tr>
-            <tr><th scope="row">Grid, tiers 3 / 2 / 1</th><td>1024 × 320 / 768 × 240 / 512 × 160</td><td><span class="tag">EST</span></td><td>tier 0 runs no lattice</td></tr>
-            <tr><th scope="row">Steps per frame, tiers 3 / 2 / 1</th><td>24 / 16 / 8</td><td><span class="tag">EST</span></td><td>per 60 Hz frame, shed under load</td></tr>
-            <tr><th scope="row">Cell size at tier 3</th><td><span data-k="cellMm">1.747</span> mm</td><td><span class="tag">SIM</span></td><td>body <span data-k="dCells">38.9</span> cells across</td></tr>
-            <tr><th scope="row">Reynolds number</th><td>900 to 2,800</td><td><span class="tag">SIM</span></td><td>u<sub>in</sub> D / ν, from the pad to the 87.5 m/s peak; set for 3,000 at u<sub>in</sub> 0.10&nbsp;<span class="tag">EST</span>; the real rocket is near 3 × 10⁵ at 70 m/s</td></tr>
-            <tr><th scope="row">Smagorinsky constant</th><td>0.12</td><td><span class="tag">STD</span></td><td>Hou, Sterling, Chen and Doolen 1996</td></tr>
-            <tr><th scope="row">Inflow speed</th><td>0.03 to 0.10</td><td><span class="tag">EST</span></td><td>lattice units, 0.03 + 0.05 V / (70 m/s)</td></tr>
-            <tr><th scope="row">Inflow angle limit</th><td>±35°</td><td><span class="tag">EST</span></td><td></td></tr>
-            <tr><th scope="row">Live</th><td><span data-k="latLive">pending</span></td><td><span class="tag">SIM</span></td><td>grid, steps per second and precision while it runs</td></tr>
-            <tr><th scope="row">CAD measurement</th><td><span data-k="geomCheck">baked copy</span></td><td><span class="tag">CAD</span></td><td data-k="geomCheckNote">re-measured from the assembly when the 3D view has loaded it</td></tr>
           </tbody>
         </table>
+      </div>
+      <details class="fd-more fd-more-table">
+        <summary>The lattice and the page's live state</summary>
+        <div class="fd-table-wrap">
+          <table class="fd-table">
+            <caption class="sr-only">The lattice settings and the page's live state, with units and source tags</caption>
+            <thead><tr><th scope="col">Item</th><th scope="col">Value</th><th scope="col">Tag</th><th scope="col">Source or note</th></tr></thead>
+            <tbody>
+                <tr class="fd-tr-group"><th scope="rowgroup" colspan="4">Lattice</th></tr>
+                <tr><th scope="row">Grid, tiers 3 / 2 / 1</th><td>1024 × 320 / 768 × 240 / 512 × 160</td><td><span class="tag">EST</span></td><td>tier 0 runs no lattice</td></tr>
+                <tr><th scope="row">Steps per frame, tiers 3 / 2 / 1</th><td>24 / 16 / 8</td><td><span class="tag">EST</span></td><td>per 60 Hz frame, shed under load</td></tr>
+                <tr><th scope="row">Cell size at tier 3</th><td><span data-k="cellMm">1.747</span> mm</td><td><span class="tag">SIM</span></td><td>body <span data-k="dCells">38.9</span> cells across</td></tr>
+                <tr><th scope="row">Reynolds number</th><td>900 to 1,500</td><td><span class="tag">SIM</span></td><td>u<sub>in</sub> D / ν, from the pad to the 0.05 cap, reached at 28 m/s; set for 1,500 at u<sub>in</sub> 0.05&nbsp;<span class="tag">EST</span>; the real rocket is near 3 × 10⁵ at 70 m/s</td></tr>
+                <tr><th scope="row">Smagorinsky constant</th><td>0.12</td><td><span class="tag">STD</span></td><td>Hou, Sterling, Chen and Doolen 1996</td></tr>
+                <tr><th scope="row">Inflow speed</th><td>0.03 to 0.05</td><td><span class="tag">EST</span></td><td>lattice units: the page asks for 0.03 + 0.05 V / (70 m/s), up to 0.10; the engine runs at most 0.05 and scales the body's pitch rate with it</td></tr>
+                <tr><th scope="row">Inflow angle limit</th><td>±35°</td><td><span class="tag">EST</span></td><td></td></tr>
+                <tr><th scope="row">Live</th><td><span data-k="latLive">pending</span></td><td><span class="tag">SIM</span></td><td>grid, steps per second and precision while it runs</td></tr>
+                <tr><th scope="row">CAD measurement</th><td><span data-k="geomCheck">baked copy</span></td><td><span class="tag">CAD</span></td><td data-k="geomCheckNote">re-measured from the assembly when the 3D view has loaded it</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section class="fd-sec" id="words" aria-labelledby="words-h">
+    <div class="fd-wrap">
+      <header class="fd-sec-head">
+        <p class="eyebrow">03 / Words used here</p>
+        <h2 class="display-2" id="words-h">Words used here</h2>
+      </header>
+      <dl class="fd-words">
+        <div><dt>Angle of attack (AOA, <span class="fd-nocase">α</span>)</dt><dd>The angle between where the nose points and where the air comes from. At 0° the rocket flies straight into the air.</dd></div>
+        <div><dt>Center of gravity (CG)</dt><dd>The balance point. This page puts CHARGER's 27.2 in from the nose at liftoff, an estimate from the CAD&nbsp;<span class="tag">EST</span>; the case study gives 22 in for its 37 in design&nbsp;<span class="tag">PAGE</span>. The point moves forward as the motor burns&nbsp;<span class="tag">SIM</span>.</dd></div>
+        <div><dt>Center of pressure (CP)</dt><dd>Where the air's sideways push on the whole rocket adds up. Fins far back pull it toward the tail.</dd></div>
+        <div><dt>Static margin, calibers</dt><dd>How far the CP sits behind the CG, counted in body diameters (1 cal = 2.68 in here&nbsp;<span class="tag">CAD</span>). A positive margin means the air turns the nose back; a negative one means it tips it further over.</dd></div>
+        <div><dt>Normal force</dt><dd>The sideways push of the air on the rocket.</dd></div>
+        <div><dt>Rail exit</dt><dd>The moment the forward rail button leaves the guide rail. Until the rocket clears the rail, the rail steers; after that, the fins do.</dd></div>
+        <div><dt>Weathercocking</dt><dd>A finned rocket turns into a crosswind, like a weathervane, and climbs upwind.</dd></div>
+        <div><dt>Barrowman's method</dt><dd>The standard hand calculation of a model rocket's CP and stability (Barrowman 1967).</dd></div>
+        <div><dt>Lattice Boltzmann section</dt><dd>Airflow computed on a grid of cells, each holding how much air moves in each of nine directions. Here it is a flat 2D slice through the rocket, shown for the picture, not used to fly it. Its forces are a 2D section's and do not check the flight model (Method 03).</dd></div>
+        <div><dt>Source tags</dt><dd><span class="tag">PAGE</span> published on merttureli.com; <span class="tag">CAD</span> measured from the 3D model; <span class="tag">EST</span> chosen here; <span class="tag">FIT</span> tuned to match a published number; <span class="tag">SIM</span> worked out live in your browser; <span class="tag">STD</span> a textbook value.</dd></div>
+      </dl>
+      <div class="fd-keys-wrap">
+        <h3 class="fd-keys-h">Keyboard</h3>
+        <dl class="fd-keys" aria-label="Keyboard shortcuts while the stage is in view">
+          <div><dt>L</dt><dd>Launch</dd></div>
+          <div><dt>Space</dt><dd>Pause</dd></div>
+          <div><dt>R</dt><dd>Reset</dd></div>
+          <div><dt>G</dt><dd>Fire the gust</dd></div>
+          <div><dt>1 to 4</dt><dd>Smoke, pressure, vorticity, speed</dd></div>
+          <div><dt>Arrows</dt><dd>Flick, with the 3D view focused</dd></div>
+        </dl>
       </div>
     </div>
   </section>
 
-  <section class="fd-sec" id="runs" aria-labelledby="runs-h">
-    <div class="fd-wrap">
-      <header class="fd-sec-head">
-        <p class="eyebrow">03 / Runs</p>
-        <h2 class="display-2" id="runs-h">Runs</h2>
-        <p class="fd-sec-intro">Each run sets the panel, resets the rocket on the pad and launches it. CG 22 in&nbsp;<span class="tag">PAGE</span>, rail 72 in&nbsp;<span class="tag">EST</span>, launch angle 0°&nbsp;<span class="tag">EST</span>. The wind speeds and the gust are chosen here&nbsp;<span class="tag">EST</span>. The results are flown in this tab when the page loads&nbsp;<span class="tag">SIM</span>.</p>
-      </header>
-      <ol class="fd-runs">
-        <li class="fd-run" data-run="full">
-          <p class="fd-run-n">01</p>
-          <h3 class="fd-run-h" id="run-full-h">Full fins</h3>
-          <p class="fd-run-s">Four fins at CAD size, a 5 mph crosswind.</p>
-          <dl class="fd-run-r">
-            <div><dt>Margin at liftoff</dt><dd><span data-r="margin0">+4.15</span> cal&nbsp;<span class="tag">SIM</span></dd></div>
-            <div><dt>AOA at rail exit</dt><dd><span data-r="alphaRail">+8.9</span>°&nbsp;<span class="tag">SIM</span></dd></div>
-            <div><dt>Under 2°&nbsp;AOA, after rail&nbsp;exit</dt><dd><span data-r="settle">0.22</span> s&nbsp;<span class="tag">SIM</span></dd></div>
-            <div><dt>Apogee</dt><dd><span data-r="apogee">1028</span> ft&nbsp;<span class="tag">SIM</span></dd></div>
-          </dl>
-          <p class="fd-run-w">Watch the nose turn into the wind, overshoot a little, and hold.</p>
-          <button type="button" class="fd-run-b" data-run-go="full" aria-describedby="run-full-h">Launch run 01</button>
-        </li>
-        <li class="fd-run" data-run="half">
-          <p class="fd-run-n">02</p>
-          <h3 class="fd-run-h" id="run-half-h">Half fins</h3>
-          <p class="fd-run-s">Span and chords halved about the root leading edge, the same breeze.</p>
-          <dl class="fd-run-r">
-            <div><dt>Margin at liftoff</dt><dd><span data-r="margin0">−0.35</span> cal&nbsp;<span class="tag">SIM</span></dd></div>
-            <div><dt>Margin at burnout</dt><dd><span data-r="marginBo">+0.14</span> cal&nbsp;<span class="tag">SIM</span></dd></div>
-            <div><dt>Under 2°&nbsp;AOA, after rail&nbsp;exit</dt><dd><span data-r="settle">0.42</span> s&nbsp;<span class="tag">SIM</span></dd></div>
-            <div><dt>Apogee</dt><dd><span data-r="apogee">1033</span> ft&nbsp;<span class="tag">SIM</span></dd></div>
-          </dl>
-          <p class="fd-run-w">Negative margin at small angles. Above about 3.5° at liftoff&nbsp;<span class="tag">SIM</span> the body lift behind the CG turns the nose back, and the margin turns positive at T+<span data-r="marginUp">0.87</span>&nbsp;s&nbsp;<span class="tag">SIM</span> as the CG moves forward.</p>
-          <button type="button" class="fd-run-b" data-run-go="half" aria-describedby="run-half-h">Launch run 02</button>
-        </li>
-        <li class="fd-run" data-run="none">
-          <p class="fd-run-n">03</p>
-          <h3 class="fd-run-h" id="run-none-h">No fins</h3>
-          <p class="fd-run-s">Fins removed, the same breeze.</p>
-          <dl class="fd-run-r">
-            <div><dt>Margin at liftoff</dt><dd><span data-r="margin0">−6.63</span> cal&nbsp;<span class="tag">SIM</span></dd></div>
-            <div><dt>Peak AOA, ascent</dt><dd><span data-r="peakAlpha">28.6</span>°&nbsp;<span class="tag">SIM</span></dd></div>
-            <div><dt>Pitch past 60°</dt><dd>T+<span data-r="theta60">1.62</span>&nbsp;s&nbsp;<span class="tag">SIM</span></dd></div>
-            <div><dt>Apogee</dt><dd><span data-r="apogee">342</span> ft&nbsp;<span class="tag">SIM</span></dd></div>
-          </dl>
-          <p class="fd-run-w">The nose falls away from the wind, the rocket pitches over and loops.</p>
-          <button type="button" class="fd-run-b" data-run-go="none" aria-describedby="run-none-h">Launch run 03</button>
-        </li>
-        <li class="fd-run" data-run="wind">
-          <p class="fd-run-n">04</p>
-          <h3 class="fd-run-h" id="run-wind-h">Crosswind 10 mph</h3>
-          <p class="fd-run-s">Full fins, a steady 10 mph crosswind.</p>
-          <dl class="fd-run-r">
-            <div><dt>AOA at rail exit</dt><dd><span data-r="alphaRail">+17.5</span>°&nbsp;<span class="tag">SIM</span></dd></div>
-            <div><dt>Pitch at T+1 s</dt><dd><span data-r="theta1">−8.7</span>°&nbsp;<span class="tag">SIM</span></dd></div>
-            <div><dt>Apogee</dt><dd><span data-r="apogee">1014</span> ft&nbsp;<span class="tag">SIM</span></dd></div>
-            <div><dt>Upwind at apogee</dt><dd><span data-r="upwind">165</span> ft&nbsp;<span class="tag">SIM</span></dd></div>
-          </dl>
-          <p class="fd-run-w">Weathercocking: the fins turn the nose upwind, so the rocket climbs into the wind.</p>
-          <button type="button" class="fd-run-b" data-run-go="wind" aria-describedby="run-wind-h">Launch run 04</button>
-        </li>
-        <li class="fd-run" data-run="gust">
-          <p class="fd-run-n">05</p>
-          <h3 class="fd-run-h" id="run-gust-h">Gust at rail exit</h3>
-          <p class="fd-run-s">Full fins, still air, an 11.2 mph (5 m/s) gust fired as the forward button leaves the rail.</p>
-          <dl class="fd-run-r">
-            <div><dt>Peak AOA</dt><dd><span data-r="peakAlpha">7.25</span>°&nbsp;<span class="tag">SIM</span></dd></div>
-            <div><dt>Under 2°&nbsp;AOA, after the&nbsp;gust</dt><dd><span data-r="settle">0.72</span> s&nbsp;<span class="tag">SIM</span></dd></div>
-            <div><dt>Frequency at 98&nbsp;ft/s</dt><dd><span data-r="fn">0.92</span> Hz&nbsp;<span class="tag">SIM</span></dd></div>
-            <div><dt>Apogee</dt><dd><span data-r="apogee">1027</span> ft&nbsp;<span class="tag">SIM</span></dd></div>
-          </dl>
-          <p class="fd-run-w">One wobble, damped. This is the disturbance the flight model's tests use.</p>
-          <button type="button" class="fd-run-b" data-run-go="gust" aria-describedby="run-gust-h">Launch run 05</button>
-        </li>
-      </ol>
-    </div>
-  </section>
 </main>
 
 <footer class="fd-foot on-dark">
   <div class="fd-wrap fd-foot-in">
-    <p class="fd-foot-who">Mert Tureli / Austin, Texas / B.S. Mechanical Engineering, Union College, 2026</p>
+    <p class="fd-foot-who"><span class="fd-nw">Mert Tureli /</span> <span class="fd-nw">Austin, Texas /</span> <span class="fd-nw-xl"><span class="fd-nw">B.S. Mechanical Engineering,</span> <span class="fd-nw">Union College, 2026</span></span></p>
     <nav class="fd-foot-nav" aria-label="Elsewhere">
-      <a href="https://merttureli.com/">merttureli.com</a>
+      <a href="../assets/Mert-Tureli-Resume.pdf">Resume (PDF)</a>
+      <a href="https://linkedin.com/in/merttureli">LinkedIn</a>
+      <a href="mailto:merttureli0@gmail.com">Email</a>
       <a href="../projects/charger.html">The CHARGER case study</a>
+      <a href="https://merttureli.com/">merttureli.com</a>
       <a href="lab/">The labs</a>
     </nav>
     <p class="fd-foot-note">No analytics. Every SIM number is computed in this tab; nothing leaves it.</p>
+    <p class="fd-foot-credit"><mark class="flag" data-flag="vx-authorship" data-note="In your own words: what did you build, direct and check on this page (the flight model, the lattice engine, the page)?">[TBD]</mark></p>
   </div>
 </footer>
 </body>

@@ -55,10 +55,10 @@ const ON_EDGE = 1e-9;                       // cells: a centre this close to an 
 const SOLID_SDF_MIN = 1e-6;                 // cells: smallest |sdf| written for a solid cell, so sdf < 0 always marks it (never -0)
 const CACHE_MAX = 6;                        // sections kept per geometry
 
-/* PAGE figures (projects/charger.html design review, FIELD 1). The fins there are the
-   three-fin design; the CAD is the final four-fin configuration (owner's decision). */
+/* PAGE figures (projects/charger.html, the airframe and numbers sections, FIELD 1): four
+   fins, 2.68 in across, as the CAD. The 37 in length against the CAD's 46.49 in is an open owner question. */
 export const PAGE_FIGURES = Object.freeze({
-  lengthIn: 37, diameterIn: 2.63, finRootIn: 2.76, finHeightIn: 2.36, finSweepIn: 2.17, finCount: 3, cgFromNoseIn: 22,
+  lengthIn: 37, diameterIn: 2.68, finRootIn: 2.76, finHeightIn: 2.36, finSweepIn: 2.17, finCount: 4, cgFromNoseIn: 22,
 });
 export const DEFAULT_CG_M = PAGE_FIGURES.cgFromNoseIn * IN_M; // PAGE: CG 22 in from the nose = 0.5588 m
 

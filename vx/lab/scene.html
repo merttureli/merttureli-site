@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Lab / Scene · Mert Tureli VX</title>
 <meta name="robots" content="noindex">
-<meta name="description" content="Test bench for the CHARGER field study scene: the published CAD rocket in its livery, the lattice slice plane on a test card, CG and CP markers, force arrows, the exhaust, camera presets and the flick interaction.">
+<meta name="description" content="Test bench for the CHARGER field study scene: the published CAD rocket in its livery, the lattice slice plane on a test card, CG and CP markers, force arrows, the exhaust on its own clock, camera presets and framing, the slice dissolve, the flick interaction, the flight paths and end plate, the angle-of-attack arc and the camera director on the real flight model.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230A0A0A'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='26' font-weight='600' fill='%23FFFFFF'%3EMT%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="../css/tokens.css">
 <link rel="stylesheet" href="../css/scene.css">
@@ -103,16 +103,42 @@
         <button class="btn" type="button" data-cam="quarter" aria-pressed="false">Quarter</button>
         <button class="btn" type="button" data-cam="chase" aria-pressed="false">Chase</button>
         <button class="btn" type="button" data-cam="pad" aria-pressed="false">Pad</button>
+        <button class="btn" type="button" data-cam="hero" aria-pressed="false">Hero</button>
       </div>
+      <label class="row" for="frK">Framing k <output aria-live="off" id="oFrK" for="frK"></output><input id="frK" aria-label="Framing fit factor" type="range" min="0.5" max="2" step="0.05" value="1"></label>
+      <label class="row" for="frAim">Framing aim aft <output aria-live="off" id="oFrAim" for="frAim"></output><input id="frAim" aria-label="Framing aim shift toward the tail, meters" type="range" min="-0.4" max="0.4" step="0.01" value="0"></label>
+      <label class="row" for="frEl">Framing elevation <output aria-live="off" id="oFrEl" for="frEl"></output><input id="frEl" aria-label="Framing elevation override, degrees" type="range" min="-5" max="30" step="0.5" value="3"></label>
+      <label class="row">Preset elevation <input id="frElAuto" type="checkbox" checked></label>
+      <div class="group" role="group" aria-label="Framing moves">
+        <button class="btn" type="button" id="frPush">Push in</button>
+        <button class="btn" type="button" id="frCoast">Ease out</button>
+        <button class="btn" type="button" id="frReset">Reset framing</button>
+      </div>
+      <p class="note">Push in: k 0.8, aim 0.15 m aft, 6 s linear. Ease out: k 1.6 at 8 deg, 2.4 s. Framing acts on side, quarter and hero.</p>
       <div class="group" role="group" aria-label="Slice section">
         <button class="btn" type="button" data-slice="through" aria-pressed="true">Through fins</button>
         <button class="btn" type="button" data-slice="between" aria-pressed="false">Between fins</button>
       </div>
       <label class="row">Slice test card <input id="sliceOn" type="checkbox" checked></label>
+      <label class="row">Slice dissolved <input id="dissolve" type="checkbox"></label>
       <label class="row">Slice ramp <select id="view"><option value="smoke">Smoke</option><option value="pressure">Pressure</option><option value="vorticity">Vorticity</option><option value="speed">Speed</option></select></label>
       <label class="row">Markers <input id="markers" type="checkbox" checked></label>
+      <label class="row">Plume clock <select id="clock"><option value="flight">Flight time (wall here: no t)</option><option value="1">1, real time</option><option value="0.125">1/8</option><option value="0.05">1/20</option><option value="0">0, paused</option></select></label>
       <label class="row">Toy flick response <input id="toy" type="checkbox"></label>
       <label class="row">Tier <select id="tier"><option value="auto">Auto (governor)</option><option value="3">T3 full</option><option value="2">T2 reduced</option><option value="1">T1 minimal</option><option value="0">T0 static</option></select></label>
+
+      <h2>Paths, plate and director</h2>
+      <div class="group">
+        <button class="btn" id="fly" type="button" aria-pressed="false">Fly with the director</button>
+        <button class="btn" id="plateBtn" type="button" aria-pressed="false">End plate</button>
+      </div>
+      <label class="row">Fly with fins <input id="flyFins" type="checkbox" checked></label>
+      <label class="row">Gust at rail exit, 11.2 mph <input id="flyGust" type="checkbox" checked></label>
+      <label class="row">Fly rate <select id="flyRate"><option value="0.125">1/8</option><option value="0.05">1/20</option><option value="1">1, real time</option></select></label>
+      <label class="row">Angle-of-attack arc asked <input id="arc" type="checkbox"></label>
+      <label class="row">Gust line on the AIR plate <input id="gustLine" type="checkbox"></label>
+      <label class="row">Emphasis <select id="emph"><option value="">None, all at full strength</option><option value="air,alpha">Air and alpha</option><option value="cp,n">CP and N</option><option value="cg">CG</option><option value="alt">ALT cursor</option><option value="thrust">Thrust</option></select></label>
+      <p class="note">Fly runs the page's flight model (vx/js/flight) on this bench, no lattice, with the scene's director (vx/js/scene/director.js): the hero view on the pad, side from ignition, the push-in from rail exit, the ease-out from burnout and the end plate at apogee with the other fin choice flown silently as the ghost. Its figures are SIM. The arc shows only face on (the side camera, settled); the bench's hand-set alpha is EST.</p>
 
       <h2>Readout</h2>
       <pre class="readout" id="readout">waiting for the scene</pre>
@@ -123,8 +149,11 @@
 <script type="module">
 import { governor } from '../js/core/governor.js';
 import { createScene, padPose, PAD, CG_DEFAULT_M, FLICK_GAIN, FLICK_MAX } from '../js/scene/scene.js';
+import { PLUME_FLOW_HZ, PLUME_COUNT } from '../js/scene/exhaust.js';
 import { defaultDomain } from '../js/scene/slice.js';
 import { createTestCard } from '../js/scene/scene-testcard.js';
+import { createDirector } from '../js/scene/director.js';
+import { createFlight } from '../js/flight/flight.js';
 
 const $ = (id) => document.getElementById(id);
 const IN = 0.0254, FT = 0.3048, LBF = 0.2248089, DEG = Math.PI / 180;   // STD conversions
@@ -140,6 +169,7 @@ if (scene.fallback) {
   $('readout').textContent = `fallback  ${scene.fallback}\nThe scene resolved to a safe no-op object; every setter is inert.`;
 }
 const offTier = governor.subscribe(({ tier }) => scene.setTier(tier));
+scene.setOverlays(() => [$('hint')]);   // the bench's hint line: the 3D plates and the plate's tick labels keep off it
 
 // lab inputs (hand-set, EST)
 const S = { x: 0, y: 0.70, theta: 0, alpha: 0, v: 0, thrust: 0, N: 0, fins: 1, cg: 22, cp: 27, cplOn: true, cpl: -0.6, rail: 72, launch: 0 };
@@ -204,6 +234,24 @@ document.querySelectorAll('[data-slice]').forEach(b => b.addEventListener('click
 $('sliceOn').addEventListener('change', () => { sliceOn = $('sliceOn').checked; push(); });
 $('view').addEventListener('change', () => scene.setView($('view').value));
 $('markers').addEventListener('change', () => scene.setMarkers($('markers').checked));
+$('dissolve').addEventListener('change', () => scene.setDissolve($('dissolve').checked));
+$('clock').addEventListener('change', () => { const v = $('clock').value; scene.setTimeScale(v === 'flight' ? 'flight' : +v); });
+function frOutputs() {
+  const f = scene.framing || { target: { k: 1, aimM: 0, elDeg: null } }, t = f.target;
+  $('oFrK').textContent = t.k.toFixed(2);
+  $('oFrAim').textContent = `${sg(t.aimM, 2)} m`;
+  $('oFrEl').textContent = t.elDeg == null ? 'preset' : `${sg(t.elDeg, 1)} deg`;
+  if (document.activeElement !== $('frK')) $('frK').value = t.k;
+  if (document.activeElement !== $('frAim')) $('frAim').value = t.aimM;
+  if (t.elDeg != null && document.activeElement !== $('frEl')) $('frEl').value = t.elDeg;
+  $('frElAuto').checked = t.elDeg == null;
+}
+function frFromInputs(opts) { scene.setFraming({ k: +$('frK').value, aimM: +$('frAim').value, elDeg: $('frElAuto').checked ? null : +$('frEl').value }, opts); frOutputs(); }
+for (const id of ['frK', 'frAim', 'frEl']) $(id).addEventListener('input', () => { if (id === 'frEl') $('frElAuto').checked = false; frFromInputs({ animate: false }); });
+$('frElAuto').addEventListener('change', () => frFromInputs({ ms: 480 }));
+$('frPush').addEventListener('click', () => { scene.setFraming({ k: 0.8, aimM: 0.15 }, { ms: 6000, ease: 'linear' }); frOutputs(); });
+$('frCoast').addEventListener('click', () => { scene.setFraming({ k: 1.6, aimM: 0, elDeg: 8 }, { ms: 2400 }); frOutputs(); });
+$('frReset').addEventListener('click', () => { scene.setFraming(null); frOutputs(); });
 $('toy').addEventListener('change', () => { toy.on = $('toy').checked; if (!toy.on) { toy.rate = 0; toy.offset = 0; push(); } });
 $('tier').addEventListener('change', () => { const v = $('tier').value; governor.pin(v === 'auto' ? null : +v); });
 $('check15').addEventListener('click', () => { stopScript(); Object.assign(S, { x: 0, theta: 15, alpha: 15, v: 60, thrust: 0, N: 12 }); S.y = 40; setCam('side'); outputs(); push(); });
@@ -249,10 +297,96 @@ $('script').addEventListener('click', () => {
   $('script').setAttribute('aria-pressed', 'true'); setCam('chase'); script.t0 = performance.now(); script.raf = requestAnimationFrame(scriptStep);
 });
 
+/* Fly with the director: the real flight model (vx/js/flight, no lattice) drives the scene, the
+   scene's director moves the camera, draws the path and closes on the end plate at apogee. The
+   ghost is the other fin choice flown silently here, sampled every 50 ms to apogee. SIM. */
+const MPH = 0.44704, GUST_MPH = 11.184681;             // STD m/s per mph; the page's 5 m/s gust in mph (EST input)
+const fly = { flight: null, director: null, raf: 0, last: 0, acc: 0, offEvent: null };
+function silentPath(cfg, gustMph, finScale) {
+  const f = createFlight({ ...cfg, finScale }, { bus: null });
+  f.onEvent((e) => { if (e.name === 'railExit' && gustMph > 0) f.gust(gustMph * MPH); });
+  f.ignite();
+  const pts = [];
+  for (let i = 0; i < 40000 && !Number.isFinite(f.state.apogee); i++) { f.step(0.001); if (f.state.stepIndex % 50 === 0) pts.push({ x: f.state.x, y: f.state.y }); }
+  pts.push({ x: f.state.x, y: f.state.y });
+  const out = { points: pts, finScale, apogeeFt: f.state.apogee / FT };
+  f.destroy();
+  return out;
+}
+function flyDerived(f) { return { xcg: f.state.xcg, xref: f.state.refFromNose, xcp: f.derived.xcp, tags: { xcp: 'SIM', margin: 'SIM' } }; }
+function stopFly() {
+  if (fly.raf) cancelAnimationFrame(fly.raf); fly.raf = 0;
+  $('fly').setAttribute('aria-pressed', 'false');
+  if (fly.director) fly.director.playing(false);
+}
+function endFly() {
+  stopFly();
+  if (fly.offEvent) fly.offEvent(); fly.offEvent = null;
+  if (fly.director) { fly.director.pad(); fly.director.destroy(); } fly.director = null;
+  if (fly.flight) fly.flight.destroy(); fly.flight = null;
+}
+function flyStep(now) {
+  fly.raf = 0;
+  const f = fly.flight;
+  if (!f) return;
+  const dt = fly.last ? Math.min(0.1, (now - fly.last) / 1000) : 1 / 60; fly.last = now;
+  fly.acc += dt * +$('flyRate').value;
+  // 5 ms at a time, so the stop lands on the first grid step at apogee, as the page's does
+  while (fly.acc >= 0.005 && !Number.isFinite(f.state.apogee) && !f.done) { f.step(0.005); fly.acc -= 0.005; }
+  scene.setFlight(f.state, flyDerived(f));
+  if (Number.isFinite(f.state.apogee) || f.done) { fly.acc = 0; stopFly(); $('plateBtn').setAttribute('aria-pressed', String(!!scene.plate)); return; }
+  fly.raf = requestAnimationFrame(flyStep);
+}
+function startFly() {
+  endFly(); stopScript(); toy.on = false; $('toy').checked = false;
+  const fins = $('flyFins').checked ? 1 : 0, gustOn = $('flyGust').checked;
+  const f = createFlight({}, { bus: null });
+  f.setFinScale(fins);
+  fly.flight = f;
+  scene.setFinScale(fins); scene.setRail(f.config.railLength, 0);
+  sliceOn = false; $('sliceOn').checked = false; scene.setSliceTexture(null);
+  fly.offEvent = f.onEvent((e) => { if (e.name === 'railExit' && gustOn) f.gust(GUST_MPH * MPH); });
+  fly.director = createDirector(scene, {
+    flight: f, reduced: () => reduced,
+    gustMph: () => (gustOn ? GUST_MPH : 0),
+    ghost: (cfg, { gustMph }) => silentPath(cfg, gustMph, cfg.finScale > 0.005 ? 0 : 1),
+    avoid: () => [$('hint')],
+  });
+  scene.setFlight(f.state, flyDerived(f));
+  f.ignite();
+  fly.director.playing(true);
+  $('fly').setAttribute('aria-pressed', 'true');
+  fly.last = 0; fly.acc = 0;
+  if (reduced) { // no autoplay under reduced motion: step to apogee in one go, a cut to the plate
+    while (!Number.isFinite(f.state.apogee) && !f.done) f.step(0.005);
+    scene.setFlight(f.state, flyDerived(f)); stopFly();
+  } else fly.raf = requestAnimationFrame(flyStep);
+}
+$('fly').addEventListener('click', () => { if (fly.raf) endFly(); else startFly(); });
+$('plateBtn').addEventListener('click', () => { const on = !!scene.plate; scene.setPlate(on ? null : 'trails'); $('plateBtn').setAttribute('aria-pressed', String(!!scene.plate)); });
+$('arc').addEventListener('change', () => scene.setAoaArc($('arc').checked));
+$('gustLine').addEventListener('change', () => scene.setGust($('gustLine').checked ? { mph: GUST_MPH, tag: 'EST' } : null));
+$('emph').addEventListener('change', () => scene.setEmphasis($('emph').value ? $('emph').value.split(',') : null));
+
 // URL state
 if (q.get('cam')) setCam(q.get('cam'));
 if (q.get('markers') === '0') { $('markers').checked = false; scene.setMarkers(false); }
 if (q.get('view')) { $('view').value = q.get('view'); scene.setView(q.get('view')); }
+if (q.get('dissolve') === '1') { $('dissolve').checked = true; scene.setDissolve(1, { animate: false }); }
+if (q.has('clock')) { const c = q.get('clock'); $('clock').value = c; scene.setTimeScale(c === 'flight' ? 'flight' : +c); }
+if (q.get('arc') === '1') { $('arc').checked = true; scene.setAoaArc(true); }
+if (q.get('gust') === '1') { $('gustLine').checked = true; scene.setGust({ mph: GUST_MPH, tag: 'EST' }); }
+if (q.get('emph')) { $('emph').value = q.get('emph'); scene.setEmphasis(q.get('emph').split(',')); }
+if (q.get('fins') === '0') $('flyFins').checked = false;
+if (q.get('nogust') === '1') $('flyGust').checked = false;
+if (q.has('rate')) $('flyRate').value = q.get('rate');
+if (q.has('k') || q.has('aim') || q.has('el')) {
+  if (q.has('k')) $('frK').value = +q.get('k');
+  if (q.has('aim')) $('frAim').value = +q.get('aim');
+  if (q.has('el')) { $('frEl').value = +q.get('el'); $('frElAuto').checked = false; }
+  frFromInputs({ animate: false });
+}
+frOutputs();
 if (sliceView === 'between') setSlice('between');
 $('sliceOn').checked = sliceOn;
 scene.setFinScale(S.fins);
@@ -262,6 +396,7 @@ scene.ready.then((ok) => {
   cardKey = ''; push();
   if (q.get('check') === '15') $('check15').click();
   if (q.get('script') === '1' && !reduced) $('script').click();
+  if (q.get('fly') === '1') startFly();
 });
 
 // readout, 4 Hz (not a live region)
@@ -276,8 +411,17 @@ const tick = () => {
 renderer  ${s.size.width} x ${s.size.height} css px / dpr ${s.dpr} / tier ${s.tier}${s.reduced ? ' / reduced motion' : ''}
 draw      ${s.calls} calls / ${s.triangles} tris / ${s.ms.toFixed(1)} ms cpu / ${s.frames} frames
 camera    ${s.camera.mode}${s.camera.transitioning ? ' (moving)' : ''} / ${s.camera.distance.toFixed(2)} m / fov ${s.camera.fov.toFixed(1)} deg
+framing   k ${s.camera.framing.k.toFixed(3)} / aim ${sg(s.camera.framing.aimM, 3)} m aft / elevation ${s.camera.framing.elDeg == null ? 'preset' : sg(s.camera.framing.elDeg, 1) + ' deg'}${s.camera.framing.moving ? ' (easing)' : ''}
 slice     ${s.slice.visible ? 'on' : 'off'} / ${s.slice.view} / ${s.slice.domain.cols} x ${s.slice.domain.rows} cells / ${(s.slice.domain.cellM * 1000).toFixed(2)} mm per cell
           ${s.slice.size.widthM.toFixed(3)} x ${s.slice.size.heightM.toFixed(3)} m / nose col ${s.slice.domain.xNoseCol.toFixed(1)}
+          dissolve ${s.slice.dissolve.toFixed(2)} (target ${s.slice.dissolveTarget.toFixed(2)})
+plume     ${s.plume.visible ? 'on' : 'off'} / clock ${s.plume.mode}${s.plume.timeScale != null ? ' x ' + s.plume.timeScale : ''} / ${s.plume.clock.toFixed(2)} s run / drift ${s.plume.advance.toFixed(1)} (${(PLUME_FLOW_HZ * PLUME_COUNT).toFixed(1)} per plume second)
+paths     ${s.trail.points} points (${s.trail.style}, ${s.trail.width} px at ${Math.round(s.trail.opacity * 100)} percent${s.trail.live ? ', live' : ''}) / ghost ${s.trail.ghostPoints} / ticks ${s.trail.ticks.map((t) => t.key + (t.ft ? ' ' + Math.round(t.ft) + ' ft' : '')).join(', ') || 'none'}
+ladder    ${s.ladder ? `${s.ladder.visible ? 'on' : 'off (no room for the ALT label)'} / ${sg(s.ladder.fromRocketM, 2)} m from the rocket${s.ladder.mix > 0 ? ` / ${Math.round(s.ladder.mix * 100)} percent to the plate` : ''}` : 'n/a'}
+plate     ${s.plate.up ? `up / ${s.plate.camera ? 'camera on the plate' : 'camera left it'} / box ${s.plate.box ? `${s.plate.box.x0.toFixed(1)} to ${s.plate.box.x1.toFixed(1)} m by ${s.plate.box.y0.toFixed(1)} to ${s.plate.box.y1.toFixed(1)} m` : 'none'}` : 'down'}${s.rocketDot ? ' / rocket dot on' : ''}
+n figure  ${s.labels ? `${s.labels.nAt === 'arrow' ? "at the arrow's tail" : s.labels.nAt === 'cp' ? 'on the CP plate' : 'off'} / stations ${Number.isFinite(s.labels.stationsPx) ? s.labels.stationsPx.toFixed(0) + ' px apart' : 'n/a'}` : 'n/a'}
+arc       ${s.arc.wanted ? 'asked' : 'not asked'} / ${s.arc.shown ? 'shown' : 'not shown' + (s.arc.blocked ? ' (' + s.arc.blocked + ')' : '')} / gust line ${s.gust ? s.gust.mph.toFixed(1) + ' mph ' + s.gust.tag : 'off'} / emphasis ${s.emphasis ? s.emphasis.join(', ') : 'none'}
+director  ${fly.director ? `${fly.director.phase}${fly.director.active ? '' : ' (released)'}${fly.flight ? ` / T+${fly.flight.state.t.toFixed(3)} s` : ''}` : 'off'}
 
 <b>SIGN CHECK</b>  alpha ${sg((S.alpha + toy.offset), 1)} deg / theta ${sg((S.theta + toy.offset), 1)} deg
 grid inflow (cos a, sin a) in world   ${v(sign.slice)}
@@ -293,8 +437,9 @@ CG default ${(CG_DEFAULT_M / IN).toFixed(1)} in from the nose (PAGE)`;
 };
 const readoutTimer = setInterval(tick, 250);
 tick();
-addEventListener('pagehide', () => { clearInterval(readoutTimer); stopScript(); offTier(); scene.destroy(); card.dispose(); });
+addEventListener('pagehide', () => { clearInterval(readoutTimer); stopScript(); endFly(); offTier(); scene.destroy(); card.dispose(); });
 window.__scene = scene;
+window.__fly = fly;
 </script>
 </body>
 </html>

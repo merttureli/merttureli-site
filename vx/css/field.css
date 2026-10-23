@@ -3,9 +3,14 @@
    the sheet and the dock, scene.css for the canvas hooks). Class prefix .fd-.
 
    One screen holds the header strip (48 px) and the stage (the rest of 100svh).
-   Below it the reading sections sit on paper: method, configuration, runs. The
-   panel's phone breakpoint (859.98 px) is used here too, so the page and the sheet
-   change layout at the same width. */
+   Below it the reading sections sit on paper, story first: the lede (with the brief
+   rows and the figure slot), the runs, then the appendix (three plain limits, method,
+   configuration) and the glossary. Long method and configuration items fold into
+   native details (.fd-more). On the stage, the caption block (.fd-cap, bottom left)
+   holds, top to bottom, the end card at apogee (.fd-end, story.js), the story caption
+   slot (.fd-cap-story) and the two flow caption lines. The panel's phone breakpoint
+   (859.98 px) is used here too, so the page and the sheet change layout at the same
+   width. */
 
 :root { --fd-head-h: 48px; --fd-gutter: max(var(--page-margin), env(safe-area-inset-left, 0px)); --fd-gutter-r: max(var(--page-margin), env(safe-area-inset-right, 0px)); }
 html { background: var(--ink-900); }
@@ -24,20 +29,20 @@ body { background: var(--paper); color: var(--ink-700); overflow-x: clip; }
   background: var(--ink-900); color: var(--paper); border-bottom: 1px solid var(--paper-a18);
   font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: 1.2;
 }
-.fd-title { flex: 0 0 auto; margin: 0; font-family: var(--font-mono); font-size: 11px; font-weight: 400; letter-spacing: 0.24em; color: var(--paper); white-space: nowrap; }
+/* left: the wordmark (to the site) and the study's name; right: the time code with the true rate,
+   then CASE STUDY, RUNS, SITE (item 3). GRID, TIER and ENGINE are in the panel's lattice line. */
+.fd-title { flex: 0 1 auto; min-width: 0; margin: 0; font-family: var(--font-mono); font-size: 11px; font-weight: 400; letter-spacing: 0.24em; color: var(--paper); white-space: nowrap; overflow: hidden; }
+.fd-mark { color: var(--paper); text-decoration: none; border-bottom: 1px solid transparent; padding: 4px 0; transition: border-color var(--dur-2) var(--ease-out); }
+.fd-mark:hover { border-bottom-color: var(--paper); }
+.fd-title-x { color: var(--paper-a70); }
 .fd-sep { color: var(--paper-a45); }
-.fd-meta { flex: 1 1 auto; display: flex; justify-content: flex-end; gap: var(--space-5); min-width: 0; margin: 0; }
-.fd-m { display: flex; gap: 8px; align-items: baseline; white-space: nowrap; }
-.fd-m dt { color: var(--paper-a70); }
-.fd-m dd { margin: 0; color: var(--paper); font-variant-numeric: tabular-nums; }
-.fd-m-tc dd { min-width: 9ch; }
-.fd-nav { flex: 0 0 auto; display: flex; gap: var(--space-4); padding-left: var(--space-5); border-left: 1px solid var(--paper-a18); }
+.fd-clock { flex: 1 0 auto; display: flex; justify-content: flex-end; align-items: baseline; gap: 8px; margin: 0; white-space: nowrap; color: var(--paper); font-variant-numeric: tabular-nums; }
+.fd-clock-tc { min-width: 8ch; text-align: right; }
+.fd-nav { flex: 0 0 auto; display: flex; gap: var(--space-4); margin-left: auto; padding-left: var(--space-5); border-left: 1px solid var(--paper-a18); }
 .fd-nav a { color: var(--paper-a70); text-decoration: none; border-bottom: 1px solid transparent; padding: 4px 0; transition: color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out); }
 .fd-nav a:hover { color: var(--paper); border-bottom-color: var(--paper); }
-.fd-nav a:focus-visible, .fd-foot a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
-@media (max-width: 1599.98px) { .fd-m-engine { display: none; } }
-@media (max-width: 1199.98px) { .fd-m-rate { display: none; } }
-@media (max-width: 1039.98px) { .fd-m-tier { display: none; } .fd-title-x { display: none; } }
+.fd-nav a:focus-visible, .fd-foot a:focus-visible, .fd-mark:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
+@media (max-width: 1039.98px) { .fd-title-x { display: none; } }
 
 /* ---------------------------------------------------------------- stage */
 .fd-stage {
@@ -47,23 +52,120 @@ body { background: var(--paper); color: var(--ink-700); overflow-x: clip; }
 .fd-viewport { overflow: hidden; background: var(--ink-900); isolation: isolate; }
 .fd-viewport > canvas.pn-fallback { position: absolute; inset: 0; touch-action: pan-y pinch-zoom; }   /* sideways drags flick; the browser keeps vertical scroll and pinch-zoom */
 .fd-viewport > .sc-canvas.fd-off { display: none; }
-/* the 2D view draws its own caption, tape and frame: the 3D overlays step aside */
-.fd-viewport.fd-2d .fd-cap, .fd-viewport.fd-2d .sc-ticks { display: none; }
-.fd-viewport.fd-2d .sc-hint { left: 74px; }
+/* the 2D view draws its own caption, tape and frame: the 3D overlays step aside. The end
+   card and the story caption stay (they are DOM over the view), clear of the altitude tape. */
+.fd-viewport.fd-2d .sc-ticks, .fd-viewport.fd-2d [data-cap-flow], .fd-viewport.fd-2d [data-cap-note] { display: none; }
+.fd-viewport.fd-2d .sc-hint, .fd-viewport.fd-2d .fd-cap { left: 74px; }
 
 /* captions over the view: informational text at paper-a70 or stronger */
 /* bottom left, over the ground, stacked above the hint: the rocket's own labels ride with the rocket near the middle */
-.fd-cap { position: absolute; z-index: 2; left: calc(var(--space-3) + 22px); bottom: calc(var(--space-3) + 28px); right: 30%; margin: 0; pointer-events: none;
+.fd-cap { position: absolute; z-index: 2; left: calc(max(var(--space-3), env(safe-area-inset-left, 0px)) + 22px); bottom: calc(var(--space-3) + 28px); right: 30%; margin: 0; pointer-events: none;
   font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: 1.6; color: var(--paper); }
-.fd-cap-l { width: fit-content; max-width: 100%; margin: 0 0 0 -6px; padding: 1px 6px; background: rgba(10, 10, 10, .74); }   /* an ink plate, as the scene's labels have: the rail, the ladder and the plume pass behind it */
+.fd-cap-l { width: fit-content; max-width: 100%; margin: 0 0 0 -6px; padding: 1px 6px; background: rgba(10, 10, 10, .74); }
+.fd-cap > * { position: relative; }   /* in source order over the plate's shade (the plate is positioned) */   /* an ink plate, as the scene's labels have: the rail, the ladder and the plume pass behind it */
 .fd-cap-dim { color: var(--paper-a70); }
 .fd-cap-warn::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 8px; background: var(--livery); vertical-align: 1px; }
+/* the story caption slot (story.js caption(); the narrated replay writes it): one plain line, a step up from the flow lines */
+.fd-cap-story { margin-bottom: 4px; font-size: var(--fs-meta); color: var(--paper); }
+.fd-cap-story[hidden], .fd-end[hidden], .fd-beats[hidden], .fd-cap-key[hidden], .sc-hint[hidden] { display: none; }
+/* the caption slot stays rendered while empty, so it is a live region before its first line (story.js caption) */
+.fd-cap-story[data-empty] { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+/* a run of words that breaks only at its edges: a name, a number and its unit, a separator and the
+   segment before it (.fd-nw); .fd-nw-w only where the line is wide enough to hold it */
+.fd-nw { white-space: nowrap; }
+@media (min-width: 1200px) { .fd-nw-xl { white-space: nowrap; } }   /* the footer's degree line in one piece where its column holds it */
+/* the byline's award in one piece where the plate holds it: a wide desktop plate, and phones from 375 px
+   (with the byline's tracking eased there); elsewhere it may break after "First place," */
+@media (min-width: 1150px) and (min-height: 650px), (min-width: 375px) and (max-width: 859.98px) { .fd-plate-by .fd-nw-w { white-space: nowrap; } }
+/* the legend line (item 8): swatches for the view on screen, so orange reads as the air pressing harder */
+.fd-key { display: none; }
+.fd-cap-key[data-view="pressure"] .fd-key-pressure, .fd-cap-key[data-view="smoke"] .fd-key-smoke { display: inline; }
+.fd-key-i { display: inline-block; white-space: nowrap; }
+.fd-key-i + .fd-key-i { margin-left: 16px; }
+.fd-sw { display: inline-block; width: 10px; height: 10px; margin-right: 8px; vertical-align: -1px; border-radius: 1px; }
+.fd-sw-hi { background: var(--livery); }
+.fd-sw-lo { background: #BDBDBD; }   /* the suction side of the lattice's pressure ramp (shaders.js: ink-800 to 0.88 paper) */
+.fd-sw-smoke { width: 16px; height: 2px; vertical-align: 3px; background: var(--paper); border-radius: 0; }
+/* NEXT BEAT and PREVIOUS BEAT under reduced motion (item 7) */
+.fd-beats { pointer-events: auto; display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 8px -6px; padding: 0 6px; }
+.fd-beats .fd-badge-x { min-height: 32px; padding: 0 14px; background: rgba(10, 10, 10, .74); }
+.fd-beats .fd-badge-x:disabled { color: var(--paper-a45); border-color: var(--paper-a18); cursor: default; }
 
-.fd-badges { position: absolute; z-index: 3; top: calc(var(--space-3) + 2px); right: calc(var(--space-3) + 22px); display: grid; justify-items: end; gap: 6px; margin: 0; }
+/* the title plate (item 3): the eyebrow, the page's h1 at display size, one plain sentence, the byline
+   and two pills, over the stage's lower left before the first launch. Static HTML, so it reads with JS
+   off. The h1 is sized to the view beside the rail, so it stays clear of the rocket at the view's
+   center. It fades on a launch (480 ms, the site easing) and, once gone, only its h1 stays, visually
+   hidden, for the accessibility tree. */
+/* Sized by the view's height as well as its width, so it never grows up into the header on a short
+   laptop screen (1280 x 720), and kept to the left half of the view, so its words stay clear of the
+   rocket at the view's center (1040 x 800). */
+.fd-plate { --fd-plate-h: clamp(48px, min(calc((100vw - var(--pn-rail-w, 0px)) * 0.08), calc((100svh - var(--fd-head-h)) * 0.11)), 184px);
+  position: relative; isolation: isolate; pointer-events: auto; width: fit-content; max-width: min(100%, calc(var(--fd-plate-h) * 5.3), calc((100vw - var(--pn-rail-w, 0px)) / 2 - 96px)); margin: 0 0 var(--space-5); text-transform: none; letter-spacing: 0; line-height: 1.5;
+  transition: opacity var(--dur-3) var(--ease-out), transform var(--dur-3) var(--ease-out); }
+/* an ink shade behind the plate, so the grid and the rail do not run through the words */
+.fd-plate::before { content: ""; position: absolute; z-index: -1; inset: -56px -96px -24px -64px; pointer-events: none;
+  background: radial-gradient(ellipse farthest-side at 30% 60%, rgba(10, 10, 10, .82) 45%, rgba(10, 10, 10, 0)); }
+.fd-plate[data-gone]::before { content: none; }
+.fd-plate[data-out] { opacity: 0; transform: translateY(8px); pointer-events: none; }
+.fd-plate[data-gone] { margin: 0; }
+.fd-plate[data-gone] > :not(.fd-plate-h) { display: none; }
+.fd-plate[data-gone] .fd-plate-h { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.fd-plate-eye { margin: 0; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps-wide); text-transform: uppercase; color: var(--paper-a70); }
+.fd-plate-h { margin: var(--space-4) 0 0; font-family: var(--font-display); font-weight: 500; font-size: var(--fd-plate-h);
+  line-height: var(--lh-display); letter-spacing: var(--ls-display); text-transform: uppercase; color: var(--paper); }
+.fd-plate-p { max-width: 36ch; margin: var(--space-5) 0 0; font-family: var(--font-body); font-size: var(--fs-body-lg); line-height: 1.5; color: var(--paper-a90); }
+.fd-plate-by { margin: var(--space-4) 0 0; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: 1.7; color: var(--paper-a70); }
+.fd-plate-by .tag { margin-left: 2px; }
+.fd-plate-act { display: flex; flex-wrap: wrap; gap: 10px; margin-top: var(--space-5); }
+@media (min-width: 860px) { .fd-plate-act { flex-wrap: nowrap; } }   /* the two pills stay one row when the plate's text column is narrow (1040 px): they sit below the rocket's stand */
+
+/* the slate (item 7): the launch's conditions, loud for 1.2 s, then quiet under the time code */
+.fd-slate { max-width: min(46ch, 100%); margin: 0; padding: 4px 12px; border: 1px solid transparent; border-radius: var(--radius-pill); background: rgba(10, 10, 10, .5);
+  font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: 1.6; text-align: right; color: var(--paper-a70);
+  transition: color var(--dur-3) var(--ease-out), border-color var(--dur-3) var(--ease-out), background-color var(--dur-3) var(--ease-out); }
+.fd-slate[data-loud] { color: var(--paper); border-color: var(--paper-a45); background: rgba(10, 10, 10, .82); }
+.fd-slate[hidden] { display: none; }
+
+/* the end card at apogee (story.js showEnd): the two figures of the flight just flown, its
+   conditions and four controls. An ink plate like the captions', with the site's display type
+   for the figures: the one large type on the stage. */
+.fd-end { pointer-events: auto; width: fit-content; max-width: min(100%, 640px); margin: 0 0 var(--space-4) -6px; padding: var(--space-4) var(--space-5) var(--space-4) var(--space-4);
+  background: rgba(10, 10, 10, .94); border: 1px solid var(--paper-a18); border-radius: var(--radius-sm);
+  opacity: 0; transform: translateY(8px); transition: opacity var(--dur-3) var(--ease-out), transform var(--dur-3) var(--ease-out); }
+.fd-end[data-in] { opacity: 1; transform: none; }
+.fd-end-eye { color: var(--paper-a70); line-height: 1.5; }
+.fd-end-figs { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-4) var(--space-7); margin: var(--space-3) 0 var(--space-5); }
+.fd-end-figs dt { color: var(--paper-a70); line-height: 1.5; }
+.fd-end-figs dd { display: flex; align-items: baseline; gap: 6px; margin: 6px 0 0; white-space: nowrap; }
+.fd-end-n { font-family: var(--font-display); font-weight: 500; font-size: clamp(40px, 4vw, 64px); line-height: var(--lh-display); letter-spacing: var(--ls-display); color: var(--paper); font-variant-numeric: tabular-nums; }
+.fd-end-u { font-size: var(--fs-meta); color: var(--paper); }
+.fd-end-act { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.fd-end-b, .fd-end-q { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; }   /* buttons do not inherit the caption's caps */
+.fd-end-b { display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border: 1px solid var(--paper-a45); border-radius: var(--radius-pill); color: var(--paper); text-decoration: none; white-space: nowrap;
+  transition: background-color var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out); }
+.fd-end-b:hover { background: var(--paper-a08); }
+.fd-end-b-p { background: var(--paper); border-color: var(--paper); color: var(--ink-900); }
+.fd-end-b-p:hover { background: var(--ink-100); }
+.fd-end-q { min-height: 40px; padding: 0 6px; color: var(--paper-a90); text-decoration: underline; text-decoration-color: var(--paper-a45); text-decoration-thickness: 1px; text-underline-offset: 4px; white-space: nowrap; }
+.fd-end-q:hover { text-decoration-color: var(--paper); }
+.fd-end-b:focus-visible, .fd-end-q:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
+/* the end plate's caption (item 10): what the two paths behind the card are, and their conditions */
+.fd-end-plate { max-width: 60ch; margin: var(--space-4) 0 0; padding-top: var(--space-3); border-top: 1px solid var(--paper-a18); color: var(--paper-a70); line-height: 1.6; }
+.fd-end-plate[hidden] { display: none; }
+.fd-end-plate .tag { margin-left: 2px; }
+/* at the end card the slice has stepped aside for the plate, so the flow lines that describe it go too */
+.fd-stage[data-end-up] [data-cap-flow], .fd-stage[data-end-up] [data-cap-key], .fd-stage[data-end-up] [data-cap-note] { display: none; }
+/* while the title plate is up the front door is the plate alone, at every width: the flow lines step
+   aside (the plate's shade covers the slice they describe) and so does the armed gust's pill (the
+   plate's sentence names the gust; DISARM stays in the panel's CONFIGURE) */
+.fd-stage[data-plate-up] [data-cap-flow], .fd-stage[data-plate-up] [data-cap-key], .fd-stage[data-plate-up] [data-cap-note] { display: none; }
+.fd-stage[data-plate-up] .fd-badge[data-badge-gust] { display: none; }
+
+.fd-badges { position: absolute; z-index: 3; top: calc(var(--space-3) + 2px); right: calc(max(var(--space-3), env(safe-area-inset-right, 0px)) + 22px); display: grid; justify-items: end; gap: 6px; margin: 0; }
 .fd-badges[hidden], .fd-badge[hidden] { display: none; }
 .fd-badge { display: inline-flex; align-items: center; gap: 10px; margin: 0; padding: 4px 6px 4px 12px; min-height: 28px; border: 1px solid var(--paper-a45); border-radius: var(--radius-pill); background: rgba(10,10,10,.72);
   font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper); white-space: nowrap; }
-.fd-badge[data-badge-hold] { padding-right: 12px; border-color: var(--livery); }
+.fd-badge[data-badge-hold] { padding-right: 12px; border-color: var(--paper); }   /* orange is the pressure legend's color (item 8) */
 .fd-badge-x { min-height: 24px; padding: 0 10px; border: 1px solid var(--paper-a45); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.1em; text-transform: uppercase; color: var(--paper); }
 .fd-badge-x:hover { background: var(--paper-a08); }
 .fd-badge-x:focus-visible { outline: 1px solid var(--paper); outline-offset: 2px; }
@@ -72,10 +174,11 @@ body { background: var(--paper); color: var(--ink-700); overflow-x: clip; }
   font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); white-space: nowrap; pointer-events: none; }
 .fd-status[hidden] { display: none; }
 .fd-viewport .sc-hint { right: 30%; }
-.no-js .fd-cap, .no-js .fd-status, .no-js .sc-hint, .no-js .sc-ticks, .no-js .fd-meta { display: none; }
+.no-js .fd-cap > :not(.fd-plate), .no-js .fd-plate-act, .no-js .fd-status, .no-js .sc-hint, .no-js .sc-ticks, .no-js .fd-clock { display: none; }
 .no-js .fd-viewport.pn-viewport { right: 0; bottom: 0; }   /* --pn-rail-w and --pn-dock-h live on .pn-host, which only the panel adds */
-.fd-noscript { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: var(--space-5); padding: var(--space-6) var(--fd-gutter-r) var(--space-6) var(--fd-gutter); text-align: center; }
-.fd-noscript img { width: min(100%, 880px); height: auto; }
+.fd-noscript { position: absolute; inset: 0; display: grid; align-content: start; justify-items: center; gap: var(--space-4); padding: var(--space-6) var(--fd-gutter-r) var(--space-6) var(--fd-gutter); text-align: center; }
+.fd-noscript img { width: auto; max-width: min(100%, 760px); height: auto; max-height: 38svh; }   /* the title plate keeps the lower left */
+@media (min-width: 860px) { .fd-noscript { left: 46%; align-content: center; } }
 .fd-noscript p { max-width: 52ch; font-size: var(--fs-body-sm); color: var(--paper-a90); }
 
 /* ---------------------------------------------------------------- reading sections */
@@ -85,9 +188,25 @@ body { background: var(--paper); color: var(--ink-700); overflow-x: clip; }
 .fd-sec-alt { background: var(--ink-050); }
 .fd-lede .eyebrow, .fd-sec .eyebrow { color: var(--ink-500); }
 
-.fd-lede-h { margin-top: var(--space-5); }
-.fd-lede-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: var(--space-7) var(--space-9); align-items: start; margin-top: var(--space-8); }
-.fd-lede-p { max-width: var(--measure); font-size: var(--fs-body-lg); line-height: 1.6; color: var(--ink-700); }
+.fd-lede-h { margin: 0; font-weight: 400; line-height: var(--lh-meta); }   /* an eyebrow h2: the page's h1 is the title plate on the stage */
+/* the first-person paragraph, the brief rows beside it (under it on phones), the figure slot
+   (item 9, wave 2) and the technical sentence */
+.fd-lede-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: var(--space-6) var(--space-9); align-items: start; margin-top: var(--space-8); }
+.fd-lede-p { grid-column: 1; max-width: var(--measure); font-size: var(--fs-body-lg); line-height: 1.6; color: var(--ink-700); }
+.fd-brief { grid-column: 2; grid-row: 1 / span 3; display: grid; gap: 0; margin: 0; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; }
+.fd-brief > div { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: var(--space-3); padding: 10px 0; border-top: 1px solid var(--ink-a12); }
+.fd-brief > div:last-child { border-bottom: 1px solid var(--ink-a12); }
+.fd-brief dt { color: var(--ink-500); }
+.fd-brief dd { margin: 0; color: var(--ink-900); line-height: 1.6; }
+.fd-figure-slot { grid-column: 1; }
+/* wide screens: the brief rows beside the paragraph, the figure in the right column beside the technical
+   sentence, so the study's one picture reads as the section's picture */
+@media (min-width: 860px) {
+  .fd-brief { grid-row: 1; }
+  .fd-figure-slot { grid-column: 2; grid-row: 2 / span 2; align-self: start; }
+  .fd-lede-t { grid-row: 2; }
+}
+.fd-lede-t { grid-column: 1; max-width: var(--measure); font-size: var(--fs-body); line-height: var(--lh-body); color: var(--ink-700); }
 .fd-keys { display: grid; gap: 0; margin: 0; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; }
 .fd-keys > div { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: var(--space-3); padding: 10px 0; border-top: 1px solid var(--ink-a12); }
 .fd-keys > div:last-child { border-bottom: 1px solid var(--ink-a12); }
@@ -102,6 +221,8 @@ body { background: var(--paper); color: var(--ink-700); overflow-x: clip; }
 
 .fd-sec-head { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); margin-bottom: var(--space-8); }
 .fd-sec-head .display-2 { margin-top: var(--space-2); font-size: min(var(--fs-display-2), 12vw); }   /* CONFIGURATION fits at 320 px */
+/* the appendix's two parts sit one step below the story's sections */
+#method .fd-sec-head .display-2, #configuration .fd-sec-head .display-2 { font-size: min(var(--fs-display-3), 10vw); }
 .fd-sec-intro { max-width: var(--measure); margin-top: var(--space-4); font-size: var(--fs-body-lg); line-height: 1.6; color: var(--ink-700); }
 
 /* source tags: mono caps in a hairline box, ink-500 on paper (5.3:1) */
@@ -129,6 +250,46 @@ body { background: var(--paper); color: var(--ink-700); overflow-x: clip; }
 .fd-slot { color: var(--ink-900); font-variant-numeric: tabular-nums; }   /* the measured validation numbers, read as prose */
 [data-k], [data-r] { font-variant-numeric: tabular-nums; }
 
+/* method 05: the differences that remain, as a short list */
+.fd-mi-list { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.fd-mi-list li { position: relative; padding-left: var(--space-4); font-size: var(--fs-body); line-height: var(--lh-body); color: var(--ink-700); }
+.fd-mi-list li::before { content: ""; position: absolute; left: 0; top: 0.8em; width: 6px; height: 1px; background: var(--ink-500); }
+.fd-mi-list b { font-weight: 500; color: var(--ink-900); }
+
+/* long method and configuration items fold into native details: the first paragraph reads, the rest is one press away */
+.fd-more { border-top: 1px solid var(--ink-a12); border-bottom: 1px solid var(--ink-a12); }
+.fd-more > summary { display: flex; align-items: center; gap: 10px; min-height: 44px; list-style: none; cursor: pointer;
+  font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--ink-900); }
+.fd-more > summary::-webkit-details-marker { display: none; }
+.fd-more > summary::before { content: "+"; content: "+" / ""; display: inline-grid; place-items: center; flex: 0 0 auto; width: 18px; height: 18px; border: 1px solid var(--ink-a30); border-radius: var(--radius-xs); font-size: 12px; letter-spacing: 0; color: var(--ink-700); }
+.fd-more[open] > summary::before { content: "\2212"; content: "\2212" / ""; }   /* the marker is not part of the summary's name */
+.fd-more > summary:hover { color: var(--ink-500); }
+.fd-more > summary:focus-visible { outline: 1px solid var(--ink-900); outline-offset: 2px; }
+.fd-more > p { padding-bottom: var(--space-4); font-size: var(--fs-body); line-height: var(--lh-body); color: var(--ink-700); }
+.fd-more-table { margin-top: var(--space-7); }
+.fd-more-table .fd-table-wrap { padding-bottom: var(--space-5); }
+
+/* the appendix opens with three limits in plain words */
+.fd-limits { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin: 0; padding: 0; border-top: 1px solid var(--ink-900); }
+.fd-limit { display: grid; gap: var(--space-3); align-content: start; padding: var(--space-5) var(--space-6) var(--space-6) 0; }
+.fd-limit + .fd-limit { padding-left: var(--space-6); border-left: 1px solid var(--ink-a12); }
+.fd-limit-h { margin: 0; font-family: var(--font-display); font-size: var(--fs-title-3); font-weight: 500; line-height: var(--lh-title); letter-spacing: var(--ls-title); text-transform: uppercase; color: var(--ink-900); }
+.fd-limit p { max-width: 44ch; font-size: var(--fs-body); line-height: var(--lh-body); color: var(--ink-700); }
+.fd-index-sub { margin-top: var(--space-8); }
+
+/* words used here */
+.fd-words { display: grid; gap: 0; margin: 0; border-top: 1px solid var(--ink-900); }
+.fd-words > div { display: grid; grid-template-columns: minmax(200px, 3fr) minmax(0, 8fr); gap: var(--space-2) var(--space-8); padding: var(--space-4) 0; border-bottom: 1px solid var(--ink-a12); }
+.fd-words dt { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: 1.6; color: var(--ink-900); }
+.fd-nocase { text-transform: none; }   /* a Greek alpha set in caps reads as a Latin A */
+.fd-words dd { margin: 0; max-width: 72ch; font-size: var(--fs-body); line-height: var(--lh-body); color: var(--ink-700); }
+.fd-keys-wrap { max-width: 560px; margin-top: var(--space-8); }
+.fd-keys-h { margin: 0 0 var(--space-3); font-family: var(--font-mono); font-size: var(--fs-meta-sm); font-weight: 400; letter-spacing: var(--ls-caps-wide); text-transform: uppercase; color: var(--ink-500); }
+@media (pointer: coarse) { .fd-keys-wrap { display: none; } }   /* a touch screen has no keys; the list stays for keyboards */
+
+/* open questions for the owner (CLAUDE.md rule 5; tools/check-flags.py lists them), as on the main site */
+mark.flag { background: none; color: inherit; text-decoration: underline dotted currentColor; text-decoration-thickness: 1px; text-underline-offset: 0.2em; cursor: help; }
+
 /* configuration table */
 .fd-table-wrap { margin: 0; }
 .fd-table { width: 100%; border-collapse: collapse; font-size: var(--fs-body-sm); line-height: 1.5; }
@@ -143,18 +304,22 @@ body { background: var(--paper); color: var(--ink-700); overflow-x: clip; }
 
 /* runs */
 .fd-runs { list-style: none; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; margin: 0; padding: 0; border-top: 1px solid var(--ink-900); }
-.fd-run { display: grid; grid-template-rows: auto auto auto 1fr auto auto; gap: var(--space-3); padding: var(--space-5) var(--space-5) var(--space-6); border-left: 1px solid var(--ink-a12); }
+.fd-run { display: grid; grid-template-rows: auto auto auto auto auto 1fr auto; gap: var(--space-3); padding: var(--space-5) var(--space-5) var(--space-6); border-left: 1px solid var(--ink-a12); }
 .fd-run:first-child { border-left: 0; padding-left: 0; }
 .fd-run:last-child { padding-right: 0; }
 .fd-run-n { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); color: var(--ink-500); }
 .fd-run-h { margin: 0; font-family: var(--font-display); font-size: var(--fs-title-3); font-weight: 500; line-height: var(--lh-title); letter-spacing: var(--ls-title); text-transform: uppercase; color: var(--ink-900); }
-.fd-run-s { font-size: var(--fs-body-sm); line-height: 1.5; color: var(--ink-700); }
+/* each card leads with its plain sentence (what to watch), then the setup, then the numbers */
+.fd-run-w { display: grid; gap: var(--space-2); align-content: start; }
+.fd-run-lead { font-size: var(--fs-body-sm); line-height: 1.5; color: var(--ink-900); }
+.fd-run-rw { display: grid; gap: var(--space-3); align-content: start; }   /* run 02: the numbers, then the technical sentence under them */
+.fd-run-x { font-size: 13px; line-height: 1.5; color: var(--ink-500); }
+.fd-run-s { font-size: 13px; line-height: 1.5; color: var(--ink-500); }
 .fd-run-r { display: grid; gap: 0; margin: var(--space-2) 0 0; align-content: start; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.06em; text-transform: uppercase; }
 .fd-run-r > div { display: flex; justify-content: space-between; gap: var(--space-3); padding: 8px 0; border-top: 1px solid var(--ink-a12); }
 .fd-run-r dt { color: var(--ink-500); }
 .fd-run-r dd { margin: 0; color: var(--ink-900); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .fd-run-r .tag { margin-left: 4px; }
-.fd-run-w { font-size: var(--fs-body-sm); line-height: 1.5; color: var(--ink-500); }
 .fd-run-b { justify-self: start; display: inline-flex; align-items: center; min-height: 40px; padding: 0 18px; border: 1px solid var(--ink-900); border-radius: var(--radius-pill);
   font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--ink-900);
   transition: background-color var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out); }
@@ -162,6 +327,36 @@ body { background: var(--paper); color: var(--ink-700); overflow-x: clip; }
 .fd-run-b:focus-visible { outline: 1px solid var(--ink-900); outline-offset: 3px; }
 .fd-run[data-active] .fd-run-b { background: var(--ink-900); color: var(--paper); }
 .fd-run[data-active] .fd-run-n::after { content: " / LAST RUN"; color: var(--ink-900); }
+
+/* ---------------------------------------------------------------- path figures (item 9) */
+/* story.js pathFigure: downrange against altitude at equal scale, baked into the HTML by
+   vx/tools/bake-figure.mjs and re-rendered live by main.js. Finned paths ink, a finless one livery
+   orange and dashed; every word ink (the line carries the color, the words the meaning). The svg's
+   own sizes are px of the drawing, so the type sizes here are px at the figure's full width. */
+.fd-fig { margin: 0; }
+.fd-fig-svg { display: block; width: 100%; height: auto; overflow: visible; }
+.fd-fig-lede .fd-fig-svg { max-width: 400px; }
+.fd-fig-cap .fd-sep { color: var(--ink-500); }
+.fd-fig-card { margin-top: var(--space-2); }
+.fd-fig-card .fd-fig-svg { max-width: 200px; }
+.fd-fig-grid line { stroke: var(--ink-a12); stroke-width: 1; }
+.fd-fig-ground line { stroke: var(--ink-900); stroke-width: 1; }
+.fd-fig-ax text { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; fill: var(--ink-500); }
+.fd-fig-line { fill: none; stroke: var(--ink-900); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.fd-fig-off .fd-fig-line { stroke: var(--livery); stroke-dasharray: 6 4; stroke-linecap: butt; }
+.fd-fig-dot { fill: var(--ink-900); stroke: var(--paper); stroke-width: 2; }
+.fd-fig-off .fd-fig-dot { fill: var(--livery); }
+.fd-fig-sw { stroke: var(--ink-900); stroke-width: 2; }
+.fd-fig-off .fd-fig-sw { stroke: var(--livery); stroke-dasharray: 6 4; }
+.fd-fig-lab text, .fd-fig-ax text { paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round; }   /* a paper halo over the grid */
+.fd-fig-name { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; fill: var(--ink-900); }
+.fd-fig-n { font-family: var(--font-display); font-weight: 500; font-size: 40px; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; fill: var(--ink-900); }
+.fd-fig-u { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; fill: var(--ink-900); }
+.fd-fig-cn { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; fill: var(--ink-900); }
+.fd-fig-tag { fill: var(--paper); stroke: var(--ink-a30); stroke-width: 1; }
+.fd-fig-lab .fd-fig-tagt { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; fill: var(--ink-600); stroke: none; }
+.fd-fig-cap { max-width: 400px; margin-top: var(--space-3); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: 1.7; color: var(--ink-500); }
+.fd-fig-card .fd-fig-cap { max-width: none; margin-top: var(--space-2); letter-spacing: 0.06em; }
 
 /* ---------------------------------------------------------------- footer */
 .fd-foot { background: var(--ink-900); color: var(--paper); padding: var(--space-8) 0 calc(var(--space-8) + env(safe-area-inset-bottom, 0px)); }
@@ -171,12 +366,12 @@ body { background: var(--paper); color: var(--ink-700); overflow-x: clip; }
 .fd-foot-nav { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-5); }
 .fd-foot-nav a { color: var(--paper); text-decoration: none; border-bottom: 1px solid var(--paper-a45); padding-bottom: 2px; transition: border-color var(--dur-2) var(--ease-out); }
 .fd-foot-nav a:hover { border-bottom-color: var(--paper); }
-.fd-foot-note { grid-column: 1 / -1; color: var(--paper-a70); letter-spacing: 0.1em; }
+.fd-foot-note, .fd-foot-credit { grid-column: 1 / -1; color: var(--paper-a70); letter-spacing: 0.1em; }
 
 /* ---------------------------------------------------------------- wide screens */
-/* the cards share their rows (title, setup, results, note, button), so they line up side by side */
+/* the cards share their rows (number, title, what to watch, setup, path sketch, results, button), so they line up side by side */
 @media (min-width: 860px) {
-  .fd-run { grid-row: span 6; grid-template-rows: subgrid; row-gap: var(--space-3); }
+  .fd-run { grid-row: span 7; grid-template-rows: subgrid; row-gap: var(--space-3); }
 }
 /* five across: each result label sits above its value instead of wrapping beside it */
 @media (min-width: 1280px) {
@@ -192,10 +387,11 @@ body { background: var(--paper); color: var(--ink-700); overflow-x: clip; }
 /* ---------------------------------------------------------------- phones (the panel's breakpoint) */
 @media (max-width: 859.98px) {
   :root { --fd-head-h: 44px; }
-  .fd-head { gap: 8px; padding: 0 max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); }
-  .fd-title { font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); }
-  .fd-title-x, .fd-m-grid, .fd-m-tier, .fd-m-tc dt { display: none; }
-  .fd-nav { gap: 0; padding-left: 0; }   /* the 44 px link boxes carry the spacing, so the title and the time code stay clear at 390 px */
+  .fd-head { gap: 8px; padding: 0 max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); letter-spacing: 0.12em; }
+  .fd-title { flex: 0 0 auto; }
+  .fd-title { font-size: var(--fs-meta-sm); letter-spacing: 0.12em; }
+  .fd-title-x, .fd-clock-m { display: none; }   /* the rate stays; its AUTO or SET word goes */
+  .fd-nav { gap: 14px; padding-left: 8px; }   /* two exits, visibly apart (CASE STUDY, SITE); the 44 px link boxes keep the targets */
   .fd-nav a[href="#runs"] { display: none; }
   /* touch targets of 44 px; the underline moves to the text so it stays under the word */
   .fd-nav a, .fd-foot-nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 0; border-bottom: 0; }
@@ -207,11 +403,43 @@ body { background: var(--paper); color: var(--ink-700); overflow-x: clip; }
   .fd-stage { min-height: 540px; max-height: none; }
   /* phones: the captions sit along the bottom of the view, over the ground, clear of the
      rocket's labels; the badges stack above them */
-  .fd-cap { top: auto; bottom: calc(var(--space-3) + 8px); left: calc(var(--space-3) + 12px); right: calc(var(--space-3) + 12px); }
+  .fd-cap { top: auto; bottom: calc(var(--space-3) + 8px); left: calc(max(var(--space-3), env(safe-area-inset-left, 0px)) + 12px); right: calc(max(var(--space-3), env(safe-area-inset-right, 0px)) + 12px); }
   .fd-cap-l { white-space: normal; overflow-wrap: anywhere; }   /* wrap, never cut: main.js writes a short form here with the caveat first */
-  .fd-badges { top: auto; bottom: calc(var(--space-3) + 58px); left: calc(var(--space-3) + 12px); right: auto; justify-items: start; }
+  /* the badges and the slate sit at the top right of the view, off the rocket's tail and clear of the
+     plate (item 6); the quiet slate keeps to the right half, beside the nose */
+  .fd-badges { top: calc(var(--space-3) + 8px); bottom: auto; left: calc(max(var(--space-3), env(safe-area-inset-left, 0px)) + 12px); right: calc(max(var(--space-3), env(safe-area-inset-right, 0px)) + 12px); justify-items: end; }
+  .fd-slate { max-width: 58%; }
+  .fd-slate[data-loud] { max-width: 100%; }
+  /* the sheet's peek row shows the caption here (panel.setPeekCaption): the stage's slot stays the
+     live region, out of sight */
+  .fd-stage[data-peek-cap] .fd-cap-story { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  .fd-plate { --fd-plate-h: min(64px, calc((100vw - 48px) / 4.6)); max-width: 100%; margin-bottom: var(--space-4); }   /* WHAT THE on one line down to 320 px */
+  /* the shade is solid from above the eyebrow down, so the 10 px eyebrow sits on plain ink (the slice
+     fades out under the plate, main.js syncPlateMarkers) */
+  .fd-plate::before { inset: -96px -40px -64px -40px; background: linear-gradient(to top, rgba(10, 10, 10, .9) 80%, rgba(10, 10, 10, 0)); }
+  .fd-plate-h { margin-top: var(--space-3); }
+  .fd-plate-p { margin-top: var(--space-3); font-size: var(--fs-body-sm); }
+  .fd-plate-by { margin-top: var(--space-3); letter-spacing: 0.12em; }
+  .fd-plate-act { margin-top: var(--space-4); gap: 8px; }
+  .fd-plate-act .fd-end-b { padding: 0 12px; letter-spacing: 0.12em; }   /* both pills on one row down to 320 px */
+  .fd-beats .fd-badge-x { min-height: 44px; }
+  /* reduced motion: while the title plate is up the beat row waits (the plate's pills start the replay and
+     the row comes with the first launch), so the plate keeps its height and the rocket stands above the
+     eyebrow, as it does without reduced motion */
+  .fd-stage[data-plate-up] .fd-beats { display: none; }
   .fd-viewport .sc-hint { display: none; }
   .fd-lede-grid { grid-template-columns: 1fr; margin-top: var(--space-6); }
+  .fd-lede-p, .fd-brief, .fd-figure-slot, .fd-lede-t { grid-column: 1; grid-row: auto; }
+  .fd-limits { grid-template-columns: 1fr; }
+  .fd-limit, .fd-limit + .fd-limit { padding: var(--space-5) 0; border-left: 0; }
+  .fd-limit + .fd-limit { border-top: 1px solid var(--ink-a12); }
+  .fd-words > div { grid-template-columns: 1fr; }
+  /* the end card on a phone: the two figures side by side, a smaller figure size, 44 px targets */
+  .fd-end { max-width: 100%; margin-bottom: var(--space-3); padding: var(--space-3) var(--space-4); }
+  .fd-end-figs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3) var(--space-4); margin: var(--space-2) 0 var(--space-3); }
+  .fd-end-n { font-size: 32px; }
+  .fd-end-b, .fd-end-q { min-height: 44px; }
+  .fd-end-b { padding: 0 14px; }
   .fd-index { grid-template-columns: 1fr; margin-top: var(--space-8); }
   .fd-index li + li a { border-top: 1px solid var(--ink-a12); }
   .fd-mi { grid-template-columns: 1fr; padding: var(--space-5) 0; }
@@ -236,19 +464,95 @@ body { background: var(--paper); color: var(--ink-700); overflow-x: clip; }
   .fd-foot-in { grid-template-columns: 1fr; }
 }
 @media (max-width: 389.98px) {
-  .fd-m-tc { display: none; }
-  .fd-badges { bottom: calc(var(--space-3) + 76px); }   /* the inflow line may wrap to a second line here */
+  .fd-clock { display: none; }   /* the wordmark and the two links fill a 320 px strip; the peek row keeps the time */
+}
+@media (max-width: 859.98px) and (max-height: 700px), (min-width: 860px) and (max-height: 780px) {
+  .fd-plate-eye { display: none; }   /* a short screen: the eyebrow is in the lede below */
 }
 /* the phone sheet is fixed to the viewport bottom: keep the footer's last line clear of it when it is still out */
 @media (max-width: 859.98px) { .fd-foot { padding-bottom: calc(var(--space-8) + 72px + env(safe-area-inset-bottom, 0px)); } }
 
+/* the end card on a phone or a short screen (item 10): compact, so the end plate keeps most of the view.
+   The figures side by side, the three pills in one row, CONTINUE PAST APOGEE as a link under them. */
+@media (max-width: 1199.98px), (max-height: 500px) {
+  .fd-end-figs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; }
+  .fd-end { padding: 10px 12px; }
+  .fd-end-eye { font-size: 10px; letter-spacing: 0.12em; }
+  .fd-end-figs { gap: 2px var(--space-4); margin: 4px 0 8px; }
+  .fd-end-figs dt { font-size: 10px; letter-spacing: 0.1em; line-height: 1.4; }
+  .fd-end-figs dd { margin-top: 2px; }
+  .fd-end-n { font-size: 28px; }
+  .fd-end-act { gap: 6px; }
+  .fd-end-act .fd-end-b { padding: 0 10px; letter-spacing: 0.08em; }
+  .fd-end-q { flex: 1 0 100%; justify-content: flex-start; min-height: 32px; padding: 0; text-align: left; }
+  .fd-end-plate { margin-top: 6px; padding-top: 6px; font-size: 10px; letter-spacing: 0.1em; line-height: 1.5; }
+}
+/* short screens, landscape phones above all (C1-2, C2-13: 844 x 390 had a 584 px page over a 390 px
+   screen, 932 x 430 a 600 px stage): the stage fits the screen. The minimum height goes, the chart dock
+   goes (the panel and the peek row keep the numbers), and the title plate drops its sentence. */
+@media (max-height: 500px) {
+  .fd-stage { min-height: 0; }
+  .fd-stage.pn-host { --pn-dock-h: 0px; --pn-dock-h-phone: 0px; }
+  /* the chart goes; the dock's text summary and the panel's live region in it stay rendered (sr-only),
+     so screen readers keep the announcements at 200 percent zoom and on landscape phones */
+  .fd-stage .pn-dock { height: 0; border: 0; overflow: visible; }
+  .fd-stage .pn-dock > .pn-chart { display: none; }
+  .fd-plate { --fd-plate-h: 40px; max-width: min(100%, 560px); margin-bottom: var(--space-2); }
+  .fd-plate::before { inset: -40px -40px -24px -40px; }
+  .fd-plate-h { margin-top: 0; }
+  .fd-plate-eye { display: none; }
+  /* the plain sentence stays (it is said nowhere else), one size down */
+  .fd-plate-p { max-width: 38ch; margin-top: 6px; font-size: var(--fs-body-sm); line-height: 1.4; }   /* narrow, so it stays left of the rocket at the view's center */
+  .fd-plate-by { margin-top: 6px; }
+  .fd-plate-act { margin-top: 8px; flex-wrap: nowrap; }
+  .fd-end-figs { margin: 2px 0 6px; }
+  .fd-end-n { font-size: 22px; }
+}
+@media (max-width: 859.98px) and (max-height: 500px) {
+  .fd-plate-h br { display: none; }   /* the view spans the screen: WHAT THE FINS DO on one line, left of the rocket */
+}
+/* very short screens (1280 x 800 at 200 percent zoom): the end card drops its eyebrow (the plate line
+   under it names the conditions and both apogees), so the plate behind it keeps some room */
+@media (max-height: 420px) {
+  .fd-end-eye { display: none; }
+  .fd-end-figs { margin-top: 0; }
+}
+
+/* ---------------------------------------------------------------- ?bench=1 (main.js runBench) */
+.fd-bench { background: var(--ink-900); color: var(--paper); border-top: 1px solid var(--paper-a18); padding: var(--space-8) 0; }
+.fd-bench .eyebrow { color: var(--paper-a70); }
+.fd-bench-h { margin: var(--space-2) 0 var(--space-4); font-family: var(--font-display); font-size: var(--fs-title-2, 32px); font-weight: 500; letter-spacing: var(--ls-title); text-transform: uppercase; color: var(--paper); }
+.fd-bench-status { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a90); }
+.fd-bench-pre { max-width: 100%; margin: var(--space-5) 0 0; padding: var(--space-4); overflow-x: auto; white-space: pre; border: 1px solid var(--paper-a18); border-radius: var(--radius-sm);
+  font-family: var(--font-mono); font-size: 12px; line-height: 1.6; color: var(--paper); background: rgba(255, 255, 255, .03); }
+.fd-bench-pre:empty { display: none; }
+.fd-bench-pre:focus-visible { outline: 1px solid var(--paper); outline-offset: 2px; }
+.fd-bench-more { margin-top: var(--space-5); border-color: var(--paper-a18); }
+.fd-bench-more > summary { color: var(--paper); }
+.fd-bench-more > summary::before { border-color: var(--paper-a45); color: var(--paper); }
+.fd-bench-act { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: var(--space-5); }
+.fd-bench-act .fd-end-b:disabled { opacity: .45; cursor: default; }
+.fd-bench-note { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); }
+
 /* ---------------------------------------------------------------- reduced motion, forced colours */
 @media (prefers-reduced-motion: reduce) {
-  .fd-nav a, .fd-index a, .fd-run-b, .fd-foot-nav a { transition: none; }
+  .fd-nav a, .fd-index a, .fd-run-b, .fd-foot-nav a, .fd-end, .fd-end-b, .fd-plate, .fd-slate, .fd-mark { transition: none; }
+  .fd-end, .fd-plate { transform: none; }
 }
 @media (forced-colors: active) {
   .fd-head, .fd-foot { border-color: CanvasText; }
-  .tag, .fd-badge, .fd-badge-x, .fd-run-b, .fd-status { border-color: CanvasText; color: CanvasText; forced-color-adjust: none; background: Canvas; }
+  .tag, .on-dark .tag, .fd-badge, .fd-badge-x, .fd-run-b, .fd-status, .fd-end-b { border-color: CanvasText; color: CanvasText; forced-color-adjust: none; background: Canvas; }
+  /* the beat buttons keep their own ink background otherwise (more specific), black on black in a light scheme */
+  .fd-beats .fd-badge-x { background: Canvas; color: CanvasText; border-color: CanvasText; }
+  .fd-beats .fd-badge-x:disabled { color: GrayText; border-color: GrayText; }
+  .fd-end { border-color: CanvasText; background: Canvas; }
+  /* the end card is Canvas already: no readability backplate behind its 64 px numerals, which overlapped the labels above */
+  .fd-end-figs dd, .fd-end-n { forced-color-adjust: none; color: CanvasText; }
+  .fd-end-n, .fd-end-u, .fd-end-eye, .fd-end-figs dt, .fd-end-q, .fd-cap-story, .fd-plate-h, .fd-plate-p, .fd-plate-eye, .fd-plate-by, .fd-slate, .fd-title-x, .fd-clock { color: CanvasText; }
+  .fd-slate[data-loud] { border-color: CanvasText; background: Canvas; }
+  .fd-sw { forced-color-adjust: none; border: 1px solid CanvasText; }   /* the swatches keep their colors; the words name them too */
+  .fd-end-b:focus-visible, .fd-end-q:focus-visible, .fd-more > summary:focus-visible { outline: 2px solid Highlight; outline-offset: 3px; }
+  .fd-limits, .fd-words { border-color: CanvasText; }
   .fd-run[data-active] .fd-run-b, .fd-run-b:hover { background: Highlight; color: HighlightText; border-color: Highlight; }
   /* these opt out of forced colours (above), so their author rings (ink on ink, paper on
      paper) would vanish against Canvas: a system-colour ring instead */
@@ -256,6 +560,12 @@ body { background: var(--paper); color: var(--ink-700); overflow-x: clip; }
   .fd-cap, .fd-cap-dim { color: CanvasText; }
   .fd-cap-warn::before { background: CanvasText; }
   .fd-index, .fd-table thead th, .fd-table tbody .fd-tr-group th, .fd-runs { border-color: CanvasText; }
+  /* the path figures: the lines and the words in CanvasText, the finless path keeps its dashes */
+  .fd-fig-line, .fd-fig-off .fd-fig-line, .fd-fig-sw, .fd-fig-off .fd-fig-sw, .fd-fig-ground line, .fd-fig-tag { stroke: CanvasText; }
+  .fd-fig-grid line { stroke: GrayText; }
+  .fd-fig-dot, .fd-fig-off .fd-fig-dot, .fd-fig-ax text, .fd-fig-lab text, .fd-fig-lab .fd-fig-tagt { fill: CanvasText; }
+  .fd-fig-lab text, .fd-fig-ax text, .fd-fig-dot, .fd-fig-tag { stroke: Canvas; }
+  .fd-fig-tag { fill: Canvas; stroke: CanvasText; }
   /* the dock grows upward here to show the chart summary (panel.css); main.js writes its
      real height to --fd-dock-real so the view, its captions and the hint stay above it */
   .fd-viewport.pn-viewport { bottom: var(--fd-dock-real, var(--pn-dock-h)); }

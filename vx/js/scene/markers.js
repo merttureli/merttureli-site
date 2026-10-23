@@ -1,13 +1,54 @@
 /* Markers for the CHARGER field scene (FIELD.md section 6): the CG symbol (circle
    with alternating filled quadrants), the Barrowman CP dot, a hollow CP ring for the
    lattice's measured CP, the relative wind arrow ahead of the nose, the normal force
-   arrow scaled by N, the thrust arrow at the tail scaled by T, each with a mono label
-   carrying its source tag.
+   arrow scaled by N, the thrust arrow at the tail scaled by T, each with a mono label.
 
-   Two CP stations: the dot, its CP label and the MARGIN are the static Barrowman CP
-   (xcp, the small-angle value the panel prints as CP / BARROWMAN and STATIC MARGIN);
-   the normal force arrow sits where the force acts at this alpha (xcpForce, Barrowman
-   plus body lift, flight.state.xcpNow), which moves forward of the dot at large alpha.
+   Plates as words (presentation plan item 4: the stage names, the panel measures). The
+   plates read the same words as the panel's CP/CG bar key, one label set:
+     CG / BALANCE POINT            on the CG roundel
+     CP / AIR'S PUSH               on the CP dot, plus a second line N +n.nn LBF SIM only
+                                   while |N| is above N_SHOW_LBF (0.05 lbf) and the N arrow
+                                   lands on the dot; see Two CP stations below
+     N +n.nn LBF SIM               on its own plate at the N arrow's tail once the arrow lands
+                                   N_SPLIT_PX or more from the dot on screen
+     AIR                           on the relative wind arrow while the air moves past the
+                                   rocket (airspeed above 1 m/s, the arrow's full strength),
+                                   plus ALPHA +n.n° SIM while |alpha| is ALPHA_SHOW_DEG (0.5
+                                   deg) or more
+     T n.n LBF SIM                 on the thrust arrow, unchanged (the panel has no thrust row)
+   Every number that left the plates (the CG and CP stations, MARGIN, the relative wind
+   speed) is in the panel; every number still on a plate keeps its tag.
+
+   The gust beat (presentation plan item 12): while a gust pulse acts the AIR plate adds
+   GUST n.n MPH EST (state.gust, set by the scene's setGust), and when the scene allows the
+   angle-of-attack arc (state.arc: asked for and the camera face on to the pitch plane, the
+   only view where an angle reads true) an arc at the nose spans the body axis (a dashed
+   extension past the nose tip) and the relative wind arrow, radius ARC_RADIUS_M, labelled
+   ALPHA +n.n° SIM. The ALPHA line then moves from the AIR plate to the arc, so the figure
+   shows once. The arc shows only while |alpha| is ALPHA_SHOW_DEG or more and the air meets
+   the nose (|alpha| under 90 deg).
+
+   Emphasis (item 7, plates step back): view.emphasis is null (everything at full strength)
+   or a list of the names the beat is about: air (the wind arrow and its plate), alpha (the
+   plate's ALPHA line and the arc), cp (the CP dot and plate), n (the normal force arrow and
+   the CP plate that carries N), cg, thrust. Everything else dims to EMPHASIS_DIM (35 percent)
+   over EMPHASIS_MS on the site's 240 ms step, instantly under reduced motion. The scene's own
+   altitude cursor answers to alt. Nothing is hidden, only dimmed; the panel keeps every number.
+   view.absent names subjects that are not on screen this frame (the scene passes alt while its
+   ladder has no room, on a phone): they do not count, and a beat left with no subject on screen
+   dims nothing, so a coast beat on a phone does not dim every plate round an empty slot.
+
+   Two CP stations: the dot and its label are the static Barrowman CP (xcp, the small-angle
+   value the panel prints as CP / BARROWMAN); the normal force arrow sits where the force
+   acts at this alpha (xcpForce, Barrowman plus body lift, flight.state.xcpNow), which moves
+   away from the dot at large alpha (toward the planform centroid, near the CG).
+   While the two stations are close on screen the N figure rides on the CP plate. Once the
+   arrow lands N_SPLIT_PX (28 px) or more from the dot, the N line and its leader move to
+   their own plate at the arrow's tail, and the CP plate keeps its words plus CP_APART_WORDS
+   (AT SMALL ANGLES): plain words never point at one place while the push is drawn at
+   another. The line comes back to the CP plate under N_JOIN_PX (20 px); the gap keeps it
+   from hopping. out.shown.nAt says where the N figure is ('cp', 'arrow' or null) and
+   out.stationsPx the on-screen distance between the two stations.
    The ring is the lattice's 2D-section CP, labelled CP 2D SECTION: a section of a long
    body lifts like a wing, so it sits ahead of the CG and is not the rocket's CP; the
    scene draws it only where the integrator asks (scene option latticeCp, ?lab).
@@ -40,11 +81,11 @@
    over an ink halo so it reads on the orange of the pressure view.
    Thrust is drawn in push convention too, aft of the nozzle pointing forward. */
 import * as THREE from 'three';
+import { createPolyline } from './polyline.js';
 
 const PAPER = '#ffffff', INK = '#0a0a0a', LIVERY = '#d63b08';
 const LB_PER_N = 0.2248089;          // STD, 1 N = 0.2248089 lbf
 const IN_PER_M = 39.37008;           // STD, 1 m = 39.37008 in
-const FT_PER_M = 3.280840;           // STD, 1 m = 3.280840 ft
 const DEG = 180 / Math.PI;
 /* Display scales (EST, chosen so the arrows read at the rocket's scale): */
 export const N_ARROW_M_PER_N = 0.03;     // 30 mm per newton of normal force, clamped to 0.7 m
@@ -53,6 +94,35 @@ const N_ARROW_MAX_M = 0.7, T_ARROW_MAX_M = 0.8;
 const WIND_ARROW_M = [0.24, 0.5];        // relative wind arrow length (m) from rest to 100 m/s and above
 const BODY_R = 0.034;                    // CAD body radius (m)
 export const LABEL_PX = 11;              // mono label size in CSS px (site meta 10 to 12 px); the scene never scales it below 10 px
+/* Plate thresholds (item 4): the alpha figure shows from 0.5 deg, the normal force figure
+   above 0.05 lbf; below them the plates carry their words only. */
+export const ALPHA_SHOW_DEG = 0.5;
+export const N_SHOW_LBF = 0.05;
+/* Two CP stations (see the header): the N figure leaves the CP plate for the arrow's tail once
+   the arrow lands N_SPLIT_PX or more from the dot on screen, and comes back under N_JOIN_PX;
+   the CP plate then carries CP_APART_WORDS under its words. Measured on the page (tier 1): the
+   finless default runs 86 to 180 px apart at 1440x900 from T+0.44, so it always splits; the
+   finned default peaks at 20 px at 1440x900 on its headline beat (7.5 deg, a plate's height),
+   where the CP plate beside the dot still reads as the arrow's, so it stays on the dot up to
+   about 1920x1080 (25 px, EST from the stage height). */
+export const N_SPLIT_PX = 28, N_JOIN_PX = 20;
+export const CP_APART_WORDS = 'AT SMALL ANGLES';
+const AIR_SHOW_MPS = 1;                  // the AIR plate shows with the wind arrow at full strength (airspeed above 1 m/s)
+export const PLATE_WORDS = { cg: 'BALANCE POINT', cp: "AIR'S PUSH", air: 'AIR' };
+/* The angle-of-attack arc (item 12): radius at the nose (m, EST, a drawing choice near the end of the
+   relative wind arrow, which runs 0.03 to at least 0.27 m out), less where the canvas edge is closer
+   ahead of the nose, never under ARC_MIN_PX on screen; the body axis runs on past the nose tip,
+   dashed, for ARC_AXIS_K times the radius, and the wedge between the axis and the air is filled
+   lightly. The angle is drawn true (face on, never exaggerated): 7 deg is a narrow sliver. */
+export const ARC_RADIUS_M = 0.3;
+const ARC_MIN_PX = 40, ARC_AXIS_K = 1.2, ARC_SEGMENTS = 32;
+const ARC_ROOM_K = 0.85;                 // the arc takes at most this share of the room ahead of the nose on screen (to the fit margin)
+const ARC_FILL_OPACITY = 0.22;           // the wedge between the axis and the air, paper at 22 percent: a small angle reads as a sliver, not a hairline
+export const GUST_WORD = 'GUST';
+/* Emphasis (item 7): the plates and arrows the beat is not about dim to this share of their opacity. */
+export const EMPHASIS_DIM = 0.35;
+export const EMPHASIS_MS = 240;
+const EMPHASIS_NAMES = ['air', 'alpha', 'cp', 'n', 'cg', 'thrust', 'alt'];
 
 /* ---------- mono labels ---------------------------------------------------
    One fixed-size canvas per label (the texture never changes size, so three
@@ -272,6 +342,8 @@ const LAYOUT = {
   dirK: 30,             // cost of an arrow's plate turned from its preferred direction (times 1 - cos)
 };
 const PLATE_PAD = 4;                     // px kept between plates
+const RESERVED_PAD_PX = 14;              // extra px kept round a reserved plate (the ALT cursor's)
+const OVERLAY_PAD_PX = 6;                // px kept round the page's overlays on the canvas (view.overlays: the slate, the badges)
 const AXIS_SLIDES = [0, 1, -1, 2, -2];   // slides along the body axis, in plate lengths
 const FREE_EXTRA = [0, 24, 48];          // extra distance (px) tried for an arrow's plate (wind, thrust)
 const FREE_ALONG = [0, 1 / 3, 2 / 3];     // spots along the arrow from its tail that a plate may sit beside
@@ -353,8 +425,25 @@ export function createMarkers({ dpr = 2 } = {}) {
   normalHalo.group.children.forEach(m => { m.renderOrder = 35; });
   const L = {
     cg: createLabel({ align: 'right', dpr }), cp: createLabel({ dpr }), ring: createLabel({ dpr }),
-    wind: createLabel({ dpr }), thrust: createLabel({ dpr }),
+    wind: createLabel({ dpr }), thrust: createLabel({ dpr }), arc: createLabel({ dpr }),
+    n: createLabel({ dpr }),                     // the N figure at the arrow's tail, while the two CP stations are apart
   };
+  // the angle-of-attack arc: paper over an ink halo (it crosses the slice's white smoke and the
+  // pressure view's orange), and the body axis carried on past the nose, dashed
+  const arcHalo = createPolyline({ capacity: ARC_SEGMENTS, color: [0.039, 0.039, 0.039], opacity: 0.85, width: 4.5, depthTest: false, renderOrder: 36 });
+  const arc = createPolyline({ capacity: ARC_SEGMENTS, color: [1, 1, 1], opacity: 0.95, width: 2, depthTest: false, renderOrder: 37 });
+  const axisExt = createPolyline({ capacity: 2, color: [1, 1, 1], opacity: 0.8, width: 1.5, depthTest: false, renderOrder: 37 });
+  const arcPts = Array.from({ length: ARC_SEGMENTS }, () => [0, 0, 0]);
+  // the wedge: a fan from the nose tip over the arc
+  const fanPos = new Float32Array((ARC_SEGMENTS + 1) * 3);
+  const fanIdx = [];
+  for (let i = 0; i < ARC_SEGMENTS - 1; i++) fanIdx.push(0, i + 1, i + 2);
+  const fanGeo = new THREE.BufferGeometry();
+  fanGeo.setAttribute('position', new THREE.BufferAttribute(fanPos, 3).setUsage(THREE.DynamicDrawUsage));
+  fanGeo.setIndex(fanIdx);
+  const fanMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: ARC_FILL_OPACITY, depthTest: false, depthWrite: false, side: THREE.DoubleSide });
+  const arcFan = new THREE.Mesh(fanGeo, fanMat);
+  arcFan.renderOrder = 35; arcFan.frustumCulled = false; arcFan.visible = false;
   // the thrust arrow draws before the additive plume (renderOrder 30), so it reads inside the glow
   thrust.group.children.forEach(m => { m.renderOrder = 29; });
   thrust.material.opacity = 0.7;
@@ -366,19 +455,31 @@ export function createMarkers({ dpr = 2 } = {}) {
   const leaderMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.45, depthTest: false, depthWrite: false });
   const leaders = new THREE.LineSegments(leaderGeo, leaderMat);
   leaders.renderOrder = 37; leaders.frustumCulled = false;
-  group.add(cg, cp, ring, normalHalo.group, wind.group, normal.group, thrust.group, leaders, ...Object.values(L).map(l => l.sprite));
+  group.add(cg, cp, ring, normalHalo.group, wind.group, normal.group, thrust.group, leaders, arcFan, arcHalo.mesh, arc.mesh, axisExt.mesh, ...Object.values(L).map(l => l.sprite));
   let visible = true;
+  /* emphasis: the names the beat is about (null: all at full strength), and per name an eased factor */
+  let emph = null;
+  const fac = Object.fromEntries(EMPHASIS_NAMES.map((k) => [k, 1]));
+  let facFrom = { ...fac }, emphT0 = -1e9;     // the fade runs from the factors at the last change, over EMPHASIS_MS
+  let effKey = '';                               // the subjects on screen last frame (emph less view.absent), joined; '' for none
   const P = {
     cg: new THREE.Vector3(), cp: new THREE.Vector3(), ring: new THREE.Vector3(), nose: new THREE.Vector3(), tail: new THREE.Vector3(),
     a: new THREE.Vector3(), from: new THREE.Vector3(), axis: new THREE.Vector3(), side: new THREE.Vector3(),
     wTail: new THREE.Vector3(), wTip: new THREE.Vector3(), nTail: new THREE.Vector3(), nHead: new THREE.Vector3(),
     tTail: new THREE.Vector3(), tHead: new THREE.Vector3(), f0: new THREE.Vector3(), f1: new THREE.Vector3(), u: new THREE.Vector3(),
+    arcMid: new THREE.Vector3(), arcOut: new THREE.Vector3(), axEnd: new THREE.Vector3(), cpF: new THREE.Vector3(),
   };
   const S = {};                                  // screen points, CSS px
-  for (const k of ['nose', 'tail', 'cg', 'cp', 'ring', 'wTail', 'wTip', 'nTail', 'nHead', 'tTail', 'tHead', 'f0', 'f1', 'q0', 'q1', 'q2', 'q3']) S[k] = { x: 0, y: 0, z: 0, ok: false, on: false };
+  for (const k of ['nose', 'tail', 'cg', 'cp', 'cpF', 'ring', 'wTail', 'wTip', 'nTail', 'nHead', 'tTail', 'tHead', 'f0', 'f1', 'q0', 'q1', 'q2', 'q3', 'arcMid', 'arcOut', 'axEnd']) S[k] = { x: 0, y: 0, z: 0, ok: false, on: false };
   const out = { windDir: new THREE.Vector3(), windTail: new THREE.Vector3(), windTip: new THREE.Vector3(), plates: {} };
   const prevOffset = {};                         // plate name -> its centre's offset from its anchor last frame (px)
-  let lastText = -1e9;
+  let lastText = -1e9, lastArcOn = false, lastGustKey = '';
+  const shown = { air: false, alpha: false, n: false, nAt: null, gust: false, arc: false };   // which conditional plate parts are up (out.shown)
+  out.shown = shown;
+  out.stationsPx = NaN;                          // the dot to the N arrow's station on screen (CSS px), NaN without an arrow
+  let nApart = false;                            // the N figure sits at the arrow's tail (the two CP stations are apart on screen)
+  out.emphasis = null;
+  out.factors = fac;
 
   /* s: { body: Object3D (CAD frame), noseY, tailY, xcg, xcp, xcpForce?, xcpLattice,
      theta, alpha, v, airspeed, thrust, N, finScale?, tags }, view: { camera, pxToScale,
@@ -388,12 +489,18 @@ export function createMarkers({ dpr = 2 } = {}) {
      static Barrowman CP (dot, label, margin); xcpForce is where N acts (the arrow),
      xcp when absent; xcpLattice is the 2D-section CP (ring), NaN to leave it out. The
      relative wind uses airspeed (|v_air|, the flight model's state.airspeed); v, the
-     inertial speed, stands in only when no airspeed is given. */
+     inertial speed, stands in only when no airspeed is given. Item 12 adds s.gust ({mph, tag}
+     while a gust pulse acts, else null) and s.arc (true when the scene allows the angle of
+     attack arc: asked for, and the camera face on); the view adds emphasis (null or a list of
+     names), absent (a Set or list of emphasis names not on screen this frame), reduced (no
+     eases) and res {width, height, dpr} (the polylines' pixel size).
+     Returns true while an emphasis fade still runs (the scene keeps drawing). */
   function update(s, view) {
     group.visible = visible;
-    if (!visible) return;
+    if (!visible) return false;
     const { camera, pxToScale, mpp } = view;
     const W = view.width || 0, H = view.height || 0, k = view.labelK || 1;
+    if (view.res) for (const pl of [arc, arcHalo, axisExt]) pl.setResolution(view.res.width, view.res.height, view.res.dpr);
     const body = s.body;
     const finScale = Number.isFinite(s.finScale) ? Math.max(0, s.finScale) : 1;
     const ax = P.axis.set(Math.sin(s.theta), Math.cos(s.theta), 0);          // body +y in the world
@@ -424,7 +531,8 @@ export function createMarkers({ dpr = 2 } = {}) {
     out.windDir.copy(P.from).negate(); out.windTail.copy(P.wTail); out.windTip.copy(P.wTip);
 
     // normal force where it acts at this alpha (xcpForce), push convention from the
-    // windward side; its value is printed in the CP label block, so the arrow carries no label
+    // windward side; its value rides on the CP plate while the arrow lands on the dot, and
+    // sits on its own plate at the arrow's tail once the two stations are apart (below)
     const xf = Number.isFinite(s.xcpForce) ? s.xcpForce : s.xcp;
     let nShown = false;
     if (Number.isFinite(s.N) && Number.isFinite(xf)) {
@@ -436,6 +544,24 @@ export function createMarkers({ dpr = 2 } = {}) {
       nShown = normal.set(P.nTail, P.nHead, mpp);
     } else normal.group.visible = false;
     if (nShown) normalHalo.set(P.nTail, P.nHead, mpp); else normalHalo.group.visible = false;
+    // the two CP stations on screen: while the arrow lands N_SPLIT_PX or more from the dot, the N
+    // figure goes to the arrow's tail (N_JOIN_PX brings it back); no dot, and it goes there anyway
+    const nLbfNow = s.N * LB_PER_N;
+    const nFigure = nShown && Number.isFinite(nLbfNow) && Math.abs(nLbfNow) > N_SHOW_LBF;
+    let sep = NaN;
+    if (nShown) {
+      body.localToWorld(P.cpF.set(0, s.noseY - xf, 0));
+      const a = toScreen(P.cp, camera, W, H, S.cp), b = toScreen(P.cpF, camera, W, H, S.cpF);
+      sep = !cp.visible ? Infinity : a.ok && b.ok ? Math.hypot(a.x - b.x, a.y - b.y) : NaN;
+    }
+    out.stationsPx = sep;
+    let apart = false;
+    if (nFigure) {
+      if (sep === Infinity) apart = true;
+      else if (Number.isFinite(sep)) apart = nApart ? sep >= N_JOIN_PX : sep >= N_SPLIT_PX;
+      else apart = nApart;                       // the stations did not project this frame: keep the last choice
+    }
+    if (apart !== nApart) { nApart = apart; lastText = -1e9; }   // the N line moves: repaint both plates now
 
     // thrust at the tail, push convention aft of the nozzle
     const tLen = Math.min(T_ARROW_MAX_M, Math.max(0, s.thrust) * T_ARROW_M_PER_N);
@@ -443,21 +569,113 @@ export function createMarkers({ dpr = 2 } = {}) {
     P.tTail.copy(P.tHead).addScaledVector(ax, -tLen);
     const tShown = thrust.set(P.tTail, P.tHead, mpp);
 
+    // the angle-of-attack arc at the nose (item 12): from the body axis (theta) to the direction
+    // the air arrives from (gam), radius ARC_RADIUS_M; only while the air meets the nose
+    const aAbs = Math.abs(s.alpha * DEG);
+    let arcOn = !!s.arc && windShown && !tailFirst && Number.isFinite(aAbs) && aAbs >= ALPHA_SHOW_DEG;
+    // the radius: ARC_RADIUS_M, or less when the nose is near the canvas edge ahead of it; with less
+    // room than ARC_MIN_PX the arc stays off (the ALPHA figure stays on the AIR plate)
+    let room = 1e9;
+    if (arcOn) {
+      const n0 = toScreen(P.nose, camera, W, H, S.nose), n1 = toScreen(P.u.copy(P.nose).addScaledVector(ax, 0.1), camera, W, H, S.axEnd);
+      if (!n0.ok || !n1.ok || n0.x < 0 || n0.x > W || n0.y < 0 || n0.y > H) room = 0;
+      else if (W > 0 && H > 0) {
+        let dx = n1.x - n0.x, dy = n1.y - n0.y; const dl = Math.hypot(dx, dy) || 1; dx /= dl; dy /= dl;
+        const m = FIT_MARGIN_PX;
+        const tx = dx > 1e-6 ? (W - m - n0.x) / dx : dx < -1e-6 ? (m - n0.x) / dx : Infinity;
+        const ty = dy > 1e-6 ? (H - m - n0.y) / dy : dy < -1e-6 ? (m - n0.y) / dy : Infinity;
+        room = Math.max(0, Math.min(tx, ty));
+      }
+      if (ARC_ROOM_K * room < ARC_MIN_PX) arcOn = false;
+    }
+    shown.arc = arcOn;
+    if (arcOn) {
+      const R = Math.max(ARC_MIN_PX * mpp, Math.min(ARC_RADIUS_M, ARC_ROOM_K * room * mpp));
+      for (let i = 0; i < ARC_SEGMENTS; i++) {
+        const ph = s.theta + (gam - s.theta) * i / (ARC_SEGMENTS - 1);
+        const q = arcPts[i];
+        q[0] = P.nose.x + R * Math.sin(ph); q[1] = P.nose.y + R * Math.cos(ph); q[2] = P.nose.z;
+      }
+      arc.set(arcPts); arcHalo.set(arcPts);
+      fanPos[0] = P.nose.x; fanPos[1] = P.nose.y; fanPos[2] = P.nose.z;
+      for (let i = 0; i < ARC_SEGMENTS; i++) { fanPos[3 * (i + 1)] = arcPts[i][0]; fanPos[3 * (i + 1) + 1] = arcPts[i][1]; fanPos[3 * (i + 1) + 2] = arcPts[i][2]; }
+      fanGeo.attributes.position.needsUpdate = true;
+      arcFan.visible = true;
+      P.axEnd.copy(P.nose).addScaledVector(ax, R * ARC_AXIS_K);
+      axisExt.set([[P.nose.x, P.nose.y, P.nose.z], [P.axEnd.x, P.axEnd.y, P.axEnd.z]]);
+      axisExt.setStyle({ dash: [4 * mpp, 3 * mpp] });
+      const phm = s.theta - s.alpha / 2;
+      P.arcMid.set(P.nose.x + R * Math.sin(phm), P.nose.y + R * Math.cos(phm), P.nose.z);
+      P.arcOut.set(P.nose.x + (R + 0.1) * Math.sin(phm), P.nose.y + (R + 0.1) * Math.cos(phm), P.nose.z);
+    } else { arc.mesh.visible = false; arcHalo.mesh.visible = false; axisExt.mesh.visible = false; arcFan.visible = false; }
+
     // labels: text at most every 100 ms (10 Hz) so the digits stay legible
     const tags = s.tags || {};
+    const gustKey = s.gust && s.gust.mph > 0 ? `${s.gust.mph.toFixed(1)}|${s.gust.tag || ''}` : '';
+    if (arcOn !== lastArcOn || gustKey !== lastGustKey) lastText = -1e9;   // the ALPHA line moves, or the GUST line comes or goes: repaint now
+    lastArcOn = arcOn; lastGustKey = gustKey;
     if (view.now - lastText > 100) {
       lastText = view.now;
-      L.cg.set([[['CG', META], [`${fmt(s.xcg * IN_PER_M, 1)} IN`], [tags.xcg || 'SIM', META]]], 'right');
-      L.cp.set([[['CP', META], [`${fmt(s.xcp * IN_PER_M, 1)} IN`], [tags.xcp || 'SIM', META]],
-        [['MARGIN', META], [`${sgn((s.xcp - s.xcg) / (2 * BODY_R), 2)} CAL`], [tags.margin || 'SIM', META]],
-        ...(Number.isFinite(s.N) ? [[['N', META], [`${sgn(s.N * LB_PER_N, 2)} LBF`], [tags.N || 'SIM', META]]] : [])]);
-      // two lines, so the qualifier stays and the plate fits beside the body on a phone
-      if (hasRing) L.ring.set([[['CP 2D SECTION', META]], [[`${fmt(s.xcpLattice * IN_PER_M, 1)} IN`], [tags.xcpLattice || 'SIM', META]]]);
-      L.wind.set([[['REL WIND', META], [`${fmt(Math.max(0, vAir) * FT_PER_M, 0)} FT/S`], [tags.airspeed || tags.v || 'SIM', META]],
-        [['ALPHA', META], [`${sgn(s.alpha * DEG, 1)} DEG`], [tags.alpha || 'SIM', META]]]);
+      // words on the stations; the N figure only while there is a push worth reading
+      L.cg.set([[['CG /', META], [PLATE_WORDS.cg]]], 'right');
+      const nLbf = s.N * LB_PER_N;
+      const showN = Number.isFinite(nLbf) && Math.abs(nLbf) > N_SHOW_LBF;
+      const nLine = [['N', META], [`${sgn(nLbf, 2)} LBF`], [tags.N || 'SIM', META]];
+      // the N line rides on the CP plate while the arrow lands on the dot; apart, it is the arrow's own
+      // plate and the CP plate says which push it marks
+      L.cp.set([[['CP /', META], [PLATE_WORDS.cp]],
+        ...(showN && nApart ? [[[CP_APART_WORDS, META]]] : showN ? [nLine] : [])]);
+      if (showN && nApart) L.n.set([nLine]);
+      shown.nAt = !showN ? null : nApart ? 'arrow' : 'cp';
+      // ?lab only: the 2D section's CP is not comparable with Barrowman's (validation L3), and the plate says so
+      if (hasRing) L.ring.set([[['CP / 2D SECTION ONLY', META]], [['NOT COMPARABLE', META]], [[`${fmt(s.xcpLattice * IN_PER_M, 1)} IN`], [tags.xcpLattice || 'SIM', META]]]);
+      const aDeg = s.alpha * DEG;
+      const showA = Number.isFinite(aDeg) && Math.abs(aDeg) >= ALPHA_SHOW_DEG;
+      const g = s.gust && Number.isFinite(s.gust.mph) && s.gust.mph > 0 ? s.gust : null;
+      const alphaLine = [['ALPHA', META], [`${sgn(aDeg, 1)}\u00b0`], [tags.alpha || 'SIM', META]];
+      // the ALPHA figure sits on the arc while the arc shows, else on the AIR plate
+      L.wind.set([[[PLATE_WORDS.air]],
+        ...(g ? [[[GUST_WORD, META], [`${g.mph.toFixed(1)} MPH`], [g.tag || 'EST', META]]] : []),
+        ...(showA && !arcOn ? [alphaLine] : [])]);
+      if (arcOn) L.arc.set([alphaLine]);
+      shown.n = showN; shown.alpha = showA; shown.gust = !!g;
       if (tShown) L.thrust.set([[['T', META], [`${fmt(s.thrust * LB_PER_N, 1)} LBF`], [tags.thrust || 'SIM', META]]]);
     }
-    layoutPlates(s, view, { W, H, k, finScale, hasRing, windShown, nShown, tShown, camera, pxToScale, mpp });
+    shown.air = windShown && vAir > AIR_SHOW_MPS;
+    layoutPlates(s, view, { W, H, k, finScale, hasRing, windShown, airMoving: vAir > AIR_SHOW_MPS, nShown, nApart: nApart && shown.nAt === 'arrow', tShown, arcOn, camera, pxToScale, mpp });
+    return applyEmphasis(view, windShown && vAir > 1 ? 0.95 : 0.5);
+  }
+
+  /* Opacity per name: 1 for the beat's subject (or everything when there is no emphasis), else
+     EMPHASIS_DIM, eased over EMPHASIS_MS (instant under reduced motion). Returns true while easing. */
+  function applyEmphasis(view, windBase) {
+    const now = Number.isFinite(view.now) ? view.now : performance.now();
+    // the subjects actually on screen: a beat whose subjects are all absent dims nothing
+    const absent = view.absent ? new Set(view.absent) : null;
+    let eff = emph;
+    if (emph && absent && absent.size) { const on = [...emph].filter((n) => !absent.has(n)); eff = on.length ? new Set(on) : null; }
+    const key = eff ? [...eff].sort().join(',') : '';
+    if (key !== effKey) { effKey = key; facFrom = { ...fac }; emphT0 = now; }
+    const k = view.reduced ? 1 : Math.max(0, Math.min(1, (now - emphT0) / EMPHASIS_MS));
+    let moving = false;
+    for (const name of EMPHASIS_NAMES) {
+      const want = !eff || eff.has(name) ? 1 : EMPHASIS_DIM;
+      fac[name] = k >= 1 ? want : facFrom[name] + (want - facFrom[name]) * k;
+      if (fac[name] !== want) moving = true;
+    }
+    const f = (...names) => Math.max(...names.map((n) => fac[n]));
+    wind.material.opacity = windBase * f('air');
+    L.wind.sprite.material.opacity = f('air', 'alpha');
+    const fa = f('alpha', 'air');
+    arc.setStyle({ opacity: 0.95 * fa }); arcHalo.setStyle({ opacity: 0.85 * fa }); axisExt.setStyle({ opacity: 0.8 * fa }); fanMat.opacity = ARC_FILL_OPACITY * fa;
+    L.arc.sprite.material.opacity = fa;
+    cg.material.opacity = L.cg.sprite.material.opacity = f('cg');
+    cp.material.opacity = f('cp', 'n'); L.cp.sprite.material.opacity = f('cp', 'n');
+    ring.material.opacity = L.ring.sprite.material.opacity = f('cp');
+    normal.material.opacity = f('n', 'cp'); normalHalo.material.opacity = 0.85 * f('n', 'cp'); L.n.sprite.material.opacity = f('n', 'cp');
+    thrust.material.opacity = 0.7 * f('thrust'); L.thrust.sprite.material.opacity = f('thrust');
+    leaderMat.opacity = 0.45 * (eff ? EMPHASIS_DIM : 1);   // leaders are one line set: they dim together while a beat has a subject on screen
+    return moving;
   }
 
   /* Place the plates in order (wind, CG, CP block, ring, thrust); see the header. */
@@ -470,7 +688,12 @@ export function createMarkers({ dpr = 2 } = {}) {
     const ul = Math.hypot(ux, uy);
     if (pN.ok && pT.ok && ul > 1e-3) { ux /= ul; uy /= ul; } else { ux = 0; uy = -1; }
     const nx = -uy, ny = ux;
-    const plates = Array.isArray(view.reserved) ? view.reserved.filter(Boolean) : [], segs = [];
+    // reserved plates (the ALT cursor's) keep a wider margin: the cursor sits at the CG
+    // station's height, and the CG plate must not read as the same line of text
+    const plates = (Array.isArray(view.reserved) ? view.reserved.filter(Boolean) : [])
+      .map((r) => ({ x0: r.x0 - RESERVED_PAD_PX, y0: r.y0 - RESERVED_PAD_PX, x1: r.x1 + RESERVED_PAD_PX, y1: r.y1 + RESERVED_PAD_PX })), segs = [];
+    // the page's own overlays on the canvas (the slate, the badges, the end card): plates keep off them
+    if (Array.isArray(view.overlays)) for (const r of view.overlays) if (r) plates.push({ x0: r.x0 - OVERLAY_PAD_PX, y0: r.y0 - OVERLAY_PAD_PX, x1: r.x1 + OVERLAY_PAD_PX, y1: r.y1 + OVERLAY_PAD_PX });
     const band = { x0: 0, y0: H - CAPTION_BAND_PX, x1: W, y1: H };
     const rBody = Math.max(BODY_R / mpp, 11) + 3;                 // the body, or the CG roundel where the body is thinner
     if (pN.ok && pT.ok) segs.push({ ax: pT.x, ay: pT.y, bx: pN.x, by: pN.y, r: rBody, w: 40 });
@@ -487,6 +710,11 @@ export function createMarkers({ dpr = 2 } = {}) {
       if (a.ok && b.ok) segs.push({ ax: a.x, ay: a.y, bx: b.x, by: b.y, r, w });
     };
     arrowSeg(o.windShown, P.wTail, P.wTip, 'wTail', 'wTip', 6, 100);
+    if (o.arcOn) {
+      // the arc (as its chord from the axis end to the wind side) and the dashed axis extension
+      arrowSeg(true, P.nose, P.axEnd, 'nose', 'axEnd', 6, 80);
+      arrowSeg(true, P.axEnd, P.arcMid, 'axEnd', 'arcMid', 8, 80);
+    }
     arrowSeg(o.nShown, P.nTail, P.nHead, 'nTail', 'nHead', 6, 40);
     arrowSeg(o.tShown, P.tTail, P.tHead, 'tTail', 'tHead', 6, 60);
     // the slice's footprint and its half-width across the axis
@@ -594,16 +822,33 @@ export function createMarkers({ dpr = 2 } = {}) {
     if (o.nShown && S.nTail.ok) arrowSide = Math.sign((S.nTail.x - pCp.x) * nx + (S.nTail.y - pCp.y) * ny) || -1;
     const cpPref = -arrowSide, cgPref = arrowSide;
 
-    // wind: continue the arrow back from its tail, else beside it
-    if (o.windShown && S.wTail.ok && S.wTip.ok) {
+    // wind: continue the arrow back from its tail, else beside it (the AIR plate only while
+    // the air moves past the rocket; the arrow stays, dimmed, in still air on the pad)
+    if (o.windShown && o.airMoving && S.wTail.ok && S.wTip.ok) {
       let dx = S.wTail.x - S.wTip.x, dy = S.wTail.y - S.wTip.y; const dl = Math.hypot(dx, dy) || 1; dx /= dl; dy /= dl;
       stickTo('wind', S.wTail);
       put('wind', L.wind, S.wTail, arrowPlate(L.wind, S.wTail, S.wTip, dx, dy, 8), 0, P.wTail, S.wTip);
     } else put('wind', L.wind, S.wTail, null);
+    // the arc's ALPHA plate: outward from the arc's midpoint
+    if (o.arcOn) {
+      const pm = sc('arcMid', P.arcMid), po = sc('arcOut', P.arcOut);
+      let dx = po.x - pm.x, dy = po.y - pm.y; const dl = Math.hypot(dx, dy) || 1; dx /= dl; dy /= dl;
+      stickTo('arc', pm);
+      put('arc', L.arc, pm, pm.ok ? arrowPlate(L.arc, pm, pm, dx, dy, 10) : null, 0, P.arcMid);
+    } else put('arc', L.arc, S.arcMid, null);
     stickTo('cg', pCg);
     put('cg', L.cg, pCg, axisPlate(L.cg, pCg, cgPref), 12, P.cg);
     stickTo('cp', pCp);
     put('cp', L.cp, pCp, cp.visible ? axisPlate(L.cp, pCp, cpPref) : null, 8, P.cp);
+    // the N figure at the arrow's tail while the two CP stations are apart: continue the arrow back
+    // from its tail, else beside it, with a leader to the arrow; from the head when the tail is off screen
+    if (o.nApart && S.nTail.ok && S.nHead.ok) {
+      let dx = S.nTail.x - S.nHead.x, dy = S.nTail.y - S.nHead.y; const dl = Math.hypot(dx, dy) || 1; dx /= dl; dy /= dl;
+      stickTo('n', S.nTail);
+      const rT = arrowPlate(L.n, S.nTail, S.nHead, dx, dy, 8);
+      if (rT) put('n', L.n, S.nTail, rT, 0, P.nTail, S.nHead);
+      else { stickTo('n', S.nHead); put('n', L.n, S.nHead, arrowPlate(L.n, S.nHead, S.nTail, -dx, -dy, 8), 0, P.nHead, S.nTail); }
+    } else put('n', L.n, S.nTail, null);
     if (o.hasRing) { const pR = sc('ring', P.ring); stickTo('ring', pR); put('ring', L.ring, pR, axisPlate(L.ring, pR, cpPref), 13, P.ring); } else put('ring', L.ring, S.ring, null);
     // thrust: beside the arrow, toward screen right first
     if (o.tShown && S.tTail.ok && S.tHead.ok) { stickTo('thrust', S.tTail); put('thrust', L.thrust, S.tTail, arrowPlate(L.thrust, S.tTail, S.tHead, 1, 0, 8), 0, P.tTail, S.tHead); }
@@ -618,10 +863,25 @@ export function createMarkers({ dpr = 2 } = {}) {
     setVisible(v) { visible = !!v; group.visible = visible; },
     refresh() { lastText = -1e9; for (const l of Object.values(L)) l.invalidate(); },
     get visible() { return visible; },
+    /* null (all at full strength) or a list of names: air, alpha, cp, n, cg, thrust, alt.
+       Returns the list kept (unknown names are dropped), or null. */
+    setEmphasis(list) {
+      const names = Array.isArray(list) ? list.filter((n) => EMPHASIS_NAMES.includes(n)) : null;
+      const next = names && names.length ? new Set(names) : null;
+      const same = (!next && !emph) || (next && emph && next.size === emph.size && [...next].every((n) => emph.has(n)));
+      if (!same) { facFrom = { ...fac }; emphT0 = performance.now(); }
+      emph = next;
+      out.emphasis = emph ? [...emph] : null;
+      return out.emphasis;
+    },
+    get emphasis() { return out.emphasis; },
+    /* the eased factor for a name (the scene dims its altitude cursor with factor('alt')) */
+    factor(name) { return fac[name] ?? 1; },
     dispose() {
       for (const t of textures) t.dispose();
       for (const s of [cg, cp, ring]) s.material.dispose();
       wind.dispose(); normal.dispose(); normalHalo.dispose(); thrust.dispose();
+      arc.dispose(); arcHalo.dispose(); axisExt.dispose(); fanGeo.dispose(); fanMat.dispose();
       leaderGeo.dispose(); leaderMat.dispose();
       for (const l of Object.values(L)) l.dispose();
       group.removeFromParent();

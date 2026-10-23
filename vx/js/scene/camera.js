@@ -14,17 +14,38 @@
      chase    target follows the rocket through a critically damped tracking
               filter with velocity feed-forward (lags only while the rocket
               accelerates), camera trails behind the air-relative flight path.
-     pad      camera fixed on the ground near the pad, looking at the rocket, with
-              a tracking zoom (field of view narrows as the range grows).
+     pad      a launch photographer's camera on the ground, 10.6 m from the rail and 31 deg
+              round toward downrange, looking up at the rocket: wide on the pad (the rail,
+              the stand and the grid to the horizon), then a tracking zoom that keeps 6 m of
+              the scene in the frame as the range grows. (Presentation plan item 12 replaced
+              the old pad preset, an 18 m telephoto that looked like the side view.)
+     hero     the static low three-quarter view for the empty stage (presentation plan
+              item 12): 24 deg round toward +x, 6 deg up, 1.15 times the side fit,
+              rigid follow. Never for an angle beat (angles read true only face on).
+     plate    the end plate (item 10): face on to the pitch plane (azimuth 0, elevation 0, so
+              a flight path reads at equal scale), aimed and distanced so a world box (the
+              paths from the pad to apogee) fits the canvas less the insets the caller keeps
+              clear (the end card, label room). setPlate(box) eases there over PLATE_MS
+              (2400 ms) on the site easing, or cuts under reduced motion; it does not follow
+              the rocket. Never in PRESETS: a director asks for it, the panel does not.
      free     entered on the first camera move the visitor makes (a drag or a zoom,
               not a plain click); rigid follow with the offset the visitor left. It
               keeps the field of view it was entered with, so the framing does not
               jump, and its zoom limits scale with that view (the same framing range
-              as at 32 deg) and always include the distance it started from.
+              as at 32 deg) and always include the distance it started from. Entered
+              from the plate, it orbits the plate's fixed aim point instead of the rocket.
    The rig never runs its own animation frame: the scene calls update(dt, ctx)
    once per drawn frame and keeps drawing while update() returns true.
    onModeChange(mode, preset) is called whenever the mode changes (a preset, or
    'free'), so a preset group can stop showing a preset the camera has left.
+
+   Framing (item 12): setFraming({k, aimM, elDeg}) modulates the side, quarter and hero
+   poses for a director: k multiplies the fit distance (1.0 to 0.8 is a push-in, 1.6 an
+   ease-out), aimM moves the aim point along the body axis (in m, positive toward the
+   tail: 0.15 aims at the CP and the fins), elDeg replaces the preset's elevation (null
+   keeps it). The change eases over opts.ms (1200 ms) on the site easing, or linearly
+   with opts.ease 'linear' (a slow push-in); k eases in log space. Chase, pad and free
+   ignore it; it stays set across preset changes until it is set again.
 
    Gestures the browser takes over: on a scrolling page the canvas allows vertical
    panning (touch-action pan-y), so a vertical swipe that starts on the view scrolls
@@ -40,7 +61,7 @@ const DEG = Math.PI / 180;
 export const FOV_DEG = 32;                 // vertical field of view of the presets (deg), narrow so the side view reads flat
 export const NEAR_M = 0.05, FAR_M = 3000;  // clip planes (m); the flight tops out near 315 m (PAGE 1,033 ft)
 export const TRANSITION_MS = 1200;         // preset change, the site's --dur-5
-export const PRESETS = ['side', 'quarter', 'chase', 'pad'];
+export const PRESETS = ['side', 'quarter', 'chase', 'pad', 'hero'];
 const MIN_DISTANCE_M = 0.45, MAX_DISTANCE_M = 80;   // orbit zoom limits (m)
 const GROUND_CLEAR_M = 0.12;               // the camera never goes below this height (m)
 /* Frame box the side and quarter presets fit (m, half extents about the frame
@@ -50,6 +71,12 @@ const GROUND_CLEAR_M = 0.12;               // the camera never goes below this h
 const FIT_HALF_AXIAL_M = 1.12, FIT_HALF_LATERAL_M = 0.5;
 const SIDE = { az: 0, el: 3 * DEG, k: 1.0 };
 const QUARTER = { az: 38 * DEG, el: 15 * DEG, k: 1.12 };
+/* Hero (EST, a framing choice): the empty stage seen low from the front quarter. */
+export const HERO = { az: 24 * DEG, el: 6 * DEG, k: 1.15 };
+const FRAMED = { side: SIDE, quarter: QUARTER, hero: HERO };   // the presets setFraming acts on
+const FRAMING_K = [0.3, 4];                // allowed fit factor range
+const FRAMING_AIM_M = 1;                   // aim shift limit, either way along the axis (m)
+const FRAMING_EL = [-10 * DEG, 60 * DEG];  // elevation override range
 /* Chase: 1.7 m behind along the air-relative flight path, 2.9 m to the +z side,
    0.4 m to the in-plane side, aimed 0.15 m behind the frame point so the tail and
    the plume stay in: about 30 deg up from behind in flight, and still 3 m off when
@@ -62,12 +89,18 @@ const CHASE_OMEGA = 12;
 const CHASE_DIR_TAU_S = 0.4;               // one-pole smoothing of the chase direction (s)
 const CHASE_SUBSTEP_S = 1 / 240;           // filter sub-step; omega * dt = 0.05 keeps it stable
 const SNAP_M = 25;                         // a jump larger than this per frame is a reset: snap, do not chase
-/* Pad camera: 1.4 m up, 9 m downrange and 16 m out (18 m from the rail, past the
-   NAR safety code's 30 ft minimum for a G motor). The tracking zoom keeps 1.6 m of
-   the scene in the vertical frame, between 0.8 and 32 deg. EST (a launch
+/* Pad camera (item 12 replaced the old 18 m telephoto that looked like the side view): 1.1 m up,
+   5.5 m downrange and 9 m out, 10.6 m from the rail, past the NAR safety code's 30 ft (9.1 m)
+   minimum for a G motor, and 31 deg round from the side view toward downrange. The tracking zoom
+   keeps 6 m of the scene in the vertical frame, between 0.8 and 32 deg: about 32 deg on the pad
+   (wide: the stand, the rail and the grid to the horizon), 3.4 deg at 100 m of range. EST (a launch
    photographer's position, not a site figure). */
-export const PAD_CAMERA = new THREE.Vector3(9, 1.4, 16);
-const PAD_FRAME_M = 1.6, PAD_FOV_MIN = 0.8;
+export const PAD_CAMERA = new THREE.Vector3(5.5, 1.1, 9.0);
+const PAD_FRAME_M = 6, PAD_FOV_MIN = 0.8;
+/* Plate (item 10): the end plate's pull-back, the site's --dur-6, and its view: face on, level. */
+export const PLATE_MS = 2400;
+const PLATE_MIN_FREE = 0.25;               // the free rectangle never shrinks below this share of the canvas
+const PLATE_MIN_HALF_M = 0.5;              // a box is never framed tighter than 1 m across
 
 /* cubic-bezier(x1, y1, x2, y2) as a function of x in [0, 1]: Newton on x(t) with
    a bisection fallback, then y(t). The site easing is (0.22, 1, 0.36, 1). */
@@ -121,6 +154,38 @@ export function fitDistance(aspect, k = 1, pitch = 0) {
 export function screenPitch(theta, az = 0) { return Math.atan2(Math.sin(theta || 0) * Math.cos(az), Math.cos(theta || 0)); }
 const FIT_TAU_S = 0.45;                    // the pitch fit eases with this time constant (s), so a reset does not jump the zoom
 
+/* The plate's pose for a world box {x0, y0, x1, y1} (m, in the z = 0 pitch plane) on a canvas
+   width x height CSS px with insets {l, r, t, b} (px kept clear): the box fits the free rectangle
+   and sits at its centre (a free rectangle narrower than PLATE_MIN_FREE of the canvas widens about
+   its centre). insets.hard {l, r, t, b}, when given, is what the box itself may never cross (the
+   page's end card with the ladder's labels beside it, the canvas edges): the box slides inside it,
+   and shrinks only when it cannot fit there. Returns {x, y, d, mpp}: the aim point, the camera
+   distance along +z and the metres per CSS px on the plane. */
+export function plateFit(box, width, height, insets = null) {
+  const W = Math.max(1, width || 1), H = Math.max(1, height || 1);
+  const ins = insets || {}, hard = ins.hard || null;
+  let fx0 = Math.max(0, ins.l || 0), fx1 = W - Math.max(0, ins.r || 0);
+  let fy0 = Math.max(0, ins.t || 0), fy1 = H - Math.max(0, ins.b || 0);
+  if (fx1 - fx0 < W * PLATE_MIN_FREE) { const c = (fx0 + fx1) / 2; fx0 = c - W * PLATE_MIN_FREE / 2; fx1 = c + W * PLATE_MIN_FREE / 2; }
+  if (fy1 - fy0 < H * PLATE_MIN_FREE) { const c = (fy0 + fy1) / 2; fy0 = c - H * PLATE_MIN_FREE / 2; fy1 = c + H * PLATE_MIN_FREE / 2; }
+  const hx = Math.max(PLATE_MIN_HALF_M, (box.x1 - box.x0) / 2), hy = Math.max(PLATE_MIN_HALF_M, (box.y1 - box.y0) / 2);
+  let mpp = Math.max(2 * hx / (fx1 - fx0), 2 * hy / (fy1 - fy0));
+  let cx = (fx0 + fx1) / 2, cy = (fy0 + fy1) / 2;              // the box's centre on the canvas (px, +y down)
+  if (hard) {
+    const lo = Math.max(0, hard.l || 0), hi = W - Math.max(0, hard.r || 0);
+    const top = Math.max(0, hard.t || 0), bot = H - Math.max(0, hard.b || 0);
+    if (hi - lo >= 8 && bot - top >= 8) {
+      mpp = Math.max(mpp, 2 * hx / (hi - lo), 2 * hy / (bot - top));   // shrink only when the box cannot fit inside the hard insets
+      const bw = 2 * hx / mpp, bh = 2 * hy / mpp;
+      cx = Math.max(lo + bw / 2, Math.min(hi - bw / 2, cx));
+      cy = Math.max(top + bh / 2, Math.min(bot - bh / 2, cy));
+    }
+  }
+  const d = mpp * H / (2 * Math.tan(FOV_DEG * DEG / 2));
+  const ox = cx - W / 2, oy = cy - H / 2;                      // the box centre from the canvas centre (px, +y down)
+  return { x: (box.x0 + box.x1) / 2 - ox * mpp, y: (box.y0 + box.y1) / 2 + oy * mpp, d, mpp };
+}
+
 export function createCameraRig({ camera, canvas, reducedMotion = false, zoom = true, onUserStart = null, onChange = null, onModeChange = null }) {
   const controls = new OrbitControls(camera, canvas);
   controls.enablePan = false;               // the target always follows the rocket
@@ -133,11 +198,27 @@ export function createCameraRig({ camera, canvas, reducedMotion = false, zoom = 
   controls.maxDistance = MAX_DISTANCE_M;
   controls.minPolarAngle = 0.02;            // rad; allows looking up from under the rocket (pad, chase)
   controls.maxPolarAngle = Math.PI - 0.02;
+  /* OrbitControls always listens for wheel events with passive: false. With zoom off (the page: the
+     stage sits in a scrolling page) that listener would only make every wheel or trackpad scroll that
+     starts over the view wait for a busy main thread (shipping finding C2-11), so it is removed, and
+     added back if zoom is turned on. */
+  let wheelOn = true;
+  function setWheel(on) {
+    const fn = controls._onMouseWheel;
+    if (typeof fn !== 'function' || on === wheelOn) return;
+    wheelOn = on;
+    if (on) canvas.addEventListener('wheel', fn, { passive: false });
+    else canvas.removeEventListener('wheel', fn);
+  }
+  setWheel(!!zoom);
 
   let mode = 'side', preset = 'side', reduced = !!reducedMotion;
   let transition = null;                    // { t0, dur, fromRel: V3, fromSph, fromFov }
   let userActive = false, damping = false;
   let freeFov = FOV_DEG;                    // fov kept from the view free mode was entered from
+  let freeAimM = 0;                         // aim shift kept from the framing free mode was entered from (no jump on entry)
+  let freeAnchor = null;                    // a fixed world aim point for free mode entered from the plate (it does not follow the rocket)
+  let plateBox = null;                      // the plate's world box {x0, y0, x1, y1} while the plate is up
   const freeOffset = new THREE.Vector3(0, 0.2, 3.3);
   const target = new THREE.Vector3();
   const desiredTarget = new THREE.Vector3(), desiredOffset = new THREE.Vector3();
@@ -150,6 +231,17 @@ export function createCameraRig({ camera, canvas, reducedMotion = false, zoom = 
   let fitK = NaN;                           // eased pitch factor of the side and quarter fit: the fit distance at this pitch over the one at 0
   let notifiedMode = mode;
   let gestureStart = null;                  // pose at the start of the visitor's gesture (restored on pointercancel)
+  /* framing: eased from frFrom to frTo; el NaN means the preset's own elevation */
+  let frFrom = { k: 1, aimM: 0, el: NaN }, frTo = { k: 1, aimM: 0, el: NaN };
+  let frT0 = 0, frDur = 0, frEase = easeSite, frK = 1;
+  const easeLinear = (x) => Math.max(0, Math.min(1, x));
+  /* the framing now for a preset whose own elevation is pEl */
+  function framingNow(pEl) {
+    const k = Math.exp(Math.log(frFrom.k) + (Math.log(frTo.k) - Math.log(frFrom.k)) * frK);
+    const aimM = frFrom.aimM + (frTo.aimM - frFrom.aimM) * frK;
+    const e0 = Number.isFinite(frFrom.el) ? frFrom.el : pEl, e1 = Number.isFinite(frTo.el) ? frTo.el : pEl;
+    return { k, aimM, el: e0 + (e1 - e0) * frK };
+  }
   function noteMode() {
     if (mode === notifiedMode) return;
     notifiedMode = mode;
@@ -165,7 +257,7 @@ export function createCameraRig({ camera, canvas, reducedMotion = false, zoom = 
   const onStart = () => {
     if (!userActive) {
       gestureStart = {
-        mode, preset, fov, freeFov, transition,
+        mode, preset, fov, freeFov, freeAimM, transition, freeAnchor: freeAnchor && freeAnchor.clone(),
         freeOffset: freeOffset.clone(), position: camera.position.clone(), target: controls.target.clone(),
         minDistance: controls.minDistance, maxDistance: controls.maxDistance,
       };
@@ -180,9 +272,12 @@ export function createCameraRig({ camera, canvas, reducedMotion = false, zoom = 
   const onEnd = () => { userActive = false; damping = controls.enableDamping; };
   const onCtrlChange = () => {
     if (userActive && mode !== 'free') {
+      const fromPlate = mode === 'plate';
       mode = 'free'; transition = null;
       freeOffset.subVectors(camera.position, controls.target);
       freeFov = fov;
+      freeAimM = !fromPlate && FRAMED[preset] ? snapshot().aimM : 0;
+      freeAnchor = fromPlate ? controls.target.clone() : null;
       noteMode();
     }
     if (onChange) onChange();
@@ -207,7 +302,7 @@ export function createCameraRig({ camera, canvas, reducedMotion = false, zoom = 
     controls.enableDamping = damp;
     damping = false;
     mode = g.mode; preset = g.preset; transition = g.transition;
-    freeFov = g.freeFov; freeOffset.copy(g.freeOffset);
+    freeFov = g.freeFov; freeAimM = g.freeAimM; freeOffset.copy(g.freeOffset); freeAnchor = g.freeAnchor;
     camera.position.copy(g.position); controls.target.copy(g.target);
     controls.minDistance = g.minDistance; controls.maxDistance = g.maxDistance;
     applyFov(g.fov);
@@ -222,12 +317,20 @@ export function createCameraRig({ camera, canvas, reducedMotion = false, zoom = 
 
   /* Desired pose of a preset now. ctx: { frame: V3 (frame point on the axis),
      flightDir: V3 (unit, air-relative flight direction, world), aspect, theta (body
-     pitch, rad), dt }. */
+     pitch, rad), dt, width and height (CSS px), plateInsets ({l, r, t, b} px) }. */
   function presetPose(name, ctx, outTarget, outOffset) {
-    if (name === 'side' || name === 'quarter') {
-      const p = name === 'side' ? SIDE : QUARTER;
+    if (name === 'plate' && plateBox) {
+      const f = plateFit(plateBox, ctx.width, ctx.height, ctx.plateInsets);
+      outTarget.set(f.x, f.y, 0);
+      fromSph({ r: f.d, az: 0, el: 0 }, outOffset);
+      return FOV_DEG;
+    }
+    const p = FRAMED[name];
+    if (p) {
+      const fr = framingNow(p.el);
       outTarget.copy(ctx.frame);
-      fromSph({ r: fitDistance(ctx.aspect, p.k) * (Number.isFinite(fitK) ? fitK : 1), az: p.az, el: p.el }, outOffset);
+      if (fr.aimM && ctx.axis) outTarget.addScaledVector(ctx.axis, -fr.aimM);   // positive aimM: toward the tail
+      fromSph({ r: fitDistance(ctx.aspect, p.k) * (Number.isFinite(fitK) ? fitK : 1) * fr.k, az: p.az, el: fr.el }, outOffset);
       return FOV_DEG;
     }
     if (name === 'chase') {
@@ -282,9 +385,14 @@ export function createCameraRig({ camera, canvas, reducedMotion = false, zoom = 
     let moving = false;
     if (mode === 'chase' || preset === 'chase') moving = stepChase(ctx, dt) || moving;
     else { chaseReady = false; haveLast = false; }
-    // the side and quarter fit follows the on-screen pitch, eased (snapped under reduced motion)
-    if (mode === 'side' || mode === 'quarter') {
-      const az = mode === 'side' ? SIDE.az : QUARTER.az;
+    // the framing ease (item 12)
+    if (frDur > 0) {
+      frK = frEase((performance.now() - frT0) / frDur);
+      if (frK >= 1) { frFrom = { ...frTo }; frDur = 0; frK = 1; } else moving = true;
+    }
+    // the side, quarter and hero fit follows the on-screen pitch, eased (snapped under reduced motion)
+    if (FRAMED[mode]) {
+      const az = FRAMED[mode].az;
       const want = fitDistance(ctx.aspect, 1, screenPitch(ctx.theta, az)) / fitDistance(ctx.aspect, 1, 0);
       if (!Number.isFinite(fitK) || reduced) fitK = want;
       else if (dt > 0) fitK += (want - fitK) * (1 - Math.exp(-Math.min(dt, 0.1) / FIT_TAU_S));
@@ -292,9 +400,12 @@ export function createCameraRig({ camera, canvas, reducedMotion = false, zoom = 
     }
 
     if (mode === 'free') {
-      tmp.subVectors(ctx.frame, controls.target);
+      if (freeAnchor) tmp2.copy(freeAnchor);
+      else tmp2.copy(ctx.frame);
+      if (!freeAnchor && freeAimM && ctx.axis) tmp2.addScaledVector(ctx.axis, -freeAimM);
+      tmp.subVectors(tmp2, controls.target);
       camera.position.add(tmp);
-      controls.target.copy(ctx.frame);
+      controls.target.copy(tmp2);
       const changed = controls.update(dt);
       if (changed && !userActive) moving = true;
       if (!changed) damping = false;
@@ -330,35 +441,106 @@ export function createCameraRig({ camera, canvas, reducedMotion = false, zoom = 
     return moving || userActive;
   }
 
-  function setPreset(name, ctx) {
-    if (!PRESETS.includes(name)) return false;
-    const from = mode;
-    preset = name; mode = name;
-    if (name === 'chase') { chaseReady = false; haveLast = false; }
-    gestureStart = null;                    // a preset chosen mid-gesture is not undone by a later cancel
-    noteMode();
-    if (reduced || !ctx || from === name && !transition) { transition = null; return true; }
+  function startTransition(ctx, dur) {
     transition = {
-      t0: performance.now(), dur: TRANSITION_MS,
+      t0: performance.now(), dur,
       fromRel: new THREE.Vector3().subVectors(target, ctx.frame),
       fromSph: toSph(new THREE.Vector3().subVectors(camera.position, target), { r: 1, az: 0, el: 0 }),
       fromFov: fov,
     };
+  }
+  function setPreset(name, ctx) {
+    if (!PRESETS.includes(name)) return false;
+    const from = mode;
+    preset = name; mode = name;
+    plateBox = null; freeAnchor = null;
+    if (name === 'chase') { chaseReady = false; haveLast = false; }
+    gestureStart = null;                    // a preset chosen mid-gesture is not undone by a later cancel
+    noteMode();
+    if (reduced || !ctx || from === name && !transition) { transition = null; return true; }
+    startTransition(ctx, TRANSITION_MS);
     return true;
   }
+  /* The end plate (item 10): box {x0, y0, x1, y1} in world m (the z = 0 plane), eased over
+     opts.ms (PLATE_MS) from wherever the camera is, or a cut (reduced motion, opts.animate false,
+     no ctx). Called again while the plate is up, it only moves the box (a ghost path that arrives
+     late widens the frame; the running ease follows it). null leaves the plate for the preset it
+     came from, over the preset change's 1200 ms (a free camera the visitor took on the plate stays
+     where it is). Returns true when the plate is (still) up. */
+  function setPlate(box, ctx, { ms = PLATE_MS, animate = true } = {}) {
+    if (box == null) {
+      // a free camera the visitor took on the plate keeps its fixed aim point until they pick a preset
+      if (mode !== 'plate') { plateBox = null; return false; }
+      setPreset(PRESETS.includes(preset) ? preset : 'side', ctx);
+      return false;
+    }
+    const b = { x0: +box.x0, y0: +box.y0, x1: +box.x1, y1: +box.y1 };
+    if (![b.x0, b.y0, b.x1, b.y1].every(Number.isFinite) || b.x1 < b.x0 || b.y1 < b.y0) return mode === 'plate';
+    const was = mode === 'plate';
+    plateBox = b;
+    if (was) { if (onChange) onChange(); return true; }
+    mode = 'plate'; freeAnchor = null;
+    gestureStart = null;
+    noteMode();
+    if (reduced || !animate || !ctx || !(ms > 0)) transition = null;
+    else startTransition(ctx, ms);
+    if (onChange) onChange();
+    return true;
+  }
+
+  /* The framing as it stands (eased), resolved against the current preset's elevation
+     when it is a framed one (else the side preset's). */
+  function snapshot() {
+    const p = FRAMED[mode] || FRAMED[preset] || SIDE;
+    const f = framingNow(p.el);
+    if (!Number.isFinite(frFrom.el) && !Number.isFinite(frTo.el)) f.el = NaN;
+    return f;
+  }
+  /* f: {k, aimM, elDeg} or null (reset). opts: {ms, ease 'site' | 'linear', animate}. */
+  function setFraming(f, { ms = TRANSITION_MS, ease = 'site', animate = true } = {}) {
+    const clampN = (v, a, b) => Math.max(a, Math.min(b, v));
+    let to;
+    if (f == null) to = { k: 1, aimM: 0, el: NaN };
+    else {
+      const k = +f.k, aim = +f.aimM, el = f.elDeg == null ? NaN : +f.elDeg * DEG;
+      to = {
+        k: Number.isFinite(k) && k > 0 ? clampN(k, FRAMING_K[0], FRAMING_K[1]) : frTo.k,
+        aimM: Number.isFinite(aim) ? clampN(aim, -FRAMING_AIM_M, FRAMING_AIM_M) : frTo.aimM,
+        el: 'elDeg' in f ? (Number.isFinite(el) ? clampN(el, FRAMING_EL[0], FRAMING_EL[1]) : NaN) : frTo.el,
+      };
+    }
+    if (reduced || !animate || !(ms > 0)) { frFrom = { ...to }; frTo = { ...to }; frDur = 0; frK = 1; }
+    else {
+      frFrom = snapshot(); frTo = to;
+      frT0 = performance.now(); frDur = ms; frEase = ease === 'linear' ? easeLinear : easeSite; frK = 0;
+    }
+    if (onChange) onChange();
+    return framingTarget();
+  }
+  const outEl = (e) => (Number.isFinite(e) ? e / DEG : null);
+  function framingTarget() { return { k: frTo.k, aimM: frTo.aimM, elDeg: outEl(frTo.el) }; }
 
   return {
     controls,
     update,
     setPreset,
+    setPlate,
+    setFraming,
+    /* the plate's world box while it is up, else null */
+    get plate() { return mode === 'plate' && plateBox ? { ...plateBox } : null; },
+    /* {k, aimM, elDeg (null: the preset's own)} now, the target, and whether it still eases */
+    get framing() { const f = snapshot(); return { k: f.k, aimM: f.aimM, elDeg: outEl(f.el), target: framingTarget(), moving: frDur > 0 }; },
     get mode() { return mode; },
     get preset() { return preset; },
     get transitioning() { return !!transition; },
     get target() { return target; },
     get fov() { return fov; },
     get distance() { return camera.position.distanceTo(target); },
-    setReducedMotion(r) { reduced = !!r; controls.enableDamping = !reduced; if (reduced) transition = null; },
-    setZoom(z) { controls.enableZoom = !!z; },
+    setReducedMotion(r) {
+      reduced = !!r; controls.enableDamping = !reduced;
+      if (reduced) { transition = null; if (frDur > 0) { frFrom = { ...frTo }; frDur = 0; frK = 1; } }
+    },
+    setZoom(z) { controls.enableZoom = !!z; setWheel(!!z); },
     dispose() {
       controls.removeEventListener('start', onStart);
       controls.removeEventListener('end', onEnd);

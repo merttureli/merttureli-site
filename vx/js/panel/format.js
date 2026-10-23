@@ -35,7 +35,7 @@ export function timeCode(t) {
   return (neg ? 'T' + MINUS : 'T+') + s;
 }
 
-export const PHASES = { pad: 'PAD', rail: 'RAIL', boost: 'BOOST', coast: 'COAST', descent: 'DESCENT', done: 'DONE', hold: 'HOLD' };
+export const PHASES = { pad: 'PAD', rail: 'RAIL', boost: 'BOOST', coast: 'COAST', apogee: 'APOGEE', descent: 'DESCENT', done: 'DONE', hold: 'HOLD' };   // apogee: the panel's word at the page's apogee stop (the flight is already one step into descent)
 export const phaseLabel = (p) => PHASES[p] || (p ? String(p).toUpperCase() : DASH);
 
 /* Read a value that the flight module may expose as a number or as a function of
@@ -229,15 +229,23 @@ export function createIdleLoop(fn, { idleFrames = 20, poll = null, pollMs = 250 
     if (idle < idleFrames) raf = requestAnimationFrame(tick);
     else { last = 0; arm(); }
   };
+  /* the idle poll notices an external driver (the page stepping the flight) while the loop
+     sleeps. pollMs may be a function, read before each wait, so a caller can poll often only
+     while something can change behind its back (C2-24); 0 or less skips that wait's poll. */
   function arm() {
     if (!poll || timer || destroyed) return;
-    timer = setInterval(() => {
+    let ms = typeof pollMs === 'function' ? Number(pollMs()) : pollMs;
+    const skip = !(ms > 0);
+    if (skip) ms = 1000;                       // look again in a second whether polling is wanted
+    timer = setTimeout(() => {
+      timer = 0;
       if (destroyed || document.hidden || raf) return;
-      let go = false; try { go = poll() === true; } catch { go = false; }
-      if (go) wake();
-    }, pollMs);
+      let go = false;
+      if (!skip) { try { go = poll() === true; } catch { go = false; } }
+      if (go) wake(); else arm();
+    }, ms);
   }
-  function disarm() { if (timer) clearInterval(timer); timer = 0; }
+  function disarm() { if (timer) clearTimeout(timer); timer = 0; }
   function wake() { if (destroyed || document.hidden) return; idle = 0; disarm(); if (!raf) raf = requestAnimationFrame(tick); }
   const onVis = () => { if (document.hidden) { if (raf) cancelAnimationFrame(raf); raf = 0; last = 0; disarm(); } else wake(); };
   document.addEventListener('visibilitychange', onVis);

@@ -209,7 +209,7 @@
       <h2 id="g-der">Derived / Barrowman, liftoff mass</h2>
       <dl class="fl-readout" id="ro-derived"></dl>
     </section>
-    <p class="fl-note">Shape from the CAD assembly (<strong>46.5 in, four fins</strong>, CAD); mass and CG from the page (<strong>2.2 lb, 22 in</strong>, PAGE). The page's 1.80 cal is its three-fin design review figure; every margin here is recomputed (SIM). The CAD fin's root chord and sweep match the page's 2.76 in and 2.17 in; its span is 2.17 in against the page's 2.36 in height. The drag coefficient is fitted so the still-air apogee equals the page's 1,033 ft (FIT). Thrust: AeroTech G77R RASP curve from thrustcurve.org via OpenRocket, tagged STD as published reference data. Inertia, propellant station and burnout CG are estimates (EST). Alpha is ill-defined as airspeed goes to zero, so the chart scales to the part of the flight above 50 Pa of dynamic pressure and shades the rest. <strong>First alpha peak</strong> is the end of the first swing after rail exit (alpha low-passed at 5 Hz, so turbulence noise cannot end it); <strong>max alpha</strong> in the state readout is the largest over the ascent. The normal-force arrow sits at <strong>CP(alpha)</strong>, the resultant including body lift (hollow ring, SIM); the filled dot is the small-alpha Barrowman CP. Without fins CHARGER does not tumble: body lift acts at the planform centroid, <strong>24.42 in</strong> from the nose (SIM), aft of the 22 in CG, so the rocket settles at a high-alpha trim and loops over instead of passing 60 deg of angle of attack.</p>
+    <p class="fl-note">Shape from the CAD assembly (<strong>46.5 in, four fins</strong>, CAD); mass and CG from the page (<strong>2.2 lb, 22 in</strong>, PAGE). The 1.80 cal on the page is the case study's design review figure for the 37 in airframe, computed at its 22 in CG; every margin here is recomputed (SIM). The 22 in CG belongs to the 37 in design: a part-wise estimate of the CAD airframe at the page mass puts it near <strong>27.2 in</strong> (EST), where the margin is about 2.2 cal; the derived list shows both. The rail buttons are the CAD's, 24.59 and 41.94 in from the nose (CAD); the page's stations belong to the 37 in design. The nose CP uses the exposed tangent ogive, 0.200 m (CAD); the nose part is 0.232 m with its last 32 mm at the body radius. The CAD fin's root chord and sweep match the page's 2.76 in and 2.17 in; its span is 2.17 in against the page's 2.36 in height. The drag coefficient is fitted so the still-air apogee equals the page's 1,033 ft (FIT). Thrust: AeroTech G77R RASP curve from thrustcurve.org via OpenRocket, tagged STD as published reference data. Inertia, propellant station and burnout CG are estimates (EST). Alpha is ill-defined as airspeed goes to zero, so the chart scales to the part of the flight above 50 Pa of dynamic pressure and shades the rest. <strong>First alpha peak</strong> is the end of the first swing after rail exit (alpha low-passed at 5 Hz, so turbulence noise cannot end it); <strong>max alpha</strong> in the state readout is the largest over the ascent. The normal-force arrow sits at <strong>CP(alpha)</strong>, the resultant including body lift (hollow ring, SIM); the filled dot is the small-alpha Barrowman CP. Without fins CHARGER does not tumble: body lift acts at the planform centroid, <strong>24.22 in</strong> from the nose (SIM), aft of the 22 in CG, so the rocket settles at a high-alpha trim and loops over instead of passing 60 deg of angle of attack.</p>
   </div>
 </main>
 
@@ -311,8 +311,11 @@
         k++; ox = it.ox * (L + 6 * k) / L; oy = it.oy * (L + 6 * k) / L;
         b = labelBox(ctx, it.text, it.ax, it.ay + 12 * k, ox, oy);
       }
+      // keep the label inside the canvas (a 390 px phone puts CP(ALPHA) against the left edge)
+      const cw = ctx.canvas.clientWidth || ctx.canvas.width, shift = b.x0 < 6 ? 6 - b.x0 : b.x1 > cw - 6 ? cw - 6 - b.x1 : 0;
+      if (shift) b = { ...b, x0: b.x0 + shift, x1: b.x1 + shift };
       boxes.push(b);
-      offsetLabel(ctx, it.text, it.ax, it.ay + 12 * k, ox, oy, it.color);
+      offsetLabel(ctx, it.text, it.ax + shift, it.ay + 12 * k, ox, oy, it.color);
     }
   }
   function cgSymbol(ctx, x, y, r) {
@@ -586,7 +589,7 @@
       ['Apogee', Number.isFinite(s.apogee) ? `${fx(s.apogee / FT, 0)} ft` : '--', 'SIM'],
     ]);
     const f = d.fins, on = d.finsActive, asBuilt = cfg.finScale === 1;
-    const wn = d.naturalFrequency(30), z = d.dampingRatio(30);
+    const wn = d.naturalFrequency(30), z = d.dampingRatio(30), zM = d.dampingRatioMandell(30);
     rows($('ro-derived'), [
       ['C_Na, total', `${fx(d.cna, 3)} /rad`, 'SIM'],
       ['C_Na, nose / fins', `${fx(d.noseCna, 2)} / ${fx(d.finCna, 2)}`, 'SIM'],
@@ -596,10 +599,12 @@
       Math.abs(cfg.cgFromNose - DEFAULTS.cgFromNose) < 1e-9 ? ['CG at liftoff', `${fx(d.xcgLiftoff / IN, 2)} in`, 'PAGE'] : ['CG at liftoff, set', `${fx(d.xcgLiftoff / IN, 2)} in (page ${fx(DEFAULTS.cgFromNose / IN, 2)})`, 'SIM'],
       ['CG at burnout', `${fx(d.xcgBurnout / IN, 2)} in`, 'EST'],
       ['Margin, liftoff / burnout', `${fx(d.staticMargin, 2)} / ${fx(d.staticMarginBurnout, 2)} cal`, 'SIM'],
+      ['Margin at the CAD CG estimate', `${fx(d.staticMarginCadCg, 2)} cal at ${fx(d.cgEstimateCad.value / IN, 1)} in`, 'EST'],
       cfg.cd === CD_FIT ? ['Drag coefficient', fx(cfg.cd, 4), 'FIT'] : ['Drag coefficient, set', `${fx(cfg.cd, 4)} (fit ${fx(CD_FIT, 4)})`, 'SIM'],
       ['Rail exit, predicted', `${fx(d.railExitSpeedPrediction / FT, 1)} ft/s`, 'SIM'],
-      ['Natural freq., 30 m/s', wn > 0 ? `${fx(wn / (2 * Math.PI), 3)} Hz` : 'unstable', 'SIM'],
-      ['Damping ratio, 30 m/s', Number.isFinite(z) ? fx(z, 3) : '--', 'SIM'],
+      ['Natural freq., 30 m/s, 2-DOF', wn > 0 ? `${fx(wn / (2 * Math.PI), 3)} Hz` : 'unstable', 'SIM'],
+      ['Damping ratio, 30 m/s, 2-DOF', Number.isFinite(z) ? fx(z, 3) : '--', 'SIM'],
+      ['Damping ratio, Mandell 1-DOF', Number.isFinite(zM) ? fx(zM, 3) : '--', 'SIM'],
       ['Thrust / weight, mean', fx(d.averageThrustToWeight, 2), 'SIM'],
       ['Thrust / weight, page', '8.17', 'PAGE'],
       ['Motor impulse / burn', `${fx(d.totalImpulse, 1)} N s / ${fx(d.burnTime, 3)} s`, 'STD'],

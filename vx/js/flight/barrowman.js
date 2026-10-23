@@ -7,6 +7,8 @@
      NARAM-8 R&D report, 1966. Subsonic, small angle of attack, rigid body.
    - G. K. Mandell, G. J. Caporaso, W. P. Bengen, "Topics in Advanced Model Rocketry",
      MIT Press 1973: the corrective and damping moment coefficients and jet damping.
+   - W. T. Thomson, "Introduction to Space Dynamics", Wiley 1961: the variable-mass
+     angular-momentum balance (the dI/dt term of the jet damping).
    - S. Niskanen, "Development of an Open Source Model Rocket Simulation Software"
      (OpenRocket technical documentation), 2009: the body-lift extension
      C_N = K (A_plan / A_ref) sin^2(alpha) with K = 1.1 (after Galejs), at the planform
@@ -131,10 +133,22 @@ export function dampingCmq(components, xcg, refLength) {
   return s / (refLength * refLength);
 }
 
-/** Jet damping coefficient (Mandell), N m s: mdot (x_nozzle - x_cg)^2. */
-export function jetDamping(mdot, xNozzle, xcg) {
+/** Jet damping coefficient, N m s, for a body that loses mass through a nozzle.
+      with xProp:     mdot [ (x_nozzle - x_cg)^2 - (x_prop - x_cg)^2 ]
+      without xProp:  mdot (x_nozzle - x_cg)^2   (Mandell's form)
+    The first term is the angular momentum the exhaust carries out through the nozzle exit
+    (Mandell, Caporaso and Bengen 1973). The second is the dI/dt term of the variable-mass
+    balance d(I omega)/dt = M - mdot (x_nozzle - x_cg)^2 omega: with the propellant a point
+    mass at xProp, dI/dt = -mdot (x_prop - x_cg)^2 (the CG-shift terms cancel because
+    m_dry (x_dry - x_cg) + m_p (x_prop - x_cg) = 0), so I d(omega)/dt = M - c2_jet omega with
+    the difference above (W. T. Thomson, Introduction to Space Dynamics, Wiley 1961; RocketPy
+    documentation, Equations of Motion v0, nozzle term). Positive while x_cg lies ahead of the
+    midpoint of x_prop and x_nozzle, which holds for every CG the flight model accepts. */
+export function jetDamping(mdot, xNozzle, xcg, xProp) {
   const d = xNozzle - xcg;
-  return mdot * d * d;
+  if (!Number.isFinite(xProp)) return mdot * d * d;
+  const e = xProp - xcg;
+  return mdot * (d * d - e * e);
 }
 
 /** Whole-vehicle analysis at small angle: component slopes and stations, total C_Na, CP,

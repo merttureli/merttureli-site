@@ -6,10 +6,13 @@
    and NaN guards at dt extremes, determinism with a seed. Also: rail exit prediction and the
    rail-button geometry, the weathercock direction, event order, the maxQ and maxAlpha
    detectors under turbulence, fin scaling, the lattice moment low-pass, its Barrowman
-   fallback and damping rule, geometry sanitising and destroy(). */
+   fallback and damping rule, geometry sanitising and destroy(). Added in the validation fix
+   phase (2026-10-23): the variable-mass jet damping, the two-degree-of-freedom damping ratio
+   against the simulated decay, the rail exit speed interpolated to the crossing against an
+   independent fine-step integration, and the CAD-based CG estimate. */
 import assert from 'node:assert/strict';
 import * as B from './barrowman.js';
-import { createFlight, CD_FIT, CAD_FINS, DEFAULTS, DT, FT, IN, APOGEE_FT_PAGE, LATTICE_LP_HZ, ALPHA_Q_MIN } from './flight.js';
+import { createFlight, normaliseMotor, CD_FIT, CAD_FINS, CAD_RAIL_BUTTONS, CG_ESTIMATE_CAD, DEFAULTS, DT, FT, IN, APOGEE_FT_PAGE, LATTICE_LP_HZ, ALPHA_Q_MIN } from './flight.js';
 
 const DEG = Math.PI / 180;
 const results = [];
@@ -42,11 +45,16 @@ function settleTime(trace, tGust, limit = 2 * DEG, vMin = 15) {
 }
 
 /* ------------------------------------------------------------------ Barrowman */
-test('ogive nose CP at 0.466 L (Barrowman 1967)', () => {
+test('ogive nose CP at 0.466 L (Barrowman 1967), on the exposed CAD ogive', () => {
   assert.equal(B.noseCp('ogive', 0.232), 0.466 * 0.232);
   assert.equal(B.noseCp('ogive', 1), 0.466);
   assert.equal(B.noseCna(0.068, 0.068), 2);
-  return `X_n = ${(0.466 * 0.232).toFixed(6)} m for the 0.232 m CAD nose`;
+  // the default nose is the exposed tangent ogive, 0.200 m (CAD), not the 0.232 m nose part
+  // with its 32 mm at the body radius (validation F1 A05)
+  assert.equal(DEFAULTS.noseLength, 0.200);
+  const f = createFlight({}, quiet);
+  assert.equal(f.derived.noseXcp, 0.466 * 0.200);
+  return `X_n = ${(0.466 * DEFAULTS.noseLength).toFixed(6)} m for the ${DEFAULTS.noseLength.toFixed(3)} m exposed CAD ogive`;
 });
 
 test('four-fin C_Na and CP match a hand computation within 1 percent', () => {
@@ -63,9 +71,10 @@ test('four-fin C_Na and CP match a hand computation within 1 percent', () => {
   //   nose C_Na = 2, total 7.472902 per rad
   //   X_f = 1.071385 + (0.055/3)(0.130/0.100) + (1/6)(0.100 - 0.0021/0.100)
   //       = 1.071385 + 0.023833 + 0.013167 = 1.108385 m
-  //   X_n = 0.466 x 0.232 = 0.108112 m
-  //   X_cp = (2 x 0.108112 + 5.472902 x 1.108385) / 7.472902 = 6.282207 / 7.472902 = 0.840665 m
-  const hand = { finCna: 5.472902, cna: 7.472902, finXcp: 1.108385, xcp: 0.840665 };
+  //   X_n = 0.466 x 0.200 = 0.093200 m (exposed ogive; was 0.466 x 0.232 = 0.108112 m with the
+  //   nose part, X_cp 0.840665 m, before the validation fix of 2026-10-23)
+  //   X_cp = (2 x 0.093200 + 5.472902 x 1.108385) / 7.472902 = 6.252482 / 7.472902 = 0.836687 m
+  const hand = { finCna: 5.472902, cna: 7.472902, finXcp: 1.108385, xcp: 0.836687 };
   const fins = B.finCna(CAD_FINS, 0.068, 0.034);
   close(fins.cna, hand.finCna, 0.01, 'fin C_Na');
   close(B.finCp(CAD_FINS), hand.finXcp, 0.01, 'fin CP');
@@ -101,7 +110,7 @@ test('finless rocket diverges after a 5 m/s gust at rail exit (FIELD 3; see note
   const tTheta60 = (win.find((p) => Math.abs(p.theta) > 60 * DEG) || {}).t;
   // FIELD.md asks for alpha > 60 deg within 3 s. With the contract's own aerodynamics the
   // finless CHARGER does not tumble: the body-lift term acts at the planform centroid
-  // (0.620 m), aft of the PAGE CG (0.559 m), so alpha runs away from zero to a high-alpha
+  // (0.615 m), aft of the PAGE CG (0.559 m), so alpha runs away from zero to a high-alpha
   // trim of 20 to 30 deg and the rocket pitches over and loops. Divergence is asserted on
   // what the model does: alpha far beyond the finned case, attitude past 60 deg from the
   // launch direction inside 3 s, and a collapsed apogee.
@@ -235,11 +244,13 @@ test('rail buttons: aft end on the rail base; railExit when the forward button r
     const along = (p) => p.x * ux + p.y * uy;                       // distance up the rail from the base
     const aftSt = c.length - c.aftButtonFromAft, fwdSt = aftSt - c.buttonSpacing;
     assert.ok(Math.abs(along(f.bodyToWorld(c.length))) < 1e-12, 'aft end on the rail base');
-    close(along(f.bodyToWorld(aftSt)), c.aftButtonFromAft, 1e-9, 'aft button 2 in up the rail');
+    close(along(f.bodyToWorld(aftSt)), c.aftButtonFromAft, 1e-9, 'aft button up the rail by its distance from the aft end');
     let fwdAtExit = NaN, aftAtExit = NaN, v = NaN;
-    f.onEvent((e) => { if (e.name === 'railExit') { fwdAtExit = along(f.bodyToWorld(fwdSt)); aftAtExit = along(f.bodyToWorld(aftSt)); v = e.state.railExitSpeed; } });
+    let tEv = NaN, tStepEnd = NaN;
+    f.onEvent((e) => { if (e.name === 'railExit') { fwdAtExit = along(f.bodyToWorld(fwdSt)); aftAtExit = along(f.bodyToWorld(aftSt)); v = e.state.railExitSpeed; tEv = e.t; tStepEnd = f.state.t; } });
     f.run(1);
     const slack = v * DT * 1.01;                                     // the event fires on the first step past the top
+    assert.ok(tEv > tStepEnd - DT - 1e-12 && tEv <= tStepEnd + 1e-12, 'event time interpolated inside the step that passes the top');
     assert.ok(fwdAtExit >= c.railLength - 1e-9 && fwdAtExit <= c.railLength + slack, `forward button at ${fwdAtExit.toFixed(4)} m on a ${c.railLength} m rail`);
     assert.ok(aftAtExit < c.railLength, 'aft button still on the rail at railExit');
     close(f.state.railExitSpeed, f.derived.railExitSpeedPrediction, 1e-6, 'prediction uses the same goal');
@@ -319,7 +330,7 @@ test('fin scale scales about the root leading edge; 0 removes the fins', () => {
   assert.ok(f.derived.finXcp < B.finCp(CAD_FINS), 'smaller fins, CP closer to the root leading edge');
   const g = createFlight({ finScale: 0 }, quiet);
   assert.equal(g.derived.finsActive, false); assert.equal(g.derived.cna, 2);
-  close(g.derived.xcp, 0.466 * 0.232, 1e-12, 'finless CP is the nose CP');
+  close(g.derived.xcp, 0.466 * DEFAULTS.noseLength, 1e-12, 'finless CP is the nose CP');
   return `half fins: C_Na ${f.derived.cna.toFixed(3)}, margin ${f.derived.staticMargin.toFixed(2)} cal; none: margin ${g.derived.staticMargin.toFixed(2)} cal`;
 });
 
@@ -403,6 +414,78 @@ test('destroy: no bus traffic, no events and no motion afterwards', () => {
   return 'reset, setters, gust, flick, ignite, step and run all inert';
 });
 
+/* ------------------------------------------------------------------ validation fixes (2026-10-23) */
+test('rail buttons default to the CAD stations; rail exit speed against an independent fine-step integration', () => {
+  const f = createFlight({}, quiet);
+  const c = f.config;
+  close(c.length - c.aftButtonFromAft, CAD_RAIL_BUTTONS.aftFromNose, 1e-12, 'aft button station (CAD part 11)');
+  close(c.length - c.aftButtonFromAft - c.buttonSpacing, CAD_RAIL_BUTTONS.forwardFromNose, 1e-12, 'forward button station (CAD part 10)');
+  f.run(1);
+  // reference: the axial equation m dv/dt = T - m g - q A cd from the exact liftoff instant,
+  // RK4 at 10 us, linear interpolation at the goal (independent of the engine's stepping)
+  const mo = normaliseMotor(null), g = c.gravity, A = f.derived.refArea, m0 = c.massLiftoff, mp0 = mo.propellantMass;
+  const thrust = (t) => { const { ts, fs } = mo; if (t <= ts[0] || t >= ts[ts.length - 1]) return 0; let i = 0; while (ts[i + 1] <= t) i++; return fs[i] + (fs[i + 1] - fs[i]) * (t - ts[i]) / (ts[i + 1] - ts[i]); };
+  const impulse = (t) => { const { ts, fs, cum } = mo; if (t <= ts[0]) return 0; if (t >= ts[ts.length - 1]) return mo.totalImpulse; let i = 0; while (ts[i + 1] <= t) i++; return cum[i] + 0.5 * (fs[i] + thrust(t)) * (t - ts[i]); };
+  const mass = (t) => m0 - mp0 * impulse(t) / mo.totalImpulse;
+  const acc = (t, v) => (thrust(t) - mass(t) * g - 0.5 * c.airDensity * v * v * A * c.cd) / mass(t);
+  let lo = 1e-6, hi = 0.05; for (let i = 0; i < 80; i++) { const mid = 0.5 * (lo + hi); if (thrust(mid) > mass(mid) * g) hi = mid; else lo = mid; }
+  const goal = c.railLength - c.aftButtonFromAft - c.buttonSpacing, h = 1e-5;
+  let t = hi, x = 0, v = 0, xp = 0, vp = 0;
+  while (x < goal) {
+    xp = x; vp = v;
+    const a1 = acc(t, v), a2 = acc(t + h / 2, v + a1 * h / 2), a3 = acc(t + h / 2, v + a2 * h / 2), a4 = acc(t + h, v + a3 * h);
+    x += h / 6 * (v + 2 * (v + a1 * h / 2) + 2 * (v + a2 * h / 2) + (v + a3 * h)); v += h / 6 * (a1 + 2 * a2 + 2 * a3 + a4); t += h;
+  }
+  const ref = vp + (goal - xp) / (x - xp) * (v - vp);
+  close(f.state.railExitSpeed, ref, 1e-4, 'rail exit speed at the crossing (before the fix the first 1 ms step past it read 0.34 percent high)');
+  return `${f.state.railExitSpeed.toFixed(5)} m/s against ${ref.toFixed(5)} m/s (${((f.state.railExitSpeed / ref - 1) * 1e6).toFixed(1)} ppm); CAD buttons ${CAD_RAIL_BUTTONS.forwardFromNose} and ${CAD_RAIL_BUTTONS.aftFromNose} m from the nose`;
+});
+
+test('jet damping carries the variable-mass dI/dt term', () => {
+  // hand: mdot ((x_nozzle - x_cg)^2 - (x_prop - x_cg)^2), point-mass propellant (Thomson 1961)
+  assert.equal(B.jetDamping(0.05, 1.2, 0.6), 0.05 * 0.36);
+  close(B.jetDamping(0.05, 1.2, 0.6, 1.1), 0.05 * (0.36 - 0.25), 1e-12, 'variable-mass form');
+  const f = createFlight({}, quiet);
+  f.ignite(); f.run(0.249);
+  const s = f.state, d = f.derived;
+  const aeroC2 = 0.5 * f.config.airDensity * s.airspeed * d.refArea * d.refLength ** 2 * s.cmq;
+  const jet = d.damping(s.airspeed, s.t) - aeroC2;
+  const hand = s.mdot * ((d.xNozzle - s.xcg) ** 2 - (d.xPropellant - s.xcg) ** 2);
+  close(jet, hand, 1e-9, 'derived jet damping');
+  const classic = s.mdot * (d.xNozzle - s.xcg) ** 2;
+  assert.ok(classic / jet > 4 && classic / jet < 6, `Mandell's form is about 5 times the variable-mass value here (${(classic / jet).toFixed(2)})`);
+  return `T+0.249 s: jet C2 ${jet.toFixed(5)} N m s (Mandell's form ${classic.toFixed(5)}), aero C2 ${aeroC2.toFixed(4)} N m s`;
+});
+
+test('damping ratio: the two-degree-of-freedom value matches the simulated decay; Mandell reads low', () => {
+  // near-constant speed: gravity 1 m/s^2 and cd 0.05 (the smallest the clamps allow), flick in the coast
+  const f = createFlight({ gravity: 1, cd: 0.05 }, quiet);
+  f.ignite(); f.run(f.derived.burnTime + 0.3);
+  const V0 = f.state.airspeed, t0 = f.state.t;
+  const z2 = f.derived.dampingRatio(V0, t0), zM = f.derived.dampingRatioMandell(V0, t0), wn = f.derived.naturalFrequency(V0, t0);
+  assert.equal(z2, f.derived.dampingRatio2(V0, t0));
+  f.flick(0.2);
+  const tr = []; for (let i = 0; i < 1500; i++) { f.run(0.001); tr.push([f.state.t, f.state.alpha]); }
+  const pk = []; for (let i = 1; i < tr.length - 1; i++) if (tr[i][1] > tr[i - 1][1] && tr[i][1] >= tr[i + 1][1] && tr[i][1] > 0) pk.push(tr[i]);
+  const p = pk.slice(0, 5);
+  assert.ok(p.length === 5, 'five peaks');
+  const Td = (p[4][0] - p[0][0]) / 4, sig = Math.log(p[0][1] / p[4][1]) / (p[4][0] - p[0][0]), wd = 2 * Math.PI / Td;
+  const zFit = sig / Math.hypot(sig, wd);
+  close(z2, zFit, 0.02, 'two-degree-of-freedom zeta against the log decrement');
+  close(wn, Math.hypot(sig, wd), 0.03, 'two-degree-of-freedom omega_n against the fit');
+  assert.ok(zM < 0.8 * zFit, `Mandell's one-degree-of-freedom zeta reads low (${zM.toFixed(4)})`);
+  return `at ${V0.toFixed(1)} m/s: fit ${zFit.toFixed(4)}, 2-DOF ${z2.toFixed(4)}, Mandell ${zM.toFixed(4)}`;
+});
+
+test('CG estimate of the CAD airframe is exposed; the default CG stays PAGE', () => {
+  const f = createFlight({}, quiet), d = f.derived;
+  close(f.config.cgFromNose, 22 * IN, 1e-12, 'default CG is the PAGE 22 in');
+  close(d.staticMarginCadCg, (d.xcp - CG_ESTIMATE_CAD.value) / d.refLength, 1e-12, 'margin at the CAD estimate');
+  close(d.staticMarginAt(f.config.cgFromNose), d.staticMargin, 1e-12, 'staticMarginAt the liftoff CG');
+  assert.ok(d.staticMarginCadCgRange[0] < d.staticMarginCadCg && d.staticMarginCadCg < d.staticMarginCadCgRange[1], 'range brackets the estimate');
+  return `margin ${d.staticMargin.toFixed(2)} cal at the PAGE CG, ${d.staticMarginCadCg.toFixed(2)} cal (${d.staticMarginCadCgRange.map((v) => v.toFixed(2)).join(' to ')}) at the CAD estimate (EST)`;
+});
+
 /* ------------------------------------------------------------------ report */
 {
   const f = createFlight({}, quiet);
@@ -418,8 +501,10 @@ test('destroy: no bus traffic, no events and no motion afterwards', () => {
   console.log(`  cd                    ${CD_FIT} (CD_FIT), bisection ${Number.isFinite(fitted) ? fitted.toFixed(4) : 'n/a'}  FIT`);
   console.log(`  rail exit speed       ${(nom.f.state.railExitSpeed / FT).toFixed(1)} ft/s (${nom.f.state.railExitSpeed.toFixed(2)} m/s) on a 6 ft rail, aft end on the rail base  SIM`);
   console.log(`  apogee                ${(nom.f.state.apogee / FT).toFixed(1)} ft  SIM`);
-  console.log(`  omega_n at 30 m/s     ${d.naturalFrequency(30).toFixed(2)} rad/s (${(d.naturalFrequency(30) / (2 * Math.PI)).toFixed(3)} Hz), zeta ${d.dampingRatio(30).toFixed(3)}  (liftoff mass, aero damping)  SIM`);
-  if (t30 !== undefined) console.log(`  at T+${t30.toFixed(3)} s (30 m/s)  omega_n ${d.naturalFrequency(30, t30).toFixed(2)} rad/s, zeta ${d.dampingRatio(30, t30).toFixed(3)} (with jet damping)  SIM`);
+  console.log(`  omega_n at 30 m/s     ${d.naturalFrequency(30).toFixed(2)} rad/s (${(d.naturalFrequency(30) / (2 * Math.PI)).toFixed(3)} Hz), zeta ${d.dampingRatio(30).toFixed(3)}  (liftoff mass, no thrust; 2-DOF short period)  SIM`);
+  console.log(`                        Mandell 1-DOF: omega_n ${d.naturalFrequencyMandell(30).toFixed(2)} rad/s, zeta ${d.dampingRatioMandell(30).toFixed(3)}  SIM`);
+  if (t30 !== undefined) console.log(`  at T+${t30.toFixed(3)} s (30 m/s)  omega_n ${d.naturalFrequency(30, t30).toFixed(2)} rad/s, zeta ${d.dampingRatio(30, t30).toFixed(3)} (thrust and jet damping; Mandell ${d.dampingRatioMandell(30, t30).toFixed(3)})  SIM`);
+  console.log(`  margin at the CAD CG  ${d.staticMarginCadCg.toFixed(2)} cal (${d.staticMarginCadCgRange.map((v) => v.toFixed(2)).join(' to ')}) at ${(CG_ESTIMATE_CAD.value / IN).toFixed(1)} in  EST`);
   console.log(`  gust 5 m/s at rail exit: alpha < 2 deg after ${settleTime(g.trace, g.tGust).toFixed(3)} s  SIM`);
   console.log(`  inertia               ${d.inertiaLiftoff.toFixed(4)} kg m2 liftoff, ${d.inertiaBurnout.toFixed(4)} burnout  EST`);
 }

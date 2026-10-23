@@ -1,12 +1,16 @@
 /* controls.js: the panel's controls as plain DOM, with no knowledge of the flight.
-   buildControls() returns the sections (playback, configuration, view, keyboard
-   legend) for panel.js to place, plus a compact play button for the phone sheet's
-   collapsed row. Every change goes out through on(fn) as {name, value, source}
-   with source 'ui', 'key' or 'api'; panel.js turns those into flight, scene,
-   lattice and playback calls.
+   buildControls() returns the pieces panel.js places: the top level (playback, the
+   RUNS row, the FINS presets) and the bodies of the folded groups (CONFIGURE, VIEW,
+   KEYS), plus a compact play button for the phone sheet's collapsed row. Every
+   change goes out through on(fn) as {name, value, source} with source 'ui', 'key'
+   or 'api'; panel.js turns those into flight, scene, lattice, playback and page
+   calls.
 
    Names and values:
      launch, pause, reset          buttons (value undefined)
+     run                           a RUNS button: value is the run key (full, half,
+                                   none, wind, gust); panel.js hands it to the page
+     disarmGust                    DISARM: drop the gust armed for rail exit (page)
      rate                          playback rate, one of RATES (fraction of real time)
      step                          seconds of flight time per press (reduced motion)
      fins                          fin scale k, 0..1 (CAD planform at 1)
@@ -15,7 +19,9 @@
      angle                         launch angle, degrees from vertical, + downrange
      wind                          steady wind, mph
      gust                          gust peak, mph (the slider); fireGust fires it
-     view                          smoke | pressure | vorticity | speed
+     view                          smoke | pressure | vorticity | speed (the view shown)
+     viewAuto                      AUTO (boolean): the page picks the view (panel.js
+                                   setAutoView); a pressed view ends it
      section                       through | between
      camera                        side | quarter | chase | pad
      markers, latticeFlies         booleans
@@ -25,6 +31,17 @@
    showNone(name, on) presses no button of a segment while its value is kept (the
    camera group while the visitor orbits freely); setInfo(name, text) shows a note
    under a control while it is enabled (setEnabled's text shows while it is not).
+   setArmed(mph | 0 | null) paints the ARMED AT RAIL EXIT row and enables DISARM
+   only while a gust is armed (null: the page gives no armed state).
+   offerAuto(on) shows the AUTO button at the head of the view group; while AUTO is
+   on, no view is pressed and the one shown is marked data-live (panel.css).
+   showRate(rate, {auto}) paints the true playback rate: the RATE head reads it (HOLD
+   at 0, AUTO while the page sets it) and the segment presses an entry only when the
+   rate is exactly one of RATES (a ramped 1/20 presses none instead of a wrong 1/32).
+   peekFins: the phone sheet's FINS toggle beside play (WITH, WITHOUT, or HALF and
+   any other scale as mixed); a press sets the fins to 0 or 1 through 'fins'.
+   Source tags: tagEl() boxes every tag except SIM, which stays plain text (one quiet
+   style for the live numbers); the full tag word stays in the text either way.
    Keyboard (bindKeys): L launch, R reset, space pause, 1 to 4 views, G gust; the
    SHORTCUTS switch in the keys legend ('keys', boolean, kept in localStorage) turns
    all of them off. */
@@ -36,6 +53,19 @@ export const CAMERAS = ['side', 'quarter', 'chase', 'pad'];
 export const FLICK_RADPS = 1;      // rad/s per FLICK button press (EST: a firm nudge, about a third of a hard drag on the view)
 export const KEYMAP = { l: 'launch', r: 'reset', ' ': 'pause', g: 'fireGust', 1: 'view:smoke', 2: 'view:pressure', 3: 'view:vorticity', 4: 'view:speed' };
 const KEYS_STORE = 'charger-field-keys';   // localStorage: 'off' when the visitor switched the single-key shortcuts off
+/* The RUNS row: the five runs of the page's Runs section, in its order. The key is what
+   the page's startRun(key) and its [data-run-go] buttons take. The names carry no
+   numbers, so they need no source tags; the run cards below the stage give the
+   conditions with theirs. */
+export const RUNS = [
+  { key: 'full', n: '01', label: 'FULL', name: 'full fins in a crosswind' },
+  { key: 'half', n: '02', label: 'HALF', name: 'half fins in a crosswind' },
+  { key: 'none', n: '03', label: 'NONE', name: 'no fins in a crosswind' },
+  { key: 'wind', n: '04', label: 'WIND', name: 'full fins in a stronger crosswind' },
+  { key: 'gust', n: '05', label: 'GUST', name: 'full fins, still air, a gust at rail exit' },
+];
+const GUST_EST_MPH = 5 / 0.44704;
+const finsWord = (k) => (Math.abs(k - 1) < 0.005 ? 'WITH' : k < 0.005 ? 'WITHOUT' : Math.abs(k - 0.5) < 0.005 ? 'HALF' : `×${(+k).toFixed(2)}`);          // EST: the 5 m/s of the FIELD 3 test (11.2 mph); an armed gust of this size carries the EST tag
 
 /* Ranges. Units: inches for CG and rail, degrees, mph. Bounds:
    rail 36 to 94 in is FIELD 3's 0.9 to 2.4 m slider; wind 0 to 20 mph is its 0 to
@@ -68,6 +98,14 @@ function h(tag, attrs = {}, ...kids) {
 }
 const fmt = (v, dec, signed) => { const s = Math.abs(v).toFixed(dec); const z = Number(s) === 0; return v < 0 && !z ? MINUS + s : (signed && !z ? '+' + s : s); };
 const rateText = (r) => (r >= 1 ? '1' : '1/' + Math.round(1 / r));
+/* A source tag. text is the tag word, optionally followed by a value ('PAGE 22.0'):
+   the word goes in .pn-src[data-src], boxed by panel.css unless it is SIM. */
+export function tagEl(text, attrs = {}) {
+  const t = String(text || '').trim();
+  const sp = t.indexOf(' ');
+  const word = sp < 0 ? t : t.slice(0, sp), rest = sp < 0 ? '' : t.slice(sp);
+  return h('span', Object.assign({ class: 'pn-tag' }, attrs), word ? h('span', { class: 'pn-src', dataset: { src: word }, text: word }) : null, rest || null);
+}
 /* the playback rate a value stands for: the nearest entry of RATES on a log scale,
    or undefined for anything that is not a finite positive number */
 function nearestRate(v) {
@@ -79,7 +117,7 @@ const rateWords = (r) => (r >= 1 ? 'real time' : `one ${({ 2: 'half', 8: 'eighth
 
 /* defaults: {fins, cg, rail, angle, wind, gust, rate, view, section, camera, markers}
    refs: tagged reference values shown beside a control, e.g. {cg: 'PAGE 22.0'}. */
-export function buildControls({ lab = false, defaults = {}, refs = {}, ranges = {}, level = 3 } = {}) {
+export function buildControls({ lab = false, defaults = {}, refs = {}, ranges = {}, level = 3, runs = RUNS } = {}) {
   const id = `pn${++uid}`;
   const listeners = new Set();
   const reg = new Map();            // name -> {get, set, enable, els}
@@ -103,7 +141,7 @@ export function buildControls({ lab = false, defaults = {}, refs = {}, ranges = 
     // live region faster than 1 Hz). The name is the visible label alone; the
     // tagged reference value describes the slider.
     const out = h('span', { class: 'pn-v', 'aria-hidden': 'true' });
-    const tag = refs[name] ? h('span', { class: 'pn-tag', id: `${inputId}-ref`, text: refs[name] }) : null;
+    const tag = refs[name] ? tagEl(refs[name], { id: `${inputId}-ref` }) : null;
     const input = h('input', { type: 'range', id: inputId, class: 'pn-range', min: s.min, max: s.max, step: s.step, name, 'aria-labelledby': `${inputId}-k`, 'aria-describedby': tag ? `${inputId}-ref` : null });
     const row = h('div', { class: 'pn-ctl', dataset: { ctl: name } },
       h('label', { class: 'pn-ctl-head', for: inputId }, h('span', { class: 'pn-k', id: `${inputId}-k`, text: s.label }), out, h('span', { class: 'pn-u', text: s.unit }), tag || h('span', { class: 'pn-tag' })),
@@ -171,18 +209,38 @@ export function buildControls({ lab = false, defaults = {}, refs = {}, ranges = 
   const playback = h('section', { class: 'pn-sec pn-sec-play', 'aria-labelledby': `${id}-h-play` },
     Object.assign(heading('PLAYBACK'), { id: `${id}-h-play` }),
     h('div', { class: 'pn-btns' }, launchB, pauseB, resetB),
-    h('div', { class: 'pn-ctl-head pn-ctl-head-seg' }, h('span', { class: 'pn-k', text: 'RATE' }), h('span', { class: 'pn-v', dataset: { rate: '' } }), h('span', { class: 'pn-u', text: 'OF REAL TIME' })),
+    h('div', { class: 'pn-ctl-head pn-ctl-head-seg' }, h('span', { class: 'pn-k', dataset: { rateK: '' }, text: 'RATE' }), h('span', { class: 'pn-v', dataset: { rate: '' } }), h('span', { class: 'pn-u', dataset: { rateU: '' }, text: 'OF REAL TIME' })),
     rateSeg, stepRow);
-  const rateOut = playback.querySelector('[data-rate]');
-  const paintRate = () => { rateOut.textContent = rateText(values.rate); };
+  const rateOut = playback.querySelector('[data-rate]'), rateK = playback.querySelector('[data-rate-k]'), rateU = playback.querySelector('[data-rate-u]');
+  /* the rate shown: the true one when the playback says (showRate), else the pressed one */
+  let shownRate = null, rateAuto = false;
+  const paintRate = () => {
+    const r = shownRate === null ? values.rate : shownRate;
+    const moving = r > 0 && Number.isFinite(r);
+    rateOut.textContent = moving ? rateText(r) : r === 0 ? 'HOLD' : '—';
+    rateU.hidden = !moving;                 // "OF REAL TIME" belongs to a rate, not to HOLD or the dash
+    rateK.textContent = rateAuto ? 'RATE / AUTO' : 'RATE';
+  };
   paintRate();
-  const rateReg = reg.get('rate'); const rateSet = rateReg.set; rateReg.set = (v) => { const ok = rateSet(v); paintRate(); return ok; };
-  listeners.add(({ name }) => { if (name === 'rate') paintRate(); });
+  const rateReg = reg.get('rate'); const rateSet = rateReg.set; rateReg.set = (v) => { const ok = rateSet(v); if (ok) { shownRate = null; rateReg.showNone(false); } paintRate(); return ok; };
+  listeners.add(({ name }) => { if (name === 'rate') { shownRate = null; rateAuto = false; rateReg.showNone(false); paintRate(); } });
+  /* showRate(r, {auto}): the playback's own rate. An exact entry of RATES is pressed (and
+     kept as the value); any other rate (a ramp's 1/20, a HOLD at 0) presses none. */
+  function showRate(r, { auto = false } = {}) {
+    rateAuto = !!auto;
+    const n = Number(r);
+    const exact = Number.isFinite(n) && n > 0 ? RATES.find((x) => Math.abs(x - n) < 1e-9) : undefined;
+    if (exact !== undefined) { rateSet(exact); rateReg.showNone(false); }
+    else rateReg.showNone(true);
+    shownRate = Number.isFinite(n) && n >= 0 ? n : null;
+    paintRate();
+    return exact !== undefined;
+  }
 
   /* ---- configuration */
-  const finPresets = segment('finPreset', 'Fin presets', [[0, 'NONE', 'None, no fins'], [0.5, 'HALF', 'Half, half-size fins'], [1, 'FULL', 'Full, the CAD fins']], { cls: 'pn-seg-3', free: true });
+  const finPresets = segment('finPreset', 'Fins', [[0, 'NONE', 'None, no fins'], [0.5, 'HALF', 'Half, half-size fins'], [1, 'FULL', 'Full, the CAD fins']], { cls: 'pn-seg-3', free: true });
   values.finPreset = values.fins;
-  const fireB = button('fireGust', 'FIRE GUST', { key: 'G', keyLabel: 'G', cls: 'pn-btn-wide' });
+  const fireB = button('fireGust', 'FIRE GUST', { key: 'G', keyLabel: 'G' });
   // FLICK from the keyboard: the same pitch-rate impulse a drag on the view gives, in fixed steps
   const flickDeg = (FLICK_RADPS * 180 / Math.PI).toFixed(1);
   const flickBs = [-1, 1].map((sg) => {
@@ -190,13 +248,33 @@ export function buildControls({ lab = false, defaults = {}, refs = {}, ranges = 
     b.dataset.value = String(sg);
     return b;
   });
-  const config = h('section', { class: 'pn-sec pn-sec-config', 'aria-labelledby': `${id}-h-config` },
-    Object.assign(heading('CONFIGURATION'), { id: `${id}-h-config` }),
-    range('fins'), finPresets, range('cg'), range('rail'), range('angle'), range('wind'), range('gust'), fireB,
+  // DISARM: the page arms a gust for rail exit (run 05, ?gust=); the row shows it and
+  // DISARM drops it. FIRE GUST fires the slider's gust now, armed or not.
+  const disarmB = button('disarmGust', 'DISARM', { label: 'Disarm, the gust armed for rail exit' });
+  const armedV = h('span', { class: 'pn-v', text: '—' }), armedU = h('span', { class: 'pn-u' }), armedT = h('span', { class: 'pn-tag' });
+  const armedRow = h('div', { class: 'pn-ctl-head pn-ctl-head-seg pn-armed', dataset: { ctl: 'armed' } }, h('span', { class: 'pn-k', text: 'ARMED AT RAIL EXIT' }), armedV, armedU, armedT);
+  // the body of the CONFIGURE fold (panel.js wraps it; the summary names it)
+  const config = h('div', { class: 'pn-fold-c pn-sec-config' },
+    range('fins'), range('cg'), range('rail'), range('angle'), range('wind'), range('gust'),
+    armedRow, h('div', { class: 'pn-btns pn-btns-gust' }, fireB, disarmB), note('disarmGust'),
     h('p', { class: 'pn-hint' }, h('span', { class: 'pn-hint-k', text: 'FLICK' }), ' Drag the rocket sideways and let go: the release sets a pitch rate. The buttons give a fixed one.'),
-    h('div', { class: 'pn-ctl-head pn-ctl-head-seg' }, h('span', { class: 'pn-k', text: 'FLICK STEP' }), h('span', { class: 'pn-v', text: `±${flickDeg}` }), h('span', { class: 'pn-u', text: 'DEG/S' }), h('span', { class: 'pn-tag', text: 'EST' })),
+    h('div', { class: 'pn-ctl-head pn-ctl-head-seg' }, h('span', { class: 'pn-k', text: 'FLICK STEP' }), h('span', { class: 'pn-v', text: `±${flickDeg}` }), h('span', { class: 'pn-u', text: 'DEG/S' }), tagEl('EST')),
     h('div', { class: 'pn-btns pn-btns-flick' }, flickBs),
     note('flick'));
+  // top level: the fin presets under their own heading
+  const fins = h('section', { class: 'pn-sec pn-sec-fins', 'aria-labelledby': `${id}-h-fins` },
+    Object.assign(heading('FINS'), { id: `${id}-h-fins` }), finPresets);
+  // top level: the RUNS row (each press configures, resets and launches through the page)
+  const runBs = runs.map((r) => {
+    const b = h('button', { type: 'button', class: 'pn-run', 'aria-label': `${r.n} ${r.label}, launch run ${r.n}: ${r.name}`, dataset: { runKey: r.key } },
+      h('span', { class: 'pn-run-n', text: r.n }), h('span', { class: 'pn-run-t', text: r.label }));
+    b.addEventListener('click', () => emit('run', r.key));
+    return b;
+  });
+  const runsSec = h('section', { class: 'pn-sec pn-sec-runs', 'aria-labelledby': `${id}-h-runs` },
+    Object.assign(heading('RUNS'), { id: `${id}-h-runs` }),
+    h('div', { class: 'pn-runs', role: 'group', 'aria-labelledby': `${id}-h-runs`, dataset: { ctl: 'run' } }, runBs),
+    note('run'));
   // presets mirror the fin slider; a preset press sets the slider
   listeners.add(({ name, value, source }) => {
     if (name === 'finPreset' && source !== 'mirror') { reg.get('fins').set(value); emit('fins', value, source); }
@@ -207,17 +285,48 @@ export function buildControls({ lab = false, defaults = {}, refs = {}, ranges = 
   const gustReg = reg.get('gust');
   reg.set('fireGust', { get: () => values.gust, set() { return false; }, enable: (on) => { fireB.disabled = !on; }, els: [fireB] });
   reg.set('flick', { get: () => FLICK_RADPS, set() { return false; }, enable: (on) => { flickBs.forEach((b) => { b.disabled = !on; }); }, els: flickBs });
+  reg.set('run', { get: () => undefined, set() { return false; }, enable: (on) => { runBs.forEach((b) => { b.disabled = !on; }); }, els: runBs });
+  reg.set('disarmGust', { get: () => undefined, set() { return false; }, enable: (on) => { disarmB.disabled = !on; }, els: [disarmB] });
   void gustReg;
+  /* the armed gust: mph > 0 armed, 0 none, null when the page says nothing */
+  let armed = null;
+  function setArmed(mph) {
+    armed = mph === null || mph === undefined || !Number.isFinite(Number(mph)) ? null : Math.max(0, Number(mph));
+    const on = armed > 0;
+    armedV.textContent = armed === null ? '—' : on ? fmt(armed, 1) : 'NONE';
+    armedU.textContent = on ? 'MPH' : '';
+    armedT.replaceChildren(...(on && Math.abs(armed - GUST_EST_MPH) < 0.05 ? [tagEl('EST').firstChild] : []));
+    return armed;
+  }
+  setArmed(null);
 
   /* ---- view */
   const viewSeg = segment('view', 'Lattice view', VIEWS.map((v, i) => [v, v.toUpperCase(), `${v} view, key ${i + 1}`]), { cls: 'pn-seg-4 pn-seg-tight', keyFor: (v) => String(VIEWS.indexOf(v) + 1) });
+  /* AUTO heads the view group once the page offers it (offerAuto): the page then picks
+     the view by the flight's phase. While it is on, no view is pressed and the one on
+     screen is marked data-live; a pressed view (click, keys 1 to 4, panel.set) ends it. */
+  values.viewAuto = false;
+  const autoB = h('button', { type: 'button', class: 'pn-seg-b pn-seg-auto', 'aria-pressed': 'false', 'aria-label': 'Auto, the page picks the view by the phase of the flight', hidden: true, dataset: { value: 'auto' } }, h('span', { text: 'AUTO' }));
+  viewSeg.prepend(autoB);
+  const viewReg = reg.get('view');
+  const paintAuto = () => {
+    const on = !!values.viewAuto;
+    autoB.setAttribute('aria-pressed', String(on));
+    viewReg.showNone(on);
+    for (const b of viewSeg.querySelectorAll('.pn-seg-b:not(.pn-seg-auto)')) { if (on && b.dataset.value === values.view) b.dataset.live = '1'; else delete b.dataset.live; }
+  };
+  const viewSet = viewReg.set; viewReg.set = (v) => { const ok = viewSet(v); paintAuto(); return ok; };
+  autoB.addEventListener('click', () => { values.viewAuto = true; paintAuto(); emit('viewAuto', true); });
+  reg.set('viewAuto', { get: () => values.viewAuto, set(v) { values.viewAuto = !!v && !autoB.hidden; paintAuto(); return true; }, enable: (on) => { autoB.disabled = !on; }, els: [autoB] });
+  const viewEnable = viewReg.enable; viewReg.enable = (on) => { viewEnable(on); autoB.disabled = !on; };
+  function offerAuto(on) { autoB.hidden = !on; if (!on) values.viewAuto = false; paintAuto(); }
   const sectionSeg = segment('section', 'Section plane', [['through', 'THROUGH FINS', 'Through fins, the section through the fins'], ['between', 'BETWEEN FINS', 'Between fins, the section between the fins']], { cls: 'pn-seg-2' });
   const camSeg = segment('camera', 'Camera preset', CAMERAS.map((c) => [c, c.toUpperCase(), `${c} camera`]), { cls: 'pn-seg-4 pn-seg-tight' });
   const markersT = toggle('markers', 'MARKERS', 'Markers: CG, CP, wind and force arrows');
-  const latticeT = toggle('latticeFlies', 'LATTICE FLIES IT', 'Lattice flies it: the lattice moment replaces Barrowman (lab)');
+  const latticeT = toggle('latticeFlies', 'LATTICE FLIES IT', "Lattice flies it (lab, not quantitative): the 2D section's moment replaces Barrowman's");
   latticeT.hidden = !lab;
-  const view = h('section', { class: 'pn-sec pn-sec-view', 'aria-labelledby': `${id}-h-view` },
-    Object.assign(heading('VIEW'), { id: `${id}-h-view` }),
+  // the body of the VIEW fold
+  const view = h('div', { class: 'pn-fold-c pn-sec-view' },
     h('p', { class: 'pn-sub', text: 'FLOW FIELD' }), viewSeg, note('view'),
     h('p', { class: 'pn-sub', text: 'SECTION' }), sectionSeg, note('section'),
     h('p', { class: 'pn-sub', text: 'CAMERA' }), camSeg, note('camera'),
@@ -230,21 +339,44 @@ export function buildControls({ lab = false, defaults = {}, refs = {}, ranges = 
   const keysT = toggle('keys', 'SHORTCUTS', 'Shortcuts: the single-key shortcuts L, Space, R, 1 to 4 and G');
   keysT.classList.add('pn-keys-t');
   listeners.add(({ name, value }) => { if (name === 'keys') { try { localStorage.setItem(KEYS_STORE, value ? 'on' : 'off'); } catch { /* storage blocked: the switch still holds for this visit */ } } });
-  const legend = h('div', { class: 'pn-keys' },
-    h('div', { class: 'pn-keys-head' }, h('span', { class: 'pn-keys-k', text: 'KEYS' }), keysT),
-    ...[['L', 'LAUNCH'], ['SPC', 'PAUSE'], ['R', 'RESET'], ['1–4', 'VIEW'], ['G', 'GUST']].map(([k, t]) => h('span', { class: 'pn-keys-i' }, h('kbd', { class: 'pn-kbd', text: k }), ` ${t}`)));
+  // the body of the KEYS fold (its summary is the KEYS label)
+  const legend = h('div', { class: 'pn-fold-c pn-keys' },
+    h('div', { class: 'pn-keys-head' }, keysT),
+    ...[['L', 'LAUNCH'], ['SPC', 'PAUSE'], ['R', 'RESET'], ['1 to 4', 'VIEW'], ['G', 'GUST']].map(([k, t]) => h('span', { class: 'pn-keys-i' }, h('kbd', { class: 'pn-kbd', text: k }), ` ${t}`)));
 
-  /* compact play button for the phone sheet's collapsed row */
+  /* compact play button for the phone sheet's collapsed row. At the end card (paused at
+     apogee) it launches again, as LAUNCH and L do there; PAUSE and the card resume. */
   const peekPlay = h('button', { type: 'button', class: 'pn-peek-play', 'aria-label': 'Launch' }, h('span', { class: 'pn-peek-icon', 'aria-hidden': 'true' }));
-  let playState = { running: false, paused: false, phase: 'pad', done: false };
-  peekPlay.addEventListener('click', () => { if (playState.running && !playState.paused) emit('pause'); else if (playState.paused) emit('pause'); else emit('launch'); });
+  let playState = { running: false, paused: false, phase: 'pad', done: false, end: false };
+  peekPlay.addEventListener('click', () => { const m = peekPlay.dataset.mode; emit(m === 'launch' ? 'launch' : 'pause'); });
+  /* the phone sheet's FINS toggle beside play: WITH (fin scale 1) or WITHOUT (0); any
+     other scale (HALF from run 02, the slider) shows as mixed and a press gives WITH */
+  const peekFinsV = h('span', { class: 'pn-peek-fins-v', 'aria-hidden': 'true' });
+  const peekFins = h('button', { type: 'button', class: 'pn-peek-fins', 'aria-pressed': 'true', 'aria-label': 'Fins' },
+    h('span', { class: 'pn-peek-fins-k', text: 'FINS' }), peekFinsV);
+  const paintPeekFins = () => {
+    const k = Number(values.fins);
+    const full = Math.abs(k - 1) < 0.005, none = k < 0.005;
+    peekFins.setAttribute('aria-pressed', full ? 'true' : none ? 'false' : 'mixed');
+    peekFinsV.textContent = finsWord(k);
+    peekFins.dataset.fins = full ? 'with' : none ? 'without' : 'mixed';
+  };
+  peekFins.addEventListener('click', () => {
+    const k = Number(values.fins);
+    const next = Math.abs(k - 1) < 0.005 ? 0 : 1;
+    reg.get('fins').set(next);
+    emit('fins', next);
+  });
+  paintPeekFins();
+  listeners.add(({ name }) => { if (name === 'fins') paintPeekFins(); });
+  { const fr = reg.get('fins'); const fs = fr.set; fr.set = (v) => { const ok = fs(v); paintPeekFins(); return ok; }; const fe = fr.enable; fr.enable = (on) => { fe(on); peekFins.disabled = !on; }; }
 
   function setPlayState(st) {
     playState = Object.assign(playState, st);
-    const { running, paused } = playState;
+    const { running, paused, end } = playState;
     pauseB.querySelector('.pn-btn-t').textContent = paused ? 'RESUME' : 'PAUSE';
     pauseB.setAttribute('aria-pressed', String(!!paused));
-    const mode = running && !paused ? 'pause' : paused ? 'resume' : 'launch';
+    const mode = end ? 'launch' : running && !paused ? 'pause' : paused ? 'resume' : 'launch';
     if (peekPlay.dataset.mode !== mode) {
       peekPlay.dataset.mode = mode;
       peekPlay.setAttribute('aria-label', mode === 'pause' ? 'Pause' : mode === 'resume' ? 'Resume' : 'Launch');
@@ -255,7 +387,7 @@ export function buildControls({ lab = false, defaults = {}, refs = {}, ranges = 
   function setReduced(on) { stepRow.hidden = !on; }
 
   function paintNote(name) {
-    const n = view.querySelector(`[data-note="${name}"]`) || config.querySelector(`[data-note="${name}"]`);
+    const n = view.querySelector(`[data-note="${name}"]`) || config.querySelector(`[data-note="${name}"]`) || runsSec.querySelector(`[data-note="${name}"]`);
     if (!n) return;
     const st = notes.get(name) || {};
     const text = (st.enabled === false && st.why) || st.info || '';   // the reason it is off wins; otherwise the info note
@@ -306,13 +438,15 @@ export function buildControls({ lab = false, defaults = {}, refs = {}, ranges = 
   }
 
   return {
-    playback, config, view, legend, peekPlay,
+    playback, runs: runsSec, fins, config, view, legend, peekPlay, peekFins,
     on(fn) { listeners.add(fn); return () => listeners.delete(fn); },
     emit,
     get(name) { return values[name]; },
     set(name, value) { const r = reg.get(name); if (!r) return false; return r.set(value) !== false; },
     values,
-    setEnabled, setInfo, showNone, setReduced, setPlayState, bindKeys,
+    setEnabled, setInfo, showNone, setReduced, setPlayState, setArmed, bindKeys, offerAuto, showRate,
+    get armed() { return armed; },
+    names() { return [...reg.keys()]; },
     destroy() { listeners.clear(); reg.clear(); },
   };
 }

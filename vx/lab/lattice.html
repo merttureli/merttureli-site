@@ -86,7 +86,7 @@
     </figure>
     <p class="lt-caption"><span>Page simulation / D2Q9 lattice Boltzmann / lattice units / src: SIM</span><span>Section shapes are analytic stand-ins (EST), not the CAD</span></p>
     <p class="lt-caption lt-key"><span>CG: quartered disc, 22 in from the nose (PAGE) on the CAD length</span><span>CP: ring and resultant from the lattice (SIM)</span></p>
-    <p class="lt-caption lt-key"><span>C_N, C_M and CP are 2D section values. A 2D section lifts like an airfoil along its whole length, so its CP sits ahead of the 3D rocket's (Barrowman); above about 5 degrees the edges, 0.16 of the width from a body 0.66 long, also confine the flow and pressurise the windward half</span></p>
+    <p class="lt-caption lt-key"><span>C_N, C_M and CP are 2D section values. A 2D section lifts like an airfoil along its whole length, so its CP sits ahead of the 3D rocket's (Barrowman); above about 5 degrees the edges, 0.16 of the width from a body 0.66 long, also confine the flow and pressurize the windward half</span></p>
     <p class="lt-caption lt-status" id="status"></p>
     <div class="lt-chartwrap"><canvas class="lt-chart" id="chart" aria-hidden="true"></canvas></div>
     <pre class="lt-readout" id="readout" aria-label="Lattice readout">LATTICE / STARTING</pre>
@@ -103,17 +103,17 @@
 
     <h2>Flow</h2>
     <label class="lt-row" for="alpha">Alpha <output aria-live="off" id="alpha-out" for="alpha">10.0°</output><input type="range" id="alpha" aria-label="Alpha, degrees" min="-35" max="35" step="0.5" value="10"></label>
-    <label class="lt-row" for="uin">U_in, lattice units <output aria-live="off" id="uin-out" for="uin">0.080</output><input type="range" id="uin" aria-label="Inflow speed u_in, lattice units" min="0.01" max="0.12" step="0.005" value="0.08"><small>Page range 0.03 to 0.10</small></label>
-    <label class="lt-row" for="re">Re at u_in 0.10 <output aria-live="off" id="re-out" for="re">3000</output><input type="range" id="re" aria-label="Reynolds number at u_in 0.10" min="100" max="6000" step="50" value="3000"><small>Sets tau0; Re follows u_in</small></label>
+    <label class="lt-row" for="uin">U_in, lattice units <output aria-live="off" id="uin-out" for="uin">0.050</output><input type="range" id="uin" aria-label="Inflow speed u_in, lattice units" min="0.01" max="0.12" step="0.005" value="0.05"><small>The page asks 0.03 to 0.10; the engine runs at most 0.05</small></label>
+    <label class="lt-row" for="re">Re at u_in 0.05 <output aria-live="off" id="re-out" for="re">1500</output><input type="range" id="re" aria-label="Reynolds number at u_in 0.05" min="50" max="3000" step="25" value="1500"><small>Sets tau0; Re follows u_in</small></label>
     <label class="lt-row" for="rate">Body rate, rad per step <output aria-live="off" id="rate-out" for="rate">0</output><input type="range" id="rate" aria-label="Body rate, 10 to the minus 4 radians per step" min="-3" max="3" step="0.1" value="0"><small>Positive raises theta (flight sign)</small></label>
 
     <h2>Model</h2>
     <label class="lt-row">Smagorinsky C 0.12 <input type="checkbox" id="smag" checked></label>
-    <label class="lt-row">Regularised collision <input type="checkbox" id="reg" checked></label>
+    <label class="lt-row">Regularized collision <input type="checkbox" id="reg" checked></label>
     <label class="lt-row">Positivity limiter <input type="checkbox" id="positive" checked></label>
     <label class="lt-row">Speed floor on tau <input type="checkbox" id="mach" checked></label>
-    <label class="lt-row">Absorbing edges <input type="checkbox" id="sponge" checked><small>Plain BGK + Smagorinsky does not pass the alpha 15 gate at tau0 near 0.504; these keep it running (Latt and Chopard 2006, Brownlee et al. 2007, EST)</small></label>
-    <label class="lt-row">Inflow at neighbour density <input type="checkbox" id="neq"><small>Guo et al. 2002: removes the one-cell density jump on an inflow edge, but in this domain the windward half pressurises further (C_p 3.3 at 10 degrees against 1.65, SIM)</small></label>
+    <label class="lt-row">Absorbing edges <input type="checkbox" id="sponge" checked><small>At u_in 0.10 plain BGK + Smagorinsky failed the alpha 15 gate at tau0 near 0.504; at the 0.05 cap with the regularized outflow edge it passes, and these stay on by default (Latt and Chopard 2006, Brownlee et al. 2007, EST)</small></label>
+    <label class="lt-row">Inflow at neighbor density <input type="checkbox" id="neq"><small>Guo et al. 2002: removes the one-cell density jump on an inflow edge, but in this domain the windward half pressurizes further (C_p 3.3 at 10 degrees against 1.65, SIM)</small></label>
 
     <h2>View</h2>
     <div class="lt-group" role="group" aria-label="View">
@@ -139,7 +139,7 @@
       <a class="lt-button" href="?validate=stability">Stability gate</a>
     </div>
     <p class="lt-out" id="check-out"></p>
-    <p class="lt-kbd"><b>1 – 4</b> view / <b>Space</b> pause / <b>S</b> step / <b>R</b> reset / <b>?validate=</b>cylinder, stability, bench, destroy / <b>?tier=N</b> / <b>?reg=1</b></p>
+    <p class="lt-kbd"><b>1 to 4</b> view / <b>Space</b> pause / <b>S</b> step / <b>R</b> reset / <b>?validate=</b>cylinder, stability, bench, destroy / <b>?tier=N</b> / <b>?reg=1</b></p>
   </aside>
 </main>
 <script type="module">

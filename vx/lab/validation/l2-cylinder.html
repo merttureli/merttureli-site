@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab / Validation L2 / Cylinder · Mert Tureli VX</title>
+<meta name="description" content="Validation bench, track L2: flow past a circular cylinder on the field study's lattice Boltzmann engine, against published drag, lift, Strouhal and recirculation data.">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="../../css/tokens.css">
+<style>
+  body { margin: 0; background: var(--ink-900); color: var(--paper); font-family: var(--font-mono); }
+  .v2 { padding: var(--space-5) var(--page-margin); display: grid; gap: var(--space-4); }
+  .v2 h1 { font-size: var(--fs-meta); letter-spacing: var(--ls-caps-wide); text-transform: uppercase; font-weight: 400; margin: 0; }
+  .v2 p { font-size: var(--fs-meta-sm); color: var(--paper-a70); margin: 0; max-width: 72ch; line-height: 1.6; }
+  .v2 canvas { width: 100%; height: auto; display: block; background: var(--ink-800, #141414); }
+  .v2 pre { font-size: 11px; color: var(--paper-a90); white-space: pre-wrap; word-break: break-all; margin: 0; max-height: 40vh; overflow: auto; }
+  .lb-skip { position: absolute; left: 12px; top: -48px; z-index: 10; padding: 8px 14px; background: var(--paper); color: var(--ink-900); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; text-decoration: none; }
+  .lb-skip:focus { top: 8px; }
+  /* the lab chrome (as lab/index.html and lab/validation.html): header, display title, two-line summary */
+  .lb-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-5); height: 56px; padding: 0 max(var(--page-margin), env(safe-area-inset-right, 0px)) 0 max(var(--page-margin), env(safe-area-inset-left, 0px)); border-bottom: 1px solid var(--paper-a18); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; }
+  .lb-head h1 { margin: 0; font-family: var(--font-mono); font-size: var(--fs-meta); font-weight: 400; letter-spacing: var(--ls-caps-wide); color: var(--paper); white-space: nowrap; }
+  .lb-head nav { display: flex; gap: var(--space-5); }
+  .lb-head a { color: var(--paper-a70); text-decoration: none; border-bottom: 1px solid transparent; white-space: nowrap; }
+  .lb-head a:hover { color: var(--paper); border-bottom-color: var(--paper); }
+  .lb-head a:focus-visible { outline: 1px solid var(--paper); outline-offset: 3px; }
+  .lb-title { margin: var(--space-6) 0 0; font-family: var(--font-display); font-weight: 500; font-size: var(--fs-display-3); line-height: var(--lh-display); letter-spacing: var(--ls-display); text-transform: uppercase; color: var(--paper); }
+  p.lb-sum { max-width: var(--measure); margin: var(--space-4) 0 var(--space-5); font-family: var(--font-body); font-size: var(--fs-body); line-height: var(--lh-body); letter-spacing: 0; color: var(--paper-a90); }
+  @media (max-width: 859.98px) {
+    .lb-head { height: auto; min-height: 48px; flex-wrap: wrap; padding: 10px 16px; gap: 4px var(--space-3); }
+    .lb-head h1 { font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); }
+    .lb-head nav { gap: var(--space-3); }
+    .lb-title { font-size: min(var(--fs-display-3), 11vw); }
+  }
+  @media (forced-colors: active) { .lb-head { border-color: CanvasText; } }
+</style>
+<script type="importmap">{"imports":{"three":"../../../assets/charger-explorer/vendor/three.module.js"}}</script>
+</head>
+<body>
+<a class="lb-skip" href="#bench">Skip to the bench</a>
+<header class="lb-head">
+  <h1>LAB / 06 / VALIDATION / L2</h1>
+  <nav aria-label="Lab navigation"><a href="../validation.html">Validation</a><a href="../index.html">All labs</a><a href="../../">Field study</a></nav>
+</header>
+<main class="v2" id="bench">
+  <h2 class="lb-title">Cylinder</h2>
+  <p class="lb-sum">This bench checks the lattice against flow past a circular cylinder: published drag, lift, shedding frequency and the length of the wake bubble. One case runs from the address bar, and its result prints below.</p>
+  <p>Runs one case given as ?cfg=(base64 JSON) on the real engine and prints the result as JSON. Without a case it runs a short demonstration (Re 100, D 16 cells, 2,000 steps). The view shows vorticity at the end of the run.</p>
+  <canvas id="view" width="896" height="384" aria-label="Vorticity of the last case" role="img"></canvas>
+  <pre id="status">waiting</pre>
+</main>
+<script type="module">
+import * as THREE from '../../../assets/charger-explorer/vendor/three.module.js';   // the import map's target, so this page and the engine share one three.js
+import { runCase } from '../../js/validation/l2-cylinder.js';
+const status = document.getElementById('status');
+const canvas = document.getElementById('view');
+const q = new URLSearchParams(location.search);
+let cfg = { name: 'demo', cols: 448, rows: 192, D: 16, steps: 2000, kickDeg: 4, kickSteps: 1000 };
+if (q.has('cfg')) cfg = JSON.parse(atob(q.get('cfg')));
+let renderer = null;
+try { renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false, preserveDrawingBuffer: true }); } catch (e) { renderer = null; }
+if (!renderer) {
+  const r = { case: cfg.name, error: 'no-webgl2' };
+  status.textContent = JSON.stringify(r); console.log('L2_RESULT ' + JSON.stringify(r));
+} else {
+  const ratio = cfg.rows / cfg.cols;
+  renderer.setPixelRatio(1);
+  renderer.setSize(896, Math.max(64, Math.round(896 * ratio)), false);
+  const onFrame = (lat, probe) => probe.draw(lat.texture);
+  const log = (line) => { console.log(line); if (line.startsWith('L2_PROGRESS')) status.textContent = line; };
+  let result;
+  try { result = await runCase(renderer, cfg, { log, onFrame }); } catch (e) { result = { case: cfg.name, error: String(e && e.stack || e) }; }
+  const brief = Object.assign({}, result); delete brief.trace; delete brief.wakeTrace; delete brief.cycles;
+  status.textContent = JSON.stringify(brief, null, 2);
+  window.__L2_RESULT = result;
+  console.log('L2_RESULT ' + JSON.stringify(result));
+}
+</script>
+</body>
+</html>

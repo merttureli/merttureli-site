@@ -112,7 +112,7 @@
     <p class="eyebrow">CHARGER / FIELD STUDY 01 / LAB / GEOMETRY</p>
     <h1>Section geometry</h1>
     <nav aria-label="Lab navigation"><a href="./">Lab index</a><a href="../">VX</a></nav>
-    <p class="gm-sub">The pitch-plane section the lattice flies through, measured from the CAD assembly: outer radius every 2 mm from the nose tip to the screw cap, Fin 1 projected onto its own plane, and the solid mask built from signed distances at cell centres.</p>
+    <p class="gm-sub">The pitch-plane section the lattice flies through, measured from the CAD assembly: outer radius every 2 mm from the nose tip to the screw cap, Fin 1 projected onto its own plane, and the solid mask built from signed distances at cell centers.</p>
   </header>
 
   <div class="gm-bench">
@@ -135,7 +135,7 @@
       </section>
 
       <section aria-labelledby="hZoom">
-        <div class="gm-h2"><h2 id="hZoom">Cells at the surface</h2><span>CAD outline / cell centres / outward normals</span></div>
+        <div class="gm-h2"><h2 id="hZoom">Cells at the surface</h2><span>CAD outline / cell centers / outward normals</span></div>
         <div class="gm-insets">
           <figure><canvas id="zNose" role="img" aria-label="Nose tip, magnified"></canvas><figcaption><b>Nose tip</b> / <span id="zNoseCap">-</span></figcaption></figure>
           <figure><canvas id="zFin" role="img" aria-label="Fin 1, magnified"></canvas><figcaption><b id="zFinName">Fin 1</b> / <span id="zFinCap">-</span></figcaption></figure>
@@ -351,7 +351,7 @@ function drawZoom(cv, s, c0, c1, r0, r1) {
     for (let c = Math.ceil(c0); c <= c1; c++) { ctx.moveTo(Math.round(X(c)) + .5, 0); ctx.lineTo(Math.round(X(c)) + .5, h); }
     for (let r = Math.ceil(r0); r <= r1; r++) { ctx.moveTo(0, Math.round(Y(r)) + .5); ctx.lineTo(w, Math.round(Y(r)) + .5); }
     ctx.stroke();
-    // cell centres, where the signed distance is sampled, once they are far enough apart to read
+    // cell centers, where the signed distance is sampled, once they are far enough apart to read
     ctx.fillStyle = k >= 10 ? COL.p18 : 'transparent';
     if (k >= 10) for (let r = Math.ceil(r0); r < r1; r++) for (let c = Math.ceil(c0); c < c1; c++) ctx.fillRect(X(c + .5) - .75, Y(r + .5) - .75, 1.5, 1.5);
   }
@@ -380,7 +380,7 @@ function drawZoom(cv, s, c0, c1, r0, r1) {
 
 function drawInsets(s) {
   const g = state.geometry;
-  // nose: 40 x 22.5 mm window from just ahead of the tip, centred on the axis
+  // nose: 40 x 22.5 mm window from just ahead of the tip, centered on the axis
   const nw = 0.040 / s.cellM, nh = nw * 9 / 16, nx0 = s.xNoseCol - nw * 0.12;
   const kn = drawZoom($('zNose'), s, nx0, nx0 + nw, s.axisRow - nh / 2, s.axisRow + nh / 2);
   tagged($('zNoseCap'), `${f(nw, 0)} x ${f(nh, 0)} cells / x${f(kn, 1)}`, 'SIM');
@@ -553,7 +553,7 @@ function writeTable(g) {
       [r.deltaIn == null ? '-' : `<span>${r.deltaIn >= 0 ? '+' : ''}${f(r.deltaIn, 3)} in</span><span class="gm-sep"> / </span><span>${r.deltaPct >= 0 ? '+' : ''}${f(r.deltaPct, 1)} %</span>`, r.deltaIn == null ? 'gm-dim' : (off ? 'gm-off' : '')],
     ]);
   });
-  rows.push(row([['Fin count'], [`4${tag('CAD')}`], ['-', 'gm-dim'], [`${PAGE_FIGURES.finCount}${tag('PAGE')}`], ['four is final', 'gm-dim']]));
+  rows.push(row([['Fin count'], [`4${tag('CAD')}`], ['-', 'gm-dim'], [`${PAGE_FIGURES.finCount}${tag('PAGE')}`], [PAGE_FIGURES.finCount === 4 ? 'match' : 'four is final', 'gm-dim']]));
   tb.replaceChildren(...rows);
   const by = Object.fromEntries(g.page.map(r => [r.key, r]));
   const notes = $('notes');
@@ -562,7 +562,7 @@ function writeTable(g) {
   const buttons = g.features.railButtonBounds || [];
   const paras = [
     `Fin 1 measured as a trapezoid: root chord ${f(by.finRoot.cadMm, 2)} mm${TAG('CAD')} and leading-edge sweep ${f(by.finSweep.cadMm, 2)} mm${TAG('CAD')} agree with the page's ${PAGE_FIGURES.finRootIn} in${TAG('PAGE')} and ${PAGE_FIGURES.finSweepIn} in${TAG('PAGE')} to within ${f(within, 3)} in${TAG('SIM')}. The span is ${f(by.finHeight.cadMm, 2)} mm (${f(by.finHeight.cadIn, 3)} in)${TAG('CAD')}, ${f(Math.abs(by.finHeight.deltaIn), 3)} in${TAG('SIM')} short of the page's ${PAGE_FIGURES.finHeightIn} in${TAG('PAGE')} height. The tip trailing edge sits ${f(g.fin.tipTrailingEdgeAft * 1000, 1)} mm${TAG('CAD')} aft of the root trailing edge.`,
-    `The assembly is ${f(by.length.cadIn, 2)} in${TAG('CAD')} from nose tip to screw cap against the page's ${PAGE_FIGURES.lengthIn} in${TAG('PAGE')} for the three-fin design review; its body diameter is ${f(by.diameter.cadIn, 3)} in${TAG('CAD')} against ${PAGE_FIGURES.diameterIn} in${TAG('PAGE')}. The study takes shape from the CAD and mass and CG from the page.`,
+    `The assembly is ${f(by.length.cadIn, 2)} in${TAG('CAD')} from nose tip to screw cap against the page's ${PAGE_FIGURES.lengthIn} in${TAG('PAGE')} (which length is current is an open question for the owner); its body diameter is ${f(by.diameter.cadIn, 3)} in${TAG('CAD')} against ${PAGE_FIGURES.diameterIn} in${TAG('PAGE')}. The study takes shape from the CAD and mass and CG from the page.`,
     `Nose length: refs.noseLength is the nose cone part with its shoulder, ${f(g.refs.noseLength * 1000, 1)} mm${TAG('CAD')}, the value the flight model takes. The exposed nose, from the tip to the forward edge of the upper tube where the measured radius first reaches ${f(g.refs.radius * 1000, 1)} mm${TAG('CAD')}, is ${f(g.refs.noseExposedLength * 1000, 1)} mm${TAG('CAD')}, exported as refs.noseExposedLength.`,
   ];
   if (buttons.length) paras.push(`The rail buttons (parts ${buttons.map(b => b.id).join(' and ')}) stand ${f((buttons[0].rOut - buttons[0].rIn) * 1000, 1)} mm${TAG('CAD')} proud of the tube on the Fin 3 side, ${buttons.map(b => f((b.sFwd + b.sAft) / 2 * 1000, 1)).join(' and ')} mm${TAG('CAD')} aft of the nose tip. They are one-sided, so the radius profile leaves them out; the through-fins section carries each as the rectangle of its part bounds${TAG('CAD')} (rectangular shape${TAG('EST')}) and is not mirrored where they are. The between-fins plane misses them.`);

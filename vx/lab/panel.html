@@ -85,6 +85,13 @@
             <input class="plab-range" id="seek" type="range" min="0" max="9.8" step="0.05" value="2.4">
           </label>
           <label class="plab-check"><input type="checkbox" id="autogust" checked> Scripted gust at 0.60 s, 5 m/s</label>
+          <div class="plab-row"><button type="button" class="plab-btn" id="seek-apogee">Seek to apogee</button></div>
+        </div>
+        <div class="plab-group">
+          <p class="plab-k" id="k-chart">Strip chart and end plate</p>
+          <label class="plab-check"><input type="checkbox" id="chart-preview" checked> Pad preview: the bench flight flown ahead</label>
+          <label class="plab-check"><input type="checkbox" id="chart-ghost" checked> Ghost: the other fin choice, flown ahead</label>
+          <label class="plab-check"><input type="checkbox" id="plate2d" checked> 2D end plate at apogee</label>
         </div>
         <div class="plab-group">
           <p class="plab-k" id="k-geom">Geometry</p>
@@ -108,6 +115,15 @@
             <button type="button" class="plab-btn" data-scene="2d" aria-pressed="false">2D view only</button>
             <button type="button" class="plab-btn" data-scene="none" aria-pressed="false">None</button>
           </div>
+        </div>
+        <div class="plab-group">
+          <p class="plab-k" id="k-cap">Phone peek caption</p>
+          <div class="plab-row" role="group" aria-labelledby="k-cap">
+            <button type="button" class="plab-btn" data-cap="off" aria-pressed="true">Off</button>
+            <button type="button" class="plab-btn" data-cap="quiet" aria-pressed="false">Caption</button>
+            <button type="button" class="plab-btn" data-cap="live" aria-pressed="false">Caption, read out</button>
+          </div>
+          <label class="plab-check"><input type="checkbox" id="autoview" checked> View AUTO stand-in: pressure from rail exit to burnout, smoke otherwise</label>
         </div>
         <div class="plab-group">
           <p class="plab-k" id="k-sheet">Phone sheet</p>
@@ -182,7 +198,12 @@
   let latMode = qs.get('lattice') || (hasGL2 ? 'script' : 'no-webgl2');
   let sceneMode = qs.get('scene') || (hasGL2 ? 'stub' : '2d');
 
-  const fallbackView = createFallbackView(viewCanvas, geometry, flight, { lattice, section: lattice.section });
+  const fallbackView = createFallbackView(viewCanvas, geometry, flight, {
+    lattice, section: lattice.section,
+    // the end plate's ghost: the other fin choice of the bench flight, flown ahead (flight frame: the bench flights start at the origin)
+    ghost: (cfg) => { const k = num(cfg.finScale, 1) > 0.005 ? 0 : 1; const p = flyAhead(k); return p ? { points: p.path, finScale: k, apogeeFt: p.apogeeFt } : null; },
+    gustMph: () => 0, ghostValid: () => $('#chart-ghost').checked,
+  });
   const setCaption = () => fallbackView.setCaption([hasGL2 ? '2D VIEW / PITCH PLANE' : '2D FALLBACK / NO WEBGL2', `LAB BENCH / ${source === 'module' ? 'FLIGHT MODULE' : 'SCRIPTED FLIGHT'}`]);
   setCaption();
   const sceneStub = {
@@ -208,7 +229,56 @@
     pause() { log('playback.pause()'); if (flight.phase === 'pad' || flight.done) return; playback.paused = !playback.paused; if (playback.paused) stop(); else start(); },
     reset() { log('playback.reset()'); stop(); flight.reset(); playback.paused = false; tickLattice(); },
     step(dt) { log(`playback.step(${dt})`); if (flight.done) return; if (flight.phase === 'pad') flight.ignite(); stop(); playback.paused = true; flight.run(dt); tickLattice(); fallbackView.wake(); panel && panel.wake(); },
+    /* the chart's page hooks (item 11), stood in: the pad preview and the ghost are this bench's
+       own flight flown ahead (the script or the flight module, whichever is the source) */
+    get preview() { return $('#chart-preview').checked && flight.phase === 'pad' ? flyAhead(num(flight.config.finScale, 1)) : undefined; },
+    get ghostTrace() {
+      if (!$('#chart-ghost').checked || flight.phase === 'pad') return undefined;
+      const k = num(flight.config.finScale, 1) > 0.005 ? 0 : 1;
+      const p = flyAhead(k);
+      return p ? { label: k > 0 ? 'Full fins' : 'No fins', finScale: k, trace: p.trace, beats: { railExit: p.result.railT, apogee: p.result.apogeeT, peakAlpha: p.result.peakAlpha, peakT: p.result.peakT } } : undefined;
+    },
   };
+  const num = (v, d) => (typeof v === 'number' && Number.isFinite(v) ? v : d);
+  /* a flight of the bench's own kind flown to apogee in this tab, cached by source, gust and fin
+     scale: the trace every 10 ms ([t, alpha deg, theta deg, airspeed m/s]), the run cards' marks
+     (peak and settle above 50 ft/s, after rail exit), the path in the flight frame */
+  const ahead = new Map();
+  function flyOne(k) {
+    let f;
+    if (source === 'module' && flyAhead.mod) f = flyAhead.mod.createFlight({ ...flight.config, finScale: k }, { bus: null });
+    else { f = createScriptFlight({ emit: () => {}, autoGust: $('#autogust').checked }); f.setFinScale(k); }
+    f.ignite();
+    const trace = [], path = [];
+    let railT = NaN, peakAlpha = 0, peakT = NaN, lastBig = NaN, apo = null;
+    for (let i = 0; i < 4000 && !f.done; i++) {
+      f.run ? f.run(0.005) : f.step(0.005);
+      const s = f.state, evs = Array.isArray(f.events) ? f.events : [];
+      if (!Number.isFinite(railT)) { const e = evs.find((x) => x.name === 'railExit'); if (e) railT = e.t; }
+      const v = Number.isFinite(s.airspeed) ? s.airspeed : Math.sqrt(2 * Math.max(0, s.qdyn || 0) / 1.225);
+      if (i % 2 === 1) trace.push([s.t, s.alpha * 57.29577951308232, s.theta * 57.29577951308232, v]);
+      if (i % 10 === 0) path.push({ x: s.x, y: s.y });
+      apo = evs.find((x) => x.name === 'apogee');
+      if (apo) { path.push({ x: s.x, y: s.y }); break; }
+      if (Number.isFinite(railT) && v > 50 * 0.3048) { const a = Math.abs(s.alpha) * 57.29577951308232; if (a > peakAlpha) { peakAlpha = a; peakT = s.t; } if (a >= 2) lastBig = s.t; }
+    }
+    const gustT = source === 'script' && $('#autogust').checked ? 0.6 : NaN;
+    const from = Number.isFinite(gustT) ? gustT : railT;
+    const bo = (f.events || []).find((x) => x.name === 'burnout');
+    const apoState = apo && apo.state ? apo.state : f.state;
+    const out = { trace, path, finScale: k,
+      apogeeFt: (Number.isFinite(apoState.apogee) ? apoState.apogee : apoState.altitude ?? apoState.y) / 0.3048,
+      result: { railT, gustT, peakT, peakAlpha, settle: Number.isFinite(lastBig) ? Math.max(0, lastBig - from) : 0, apogeeT: apo ? apo.t : NaN },
+      beats: { burnout: bo ? bo.t : NaN, pitch60: NaN } };
+    if (f.destroy) f.destroy();
+    return out;
+  }
+  function flyAhead(k) {
+    const key = `${source}|${$('#autogust').checked}|${k.toFixed(3)}`;
+    if (!ahead.has(key)) { try { ahead.set(key, flyOne(k)); } catch (err) { log(`fly ahead failed: ${err && err.message ? err.message.slice(0, 60) : err}`); ahead.set(key, null); } }
+    return ahead.get(key);
+  }
+  import('../js/flight/flight.js').then((m) => { flyAhead.mod = m; }).catch(() => {});
   function start() { if (raf || flight.done) return; playback.running = true; last = 0; raf = requestAnimationFrame(frame); }
   function stop() { if (raf) cancelAnimationFrame(raf); raf = 0; playback.running = false; }
   function frame(now) {
@@ -237,10 +307,27 @@
     $('#seek-out').value = timeCode(flight.state.t);
   }
 
+  /* ---- page hooks, stood in for the lab: the RUNS row and the armed gust. The page's
+     startRun(key) configures, resets and launches; here the same five configurations
+     are set through the panel (the bench's flight is the script or the flight module). */
+  const LAB_RUNS = { full: { fins: 1, wind: 5, gust: 0 }, half: { fins: 0.5, wind: 5, gust: 0 }, none: { fins: 0, wind: 5, gust: 0 }, wind: { fins: 1, wind: 10, gust: 0 }, gust: { fins: 1, wind: 0, gust: 5 / 0.44704 } };
+  let labArmed = 0;
+  const hooks = {
+    startRun(key) {
+      const r = LAB_RUNS[key]; if (!r || !panel) return;
+      log(`startRun(${key})`);
+      panel.press('reset'); panel.set('fins', r.fins); panel.set('wind', r.wind);
+      labArmed = r.gust; if (r.gust > 0) panel.set('gust', r.gust);
+      panel.press('launch');
+    },
+    disarmGust() { log('disarmGust()'); labArmed = 0; },
+    armedGust() { return labArmed; },
+  };
+
   /* ---- mount */
   let panel = null;
   function mount() {
-    panel = mountPanel(stage, { flight, lattice: latticeFor(latMode), scene: sceneFor(sceneMode), playback, geometry, section: lattice.section, lab: true, sheet: qs.get('sheet') === 'open' ? 'expanded' : 'collapsed' });
+    panel = mountPanel(stage, { flight, lattice: latticeFor(latMode), scene: sceneFor(sceneMode), playback, geometry, section: lattice.section, lab: true, autoView: true, sheet: qs.get('sheet') === 'open' ? 'expanded' : 'collapsed', ...hooks });
     panel.onControl(({ name, value }) => { if (name === 'markers' && sceneMode === 'stub') { /* the stub forwards to the 2D view already */ } void value; });
     window.vxPanel = { panel, flight, lattice, fallbackView, playback, bus };
   }
@@ -253,6 +340,16 @@
   const pressGroup = (attr, value) => { for (const b of document.querySelectorAll(`[data-${attr}]`)) b.setAttribute('aria-pressed', String(b.dataset[attr] === value)); };
   pressGroup('lat', latMode); pressGroup('scene', sceneMode); pressGroup('sheet', panel.sheet);
   $('#seek').addEventListener('input', (e) => seek(e.target.valueAsNumber));
+  /* run the bench flight to its apogee event and pause there: the chart's summary and the 2D end plate */
+  $('#seek-apogee').addEventListener('click', () => {
+    stop(); flight.reset(); flight.ignite(); playback.paused = true;
+    for (let i = 0; i < 4000 && !flight.done; i++) { flight.run(0.005); if ((flight.events || []).some((e) => e.name === 'apogee')) break; }
+    tickLattice(); fallbackView.wake(); panel && panel.wake();
+    $('#seek-out').value = timeCode(flight.state.t);
+    log('seek to apogee');
+  });
+  for (const id of ['chart-preview', 'chart-ghost']) $(`#${id}`).addEventListener('change', () => { panel && panel.wake(); fallbackView.setPlateOptions({}); });
+  $('#plate2d').addEventListener('change', (e) => fallbackView.setPlate(e.target.checked));
   $('#autogust').addEventListener('change', (e) => {
     flight = createScriptFlight({ emit: (t, d) => bus.emit(t, d), autoGust: e.target.checked });
     rebindFlight(); seek($('#seek').valueAsNumber);
@@ -297,6 +394,28 @@
   $('#destroy').addEventListener('click', () => { if (panel) { panel.destroy(); panel = null; log('panel.destroy()'); } });
   $('#remount').addEventListener('click', () => { if (!panel) { mount(); log('mountPanel()'); pressGroup('sheet', panel.sheet); } });
 
+  /* ---- view AUTO, stood in for the page: the page picks the view by the flight's beats
+     (PRESENTATION-PLAN item 8); this bench uses phases only: pressure from rail exit to
+     burnout, smoke on the pad, on the rail and after burnout. */
+  function autoPick() {
+    if (!panel || !$('#autoview').checked) return;
+    const evs = Array.isArray(flight.events) ? flight.events : [];
+    const t = flight.state.t;
+    const rx = evs.find((e) => e.name === 'railExit'), bo = evs.find((e) => e.name === 'burnout');
+    const v = rx && t >= rx.t && !(bo && t >= bo.t) ? 'pressure' : 'smoke';
+    if (panel.state.autoWant !== v) panel.setAutoView(v);
+  }
+  autoPick();
+  const autoTimer = setInterval(autoPick, 100);
+  /* ---- the phone peek caption (the page narrates through setPeekCaption) */
+  // no numbers: nothing on this bench computes a beat (the page fills its captions from the flight)
+  const SAMPLE_CAP = 'Lab sample: the beat caption sits here, in place of the four cells, while the page narrates';
+  for (const b of document.querySelectorAll('[data-cap]')) b.addEventListener('click', () => {
+    pressGroup('cap', b.dataset.cap);
+    if (!panel) return;
+    panel.setPeekCaption(b.dataset.cap === 'off' ? null : SAMPLE_CAP, { live: b.dataset.cap === 'live' });
+  });
+
   /* ---- readout at 4 Hz while it is on screen */
   let readoutVisible = true;
   new IntersectionObserver((es) => { readoutVisible = es[es.length - 1].isIntersecting; }).observe(readout);
@@ -311,8 +430,10 @@
       add('FLIGHT', `${source.toUpperCase()} ${timeCode(s.t)} ${String(s.phase).toUpperCase()}`, `  playback ${playback.running ? 'running' : 'stopped'}${playback.paused ? ' / paused' : ''}  rate 1/${Math.round(1 / playback.rate)}`);
       const v = s.values;
       add('CONFIG', `fins ${f2(v.fins)}  cg ${f2(v.cg, 1)} in  rail ${f2(v.rail, 0)} in`, `  angle ${f2(v.angle, 1)} deg  wind ${f2(v.wind, 1)} mph  gust ${f2(v.gust, 1)} mph`);
-      add('VIEW', `${v.view} / ${v.section} / ${v.camera}`, `  markers ${v.markers ? 'on' : 'off'}  lattice flies ${v.latticeFlies ? 'on' : 'off'}`);
-      add('CHART', `${s.chartPoints} points`, `  range +/-${s.chartScaleDeg} deg  max aoa after rail ${f2(s.maxAoaDeg)} deg`);
+      add('VIEW', `${v.view} / ${v.section} / ${v.camera}`, `  auto ${s.viewAuto ? 'on' : s.autoOffered ? 'off (a view was picked)' : 'not offered'}${s.autoWant ? ` / page pick ${s.autoWant}` : ''}  markers ${v.markers ? 'on' : 'off'}  lattice flies ${v.latticeFlies ? 'on' : 'off'}`);
+      add('PEEK', s.peekCaption ? 'caption' : 'cells', `  ${s.peekCaption || 'PHASE / TIME / AOA / MARGIN'}  events ${s.muted.page || s.muted.caption ? 'muted' : 'spoken'}`);
+      add('FOLDS', Object.entries(s.open).filter(([, o]) => o).map(([k]) => k).join(' ') || 'all closed', `  armed gust ${s.armed === null ? 'unknown' : s.armed > 0 ? f2(s.armed, 1) + ' mph' : 'none'}  runs ${s.runs ? 'available' : 'unavailable'}`);
+      add('CHART', `${s.chartPoints} points / ${s.chart ? s.chart.mode : '—'}`, `  range +/-${s.chartScaleDeg} deg  max aoa after rail ${f2(s.maxAoaDeg)} deg  labels ${s.chart ? s.chart.labels.map((l) => l.text).join(', ') : '—'}${s.chart && s.chart.dropped.length ? `  dropped ${s.chart.dropped.join(', ')}` : ''}`);
       add('EVENTS', s.events.join('  ') || 'none');
       add('WORK', `${s.stats.updates} updates`, `  ${s.stats.textWrites} text writes  ${s.stats.chartDraws} chart draws  last ${f2(s.stats.lastUpdateMs)} ms`);
       add('SUMMARY', '', s.summary);
@@ -321,6 +442,7 @@
     const fv = fallbackView.state;
     add('GEOMETRY', geomMode === 'module' ? 'geom.js baked CAD section' : 'inline lab set (CAD lengths, CAD part 6 fin planform)', '');
     add('2D VIEW', `${fv.draws} draws`, `  last ${f2(fv.lastDrawMs)} ms  ${fv.running ? 'running' : 'idle'}  ${fv.size.w}x${fv.size.h} px at dpr ${fv.dpr}  outline ${fv.outlineSource}${Number.isFinite(fv.lastFlick) ? `  flick ${f2(fv.lastFlick)} rad/s` : ''}`);
+    add('PLATE', fv.plate.up ? `up ${f2(fv.plate.k)}` : 'down', fv.plate.up ? `  ${fv.plate.points} points  ghost ${fv.plate.ghostPoints}  apogee ${f2(fv.plate.apogeeFt, 0)} ft  ticks ${fv.plate.ticks.map((t) => t.key + (t.shown ? '' : ' (no room)')).join(', ')}` : '  at the apogee stop: Seek to apogee');
     const lat = lattice;
     add('LATTICE', latMode === 'none' ? 'not attached' : lat.fallback ? `fallback ${lat.fallback}` : `${lat.stats.grid} ${lat.stats.stepsPerSecond} steps/s`, latMode === 'script' ? `  cn ${f2(lat.force.cn, 3)}  cm ${f2(lat.force.cm, 3)}  xcp ${f2(lat.force.xcpCells, 1)} cells  view ${lat.view}` : '');
     add('CALLS', '', [...(flight.calls || []), ...calls].slice(-10).join('  /  ') || '—');
@@ -329,7 +451,7 @@
   }
   print();
   const printTimer = setInterval(print, 250);
-  addEventListener('pagehide', () => { clearInterval(printTimer); clearInterval(statsTimer); });
+  addEventListener('pagehide', () => { clearInterval(printTimer); clearInterval(statsTimer); clearInterval(autoTimer); });
 </script>
 </body>
 </html>

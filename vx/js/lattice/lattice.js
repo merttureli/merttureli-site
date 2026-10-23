@@ -5,8 +5,9 @@
      BGK collision, Smagorinsky subgrid viscosity C = 0.12 (STD, Hou, Sterling,
      Chen and Doolen 1996), nu = (tau0 - 0.5) / 3. Single pull pass: gather,
      bounce-back, collide, write, into three RGBA32F textures through one MRT
-     draw (WebGLRenderTarget count 3, NearestFilter, no depth). Without float32
-     render targets: RGBA16F holding f_i - w_i (stats.precision says which).
+     draw (WebGLRenderTarget count 3, NearestFilter, no depth); without float32
+     render targets RGBA16F (stats.precision says which). Both paths store and
+     compute f_i - w_i (shaders.js storage note; fields.storage 'f - w').
      Stabilisers, documented because the contract's model alone did not pass its
      own gate (see MACH_K and STARTUP_TAU below):
        regularised collision (STD, Latt and Chopard 2006), on by default: the
@@ -15,12 +16,17 @@
        a local viscosity floor where |u| > 0.15 (EST), off elsewhere;
        a start-up viscosity that eases from tau 0.75 to tau0 over 2,000 steps
          after a reset (EST).
-     Walls: halfway bounce-back with Ladd's moving-wall term (STD, Ladd 1994),
-     u_w = omega x (r - r_cg) from setBodyRate. Outer edges: equilibrium at rho 1
-     and u_in where the freestream enters; elsewhere zero-gradient velocity and
-     non-equilibrium part (STD, Guo, Zheng and Shi 2002) with rho held at 1.
-     Option inflowNeq (setStabilisers): inflow cells take u_in with the inward
-     neighbour's density and non-equilibrium part (same reference); see EDGES.
+     Walls: halfway bounce-back. Body rate (setBodyRate, see BODY RATE below): by
+     default in the body frame (walls at rest, the free stream at the edges turning
+     with -omega x (r - r_cg), Coriolis, centrifugal and Euler accelerations by Guo
+     forcing, STD, Guo, Zheng and Shi 2002); mode 'wall' keeps Ladd's moving-wall
+     term (STD, Ladd 1994), u_w = omega x (r - r_cg), for a spinning cylinder.
+     Outer edges: equilibrium at rho 1 and the local free stream where it enters;
+     elsewhere zero-gradient velocity with rho held at 1 and the neighbour's
+     non-equilibrium part projected on its second-order Hermite moment (STD, Latt,
+     Chopard, Malaspinas, Deville and Michler 2008). Option inflowNeq
+     (setStabilisers): inflow cells take u_in with the inward neighbour's density and
+     projected non-equilibrium part (Guo, Zheng and Shi 2002); see EDGES.
      Force: momentum exchange per wall link (Galilean-corrected, STD, Wen et al.
      2014), accumulated per cell in the spare channels of the third texture,
      reduced by 2 x 2 halving passes to 1 x 1 and read back with
@@ -34,16 +40,30 @@
 
    Numbers (tags as in FIELD.md):
      grids and steps per frame by tier, TIERS below (contract)
-     u_in = clamp(0.03 + 0.05 V / 70 m/s, 0.03, 0.10) lattice units (contract; the
-       0.03 floor keeps the smoke moving on the pad), inflowFor(V)
-     tau0 = 0.5 + 3 u_ref D_cells / Re with Re 3000 at u_ref 0.10, the top of the
-       inflow range: Re = u_in D_cells / nu then runs from 900 on the pad to 3000
-       (SIM). With the lab rocket (D 38.9 cells at tier 3) tau0 = 0.50389.
+     u_in = clamp(0.03 + 0.05 V / 70 m/s, 0.03, 0.10) lattice units is what the page
+       asks for (contract, inflowFor(V); the 0.03 floor keeps the smoke moving on
+       the pad); the flow runs at min(u_in, U_CAP 0.05), with the body rate scaled
+       alike so the reduced rate q D / V is kept (setInflow, U_CAP for the evidence)
+     tau0 = 0.5 + 3 u_ref D_cells / Re with Re 1500 at u_ref 0.05, the same tau0 as
+       the contract's Re 3000 at 0.10: Re = u_in D_cells / nu then runs from 900 on
+       the pad to 1500 at the cap (SIM). With the lab rocket (D 38.9 cells at tier 3)
+       tau0 = 0.50389; with the page section at tier 1 (D 19.46) 0.50195.
      The real rocket at 70 m/s is near Re 3e5 (D 0.068 m CAD, nu 1.5e-5 m^2/s STD
        sea-level air); the lattice is a Reynolds-scaled model and says so.
 
    EDGES AND WHAT c_n, c_m AND THE CENTRE OF PRESSURE MEAN (SIM, measured on the lab's
-   rocket stand-in at 512 x 160, u_in 0.10, 3,000 steps, SwiftShader).
+   rocket stand-in at 512 x 160, u_in 0.10, 3,000 steps, SwiftShader, before the fix phase
+   of 2026-10-23 brought the speed cap, the regularised outflow and the body frame; the
+   mechanism is unchanged).
+     Inflow edge. An inflow cell set to the equilibrium at rho 1 is a pressure anchor, not
+     a velocity inlet: it admits about u_in - (rho_inside - 1) / 3 per unit length, so a
+     pressure rise behind it lowers the inflow that arrives (validation tracks L1, D3, and
+     L2, defect 4: 95 to 97 percent of u_in one cell inside at 5 to 10 deg on the page
+     section and about half the imposed cross-flow; 87 percent in a walled channel with a
+     1.5 percent pressure rise). c_n, c_m and the Reynolds number are referred to u_in
+     and the nominal alpha, so at 5 and 10 deg they read about 7 and 11 percent low
+     against the dynamic pressure that arrives. Where the inflow speed must be exact
+     (a channel benchmark) use inflowNeq, which lets rho float (track L2: 100.8 percent).
      Confinement. The edges sit 0.16 cols from a body 0.66 cols long, and at incidence
      two of them feed the cross-flow u_in sin(alpha) along their whole length. The body
      splits the domain, so the fluid fed in under it has to leave around its ends: the
@@ -77,6 +97,16 @@
      xcpCells are 2D section values for the flow picture, not the 3D rocket's; above
      about 5 deg they are dominated by the confinement as well. A caller that lets the
      lattice fly the rocket shows what a 2D section would do: it diverges.
+     Measured (validation track L3, section 5, page CAD section, 512 x 160 and 1024 x 320):
+     the section's centre of pressure sits 15 to 18 in from the nose at 2 to 15 deg against
+     Barrowman's 29 to 33 in, ahead of the 22 in CG at every angle, grid and domain size
+     (15.6 in at 5 deg in a 1024 x 1024 domain); the fin increment acts near 18.7 in, not at
+     the fins, with 1 percent of its force on the fin links; used as 3D coefficients the
+     section's C_N is 21 times Barrowman's at 5 deg; slender-body theory for the body plus a
+     Diederich finite-wing factor on the fin increment still puts the centre of pressure at
+     15.6 in. In the page's domain (0.47 rocket lengths tall) C_N at 5 to 15 deg is about
+     1.7 times its value in a domain 3.2 times taller. These numbers are not a cross-check
+     of Barrowman; they describe the 2D flow picture.
 
    FORCES: WHAT A 2D SECTION CANNOT MEASURE, AND WHEN THE NUMBERS ARE SHOWN
      Fin links (measured, not shipped). A review asked for the fin links' share as a
@@ -92,11 +122,12 @@
      pitch-plane section gives the flow and the pressure on the fins, not a stability
      number.
      Body rate. setBodyRate's target is approached at OMEGA_SLEW_U of wall speed per step.
-     A step change (a flick) at full speed rang the domain's acoustic modes for 700 steps
-     and more (c_m swinging -140 to +290 about a base of +50, the centre of pressure
-     leaving the body; tier 1, hold at 5 deg, SIM). With the ramp the same flicks moved
-     c_m without the ringing: +23 to +62 while q was +3.38 rad/s, then +63 to +69 at
-     q -4.62 rad/s (damping in the right sense about the base of +50).
+     With the moving-wall coupling the engine used before the fix phase, a step change (a
+     flick) at full speed rang the domain's acoustic modes for 700 steps and more (c_m
+     swinging -140 to +290 about a base of +50, the centre of pressure leaving the body;
+     tier 1, hold at 5 deg, SIM); with the ramp the same flicks moved c_m without the
+     ringing. The ramp stays for the body frame, whose rotating edge stream would
+     otherwise jump as well; see BODY RATE.
      A jump above OMEGA_JUMP_U also marks the forces undeveloped until the rate has
      arrived and one acoustic crossing of the domain length (cols / c_s steps,
      SETTLE_CROSSINGS) has passed.
@@ -106,6 +137,54 @@
      that resolved in the last RATE_SPAN_MS (stats.rateSource 'completed'), else the steps
      issued in the 1 Hz window ('issued'), never for the first window after the stats
      window (re)opens, and null until one of them exists.
+
+   BODY RATE (setBodyRate; validation track L3, defect 1, and the fix phase of 2026-10-23, SIM)
+     Before the fix the rate was a moving-wall velocity on the static mask (Ladd's term).
+     Where that velocity is normal to the wall, along most of a long body pitching about
+     its CG, it acts as transpiration, so a flat plate given a uniform wall velocity lifted
+     2.0 to 2.5 times as much as the same plate at the equivalent incidence, and the
+     pitch-rate lift of a plate, (dc_l/dQ) / (dc_l/dalpha), read 1.19 with the pivot at the
+     quarter chord and 0.64 at mid-chord against 0.5 and 0.25 from thin-airfoil theory
+     (STD, Anderson, Fundamentals of Aerodynamics, ch. 4). The default is now the body frame
+     (shaders.js STEP_FRAG): walls at rest, the edges at u_in - omega x (r - r_cg), and the
+     Coriolis, centrifugal, Euler and frame accelerations by Guo forcing. Measured on the CPU
+     transcription of the step, which matches the engine on SwiftShader to 4e-5 in the force
+     coefficients over 2,000 steps of a pitching plate:
+       an empty domain turning at 1e-4 rad per step keeps the rigid rotation plus the
+         uniform stream to 0.9 percent of u_in with |rho - 1| under 5e-5 (without the frame
+         acceleration term the interior departs by 29 percent of u_in);
+       plate, chord 48, 12 chords tall, Re 1000: (dc_l/dQ) / (dc_l/dalpha) 0.38 (pivot c/4)
+         and 0.125 (c/2) against 0.5 and 0.25; dc_l/dQ falls with the pivot at 5.26 per chord
+         against the static slope 5.18 (thin-airfoil theory: equal), so the remaining error
+         is a shortfall of 0.64 in dc_l/dQ that does not depend on the pivot. It does not
+         move with the grid (chord 32: 0.379, on the engine itself under SwiftShader as on
+         the transcription), the Reynolds number (Re 3000: 0.375) or the domain (24 chords
+         tall, 6 upstream: 0.363), so it is not resolution or confinement; it is not
+         explained here;
+       a cylinder spinning in still fluid gives the same torque in the body frame as with
+         the moving wall, which is exact for it (0.08452 against 0.08410, 0.5 percent; 2D
+         theory 4 pi mu R^2 Omega = 0.0804).
+     Mode 'wall' keeps the moving wall for a spinning cylinder, where the wall moves along
+     itself (Magnus lift within 6 percent of Mittal and Kumar 2003 at spin 0.5 to 1.5, track
+     L3). On the page section the rate response is a 2D section's: at alpha 5 deg
+     -dC_m/d(qD/V) is 1,380 (u_in 0.10) and 2,010 (u_in 0.05) on the page grid and 730 in a
+     domain 3.2 times taller, against 24 for a 2D thin plate the length of the rocket pitching
+     about the same CG and Barrowman's C_mq 445 for the 3D rocket. The thin-plate value is a
+     near cancellation that the plate's 25 percent pitch-rate shortfall above breaks, and the
+     section's length (17.4 D) multiplies that by (L / D)^3; so it is not a damping derivative
+     of the rocket and must not feed the flight (the lab's LATTICE FLIES IT shows what such a
+     section would do).
+
+   DEVELOPED (force.developed, stats.developed, force.mean)
+     Forces count as developed once the start-up viscosity has eased back (STARTUP_STEPS),
+     the inflow and the body rate have reached their targets, a body-rate jump has settled
+     (SETTLE_CROSSINGS) and the free stream has travelled DEV_PASSES = 1.5 body lengths since
+     the last reset or inflow jump (validation track L2, section 9: 2,000 steps was 0.6 chord
+     passes for the page section at u_in 0.10, when its one-pass C_m mean was still 31 to 53
+     percent below its later mean; after 1.5 passes it was within 0 to 10 percent). At the
+     page grids that is 10,100 steps at tier 1 and 20,300 at tier 3 at the 0.05 cap, about
+     1.7 times longer at the 0.03 floor. force.mean holds the means over the last chord
+     pass of developed windows.
 
    Grid frame: +x from nose to tail (column 0 upstream of the nose), +y the body's
    +x side; inflow direction (cos alpha, sin alpha) with alpha from section 2.
@@ -138,8 +217,15 @@ export const TIERS = Object.freeze({
 });
 export const VIEWS = Object.freeze(['smoke', 'pressure', 'vorticity', 'speed']);
 export const SMAGORINSKY_C = 0.12;   /* STD, Hou et al. 1996 (contract value) */
-export const RE_TARGET = 3000;       /* lattice Reynolds number at U_REF (contract) */
-export const U_REF = 0.10;           /* lattice units, top of the inflow range (contract) */
+export const RE_TARGET = 1500;       /* lattice Reynolds number at U_REF: the same tau0 as the contract's Re 3000 at
+                                        u_in 0.10 (tau0 = 0.5 + 3 u D / Re), now at the top speed that runs (U_CAP) */
+export const U_REF = 0.05;           /* lattice units, the top of the inflow range that runs (= U_CAP) */
+export const U_CAP = 0.05;           /* lattice units: the highest inflow speed that runs. The contract's range goes to
+                                        0.10 (FIELD 4), but at 0.10 the flow passes the nose shoulder at local Mach
+                                        0.3 and more and grid-scale noise of 15 percent of u_in fills the domain at the
+                                        page's tau0 (validation track L1, D2: wall cells at 1.3 to 1.7 nu0); at 0.05 the
+                                        local Mach number stays under 0.18 and the noise is gone (wall cells 1.19 nu0).
+                                        A faster request runs at the cap with the body rate scaled alike (setInflow). */
 export const ALPHA_MAX = 35 * Math.PI / 180;   /* rad, edge treatment holds to here (contract) */
 export const MACH_FLOOR = 2;         /* default slope of the local speed floor, tau per lattice unit (see MACH_K) */
 
@@ -178,6 +264,10 @@ const OMEGA_JUMP_U = 2e-3;    /* lattice units of wall speed: a setBodyRate chan
 const OMEGA_ARRIVED_U = 5e-4; /* lattice units of wall speed: the body rate counts as arrived within this of its target */
 const RIM_D = 0.06;           /* the views' ink rim around the solid: this many body diameters wide (cell texture b) */
 const RIM_MIN = 1, RIM_MAX = 3;   /* cells, its narrowest and widest */
+const DEV_PASSES = 1.5;       /* forces count as developed only after the free stream has travelled this many body
+                                 lengths since the last reset or inflow jump (validation track L2, section 9: the
+                                 rocket stand-in's one-pass means settle after about 1.5 chord passes; a cylinder's
+                                 steady drag needs 12 to 51 D/u, its shedding 38 to 53 D/u) */
 const SETTLE_CROSSINGS = 1;   /* after a body-rate jump the forces count as developed again only once the rate has
                                  arrived and this many acoustic crossings of the domain length (cols / c_s steps) have
                                  passed (EST, see FORCES in the header) */
@@ -201,6 +291,13 @@ const MACH_K = MACH_FLOOR;    /* tau per lattice unit of speed above MACH_U (EST
        reached 0.2), so outflow edges hold rho at 1;
      + positivity + absorbing edges: 14,000 steps, then backflow through the top outflow edge;
      + backflow removal: 20,000 steps clean, max |u| 0.355, max |rho - 1| 0.159.
+   Fix phase (2026-10-23; CPU transcription of the step, which matches the engine to 1e-3, SIM): with the
+   regularised outflow edge, the body frame and the shifted storage, the gate at the regime the page now
+   runs (u_in 0.05 at the cap, Re 1500, tau0 0.50389) is clean for 20,000 steps with every stabiliser on
+   (max |u| 0.185, max |rho - 1| 0.069) and also with plain BGK + Smagorinsky and every stabiliser off
+   (0.255, 0.083); the old setting (u_in 0.10, Re 3000) is clean with the stabilisers (0.279, 0.126). The
+   stabilisers stay on by default: at Re 1500 the regularised collision costs a flat plate 4 percent of
+   its lift slope against BGK + Smagorinsky (5.09 against 5.30 per rad, chord 48; 10 percent at Re 3000).
    The cylinder gate (Re 100, tau0 0.536, |u| < 0.07) runs with every stabiliser on: the regularised
    collision touches only the non-hydrodynamic modes, the speed floor never engages below |u| 0.15,
    and the 10-cell absorbing edges start 73 cells or more from the cylinder. */
@@ -250,6 +347,7 @@ export function createLattice(renderer, options = {}) {
     precision: 'none', re: 0, tau0: 0, tauNow: 0, nu: 0, uIn: 0.05, uNow: 0, alpha: 0, alphaDeg: 0, dCells: 0,
     steps: 0, shed: 0, stepScale: 1, nanResets: 0, rateSource: null, view: 'smoke', smagorinsky: SMAGORINSKY_C, regularised: options.regularised !== false, machK: Number.isFinite(options.machK) ? options.machK : MACH_K,
     sponge: options.sponge !== false, positive: options.positive !== false, inflowNeq: options.inflowNeq === true,
+    speedCap: Number.isFinite(options.speedCap) ? clamp(options.speedCap, 0.005, U_MAX) : U_CAP, uRequested: 0.05, bodyRate: 'frame', travelPasses: 0, omega: 0, omegaTarget: 0,
     fallback: null, lost: false, forceReadback: true,
   };
   const api = {
@@ -306,7 +404,7 @@ export function createLattice(renderer, options = {}) {
   function material(fragmentShader, uniforms) {
     const m = new THREE.RawShaderMaterial({
       vertexShader: S.VERT, fragmentShader, uniforms, glslVersion: THREE.GLSL3,
-      depthTest: false, depthWrite: false, defines: half ? { DEV: 1 } : {},
+      depthTest: false, depthWrite: false,
     });
     materials.push(m);
     return m;
@@ -317,13 +415,14 @@ export function createLattice(renderer, options = {}) {
     for (const m of materials) m.dispose();
     materials.length = 0;
     mats = {
-      init: material(S.INIT_FRAG, { tCell: u(null), uU: u(new THREE.Vector2()) }),
+      init: material(S.INIT_FRAG, { tCell: u(null), uU: u(new THREE.Vector2()), uOmega: u(0), uCg: u(new THREE.Vector2()), uFrame: u(1) }),
       step: material(S.STEP_FRAG, {
         tF0: u(null), tF1: u(null), tF2: u(null), tCell: u(null), uU: u(new THREE.Vector2()),
         uTau0: u(0.51), uC2: u(SMAGORINSKY_C * SMAGORINSKY_C), uOmega: u(0), uCg: u(new THREE.Vector2()), uAccum: u(0), uReg: u(0),
         uMachU: u(MACH_U), uMachK: u(0), uSpongeW: u(0), uSpongeTau: u(SPONGE_TAU), uPositive: u(1), uInflowNeq: u(0),
+        uOmegaDot: u(0), uFrame: u(1), uAccel: u(new THREE.Vector2()),
       }),
-      macro: material(S.MACRO_FRAG, { tF0: u(null), tF1: u(null), tF2: u(null), tCell: u(null), uOmega: u(0), uCg: u(new THREE.Vector2()) }),
+      macro: material(S.MACRO_FRAG, { tF0: u(null), tF1: u(null), tF2: u(null), tCell: u(null), uOmega: u(0), uFrame: u(1), uCg: u(new THREE.Vector2()) }),
       dye: material(S.DYE_FRAG, {
         tDye: u(null), tMacro: u(null), tCell: u(null), uGrid: u(new THREE.Vector2()), uScale: u(2), uSteps: u(0),
         uDecay: u(new THREE.Vector2(1, 1)), uFlow: u(new THREE.Vector2(1, 0)), uSpacing: u(12), uWidth: u(0.6), uWallDye: u(WALL_DYE), uInit: u(0),
@@ -497,8 +596,12 @@ export function createLattice(renderer, options = {}) {
   }
 
   /* ---------------------------------------------------------- parameters */
-  const flow = { uIn: 0.05, alpha: 0, omega: 0, omegaTarget: 0, view: 0 };   /* omega slews toward omegaTarget (setBodyRate) */
-  const visc = { mode: 're', re: RE_TARGET, uRef: U_REF, tau0: 0.51, c: SMAGORINSKY_C, reg: options.regularised !== false, machK: Number.isFinite(options.machK) ? options.machK : MACH_K, sponge: options.sponge !== false, positive: options.positive !== false, inflowNeq: options.inflowNeq === true };
+  /* omega slews toward omegaTarget (setBodyRate). uReq is the inflow the caller asked for, uIn the one that
+     runs (at most visc.speedCap, see U_CAP); rateScale = uIn / uReq scales the body rate with it, so the
+     reduced rate omega D / u stays what the caller set. frame: body-frame rotation (true) or moving wall. */
+  const flow = { uIn: 0.05, uReq: 0.05, rateScale: 1, alpha: 0, omega: 0, omegaTarget: 0, omegaReq: 0, frame: true, view: 0 };
+  const visc = { mode: 're', re: RE_TARGET, uRef: U_REF, tau0: 0.51, c: SMAGORINSKY_C, reg: options.regularised !== false, machK: Number.isFinite(options.machK) ? options.machK : MACH_K, sponge: options.sponge !== false, positive: options.positive !== false, inflowNeq: options.inflowNeq === true,
+    speedCap: Number.isFinite(options.speedCap) ? clamp(options.speedCap, 0.005, U_MAX) : U_CAP };
   function updateViscosity() {
     const d = section.dCells > 0 ? section.dCells : 24;
     if (visc.mode === 're') visc.tau0 = tauFor(visc.re, visc.uRef, d);
@@ -544,6 +647,10 @@ export function createLattice(renderer, options = {}) {
      transient (c_n about 100 at step 100; after a flick the acoustic ripples cross the whole domain)
      and callers should show a dash. */
   let devRun = 0;
+  let travel = 0;      /* cells of free-stream travel since the last reset or inflow jump (DEV_PASSES) */
+  const meanBuf = [];  /* developed force windows of the current generation, newest last (force.mean) */
+  /* body length in cells: the solid's column extent (nose tip to tail), else the reference length */
+  const bodyLength = () => (section.solidCells > 0 && section.xMax > section.xMin ? section.xMax - section.xMin : Math.max(1, section.dCells || 1));
   let quiet = 0;       /* steps since the body rate last jumped or was still ramping */
   const omegaSlew = () => OMEGA_SLEW_U / Math.max(1, section.rMax);
   const omegaArrived = () => Math.abs(flow.omegaTarget - flow.omega) * section.rMax <= OMEGA_ARRIVED_U;
@@ -557,6 +664,8 @@ export function createLattice(renderer, options = {}) {
   function initState() {
     const m = mats.init;
     m.uniforms.tCell.value = cellTex;
+    m.uniforms.uOmega.value = -flow.omega; m.uniforms.uFrame.value = flow.frame ? 1 : 0;
+    setVec(m.uniforms.uCg, section.cgX, section.cgY);
     setVec(m.uniforms.uU, inflow.x, inflow.y);
     pass(m, fA);
     accumSteps = 0; accumReset = true;
@@ -565,6 +674,7 @@ export function createLattice(renderer, options = {}) {
     const m = mats.step.uniforms;
     m.tF0.value = fA.textures[0]; m.tF1.value = fA.textures[1]; m.tF2.value = fA.textures[2];
     m.tCell.value = cellTex;
+    const ix0 = inflow.x, iy0 = inflow.y;
     advanceInflow();
     setVec(m.uU, inflow.x, inflow.y);
     m.uTau0.value = tauNow(); m.uC2.value = visc.c * visc.c; m.uReg.value = visc.reg ? 1 : 0;
@@ -572,9 +682,14 @@ export function createLattice(renderer, options = {}) {
     m.uSpongeW.value = visc.sponge ? Math.max(SPONGE_MIN, Math.round(SPONGE_FRAC * grid.rows)) : 0;
     m.uPositive.value = visc.positive ? 1 : 0;
     m.uInflowNeq.value = visc.inflowNeq ? 1 : 0;
-    const dw = omegaSlew();
+    const dw = omegaSlew(), was = flow.omega;
     flow.omega += clamp(flow.omegaTarget - flow.omega, -dw, dw);
     m.uOmega.value = -flow.omega;                 /* flight rate (clockwise in the grid) to counter-clockwise */
+    m.uOmegaDot.value = -(flow.omega - was);      /* the Euler term of the body frame, same sense */
+    /* minus the frame's acceleration in body axes: du_in/dt + Omega x u_in (Omega counter-clockwise in the grid) */
+    m.uAccel.value.set(inflow.x - ix0 + m.uOmega.value * -inflow.y, inflow.y - iy0 + m.uOmega.value * inflow.x);
+    m.uFrame.value = flow.frame ? 1 : 0;
+    stats.omega = flow.omega;
     setVec(m.uCg, section.cgX, section.cgY);
     m.uAccum.value = (!half && !accumReset) ? 1 : 0;
     pass(mats.step, fB);
@@ -583,7 +698,10 @@ export function createLattice(renderer, options = {}) {
     stats.uNow = Math.hypot(inflow.x, inflow.y); stats.tauNow = m.uTau0.value;
     const [tx, ty] = targetVec();
     quiet = omegaArrived() ? quiet + 1 : 0;
-    devRun = sinceReset >= STARTUP_STEPS && Math.abs(tx - inflow.x) <= ARRIVED && Math.abs(ty - inflow.y) <= ARRIVED && quiet >= settleSteps() ? devRun + 1 : 0;
+    const arrived = Math.abs(tx - inflow.x) <= ARRIVED && Math.abs(ty - inflow.y) <= ARRIVED;
+    travel = arrived ? travel + Math.hypot(inflow.x, inflow.y) : 0;
+    stats.travelPasses = travel / bodyLength();
+    devRun = sinceReset >= STARTUP_STEPS && arrived && quiet >= settleSteps() && travel >= DEV_PASSES * bodyLength() ? devRun + 1 : 0;
     stats.developed = devRun > 0;
   }
   function dyePass(init) {
@@ -606,7 +724,7 @@ export function createLattice(renderer, options = {}) {
   function renderViews() {
     const mm = mats.macro.uniforms;
     mm.tF0.value = fA.textures[0]; mm.tF1.value = fA.textures[1]; mm.tF2.value = fA.textures[2];
-    mm.tCell.value = cellTex; mm.uOmega.value = -flow.omega; setVec(mm.uCg, section.cgX, section.cgY);
+    mm.tCell.value = cellTex; mm.uOmega.value = -flow.omega; mm.uFrame.value = flow.frame ? 1 : 0; setVec(mm.uCg, section.cgX, section.cgY);
     pass(mats.macro, macro);
     if (pendingDye > 0) dyePass(false);
     const c = mats.composite.uniforms;
@@ -641,6 +759,7 @@ export function createLattice(renderer, options = {}) {
     const meta = {
       gen, steps: n, uIn: flow.uIn, alpha: flow.alpha, d: section.dCells, cgX: section.cgX, xMin: section.xMin, xMax: section.xMax,
       issued: performance.now(), stepIndex: stats.steps, work, countMul: countMul(), developed: devRun >= accumSteps,
+      span: accumSteps,
     };
     accumSteps = 0; accumReset = true;
     readsInFlight++;
@@ -657,9 +776,29 @@ export function createLattice(renderer, options = {}) {
       stats.forceReadback = true;
       const f = forceFrom(v, meta);
       if (!f.finite && autoNaNReset) { stats.nanResets++; reset(); return api.force; }
+      f.mean = chordMean(f, meta);
       api.force = f;
       return f;
     }, () => { readsInFlight--; stats.forceReadback = false; return api.force; });
+  }
+  /* force.mean: the means of the developed force windows over the last chord pass (body length
+     over u_in steps, newest first), with their coefficients and centre of pressure under the same
+     rules as below; null until one chord pass of developed windows has been read. A lifting or
+     shedding section's forces swing widely inside a chord pass (validation track L2, section 9:
+     the rocket stand-in's one-pass C_N and C_m means scatter by 13 and 27 percent, single windows
+     far more), so a mean over a pass is the number to show. Windows are weighted by the steps
+     they cover; an undeveloped window, a reset or a new section starts the mean again. */
+  function chordMean(f, m) {
+    if (!f.developed || !f.finite) { meanBuf.length = 0; return null; }
+    if (meanBuf.length && meanBuf[0].gen !== m.gen) meanBuf.length = 0;
+    meanBuf.push({ gen: m.gen, fx: f.fx, fy: f.fy, mz: f.mz, w: Math.max(1, m.span || m.steps) });
+    const need = bodyLength() / Math.max(1e-4, m.uIn);
+    let n = 0, sx = 0, sy = 0, sm = 0, i = meanBuf.length - 1;
+    for (; i >= 0 && n < need; i--) { const b = meanBuf[i]; n += b.w; sx += b.fx * b.w; sy += b.fy * b.w; sm += b.mz * b.w; }
+    if (i > 8) meanBuf.splice(0, i - 8);
+    if (n < need) return null;
+    const g = forceFrom([sx / n, sy / n, sm / n, 0], { ...m, steps: 1, countMul: 0 });
+    return { fx: g.fx, fy: g.fy, mz: g.mz, cx: g.cx, cn: g.cn, cm: g.cm, cd: g.cd, cl: g.cl, xcpCells: g.xcpCells, steps: n, passes: n * m.uIn / bodyLength() };
   }
   /* Coefficients use the dynamic pressure at the inflow; with no inflow (u_in <= 1e-4)
      they are null, as is xcpCells. finite reports the field's force sums only. A centre of
@@ -727,7 +866,7 @@ export function createLattice(renderer, options = {}) {
     gen++;                               /* readbacks in flight belong to the old state */
     [inflow.x, inflow.y] = targetVec();  /* uniform inflow: the tunnel is already running */
     flow.omega = flow.omegaTarget;       /* and the body already turning: the start-up covers both */
-    sinceReset = 0; quiet = 0;
+    sinceReset = 0; quiet = 0; travel = 0; meanBuf.length = 0;
     stats.uNow = Math.hypot(inflow.x, inflow.y); stats.tauNow = tauNow();
     initState();
     devRun = 0; stats.developed = false;
@@ -748,7 +887,7 @@ export function createLattice(renderer, options = {}) {
      inflow back afterwards. */
   async function selfTest() {
     const w1 = 1 / 9, ux = SELFTEST_U;
-    const expect = w1 * (1 + 3 * ux + 3 * ux * ux) - (half ? w1 : 0);
+    const expect = w1 * (3 * ux + 3 * ux * ux);   /* stored as f1 - w1 on both paths (shaders.js STORAGE) */
     inflow.x = ux; inflow.y = 0;
     sinceReset = STARTUP_STEPS;
     begin(); initState(); stepOnce(); end();
@@ -794,21 +933,43 @@ export function createLattice(renderer, options = {}) {
     applySection();   /* a section built at another size is resampled to the grid */
     if (live && tier > 0 && !lost) { begin(); renderViews(); end(); }
   }
+  /* uIn: the inflow speed the caller asks for, lattice units; alpha: rad. The flow runs at
+     min(uIn, speed cap) (U_CAP, setStabilisers({speedCap})), and the body rate is scaled by the
+     same factor, so the reduced rate omega D / u the caller set is kept (setBodyRate). */
   function setInflow(uIn, alpha) {
-    flow.uIn = clamp(Number(uIn) || 0, 0, U_MAX);
+    flow.uReq = clamp(Number(uIn) || 0, 0, U_MAX);
+    flow.uIn = Math.min(flow.uReq, visc.speedCap);
+    flow.rateScale = flow.uReq > 1e-9 ? flow.uIn / flow.uReq : 1;
     flow.alpha = clamp(Number(alpha) || 0, -ALPHA_MAX, ALPHA_MAX);
-    stats.uIn = flow.uIn; stats.alpha = flow.alpha; stats.alphaDeg = flow.alpha * 180 / Math.PI;
+    stats.uIn = flow.uIn; stats.uRequested = flow.uReq; stats.alpha = flow.alpha; stats.alphaDeg = flow.alpha * 180 / Math.PI;
+    retargetOmega();
     updateViscosity();
   }
-  /* omegaLU: pitch rate in lattice units (rad per step), flight convention:
-     positive raises theta, which turns the body clockwise in the grid frame. The wall
-     follows it at OMEGA_SLEW_U of wall speed per step; a change of more than
-     OMEGA_JUMP_U of wall speed at the far end of the body (a flick) marks the forces
-     undeveloped until the rate has arrived and settleSteps() have passed. */
-  function setBodyRate(omegaLU) {
-    const w = Number(omegaLU) || 0;
+  /* omegaLU: pitch rate in lattice units (rad per step) for the inflow the caller asked for,
+     flight convention: positive raises theta, which turns the body clockwise in the grid
+     frame. mode: 'frame' (default) turns the grid with the body (walls at rest, the free
+     stream at the edges and the fictitious forces carry the rotation; right for any body
+     that turns as a whole, such as a pitching section) or 'wall' (moving-wall velocity on
+     the static mask, Ladd 1994; right only where that velocity is tangent to the wall,
+     such as a spinning cylinder). See shaders.js STEP_FRAG and BODY RATE in the header.
+     The rate follows its target at OMEGA_SLEW_U of wall speed per step; a change of more
+     than OMEGA_JUMP_U of wall speed at the far end of the body (a flick), or a change of
+     mode, marks the forces undeveloped until the rate has arrived and settleSteps() have
+     passed. */
+  function setBodyRate(omegaLU, mode) {
+    flow.omegaReq = Number(omegaLU) || 0;
+    if (mode === 'wall' || mode === 'frame') {
+      const frame = mode === 'frame';
+      if (frame !== flow.frame) { flow.frame = frame; quiet = 0; devRun = 0; stats.developed = false; }
+      stats.bodyRate = mode;
+    }
+    retargetOmega();
+  }
+  function retargetOmega() {
+    const w = flow.omegaReq * flow.rateScale;
     if (Math.abs(w - flow.omegaTarget) * section.rMax > OMEGA_JUMP_U) { quiet = 0; devRun = 0; stats.developed = false; }
     flow.omegaTarget = w;
+    stats.omegaTarget = w;
   }
   function setView(name) {
     const i = VIEWS.indexOf(name);
@@ -838,12 +999,18 @@ export function createLattice(renderer, options = {}) {
   /* Local speed floor on tau (see shaders.js): k in tau per lattice unit above MACH_U, 0 turns it off. */
   function setMachFloor(k) { visc.machK = Math.max(0, Number(k) || 0); stats.machK = visc.machK; }
   /* Stabiliser and edge switches for the lab and the gates: { sponge, positive, inflowNeq }
-     booleans (inflowNeq: inflow cells at the neighbour's density, see EDGES in the header). */
+     booleans (inflowNeq: inflow cells at the neighbour's density, see EDGES in the header) and
+     speedCap, the highest inflow speed that runs (lattice units, U_CAP by default; the
+     validation benches raise it to test the Mach number trend). */
   function setStabilisers(o = {}) {
     if ('sponge' in o) visc.sponge = !!o.sponge;
     if ('positive' in o) visc.positive = !!o.positive;
     if ('inflowNeq' in o) visc.inflowNeq = !!o.inflowNeq;
-    stats.sponge = visc.sponge; stats.positive = visc.positive; stats.inflowNeq = visc.inflowNeq;
+    if ('speedCap' in o) {
+      visc.speedCap = clamp(Number(o.speedCap) || U_CAP, 0.005, U_MAX);
+      setInflow(flow.uReq, flow.alpha);
+    }
+    stats.sponge = visc.sponge; stats.positive = visc.positive; stats.inflowNeq = visc.inflowNeq; stats.speedCap = visc.speedCap;
   }
 
   function step(n = 1) {
@@ -934,7 +1101,7 @@ export function createLattice(renderer, options = {}) {
       density: { texture: macro.texture, channels: 'b', units: 'rho - 1' },
       vorticity: { texture: macro.texture, channels: 'a', units: 'per step, counter-clockwise in the grid' },
       dye: { texture: dyeA.texture, channels: 'rg', units: 'rake smoke, wall dye (0..1)' },
-      distributions: fA.textures,
+      distributions: fA.textures, storage: S.STORAGE,
       cells: cellTex,
     };
   }

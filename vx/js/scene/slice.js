@@ -25,7 +25,16 @@
    Domain defaults (FIELD.md section 5): the rocket spans 66 percent of the width,
    the nose sits at 0.12 cols, the axis is centred vertically; at every tier the
    grid is 3.2 : 1 (1024 x 320, 768 x 240, 512 x 160), so the plane's size in
-   metres does not change with the tier. */
+   metres does not change with the tier.
+
+   Dissolve (presentation plan item 12): setDissolve(k), k in [0, 1], widens the fade at
+   the domain's two ends (uFade.x, in u, along the body axis) from FADE_U[0] = 0.02 to
+   FADE_U[1] = 0.10 and fades the hairline frame (uFrame) from FRAME_ALPHA = 0.24 to 0;
+   the hard-cornered registration ticks stay. The fade across the axis (uFade.y) is
+   unchanged. So the inner 80 percent of the quad (u and v from 0.1 to 0.9) is the
+   same pixel for pixel at any k: the fade there is 1 and the frame line lives in the
+   outermost 1.6 px. The faded ends are where the domain's inflow and outflow
+   boundaries sit (the absorbing layer the page's method calls numerical). */
 import * as THREE from 'three';
 import { easeSite } from './camera.js';
 
@@ -35,6 +44,9 @@ export const SECTION = { span: 0.66, noseFrac: 0.12, cols: 1024, rows: 320 };   
 const BETWEEN_RAD = Math.PI / 4;          // 'between' rotates the plane 45 deg about the body axis
 const VIEW_MS = 480;                      // view rotation, the site's --dur-3
 const VIEW_OPACITY = { smoke: 1, pressure: 0.94, vorticity: 0.94, speed: 0.94 };
+export const FADE_U = [0.02, 0.10];       // uFade.x, framed and dissolved (fraction of the length at each end)
+export const FRAME_ALPHA = 0.24;          // uFrame, the hairline frame's alpha when framed
+const DISSOLVE_MS = 480;                  // dissolve ease, the site's --dur-3
 
 export function defaultDomain({ cols = SECTION.cols, rows = SECTION.rows, lengthM = LENGTH_M } = {}) {
   return { cols, rows, cellM: lengthM / (SECTION.span * cols), xNoseCol: SECTION.noseFrac * cols, axisRow: rows / 2 };
@@ -67,9 +79,9 @@ void main() {
 const FRAG = /* glsl */`
 uniform sampler2D uMap;
 uniform float uOpacity;
-uniform vec2 uFade;      // edge fade width in uv on each axis
+uniform vec2 uFade;      // edge fade width in uv on each axis (x: the two ends, widened by the dissolve)
 uniform vec2 uTick;      // corner tick length in uv on each axis
-uniform float uFrame;    // frame alpha
+uniform float uFrame;    // hairline frame alpha (0 when dissolved; the ticks do not use it)
 varying vec2 vUv;
 void main() {
   vec4 c = texture2D(uMap, vUv);
@@ -97,7 +109,7 @@ export function createSlice({ noseY = NOSE_Y, domain = null, reducedMotion = fal
     vertexShader: VERT, fragmentShader: FRAG,
     uniforms: {
       uMap: { value: null }, uOpacity: { value: 1 }, uFade: { value: new THREE.Vector2(0.02, 0.064) },
-      uTick: { value: new THREE.Vector2(0.03, 0.096) }, uFrame: { value: 0.24 },
+      uTick: { value: new THREE.Vector2(0.03, 0.096) }, uFrame: { value: FRAME_ALPHA },
     },
     transparent: true, depthTest: true, depthWrite: false, side: THREE.DoubleSide,
     blending: THREE.NormalBlending,
@@ -109,6 +121,11 @@ export function createSlice({ noseY = NOSE_Y, domain = null, reducedMotion = fal
   mesh.visible = false;
   let texture = null, view = 'through', viewName = 'smoke', opacity = 1, reduced = !!reducedMotion;
   let tween = null;                       // { from, to, t0 }
+  let dissolve = 0, dissolveTo = 0, dTween = null;   // dTween { from, to, t0 }
+  function applyDissolve() {
+    material.uniforms.uFade.value.x = FADE_U[0] + (FADE_U[1] - FADE_U[0]) * dissolve;
+    material.uniforms.uFrame.value = FRAME_ALPHA * (1 - dissolve);
+  }
 
   function rebuild() {
     const { cols, rows, cellM, xNoseCol, axisRow } = dom;
@@ -119,8 +136,9 @@ export function createSlice({ noseY = NOSE_Y, domain = null, reducedMotion = fal
     geometry.attributes.position.needsUpdate = true;
     geometry.computeBoundingSphere();
     const aspect = cols / rows;            // uv units per metre differ by this ratio on the two axes
-    material.uniforms.uFade.value.set(0.02, 0.02 * aspect);
+    material.uniforms.uFade.value.set(FADE_U[0], 0.02 * aspect);
     material.uniforms.uTick.value.set(0.03, 0.03 * aspect);
+    applyDissolve();
   }
   rebuild();
 
@@ -131,6 +149,17 @@ export function createSlice({ noseY = NOSE_Y, domain = null, reducedMotion = fal
     get view() { return view; },
     get viewName() { return viewName; },
     get size() { return { widthM: dom.cols * dom.cellM, heightM: dom.rows * dom.cellM }; },
+    get dissolve() { return dissolve; },
+    get dissolveTarget() { return dissolveTo; },
+    /* k in [0, 1] (true 1, false 0). animate: ease over DISSOLVE_MS on the site easing
+       (never under reduced motion). Returns the target. */
+    setDissolve(k, { animate = true } = {}) {
+      const to = Math.max(0, Math.min(1, k === true ? 1 : k === false ? 0 : (Number.isFinite(+k) ? +k : 0)));
+      dissolveTo = to;
+      if (reduced || !animate || Math.abs(to - dissolve) < 1e-6) { dTween = null; dissolve = to; applyDissolve(); }
+      else dTween = { from: dissolve, to, t0: performance.now() };
+      return to;
+    },
     setTexture(tex, d) {
       texture = tex || null;
       material.uniforms.uMap.value = texture;
@@ -151,13 +180,24 @@ export function createSlice({ noseY = NOSE_Y, domain = null, reducedMotion = fal
       material.uniforms.uOpacity.value = opacity * (VIEW_OPACITY[viewName] ?? 1);
     },
     setOpacity(o) { opacity = Math.max(0, Math.min(1, +o || 0)); api.setViewName(viewName); },
-    setReducedMotion(r) { reduced = !!r; if (reduced && tween) { mesh.rotation.y = tween.to; tween = null; } },
-    /* Advances the view rotation; true while it still turns. */
+    setReducedMotion(r) {
+      reduced = !!r;
+      if (reduced && tween) { mesh.rotation.y = tween.to; tween = null; }
+      if (reduced && dTween) { dissolve = dTween.to; dTween = null; applyDissolve(); }
+    },
+    /* Advances the view rotation and the dissolve; true while either still moves. */
     update() {
-      if (!tween) return false;
+      let moving = false;
+      if (dTween) {
+        const k = easeSite((performance.now() - dTween.t0) / DISSOLVE_MS);
+        dissolve = dTween.from + (dTween.to - dTween.from) * k;
+        if (k >= 1) { dissolve = dTween.to; dTween = null; } else moving = true;
+        applyDissolve();
+      }
+      if (!tween) return moving;
       const k = easeSite((performance.now() - tween.t0) / VIEW_MS);
       mesh.rotation.y = tween.from + (tween.to - tween.from) * k;
-      if (k >= 1) { tween = null; return false; }
+      if (k >= 1) { tween = null; return moving; }
       return true;
     },
     /* A grid-space vector (gx along columns, gy along rows) as a world direction,

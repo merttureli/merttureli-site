@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en" class="on-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Validation · CHARGER field study · Mert Tureli VX</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0A0A0A">
+<meta name="description" content="The CHARGER field study's flight model and lattice checked against published references: every case with its reference and source, the measured value, the error, the tolerance and the result, plus the measured limits.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230A0A0A'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='26' font-weight='600' fill='%23FFFFFF'%3EMT%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../css/tokens.css">
+<style>
+  /* Validation lab only. Tokens from ../css/tokens.css; everything else is here. */
+  body { background: var(--ink-900); color: var(--paper); }
+  .vl-skip { position: absolute; left: 12px; top: -48px; z-index: 10; padding: 8px 14px; background: var(--paper); color: var(--ink-900); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; text-decoration: none; }
+  .vl-skip:focus { top: 8px; }
+  .vl-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-5); height: 56px; padding: 0 max(var(--page-margin), env(safe-area-inset-right, 0px)) 0 max(var(--page-margin), env(safe-area-inset-left, 0px)); border-bottom: 1px solid var(--paper-a18); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; }
+  .vl-head h1 { font-family: var(--font-mono); font-size: var(--fs-meta); font-weight: 400; letter-spacing: var(--ls-caps-wide); color: var(--paper); white-space: nowrap; }
+  .vl-head nav { display: flex; gap: var(--space-5); }
+  .vl-head a { color: var(--paper-a70); text-decoration: none; border-bottom: 1px solid transparent; transition: color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out); white-space: nowrap; }
+  .vl-head a:hover { color: var(--paper); border-bottom-color: var(--paper); }
+  main { max-width: 1320px; padding: var(--space-8) max(var(--page-margin), env(safe-area-inset-right, 0px)) var(--space-9) max(var(--page-margin), env(safe-area-inset-left, 0px)); }
+  a { color: var(--paper); text-underline-offset: 3px; }
+  a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visible + span { outline: 1px solid var(--paper); outline-offset: 3px; }
+  code { font-family: var(--font-mono); font-size: 0.92em; letter-spacing: 0.02em; overflow-wrap: anywhere; }
+  .vl-title { font-family: var(--font-display); font-weight: 500; font-size: var(--fs-display-3); line-height: var(--lh-display); letter-spacing: var(--ls-display); text-transform: uppercase; color: var(--paper); }
+  .vl-intro { max-width: var(--measure); margin-top: var(--space-5); font-size: var(--fs-body); line-height: var(--lh-body); color: var(--paper-a90); }
+  .vl-meta { margin-top: var(--space-4); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: 1.8; color: var(--paper-a70); max-width: 90ch; }
+  .vl-note { margin-top: var(--space-6); max-width: 92ch; padding: var(--space-4) var(--space-5); border: 1px solid var(--paper-a45); border-left: 3px solid var(--livery); }
+  .vl-note h2 { font-family: var(--font-mono); font-size: var(--fs-meta-sm); font-weight: 400; letter-spacing: var(--ls-caps-wide); text-transform: uppercase; color: var(--paper); }
+  .vl-note p { margin-top: var(--space-2); font-size: var(--fs-body-sm); line-height: 1.6; color: var(--paper-a90); }
+  .vl-sec { margin-top: var(--space-9); padding-top: var(--space-5); border-top: 1px solid var(--paper-a45); }
+  .vl-eyebrow { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps-wide); text-transform: uppercase; color: var(--paper-a70); }
+  .vl-h2 { margin-top: var(--space-3); font-family: var(--font-display); font-weight: 500; font-size: var(--fs-title-1); line-height: var(--lh-title); letter-spacing: var(--ls-title); text-transform: uppercase; color: var(--paper); }
+  .vl-h3 { margin-top: var(--space-6); font-family: var(--font-mono); font-size: var(--fs-meta); font-weight: 400; letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper); }
+  .vl-p { margin-top: var(--space-4); max-width: var(--measure); font-size: var(--fs-body); line-height: var(--lh-body); color: var(--paper-a90); }
+  .vl-p + .vl-p { margin-top: var(--space-3); }
+
+  /* summary of the tracks */
+  .vl-sum { width: 100%; margin-top: var(--space-6); border-collapse: collapse; font-size: var(--fs-body-sm); }
+  .vl-sum th, .vl-sum td { padding: var(--space-3) var(--space-3) var(--space-3) 0; border-bottom: 1px solid var(--paper-a18); text-align: left; vertical-align: baseline; }
+  .vl-sum thead th { font-family: var(--font-mono); font-size: var(--fs-meta-sm); font-weight: 400; letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); border-bottom-color: var(--paper-a45); }
+  .vl-sum td.n { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .vl-sum a { font-family: var(--font-mono); letter-spacing: 0.04em; }
+
+  /* lists */
+  .vl-limits { margin: var(--space-5) 0 0; padding: 0; list-style: none; max-width: 100ch; counter-reset: lim; }
+  .vl-limits li { position: relative; padding: var(--space-3) 0 var(--space-3) 48px; border-bottom: 1px solid var(--paper-a18); font-size: var(--fs-body-sm); line-height: 1.6; color: var(--paper-a90); counter-increment: lim; }
+  .vl-limits li::before { content: counter(lim, decimal-leading-zero); position: absolute; left: 0; top: var(--space-3); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); color: var(--paper-a70); line-height: 2; }
+  .vl-from { margin-left: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); white-space: nowrap; }
+  .vl-defects { margin: var(--space-5) 0 0; padding: 0; list-style: none; max-width: 100ch; }
+  .vl-defects li { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: var(--space-1) var(--space-4); padding: var(--space-3) 0; border-bottom: 1px solid var(--paper-a18); font-size: var(--fs-body-sm); line-height: 1.6; color: var(--paper-a90); }
+  .vl-sev { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper); line-height: 2; }
+  .vl-where { display: block; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.02em; color: var(--paper-a70); overflow-wrap: anywhere; }
+  .vl-fixed { margin: var(--space-3) 0 0; padding-left: var(--space-5); max-width: 92ch; font-size: var(--fs-body-sm); line-height: 1.6; color: var(--paper-a90); }
+  .vl-bench { margin: var(--space-4) 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); }
+  .vl-bench li { font-size: var(--fs-body-sm); line-height: 1.6; color: var(--paper-a70); max-width: 60ch; }
+  .vl-bench a { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper); }
+  .vl-index { margin: var(--space-6) 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; }
+  .vl-index a { color: var(--paper-a90); text-decoration: none; border-bottom: 1px solid var(--paper-a45); }
+  .vl-index a:hover { color: var(--paper); border-bottom-color: var(--paper); }
+
+  /* filter */
+  .vl-filter { position: sticky; top: 0; z-index: 5; margin-top: var(--space-7); padding: var(--space-3) 0; background: var(--ink-900); border-bottom: 1px solid var(--paper-a18); display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); }
+  .vl-filter-l, .vl-count { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); }
+  .vl-filter label { position: relative; cursor: pointer; }
+  .vl-filter input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .vl-filter label span { display: inline-block; padding: 6px 12px; border: 1px solid var(--paper-a45); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a90); }
+  .vl-filter input:checked + span { background: var(--paper); border-color: var(--paper); color: var(--ink-900); }
+
+  /* track tables */
+  .vl-track-meta { margin-top: var(--space-4); display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--space-1) var(--space-4); max-width: 110ch; font-size: var(--fs-body-sm); line-height: 1.55; color: var(--paper-a90); }
+  .vl-track-meta dt { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); line-height: 2.1; }
+  .vl-track-meta dd { margin: 0; overflow-wrap: anywhere; }
+  .vl-table-box { margin-top: var(--space-6); }
+  .vl-table-box > summary { cursor: pointer; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper); padding: var(--space-2) 0; }
+  .vl-t { width: 100%; margin-top: var(--space-3); border-collapse: collapse; table-layout: fixed; font-size: 13px; line-height: 1.5; }
+  .vl-t col.c-id { width: 64px; } .vl-t col.c-case { width: 24%; } .vl-t col.c-ref { width: 20%; } .vl-t col.c-meas { width: 18%; }
+  .vl-t col.c-err { width: 10%; } .vl-t col.c-tol { width: 11%; } .vl-t col.c-res { width: 82px; }
+  .vl-t th, .vl-t td { padding: var(--space-2) var(--space-3) var(--space-2) 0; text-align: left; vertical-align: top; border-bottom: 1px solid var(--paper-a18); overflow-wrap: anywhere; }
+  .vl-t thead th { font-family: var(--font-mono); font-size: var(--fs-meta-sm); font-weight: 400; letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); border-bottom-color: var(--paper-a45); }
+  .vl-t tr.vl-grp th { padding-top: var(--space-5); font-family: var(--font-mono); font-size: var(--fs-meta-sm); font-weight: 400; letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper); border-bottom-color: var(--paper-a45); }
+  .vl-t td { color: var(--paper-a90); }
+  .vl-id, .vl-num { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.01em; }
+  .vl-id { color: var(--paper-a70); }
+  .vl-src { display: block; margin-top: 2px; font-size: 11.5px; line-height: 1.45; color: var(--paper-a70); }
+  .vl-sub { display: block; margin-top: 4px; font-size: 11.5px; line-height: 1.45; color: var(--paper-a70); }
+  .vl-before { display: block; margin-top: 4px; font-family: var(--font-mono); font-size: 11px; line-height: 1.45; color: var(--paper-a70); }
+  .vl-badge { display: inline-block; min-width: 44px; padding: 1px 6px; border: 1px solid var(--paper-a45); border-radius: var(--radius-xs); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; text-align: center; color: var(--paper-a90); line-height: 1.7; }
+  .vl-badge.is-fail { background: var(--livery); border-color: var(--livery); color: var(--paper); }
+  .vl-badge.is-info { border-style: dashed; color: var(--paper-a70); }
+  .vl-badge.is-fix { margin-top: 4px; border-color: var(--paper-a70); color: var(--paper); }
+  .vl-refs { margin-top: var(--space-4); }
+  .vl-refs > summary { cursor: pointer; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a90); padding: var(--space-2) 0; }
+  .vl-refs ol { margin: var(--space-2) 0 0; padding-left: var(--space-6); max-width: 110ch; font-size: 12.5px; line-height: 1.55; color: var(--paper-a90); }
+  .vl-refs li { margin-top: var(--space-2); overflow-wrap: anywhere; }
+  .vl-foot { margin-top: var(--space-9); padding-top: var(--space-5); border-top: 1px solid var(--paper-a18); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: 1.8; color: var(--paper-a70); max-width: 90ch; }
+  .vl-foot code { text-transform: none; color: var(--paper); }
+  .vl-empty { margin-top: var(--space-6); font-size: var(--fs-body); color: var(--paper-a90); }
+  [hidden] { display: none !important; }
+
+  @media (max-width: 859.98px) {
+    .vl-head { height: 48px; padding: 0 16px; gap: var(--space-3); }
+    .vl-head h1 { font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); }
+    .vl-head nav { gap: var(--space-3); }
+    main { padding: var(--space-7) 16px var(--space-8); }
+    .vl-sum thead { display: none; }
+    .vl-sum, .vl-sum tbody, .vl-sum tr, .vl-sum td, .vl-sum th { display: block; }
+    .vl-sum tr { padding: var(--space-3) 0; border-bottom: 1px solid var(--paper-a18); }
+    .vl-sum th, .vl-sum td { border: 0; padding: 2px 0; }
+    .vl-sum td[data-label]::before { content: attr(data-label) " "; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); }
+    .vl-limits li { padding-left: 36px; }
+    .vl-filter { position: static; }
+    .vl-defects li { grid-template-columns: minmax(0, 1fr); }
+    .vl-track-meta { grid-template-columns: minmax(0, 1fr); }
+    .vl-track-meta dd + dt { margin-top: var(--space-2); }
+    .vl-t, .vl-t tbody, .vl-t tr, .vl-t td, .vl-t th { display: block; width: auto; }
+    .vl-t colgroup, .vl-t thead { display: none; }
+    .vl-t tr.vl-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px var(--space-3); padding: var(--space-3) 0; border-bottom: 1px solid var(--paper-a18); }
+    .vl-t tr.vl-row td { border: 0; padding: 0; }
+    .vl-t td.vl-c-id { grid-column: 1; }
+    .vl-t td.vl-c-res { grid-column: 2; grid-row: 1; text-align: right; }
+    .vl-t td.vl-c-case, .vl-t td.vl-c-ref, .vl-t td.vl-c-meas, .vl-t td.vl-c-err, .vl-t td.vl-c-tol { grid-column: 1 / -1; }
+    .vl-t td[data-label]::before { content: attr(data-label); display: block; font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); }
+    .vl-t tr.vl-grp th { padding: var(--space-5) 0 var(--space-2); }
+  }
+  @media (prefers-reduced-motion: reduce) { .vl-head a { transition: none; } }
+  @media (forced-colors: active) {
+    .vl-badge, .vl-filter label span, .vl-note { border-color: CanvasText; }
+    .vl-badge.is-fail { forced-color-adjust: none; background: Mark; color: MarkText; }
+    .vl-filter input:checked + span { forced-color-adjust: none; background: Highlight; color: HighlightText; }
+  }
+</style>
+</head>
+<body>
+<a class="vl-skip" href="#tracks">Skip to the tables</a>
+<header class="vl-head">
+  <h1>LAB / 06 / VALIDATION</h1>
+  <nav aria-label="Lab navigation"><a href="index.html">All labs</a><a href="../">Field study</a></nav>
+</header>
+<main id="main">
+  <h2 class="vl-title">Validation</h2>
+  <p class="vl-intro">The flight model and the lattice, each checked against published references, closed forms and an independent code. Every row gives the case, the reference value and its source, the measured value, the error, the tolerance set before the run and the result. Rows marked FIX were measured again after the fix phase; the benchmark value stays beside them as before.</p>
+  <p class="vl-meta" id="vl-meta">Loading the results.</p>
+  <noscript><p class="vl-empty">This page renders its tables from <code>js/data/validation.js</code> and needs JavaScript. The same results are in the campaign's markdown reports.</p></noscript>
+  <div id="vl-root"></div>
+  <p class="vl-foot">Data: <code>js/data/validation.js</code>, generated from the per-case JSON of tracks L1, L2, L3, F1 and F2 and the two fix phases. Bench pages: <a href="validation/l1.html">L1</a>, <a href="validation/l2-cylinder.html">L2</a>, <a href="validation/l3.html">L3</a>; flight runners under node: <code>node vx/js/validation/f1-flight.mjs</code>, <code>node vx/js/validation/f2-flight.mjs</code>, <code>node vx/js/flight/flight.test.mjs</code>.</p>
+</main>
+<script type="module">
+  import { VALIDATION as V } from '../js/data/validation.js';
+
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const LABEL = { pass: 'Pass', fail: 'Fail', info: 'Info' };
+  const MODEL = { lattice: 'Lattice', flight: 'Flight' };
+  const root = document.getElementById('vl-root');
+  const total = { pass: 0, fail: 0, info: 0, rows: 0, fix: 0 };
+  for (const t of V.tracks) {
+    for (const k of ['pass', 'fail', 'info']) total[k] += t.counts[k];
+    total.rows += t.rows.length;
+    total.fix += t.rows.filter((r) => r.phase === 'fix').length;
+  }
+  document.getElementById('vl-meta').textContent =
+    `Runs ${V.runDate} (UTC) / ${V.tracks.length} tracks / ${total.rows} rows: ${total.pass} pass, ${total.fail} fail, ${total.info} informational / ${total.fix} rows measured after the fix phase / generated ${V.generated}`;
+
+  const badge = (st) => `<span class="vl-badge is-${st}">${LABEL[st]}</span>`;
+
+  function summaryTable() {
+    const rows = V.tracks.map((t) => {
+      const b = t.countsBenchmark;
+      const bench = t.bench.map((x) => `<a href="${esc(x.href)}">${esc(x.label)}</a>`).join(', ');
+      return `<tr>
+        <th scope="row"><a href="#track-${t.id}">${t.id}</a> ${esc(t.title)}</th>
+        <td data-label="Model">${MODEL[t.model]}</td>
+        <td class="n" data-label="Rows">${t.rows.length}</td>
+        <td class="n" data-label="Now">${t.counts.pass} pass / ${t.counts.fail} fail${t.counts.info ? ` / ${t.counts.info} info` : ''}</td>
+        <td class="n" data-label="Benchmark phase">${b.pass} / ${b.fail}${b.info ? ` / ${b.info}` : ''}</td>
+        <td data-label="Runs">${esc(t.runWindow)}</td>
+        <td data-label="Bench">${bench}</td></tr>`;
+    }).join('');
+    return `<table class="vl-sum"><caption class="sr-only">The five validation tracks with their row counts, results, run windows and bench pages</caption>
+      <thead><tr><th scope="col">Track</th><th scope="col">Model</th><th scope="col">Rows</th><th scope="col">Now</th><th scope="col">Benchmark phase (pass / fail / info)</th><th scope="col">Runs</th><th scope="col">Bench</th></tr></thead>
+      <tbody>${rows}</tbody></table>`;
+  }
+
+  function limits(model) {
+    return `<ol class="vl-limits">${V.limits[model].map((l) => `<li>${esc(l.text)}<span class="vl-from">${esc(l.from)}</span></li>`).join('')}</ol>`;
+  }
+
+  function defects() {
+    return `<ul class="vl-defects">${V.defectsOpen.map((d) => `<li><span class="vl-sev">${MODEL[d.model]} / ${esc(d.severity)}</span><span>${esc(d.what)}<span class="vl-where">${esc(d.where)}</span></span></li>`).join('')}</ul>`;
+  }
+
+  function fixBlock(model) {
+    const f = V.fix[model];
+    return `<h3 class="vl-h3">${MODEL[model]} / ${esc(f.window)}</h3>
+      <p class="vl-p">${esc(f.text)}</p>
+      <ul class="vl-fixed">${f.fixed.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
+      <p class="vl-sub">Record: ${esc(f.report)}</p>`;
+  }
+
+  function rowHtml(t, r) {
+    const ref = r.ref != null ? ` title="${esc(t.refs[r.ref])}"` : '';
+    const before = r.before ? `<span class="vl-before">before: ${esc(r.before.measured)}; ${esc(r.before.error)}; ${esc(LABEL[r.before.status])}</span>` : '';
+    const note = r.note ? `<span class="vl-sub">${esc(r.note)}</span>` : '';
+    const src = r.source ? `<span class="vl-src"${ref}>${esc(r.source)}${r.ref != null ? ` [${r.ref + 1}]` : ''}</span>` : '';
+    return `<tr class="vl-row" data-status="${r.status}" data-phase="${r.phase}">
+      <td class="vl-c-id vl-id">${esc(r.id)}</td>
+      <td class="vl-c-case" data-label="Case">${esc(r.case)}${note}</td>
+      <td class="vl-c-ref" data-label="Reference and source"><span class="vl-num">${esc(r.reference)}</span>${src}</td>
+      <td class="vl-c-meas" data-label="Measured"><span class="vl-num">${esc(r.measured)}</span>${before}</td>
+      <td class="vl-c-err vl-num" data-label="Error">${esc(r.error)}</td>
+      <td class="vl-c-tol" data-label="Tolerance">${esc(r.tolerance)}</td>
+      <td class="vl-c-res">${badge(r.status)}${r.phase === 'fix' ? '<br><span class="vl-badge is-fix">Fix</span>' : ''}</td></tr>`;
+  }
+
+  function trackSection(t, i) {
+    const groups = [];
+    for (const r of t.rows) {
+      let g = groups.find((x) => x.name === r.group);
+      if (!g) groups.push(g = { name: r.group, rows: [] });
+      g.rows.push(r);
+    }
+    const body = groups.map((g) => `<tbody data-group="${esc(g.name)}"><tr class="vl-grp"><th colspan="7" scope="rowgroup">${esc(g.name)}</th></tr>${g.rows.map((r) => rowHtml(t, r)).join('')}</tbody>`).join('');
+    const bench = t.bench.map((x) => `<li><a href="${esc(x.href)}">${esc(x.label)}</a> ${esc(x.note)}</li>`).join('');
+    return `<section class="vl-sec" id="track-${t.id}" aria-labelledby="track-${t.id}-h">
+      <p class="vl-eyebrow">${String(i + 5).padStart(2, '0')} / Track ${t.id} / ${MODEL[t.model]}</p>
+      <h2 class="vl-h2" id="track-${t.id}-h">${esc(t.title)}</h2>
+      <dl class="vl-track-meta">
+        <dt>Runs</dt><dd>${esc(t.runWindow)}</dd>
+        <dt>Under test</dt><dd>${esc(t.engine)}</dd>
+        <dt>Result</dt><dd>${t.counts.pass} pass, ${t.counts.fail} fail${t.counts.info ? `, ${t.counts.info} informational` : ''} of ${t.rows.length} rows (benchmark phase: ${t.countsBenchmark.pass} pass, ${t.countsBenchmark.fail} fail${t.countsBenchmark.info ? `, ${t.countsBenchmark.info} informational` : ''})</dd>
+        <dt>Report</dt><dd><code>${esc(t.report)}</code> (campaign scratchpad)</dd>
+      </dl>
+      <h3 class="vl-h3">Method</h3>
+      ${t.method.map((p) => `<p class="vl-p">${esc(p)}</p>`).join('')}
+      <ul class="vl-bench">${bench}</ul>
+      <details class="vl-table-box" data-track="${t.id}">
+        <summary>Cases: ${t.rows.length} rows</summary>
+        <table class="vl-t"><caption class="sr-only">Track ${t.id}, ${esc(t.title)}: case, reference and source, measured value, error, tolerance and result</caption>
+          <colgroup><col class="c-id"><col class="c-case"><col class="c-ref"><col class="c-meas"><col class="c-err"><col class="c-tol"><col class="c-res"></colgroup>
+          <thead><tr><th scope="col">ID</th><th scope="col">Case</th><th scope="col">Reference and source</th><th scope="col">Measured</th><th scope="col">Error</th><th scope="col">Tolerance</th><th scope="col">Result</th></tr></thead>
+          ${body}
+        </table>
+        <details class="vl-refs"><summary>Full sources, ${t.refs.length}</summary><ol>${t.refs.map((s) => `<li>${esc(s)}</li>`).join('')}</ol></details>
+      </details>
+    </section>`;
+  }
+
+  root.innerHTML = `
+    <section class="vl-note" aria-labelledby="vl-gl-h"><h2 id="vl-gl-h">Software rendering</h2><p>${esc(V.softwareGL)}</p></section>
+    <ul class="vl-index" aria-label="On this page">
+      <li><a href="#tracks-sum">Tracks</a></li><li><a href="#limits">Limits</a></li><li><a href="#defects">Open defects</a></li><li><a href="#fixes">Fix phases</a></li>
+      ${V.tracks.map((t) => `<li><a href="#track-${t.id}">${t.id}</a></li>`).join('')}
+    </ul>
+    <section class="vl-sec" id="tracks-sum" aria-labelledby="tracks-sum-h">
+      <p class="vl-eyebrow">01 / Summary</p>
+      <h2 class="vl-h2" id="tracks-sum-h">The tracks</h2>
+      ${summaryTable()}
+    </section>
+    <section class="vl-sec" id="limits" aria-labelledby="limits-h">
+      <p class="vl-eyebrow">02 / Measured limits</p>
+      <h2 class="vl-h2" id="limits-h">What the numbers support</h2>
+      <p class="vl-p">Each limit names the track that measured it. They describe the engines as they stand after the fix phase.</p>
+      <h3 class="vl-h3">Lattice</h3>${limits('lattice')}
+      <h3 class="vl-h3">Flight model</h3>${limits('flight')}
+    </section>
+    <section class="vl-sec" id="defects" aria-labelledby="defects-h">
+      <p class="vl-eyebrow">03 / Open defects</p>
+      <h2 class="vl-h2" id="defects-h">Not fixed</h2>
+      ${defects()}
+    </section>
+    <section class="vl-sec" id="fixes" aria-labelledby="fixes-h">
+      <p class="vl-eyebrow">04 / Fix phases</p>
+      <h2 class="vl-h2" id="fixes-h">What the fixes changed</h2>
+      ${fixBlock('lattice')}${fixBlock('flight')}
+    </section>
+    <div class="vl-filter" id="tracks" role="radiogroup" aria-labelledby="vl-filter-l"><span class="vl-filter-l" id="vl-filter-l">Rows</span>
+      <label><input type="radio" name="vl-filter" value="all" checked><span>All</span></label>
+      <label><input type="radio" name="vl-filter" value="fail"><span>Fail only</span></label>
+      <label><input type="radio" name="vl-filter" value="fix"><span>Measured after the fix</span></label>
+      <span class="vl-count" id="vl-count" aria-live="polite"></span>
+    </div>
+    ${V.tracks.map(trackSection).join('')}`;
+
+  const wide = window.matchMedia('(min-width: 860px)');
+  for (const d of root.querySelectorAll('.vl-table-box')) d.open = wide.matches;
+
+  function applyFilter(mode) {
+    let shown = 0;
+    for (const tb of root.querySelectorAll('.vl-t tbody')) {
+      let any = false;
+      for (const tr of tb.querySelectorAll('tr.vl-row')) {
+        const ok = mode === 'all' || (mode === 'fail' && tr.dataset.status === 'fail') || (mode === 'fix' && tr.dataset.phase === 'fix');
+        tr.hidden = !ok;
+        if (ok) { any = true; shown++; }
+      }
+      tb.hidden = !any;
+    }
+    for (const d of root.querySelectorAll('.vl-table-box')) {
+      const n = d.querySelectorAll('tr.vl-row:not([hidden])').length;
+      d.querySelector('summary').textContent = mode === 'all' ? `Cases: ${n} rows` : `Cases: ${n} of ${d.querySelectorAll('tr.vl-row').length} rows`;
+      if (mode !== 'all' && n) d.open = true;
+    }
+    document.getElementById('vl-count').textContent = mode === 'all' ? `${shown} rows` : `${shown} of ${total.rows} rows`;
+  }
+  root.querySelector('.vl-filter').addEventListener('change', (e) => { if (e.target.name === 'vl-filter') applyFilter(e.target.value); });
+  applyFilter('all');
+</script>
+</body>
+</html>

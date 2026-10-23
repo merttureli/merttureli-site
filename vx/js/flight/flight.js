@@ -18,18 +18,31 @@
        (Barrowman 1967 slopes; the sin form and the body-lift term as OpenRocket, STD).
      M_aero = -sum_i q A_ref C_N,i (x_i - x_cg)   over nose, fins, body-lift centroid, or
               C_m,lattice q A_ref d when the lattice flies it (10 Hz low-pass).
-     M_damp = -[ (1/2) rho |v_air| A_ref d^2 C_mq + mdot (x_nozzle - x_cg)^2 ] omega
+     M_damp = -[ (1/2) rho |v_air| A_ref d^2 C_mq + mdot ((x_nozzle - x_cg)^2 - (x_prop - x_cg)^2) ] omega
        C_mq = sum over nose and fins of C_Na,i (x_i - x_cg)^2 / d^2   (Mandell, STD)
-       the second term is jet damping (Mandell, STD), mdot from the thrust curve.
+       the second term is jet damping with the variable-mass dI/dt term (STD: Mandell for
+       the nozzle flux, Thomson 1961 for dI/dt; barrowman.js jetDamping), mdot from the
+       thrust curve. Without the dI/dt term it would be about 5 times larger through the burn
+       (validation F1 B04, F2 G06).
        While the lattice flies it, the aerodynamic C_mq term is left out: the lattice
        moment already carries the pitch-rate damping of its moving walls (Ladd), so only
        the jet damping is added to it.
      The lattice moment is used only once a finite C_m has been supplied: until the first
      setLatticeMoment, and after setLatticeMoment(NaN or null), the Barrowman moment flies
      the rocket even with useLattice(true) (state.latticeActive says which one is in use).
-     Linearised pitch equation used for the derived frequency and damping:
-       I theta'' + C2 theta' + C1 theta = 0, C1 = q A_ref C_Na (x_cp - x_cg) [N m/rad],
-       C2 = the bracket in M_damp [N m s]; omega_n = sqrt(C1/I), zeta = C2 / (2 sqrt(C1 I)).
+     Linearised pitch dynamics used for the derived frequency and damping. With
+       C1 = q A_ref C_Na (x_cp - x_cg) [N m/rad], C2 = the bracket in M_damp [N m s] and
+       Z = (q A_ref C_Na + T) / (m V) [1/s], the rate at which the normal force and the
+       thrust turn the flight path toward the body axis (alpha' = q - Z alpha):
+       - two degrees of freedom (alpha, q), the short period (Etkin, Dynamics of Flight;
+         validation F1 section B):  s^2 + (C2/I + Z) s + C1/I + Z C2/I = 0,
+         omega_n = sqrt(C1/I + Z C2/I), zeta = (C2/I + Z) / (2 omega_n).
+         derived.naturalFrequency and derived.dampingRatio return these: the simulated
+         oscillation decays at this rate (F1 B05: 0.142 fitted against 0.142 predicted).
+       - one degree of freedom (Mandell): I theta'' + C2 theta' + C1 theta = 0,
+         omega_n = sqrt(C1/I), zeta = C2 / (2 sqrt(C1 I)); derived.naturalFrequencyMandell
+         and derived.dampingRatioMandell. It leaves out the flight-path turning and reads
+         zeta about 28 percent low in the coast (F1 B06, F2 E09).
 
    MASS PROPERTIES (EST unless tagged)
      Liftoff mass 0.998 kg (PAGE 2.2 lb) and CG 0.5588 m from the nose (PAGE 22 in) include
@@ -39,6 +52,13 @@
      dry CG follows from the liftoff CG. Inertia: the dry mass as a uniform slender rod of
      the full length about its own CG (m L^2 / 12) plus the parallel-axis terms of the dry
      mass and the propellant point mass about the moving vehicle CG.
+     The PAGE CG of 22 in is the case study's design review figure for the 37 in airframe. A part-wise estimate of the
+     46.5 in CAD airframe at the page mass puts it at 0.688 to 0.692 m (validation F1 F02;
+     0.669 to 0.700 m over the density scenarios), a margin near 2.2 cal against 4.1 cal.
+     The default stays PAGE (FIELD 1) until the owner gives the measured CG; CG_ESTIMATE_CAD
+     and derived.staticMarginCadCg carry the estimate so a page can print the range.
+     The slender rod reads the pitch inertia 17 to 26 percent above a part-wise CAD estimate
+     at the same mass and CG (F1 F01), so the pitch frequency may be 7 to 11 percent low.
      Position (x, y) is the world position of a fixed body station, refFromNose (the liftoff
      CG station). The CG moves forward by a few centimetres during the burn; its kinematic
      coupling into translation is neglected (EST, under 0.04 m).
@@ -46,26 +66,36 @@
    RAIL
      The rail starts at the world origin and points along the launch angle. On the pad the
      aft end of the airframe rests on the rail base (the scene draws it there too), so the
-     aft rail button starts aftButtonFromAft = 0.0508 m up the rail and the forward button
-     buttonSpacing = 0.3302 m ahead of that (PAGE: buttons 2 in from the aft end and 22 in
-     from the nose of the 37 in airframe, 13 in apart). With travel measured along the rail:
-       railExit,  forward button leaves the top:  travel = railLength - 2 in - 13 in
-       railClear, aft button leaves the top:      travel = railLength - 2 in
+     aft rail button starts aftButtonFromAft = 0.1156 m up the rail and the forward button
+     buttonSpacing = 0.4407 m ahead of that (CAD: assembly parts 10 and 11, 0.6246 m and
+     1.0653 m from the nose of the 46.5 in airframe). The page's stations (2 in from the aft
+     end, 13 in apart) belong to the 37 in design and stay available as PAGE_RAIL_BUTTONS;
+     they give 46.4 ft/s at rail exit against 43.3 ft/s (validation F1 C13, at the crossing).
+     With travel measured along the rail:
+       railExit,  forward button leaves the top:  travel = railLength - aftButtonFromAft - buttonSpacing
+       railClear, aft button leaves the top:      travel = railLength - aftButtonFromAft
      Until railClear the rocket is constrained to the rail direction; only axial forces act
-     and the rail carries the rest. Rail friction is neglected. predictRailExit uses the same
-     goal. The rail in use is captured when the rocket is placed on the pad; setRail and
-     setLaunchAngle after ignition take effect at the next reset.
+     and the rail carries the rest. Rail friction is neglected. Both crossings are found
+     inside the step that passes them (cubic Hermite in travel over the step): railExit time
+     and speed are interpolated there, and the step that passes railClear is split at the
+     crossing, rail-constrained before it and free after it, so neither depends on where
+     the 1 ms grid falls (validation F1 C02, C12; F2 B01). predictRailExit integrates the
+     same axial equation with the same interpolation. The rail in use is captured when the
+     rocket is placed on the pad; setRail and setLaunchAngle after ignition take effect at
+     the next reset.
 
    INTEGRATION
-     Classic RK4 at a fixed 0.001 s. step(dtPhysical) accumulates and sub-steps, so the
+     Classic RK4 at a fixed 0.001 s (the step that passes railClear is taken as two RK4
+     sub-steps that meet at the crossing). step(dtPhysical) accumulates and sub-steps, so the
      trajectory is identical for any frame pattern. Gusts are smooth functions of time;
      turbulence (off by default) is a seeded first-order Gauss-Markov process held over
      each step. history samples every 10 steps (0.01 s) into a preallocated ring buffer.
 
    EVENTS (inserted in order of t)
-     ignition (t = 0), liftoff (thrust exceeds weight), railExit, maxQ, burnout, maxAlpha,
-     apogee. maxQ carries the time and state of the largest q. It is emitted only when that
-     peak is certain: after rail exit, with the rocket decelerating (burnout, or thrust
+     ignition (t = 0), liftoff (thrust exceeds weight), railExit (time interpolated to the
+     crossing; the event state is the end of that step, with railExitSpeed interpolated),
+     maxQ, burnout, maxAlpha, apogee. maxQ carries the time and state of the largest q. It
+     is emitted only when that peak is certain: after rail exit, with the rocket decelerating (burnout, or thrust
      below drag plus the weight component along the axis), and with q low-passed at 10 Hz
      below 0.9 of its own running peak. Turbulence (fresh noise every step) and gusts near
      the pad therefore cannot fire it early. maxAlpha is the first local maximum of |alpha|
@@ -120,8 +150,27 @@ export const MAXQ_DROP = 0.9;            // maxQ is released once filtered q is 
 export const ALPHA_LP_HZ = 5;            // Hz, low-pass on alpha for the maxAlpha detector
 export const ALPHA_HYST_DEG = 0.5;       // deg, absolute hysteresis of the maxAlpha detector
 export const ALPHA_HYST_REL = 0.15;      // fraction of the peak, relative hysteresis of the maxAlpha detector
-/** m, aft rail button ahead of the aft end (PAGE: 2 in from the aft end). */
-export const AFT_BUTTON_FROM_AFT = 2 * IN;
+/** Rail-button stations of the CAD airframe, m from the nose tip: the centres of the axial
+    bounds of assembly parts 10 (forward) and 11 (aft), as vx/js/geom measures them
+    (geometry.features.railButtons). CAD. */
+export const CAD_RAIL_BUTTONS = Object.freeze({ forwardFromNose: 0.6246295, aftFromNose: 1.0653225, source: 'CAD' });
+/** The page's stations, from the case study's 37 in airframe: aft button 2 in from the aft end,
+    13 in apart (22 in from the nose). PAGE. Not the default: the CAD is the final airframe. */
+export const PAGE_RAIL_BUTTONS = Object.freeze({ aftButtonFromAft: 2 * IN, buttonSpacing: 13 * IN, source: 'PAGE' });
+/** m, nose tip to screw cap (CAD). */
+const LENGTH_CAD = 1.1809;
+/** m, aft rail button ahead of the aft end: 0.1156 (CAD, 4.55 in). */
+export const AFT_BUTTON_FROM_AFT = LENGTH_CAD - CAD_RAIL_BUTTONS.aftFromNose;
+/** m, forward to aft rail button: 0.4407 (CAD, 17.35 in). */
+export const BUTTON_SPACING = CAD_RAIL_BUTTONS.aftFromNose - CAD_RAIL_BUTTONS.forwardFromNose;
+
+/** CG of the CAD airframe at the PAGE liftoff mass, m from the nose (EST, validation F1 case
+    F02: part-wise CAD volumes from assembly.bin with OpenRocket 15.03 material densities and
+    the motor as given, nine density scenarios, every non-motor part scaled to 0.998 kg).
+    atPageMass is the spread at 0.998 kg; lo and hi the spread of the unscaled scenarios.
+    The page's 22 in is 59.5 percent of its 37 in length; this is 58.4 percent of 46.5 in.
+    Not the default (FIELD 1 keeps the PAGE CG until the owner gives the measured CG). */
+export const CG_ESTIMATE_CAD = Object.freeze({ value: 0.690, atPageMass: Object.freeze([0.688, 0.692]), lo: 0.669, hi: 0.700, source: 'EST' });
 
 /** Drag coefficient on A_ref = pi d^2/4 (A_ref 3.632e-3 m^2), FIT 2026-10-22 by bisection
     so that the no-wind, zero-launch-angle apogee equals 1,033 ft (PAGE), with the G77R RASP
@@ -143,9 +192,11 @@ export const CAD_FINS = Object.freeze({
 
 /** Defaults, SI. Tags: PAGE, CAD, EST, FIT, STD. */
 export const DEFAULTS = Object.freeze({
-  length: 1.1809,              // m, nose tip to screw cap (CAD)
+  length: LENGTH_CAD,          // m, 1.1809, nose tip to screw cap (CAD)
   diameter: 0.068,             // m, body tube (CAD, radius 34 mm)
-  noseLength: 0.232,           // m (CAD, part 0)
+  noseLength: 0.200,           // m, exposed tangent ogive (CAD: geometry.refs.noseExposedLength; the
+                               // CAD profile is within 0.25 mm of an ogive of L 0.200 m, R 0.034 m.
+                               // The nose part, part 0, is 0.232 m: its last 32 mm sit at the body radius.)
   noseShape: 'ogive',          // tangent ogive (CAD)
   tailCapLength: 0.0395,       // m, screw cap protrusion behind the body tube (CAD, part 19)
   tailCapRadius: 0.0215,       // m (CAD, part 19)
@@ -160,8 +211,8 @@ export const DEFAULTS = Object.freeze({
   airDensity: RHO_SL,          // kg/m^3 (STD), constant with altitude
   gravity: G0,                 // m/s^2 (STD)
   railLength: 1.83,            // m (EST default 6 ft), 0.9 .. 2.4
-  buttonSpacing: 13 * IN,      // m, 0.3302 (PAGE)
-  aftButtonFromAft: AFT_BUTTON_FROM_AFT, // m, 0.0508 (PAGE)
+  buttonSpacing: BUTTON_SPACING,         // m, 0.4407 (CAD; PAGE_RAIL_BUTTONS has the 37 in design's 0.3302)
+  aftButtonFromAft: AFT_BUTTON_FROM_AFT, // m, 0.1156 (CAD; PAGE 0.0508)
   launchAngle: 0,              // rad, +-10 deg, positive tilts the rail toward +x
   wind: 0,                     // m/s toward +x, uniform profile
   windProfile: 'uniform',
@@ -187,6 +238,30 @@ const LP_Q = 1 - Math.exp(-2 * Math.PI * MAXQ_LP_HZ * DT);       // first-order 
 const LP_ALPHA = 1 - Math.exp(-2 * Math.PI * ALPHA_LP_HZ * DT);
 const finite = (v) => typeof v === 'number' && Number.isFinite(v);
 function wrapPi(a) { a = (a + Math.PI) % (2 * Math.PI); if (a < 0) a += 2 * Math.PI; return a - Math.PI; }
+
+/** Fraction u in [0, 1] of a step of length h at which the travel reaches goal, from the
+    travel and speed at both ends (cubic Hermite, Newton from the linear guess, bisection as
+    the fallback). The interpolant matches position and speed at both ends, so u is exact to
+    O(h^4) in travel; for the 1 ms step that is far below a microsecond. */
+export function crossing(p0, v0, p1, v1, goal, h) {
+  if (!(p1 > p0) || goal <= p0) return 0;
+  if (goal >= p1) return 1;
+  const m0 = v0 * h, m1 = v1 * h;
+  const P = (u) => { const u2 = u * u, u3 = u2 * u; return (2 * u3 - 3 * u2 + 1) * p0 + (u3 - 2 * u2 + u) * m0 + (-2 * u3 + 3 * u2) * p1 + (u3 - u2) * m1; };
+  const dP = (u) => { const u2 = u * u; return (6 * u2 - 6 * u) * p0 + (3 * u2 - 4 * u + 1) * m0 + (-6 * u2 + 6 * u) * p1 + (3 * u2 - 2 * u) * m1; };
+  let lo = 0, hi = 1, u = (goal - p0) / (p1 - p0);
+  for (let i = 0; i < 40; i++) {
+    const f = P(u) - goal;
+    if (Math.abs(f) < 1e-15 * Math.max(1, Math.abs(goal))) break;
+    if (f > 0) hi = u; else lo = u;
+    const d = dP(u);
+    let un = d > 0 ? u - f / d : NaN;
+    if (!(un > lo && un < hi)) un = 0.5 * (lo + hi);
+    if (Math.abs(un - u) < 1e-15) { u = un; break; }
+    u = un;
+  }
+  return clamp(u, 0, 1);
+}
 
 /** mulberry32 PRNG (public domain, T. Ettinger): 32-bit state, period 2^32. */
 function mulberry32(seed) {
@@ -286,6 +361,7 @@ function massAt(model, t, out) {
     motor mass flow mdot (kg/s) and pitch rate om (rad/s). latticeCm replaces the Barrowman
     static moment when it is a number; the aerodynamic part of the pitch damping is then
     dropped (the lattice moment includes its moving-wall damping) and jet damping stays.
+    Jet damping includes the variable-mass dI/dt term (barrowman.js jetDamping).
     Writes into out and returns it:
       cnNose, cnFins, cnBody, cn (normal-force coefficients on A_ref), N (N, along +n),
       drag (N, along the relative wind), Maero, Mdamp, M (N m, theta sense), cm (Maero on
@@ -307,7 +383,7 @@ export function aeroLoads(model, cfg, alpha, V, xcg, mdot, om, latticeCm, out = 
   { const dn = aero.nose.xcp - xcg; cmq += aero.nose.cna * dn * dn; }
   if (model.finsActive) { const df = aero.fins.xcp - xcg; cmq += aero.fins.cna * df * df; }
   cmq /= d * d;
-  const c2 = (finite(latticeCm) ? 0 : 0.5 * cfg.airDensity * V * A * d * d * cmq) + B.jetDamping(mdot, model.xMotorAft, xcg);
+  const c2 = (finite(latticeCm) ? 0 : 0.5 * cfg.airDensity * V * A * d * d * cmq) + B.jetDamping(mdot, model.xMotorAft, xcg, model.xProp);
   const Mdamp = -c2 * om;
   out.cnNose = cnNose; out.cnFins = cnFins; out.cnBody = cnBody; out.cn = cn; out.N = N;
   out.drag = q * A * cfg.cd; out.Maero = Maero; out.Mdamp = Mdamp; out.M = Maero + Mdamp;
@@ -337,7 +413,7 @@ export function createFlight(config = {}, { bus = sharedBus } = {}) {
   let ignited = false, lifted = false, railExited = false, railClear = false, burnedOut = false, apogeeReached = false, done = false;
   let tApogee = Infinity, maxAlt = 0, maxQ = 0, tMaxQ = 0, maxQEmitted = false, qF = 0, qFPeak = 0;
   let alphaF = 0, alphaArmed = false, alphaFPeak = 0, alphaRawPeak = 0, alphaPeakT = 0, maxAlphaEmitted = false, maxAlphaAbs = 0;
-  let railExitSpeed = NaN, railExitT = NaN, liftoffT = NaN, fault = null, groundHit = false, pendingLiftoff = false;
+  let railExitSpeed = NaN, railExitT = NaN, railClearT = NaN, liftoffT = NaN, fault = null, groundHit = false, pendingLiftoff = false, pendingRailExit = false;
   let refFromNose = cfg.cgFromNose, x0 = 0, y0 = 0;
   let railAngle = cfg.launchAngle, railLen = cfg.railLength;   // the rail in use, captured on the pad
   let gusts = [];                       // {t0, peak, dur}
@@ -404,22 +480,23 @@ export function createFlight(config = {}, { bus = sharedBus } = {}) {
   }
 
   /* -------------------------------------------------- integration */
-  function rk4(mode) {
-    const h = DT;
-    deriv(t, s, k1, mode, false);
+  /** One classic RK4 step of length h from time t0 (default: the fixed step from t). */
+  function rk4(mode, t0 = t, h = DT) {
+    deriv(t0, s, k1, mode, false);
     for (let i = 0; i < 6; i++) tmp[i] = s[i] + 0.5 * h * k1[i];
-    deriv(t + 0.5 * h, tmp, k2, mode, false);
+    deriv(t0 + 0.5 * h, tmp, k2, mode, false);
     for (let i = 0; i < 6; i++) tmp[i] = s[i] + 0.5 * h * k2[i];
-    deriv(t + 0.5 * h, tmp, k3, mode, false);
+    deriv(t0 + 0.5 * h, tmp, k3, mode, false);
     for (let i = 0; i < 6; i++) tmp[i] = s[i] + h * k3[i];
-    deriv(t + h, tmp, k4, mode, false);
+    deriv(t0 + h, tmp, k4, mode, false);
     for (let i = 0; i < 6; i++) s[i] += (h / 6) * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]);
   }
 
-  function railTravel() {
+  function railTravel(y = s) {
     const ux = Math.sin(railAngle), uy = Math.cos(railAngle);
-    return (s[0] - x0) * ux + (s[1] - y0) * uy;
+    return (y[0] - x0) * ux + (y[1] - y0) * uy;
   }
+  function railSpeed(y = s) { return y[2] * Math.sin(railAngle) + y[3] * Math.cos(railAngle); }
 
   function advance() {
     // turbulence: one Gauss-Markov update per fixed step, before the step (deterministic)
@@ -439,8 +516,8 @@ export function createFlight(config = {}, { bus = sharedBus } = {}) {
       if (thrustAt(model.motor, t) > mp.m * cfg.gravity) { lifted = true; liftoffT = t; pendingLiftoff = true; }
     } else {
       const mode = railClear ? 'free' : 'rail';
+      const t0 = t;
       rk4(mode);
-      t += DT; stepIndex++;
       if (mode === 'rail') {
         const ux = Math.sin(railAngle), uy = Math.cos(railAngle);
         const vAlong = s[2] * ux + s[3] * uy;
@@ -448,7 +525,24 @@ export function createFlight(config = {}, { bus = sharedBus } = {}) {
           const tr = Math.max(0, railTravel());
           s[0] = x0 + tr * ux; s[1] = y0 + tr * uy; s[2] = Math.max(0, vAlong) * ux; s[3] = Math.max(0, vAlong) * uy;
         }
+        // the rail crossings inside this step, on the rail-constrained trajectory
+        const tr0 = railTravel(prev), v0 = railSpeed(prev), tr1 = railTravel(), v1 = railSpeed();
+        const goalExit = railLen - cfg.aftButtonFromAft - cfg.buttonSpacing, goalClear = railLen - cfg.aftButtonFromAft;
+        if (!railExited && tr1 >= goalExit) {
+          const u = crossing(tr0, v0, tr1, v1, goalExit, DT);
+          pendingRailExit = true; railExitT = t0 + u * DT; railExitSpeed = Math.abs(v0 + u * (v1 - v0));
+        }
+        if (tr1 >= goalClear) {
+          // the aft button leaves inside this step: redo it, rail-constrained up to the crossing
+          // and free after it, so the release does not wait for the next grid point
+          const u = crossing(tr0, v0, tr1, v1, goalClear, DT);
+          s.set(prev);
+          if (u > 0) rk4('rail', t0, u * DT);
+          railClear = true; railClearT = t0 + u * DT;
+          if (u < 1) rk4('free', t0 + u * DT, (1 - u) * DT);
+        }
       }
+      t += DT; stepIndex++;
     }
     // NaN guard: restore the last good state and stop
     for (let i = 0; i < 6; i++) if (!finite(s[i])) { s.set(prev); fault = 'non-finite state'; done = true; break; }
@@ -462,12 +556,12 @@ export function createFlight(config = {}, { bus = sharedBus } = {}) {
   function detectEvents() {
     const alt = s[1] - y0;
     if (pendingLiftoff) { pendingLiftoff = false; addEvent('liftoff', liftoffT); }
-    if (lifted && !railExited && railTravel() >= railLen - cfg.aftButtonFromAft - cfg.buttonSpacing) {
-      railExited = true; railExitT = t; railExitSpeed = Math.hypot(s[2], s[3]);
+    if (pendingRailExit) {
+      // time and speed interpolated to the crossing inside the step (advance); state at the step end
+      pendingRailExit = false; railExited = true;
       state.railExitSpeed = railExitSpeed;
-      addEvent('railExit', t);
+      addEvent('railExit', railExitT);
     }
-    if (lifted && !railClear && railTravel() >= railLen - cfg.aftButtonFromAft) railClear = true;
     if (!burnedOut && t >= model.motor.burnEnd - 1e-9) { burnedOut = true; addEvent('burnout', model.motor.burnEnd); }
     alphaF += LP_ALPHA * (info.alpha - alphaF);
     if (lifted) {
@@ -547,6 +641,7 @@ export function createFlight(config = {}, { bus = sharedBus } = {}) {
     state.apogee = apogeeReached ? maxAlt : NaN;
     state.maxAltitude = maxAlt;
     state.railExitSpeed = railExitSpeed;
+    state.railExitTime = railExitT; state.railClearTime = railClearT;
     state.ignited = ignited;
     state.lattice = latticeOn;
     state.latticeActive = latticeActive();
@@ -574,8 +669,23 @@ export function createFlight(config = {}, { bus = sharedBus } = {}) {
       const p = props(tt);
       const comps = aero.components;
       const cmq = B.dampingCmq(comps, p.xcg, d);
-      const jet = tt === undefined ? 0 : B.jetDamping(p.mdot, model.xMotorAft, p.xcg);
+      const jet = tt === undefined ? 0 : B.jetDamping(p.mdot, model.xMotorAft, p.xcg, model.xProp);
       return 0.5 * cfg.airDensity * V * A * d * d * cmq + jet;
+    }
+    /** Linearised pitch dynamics at airspeed V (m/s) and time tt (s; omitted = liftoff mass
+        with the motor not burning: no thrust, no jet damping). See the header. */
+    function shortPeriod(V, tt) {
+      const p = props(tt);
+      const C1 = c1(V, tt), C2 = c2(V, tt), I = p.I;
+      const T = tt === undefined ? 0 : thrustAt(model.motor, tt);
+      const Z = V > 1e-9 ? (C1per(V) + T) / (p.m * V) : 0;           // 1/s, flight-path turning per unit alpha
+      const k = C1 / I + Z * C2 / I, c = C2 / I + Z;
+      const ok = C1 > 0 && k > 0;
+      return {
+        V, t: tt, C1, C2, I, Z, thrust: T, mass: p.m,
+        omegaN: ok ? Math.sqrt(k) : 0, zeta: ok ? c / (2 * Math.sqrt(k)) : NaN,
+        omegaNMandell: C1 > 0 ? Math.sqrt(C1 / I) : 0, zetaMandell: C1 > 0 ? C2 / (2 * Math.sqrt(C1 * I)) : NaN,
+      };
     }
     const rail = predictRailExit();
     const tw = (model.motor.totalImpulse / Math.max(1e-9, model.motor.burnEnd)) / (cfg.massLiftoff * cfg.gravity);
@@ -595,8 +705,21 @@ export function createFlight(config = {}, { bus = sharedBus } = {}) {
       cmqLiftoff: B.dampingCmq(aero.components, m0.xcg, d),
       corrective: (V, tt) => c1(V, tt),            // C1, N m/rad
       damping: (V, tt) => c2(V, tt),               // C2, N m s
-      naturalFrequency(V, tt) { const C1 = c1(V, tt); const I = props(tt).I; return C1 > 0 ? Math.sqrt(C1 / I) : 0; },
-      dampingRatio(V, tt) { const C1 = c1(V, tt); const I = props(tt).I; return C1 > 0 ? c2(V, tt) / (2 * Math.sqrt(C1 * I)) : NaN; },
+      // two-degree-of-freedom short period (alpha, q), rad/s and dimensionless: the decay the
+      // simulated motion shows (header; validation F1 B05, F2 E02)
+      naturalFrequency: (V, tt) => shortPeriod(V, tt).omegaN,
+      dampingRatio: (V, tt) => shortPeriod(V, tt).zeta,
+      naturalFrequency2: (V, tt) => shortPeriod(V, tt).omegaN,
+      dampingRatio2: (V, tt) => shortPeriod(V, tt).zeta,
+      // Mandell's one-degree-of-freedom values (exclude the flight-path turning Z)
+      naturalFrequencyMandell: (V, tt) => shortPeriod(V, tt).omegaNMandell,
+      dampingRatioMandell: (V, tt) => shortPeriod(V, tt).zetaMandell,
+      shortPeriod,
+      // margin at any CG (cal), and at the CAD-based CG estimate (EST, CG_ESTIMATE_CAD) with its spread
+      staticMarginAt: (xcg) => (aero.xcp - xcg) / d,
+      cgEstimateCad: CG_ESTIMATE_CAD,
+      staticMarginCadCg: (aero.xcp - CG_ESTIMATE_CAD.value) / d,
+      staticMarginCadCgRange: [(aero.xcp - CG_ESTIMATE_CAD.hi) / d, (aero.xcp - CG_ESTIMATE_CAD.lo) / d],
       railExitSpeedPrediction: rail.speed, railExitTimePrediction: rail.t, liftoffTimePrediction: rail.tLiftoff,
       motorName: model.motor.name, motorSource: model.motor.source,
       totalImpulse: model.motor.totalImpulse, burnTime: model.motor.burnEnd, peakThrust: peak,
@@ -606,7 +729,8 @@ export function createFlight(config = {}, { bus = sharedBus } = {}) {
     });
   }
 
-  /** Axial motion on the rail with no wind, RK4 at DT, until the forward button leaves. */
+  /** Axial motion on the rail with no wind, RK4 at DT, until the forward button leaves; the
+      speed and time are interpolated to the crossing inside the last step. */
   function predictRailExit() {
     const g = cfg.gravity, ca = Math.cos(cfg.launchAngle), A = model.refArea;
     const p = { m: 0, xcg: 0, I: 0, mdot: 0, mp: 0 };
@@ -615,8 +739,9 @@ export function createFlight(config = {}, { bus = sharedBus } = {}) {
     const tLiftoff = tt;
     const goal = cfg.railLength - cfg.aftButtonFromAft - cfg.buttonSpacing;   // forward button at the rail top
     const f = (time, v) => { massAt(model, time, p); const a = (thrustAt(model.motor, time) - p.m * g * ca - 0.5 * cfg.airDensity * v * v * A * cfg.cd) / p.m; return v <= 0 && a < 0 ? 0 : a; };
-    let x = 0, v = 0;
+    let x = 0, v = 0, xp = 0, vp = 0;
     for (guard = 0; guard < 20000 && x < goal; guard++) {
+      xp = x; vp = v;
       const a1 = f(tt, v), x1 = v;
       const a2 = f(tt + DT / 2, v + a1 * DT / 2), x2 = v + a1 * DT / 2;
       const a3 = f(tt + DT / 2, v + a2 * DT / 2), x3 = v + a2 * DT / 2;
@@ -626,7 +751,9 @@ export function createFlight(config = {}, { bus = sharedBus } = {}) {
       if (v < 0) v = 0;
       tt += DT;
     }
-    return { speed: x >= goal ? v : NaN, t: x >= goal ? tt : NaN, tLiftoff };
+    if (!(x >= goal)) return { speed: NaN, t: NaN, tLiftoff };
+    const u = crossing(xp, vp, x, v, goal, DT);                   // interpolated to the crossing, as the flight does
+    return { speed: vp + u * (v - vp), t: tt - DT + u * DT, tLiftoff };
   }
 
   /* -------------------------------------------------- lifecycle */
@@ -646,7 +773,7 @@ export function createFlight(config = {}, { bus = sharedBus } = {}) {
     ignited = lifted = railExited = railClear = burnedOut = apogeeReached = done = false;
     tApogee = Infinity; maxAlt = 0; maxQ = 0; tMaxQ = 0; maxQEmitted = false; qF = 0; qFPeak = 0;
     alphaF = 0; alphaArmed = false; alphaFPeak = 0; alphaRawPeak = 0; alphaPeakT = 0; maxAlphaEmitted = false; maxAlphaAbs = 0;
-    railExitSpeed = NaN; railExitT = NaN; liftoffT = NaN; fault = null; groundHit = false; pendingLiftoff = false;
+    railExitSpeed = NaN; railExitT = NaN; railClearT = NaN; liftoffT = NaN; fault = null; groundHit = false; pendingLiftoff = false; pendingRailExit = false;
     gusts = []; turb = 0; rng = mulberry32(cfg.seed); latticeCmF = latticeCmIn;
     events.length = 0; history._clear();
     placeOnPad();
