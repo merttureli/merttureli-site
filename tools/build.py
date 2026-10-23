@@ -130,7 +130,7 @@ def case_live(slug):
 
 SKIP = re.compile(r"^(?:#|[a-z][a-z0-9+.-]*:|//|/)", re.I)
 ATTR = re.compile(r"""(\s(?:href|src|poster|data-src|data-sm-src|action)=)(["'])([^"']*)\2""", re.I)
-SRCSET = re.compile(r"""(\ssrcset=)(["'])([^"']*)\2""", re.I)
+SRCSET = re.compile(r"""(\s(?:image)?srcset=)(["'])([^"']*)\2""", re.I)
 CSSURL = re.compile(r"""url\((["']?)([^"')]+)\1\)""")
 
 

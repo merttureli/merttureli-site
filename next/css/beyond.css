@@ -7,6 +7,12 @@ mark.flag { background: none; color: inherit; border-bottom: 1px dotted var(--si
 
 /* ------------------------------------------------------------------ hero */
 .bhero { padding: clamp(28px, 4vw, 64px) 0 0; }
+/* the home album's wide photo, opened up (next/js/nav.js grows the album photo into it). The
+   background is the home album's own file, already cached, so the photo shows while the larger
+   one loads. Height: the rule under it peeks above the fold. */
+.bhero__photo { position: relative; width: 100%; aspect-ratio: 16 / 9; max-height: calc(100svh - 300px); min-height: 220px; margin-bottom: clamp(28px, 4vw, 64px); border-radius: var(--radius-tile); overflow: hidden; background: var(--paper-3) url(../assets/img/balloon-1000.webp) center / cover; box-shadow: var(--shadow-tile); }
+.bhero__photo img { width: 100%; height: 100%; object-fit: cover; }
+.bhero__photo figcaption { position: absolute; left: 14px; bottom: 14px; padding: 6px 11px; border-radius: var(--radius-pill); background: var(--glass); color: var(--ink); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 .bhero__title { font-family: var(--display); font-weight: 780; font-stretch: var(--display-stretch); text-transform: uppercase; font-size: clamp(54px, 10.4vw, 188px); line-height: .84; letter-spacing: -.045em; }
 .bhero__row { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: clamp(28px, 5vw, 90px); align-items: end; margin-top: clamp(26px, 3.4vw, 52px); }
 .bhero__lede { max-width: 24ch; font-size: clamp(24px, 2.7vw, 44px); font-weight: 560; line-height: 1.08; letter-spacing: -.025em; }
@@ -105,7 +111,9 @@ mark.flag { background: none; color: inherit; border-bottom: 1px dotted var(--si
 
 /* --------------------------------------------------------------- phone */
 @media (max-width: 760px) {
-  .bhero__title { font-size: 15.4vw; }
+  .bhero__title { font-size: 11.4vw; }   /* ENGINEERING is 7.8 em wide: fits 100vw minus the gutters, so phones keep their own width */
+  .bhero__photo { aspect-ratio: 16 / 10; max-height: none; min-height: 0; }
+  .bhero__photo figcaption { left: 10px; bottom: 10px; }
   .bhero__lede { font-size: 25px; }
   .shots { --cols: 2; --gap: 8px; }
   .shot__cap { left: 8px; bottom: 8px; max-width: calc(100% - 16px); padding: 4px 8px; font-size: var(--text-mono-xs); }
