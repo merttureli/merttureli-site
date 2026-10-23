@@ -5,34 +5,37 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Privacy · Mert Tureli</title>
 <meta name="robots" content="noindex">
+<meta name="theme-color" content="#e7e8ea">
 <link rel="icon" href="/assets/icons/favicon.ico" sizes="32x32">
 <link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
-<link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="assets/fonts/martian-mono-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="css/fonts.css">
-<link rel="stylesheet" href="_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/colors.css">
-<link rel="stylesheet" href="_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/typography.css">
-<link rel="stylesheet" href="_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/spacing.css">
-<link rel="stylesheet" href="_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/layout.css">
-<link rel="stylesheet" href="_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/effects.css">
-<link rel="stylesheet" href="_ds/mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d/tokens/base.css">
+<link rel="preload" href="studies/shared/fonts/archivo-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="next/css/tokens.css">
+<link rel="stylesheet" href="next/css/pages.css">
 </head>
-<body style="background: var(--paper); margin: 0">
-<main style="max-width: 68ch; margin: 0 auto; padding: 96px var(--page-margin, 24px)">
-<p style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta)">Privacy</p>
-<h1 style="font-family: var(--font-display, inherit); font-size: 2rem; color: var(--text-display); margin: .3em 0 1em">What this site measures</h1>
-<div style="font-size: 1rem; line-height: 1.7; color: var(--text-body, var(--ink-700))">
+<body>
+<header class="ptop wrap">
+  <a class="wordmark" href="index.html" aria-label="Mert Tureli, home"><span class="wordmark__c">&copy;</span> Mert Tureli</a>
+</header>
+
+<main class="legal wrap">
+<div class="legal__head rise">
+<p class="label">Privacy</p>
+<h1 class="display legal__title">What this site <em class="serif">measures</em></h1>
+</div>
+<div class="legal__card rise rise--2">
+<div class="legal__body">
 <p>This is my personal site. It runs basic analytics so I can tell whether the work is landing and which applications people are arriving from.</p>
 <p><strong>What is collected.</strong> Pages viewed, how long the page was open and visible, how far it scrolled, which sections stayed on screen long enough to read, and clicks on links such as the resume, contact card, email, phone, and project pages. For links that leave the site, only the name of the other site is kept. Your browser also reports its language, screen size, and time zone, and the referring site if you arrived from a link. When a link I sent includes a short code in the address, that code is recorded so I know which application or message the visit came from.</p>
 <p><strong>Visitor ID.</strong> The site stores a random visitor ID in your browser's local storage so repeat visits can be linked, and a second random ID in session storage for the current tab. It also keeps any link code from the address for up to 30 days, so a later visit still counts toward the right message. These are not cookies and hold nothing about you. Clearing site data for merttureli.com removes them.</p>
 <p><strong>Who receives it.</strong> These measurements go to a collector I run on Cloudflare Workers, which sees the network your request came from (the internet provider or company network name) and the approximate city, as any web request does. Your IP address itself is not stored.</p>
-<p><strong>Microsoft Clarity.</strong> The home page and the project pages also load Microsoft Clarity, which records page interactions such as scrolling, clicks, and pointer movement so I can replay how a visit went. Clarity sets cookies named _clck and _clsk on this site, and Microsoft may set its own cookies from clarity.ms. The link code, if any, is attached to the replay. Clarity is not loaded on the website inquiry page or the contact card page. Microsoft's practices are described in their <a href="https://privacy.microsoft.com/privacystatement" style="color: var(--text-display)">privacy statement</a>.</p>
-<p><strong>Website inquiries.</strong> If you choose to send a meeting request, I receive the name, email, project details, preferred date, time preference, and timezone you provide. Formspree processes and stores the submission and forwards it to my inbox so I can reply. Read <a href="https://formspree.io/legal/privacy-policy" style="color: var(--text-display)">Formspree's privacy policy</a> for how it handles submissions. A request does not book a meeting automatically. Analytics on that page record only that the form was opened, which step it reached, and whether the request was sent or failed.</p>
+<p><strong>Microsoft Clarity.</strong> The home page and the project pages also load Microsoft Clarity, which records page interactions such as scrolling, clicks, and pointer movement so I can replay how a visit went. Clarity sets cookies named _clck and _clsk on this site, and Microsoft may set its own cookies from clarity.ms. The link code, if any, is attached to the replay. Clarity is not loaded on the website inquiry page or the contact card page. Microsoft's practices are described in their <a href="https://privacy.microsoft.com/privacystatement">privacy statement</a>.</p>
+<p><strong>Website inquiries.</strong> If you choose to send a meeting request, I receive the name, email, project details, preferred date, time preference, and timezone you provide. Formspree processes and stores the submission and forwards it to my inbox so I can reply. Read <a href="https://formspree.io/legal/privacy-policy">Formspree's privacy policy</a> for how it handles submissions. A request does not book a meeting automatically. Analytics on that page record only that the form was opened, which step it reached, and whether the request was sent or failed.</p>
 <p><strong>What is not collected.</strong> Analytics do not collect names, email addresses, or the contents of the inquiry form. There are no visitor accounts or advertising, and I do not sell personal information.</p>
-<p><strong>Opting out.</strong> If your browser sends Global Privacy Control or Do Not Track, neither the analytics nor Clarity loads, and no visitor ID is created or read. A content blocker also works. Cookies and IDs stored on an earlier visit stay until you clear site data. These settings do not stop an inquiry you choose to submit. To request removal of information associated with your visit or inquiry, email <a href="mailto:merttureli0@gmail.com" style="color: var(--text-display)">merttureli0@gmail.com</a>.</p>
-<p style="margin-top: 3em"><a href="index.html" style="color: var(--text-display)">Back to the site →</a></p>
+<p><strong>Opting out.</strong> If your browser sends Global Privacy Control or Do Not Track, neither the analytics nor Clarity loads, and no visitor ID is created or read. A content blocker also works. Cookies and IDs stored on an earlier visit stay until you clear site data. These settings do not stop an inquiry you choose to submit. To request removal of information associated with your visit or inquiry, email <a href="mailto:merttureli0@gmail.com">merttureli0@gmail.com</a>.</p>
 </div>
+</div>
+<p class="legal__back"><a class="pillbtn" href="index.html">Back to the site <span class="arrow" aria-hidden="true"></span></a></p>
 </main>
 </body>
 </html>

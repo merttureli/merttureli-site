@@ -30,10 +30,11 @@ defined, what to call it, and what is still a literal. Studio (`next/`) has its 
 | Site tokens | `css/tokens.css` | the site's own names (table below) | Yes, new names only |
 | Palettes | `css/site-palette.css` | per-theme ink ramp, alpha steps, accent, depth, smoke, corridor; Original contrast fix | Yes |
 | Depth surfaces | `css/depth.css` `:root` | `--depth-stage-hi/mid/lo`, `--depth-panel-a/b` (palettes retint them) | Yes |
-| Stand-alone pages | `css/photography-lab.css`, `404.html` and `hi/index.html` inline `<style>` | their own small palettes (below) | Yes, in place |
+| Stand-alone pages | `css/photography-lab.css` | its own small palette (below) | Yes, in place |
+| Studio plain pages | `404.html`, `privacy.html`, `hi/index.html` | Studio tokens: `next/css/tokens.css` + `next/css/pages.css` (see [studio.md](studio.md)) | in `next/css/` |
 
 `css/tokens.css` is pulled in by `@import url("tokens.css")` at the top of `css/fonts.css`, because `css/fonts.css`
-is the one stylesheet every page links (home, case studies, websites, privacy, 404, hi, photography lab; the
+is the one stylesheet every site page links (home, case studies, websites, photography lab; the
 src templates reach it through `_ds/.../tokens/fonts.css`). Cost: one small chained request.
 
 ### Which page loads what
@@ -43,11 +44,10 @@ src templates reach it through `_ds/.../tokens/fonts.css`). Cost: one small chai
 | `index.html` (from `src/index.html`) | all | yes | rocket, interaction-polish, website-entry, mobile, depth, site-palette, static-interactions |
 | `projects/*.html` (from `build-case.py`) | all | yes | interaction-polish, mobile, depth, site-palette, static-interactions |
 | `websites.html` | all | yes | interaction-polish, websites, website-studies, site-palette |
-| `privacy.html` | all but motion | yes | none (inline styles) |
 | `photography-lab.html` | none | yes | photography-lab |
-| `404.html`, `hi/index.html` | none | yes | inline `<style>` only |
+| `404.html`, `privacy.html`, `hi/index.html` | none | no | Studio: `next/css/tokens.css`, `next/css/pages.css` |
 
-So a `_ds` token (`--space-*`, `--fs-*`, ...) works in every file above except `photography-lab.css`, 404 and hi.
+So a `_ds` token (`--space-*`, `--fs-*`, ...) works in every file above except `photography-lab.css`. The three Studio plain pages use Studio tokens only.
 A `css/tokens.css` token works everywhere.
 
 ## Safe and scoped tokens
@@ -169,7 +169,6 @@ Custom properties do not work inside `@media`, so these are names for the docs. 
 | wide hero | `min-width: 1600px` | websites | |
 | phone video | `max-width: 720px` | | `js/media-playback.js` |
 | photography | `max-width: 650px` | photography-lab | `js/photography-lab.js`, `js/photography-gallery.js` |
-| small phone | `max-width: 360px` | `hi/index.html` | |
 | pointer | `(hover: hover) and (pointer: fine)`, `(hover: hover)` | depth, rocket, website-entry, website-studies | `js/rocket-flight.js` |
 | motion | `prefers-reduced-motion: reduce` plus `html[data-motion="off"]` | most files | see [motion.md](motion.md) |
 
@@ -178,11 +177,8 @@ Custom properties do not work inside `@media`, so these are names for the docs. 
 | Page | Tokens | Why not shared |
 |---|---|---|
 | `photography-lab.html` (`css/photography-lab.css`) | `--bg` #0a0a0a, `--paper` #eeeae4, `--muted` #a39f99, `--line` #ffffff26, `--accent` #c67650 | its own dark warm look, no `_ds`; same values feed the corridor fallbacks in `js/photography-loader.js` |
-| `404.html` | `--ink` #0A0A0A, `--paper` #FFF, `--p90/p70/p45/p14` paper alphas, `--body/--display/--mono` stacks, `--ease` = `--ease-out` | must render with nothing but `/css/fonts.css`, from any path |
-| `hi/index.html` | `--bg` #1c2520, `--ink` #e4e8dc, `--quiet` #b9c3b3, `--line` #53604f | the business-card page, in the Card green palette values |
 
-Do not reuse these short names (`--bg`, `--ink`, `--line`, `--muted`, `--quiet`, `--p*`) in `css/tokens.css`:
-it loads on those pages too.
+Do not reuse these short names (`--bg`, `--paper`, `--muted`, `--line`) in `css/tokens.css`: it loads on that page too.
 
 ## What was migrated
 
@@ -210,7 +206,7 @@ it loads on those pages too.
 | One-off timings: rocket build `.85s` / `.12s` delay, `.22s` / `.32s` fades, belt 90s, inquiry `.45s` / `.3s`, menu `.22s` | rocket, websites | single uses; motion rules in [motion.md](motion.md) |
 | Phone frame radii 36/29 and 34/27px | website-entry, website-studies | the two frames differ by 2px; unifying them is a visible change |
 | `z-index: 1, 2, 3, -1, 100` | local stacking | local stacking contexts, not page layers |
-| `photography-lab.css`, `404.html`, `hi/index.html` | | stand-alone pages (above); 404 and hi inline styles stay self-contained |
+| `photography-lab.css` | | stand-alone page (above) |
 | `assets/charger-explorer/launcher.css` | home | belongs to the explorer bundle |
 | Inline `style=""` on `index.html`, `projects/*.html` | generated | rendered by the `_ds` components; they already read `_ds` tokens |
 | Fallbacks like `var(--t-hover, .24s)`, `var(--paper-a45, #ffffff73)` | rocket, site-palette | the token always resolves; harmless |

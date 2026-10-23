@@ -7,7 +7,7 @@ One tool makes every web derivative and prints the HTML to paste: `python3 tools
 | Task | Command (add `--dry-run` to see the ffmpeg calls first) |
 |---|---|
 | Studio photo strip (4:5, 420 + 720) | `python3 tools/media.py image SRC --preset gallery --name dunes --out next/assets/img --page next/index.html --alt "Dunes at dusk"` |
-| Studio card image (600 + 1000) | `python3 tools/media.py image SRC --preset card --name balloon --out next/assets/img --page next/index.html --alt "..."` |
+| Studio image (600 + 1000) | `python3 tools/media.py image SRC --preset card --name balloon --out next/assets/img --page next/index.html --alt "..."` |
 | Photography gallery (thumb 512 + view 1280) | `python3 tools/media.py image SRC --preset lightbox --name dunes --out assets/photos/beyond/gallery`, then add `{file:'dunes', title:'...', alt:'...'}` to the list in `js/photography-gallery.js` |
 | Hero poster, landscape + portrait | `... image SRC --preset hero --name hero-land --out next/assets/img` and `... image SRC2 --preset hero-portrait --name hero-port --out next/assets/img`, then `python3 tools/media.py snippet next/assets/img/hero-land.webp --portrait next/assets/img/hero-port.webp --eager --page next/index.html` |
 | Product stills from the live 3D (home tiles, spec sheets, case-page posters) | `python3 tools/stills.py` (`--list`, `--only case`): transparent WebP drawn by `next/js/case-stage.js` into `next/assets/img/stills/`; re-run after an actor or the case-stage framing changes |
@@ -73,5 +73,5 @@ Findings under `studies/` (frozen prototypes) and files no page loads are report
 - ffmpeg's built-in VP9 decoder drops the alpha plane and reports alpha webms as opaque. The tool decodes them with `-c:v libvpx-vp9`. If you run ffmpeg by hand, put `-c:v libvpx-vp9` before `-i`.
 - Outputs newer than the source are skipped. After changing options (crop, widths, trim, quality), add `--force`.
 - A source smaller than the preset makes fewer files, named by their real width. Read the log line `not upscaling to ...`.
-- The tool never edits pages, `content/` or `build-case.py`. Paste the snippet, then run `python3 tools/check.py`.
+- The tool never edits pages, `content/` or `tools/build-studio-cases.py`. Paste the snippet, then run `python3 tools/check.py`.
 - Pages load only the derivatives; sources (PSD, ProRes, PNG frames) do not need to be committed.

@@ -2,7 +2,7 @@
 
 Use this to replace a picture or video that is already on the site. To add new media in a new place, make the derivatives with [media.md](media.md) and paste its snippet.
 
-Which image is "the card image" or "the hero image"? The case page, the home card and the Studio card each have their own: see
+Which image is "the card image" or "the hero image"? The case page and the home tile each have their own: see
 "What the owner's words mean" in [content.md](content.md#what-the-owners-words-mean). Ask which surface when the request does not say.
 
 ## Pick the route
@@ -33,8 +33,8 @@ Which image is "the card image" or "the hero image"? The case page, the home car
    ```sh
    grep -rn --include=*.html --include=*.py --include=*.js --include=*.css --include=*.json "old-name" . | grep -v -e '^./vx/' -e node_modules
    ```
-4. Change each reference in its source (a hit in `index.html` or `projects/` means edit `src/index.html` or `content/projects/<slug>.json`, see [copy.md](copy.md)). In `content/projects/<slug>.json` a frame is `{"src": "assets/photos/...jpg", "alt": "...", "caption": "..."}` (also `hero_image`, bleed `src`): change only `src` unless the owner gave new alt text or caption.
-   Studio cards use each image TWICE in `next/index.html`: the stage `<img data-key="robo">` near the top of the work list and the `<img>` in `<figure class="project__media">` inside `<li data-project="robo">`. Change both; on the list item also update `width`/`height` to the new file's size.
+4. Change each reference in its source (a hit in `index.html`, `websites.html` or `projects/` means edit `next/index.html`, `next/websites.html`, `content/projects/<slug>.json` or `PRESENT` in `tools/build-studio-cases.py`, see [copy.md](copy.md), then `python3 tools/build.py`). In `content/projects/<slug>.json` a frame is `{"src": "assets/photos/...jpg", "alt": "...", "caption": "..."}` (also `hero_image`, bleed `src`): change only `src` unless the owner gave new alt text or caption.
+   A home tile image is in `next/index.html` (update its `width`/`height` to the new file's size); the same file may also be a case page's `img` in `PRESENT`.
 5. Delete the old file with `git rm` only when the grep finds no reference at all. Hits in `studies/` (frozen design prototypes) and `docs/` (the catalog, doc examples) count too: the `links` check covers them and FAILs if the file goes. If only those remain, keep the file. (`vx/` is never touched and does not count.)
 6. `python3 tools/build.py` if you edited a source of a generated page.
 
@@ -61,7 +61,7 @@ Alpha is detected; `--alpha` makes it required, `--mp4-bg white` adds the opaque
 
 ## D. Share images
 
-Crawlers cache share images by URL. Write the new file as the next version, 1200 x 630 PNG: `python3 tools/media.py image <source> --preset og --name case-<slug>-v2 --out assets/og`. Then change `-v1` to `-v2` where the page names it (`src/index.html` for `cover`, the page head for `websites` and `hi`). Case pages share one pattern, `case-%s-v1.png` in the head template in `build-case.py`, so a version bump there needs a `-v2` file for all five cases (or copy the four unchanged ones to `-v2`). See [meta.md](meta.md).
+Crawlers cache share images by URL. Write the new file as the next version, 1200 x 630 PNG: `python3 tools/media.py image <source> --preset og --name case-<slug>-v2 --out assets/og`. Then change `-v1` to `-v2` where the page names it (`LIVE` in `tools/build.py` for `cover` and `websites`, the page head for `hi`). Case pages share one pattern, `case-%s-v1.png` in `case_live()` in `tools/build.py`, so a version bump there needs a `-v2` file for all five cases (or copy the four unchanged ones to `-v2`). See [meta.md](meta.md).
 
 ## Verify
 

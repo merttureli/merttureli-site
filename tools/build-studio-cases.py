@@ -355,6 +355,7 @@ def page(case):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
+<link rel="canonical" href="https://merttureli.com/projects/{slug}.html">
 <script src="../../studies/shared/study.js"></script>
 <title>{esc(title)}</title>
 <meta name="description" content="{esc(strip_tags(case["description"]))}">
@@ -369,7 +370,7 @@ def page(case):
 <a class="skip" href="#main">Skip to content</a>
 
 <header class="top" data-top>
-  <a class="wordmark" href="../index.html" aria-label="Mert Tureli, Studio home"><span class="wordmark__c">&copy;</span> Mert Tureli</a>
+  <a class="wordmark" href="../index.html" aria-label="Mert Tureli, home"><span class="wordmark__c">&copy;</span> Mert Tureli</a>
   <nav class="top__nav" aria-label="Main">
     {top_nav}
   </nav>
@@ -385,7 +386,6 @@ def page(case):
       {menu_nav}
     </nav>
     <div class="menu__foot">
-      <a href="../../assets/Mert-Tureli-Resume.pdf">Resume (PDF)</a>
       <a href="https://linkedin.com/in/merttureli" rel="noopener">LinkedIn</a>
       <a href="mailto:merttureli0@gmail.com">merttureli0@gmail.com</a>
     </div>
@@ -444,12 +444,12 @@ def page(case):
       </span>
       <span class="nextp__media"><img src="{product_img(nxt, "wide") if slug in LIVE else np_["img"]}" alt="" decoding="async" fetchpriority="low"></span>
     </a>
-    <p class="nextp__more"><a class="link" href="../index.html#work">All work</a><a class="link" href="mailto:merttureli0@gmail.com">Get in touch</a><a class="link link--quiet" href="../index.html">Studio home</a></p>
+    <p class="nextp__more"><a class="link" href="../index.html#work">All work</a><a class="link" href="mailto:merttureli0@gmail.com">Get in touch</a><a class="link link--quiet" href="../index.html">Home</a></p>
   </div>
 </section>
 
 <footer class="foot wrap">
-  <div><p class="label">Version</p><p>2026 Studio</p></div>
+  <div><p class="label">Version</p><p>2026</p></div>
   <div><p class="label">Local time</p><p data-clock>Austin</p></div>
   <div><p class="label">Socials</p><p><a class="link" href="https://linkedin.com/in/merttureli" rel="noopener">LinkedIn</a> <a class="link" href="mailto:merttureli0@gmail.com">Email</a> <a class="link" href="../websites.html">Websites</a></p></div>
   <p class="foot__credit">CAD renders from the source assemblies. Hand built, no framework.</p>

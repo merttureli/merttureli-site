@@ -471,7 +471,7 @@ Do: in-page anchors only; `data-magnetic` on each link. Don't: give the bar a ba
       <a href="#contact">Contact</a>
     </nav>
     <div class="menu__foot">
-      <a href="../assets/Mert-Tureli-Resume.pdf">Resume (PDF)</a>
+      <a href="#">Resume (PDF)</a>
       <a href="https://linkedin.com/in/merttureli" rel="noopener">LinkedIn</a>
       <a href="mailto:merttureli0@gmail.com">merttureli0@gmail.com</a>
     </div>
@@ -542,7 +542,7 @@ Do: one per section, two short lines. Don't: more than four words; nest links.
 ```html
 <div class="contact__doors">
   <a class="btn" href="mailto:merttureli0@gmail.com?subject=Engineering" data-magnetic><span>Talk engineering</span></a>
-  <a class="btn btn--ghost" href="../assets/Mert-Tureli-Resume.pdf" data-magnetic><span>Resume (PDF)</span></a>
+  <a class="btn btn--ghost" href="#" data-magnetic><span>Resume (PDF)</span></a>
 </div>
 ```
 

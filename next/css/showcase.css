@@ -90,12 +90,14 @@ a.tile__link:focus-visible .tile__go { transform: rotate(-45deg); background: va
 
 /* -------------------------------------------------------- roles, one line */
 .roles { padding: 0 0 var(--space-70-140); }
-.roles__line { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: var(--tile); border-radius: var(--radius-tile-s); box-shadow: var(--shadow-tile); overflow: hidden; }
+.roles__line { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); background: var(--tile); border-radius: var(--radius-tile-s); box-shadow: var(--shadow-tile); overflow: hidden; }
 .roles__line li { display: flex; flex-direction: column; gap: 6px; padding: clamp(18px, 1.8vw, 26px); }
 .roles__line li + li { border-left: var(--hairline); }
 .roles__line b { font-size: clamp(16px, 1.25vw, 19px); font-weight: 620; letter-spacing: -.015em; line-height: 1.2; }
 .roles__line span:last-child { font-family: var(--serif); font-style: italic; font-weight: 500; font-size: clamp(16px, 1.2vw, 18px); color: var(--ink-soft); line-height: 1.25; }
 .roles .rule h2 { font-weight: 400; }
+/* the current employer's mark: small, cap height, sitting on the baseline (no other role gets one) */
+.roles__logo { display: inline-block; width: auto; height: .86em; margin-right: .3em; vertical-align: baseline; }
 
 /* ------------------------------------------------------------ the album */
 .beyond2 { padding: 0 0 var(--space-80-160); }
@@ -276,8 +278,9 @@ a.tile__link:focus-visible .tile__go { transform: rotate(-45deg); background: va
   .tile--explorer { grid-column: 1 / -1; }
   .tile--web { grid-column: 1 / -1; }
   .roles__line { grid-template-columns: 1fr 1fr; }
-  .roles__line li:nth-child(3) { border-left: 0; }
-  .roles__line li:nth-child(n+3) { border-top: var(--hairline); }
+  .roles__line li:first-child { grid-column: 1 / -1; }
+  .roles__line li:nth-child(even) { border-left: 0; }
+  .roles__line li:nth-child(n+2) { border-top: var(--hairline); }
   .album { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .album__ph--wide, .album__notes { grid-column: 1 / -1; }
   .hl { grid-template-columns: 1fr 1fr; }

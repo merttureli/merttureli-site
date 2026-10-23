@@ -17,8 +17,7 @@ it is local: relative, root-relative, or an absolute https://merttureli.com/ URL
     XML   sitemap.xml <loc>, robots.txt Sitemap:
 
 A target FAILs when it is missing, escapes the repo, or exists but git ignores
-it (it would 404 once deployed). src/ templates are checked from the place they
-are served (src/index.html as /index.html). templates/ and tools/ are skipped.
+it (it would 404 once deployed). templates/ and tools/ are skipped.
 
 To silence a JS literal that is not a path, add "file.js: literal" to
 tools/checks/links-allow.txt.
@@ -55,9 +54,7 @@ JS_COMMENT = re.compile(r"/\*.*?\*/|(?<![:\"'\\])//[^\n]*", re.S)
 
 
 def served_as(rel):
-    """Where a file is served from. src/ templates are rendered at the root."""
-    if rel.startswith("src/"):
-        return rel[len("src/"):]
+    """Where a file is served from (every file is served at its own path)."""
     return rel
 
 
