@@ -1,0 +1,678 @@
+{
+ "format": "cadmesh",
+ "version": 1,
+ "name": "rudder-pedals",
+ "bin": "rudder-pedals.bin",
+ "units": "m",
+ "up": "+y",
+ "generator": "tools/cad.py",
+ "source": {
+  "file": "Full rudder assem COMPLETE.STEP",
+  "unit": "mm",
+  "sha1": "60937bca3b16",
+  "up": "y",
+  "origin": "bottom",
+  "quality": "medium",
+  "deflection_mm": 0.1394,
+  "angle_rad": 0.4
+ },
+ "center": [
+  0.0,
+  0.130551,
+  -0.0
+ ],
+ "scale": 0.1719987,
+ "bounds": [
+  [
+   -0.081092,
+   0.0,
+   -0.171999
+  ],
+  [
+   0.081092,
+   0.261101,
+   0.171999
+  ]
+ ],
+ "triangles": 26794,
+ "bytes": 406058,
+ "parts": [
+  {
+   "name": "wallR",
+   "label": "Right side wall",
+   "cad": [
+    "Rudder side wall R"
+   ],
+   "material": {
+    "key": null,
+    "color": "#393b41",
+    "roughness": 0.5,
+    "metalness": 0.1
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    0.006899,
+    0.125,
+    -0.055001
+   ],
+   "explode": [
+    0.006899,
+    -0.005551,
+    -0.055001
+   ],
+   "triangles": 2200,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": null,
+      "color": "#393b41",
+      "roughness": 0.5,
+      "metalness": 0.1
+     },
+     "triangles": 2200,
+     "pos": [
+      0,
+      2290
+     ],
+     "nrm": 13740,
+     "idx": [
+      20612,
+      6600,
+      16
+     ]
+    }
+   ]
+  },
+  {
+   "name": "wallL",
+   "label": "Left side wall",
+   "cad": [
+    "Rudder side wall"
+   ],
+   "material": {
+    "key": null,
+    "color": "#393b41",
+    "roughness": 0.5,
+    "metalness": 0.1
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    0.006899,
+    0.125,
+    0.054999
+   ],
+   "explode": [
+    0.006899,
+    -0.005551,
+    0.054999
+   ],
+   "triangles": 2200,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": null,
+      "color": "#393b41",
+      "roughness": 0.5,
+      "metalness": 0.1
+     },
+     "triangles": 2200,
+     "pos": [
+      33812,
+      2290
+     ],
+     "nrm": 47552,
+     "idx": [
+      54424,
+      6600,
+      16
+     ]
+    }
+   ]
+  },
+  {
+   "name": "core",
+   "label": "Middle supports",
+   "cad": [
+    "Middle support front",
+    "Middle support back",
+    "instrument ball bearing_68_am_AFBMA 12.1.4.1 - 0080-22 - 8,SI,NC,8_68-1",
+    "formed hex screw_am_B18.2.3.2M - Formed hex screw, M8 x 1.25 x 20 --20WN-5",
+    "formed hex screw_am_B18.2.3.2M - Formed hex screw, M8 x 1.25 x 20 --20WN-6",
+    "socket head cap screw_am_B18.3.1M - 3 x 0.5 x 20 Hex SHCS -- 20CHX-6",
+    "socket head cap screw_am_B18.3.1M - 3 x 0.5 x 20 Hex SHCS -- 20CHX-8"
+   ],
+   "material": {
+    "key": null,
+    "color": "#c4c8ce",
+    "roughness": 0.5,
+    "metalness": 0.1
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    0.001171,
+    0.118176,
+    -0.0
+   ],
+   "explode": [
+    0.001171,
+    -0.012375,
+    -0.0
+   ],
+   "triangles": 1708,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": null,
+      "color": "#c4c8ce",
+      "roughness": 0.5,
+      "metalness": 0.1
+     },
+     "triangles": 212,
+     "pos": [
+      67624,
+      276
+     ],
+     "nrm": 69280,
+     "idx": [
+      70108,
+      636,
+      16
+     ]
+    },
+    {
+     "sub": null,
+     "material": {
+      "key": "steel",
+      "color": "#bfc3c8",
+      "roughness": 0.34,
+      "metalness": 0.9
+     },
+     "triangles": 592,
+     "pos": [
+      71380,
+      536
+     ],
+     "nrm": 74596,
+     "idx": [
+      76204,
+      1776,
+      16
+     ]
+    },
+    {
+     "sub": null,
+     "material": {
+      "key": "darkMetal",
+      "color": "#2c2e33",
+      "roughness": 0.5,
+      "metalness": 0.6
+     },
+     "triangles": 904,
+     "pos": [
+      79756,
+      1084
+     ],
+     "nrm": 86260,
+     "idx": [
+      89512,
+      2712,
+      16
+     ]
+    }
+   ]
+  },
+  {
+   "name": "rocker",
+   "label": "Sensor lever",
+   "cad": [
+    "Sensor lever",
+    "formed hex screw_am_B18.2.3.2M - Formed hex screw, M8 x 1.25 x 35 --22WN-1",
+    "instrument ball bearing_68_am_AFBMA 12.1.4.1 - 0080-22 - 8,SI,NC,8_68-4",
+    "instrument ball bearing_68_am_AFBMA 12.1.4.1 - 0080-22 - 8,SI,NC,8_68-5",
+    "hex nut style 1_am_B18.2.4.1M - Hex nut, Style 1,  M8 x 1.25 --D-N",
+    "formed hex screw_am_B18.2.3.2M - Formed hex screw, M8 x 1.25 x 20 --20WN-1",
+    "formed hex screw_am_B18.2.3.2M - Formed hex screw, M8 x 1.25 x 20 --20WN-2",
+    "Center magnet holder"
+   ],
+   "material": {
+    "key": null,
+    "color": "#c4c8ce",
+    "roughness": 0.5,
+    "metalness": 0.1
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    -0.047842,
+    0.103176,
+    -1e-06
+   ],
+   "explode": [
+    -0.047842,
+    -0.027375,
+    -1e-06
+   ],
+   "triangles": 3620,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": null,
+      "color": "#c4c8ce",
+      "roughness": 0.5,
+      "metalness": 0.1
+     },
+     "triangles": 1604,
+     "pos": [
+      94936,
+      1716
+     ],
+     "nrm": 105232,
+     "idx": [
+      110380,
+      4812,
+      16
+     ]
+    },
+    {
+     "sub": null,
+     "material": {
+      "key": "darkMetal",
+      "color": "#2c2e33",
+      "roughness": 0.5,
+      "metalness": 0.6
+     },
+     "triangles": 832,
+     "pos": [
+      120004,
+      1052
+     ],
+     "nrm": 126316,
+     "idx": [
+      129472,
+      2496,
+      16
+     ]
+    },
+    {
+     "sub": null,
+     "material": {
+      "key": "steel",
+      "color": "#bfc3c8",
+      "roughness": 0.34,
+      "metalness": 0.9
+     },
+     "triangles": 1184,
+     "pos": [
+      134464,
+      1072
+     ],
+     "nrm": 140896,
+     "idx": [
+      144112,
+      3552,
+      16
+     ]
+    }
+   ]
+  },
+  {
+   "name": "rodR",
+   "label": "Right link rod",
+   "cad": [
+    "alignment rod-2"
+   ],
+   "material": {
+    "key": "steel",
+    "color": "#bfc3c8",
+    "roughness": 0.34,
+    "metalness": 0.9
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    -0.064691,
+    0.165087,
+    -0.069787
+   ],
+   "explode": [
+    -0.064691,
+    0.034537,
+    -0.069787
+   ],
+   "triangles": 1026,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": "steel",
+      "color": "#bfc3c8",
+      "roughness": 0.34,
+      "metalness": 0.9
+     },
+     "triangles": 1026,
+     "pos": [
+      151216,
+      923
+     ],
+     "nrm": 156756,
+     "idx": [
+      159528,
+      3078,
+      16
+     ]
+    }
+   ]
+  },
+  {
+   "name": "rodL",
+   "label": "Left link rod",
+   "cad": [
+    "alignment rod-1"
+   ],
+   "material": {
+    "key": "steel",
+    "color": "#bfc3c8",
+    "roughness": 0.34,
+    "metalness": 0.9
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    -0.064915,
+    0.176025,
+    0.069785
+   ],
+   "explode": [
+    -0.064915,
+    0.045474,
+    0.069785
+   ],
+   "triangles": 1026,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": "steel",
+      "color": "#bfc3c8",
+      "roughness": 0.34,
+      "metalness": 0.9
+     },
+     "triangles": 1026,
+     "pos": [
+      165684,
+      923
+     ],
+     "nrm": 171224,
+     "idx": [
+      173996,
+      3078,
+      16
+     ]
+    }
+   ]
+  },
+  {
+   "name": "leverR",
+   "label": "Right pedal",
+   "cad": [
+    "LEVER ARM",
+    "instrument ball bearing_68_am_AFBMA 12.1.4.1 - 0080-22 - 8,SI,NC,8_68-2",
+    "instrument ball bearing_68_am_AFBMA 12.1.4.1 - 0080-22 - 8,SI,NC,8_68-6",
+    "formed hex screw_am_B18.2.3.2M - Formed hex screw, M8 x 1.25 x 35 --22WN-3",
+    "formed hex screw_am_B18.2.3.2M - Formed hex screw, M8 x 1.25 x 35 --22WN-4",
+    "formed hex screw_am_B18.2.3.2M - Formed hex screw, M8 x 1.25 x 20 --20WN-4",
+    "socket head cap screw_am_B18.3.1M - 3 x 0.5 x 20 Hex SHCS -- 20CHX-2",
+    "socket head cap screw_am_B18.3.1M - 3 x 0.5 x 20 Hex SHCS -- 20CHX-3",
+    "Pedal RIGHT (mirrored)",
+    "instrument ball bearing_68_am_AFBMA 12.1.4.1 - 0080-22 - 8,SI,NC,8_68-9",
+    "socket head cap screw_am_B18.3.1M - 3 x 0.5 x 20 Hex SHCS -- 20CHX-7"
+   ],
+   "material": {
+    "key": null,
+    "color": "#c4c8ce",
+    "roughness": 0.5,
+    "metalness": 0.1
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    0.001435,
+    0.177359,
+    -0.108762
+   ],
+   "explode": [
+    0.001435,
+    0.046809,
+    -0.108762
+   ],
+   "triangles": 7505,
+   "subs": {
+    "pedalR": [
+     0.030779,
+     0.150233,
+     -0.116999
+    ]
+   },
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": null,
+      "color": "#c4c8ce",
+      "roughness": 0.5,
+      "metalness": 0.1
+     },
+     "triangles": 2608,
+     "pos": [
+      180152,
+      2668
+     ],
+     "nrm": 196160,
+     "idx": [
+      204164,
+      7824,
+      16
+     ]
+    },
+    {
+     "sub": null,
+     "material": {
+      "key": "steel",
+      "color": "#bfc3c8",
+      "roughness": 0.34,
+      "metalness": 0.9
+     },
+     "triangles": 1776,
+     "pos": [
+      219812,
+      1608
+     ],
+     "nrm": 229460,
+     "idx": [
+      234284,
+      5328,
+      16
+     ]
+    },
+    {
+     "sub": null,
+     "material": {
+      "key": "darkMetal",
+      "color": "#2c2e33",
+      "roughness": 0.5,
+      "metalness": 0.6
+     },
+     "triangles": 1356,
+     "pos": [
+      244940,
+      1626
+     ],
+     "nrm": 254696,
+     "idx": [
+      259576,
+      4068,
+      16
+     ]
+    },
+    {
+     "sub": "pedalR",
+     "material": {
+      "key": null,
+      "color": "#e59f5c",
+      "roughness": 0.5,
+      "metalness": 0.1
+     },
+     "triangles": 1765,
+     "pos": [
+      267712,
+      1630
+     ],
+     "nrm": 277492,
+     "idx": [
+      282384,
+      5295,
+      16
+     ]
+    }
+   ]
+  },
+  {
+   "name": "leverL",
+   "label": "Left pedal",
+   "cad": [
+    "LEVER ARM L",
+    "instrument ball bearing_68_am_AFBMA 12.1.4.1 - 0080-22 - 8,SI,NC,8_68-3",
+    "formed hex screw_am_B18.2.3.2M - Formed hex screw, M8 x 1.25 x 35 --22WN-2",
+    "formed hex screw_am_B18.2.3.2M - Formed hex screw, M8 x 1.25 x 20 --20WN-3",
+    "Pedal left and right print",
+    "instrument ball bearing_68_am_AFBMA 12.1.4.1 - 0080-22 - 8,SI,NC,8_68-7",
+    "instrument ball bearing_68_am_AFBMA 12.1.4.1 - 0080-22 - 8,SI,NC,8_68-8",
+    "formed hex screw_am_B18.2.3.2M - Formed hex screw, M8 x 1.25 x 35 --22WN-5",
+    "socket head cap screw_am_B18.3.1M - 3 x 0.5 x 20 Hex SHCS -- 20CHX-1",
+    "socket head cap screw_am_B18.3.1M - 3 x 0.5 x 20 Hex SHCS -- 20CHX-4",
+    "socket head cap screw_am_B18.3.1M - 3 x 0.5 x 20 Hex SHCS -- 20CHX-5"
+   ],
+   "material": {
+    "key": null,
+    "color": "#c4c8ce",
+    "roughness": 0.5,
+    "metalness": 0.1
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    -0.002016,
+    0.178733,
+    0.109409
+   ],
+   "explode": [
+    -0.002016,
+    0.048182,
+    0.109409
+   ],
+   "triangles": 7509,
+   "subs": {
+    "pedalL": [
+     0.023652,
+     0.153106,
+     0.116999
+    ]
+   },
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": null,
+      "color": "#c4c8ce",
+      "roughness": 0.5,
+      "metalness": 0.1
+     },
+     "triangles": 2612,
+     "pos": [
+      292976,
+      2694
+     ],
+     "nrm": 309140,
+     "idx": [
+      317224,
+      7836,
+      16
+     ]
+    },
+    {
+     "sub": null,
+     "material": {
+      "key": "steel",
+      "color": "#bfc3c8",
+      "roughness": 0.34,
+      "metalness": 0.9
+     },
+     "triangles": 1776,
+     "pos": [
+      332896,
+      1608
+     ],
+     "nrm": 342544,
+     "idx": [
+      347368,
+      5328,
+      16
+     ]
+    },
+    {
+     "sub": null,
+     "material": {
+      "key": "darkMetal",
+      "color": "#2c2e33",
+      "roughness": 0.5,
+      "metalness": 0.6
+     },
+     "triangles": 1356,
+     "pos": [
+      358024,
+      1626
+     ],
+     "nrm": 367780,
+     "idx": [
+      372660,
+      4068,
+      16
+     ]
+    },
+    {
+     "sub": "pedalL",
+     "material": {
+      "key": null,
+      "color": "#e59f5c",
+      "roughness": 0.5,
+      "metalness": 0.1
+     },
+     "triangles": 1765,
+     "pos": [
+      380796,
+      1630
+     ],
+     "nrm": 390576,
+     "idx": [
+      395468,
+      5295,
+      16
+     ]
+    }
+   ]
+  }
+ ]
+}

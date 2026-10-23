@@ -1,0 +1,52 @@
+{
+ "_doc": "Robo-Catcher: the owner's render mesh (catcher_mesh.npz, 84 parts, mm, +Y up, +Z = front, the side the pitcher stands) -> next/assets/3d/robo-catcher.json/.bin. Run: $CAD_VENV/bin/python tools/cad/npz_to_cadmesh.py --map tools/cad/maps/robo-catcher.npz.json --npz <scratchpad>/cad-src/robo/catcher_mesh.npz. Parts are grouped by motion (indexer, flywheels, idler gears turn on their own axles; the rest is grouped for the fly-in) and meshes by the owner's material groups from catcher_scene.py material_for(): colors are his linear values converted to sRGB, metalness his, roughness clamped to satin (his steel .18 and black .28 were glossy). tris = decimation target per source part. The net and the cage's wire panels become line sets (1 px lines, as in his render). The Softball is skipped: the actor draws its own optic-yellow ball.",
+ "name": "robo-catcher",
+ "out": "next/assets/3d",
+ "unit_mm": 1.0,
+ "origin": "bottom",
+ "weld_mm": 0.01,
+ "crease_deg": 34,
+ "key_prefix": "robo:",
+ "materials": {
+  "accent":  {"color": "#d39a62", "roughness": 0.55, "metalness": 0.15, "from": "catcher_scene.py accent (0.72, 0.27, 0.05) linear: flywheels, thrower plates"},
+  "accent2": {"color": "#c6a865", "roughness": 0.58, "metalness": 0.15, "from": "catcher_scene.py accent2 (0.55, 0.34, 0.08): indexer, feed"},
+  "frame":   {"color": "#7c8189", "roughness": 0.62, "metalness": 0.30, "from": "catcher_scene.py frame (0.20, 0.22, 0.25): tube frame, panels"},
+  "sheet":   {"color": "#696c73", "roughness": 0.70, "metalness": 0.22, "from": "catcher_scene.py sheet (0.14, 0.15, 0.17): sheet metal, chutes"},
+  "net":     {"color": "#8b939e", "roughness": 0.85, "metalness": 0.10, "from": "catcher_scene.py net (0.26, 0.29, 0.34): netting"},
+  "steel":   {"color": "#bfc4ca", "roughness": 0.38, "metalness": 0.85, "from": "catcher_scene.py steel (0.52, 0.55, 0.59), roughness .18 -> .38"},
+  "black":   {"color": "#555559", "roughness": 0.45, "metalness": 0.50, "from": "catcher_scene.py black (0.09, 0.09, 0.10), roughness .28 -> .45, metal .7 -> .5"}
+ },
+ "skip": ["Softball"],
+ "order": ["bed", "groundRamps", "backstop", "cage", "indexer", "tube", "throwerBase", "throwerPlates", "flywheelBottom", "flywheelTop", "idlers"],
+ "lines": [
+  {"name": "net", "part": "backstop", "match": "net_sheets", "material": "net", "gap_mm": 10},
+  {"name": "feed", "part": "cage", "match": ["net feed", "net feed (top)"], "material": "accent2", "gap_mm": 10}
+ ],
+ "parts": [
+  {"name": "groundRamps", "label": "Ground ball ramps", "match": "GBRamp_frame", "material": "frame", "explode_mm": [0, 0, 260]},
+  {"name": "bed", "label": "Catch bed and ramps", "match": ["MAIN", "frontwall_frame", "backwall_frame", "Ramp_frame", "ShortRamp_frame", "OtherRamp_frame", "Rail", "Rod1"], "material": "frame", "explode_mm": [0, -40, 0], "note": "Rail (sheet) and Rod1 (steel) are under the bed: merged into frame"},
+  {"name": "backstop", "label": "Backstop poles and net", "match": "Pole_frame", "material": "frame", "explode_mm": [0, 120, -260]},
+  {"name": "cage", "label": "Feeder cage", "match": ["vertical tubing (frame)", "horizontal tube (frame)", "side tubing (frame)", "entrance side ramp", "exit side ramp"], "material": "frame", "explode_mm": [0, 260, 120]},
+  {"name": "cage", "match": ["Perforated Panel*"], "material": "accent2"},
+  {"name": "cage", "match": ["Motor DM6"], "material": "black"},
+  {"name": "indexer", "label": "Rotating dual chamber", "match": ["Newest Chamber entrance plate", "shaft DM6"], "material": "frame", "tris": 520, "pivot_mm": [273.912, 816.408, 1141.89], "explode_mm": [0, 720, 220]},
+  {"name": "indexer", "match": ["Newest Chamber exit plate", "more sloped tunnel"], "material": "accent2", "tris": 560},
+  {"name": "tube", "label": "Transfer elbow", "match": "Tube", "material": "frame", "tris": 1300, "explode_mm": [40, 330, 220]},
+  {"name": "throwerBase", "label": "Thrower base", "match": ["SheetMetal Base"], "material": "frame", "tris": 900, "explode_mm": [0, -60, 0]},
+  {"name": "throwerBase", "match": ["6103K72*", "motor"], "material": "black", "tris": 220},
+  {"name": "throwerBase", "match": ["99086A347*", "95462A029*"], "material": "steel", "tris": 110},
+  {"name": "throwerPlates", "label": "Thrower plates", "match": ["Thrower Plate"], "material": "accent", "tris": 640, "explode_mm": [140, 280, 40]},
+  {"name": "throwerPlates", "match": ["SheetMetal Top"], "material": "frame", "tris": 600},
+  {"name": "throwerPlates", "match": ["grainger-1zge3"], "material": "steel", "tris": 150, "drop_inner": true, "note": "flange bearings: balls and inner races left out"},
+  {"name": "flywheelTop", "label": "Upper flywheel", "ids": [18], "material": "accent", "tris": 900, "pivot_mm": [597.547, 1034.669, 1397.01], "explode_mm": [0, 440, 320]},
+  {"name": "flywheelTop", "ids": [16, 20], "material": "steel", "tris": 560},
+  {"name": "flywheelTop", "ids": [25, 26, 27], "material": "steel", "tris": 96, "drop_inner": true},
+  {"name": "flywheelBottom", "label": "Lower flywheel", "ids": [17], "material": "accent", "tris": 900, "pivot_mm": [597.547, 799.719, 1397.01], "explode_mm": [0, 140, 320]},
+  {"name": "flywheelBottom", "ids": [15, 19], "material": "steel", "tris": 560},
+  {"name": "flywheelBottom", "ids": [24, 31, 32], "material": "steel", "tris": 96, "drop_inner": true},
+  {"name": "idlers", "label": "Idler gears", "ids": [21, 42], "sub": "idlerA", "sub_pivot_mm": [650.989, 883.684, 1426.216], "material": "steel", "tris": 560, "explode_mm": [220, 360, 180]},
+  {"name": "idlers", "ids": [30, 33], "sub": "idlerA", "sub_pivot_mm": [650.989, 883.684, 1426.216], "material": "steel", "tris": 96, "drop_inner": true},
+  {"name": "idlers", "ids": [22, 41], "sub": "idlerB", "sub_pivot_mm": [650.989, 950.703, 1367.805], "material": "steel", "tris": 560},
+  {"name": "idlers", "ids": [28, 29], "sub": "idlerB", "sub_pivot_mm": [650.989, 950.703, 1367.805], "material": "steel", "tris": 96, "drop_inner": true}
+ ]
+}

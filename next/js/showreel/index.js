@@ -352,6 +352,7 @@ async function createThermaShift(ctx) {
 }
 
 registerProject({ key: 'therma-shift', word: 'Therma-Shift', actor: createThermaShift });
+registerProject({ key: 'robo-catcher', word: 'Robo-Catcher', actor: ctx => import('./robo-catcher.js').then(m => m.createActor(ctx)) });
 // More guests: `python3 tools/new.py actor <key> --register` adds one
 // registerProject(...) line just above this comment (docs/recipes/showreel-actor.md).
 

@@ -1,0 +1,208 @@
+{
+  "_doc": "Rudder pedals (owner's 'Full rudder assem COMPLETE.STEP', 41 parts, Y up, mm). Parts are grouped by what moves together: each lever arm swings on its top pivot bolt and carries its pedal (sub, turns on the hinge bolt at the lever's foot for the toe brake), its rear rod-end bolt and its screws; the rods link the lever rears to the sensor lever (rocker, turns about x on the center bolt, carries the magnet holder). Walls and middle supports never move. Colors follow the owner's mechanism render (assets/motion/rudder-pedals-mechanism.mp4): charcoal side walls, light grey printed levers and supports, orange pedals; the actor sets roughness per color. Instance suffixes (-1..-9) were matched to positions with tools/cad.py inspect --json. The STEP stays in the scratchpad (not published).",
+  "name": "rudder-pedals",
+  "out": "next/assets/3d/",
+  "formats": [
+    "cadmesh"
+  ],
+  "up": "y",
+  "origin": "bottom",
+  "quality": "medium",
+  "unmatched": "keep",
+  "order": [
+    "wallR",
+    "wallL",
+    "core",
+    "rocker",
+    "rodR",
+    "rodL",
+    "leverR",
+    "leverL"
+  ],
+  "parts": [
+    {
+      "match": "Pedal RIGHT*",
+      "name": "leverR",
+      "sub": "pedalR",
+      "color": "#e59f5c",
+      "label": "Right pedal",
+      "deflection": 0.25,
+      "angle": 0.5
+    },
+    {
+      "match": "Pedal left and right print",
+      "name": "leverL",
+      "sub": "pedalL",
+      "color": "#e59f5c",
+      "label": "Left pedal",
+      "deflection": 0.25,
+      "angle": 0.5
+    },
+    {
+      "match": "LEVER ARM",
+      "name": "leverR",
+      "label": "Right lever arm",
+      "color": "#c4c8ce",
+      "deflection": 0.25,
+      "angle": 0.5
+    },
+    {
+      "match": [
+        "*8_68-2",
+        "*8_68-6",
+        "*8_68-9"
+      ],
+      "name": "leverR",
+      "material": "steel",
+      "note": "top pivot, rear rod end, pedal hinge bearings",
+      "deflection": 1.0,
+      "angle": 1.5
+    },
+    {
+      "match": [
+        "*35 --22WN-3",
+        "*35 --22WN-4",
+        "*20 --20WN-4",
+        "*20CHX-2",
+        "*20CHX-3",
+        "*20CHX-7"
+      ],
+      "name": "leverR",
+      "material": "darkMetal",
+      "note": "pivot, hinge, rod-end bolts and lever screws",
+      "deflection": 1.0,
+      "angle": 1.5
+    },
+    {
+      "match": "LEVER ARM L",
+      "name": "leverL",
+      "label": "Left lever arm",
+      "color": "#c4c8ce",
+      "deflection": 0.25,
+      "angle": 0.5
+    },
+    {
+      "match": [
+        "*8_68-3",
+        "*8_68-7",
+        "*8_68-8"
+      ],
+      "name": "leverL",
+      "material": "steel",
+      "deflection": 1.0,
+      "angle": 1.5
+    },
+    {
+      "match": [
+        "*35 --22WN-2",
+        "*35 --22WN-5",
+        "*20 --20WN-3",
+        "*20CHX-1",
+        "*20CHX-4",
+        "*20CHX-5"
+      ],
+      "name": "leverL",
+      "material": "darkMetal",
+      "deflection": 1.0,
+      "angle": 1.5
+    },
+    {
+      "match": "alignment rod-2",
+      "name": "rodR",
+      "label": "Right link rod",
+      "material": "steel",
+      "deflection": 0.6,
+      "angle": 1.0
+    },
+    {
+      "match": "alignment rod-1",
+      "name": "rodL",
+      "label": "Left link rod",
+      "material": "steel",
+      "deflection": 0.6,
+      "angle": 1.0
+    },
+    {
+      "match": [
+        "Sensor lever",
+        "Center magnet holder"
+      ],
+      "name": "rocker",
+      "label": "Sensor lever",
+      "color": "#c4c8ce",
+      "deflection": 0.25,
+      "angle": 0.5
+    },
+    {
+      "match": [
+        "*8_68-4",
+        "*8_68-5"
+      ],
+      "name": "rocker",
+      "material": "steel",
+      "note": "rod-end bearings at the rocker tips",
+      "deflection": 1.0,
+      "angle": 1.5
+    },
+    {
+      "match": [
+        "*35 --22WN-1",
+        "hex nut*",
+        "*20 --20WN-1",
+        "*20 --20WN-2"
+      ],
+      "name": "rocker",
+      "material": "darkMetal",
+      "note": "center bolt and nut, rod-end bolts",
+      "deflection": 1.0,
+      "angle": 1.5
+    },
+    {
+      "match": [
+        "Middle support front",
+        "Middle support back"
+      ],
+      "name": "core",
+      "label": "Middle supports",
+      "color": "#c4c8ce",
+      "deflection": 0.25,
+      "angle": 0.5
+    },
+    {
+      "match": "*8_68-1",
+      "name": "core",
+      "material": "steel",
+      "note": "rocker pivot bearing",
+      "deflection": 1.0,
+      "angle": 1.5
+    },
+    {
+      "match": [
+        "*20 --20WN-5",
+        "*20 --20WN-6",
+        "*20CHX-6",
+        "*20CHX-8"
+      ],
+      "name": "core",
+      "material": "darkMetal",
+      "deflection": 1.0,
+      "angle": 1.5
+    },
+    {
+      "match": "Rudder side wall R",
+      "name": "wallR",
+      "label": "Right side wall",
+      "color": "#393b41",
+      "deflection": 0.25,
+      "angle": 0.5
+    },
+    {
+      "match": "Rudder side wall",
+      "name": "wallL",
+      "label": "Left side wall",
+      "color": "#393b41",
+      "deflection": 0.25,
+      "angle": 0.5
+    }
+  ]
+}
