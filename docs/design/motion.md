@@ -193,7 +193,7 @@ from `tools/build-studio-cases.py`) and on 404, privacy and hi. `nav.js` loads i
 | Opt-in | `<style>@view-transition{navigation:auto}html{background:#e7e8ea}</style>` first in each `<head>`: Chrome decides at the new page's first render, which can come before a linked stylesheet (the transition was skipped about half the time), and the inline background matches the first screen so nothing flashes |
 | Page crossfade | `::view-transition-old/new(root)`, `--dur-400` linear; the grey paper eases instead of snapping |
 | Shared photo | `nav.js` names the clicked album photo (home) and `.bhero__photo img` (beyond) `nav-photo`, with the caption pill as `nav-cap`; the group moves over `--dur-700 --ease` |
-| Shared case media | the clicked `.tile__media` or `.nextp__media` and the case `.stage__media` are `nav-media` |
+| Shared case media | the clicked `.tile__media` or `.nextp__media` and the first case `.stage__media` or `.stage__live` (live 3D stage) are `nav-media` |
 | Back / Forward | only the link we left from, and only when its image has loaded; else the plain crossfade |
 | Entrance | `html.nav-enter` on a fresh navigation: the first block of `<main>` rises (`--dur-1100`); dropped when a picture is shared; also the whole effect where view transitions are missing |
 | Land at the top | a fresh navigation (Navigation Timing `navigate`) goes to the top, or to the `#hash` target; `back_forward` and `reload` keep the browser's restore. Inside a frame whose host page scrolls (a preview can size its frame to the page, and the host keeps its own scroll across our navigations) `scrollIntoView` brings the frame's top into view |

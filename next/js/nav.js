@@ -56,7 +56,8 @@
 
   /* 2. shared media */
   if (reduced || !('onpagereveal' in window)) return;
-  const HERO = '.bhero__photo img, .stage__media';
+  // the case hero: .stage__media (clip or still) or .stage__live (live 3D stage, case-stage.js); the first one on the page
+  const HERO = '.bhero__photo img, .stage__media, .stage__live';
   const MEDIA = '.tile__media, .nextp__media, img';
   const page = u => { const x = new URL(u, location.href); return x.origin + x.pathname.replace(/index\.html$/, ''); };
   const nameFor = u => (/\/beyond\.html$/.test(new URL(u, location.href).pathname) ? 'nav-photo' : 'nav-media');
