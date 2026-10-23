@@ -1,3 +1,20 @@
 User-agent: *
 Allow: /
+Disallow: /cards/
+Disallow: /src/
+Disallow: /tools/
+Disallow: /photography-gallery.html
+# Design studies duplicate the portfolio content.
+Disallow: /studies/
+Disallow: /next/
+# Repo tooling and docs, not site pages (.nojekyll makes Pages serve dot folders).
+Disallow: /docs/
+Disallow: /templates/
+Disallow: /content/
+Disallow: /.claude/
+# Keep the design-system notes out of the index, but leave its CSS, fonts and
+# JS crawlable: every page renders from /_ds/ and Googlebot needs it to see them.
+Disallow: /_ds/*.md$
+Disallow: /_ds/*.json$
+
 Sitemap: https://merttureli.com/sitemap.xml

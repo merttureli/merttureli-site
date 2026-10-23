@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>CAD view: __MODEL__</title>
+<style>
+  :root { --paper: #e7e8ea; --ink: #121315; --soft: #5b5f66; --rule: rgba(18, 19, 21, .14); }
+  html, body { margin: 0; height: 100%; background: var(--paper); color: var(--ink); font: 12px/1.45 ui-monospace, Menlo, monospace; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+  aside { position: fixed; top: 16px; left: 16px; width: 280px; max-height: calc(100% - 32px); overflow: auto; background: rgba(231, 232, 234, .86);
+          backdrop-filter: blur(6px); border: 1px solid var(--rule); padding: 12px 14px; box-sizing: border-box; }
+  h1 { font-size: 13px; margin: 0 0 2px; }
+  p { margin: 0 0 10px; color: var(--soft); }
+  label { display: flex; gap: 8px; align-items: center; margin: 6px 0; }
+  input[type=range] { flex: 1; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  td { padding: 3px 0; border-top: 1px solid var(--rule); vertical-align: top; }
+  td + td { text-align: right; color: var(--soft); }
+  tr:hover td { background: rgba(18, 19, 21, .06); }
+  .sw { display: inline-block; width: 9px; height: 9px; margin-right: 6px; border: 1px solid var(--rule); vertical-align: -1px; }
+  .cad { color: var(--soft); font-size: 11px; }
+  #err { color: #a8231b; }
+  body.shot aside { display: none; }
+  @media (max-width: 600px) { aside { width: auto; right: 16px; max-height: 40%; } }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<aside>
+  <h1>__MODEL__</h1>
+  <p id="stats">loading...</p>
+  <label>explode <input id="ex" type="range" min="0" max="1" step="0.01" value="0"></label>
+  <label><input id="spin" type="checkbox"> turn</label>
+  <table id="parts"></table>
+  <p id="err"></p>
+</aside>
+<script type="module">
+// Lit by the real showreel rig (engine.js: hemisphere, key, fill, rim, studio environment via adopt()).
+import { createEngine } from './view/showreel/engine.js';
+import { loadCadMesh } from './view/cadmesh.js';
+import * as THREE from './view/three.module.min.js';
+const $ = id => document.getElementById(id);
+const engine = createEngine({ canvas: $('c'), preserve: true, pixelRatio: Math.min(devicePixelRatio || 1, 2) });
+const { scene, camera } = engine;
+let model;
+try { model = await loadCadMesh(THREE, '__MODEL__.json'); }
+catch (e) { $('err').textContent = String(e); $('stats').textContent = ''; throw e; }
+const pivot = new THREE.Group();
+scene.add(pivot); pivot.add(model.group);
+engine.adopt(model.group);
+const sphere = new THREE.Box3().setFromObject(model.group).getBoundingSphere(new THREE.Sphere());
+model.group.position.sub(sphere.center);
+camera.near = sphere.radius / 50; camera.far = sphere.radius * 40;
+const fit = sphere.radius / Math.sin(THREE.MathUtils.degToRad(camera.fov / 2)) * 1.08;
+let yaw = .62, pitch = .32, dist = fit;
+function place() {
+  camera.position.set(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)).multiplyScalar(dist);
+  camera.lookAt(0, 0, 0); camera.updateProjectionMatrix();
+}
+function size() { engine.size(innerWidth, innerHeight); place(); }
+addEventListener('resize', () => { size(); draw(); });
+let drag = null;
+$('c').addEventListener('pointerdown', e => { drag = [e.clientX, e.clientY, yaw, pitch]; $('c').setPointerCapture(e.pointerId); });
+$('c').addEventListener('pointermove', e => {
+  if (!drag) return;
+  yaw = drag[2] - (e.clientX - drag[0]) * .008; pitch = Math.max(-1.4, Math.min(1.4, drag[3] + (e.clientY - drag[1]) * .008)); place(); draw();
+});
+$('c').addEventListener('pointerup', () => { drag = null; });
+$('c').addEventListener('wheel', e => { e.preventDefault(); dist *= Math.exp(e.deltaY * .001); place(); draw(); }, { passive: false });
+$('ex').addEventListener('input', () => { model.setProgress(1 - +$('ex').value); draw(); });
+$('spin').addEventListener('change', () => { if ($('spin').checked) loop(); });
+function loop() { if (!$('spin').checked) return; yaw += .006; place(); draw(); requestAnimationFrame(loop); }
+function draw() { engine.render(); }
+
+// part list: name (showreel getParts name), CAD names, triangles; hover tints the part
+const meta = model.meta;
+$('stats').textContent = `${meta.parts.length} parts, ${meta.triangles.toLocaleString()} triangles, ${(meta.bytes / 1024).toFixed(0)} KB bin, ` +
+  `${Object.keys(model.materials).length} materials. Source ${meta.source.file} (${meta.source.unit}).`;
+for (const p of meta.parts) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td><span class="sw" style="background:${p.material.color}"></span>${p.name}<div class="cad">${p.label} &middot; ${p.cad.join(', ')}${Object.keys(p.subs || {}).length ? ' &middot; subs: ' + Object.keys(p.subs).join(', ') : ''}</div></td><td>${p.triangles}</td>`;
+  const meshes = []; model.parts[p.name].traverse(o => { if (o.isMesh) meshes.push(o); });
+  const hot = new THREE.MeshStandardMaterial({ color: p.material.color, emissive: 0xff7a2e, emissiveIntensity: .45, roughness: .5, side: THREE.DoubleSide });
+  tr.onmouseenter = () => { for (const m of meshes) { m.userData.mat = m.material; m.material = hot; } draw(); };
+  tr.onmouseleave = () => { for (const m of meshes) m.material = m.userData.mat; draw(); };
+  $('parts').append(tr);
+}
+size(); model.setProgress(1); draw();
+// hooks for `python3 tools/cad.py shot`
+window.__cad = {
+  ready: true, meta,
+  set(o) { if ('explode' in o) { model.setProgress(1 - o.explode); $('ex').value = o.explode; } if ('yaw' in o) yaw = o.yaw; if ('pitch' in o) pitch = o.pitch; if ('zoom' in o) dist = fit * o.zoom; place(); draw(); },
+  shotMode(on) { document.body.classList.toggle('shot', on); },
+};
+</script>
+</body>
+</html>

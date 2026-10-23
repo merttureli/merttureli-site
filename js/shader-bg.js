@@ -38,6 +38,29 @@
     0.918, 0.976, 1.000
   ];
   var COLOR_COUNT = 4.0;
+
+  // The blue above belongs to the Original palette. The other palettes in
+  // css/site-palette.css publish their own four stops as --smoke-0..3 on
+  // <html>; when those are present the shader uses them instead.
+  function themeColors() {
+    var cs = getComputedStyle(document.documentElement);
+    var out = [];
+    for (var i = 0; i < 4; i++) {
+      var m = /^#([0-9a-f]{6})$/i.exec(cs.getPropertyValue("--smoke-" + i).trim());
+      if (!m) return COLORS;
+      var n = parseInt(m[1], 16);
+      out.push(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
+    }
+    for (var j = 4; j < 8; j++) out.push(out[9], out[10], out[11]);
+    return out;
+  }
+
+  // Motion follows the site's Display setting (js/site-palette.js), which
+  // itself defaults to prefers-reduced-motion. Without it, the media query.
+  function motionOff(mq) {
+    var d = window.PortfolioDisplay;
+    return d && d.motion ? !d.motion() : mq.matches;
+  }
   var TIME_SCALE = 0.97;
 
   var SHAPE     = [1.72, 0.60, 0.50, 0.00];   // scale, intensity, paramA, warp
@@ -58,11 +81,12 @@
   // turn if the effect wants to be stronger (lower) or the text safer (higher).
   var SCRIM_ALPHA = 0.58;
 
-  // Every pixel runs five 5-octave fBm evaluations, and this section is several
-  // thousand CSS pixels tall. At a straight 2x device ratio that is tens of
-  // millions of shaded pixels per frame and the whole page stutters. Smoke is
-  // low-frequency enough that resolving it below 1:1 is invisible, so the
-  // drawing buffer is held to a fixed pixel budget and CSS scales it back up.
+  // Every pixel runs five 5-octave fBm evaluations. The smoke sits on the
+  // closing contact plate (about 1440x570 CSS pixels on a laptop), but on a
+  // large or high-density screen the plate still reaches millions of device
+  // pixels. Smoke is low-frequency enough that resolving it below 1:1 is
+  // invisible, so the drawing buffer is held to a fixed pixel budget and CSS
+  // scales it back up.
   var PIXEL_BUDGET = 2200000;
 
   // Ripples are a real height field, not a radial wobble faked in screen space.
@@ -70,6 +94,12 @@
   // injects impulses, and the main shader refracts the smoke through the
   // resulting surface. SIM_C2 must stay under 0.5 or the integration explodes.
   var SIM_SIZE = 512;
+  // The wave equation is integrated in fixed steps at this rate, whatever the
+  // display refresh rate, so ripples travel at the same speed at 30, 60 or
+  // 120 Hz. A slow frame runs at most SIM_MAX_STEPS steps and drops the rest
+  // rather than spiralling.
+  var SIM_HZ = 60;
+  var SIM_MAX_STEPS = 2;
   var SIM_C2 = 0.28;      // wave speed squared, stability bound 0.5
   var SIM_DAMP = 0.9965;  // per-step decay, so a ripple dies out on its own
   var IMPULSE_RADIUS = 0.028;
@@ -470,7 +500,7 @@
       water: gl.getUniformLocation(prog, "u_water")
     };
 
-    gl.uniform3fv(loc.colors, new Float32Array(COLORS));
+    gl.uniform3fv(loc.colors, new Float32Array(themeColors()));
     gl.uniform4f(loc.shape, SHAPE[0], SHAPE[1], SHAPE[2], SHAPE[3]);
     gl.uniform4f(loc.surface, SURFACE[0], SURFACE[1], SURFACE[2], SURFACE[3]);
     gl.uniform4f(loc.finish, FINISH[0], FINISH[1], FINISH[2], FINISH[3]);
@@ -565,9 +595,11 @@
     var scrim = document.createElement("span");
     scrim.className = "shader-bg-scrim";
     scrim.setAttribute("aria-hidden", "true");
+    // ink-900 at SCRIM_ALPHA: rgba(10,10,10,.58) on Original, the palette's
+    // own ink elsewhere.
     scrim.style.cssText =
-      "position:absolute;inset:0;z-index:0;pointer-events:none;background:rgba(10,10,10," +
-      SCRIM_ALPHA + ")";
+      "position:absolute;inset:0;z-index:0;pointer-events:none;" +
+      "background:var(--ink-900,#0a0a0a);opacity:" + SCRIM_ALPHA;
     section.insertBefore(scrim, canvas.nextSibling);
 
     var reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
@@ -576,6 +608,7 @@
     var raf = 0;
     var seconds = 0;
     var lastFrame = 0;
+    var simDebt = 0;          // seconds of wave simulation not yet stepped
 
     function resize() {
       var w = section.clientWidth;
@@ -611,10 +644,16 @@
     function frame(now) {
       // lastFrame is cleared whenever the loop stops, so a pause never shows up
       // later as a jump in the smoke.
-      if (lastFrame) seconds += (now - lastFrame) / 1000;
+      var dt = lastFrame ? (now - lastFrame) / 1000 : 0;
+      seconds += dt;
       lastFrame = now;
       resize();
-      stepWater();
+      simDebt += dt;
+      for (var steps = 0; simDebt >= 1 / SIM_HZ && steps < SIM_MAX_STEPS; steps++) {
+        stepWater();
+        simDebt -= 1 / SIM_HZ;
+      }
+      if (simDebt >= 1 / SIM_HZ) simDebt = 0;
       draw();
       raf = requestAnimationFrame(frame);
     }
@@ -624,10 +663,11 @@
       raf = 0;
       running = false;
       lastFrame = 0;
+      simDebt = 0;
     }
 
     function sync() {
-      if (reduceMotion.matches) {
+      if (motionOff(reduceMotion)) {
         stop();
         resize();
         draw();          // one still frame keeps the look without the motion
@@ -740,6 +780,15 @@
     }
 
     document.addEventListener("visibilitychange", sync);
+    document.addEventListener("portfolio:motion", sync);
+    // Palette switches re-upload the ramp and repaint a parked frame.
+    if (window.MutationObserver) {
+      new MutationObserver(function () {
+        gl.useProgram(prog);
+        gl.uniform3fv(loc.colors, new Float32Array(themeColors()));
+        if (!running) { resize(); draw(); }
+      }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-card-theme"] });
+    }
     if (reduceMotion.addEventListener) reduceMotion.addEventListener("change", sync);
     canvas.addEventListener("webglcontextlost", function (e) {
       e.preventDefault();

@@ -38,8 +38,8 @@
         "message": "Raw px value — use a design-system spacing token via var()."
       },
       {
-        "selector": "Literal[value=/font-family\\s*:\\s*(?!['\\\"]?(?:Space Grotesk|IBM Plex Mono))/i]",
-        "message": "Font not provided by the design system. Available: Space Grotesk, IBM Plex Mono."
+        "selector": "Literal[value=/font-family\\s*:\\s*(?!['\\\"]?(?:Archivo|Archivo Display|Archivo Name|Martian Mono))/i]",
+        "message": "Font not provided by the design system. Available: Archivo (Display, Name), Martian Mono."
       },
       {
         "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|variant|size|href|disabled|trailing|key|ref|className|style|children)$/]",
@@ -496,8 +496,10 @@
       "--t-media": "other"
     },
     "fontFamilies": [
-      "IBM Plex Mono",
-      "Space Grotesk"
+      "Archivo",
+      "Archivo Display",
+      "Archivo Name",
+      "Martian Mono"
     ]
   }
 }

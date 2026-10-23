@@ -1,0 +1,32 @@
+/* Hover states the design-system components used to set from React state.
+   The pages are now rendered to static HTML (tools/build.py), so there is no
+   React to set them. Each rule reproduces what the component's onMouseEnter
+   did to its inline style, which is why every value is !important: inline
+   styles outrank stylesheets. The data-ds-* hooks are added at render time
+   by tools/prerender/prerender.js. data-ds-hover lists the changes a Button
+   would make that its own style prop does not override.
+
+   MediaFrame's hoverZoom needs no rule: css/depth.css already pins those
+   images with !important, so React's scale(1.04) never showed. */
+
+/* Button, by variant (components/core/Button.jsx) */
+[data-ds-button="solid"][data-ds-hover~="bg"]:hover { background-color: var(--ink-700) !important; }
+[data-ds-button="outline"][data-ds-hover~="bg"]:hover { background-color: var(--ink-900) !important; }
+[data-ds-button="outline"][data-ds-hover~="color"]:hover { color: var(--paper) !important; }
+[data-ds-button="ghost"][data-ds-hover~="bg"]:hover { background-color: var(--ink-a06) !important; }
+[data-ds-button="glass"][data-ds-hover~="bg"]:hover { background-color: var(--paper-a18) !important; }
+[data-ds-button="link"][data-ds-hover~="border"]:hover { border-bottom-color: var(--line-strong) !important; }
+[data-ds-button][data-ds-hover~="trail"]:hover > span:last-child { transform: translateX(3px) !important; }
+
+/* NavLink inside SiteHeader (components/navigation/NavLink.jsx). The active
+   link already shows this state. */
+[data-ds-header="inverse"] nav > a:hover { color: var(--paper) !important; }
+[data-ds-header="plain"] nav > a:hover { color: var(--text-display) !important; }
+[data-ds-header] nav > a:hover > span[aria-hidden="true"] { width: 100% !important; }
+
+/* SocialRail links (components/navigation/SocialRail.jsx) */
+[data-ds-rail="inverse"] > a:hover { background-color: var(--paper-a18) !important; }
+[data-ds-rail="plain"] > a:hover { background-color: var(--ink-050) !important; }
+
+/* ScrollCue arrow (components/navigation/ScrollCue.jsx) */
+[data-ds-scrollcue]:hover > span:first-child { transform: translateY(3px) !important; }

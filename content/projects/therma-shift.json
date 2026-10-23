@@ -1,0 +1,75 @@
+{
+  "nav_title": "Therma-Shift",
+  "title": "Therma-Shift coaster",
+  "eyebrow": "Case study / Personal project",
+  "description": "A dual mode thermoelectric coaster that heats or cools any mug or glass. Bench validated to 11 C on the cold face at 12 V, with thermal runaway protection.",
+  "og_alt": "Airflow illustration of the Therma-Shift coaster heat sink.",
+  "lede": "A solid state desktop coaster that heats or cools any mug, glass or can.",
+  "clip": "therma-shift-airflow",
+  "clip_ratio": "4 / 3",
+  "clip_aria": "Airflow illustration: air enters all bottom grille slots, passes through the heatsink fins, descends into the blower and exits the oval side vent. Heating and cooling use the same flow direction.",
+  "clip_sizes": [1200, 800],
+  "brief_label": null,
+  "brief": [
+    {
+      "label": "Built for",
+      "value": "SparkLabs seed competition, March 2026"
+    },
+    {"label": "Status", "value": "Thermal stack validated, electronics in progress"}
+  ],
+  "brief_note": [
+    "Heated mugs lock you into their cup. Cheap USB warmers have no temperature control."
+  ],
+  "sections": [
+    {
+      "kind": "stats",
+      "stats": [
+        {"value": "11 &deg;C", "label": "Cold face at 12 V, steady state"},
+        {"value": "~5 min", "label": "To thermal equilibrium"},
+        {"value": "2", "label": "Modes from one stack, by polarity"},
+        {"value": "&plusmn;2 &deg;F", "label": "Closed loop target"}
+      ]
+    },
+    {"label": "The problem", "paras": ["The coaster has to run unattended on a desk."]},
+    {
+      "label": "Constraints",
+      "cards": [
+        "Universal: any mug, glass or can, the device adapts to the drinkware",
+        "Dual mode, heating and cooling from the same hardware",
+        "Powered over USB-C Power Delivery, within a desk power budget",
+        "Thermal runaway prevention independent of the control loop",
+        "Low profile and quiet enough for an office desk",
+        "No proprietary cup, ever"
+      ]
+    },
+    {
+      "label": "The design",
+      "paras": [
+        "A thermoelectric module heats or cools depending on current direction. The TEC1-12703 sits between an aluminum top plate and a finned heatsink with a blower.",
+        "An NTC thermistor at the plate closes the loop, targeting about 2 degrees F around setpoint.",
+        [
+          "Separate firmware cutoffs watch for thermal runaway independently of the control loop and shut the device down on a fault."
+        ]
+      ]
+    },
+    {
+      "label": "Bench test",
+      "strong": true,
+      "paras": [
+        "Before adding any control loop, I bench tested the bare thermal stack on a lab supply with K-type thermocouples on both faces."
+      ]
+    },
+    {
+      "label": "Where it stands",
+      "list": [
+        "10.7 to 12 degrees C cold face at 12 V, steady state",
+        "About 5 minutes to thermal equilibrium",
+        "Dual mode verified: the same stack heats and cools by polarity",
+        "Staged firmware test suite written; closed loop integration in progress"
+      ]
+    }
+  ],
+  "colophon": [
+    "CAD animations rendered from the source assemblies."
+  ]
+}

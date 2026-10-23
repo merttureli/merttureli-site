@@ -13,7 +13,7 @@ rather than theory. The rule underneath all of them:
     State what was done and what resulted. Delete any sentence whose only job
     is to tell the reader how to feel about the previous sentence.
 
-    python check-writing.py                 check every built page
+    python check-writing.py                 check every built page, websites, hi/ and 404
     python check-writing.py projects/x.html check one
 """
 import io
@@ -107,7 +107,18 @@ def check(path):
 
 
 def main():
-    targets = sys.argv[1:] or sorted(glob.glob("projects/*.html")) + ["index.html"]
+    if sys.argv[1:2] in (["-h"], ["--help"]):
+        print((__doc__ or "").strip() or "usage: python3 check-writing.py [file.html ...]")
+        return 0
+    # Default pages resolve from this script's folder (the repo root), so any cwd works.
+    root = os.path.dirname(os.path.abspath(__file__))
+    def shown(p):
+        rel = os.path.relpath(p)
+        return p if rel.startswith("..") else rel
+    targets = sys.argv[1:] or [shown(p) for p in
+                               sorted(glob.glob(os.path.join(root, "projects", "*.html")))
+                               + [os.path.join(root, p) for p in
+                                  ("index.html", "websites.html", "hi/index.html", "404.html")]]
     total = 0
     for path in targets:
         if not os.path.exists(path):

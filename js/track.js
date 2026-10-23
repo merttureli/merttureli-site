@@ -7,14 +7,31 @@
  * time, scroll depth and which case studies got opened can.
  *
  * No cookies. Nothing is sent until ENDPOINT is set, so the site is safe to
- * push before the collector is deployed.
+ * push before the collector is deployed. It also does nothing off the live
+ * domain (previews, localhost, forks), and nothing when the browser sends
+ * Global Privacy Control or Do Not Track.
  */
 (function () {
   "use strict";
 
   var ENDPOINT = (window.MT_ANALYTICS || {}).endpoint || "";
 
-  if (!ENDPOINT || navigator.doNotTrack === "1") return;
+  // Only the live site reports. Without this a local preview, a GitHub Pages
+  // fork or a copied page would write rows into the real dashboard.
+  var HOSTS = ["merttureli.com", "www.merttureli.com"];
+  if (HOSTS.indexOf(location.hostname) === -1) return;
+
+  if (!ENDPOINT) return;
+
+  // Global Privacy Control is the opt-out browsers actually ship today; Do Not
+  // Track is kept for the ones that still send it. Either one means no visitor
+  // id is created, nothing is read back, and nothing is sent.
+  if (
+    navigator.globalPrivacyControl === true ||
+    navigator.doNotTrack === "1" ||
+    window.doNotTrack === "1" ||
+    navigator.msDoNotTrack === "1"
+  ) return;
 
   var IDLE_MS = 90000;   // stop counting engaged time after this long untouched
   var DWELL_MS = 3000;   // a section counts as read after this long on screen
@@ -131,32 +148,80 @@
     if (height > 0) maxScroll = Math.max(maxScroll, Math.min(100, Math.round((reach / height) * 100)));
   }, { passive: true });
 
-  if ("IntersectionObserver" in window) {
-    var since = {};
+  // Sections are found by selector, but never once at load. The runtime that
+  // renders the pages replaces nodes after this script has run, so anything
+  // observed at load can end up detached and report nothing. Instead every
+  // matching node is observed as it appears, and a MutationObserver picks up
+  // the ones that arrive later. On a static page with no runtime the first
+  // scan finds everything and the MutationObserver simply never fires.
+  var watching = [];        // elements on screen right now: [el, started-at]
+  var live = {};            // id -> number of watched elements currently visible
+  var SECTION_SEL = "section[id], [data-track]";
+
+  function secId(el) { return el.id || (el.dataset && el.dataset.track) || ""; }
+
+  function bank(id, ms) {
+    sections[id] = (sections[id] || 0) + ms;
+    if (sections[id] >= DWELL_MS) read[id] = true;
+  }
+
+  // Add the time each visible element has been on screen so far, then restart
+  // its clock. Called before every beacon so the figures are current, and when
+  // the tab is hidden so time in a background tab is not counted.
+  function flushSections(restart) {
+    var now = Date.now();
+    watching.forEach(function (w) {
+      if (w[1]) bank(secId(w[0]), now - w[1]);
+      w[1] = restart && document.visibilityState === "visible" ? now : 0;
+    });
+  }
+
+  function indexOfEl(el) {
+    for (var i = 0; i < watching.length; i++) if (watching[i][0] === el) return i;
+    return -1;
+  }
+
+  var seen = typeof WeakSet === "function" ? new WeakSet() : null;
+
+  if ("IntersectionObserver" in window && seen) {
+    // A section taller than the screen can never be 35% visible, so it also
+    // counts when it fills a third of the viewport.
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
-        var id = entry.target.id || entry.target.dataset.track;
-        if (!id) return;
-        if (entry.isIntersecting) {
-          since[id] = Date.now();
-        } else if (since[id]) {
-          sections[id] = (sections[id] || 0) + (Date.now() - since[id]);
-          delete since[id];
-          if (sections[id] >= DWELL_MS) read[id] = true;
+        var el = entry.target;
+        if (!secId(el)) return;
+        var vh = window.innerHeight || document.documentElement.clientHeight || 1;
+        var on = entry.isIntersecting && el.isConnected !== false &&
+          (entry.intersectionRatio >= 0.35 || entry.intersectionRect.height >= vh * 0.35);
+        var i = indexOfEl(el);
+        if (on && i === -1) {
+          watching.push([el, document.visibilityState === "visible" ? Date.now() : 0]);
+        } else if (!on && i !== -1) {
+          if (watching[i][1]) bank(secId(el), Date.now() - watching[i][1]);
+          watching.splice(i, 1);
         }
       });
-    }, { threshold: 0.35 });
+    }, { threshold: [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.5, 0.75, 1] });
 
-    document.querySelectorAll("section[id], [data-track]").forEach(function (el) {
-      io.observe(el);
-    });
+    var scanTimer = 0;
+    var scan = function () {
+      scanTimer = 0;
+      var found = document.querySelectorAll(SECTION_SEL);
+      for (var i = 0; i < found.length; i++) {
+        if (!seen.has(found[i])) { seen.add(found[i]); io.observe(found[i]); }
+      }
+    };
+    var queueScan = function () { if (!scanTimer) scanTimer = setTimeout(scan, 200); };
 
-    // Flush whatever is still on screen when the visit ends.
-    addEventListener("pagehide", function () {
-      Object.keys(since).forEach(function (id) {
-        sections[id] = (sections[id] || 0) + (Date.now() - since[id]);
-        if (sections[id] >= DWELL_MS) read[id] = true;
-      });
+    scan();
+    addEventListener("load", queueScan);
+    if ("MutationObserver" in window) {
+      new MutationObserver(queueScan).observe(document.documentElement, { childList: true, subtree: true });
+    }
+
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "hidden") flushSections(false);
+      else flushSections(true);
     });
   }
 
@@ -196,6 +261,7 @@
   // resend when there is meaningfully more reading time to report, so the last
   // row for a session always holds the true total.
   function finish(kind) {
+    flushSections(true);
     if (kind === "end" && ended && engaged - ended < 5) return;
     if (kind === "end") ended = engaged;
     send({
@@ -210,6 +276,7 @@
 
   var EVENTS = [
     [/Mert-Tureli-Resume\.pdf/i, "resume-download"],
+    [/\.vcf(?:[?#]|$)/i, "vcf-download"],
     [/^mailto:/i, "email-click"],
     [/linkedin\.com/i, "linkedin-click"],
     [/github\.com/i, "github-click"],
@@ -234,6 +301,13 @@
     }
     if (name) send({ k: "ev", ev: name, eng: engaged, scr: maxScroll });
   }, true);
+
+  // For events that are not link clicks, such as the steps of the website
+  // inquiry. Callers pass a fixed event name and nothing else: never anything a
+  // visitor typed.
+  window.mtTrack = function (name) {
+    if (typeof name === "string" && name) send({ k: "ev", ev: name.slice(0, 64), eng: engaged, scr: maxScroll });
+  };
 
   /* ----------------------------------------------------------------- visit */
 

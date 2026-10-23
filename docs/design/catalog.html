@@ -1,0 +1,1775 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Component Catalog</title>
+<meta name="description" content="Every repeated UI pattern on merttureli.com and the Studio site, rendered live with the real CSS, with the snippet to copy.">
+<meta name="theme-color" content="#f1f1ef">
+<link rel="icon" href="../../assets/icons/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="../../studies/shared/fonts/archivo-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="catalog/catalog.css">
+</head>
+<body>
+<!--
+  Component catalog. Docs: docs/design/components.md.
+  To add a component: copy one <section class="c"> block, change its id, data-n
+  and name, put the markup in <script type="text/html" class="demo"> and any
+  template in <script type="text/plain" title="...">. The sidebar builds itself.
+-->
+<div class="cat">
+
+<aside class="side" aria-label="Catalog index">
+  <a class="side__mark" href="#top"><span class="side__name">Mert Tureli</span><span class="side__sub mono">Components / Live catalog</span></a>
+  <nav class="side__nav" data-nav aria-label="Components"></nav>
+  <div class="side__docs mono">
+    <a href="components.md">components.md</a>
+    <a href="site-tokens.md">site-tokens.md</a>
+    <a href="studio.md">studio.md</a>
+    <a href="motion.md">motion.md</a>
+    <a href="3d.md">3d.md</a>
+    <a href="../README.md">docs index</a>
+  </div>
+</aside>
+
+<div class="main" id="top">
+
+<div class="bar">
+  <a class="bar__name" href="#top">Mert Tureli</a>
+  <div class="bar__jump mono">
+    <a class="hide-s" href="#site">Site</a>
+    <a class="hide-s" href="#studio">Studio</a>
+    <details class="bar__menu"><summary class="mono">Index</summary><div class="bar__drop" data-nav></div></details>
+  </div>
+</div>
+
+<header class="hero">
+  <p class="hero__eyebrow mono"><span>Design system</span><span>docs/design/catalog.html</span><span>noindex</span></p>
+  <h1>Compo<wbr>nents<i>.</i></h1>
+  <div class="hero__grid">
+    <p class="hero__lead">Every repeated piece of UI on both sites, rendered live with the real site CSS. Under each one: where it is used, the snippet to paste, its variants and the rules that keep it consistent. Written guidance is in <code>docs/design/components.md</code>.</p>
+    <ol class="how">
+      <li><span class="mono">01 / Find</span><b>Pick the pattern you need</b><span class="mono">From the index</span></li>
+      <li><span class="mono">02 / Copy</span><b>Paste the snippet, swap the words</b><span class="mono">Copy button</span></li>
+      <li><span class="mono">03 / Prove</span><b>Run the checks</b><code>python3 tools/check.py</code></li>
+    </ol>
+  </div>
+</header>
+
+<nav class="parts" aria-label="Sites">
+  <a class="part" href="#site"><span class="mono">Part 1 / merttureli.com</span><span class="part__t">Site</span><span class="mono">Home, case studies, websites page</span><span class="part__n mono" data-count="site"></span></a>
+  <a class="part" href="#studio"><span class="mono">Part 2 / merttureli.com/next/</span><span class="part__t">Studio</span><span class="mono">The next design, one page</span><span class="part__n mono" data-count="studio"></span></a>
+</nav>
+
+<!-- Find by what you want to change. Keep in step with "Find by what you want to change" in components.md. -->
+<section class="find" id="find" aria-labelledby="find-title">
+  <p class="mono find__label">Index / By task</p>
+  <h2 class="find__title" id="find-title">Find by what you want to change</h2>
+  <div class="find__scroll">
+  <table class="find__table">
+    <thead><tr><th>I want to change</th><th>Look at</th><th>Edit here</th></tr></thead>
+    <tbody>
+      <tr><td>Studio accent (the orange)</td><td><a href="#studio-round">T06</a> <a href="#studio-marquee">T17</a></td><td><code>--signal</code>, <code>--signal-ink</code> in <code>next/css/tokens.css</code></td></tr>
+      <tr><td>Site colors</td><td>Palette buttons, <a href="#site">Part 1</a></td><td><code>css/site-palette.css</code> (recipe: palette.md)</td></tr>
+      <tr><td>Site corner radius</td><td><a href="#site-lists">S11</a> (panels)</td><td>Frames and cues <code>--radius-card</code>, the phone frame <code>--radius-phone</code> in <code>css/tokens.css</code>; panels <code>--radius-lg</code> (site-tokens.md, "Radius by component")</td></tr>
+      <tr><td>Site nav links</td><td><a href="#site-header">S01</a></td><td><code>nav</code> in <code>src/index.html</code>; case pages <code>NAV</code> in <code>build-case.py</code></td></tr>
+      <tr><td>Studio nav links</td><td><a href="#studio-top">T01</a> <a href="#studio-menu">T02</a></td><td><code>.top__nav</code> and <code>.menu</code> in <code>next/index.html</code></td></tr>
+      <tr><td>A Studio project (text, specs, image)</td><td><a href="#studio-project">T11</a></td><td><code>&lt;li class="project"&gt;</code> and its stage <code>&lt;img data-key&gt;</code> in <code>next/index.html</code></td></tr>
+      <tr><td>Case study figures</td><td><a href="#site-stats">S10</a></td><td><code>"kind": "stats"</code> in <code>content/projects/&lt;slug&gt;.json</code>, then build</td></tr>
+      <tr><td>Add a Studio section with a component</td><td><a href="#studio-rule">T03</a> + <a href="#studio-chips">T13</a> <a href="#studio-stats">T09</a> <a href="#studio-steps">T15</a></td><td><code>python3 tools/new.py section NAME</code>, paste the snippet into <code>NAME__body</code></td></tr>
+      <tr><td>Mark a line for the owner</td><td><a href="#site-flag">S15</a></td><td><code>python3 tools/check-flags.py --next-id SLUG</code> (recipe: flags.md)</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="mono find__note">Ids work as links too: catalog.html#T13 opens the Toolkit list.</p>
+</section>
+
+<!-- ================================================================ SITE -->
+<section class="sect sect--site" id="site" data-part="site" data-title="Site" data-sub="merttureli.com">
+  <div class="sect__head">
+    <div>
+      <p class="sect__label mono">Part 1 / merttureli.com</p>
+      <h2 class="sect__title">Site<small>The home page and case studies are built from design-system components (<code>_ds/</code>) and rendered to static HTML by <code>tools/build.py</code>. The websites page uses the same look as plain <code>.ds-*</code> classes.</small></h2>
+    </div>
+    <div class="palette">
+      <span class="mono">Palette, css/site-palette.css</span>
+      <div class="palette__row" role="group" aria-label="Preview palette">
+        <button type="button" class="sw" data-palette="original" aria-pressed="true" style="--sw: linear-gradient(135deg,#ffffff 50%,#0a0a0a 50%)"><i></i>Original</button>
+        <button type="button" class="sw" data-palette="green" aria-pressed="false" style="--sw: linear-gradient(135deg,#e4e8dc 50%,#1c2520 50%)"><i></i>Green</button>
+        <button type="button" class="sw" data-palette="slate" aria-pressed="false" style="--sw: linear-gradient(135deg,#e3e9ec 50%,#202a34 50%)"><i></i>Slate</button>
+        <button type="button" class="sw" data-palette="warm" aria-pressed="false" style="--sw: linear-gradient(135deg,#eee5d7 50%,#302820 50%)"><i></i>Warm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- S01 ------------------------------------------------------------ -->
+  <section class="c" id="site-header" data-n="S01">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>S01</b><a href="#site-header">#site-header</a></p>
+        <h3 class="c__name">Site header</h3>
+        <p class="c__what">Wordmark left, four section links right, a Menu button below 861px. Floats transparent over the dark hero on the home page and case studies; sits on a hairline on the websites page.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd><code>index.html</code>, <code>projects/*.html</code>, <code>websites.html</code></dd>
+        <dt>Built from</dt><dd><code>SiteHeader</code> (_ds), hover in <code>css/interaction-polish.css</code>, phone rules in <code>css/mobile.css</code>, <code>.ds-header</code> in <code>css/websites.css</code></dd>
+        <dt>Edit</dt><dd>Links: <code>nav</code> in the <code>renderVals()</code> of <code>src/index.html</code>; case pages: <code>NAV</code> in <code>build-case.py</code></dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="site" data-bg="dark" data-pad="0" data-height="104" data-label="SiteHeader, inverse + floating (home, case studies)">
+<script type="text/html" class="demo">
+<header data-ds-header="inverse" style="position: absolute; top: 0px; left: 0px; right: 0px; z-index: var(--z-header); height: var(--header-h); display: flex; align-items: center; justify-content: space-between; gap: var(--space-8); padding: 0 max(var(--page-margin), calc((100% - var(--max-width)) / 2)); border-bottom: none;"><a href="#" style="font-family: var(--font-display); font-size: 12px; font-weight: 500; letter-spacing: 0.32em; line-height: 1; text-transform: uppercase; color: var(--paper); display: inline-block; white-space: nowrap; text-decoration: none; border: none;">MERT TURELI</a><nav style="display: flex; align-items: center; gap: var(--space-7);" aria-label="Main"><a href="#work" style="position: relative; display: inline-block; padding: 2px 0px 6px; font-family: var(--font-display); font-size: var(--fs-meta); font-weight: 500; letter-spacing: var(--ls-nav); text-transform: uppercase; text-decoration: none; border: none; color: var(--paper); transition: color var(--t-hover);">Work<span aria-hidden="true" style="position: absolute; left: 0px; bottom: 0px; height: 1px; width: 100%; background: var(--paper); transition: width var(--dur-3) var(--ease-out);"></span></a><a href="#beyond" style="position: relative; display: inline-block; padding: 2px 0px 6px; font-family: var(--font-display); font-size: var(--fs-meta); font-weight: 500; letter-spacing: var(--ls-nav); text-transform: uppercase; text-decoration: none; border: none; color: var(--paper-a70); transition: color var(--t-hover);">Beyond<span aria-hidden="true" style="position: absolute; left: 0px; bottom: 0px; height: 1px; width: 0%; background: var(--paper); transition: width var(--dur-3) var(--ease-out);"></span></a><a href="#websites" style="position: relative; display: inline-block; padding: 2px 0px 6px; font-family: var(--font-display); font-size: var(--fs-meta); font-weight: 500; letter-spacing: var(--ls-nav); text-transform: uppercase; text-decoration: none; border: none; color: var(--paper-a70); transition: color var(--t-hover);">Websites<span aria-hidden="true" style="position: absolute; left: 0px; bottom: 0px; height: 1px; width: 0%; background: var(--paper); transition: width var(--dur-3) var(--ease-out);"></span></a><a href="#contact" style="position: relative; display: inline-block; padding: 2px 0px 6px; font-family: var(--font-display); font-size: var(--fs-meta); font-weight: 500; letter-spacing: var(--ls-nav); text-transform: uppercase; text-decoration: none; border: none; color: var(--paper-a70); transition: color var(--t-hover);">Contact<span aria-hidden="true" style="position: absolute; left: 0px; bottom: 0px; height: 1px; width: 0%; background: var(--paper); transition: width var(--dur-3) var(--ease-out);"></span></a><button aria-label="Menu" style="display: grid; place-items: center; width: 32px; height: 32px; background: transparent; border: none; cursor: pointer; padding: 0px; margin-left: var(--space-2);"><img src="data:image/svg+xml,%3C!--%20%40license%20lucide-static%20v0.544.0%20-%20ISC%20--%3E%0A%3Csvg%0A%20%20class%3D%22lucide%20lucide-menu%22%0A%20%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%0A%20%20width%3D%2224%22%0A%20%20height%3D%2224%22%0A%20%20viewBox%3D%220%200%2024%2024%22%0A%20%20fill%3D%22none%22%0A%20%20stroke%3D%22currentColor%22%0A%20%20stroke-width%3D%222%22%0A%20%20stroke-linecap%3D%22round%22%0A%20%20stroke-linejoin%3D%22round%22%0A%3E%0A%20%20%3Cpath%20d%3D%22M4%205h16%22%20%2F%3E%0A%20%20%3Cpath%20d%3D%22M4%2012h16%22%20%2F%3E%0A%20%20%3Cpath%20d%3D%22M4%2019h16%22%20%2F%3E%0A%3C%2Fsvg%3E%0A" alt="" aria-hidden="true" draggable="false" style="width: 20px; height: 20px; display: block; opacity: 1; filter: invert(1);"></button></nav></header>
+</script>
+      </figure>
+      <figure class="pv" data-profile="web" data-pad="0" data-label=".ds-header (websites.html)">
+<script type="text/html" class="demo">
+<header class="ds-header">
+  <a class="ds-wordmark" href="index.html">MERT TURELI</a>
+  <nav class="ds-nav" aria-label="Main navigation"><a href="index.html#work">Work</a><a href="index.html#beyond">Beyond</a><a href="websites.html" aria-current="page">Websites</a><a href="index.html#contact">Contact</a></nav>
+  <button class="ds-menu-button" id="open-menu" type="button" aria-label="Menu" aria-haspopup="dialog" aria-controls="site-menu" aria-expanded="false"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+</header>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="src/index.html">
+<x-import component-from-global-scope="MertTReliDesignSystem_56763c.SiteHeader" items="{{ nav }}" active="index" inverse="true" floating="true" dc-props="{{ headerRow }}" hint-size="100%,88px"></x-import>
+</script>
+<script type="text/plain" title="websites.html" data-from="1"></script>
+<script type="text/plain" title="Built HTML (read only)" data-from="0"></script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li><code>inverse="true"</code> white type over a dark hero; omit for ink type on paper.</li><li><code>floating="true"</code> absolute, no hairline. Omit to sit in flow on a hairline.</li><li><code>aria-current="page"</code> on a <code>.ds-nav</code> link keeps its underline.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Keep the same four links in the same order on every page.</li><li>Point case-page links back to <code>../index.html#section</code>.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Edit the built header in <code>index.html</code>; it is regenerated.</li><li>Add a fifth link; the phone menu and the desktop row both assume four.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- S02 ------------------------------------------------------------ -->
+  <section class="c" id="site-button" data-n="S02">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>S02</b><a href="#site-button">#site-button</a></p>
+        <h3 class="c__name">Button</h3>
+        <p class="c__what">The pill call to action: mono caps, a trailing arrow that nudges 3px on hover, and a 2px lift from <code>css/depth.css</code>. Glass over dark plates, outline on paper.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>Home hero, every work entry, contact; case-study heroes and footers; websites page; home Websites block</dd>
+        <dt>Built from</dt><dd><code>Button</code> (_ds), <code>[data-depth-button]</code> in <code>css/depth.css</code>, hover in <code>css/interaction-polish.css</code>; <code>.ds-button</code> in <code>css/websites.css</code>; <code>.websell-cta</code> in <code>css/website-entry.css</code></dd>
+        <dt>Edit</dt><dd>Home: <code>src/index.html</code>. Case pages: <code>button()</code> in <code>build-case.py</code></dd>
+      </dl>
+    </div>
+    <div class="pvs pvs--2">
+      <figure class="pv" data-profile="site" data-bg="dark" data-pad="44px 32px" data-label="Glass + outline, on a dark plate">
+<script type="text/html" class="demo">
+<div style="display: flex; flex-wrap: wrap; gap: var(--space-4);">
+  <a data-depth-button="glass" data-ds-button="glass" data-ds-hover="bg trail" href="#charger" style="font-family: var(--font-mono); font-size: 12px; letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: 1; display: inline-flex; align-items: center; gap: var(--space-3); padding: 14px 26px; border-radius: var(--radius-pill); cursor: pointer; opacity: 1; text-decoration: none; white-space: nowrap; transition: background var(--t-hover), color var(--t-hover), border-color var(--t-hover), opacity var(--t-hover); background: var(--paper-a08); color: var(--paper); border: 1px solid var(--paper-a45); backdrop-filter: var(--blur-glass);">See the work<span style="display: inline-flex; transform: none; transition: transform var(--t-hover);">→</span></a>
+  <a data-depth-button="outline" data-ds-button="outline" data-ds-hover="bg color trail" href="https://linkedin.com/in/merttureli" style="font-family: var(--font-mono); font-size: 12px; letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: 1; display: inline-flex; align-items: center; gap: var(--space-3); padding: 14px 26px; border-radius: var(--radius-pill); cursor: pointer; opacity: 1; text-decoration: none; white-space: nowrap; transition: background var(--t-hover), color var(--t-hover), border-color var(--t-hover), opacity var(--t-hover); background: transparent; color: var(--text-display); border: 1px solid var(--line-strong);">LinkedIn<span style="display: inline-flex; transform: none; transition: transform var(--t-hover);">→</span></a>
+</div>
+</script>
+      </figure>
+      <figure class="pv" data-profile="site" data-pad="44px 32px" data-label="Outline, on paper">
+<script type="text/html" class="demo">
+<a data-depth-button="outline" data-ds-button="outline" data-ds-hover="bg color trail" href="projects/robo-catcher.html#mechanism-tour" style="font-family: var(--font-mono); font-size: 12px; letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: 1; display: inline-flex; align-items: center; gap: var(--space-3); padding: 14px 26px; border-radius: var(--radius-pill); cursor: pointer; opacity: 1; text-decoration: none; white-space: nowrap; transition: background var(--t-hover), color var(--t-hover), border-color var(--t-hover), opacity var(--t-hover); background: transparent; color: var(--text-display); border: 1px solid var(--line-strong);">See the mechanism<span style="display: inline-flex; transform: none; transition: transform var(--t-hover);">→</span></a>
+</script>
+      </figure>
+      <figure class="pv" data-profile="web" data-pad="44px 32px" data-label=".ds-button, .ds-button--solid, .ds-link (websites.html)">
+<script type="text/html" class="demo">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-5);">
+  <a class="ds-button ds-button--solid" data-depth-button="outline" href="#inquiry">Find a day to talk <span aria-hidden="true">→</span></a>
+  <a class="ds-button" data-depth-button="outline" href="#inquiry">Get in touch <span aria-hidden="true">→</span></a>
+  <a class="ds-link" href="index.html#work">See the work <span aria-hidden="true">→</span></a>
+</div>
+</script>
+      </figure>
+      <figure class="pv" data-profile="site" data-bg="dark" data-pad="44px 32px" data-label=".websell-cta (home Websites block)">
+<script type="text/html" class="demo">
+<div class="websell-actions" style="display: flex; flex-wrap: wrap; gap: var(--space-4);">
+  <a class="websell-cta websell-cta--solid" href="websites.html#inquiry" data-track="websell-inquiry" data-depth-button="solid">Find a day to talk <span aria-hidden="true">&#8594;</span></a>
+  <a class="websell-cta" href="websites.html" data-track="websell-websites" data-depth-button="outline">A website for you <span aria-hidden="true">&#8599;</span></a>
+</div>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="src/index.html">
+<!-- outline, on paper -->
+<x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="outline" variant="outline" trailing="→" href="projects/robo-catcher.html#mechanism-tour" hint-size="220px,44px">See the mechanism</x-import>
+<!-- glass, on a dark plate -->
+<x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="glass" variant="glass" trailing="→" href="#charger" hint-size="180px,44px">See the work</x-import>
+</script>
+<script type="text/plain" title="build-case.py">
+button("Case study", "charger.html")                 # outline
+button("All work", "../index.html#work", variant="glass")
+</script>
+<script type="text/plain" title="websites.html" data-from="2"></script>
+<script type="text/plain" title="Home Websites block" data-from="3"></script>
+<script type="text/plain" title="Built HTML (read only)" data-from="1"></script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li><code>glass</code> only over dark plates or photos.</li><li><code>outline</code> on paper and on <code>.on-dark</code> sections (tokens flip).</li><li><code>solid</code>, <code>ghost</code>, <code>link</code> exist in the DS but are unused today.</li><li>Always pass <code>data-depth-button</code> with the same value as <code>variant</code>.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Two to four words, sentence case in the source (CSS sets caps).</li><li>Use <code>→</code> for in-site links and <code>↗</code> for a page that opens elsewhere.</li><li>One primary button per block.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Add shadows, colors or a press effect. Hover inverts and lifts, nothing else.</li><li>Use glass on white paper.</li><li>Write the inline styles by hand on the home page; use the template.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- S03 ------------------------------------------------------------ -->
+  <section class="c" id="site-meta" data-n="S03">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>S03</b><a href="#site-meta">#site-meta</a></p>
+        <h3 class="c__name">Meta label and caption</h3>
+        <p class="c__what">Small mono caps for everything measured or filed: eyebrows above headings, the credit line under a title, captions under media. An optional index (<code>01</code>, <code>a</code>) prints in full ink before the text.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>Every section of the home page and case studies; <code>.ds-meta</code> and <code>.ds-index</code> on the websites page</dd>
+        <dt>Built from</dt><dd><code>Meta</code>, <code>Caption</code> (_ds); <code>[data-depth-label]</code> color in <code>css/depth.css</code></dd>
+        <dt>Edit</dt><dd><code>src/index.html</code>; case pages: <code>meta()</code> in <code>build-case.py</code></dd>
+      </dl>
+    </div>
+    <div class="pvs pvs--2">
+      <figure class="pv" data-profile="site" data-pad="40px 32px" data-label="Meta: default, index, muted, strong, wide; Caption">
+<script type="text/html" class="demo">
+<div style="display: flex; flex-direction: column; gap: var(--space-5); align-items: flex-start;">
+  <span data-depth-label="true" style="font-family: var(--font-mono); font-size: var(--fs-meta); font-weight: 400; line-height: var(--lh-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta); display: inline-flex; align-items: baseline; gap: var(--space-3);"><span style="color: var(--text-display);">01</span>Airframe / Payload</span>
+  <span style="font-family: var(--font-mono); font-size: var(--fs-meta); font-weight: 400; line-height: var(--lh-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-muted); display: inline-flex; align-items: baseline; gap: var(--space-3);">Union College Rocket Team, 2026 / Captain and chief engineer / First place</span>
+  <span style="font-family: var(--font-mono); font-size: var(--fs-meta); font-weight: 400; line-height: var(--lh-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-display); display: inline-flex; align-items: baseline; gap: var(--space-3);"><span style="color: var(--text-display);">01</span>Design and CAD</span>
+  <span data-depth-label="true" style="font-family: var(--font-mono); font-size: var(--fs-meta); font-weight: 400; line-height: var(--lh-meta); letter-spacing: var(--ls-caps-wide); text-transform: uppercase; color: var(--text-meta); display: inline-flex; align-items: baseline; gap: var(--space-3);">Websites / Design &amp; development</span>
+  <p style="display: flex; gap: var(--space-4); justify-content: flex-start; font-family: var(--font-mono); font-size: var(--fs-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta);"><span style="color: var(--text-display);">02</span><span>84 part assembly</span></p>
+</div>
+</script>
+      </figure>
+      <figure class="pv" data-profile="web" data-pad="40px 32px" data-label=".ds-meta, .ds-meta--wide, .ds-index (websites.html)">
+<script type="text/html" class="demo">
+<div style="display: flex; flex-direction: column; gap: var(--space-5); align-items: flex-start;">
+  <span class="ds-meta ds-meta--wide">Web design / Austin, Texas</span>
+  <span class="ds-meta">01 / Work</span>
+  <span class="ds-index" aria-hidden="true">01</span>
+</div>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="src/index.html">
+<x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="01" hint-size="240px,16px">Airframe / Payload</x-import>
+<x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="muted" hint-size="100%,16px">Union College Rocket Team, 2026 / Captain and chief engineer / First place</x-import>
+<x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="01" tone="strong" hint-size="200px,16px">Design and CAD</x-import>
+<x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" wide="true" hint-size="260px,16px">Websites / Design &amp; development</x-import>
+<x-import component-from-global-scope="MertTReliDesignSystem_56763c.Caption" index="02" hint-size="100%,16px">84 part assembly</x-import>
+</script>
+<script type="text/plain" title="build-case.py">
+meta("Case study / Personal project")
+meta("SunThru, 2026 / Solo design", tone="muted")
+meta("Design for manufacture", index_no="04")
+</script>
+<script type="text/plain" title="websites.html" data-from="1"></script>
+<script type="text/plain" title="Built HTML (read only)" data-from="0"></script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li><code>tone</code>: default meta gray, <code>muted</code>, <code>strong</code> (full ink), <code>body</code>.</li><li><code>wide="true"</code> opens tracking to 0.32em for eyebrows.</li><li><code>data-depth-label</code> lets the label follow <code>.on-dark</code> and the palettes.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Separate parts with <code>/</code> and spaces.</li><li>Zero-pad indices: <code>01</code>, <code>02</code>.</li><li>No full stop on a label or caption.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Put sentences in a label; that is a paragraph.</li><li>Use a label as the only heading of a section; pair it with a display heading or a rule.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- S04 ------------------------------------------------------------ -->
+  <section class="c" id="site-rule" data-n="S04">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>S04</b><a href="#site-rule">#site-rule</a></p>
+        <h3 class="c__name">Section rule</h3>
+        <p class="c__what">A hairline with a mono label on the left and a numeral on the right. It titles a section; with <code>data-heading="2"</code> the build turns the label into the section's <code>&lt;h2&gt;</code>.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>Home About, What I work with, Contact; every case-study section</dd>
+        <dt>Built from</dt><dd><code>Rule</code> (_ds), <code>[data-depth-rule]</code> in <code>css/depth.css</code></dd>
+        <dt>Edit</dt><dd><code>src/index.html</code>; case pages: <code>rule()</code> in <code>build-case.py</code></dd>
+      </dl>
+    </div>
+    <div class="pvs pvs--2">
+      <figure class="pv" data-profile="site" data-pad="44px 32px" data-label="Rule, label + numeral, on paper">
+<script type="text/html" class="demo">
+<div data-depth-rule="true" style="display: flex; align-items: center; gap: var(--space-5); width: 100%;"><h2 style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta); white-space: nowrap; margin: 0px; font-weight: inherit; line-height: inherit;">About</h2><span style="flex: 1 1 0%; height: 1px; background: var(--line-hairline);"></span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta); white-space: nowrap;">01</span></div>
+</script>
+      </figure>
+      <figure class="pv" data-profile="site" data-bg="dark" data-pad="44px 32px" data-label="Rule, label only, in an .on-dark section">
+<script type="text/html" class="demo">
+<div data-depth-rule="true" style="display: flex; align-items: center; gap: var(--space-5); width: 100%;"><h3 style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta); white-space: nowrap; margin: 0px; font-weight: inherit; line-height: inherit;">Elsewhere</h3><span style="flex: 1 1 0%; height: 1px; background: var(--line-hairline);"></span></div>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="src/index.html">
+<x-import data-depth-rule="true" data-heading="2" component-from-global-scope="MertTReliDesignSystem_56763c.Rule" label="About" right="01" hint-size="100%,14px"></x-import>
+</script>
+<script type="text/plain" title="build-case.py">
+rule("The problem")                      # label becomes the h2
+rule("Results", right="02", anchor="results")
+</script>
+<script type="text/plain" title="Built HTML (read only)" data-from="0"></script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li><code>right</code> numeral, optional; zero-padded (<code>01</code>, <code>006</code>).</li><li><code>data-heading="2"</code> or <code>"3"</code> sets the heading level of the label.</li><li><code>strong</code> draws the line in full ink (unused today).</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Open each content section with one rule.</li><li>Keep the label to one to three words.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Stack a rule directly on top of a border-top; one line per edge.</li><li>Skip <code>data-heading</code> on a section that has no other heading.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- S05 ------------------------------------------------------------ -->
+  <section class="c" id="site-heading" data-n="S05">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>S05</b><a href="#site-heading">#site-heading</a></p>
+        <h3 class="c__name">Display heading and body</h3>
+        <p class="c__what">Archivo caps at 0.92 line height, four sizes. <code>level</code> sets the size only; <code>as</code> sets the element. Body copy is a plain <code>&lt;p&gt;</code> with the body tokens.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>Every title on the site. Home h1 is the name (Archivo Name, set in the head of <code>src/index.html</code>)</dd>
+        <dt>Built from</dt><dd><code>DisplayHeading</code> (_ds), sizes <code>--fs-display-1..3</code>, <code>--fs-title-1</code>; <code>.ds-display</code>, <code>.ds-title</code>, <code>.ds-lead</code> in <code>css/websites.css</code></dd>
+        <dt>Edit</dt><dd><code>src/index.html</code>; case pages: <code>heading()</code>, <code>para()</code> in <code>build-case.py</code></dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="site" data-pad="44px 32px" data-label="Levels 1, 2, 3, 4 + body paragraph">
+<script type="text/html" class="demo">
+<div style="display: flex; flex-direction: column; gap: var(--space-6);">
+  <h2 style="font-family: var(--font-display); font-size: var(--fs-display-1); font-weight: 500; line-height: var(--lh-display); letter-spacing: var(--ls-display); text-transform: uppercase; margin: 0px; color: var(--text-display); text-wrap: balance;">CHARGER</h2>
+  <h2 style="font-family: var(--font-display); font-size: var(--fs-display-2); font-weight: 500; line-height: var(--lh-display); letter-spacing: var(--ls-display); text-transform: uppercase; margin: 0px; color: var(--text-display); text-wrap: balance;">Get in touch</h2>
+  <h3 style="font-family: var(--font-display); font-size: var(--fs-display-3); font-weight: 500; line-height: var(--lh-display); letter-spacing: var(--ls-display); text-transform: uppercase; margin: 0px; color: var(--text-display); text-wrap: balance;">Mert Tureli</h3>
+  <h3 style="font-family: var(--font-display); font-size: var(--fs-title-1); font-weight: 500; line-height: var(--lh-display); letter-spacing: var(--ls-display); text-transform: uppercase; margin: 0px; color: var(--text-display); text-wrap: balance;">Robo-Catcher</h3>
+  <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure);">An automatic softball catching and return machine. I co-led the feeding subsystem, then took over all the electronics and firmware.</p>
+</div>
+</script>
+      </figure>
+      <figure class="pv" data-profile="web" data-pad="44px 32px" data-label=".ds-display, .ds-title, .ds-lead (websites.html)">
+<script type="text/html" class="demo">
+<div style="display: flex; flex-direction: column; gap: var(--space-6);">
+  <h1 class="ds-display" id="website-title">Websites<br><span>designed and built</span></h1>
+  <h2 class="ds-title" id="proof-title">Live<br>sites</h2>
+  <p class="ds-lead">I design and build websites for individuals and small businesses. This site is one of them.</p>
+</div>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="src/index.html">
+<x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="1" as="h2" treatment="inverse" hint-size="100%,150px">CHARGER</x-import>
+<x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" as="h3" hint-size="100%,60px">Robo-Catcher</x-import>
+<p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">One or two sentences.</p>
+</script>
+<script type="text/plain" title="build-case.py">
+heading("How it works", level=3)            # h2 element, level 3 size
+heading("Results", level=2, treatment="inverse")
+para("Body copy.")                           # big=True for the lead size
+para_dark("Body copy on an ink section.")
+</script>
+<script type="text/plain" title="websites.html" data-from="1"></script>
+<script type="text/plain" title="Built HTML (read only)" data-from="0"></script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li><code>level</code> 1 (hero), 2 (section), 3 (sub), 4 (work entry title).</li><li><code>treatment="inverse"</code> white on dark; <code>outline</code> exists, unused.</li><li>Case titles of 10+ letters a word drop to level 2 (<code>title_level()</code>).</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Two to four words, one <code>&lt;br&gt;</code> at most.</li><li>Keep one h1 per page.</li><li>Cap body copy at <code>--measure</code>.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Pick a level for its element; set <code>as</code> for that.</li><li>Use mid sizes for emphasis. Big or small, little between.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- S06 ------------------------------------------------------------ -->
+  <section class="c" id="site-spec" data-n="S06">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>S06</b><a href="#site-spec">#site-spec</a></p>
+        <h3 class="c__name">Spec list</h3>
+        <p class="c__what">Mono key and value rows on hairlines. The most repeated device on the site: project facts, About details, contact rows.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>Home CHARGER feature, About; case-study brief rows</dd>
+        <dt>Built from</dt><dd><code>SpecList</code> (_ds); phone columns in <code>css/mobile.css</code></dd>
+        <dt>Edit</dt><dd>Rows live in <code>renderVals()</code> (<code>chargerSpecs</code>, <code>aboutSpecs</code>) in <code>src/index.html</code>; case pages: <code>brief</code> in the content JSON</dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="site" data-pad="44px 32px" data-label="SpecList, three rows">
+<script type="text/html" class="demo">
+<dl style="margin: 0px; display: flex; flex-direction: column; gap: var(--space-3); max-width: 560px;"><div style="display: grid; grid-template-columns: minmax(64px, 120px) 1fr auto; gap: var(--space-5); align-items: baseline; padding-bottom: var(--space-3); border-bottom: 1px solid var(--line-hairline);"><dt style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: var(--lh-meta); color: var(--text-meta);">Event</dt><dd style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: var(--lh-meta); color: var(--text-display); margin: 0px;">Battle of the Rockets 2026</dd></div><div style="display: grid; grid-template-columns: minmax(64px, 120px) 1fr auto; gap: var(--space-5); align-items: baseline; padding-bottom: var(--space-3); border-bottom: 1px solid var(--line-hairline);"><dt style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: var(--lh-meta); color: var(--text-meta);">Result</dt><dd style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: var(--lh-meta); color: var(--text-display); margin: 0px;">First place</dd></div><div style="display: grid; grid-template-columns: minmax(64px, 120px) 1fr auto; gap: var(--space-5); align-items: baseline; padding-bottom: var(--space-3); border-bottom: 1px solid var(--line-hairline);"><dt style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: var(--lh-meta); color: var(--text-meta);">Role</dt><dd style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: var(--lh-meta); color: var(--text-display); margin: 0px;">Captain, chief engineer</dd></div></dl>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="src/index.html">
+<!-- markup -->
+<x-import component-from-global-scope="MertTReliDesignSystem_56763c.SpecList" items="{{ chargerSpecs }}" hint-size="100%,140px"></x-import>
+
+<!-- data, inside renderVals() return { ... } -->
+chargerSpecs: [
+  { label: "Event", value: "Battle of the Rockets 2026" },
+  { label: "Result", value: "First place" },
+  { label: "Role", value: "Captain, chief engineer" },
+],
+</script>
+<script type="text/plain" title="content/projects/&lt;slug&gt;.json">
+"brief": [
+  { "label": "Built for", "value": "SparkLabs seed competition, March 2026" },
+  { "label": "Status", "value": "Thermal stack validated, electronics in progress" }
+]
+</script>
+<script type="text/plain" title="Built HTML (read only)" data-from="0"></script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li>A row can carry <code>aside</code>, a third muted value on the right.</li><li><code>columns</code> overrides the grid; case pages use two columns.</li><li><code>dense</code> drops the hairlines (unused).</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Labels of one or two words; values with units.</li><li>Three to five rows.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Put prose in a value. Long values wrap badly at 390.</li><li>Hand-write rows in the markup; edit the data list.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- S07 ------------------------------------------------------------ -->
+  <section class="c" id="site-media" data-n="S07">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>S07</b><a href="#site-media">#site-media</a></p>
+        <h3 class="c__name">Media frame</h3>
+        <p class="c__what">A photo with grain, 8px corners, the mounted-print shadow from <code>css/depth.css</code> and an indexed caption under it. The image edge is the card edge.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>Home work entries (Robo-Catcher pair), Beyond; case-study galleries</dd>
+        <dt>Built from</dt><dd><code>MediaFrame</code> + <code>Grain</code> (_ds), <code>figure &gt; div:first-child</code> rules in <code>css/depth.css</code></dd>
+        <dt>Edit</dt><dd><code>src/index.html</code>; case pages: a section's <code>frames</code> in <code>content/projects/&lt;slug&gt;.json</code></dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="site" data-pad="44px 32px" data-label="Two frames, 4 / 3, indexed captions">
+<script type="text/html" class="demo">
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); max-width: 760px;">
+  <figure style="margin: 0px; display: flex; flex-direction: column; gap: var(--space-3);"><div style="position: relative; aspect-ratio: 4 / 3; overflow: hidden; border-radius: var(--radius-md); background: var(--surface-sunken);"><img src="assets/photos/shop-and-machine-photography/machine-field.jpg" alt="Robo-Catcher on the field" style="width: 100%; height: 100%; object-fit: cover; transform: scale(1); transition: transform var(--t-media);"><span aria-hidden="true" style="position: absolute; inset: 0px; pointer-events: none; background-image: var(--grain-url); background-size: 220px 220px; mix-blend-mode: overlay; opacity: var(--grain-opacity);"></span></div><figcaption style="display: flex; gap: var(--space-4); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta);"><span style="color: var(--text-display);">a</span>On the field</figcaption></figure>
+  <figure style="margin: 0px; display: flex; flex-direction: column; gap: var(--space-3);"><div style="position: relative; aspect-ratio: 4 / 3; overflow: hidden; border-radius: var(--radius-md); background: var(--surface-sunken);"><img src="assets/photos/shop-and-machine-photography/uc-track.jpg" alt="Team testing the machine" style="width: 100%; height: 100%; object-fit: cover; transform: scale(1); transition: transform var(--t-media);"><span aria-hidden="true" style="position: absolute; inset: 0px; pointer-events: none; background-image: var(--grain-url); background-size: 220px 220px; mix-blend-mode: overlay; opacity: var(--grain-opacity);"></span></div><figcaption style="display: flex; gap: var(--space-4); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta);"><span style="color: var(--text-display);">b</span>Testing. Photograph Paul Buckowski / Union College</figcaption></figure>
+</div>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="src/index.html">
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4)">
+  <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="assets/photos/shop-and-machine-photography/machine-field.jpg" alt="Robo-Catcher on the field" ratio="4 / 3" caption="On the field" index="a" hover-zoom="true" hint-size="100%,180px"></x-import>
+  <x-import component-from-global-scope="MertTReliDesignSystem_56763c.MediaFrame" src="assets/photos/shop-and-machine-photography/uc-track.jpg" alt="Team testing the machine" ratio="4 / 3" caption="Testing. Photograph Paul Buckowski / Union College" index="b" hover-zoom="true" hint-size="100%,180px"></x-import>
+</div>
+</script>
+<script type="text/plain" title="content/projects/&lt;slug&gt;.json">
+{ "label": "The airframe", "ratio": "3 / 4", "paras": ["..."],
+  "frames": [
+    { "src": "assets/photos/charger-rocket-photography/charger-pad-tall.jpg", "alt": "CHARGER on the launch rail before a flight", "caption": "On the rail", "index": "01" }
+  ] }
+</script>
+<script type="text/plain" title="Built HTML (read only)" data-from="0"></script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li><code>ratio</code>: <code>3 / 2</code> default, <code>4 / 3</code>, <code>4 / 5</code> portrait.</li><li><code>scrim</code>: <code>hero</code>, <code>bottom</code>, <code>flat</code> when type sits on the photo.</li><li><code>grain="false"</code> for screenshots.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Write real alt text; credit photographers in the caption.</li><li>Make derivatives first: <code>python3 tools/media.py image</code>.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Add a border, fill or shadow of your own.</li><li>Expect <code>hover-zoom</code> to scale; <code>css/depth.css</code> pins it to a 1.5% lift on purpose.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- S08 ------------------------------------------------------------ -->
+  <section class="c" id="site-stage" data-n="S08">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>S08</b><a href="#site-stage">#site-stage</a></p>
+        <h3 class="c__name">Render stage</h3>
+        <p class="c__what">An inset 14px tray for transparent CAD renders and turntable videos. The video waits for <code>js/media-playback.js</code>: poster first, then the source size that fits the screen, paused offscreen.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>Home work entries (HOTBOX, Robo-Catcher, bend fixture, pedals, Therma-Shift); case-study heroes</dd>
+        <dt>Built from</dt><dd><code>.depth-stage</code> in <code>css/depth.css</code>; video contract in the header of <code>js/media-playback.js</code></dd>
+        <dt>Edit</dt><dd><code>src/index.html</code>; case pages: <code>clip</code> and <code>clip_sizes</code> in the content JSON</dd>
+      </dl>
+    </div>
+    <div class="pvs pvs--2">
+      <figure class="pv" data-profile="site" data-pad="40px 32px" data-js="media-playback" data-label="Alpha turntable, three sizes">
+<script type="text/html" class="demo">
+<div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-3);">
+  <div class="depth-stage" style="position: relative; aspect-ratio: 16 / 9; overflow: hidden">
+    <video data-clip="1" data-poster="assets/motion/robo-catcher-360-poster.webp" loop muted playsinline preload="none" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain">
+      <source data-src="assets/motion/robo-catcher-360-alpha.webm" data-src-md="assets/motion/robo-catcher-360-1280-alpha.webm" data-src-sm="assets/motion/robo-catcher-360-960-alpha.webm" type="video/webm">
+    </video>
+  </div>
+  <p style="display: flex; gap: var(--space-4); justify-content: flex-start; font-family: var(--font-mono); font-size: var(--fs-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta);"><span style="color: var(--text-display);">02</span><span>84 part assembly</span></p>
+</div>
+</script>
+      </figure>
+      <figure class="pv" data-profile="site" data-pad="40px 32px" data-js="media-playback" data-label="Blurred render + IP protected pill">
+<script type="text/html" class="demo">
+<div class="depth-stage" style="position: relative; aspect-ratio: 16 / 9">
+  <video data-clip="1" data-poster="assets/motion/hotbox-blurred-poster.webp" loop muted playsinline preload="none" disablepictureinpicture controlslist="nodownload noremoteplayback" aria-label="Blurred render, SunThru proprietary hardware" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block"><source data-src="assets/motion/hotbox-blurred-alpha.webm" type="video/webm"><source data-src="assets/motion/hotbox-blurred.mp4" type="video/mp4"></video>
+  <div style="position: absolute; inset: auto 0 0 0; display: flex; justify-content: center">
+    <span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-display); border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); padding: 5px 12px; white-space: nowrap">IP protected</span>
+  </div>
+</div>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="src/index.html" data-from="0"></script>
+<script type="text/plain" title="IP protected" data-from="1"></script>
+<script type="text/plain" title="content/projects/&lt;slug&gt;.json">
+"clip": "therma-shift-airflow",
+"clip_sizes": [1200, 800]
+</script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li><code>aspect-ratio</code> 16 / 9, 4 / 3 or 5 / 4 to fit the render.</li><li>Inside <code>.depth-hero</code> the tray turns transparent with a floor shadow.</li><li>Opaque renders: add an mp4 <code>&lt;source&gt;</code> after the webm.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Always set <code>data-poster</code>; it shows when motion is off.</li><li>Ship <code>-1280</code> and <code>-960</code> sizes: <code>python3 tools/media.py video</code>.</li><li>Blur and pill anything under NDA.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Use <code>src</code> or <code>autoplay</code>; the script decides when to load.</li><li>Put opaque photos in the tray; use a media frame.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- S09 ------------------------------------------------------------ -->
+  <section class="c" id="site-work" data-n="S09">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>S09</b><a href="#site-work">#site-work</a></p>
+        <h3 class="c__name">Work entry</h3>
+        <p class="c__what">One project on the home page: an asymmetric two-column <code>&lt;article&gt;</code> under a hairline. Text column (index label, title, credit, one or two sentences, button) beside a render stage. Columns swap sides from entry to entry.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>Home <code>#work</code>, five entries</dd>
+        <dt>Built from</dt><dd>S03, S05, S02, S08 inside an inline grid; one column below 861px (<code>css/mobile.css</code>)</dd>
+        <dt>Edit</dt><dd><code>src/index.html</code>, <code>#work</code>; see <code>docs/recipes/add-project.md</code></dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="site" data-pad="8px clamp(16px, 4vw, 40px) 44px" data-js="media-playback" data-label="Text 1.5 : render 1">
+<script type="text/html" class="demo">
+<article data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; padding-top: var(--space-7); border-top: 1px solid var(--line-hairline)">
+  <div style="display: flex; flex-direction: column; gap: var(--space-5)">
+    <span data-depth-label="true" style="font-family: var(--font-mono); font-size: var(--fs-meta); font-weight: 400; line-height: var(--lh-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta); display: inline-flex; align-items: baseline; gap: var(--space-3);"><span style="color: var(--text-display);">02</span>Thermal / Instrumentation</span>
+    <h3 style="font-family: var(--font-display); font-size: var(--fs-title-1); font-weight: 500; line-height: var(--lh-display); letter-spacing: var(--ls-display); text-transform: uppercase; margin: 0px; color: var(--text-display); text-wrap: balance;">HOTBOX: thermal test bench</h3>
+    <span style="font-family: var(--font-mono); font-size: var(--fs-meta); font-weight: 400; line-height: var(--lh-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-muted); display: inline-flex; align-items: baseline; gap: var(--space-3);">SunThru, 2026 / Design, electronics, firmware, safety systems</span>
+    <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">I designed and built a test bench that ranks glazing samples by insulating performance. It runs unattended overnight.</p>
+  </div>
+  <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-3)">
+    <div class="depth-stage" style="position: relative; aspect-ratio: 16 / 9">
+      <video data-clip="1" data-poster="assets/motion/hotbox-blurred-poster.webp" loop muted playsinline preload="none" disablepictureinpicture controlslist="nodownload noremoteplayback" aria-label="Blurred render, SunThru proprietary hardware" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block"><source data-src="assets/motion/hotbox-blurred-alpha.webm" type="video/webm"><source data-src="assets/motion/hotbox-blurred.mp4" type="video/mp4"></video>
+      <div style="position: absolute; inset: auto 0 0 0; display: flex; justify-content: center">
+        <span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-display); border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); padding: 5px 12px; white-space: nowrap">IP protected</span>
+      </div>
+    </div>
+  </div>
+</article>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="src/index.html">
+<article data-reveal="1" style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; padding-top: var(--space-7); border-top: 1px solid var(--line-hairline)">
+  <div style="display: flex; flex-direction: column; gap: var(--space-5)">
+    <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="04" hint-size="240px,16px">Design for manufacture</x-import>
+    <x-import component-from-global-scope="MertTReliDesignSystem_56763c.DisplayHeading" level="4" as="h3" hint-size="100%,60px">Three-point bend fixture</x-import>
+    <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" tone="muted" hint-size="100%,16px">SunThru, 2026 / Solo design</x-import>
+    <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">One or two sentences.</p>
+    <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Button" data-depth-button="outline" variant="outline" trailing="→" href="projects/bend-fixture.html" hint-size="220px,44px">Case study</x-import>
+  </div>
+  <div style="min-width: 0; display: flex; flex-direction: column; gap: var(--space-3)">
+    <div class="depth-stage" style="position: relative; aspect-ratio: 4 / 3">
+      <!-- render video, see S08 -->
+    </div>
+  </div>
+</article>
+</script>
+<script type="text/plain" title="Built HTML (read only)" data-from="0"></script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li>Text first at <code>1.4fr</code> or <code>1.5fr</code>; render first at <code>1fr 1.4fr</code> or <code>1.35fr 1fr</code>.</li><li>Optional caption and a media-frame pair under the render (Robo-Catcher).</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Alternate sides down the list.</li><li>Number entries in order (<code>02</code>, <code>03</code>...); the CHARGER feature is <code>01</code>.</li><li>Keep the same field order in every entry.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Use a 50/50 split.</li><li>Add a third column or a card background.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- S10 ------------------------------------------------------------ -->
+  <section class="c" id="site-stats" data-n="S10">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>S10</b><a href="#site-stats">#site-stats</a></p>
+        <h3 class="c__name">Stats band</h3>
+        <p class="c__what">Big figures on an ink band straight after a case-study hero, so the result reads in one glance. Auto-fit grid, 190px minimum column. Built by <code>stats_band()</code> in <code>build-case.py</code>.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>Every case study, second section</dd>
+        <dt>Built from</dt><dd><code>stats_band()</code> in <code>build-case.py</code></dd>
+        <dt>Edit</dt><dd>The <code>"kind": "stats"</code> section of <code>content/projects/&lt;slug&gt;.json</code></dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="site" data-bg="dark" data-pad="56px clamp(16px, 4vw, 40px)" data-label="Four figures (Therma-Shift)">
+<script type="text/html" class="demo">
+<div data-reveal="1" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr)); gap: var(--space-7) var(--space-6)">
+<div style="display: flex; flex-direction: column; gap: var(--space-3)"><span style="font-family: var(--font-display); font-size: clamp(2.2rem, 4.4vw, 3.6rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.02em; color: var(--paper)">11 °C</span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70)">Cold face at 12 V, steady state</span></div>
+<div style="display: flex; flex-direction: column; gap: var(--space-3)"><span style="font-family: var(--font-display); font-size: clamp(2.2rem, 4.4vw, 3.6rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.02em; color: var(--paper)">~5 min</span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70)">To thermal equilibrium</span></div>
+<div style="display: flex; flex-direction: column; gap: var(--space-3)"><span style="font-family: var(--font-display); font-size: clamp(2.2rem, 4.4vw, 3.6rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.02em; color: var(--paper)">2</span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70)">Modes from one stack, by polarity</span></div>
+<div style="display: flex; flex-direction: column; gap: var(--space-3)"><span style="font-family: var(--font-display); font-size: clamp(2.2rem, 4.4vw, 3.6rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.02em; color: var(--paper)">±2 °F</span><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70)">Closed loop target</span></div>
+</div>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="content/projects/&lt;slug&gt;.json">
+{ "kind": "stats", "stats": [
+  { "value": "11 &deg;C", "label": "Cold face at 12 V, steady state" },
+  { "value": "~5 min", "label": "To thermal equilibrium" }
+] }
+</script>
+<script type="text/plain" title="Built HTML (read only)" data-from="0"></script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li>Two to four figures; the grid wraps on its own.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Short values with units: <code>11 °C</code>, <code>±2 °F</code>.</li><li>Labels say what was measured and under what condition.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Use a figure without a unit or a source.</li><li>Place it on paper; it is an ink band.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- S11 ------------------------------------------------------------ -->
+  <section class="c" id="site-lists" data-n="S11">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>S11</b><a href="#site-lists">#site-lists</a></p>
+        <h3 class="c__name">Panels and ruled list</h3>
+        <p class="c__what">Two ways to list requirements or facts in a case study: numbered panels on the sunken surface, or a numbered list on hairlines in the reading column.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>Therma-Shift constraints (panels); CHARGER, Robo-Catcher, Therma-Shift specs (list)</dd>
+        <dt>Built from</dt><dd><code>cards()</code>, <code>bullets()</code> in <code>build-case.py</code></dd>
+        <dt>Edit</dt><dd>A section's <code>cards</code> or <code>list</code> in <code>content/projects/&lt;slug&gt;.json</code></dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="site" data-pad="44px clamp(16px, 4vw, 40px)" data-label="cards(): numbered panels">
+<script type="text/html" class="demo">
+<div data-reveal="1" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5)">
+<div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">01</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Universal: any mug, glass or can, the device adapts to the drinkware</span></div>
+<div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">02</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Dual mode, heating and cooling from the same hardware</span></div>
+<div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">03</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Powered over USB-C Power Delivery, within a desk power budget</span></div>
+<div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">04</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Thermal runaway prevention independent of the control loop</span></div>
+<div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">05</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">Low profile and quiet enough for an office desk</span></div>
+<div style="display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); border-radius: var(--radius-lg, 14px); background: var(--surface-sunken); min-height: 150px"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">06</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-display)">No proprietary cup, ever</span></div>
+</div>
+</script>
+      </figure>
+      <figure class="pv" data-profile="site" data-pad="36px clamp(16px, 4vw, 40px)" data-label="bullets(): ruled list">
+<script type="text/html" class="demo">
+<div style="display: flex; flex-direction: column; max-width: var(--measure)"><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">01</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">Length 37 in, single stage</span></div><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">02</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">Four trapezoidal fins, root chord 2.76 in, height 2.36 in, sweep 2.17 in</span></div><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">03</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">Stability margin 1.80 cal, centre of gravity at 22 in</span></div><div style="display: grid; grid-template-columns: minmax(28px,36px) minmax(0,1fr); gap: var(--space-5); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line-hairline)"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); color: var(--text-meta)">04</span><span style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body)">Aerotech G77R-7, thrust to weight 8.17, burn 1.25 s</span></div></div>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="content/projects/&lt;slug&gt;.json">
+{ "label": "Constraints", "cards": ["Universal: any mug, glass or can, the device adapts to the drinkware", "Dual mode, heating and cooling from the same hardware"] }
+{ "label": "Where it stands", "list": ["10.7 to 12 degrees C cold face at 12 V, steady state", "..."] }
+</script>
+<script type="text/plain" title="Panels, built" data-from="0"></script>
+<script type="text/plain" title="List, built" data-from="1"></script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li>Panels: three columns, one below 861px.</li><li>List: one column at <code>--measure</code>.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Panels for three or six short constraints.</li><li>List for specs or steps that read in order.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Put a heading inside a panel.</li><li>Mix panels and a list in one section.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- S12 ------------------------------------------------------------ -->
+  <section class="c" id="site-belt" data-n="S12">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>S12</b><a href="#site-belt">#site-belt</a></p>
+        <h3 class="c__name">Pills and skills belt</h3>
+        <p class="c__what">Outlined mono pills grouped under strong meta labels, on a belt that loops sideways and pauses on hover or focus. With motion off it wraps into rows.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>Home, What I work with</dd>
+        <dt>Built from</dt><dd><code>.skills-belt*</code> in <code>css/rocket.css</code>; pills are inline spans</dd>
+        <dt>Edit</dt><dd><code>src/index.html</code>; change both lists (the second is the <code>aria-hidden</code> loop copy)</dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="site" data-pad="40px 0" data-label="Belt, two groups">
+<script type="text/html" class="demo">
+<div data-reveal="1" class="skills-belt" tabindex="0" role="region" aria-label="What I work with">
+  <div class="skills-belt-track">
+    <ul class="skills-belt-list">
+      <li class="skills-belt-group"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); font-weight: 400; line-height: var(--lh-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-display); display: inline-flex; align-items: baseline; gap: var(--space-3);"><span style="color: var(--text-display);">01</span>Design and CAD</span></li>
+      <li><span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap;">SolidWorks</span></li>
+      <li><span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap;">GD&amp;T</span></li>
+      <li class="skills-belt-group"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); font-weight: 400; line-height: var(--lh-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-display); display: inline-flex; align-items: baseline; gap: var(--space-3);"><span style="color: var(--text-display);">02</span>Controls and automation</span></li>
+      <li><span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap;">PLC ladder logic</span></li>
+      <li><span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap;">PID control</span></li>
+    </ul>
+    <ul class="skills-belt-list" aria-hidden="true">
+      <li class="skills-belt-group"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); font-weight: 400; line-height: var(--lh-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-display); display: inline-flex; align-items: baseline; gap: var(--space-3);"><span style="color: var(--text-display);">01</span>Design and CAD</span></li>
+      <li><span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap;">SolidWorks</span></li>
+      <li><span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap;">GD&amp;T</span></li>
+      <li class="skills-belt-group"><span style="font-family: var(--font-mono); font-size: var(--fs-meta); font-weight: 400; line-height: var(--lh-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-display); display: inline-flex; align-items: baseline; gap: var(--space-3);"><span style="color: var(--text-display);">02</span>Controls and automation</span></li>
+      <li><span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap;">PLC ladder logic</span></li>
+      <li><span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap;">PID control</span></li>
+    </ul>
+  </div>
+</div>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="src/index.html">
+<div data-reveal="1" class="skills-belt" tabindex="0" role="region" aria-label="What I work with">
+  <div class="skills-belt-track">
+    <ul class="skills-belt-list">
+      <li class="skills-belt-group"><x-import component-from-global-scope="MertTReliDesignSystem_56763c.Meta" index="01" tone="strong" hint-size="200px,16px">Design and CAD</x-import></li>
+      <li><span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">SolidWorks</span></li>
+    </ul>
+    <ul class="skills-belt-list" aria-hidden="true">
+      <!-- the same items again, for the seamless loop -->
+    </ul>
+  </div>
+</div>
+</script>
+<script type="text/plain" title="Pill only">
+<span style="display: inline-flex; align-items: center; padding: 7px 13px; border: 1px solid var(--line-hairline); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-body); white-space: nowrap">SolidWorks</span>
+</script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li><code>--belt-duration</code> on <code>.skills-belt</code> sets the loop time (90s default).</li><li>The pill alone also tags facts elsewhere (IP protected, S08).</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Keep the two lists identical.</li><li>Name tools as people search for them.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Drop <code>aria-hidden</code> from the copy; screen readers would read it twice.</li><li>Make pills clickable; they are labels.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- S13 ------------------------------------------------------------ -->
+  <section class="c" id="site-chrome" data-n="S13">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>S13</b><a href="#site-chrome">#site-chrome</a></p>
+        <h3 class="c__name">Hero chrome</h3>
+        <p class="c__what">What sits on the dark hero around the content: the grain overlay, the glass social rail on the right edge, the caption and the square scroll cue at the foot. The scroll cue is the only hard corner in the system.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>Home hero; case-study heroes (grain + rail)</dd>
+        <dt>Built from</dt><dd><code>Grain</code>, <code>SocialRail</code>, <code>Caption</code>, <code>ScrollCue</code> (_ds); <code>.depth-hero</code> in <code>css/depth.css</code></dd>
+        <dt>Edit</dt><dd><code>src/index.html</code>; rail links: <code>social</code> in <code>renderVals()</code></dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="site" data-pad="0" data-label=".depth-hero with grain, rail, caption, scroll cue">
+<script type="text/html" class="demo">
+<section class="on-dark depth-hero" style="position: relative; min-height: 440px; background: var(--ink-900); overflow-x: clip; display: flex; flex-direction: column; justify-content: flex-end">
+  <span aria-hidden="true" style="position: absolute; inset: 0px; pointer-events: none; background-image: var(--grain-url); background-size: 220px 220px; mix-blend-mode: overlay; opacity: var(--grain-opacity);"></span>
+  <div data-ds-rail="inverse" style="position: absolute; z-index: var(--z-rail); top: 50%; transform: translateY(-50%); right: var(--space-5); display: flex; flex-direction: column; gap: var(--space-3);"><a href="https://linkedin.com/in/merttureli" aria-label="LinkedIn" style="width: 36px; height: 36px; display: grid; place-items: center; border-radius: var(--radius-pill); border: 1px solid var(--paper-a18); background: var(--paper-a08); backdrop-filter: var(--blur-glass); transition: background var(--t-hover), border-color var(--t-hover);"><img src="data:image/svg+xml,%3C!--%20%40license%20lucide-static%20v0.544.0%20-%20ISC%20--%3E%0A%3Csvg%0A%20%20class%3D%22lucide%20lucide-linkedin%22%0A%20%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%0A%20%20width%3D%2224%22%0A%20%20height%3D%2224%22%0A%20%20viewBox%3D%220%200%2024%2024%22%0A%20%20fill%3D%22none%22%0A%20%20stroke%3D%22currentColor%22%0A%20%20stroke-width%3D%222%22%0A%20%20stroke-linecap%3D%22round%22%0A%20%20stroke-linejoin%3D%22round%22%0A%3E%0A%20%20%3Cpath%20d%3D%22M16%208a6%206%200%200%201%206%206v7h-4v-7a2%202%200%200%200-2-2%202%202%200%200%200-2%202v7h-4v-7a6%206%200%200%201%206-6z%22%20%2F%3E%0A%20%20%3Crect%20width%3D%224%22%20height%3D%2212%22%20x%3D%222%22%20y%3D%229%22%20%2F%3E%0A%20%20%3Ccircle%20cx%3D%224%22%20cy%3D%224%22%20r%3D%222%22%20%2F%3E%0A%3C%2Fsvg%3E%0A" alt="" aria-hidden="true" draggable="false" style="width: 15px; height: 15px; display: block; opacity: 1; filter: invert(1);"></a><a href="#contact" aria-label="Mail" style="width: 36px; height: 36px; display: grid; place-items: center; border-radius: var(--radius-pill); border: 1px solid var(--paper-a18); background: var(--paper-a08); backdrop-filter: var(--blur-glass); transition: background var(--t-hover), border-color var(--t-hover);"><img src="data:image/svg+xml,%3C!--%20%40license%20lucide-static%20v0.544.0%20-%20ISC%20--%3E%0A%3Csvg%0A%20%20class%3D%22lucide%20lucide-mail%22%0A%20%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%0A%20%20width%3D%2224%22%0A%20%20height%3D%2224%22%0A%20%20viewBox%3D%220%200%2024%2024%22%0A%20%20fill%3D%22none%22%0A%20%20stroke%3D%22currentColor%22%0A%20%20stroke-width%3D%222%22%0A%20%20stroke-linecap%3D%22round%22%0A%20%20stroke-linejoin%3D%22round%22%0A%3E%0A%20%20%3Cpath%20d%3D%22m22%207-8.991%205.727a2%202%200%200%201-2.009%200L2%207%22%20%2F%3E%0A%20%20%3Crect%20x%3D%222%22%20y%3D%224%22%20width%3D%2220%22%20height%3D%2216%22%20rx%3D%222%22%20%2F%3E%0A%3C%2Fsvg%3E%0A" alt="" aria-hidden="true" draggable="false" style="width: 15px; height: 15px; display: block; opacity: 1; filter: invert(1);"></a></div>
+  <div class="hero-foot" style="position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-6); padding: 0 var(--page-margin) var(--space-7); max-width: calc(var(--max-width) + 2 * var(--page-margin)); margin: 0px auto; width: 100%;">
+    <p style="display: flex; gap: var(--space-4); justify-content: flex-start; font-family: var(--font-mono); font-size: var(--fs-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a45); max-width: 46ch;"><span style="color: var(--text-display);">01</span><span>CHARGER</span></p>
+    <button aria-label="Scroll down" data-ds-scrollcue="" style="display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-2); width: 72px; height: 72px; padding: 0px; cursor: pointer; background: var(--paper-a08); border: 1px solid var(--paper-a45); border-radius: 0px; backdrop-filter: var(--blur-glass); transition: background var(--t-hover);"><span style="transform: none; transition: transform var(--dur-3) var(--ease-out);"><img src="data:image/svg+xml,%3C!--%20%40license%20lucide-static%20v0.544.0%20-%20ISC%20--%3E%0A%3Csvg%0A%20%20class%3D%22lucide%20lucide-arrow-down%22%0A%20%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%0A%20%20width%3D%2224%22%0A%20%20height%3D%2224%22%0A%20%20viewBox%3D%220%200%2024%2024%22%0A%20%20fill%3D%22none%22%0A%20%20stroke%3D%22currentColor%22%0A%20%20stroke-width%3D%222%22%0A%20%20stroke-linecap%3D%22round%22%0A%20%20stroke-linejoin%3D%22round%22%0A%3E%0A%20%20%3Cpath%20d%3D%22M12%205v14%22%20%2F%3E%0A%20%20%3Cpath%20d%3D%22m19%2012-7%207-7-7%22%20%2F%3E%0A%3C%2Fsvg%3E%0A" alt="" aria-hidden="true" draggable="false" style="width: 18px; height: 18px; display: block; opacity: 1; filter: invert(1);"></span></button>
+  </div>
+</section>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="src/index.html">
+<section class="on-dark depth-hero" style="position: relative; min-height: min(940px, 100vh); background: var(--ink-900); overflow-x: clip; display: flex; flex-direction: column">
+  <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Grain" blend="overlay" strength="normal" hint-size="100%,100%"></x-import>
+  <x-import component-from-global-scope="MertTReliDesignSystem_56763c.SocialRail" items="{{ social }}" inverse="true" fixed="true" hint-size="36px,120px"></x-import>
+  <!-- hero content -->
+  <div class="hero-foot" style="position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-6); padding: 0 var(--page-margin) var(--space-7); max-width: calc(var(--max-width) + 2 * var(--page-margin)); margin: 0 auto; width: 100%">
+    <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Caption" index="01" dc-props="{{ heroCaption }}" hint-size="380px,16px">CHARGER</x-import>
+    <x-import component-from-global-scope="MertTReliDesignSystem_56763c.ScrollCue" inverse="true" shape="square" hint-size="72px,72px"></x-import>
+  </div>
+</section>
+</script>
+<script type="text/plain" title="build-case.py">
+grain()                       # overlay, normal; any dark band
+grain(blend="multiply")       # on a light gradient plate, never on plain paper
+</script>
+<script type="text/plain" title="Built HTML (read only)" data-from="0"></script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li>Grain <code>strength</code>: <code>subtle</code> 14%, <code>normal</code>, <code>strong</code>.</li><li>Rail and cue have a plain (paper) skin; only the inverse one is used.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Grain on photos, plates and gradients.</li><li>Glass only over dark or photographic ground.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Put grain on plain white paper.</li><li>Round the scroll cue.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- S14 ------------------------------------------------------------ -->
+  <section class="c" id="site-footer" data-n="S14">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>S14</b><a href="#site-footer">#site-footer</a></p>
+        <h3 class="c__name">Footer</h3>
+        <p class="c__what">Ink band, wordmark at 16px left, one meta line right, a small mono colophon with underlined links below. Case studies copy the home footer at build time; the palette and motion control mounts into it.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd><code>index.html</code>, <code>projects/*.html</code> (copied), <code>websites.html</code> (<code>.ds-footer</code>)</dd>
+        <dt>Built from</dt><dd><code>Wordmark</code>, <code>Meta</code> (_ds); <code>footer_block()</code> in <code>build-case.py</code>; Display control from <code>js/site-palette.js</code></dd>
+        <dt>Edit</dt><dd>Home footer in <code>src/index.html</code>, then rebuild: the case pages follow</dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="site" data-bg="dark" data-pad="0" data-label="Home footer">
+<script type="text/html" class="demo">
+<footer class="on-dark" style="background: var(--ink-900); padding: var(--space-7) var(--page-margin) var(--space-8); border-top: 1px solid var(--line-hairline)">
+  <div style="max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-6)">
+    <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-5)">
+      <span style="font-family: var(--font-display); font-size: 16px; font-weight: 500; letter-spacing: 0.32em; line-height: 1; text-transform: uppercase; color: var(--text-display); display: inline-block; white-space: nowrap;">MERT TURELI</span>
+      <span data-depth-label="true" style="font-family: var(--font-mono); font-size: var(--fs-meta); font-weight: 400; line-height: var(--lh-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta); display: inline-flex; align-items: baseline; gap: var(--space-3);">Austin, Texas / B.S. Mechanical Engineering, Union College, 2026</span>
+    </div>
+    <p style="max-width: 96ch; font-family: var(--font-mono); font-size: var(--fs-meta-sm); line-height: 1.5; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-meta)">Photographs of the machine and the team by Paul Buckowski / Union College. Aircraft models are third-party, illustration only. / <a href="assets/Mert-Tureli-Resume.pdf" style="color: var(--text-meta); text-decoration: underline; text-underline-offset: 3px;">Resume (PDF)</a> / <a href="privacy.html" style="color: var(--text-meta); text-decoration: underline; text-underline-offset: 3px;">Privacy</a></p>
+  </div>
+</footer>
+</script>
+      </figure>
+      <figure class="pv" data-profile="web" data-bg="dark" data-pad="0" data-label=".ds-footer (websites.html)">
+<script type="text/html" class="demo">
+<footer class="ds-footer on-dark">
+  <div class="page-width ds-footer-inner">
+    <div class="ds-footer-row"><a class="ds-wordmark ds-wordmark--md" href="index.html">MERT TURELI</a><span class="ds-meta">Austin, Texas / Web design and build</span></div>
+    <p class="ds-colophon"><a href="index.html">Portfolio</a> / <a href="privacy.html">Privacy</a></p>
+  </div>
+</footer>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="src/index.html">
+<footer class="on-dark" style="background: var(--ink-900); padding: var(--space-7) var(--page-margin) var(--space-8); border-top: 1px solid var(--line-hairline)">
+  <div style="max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-6)">
+    <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-5)">
+      <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Wordmark" name="MERT TURELI" size="md" hint-size="220px,20px"></x-import>
+      <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="320px,16px">Austin, Texas / B.S. Mechanical Engineering, Union College, 2026</x-import>
+    </div>
+    <p style="max-width: 96ch; font-family: var(--font-mono); font-size: var(--fs-meta-sm); line-height: 1.5; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-meta)">Credits. / <a href="privacy.html" style="color: var(--text-meta); text-decoration: underline; text-underline-offset: 3px">Privacy</a></p>
+  </div>
+</footer>
+</script>
+<script type="text/plain" title="websites.html" data-from="1"></script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li><code>footer_block(index, colophon=...)</code> swaps the credit line on a case page.</li><li><code>.ds-wordmark--md</code> is the 16px wordmark; the header uses 12px.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Change the footer once, on the home page.</li><li>Keep Privacy last.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Edit a case page footer in <code>projects/</code>; it is copied on every build.</li><li>Float the Display control over content; it mounts into the footer.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- S15 ------------------------------------------------------------ -->
+  <section class="c" id="site-flag" data-n="S15">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>S15</b><a href="#site-flag">#site-flag</a></p>
+        <h3 class="c__name">Copy flag</h3>
+        <p class="c__what">An open question for the owner, marked in place: a dotted underline with the question in <code>data-note</code> (hover for the tooltip). <code>tools/check-flags.py</code> lists every one and fails while any remain.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>Home, websites page, case studies (11 open today)</dd>
+        <dt>Built from</dt><dd><code>mark.flag</code> in <code>css/site-palette.css</code>; <code>flag()</code>, <code>FlagValue</code> in <code>build-case.py</code></dd>
+        <dt>Edit</dt><dd>Resolve: replace the <code>&lt;mark&gt;</code> (or the content <code>{"flag": ...}</code> object) with its final text. Recipe: <code>docs/recipes/flags.md</code></dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="site" data-pad="40px 32px" data-label="mark.flag in a caption and in body copy">
+<script type="text/html" class="demo">
+<div style="display: flex; flex-direction: column; gap: var(--space-5)">
+  <p style="display: flex; gap: var(--space-4); font-family: var(--font-mono); font-size: var(--fs-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta);"><span style="color: var(--text-display);">00</span><span>Portrait / <mark class="flag" data-flag="home-022" data-note="Fact pass: is 2024 the correct year for the portrait caption?" title="Fact pass: is 2024 the correct year for the portrait caption?">2024</mark></span></p>
+  <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Length 37 in, maximum diameter <mark class="flag" data-flag="charger-035" data-note="Diameter: CAD measures 2.68 in. Confirm 2.63 or correct it." title="Diameter: CAD measures 2.68 in. Confirm 2.63 or correct it.">2.63</mark> in, single stage</p>
+</div>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="HTML">
+<mark class="flag" data-flag="home-022" data-note="Fact pass: is 2024 the correct year for the portrait caption?">2024</mark>
+</script>
+<script type="text/plain" title="content/projects/&lt;slug&gt;.json">
+"paras": [["37 inches, single stage, ", { "flag": "charger-029", "note": "Diameter: CAD measures 2.68 in. Confirm 2.63 or correct it.", "text": "2.63" }, " inches across."]]
+</script>
+<script type="text/plain" title="Commands">
+python3 tools/check-flags.py      # list every open flag, exit 1 while any remain
+</script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li><code>data-flag</code> id is <code>&lt;page&gt;-&lt;nnn&gt;</code>.</li><li>In content JSON a flag is an object inside a text run: <code>{"flag", "note", "text"}</code>.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Write the note as the exact question to answer.</li><li>Clear all flags before the site goes public.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Style flags further; the dotted line is the whole signal.</li><li>Leave a resolved <code>&lt;mark&gt;</code> in place.</li></ul></div>
+    </div>
+  </section>
+</section>
+
+<!-- ============================================================== STUDIO -->
+<section class="sect sect--studio" id="studio" data-part="studio" data-title="Studio" data-sub="next/">
+  <div class="sect__head">
+    <div>
+      <p class="sect__label mono">Part 2 / merttureli.com/next/</p>
+      <h2 class="sect__title">Studio<i>.</i><small>One hand-written page, <code>next/index.html</code>, styled by <code>next/css/studio.css</code> and moved by <code>next/js/studio.js</code>. Classes are short BEM: <code>.block</code>, <code>.block__part</code>, <code>.block--variant</code>.</small></h2>
+    </div>
+  </div>
+
+  <!-- T01 ------------------------------------------------------------ -->
+  <section class="c" id="studio-top" data-n="T01">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>T01</b><a href="#studio-top">#studio-top</a></p>
+        <h3 class="c__name">Top bar</h3>
+        <p class="c__what">Wordmark with a copyright sign that spins once on hover, and four links that grow a 5px dot under them. Below 761px the links hide and the round menu button (T02) takes over.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd><code>next/index.html</code>, top</dd>
+        <dt>Built from</dt><dd><code>.top</code>, <code>.wordmark</code>, <code>.top__nav</code> in <code>studio.css</code>; <code>data-magnetic</code> pull in <code>studio.js</code></dd>
+        <dt>Edit</dt><dd><code>next/index.html</code>; keep the menu panel links (T02) in step</dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="studio" data-pad="0" data-height="96" data-label=".top + .wordmark + .top__nav">
+<script type="text/html" class="demo">
+<header class="top" data-top>
+  <a class="wordmark" href="#top" aria-label="Mert Tureli, back to top"><span class="wordmark__c">&copy;</span> Mert Tureli</a>
+  <nav class="top__nav" aria-label="Main">
+    <a href="#work" data-magnetic>Work</a>
+    <a href="#experience" data-magnetic>Experience</a>
+    <a href="#websites" data-magnetic>Websites</a>
+    <a href="#contact" data-magnetic>Contact</a>
+  </nav>
+  <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu" data-menu-btn data-magnetic>
+    <span class="menu-btn__lines" aria-hidden="true"></span><span class="sr-only">Menu</span>
+  </button>
+</header>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="HTML" data-from="0"></script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li>None. The menu button is fixed and scales in when <code>studio.js</code> adds <code>.is-shown</code>.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Link to in-page anchors only.</li><li>Keep <code>data-magnetic</code> on every link and the button.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Give the bar a background; it sits on the hero.</li><li>Add a fifth link; the row is sized for four at 761px.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- T02 ------------------------------------------------------------ -->
+  <section class="c" id="studio-menu" data-n="T02">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>T02</b><a href="#studio-menu">#studio-menu</a></p>
+        <h3 class="c__name">Menu button and panel</h3>
+        <p class="c__what">A 58px ink circle, fixed top right. Open, it turns signal orange, its lines cross, and an ink panel slides in from the right with large links and a mono foot.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd><code>next/index.html</code>, all widths (always visible on phones)</dd>
+        <dt>Built from</dt><dd><code>.menu-btn</code>, <code>.menu</code>, <code>.menu__panel</code>, <code>.menu__foot</code> in <code>studio.css</code>; open and close in <code>studio.js</code></dd>
+        <dt>Edit</dt><dd><code>next/index.html</code>, <code>#menu</code></dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="studio" data-pad="0" data-height="620" data-behavior="shown" data-label="Open state: aria-expanded true, panel shown">
+<script type="text/html" class="demo">
+<button class="menu-btn" type="button" aria-expanded="true" aria-controls="menu" data-menu-btn data-magnetic>
+  <span class="menu-btn__lines" aria-hidden="true"></span><span class="sr-only">Menu</span>
+</button>
+<div class="menu" id="menu" data-menu>
+  <div class="menu__panel">
+    <p class="label">Navigation</p>
+    <nav aria-label="Menu">
+      <a href="#work">Work</a>
+      <a href="#experience">Experience</a>
+      <a href="#beyond">Beyond</a>
+      <a href="#websites">Websites</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <div class="menu__foot">
+      <a href="../assets/Mert-Tureli-Resume.pdf">Resume (PDF)</a>
+      <a href="https://linkedin.com/in/merttureli" rel="noopener">LinkedIn</a>
+      <a href="mailto:merttureli0@gmail.com">merttureli0@gmail.com</a>
+    </div>
+  </div>
+</div>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="HTML" data-from="0"></script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li>Closed: <code>aria-expanded="false"</code> and <code>hidden</code> on <code>.menu</code>.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>List every section, including ones the top bar skips (Beyond).</li><li>Keep resume, LinkedIn and email in the foot.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Toggle <code>hidden</code> yourself; <code>studio.js</code> handles focus and Escape.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- T03 ------------------------------------------------------------ -->
+  <section class="c" id="studio-rule" data-n="T03">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>T03</b><a href="#studio-rule">#studio-rule</a></p>
+        <h3 class="c__name">Label and section rule</h3>
+        <p class="c__what"><code>.label</code> is the narrow mono caps used for every small word. <code>.rule</code> opens each section: a hairline with a numbered label left and a note right.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>Every section of <code>next/index.html</code></dd>
+        <dt>Built from</dt><dd><code>.label</code>, <code>.rule</code>, <code>.rule--dark</code>, <code>.hide-s</code> in <code>studio.css</code></dd>
+        <dt>Edit</dt><dd><code>next/index.html</code></dd>
+      </dl>
+    </div>
+    <div class="pvs pvs--2">
+      <figure class="pv" data-profile="studio" data-pad="40px 32px 24px" data-label=".rule on paper" data-stage-css=".rule{margin-bottom:0}">
+<script type="text/html" class="demo">
+<div class="rule"><span class="label">02 / Selected work</span><span class="label hide-s">2024 to 2026</span></div>
+</script>
+      </figure>
+      <figure class="pv" data-profile="studio" data-bg="ink" data-pad="0" data-label=".rule--dark inside .web" data-stage-css=".web{padding:40px 32px 24px}.rule{margin-bottom:0}">
+<script type="text/html" class="demo">
+<section class="web">
+  <div class="rule rule--dark"><span class="label">05 / Websites</span><span class="label"><span class="dot" aria-hidden="true"></span> Booking web projects</span></div>
+</section>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="HTML" data-from="0"></script>
+<script type="text/plain" title="Dark" data-from="1"></script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li><code>.rule--dark</code> on ink sections.</li><li><code>.hide-s</code> drops the right note below 761px.</li><li>The right side can be a link: <code>class="label link"</code>.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Number sections <code>01 / Name</code> in page order.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Use the rule label as the section heading; add an <code>h2</code> (visible or <code>.sr-only</code>).</li></ul></div>
+    </div>
+  </section>
+
+  <!-- T04 ------------------------------------------------------------ -->
+  <section class="c" id="studio-display" data-n="T04">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>T04</b><a href="#studio-display">#studio-display</a></p>
+        <h3 class="c__name">Display type and serif accent</h3>
+        <p class="c__what">Heavy, wide Archivo caps at 0.9 line height. One word per heading turns into Bodoni Moda italic with <code>&lt;em class="serif"&gt;</code>; that contrast is the Studio voice.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>Work, Experience, Websites, Contact headings; Beyond manifesto</dd>
+        <dt>Built from</dt><dd><code>.display</code>, <code>.display--web</code>, <code>.display--contact</code>, <code>.manifesto</code>, <code>.serif</code> in <code>studio.css</code></dd>
+        <dt>Edit</dt><dd><code>next/index.html</code></dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="studio" data-pad="44px 32px" data-label=".display + .serif">
+<script type="text/html" class="demo">
+<h2 id="work-title" class="display">Things I <em class="serif">built</em><br>and measured</h2>
+</script>
+      </figure>
+      <figure class="pv" data-profile="studio" data-bg="paper2" data-pad="44px 32px" data-label=".manifesto (Beyond)">
+<script type="text/html" class="demo">
+<h2 id="beyond-title" class="manifesto">I <em class="serif">fly</em> ultralights, make short <em class="serif">films</em>, shoot <em class="serif">photographs</em> and cook the food I grew up with.</h2>
+</script>
+      </figure>
+      <figure class="pv" data-profile="studio" data-bg="ink" data-pad="0" data-label=".display--web inside .web (serif turns signal)" data-stage-css=".web{padding:44px 32px}">
+<script type="text/html" class="demo">
+<section class="web">
+  <h2 id="web-title" class="display display--web">Like what you see?<br>Let's build <em class="serif">yours</em>.</h2>
+</section>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="HTML" data-from="0"></script>
+<script type="text/plain" title="Manifesto" data-from="1"></script>
+<script type="text/plain" title="On ink" data-from="2"></script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li><code>.display--web</code> larger, serif in signal; <code>.display--contact</code> largest.</li><li><code>.manifesto</code>: a sentence in caps, serif words in signal ink.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>One serif word per heading, the word that carries the meaning.</li><li>Break lines with <code>&lt;br&gt;</code> where the reading pauses.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Use the serif in body copy or labels.</li><li>Set display type in sentence case; CSS uppercases it, keep the source natural.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- T05 ------------------------------------------------------------ -->
+  <section class="c" id="studio-link" data-n="T05">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>T05</b><a href="#studio-link">#studio-link</a></p>
+        <h3 class="c__name">Text link</h3>
+        <p class="c__what">Mono caps with a full underline that retracts to the right on hover. Used for every secondary action.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>Project links, Experience rule, Websites CTA, footer</dd>
+        <dt>Built from</dt><dd><code>.link</code>, <code>.link--quiet</code>, <code>.link--light</code> in <code>studio.css</code></dd>
+        <dt>Edit</dt><dd><code>next/index.html</code></dd>
+      </dl>
+    </div>
+    <div class="pvs pvs--2">
+      <figure class="pv" data-profile="studio" data-pad="44px 32px" data-label=".link, .link--quiet in .project__links">
+<script type="text/html" class="demo">
+<p class="project__links">
+  <a class="link" href="../assets/charger-explorer/index.html" data-explorer-link>Take it apart in 3D</a>
+  <a class="link" href="https://merttureli.com/projects/charger.html">Case study</a>
+  <a class="link link--quiet" href="https://www.union.edu/news/stories/202604/rocket-club-soars-new-heights-first-place-finish-national-competition" rel="noopener">Union College news</a>
+</p>
+</script>
+      </figure>
+      <figure class="pv" data-profile="studio" data-bg="ink" data-pad="0" data-label=".link--light on ink" data-stage-css=".web{padding:44px 32px}">
+<script type="text/html" class="demo">
+<section class="web">
+  <a class="link link--light" href="mailto:merttureli0@gmail.com?subject=Website%20project">Or email me about a website</a>
+</section>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="HTML" data-from="0"></script>
+<script type="text/plain" title="On ink" data-from="1"></script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li><code>.link--quiet</code> muted gray for outside sources.</li><li><code>.link--light</code> paper color on ink.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Say where the link goes: "Case study", "Resume, PDF".</li><li>Add <code>rel="noopener"</code> on outside links.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Use a link for the main action of a section; use a round or pill button.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- T06 ------------------------------------------------------------ -->
+  <section class="c" id="studio-round" data-n="T06">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>T06</b><a href="#studio-round">#studio-round</a></p>
+        <h3 class="c__name">Round button</h3>
+        <p class="c__what">The Studio's main call to action: a circle that floods from the bottom on hover and drifts toward the cursor (<code>data-magnetic</code>). Two-line labels.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>Explorer entry, Websites CTA, Contact</dd>
+        <dt>Built from</dt><dd><code>.round</code>, <code>.round__in</code>, <code>--ink</code>, <code>--signal</code>, <code>--l</code>, <code>--xl</code> in <code>studio.css</code>; pull in <code>studio.js</code></dd>
+        <dt>Edit</dt><dd><code>next/index.html</code></dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="studio" data-pad="44px 32px" data-label="--ink, --ink --l, --signal, --signal --xl">
+<script type="text/html" class="demo">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 24px">
+  <a class="round round--ink" href="mailto:merttureli0@gmail.com" data-magnetic><span class="round__in">Get in<br>touch</span></a>
+  <a class="round round--ink round--l" href="mailto:merttureli0@gmail.com" data-magnetic><span class="round__in">Get in<br>touch</span></a>
+  <span class="round round--signal" data-magnetic><span class="round__in">Open the<br>explorer</span></span>
+  <a class="round round--signal round--xl" href="https://merttureli.com/websites.html" data-magnetic><span class="round__in">Find a day<br>to talk</span></a>
+</div>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="HTML">
+<a class="round round--signal round--xl" href="https://merttureli.com/websites.html" data-magnetic><span class="round__in">Find a day<br>to talk</span></a>
+<a class="round round--ink round--l" href="mailto:merttureli0@gmail.com" data-magnetic><span class="round__in">Get in<br>touch</span></a>
+</script>
+<script type="text/plain" title="All four" data-from="0"></script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li>Color: <code>--ink</code> (fills signal) or <code>--signal</code> (fills paper).</li><li>Size: 132px, <code>--l</code> 168px, <code>--xl</code> up to 210px, or set <code>--size</code>.</li><li>A <code>&lt;span&gt;</code> inside a larger link, as on the explorer entry.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>One round button per section.</li><li>Break the label into two short lines.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Put more than four words in it.</li><li>Nest a link inside another link.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- T07 ------------------------------------------------------------ -->
+  <section class="c" id="studio-btn" data-n="T07">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>T07</b><a href="#studio-btn">#studio-btn</a></p>
+        <h3 class="c__name">Pill button</h3>
+        <p class="c__what">62px outlined pill whose ink fill rises as a curve and flattens on hover. For a row of equal choices.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>Contact doors</dd>
+        <dt>Built from</dt><dd><code>.btn</code>, <code>.btn--ghost</code> in <code>studio.css</code></dd>
+        <dt>Edit</dt><dd><code>next/index.html</code>, <code>.contact__doors</code></dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="studio" data-pad="44px 32px" data-label=".btn x2 + .btn--ghost" data-stage-css=".contact__doors{padding-top:0}">
+<script type="text/html" class="demo">
+<div class="contact__doors">
+  <a class="btn" href="mailto:merttureli0@gmail.com?subject=Engineering" data-magnetic><span>Talk engineering</span></a>
+  <a class="btn" href="mailto:merttureli0@gmail.com?subject=Website%20project" data-magnetic><span>Website project</span></a>
+  <a class="btn btn--ghost" href="../assets/Mert-Tureli-Resume.pdf" data-magnetic><span>Resume (PDF)</span></a>
+</div>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="HTML">
+<div class="contact__doors">
+  <a class="btn" href="mailto:merttureli0@gmail.com?subject=Engineering" data-magnetic><span>Talk engineering</span></a>
+  <a class="btn btn--ghost" href="../assets/Mert-Tureli-Resume.pdf" data-magnetic><span>Resume (PDF)</span></a>
+</div>
+</script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li><code>.btn--ghost</code> hairline border for the lesser choice.</li><li>54px tall below 761px.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Wrap the label in a <code>&lt;span&gt;</code> so it sits above the fill.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Use on ink without a dark variant; there is none yet.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- T08 ------------------------------------------------------------ -->
+  <section class="c" id="studio-dot" data-n="T08">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>T08</b><a href="#studio-dot">#studio-dot</a></p>
+        <h3 class="c__name">Status dot and pill</h3>
+        <p class="c__what">A 7px green dot that pings every 2.4s to say something is live or open. <code>.pill</code> is the frosted capsule it was designed to sit in.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>Websites rule ("Booking web projects"). <code>.pill</code> is styled but not on the page today</dd>
+        <dt>Built from</dt><dd><code>.dot</code>, <code>.dot--still</code>, <code>.pills</code>, <code>.pill</code> in <code>studio.css</code></dd>
+        <dt>Edit</dt><dd><code>next/index.html</code></dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="studio" data-pad="40px 32px" data-label=".pills with .dot and .dot--still">
+<script type="text/html" class="demo">
+<div class="pills">
+  <span class="pill"><span class="dot" aria-hidden="true"></span>Booking web projects</span>
+  <span class="pill"><span class="dot dot--still" aria-hidden="true"></span>Austin, Texas</span>
+</div>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="HTML" data-from="0"></script>
+<script type="text/plain" title="Dot in a label">
+<span class="label"><span class="dot" aria-hidden="true"></span> Booking web projects</span>
+</script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li><code>.dot--still</code> ink, no ping.</li><li><code>.pill--wide</code> reorders last on phones.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Use the pinging dot for one true live status only.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Color the dot anything but green or ink.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- T09 ------------------------------------------------------------ -->
+  <section class="c" id="studio-stats" data-n="T09">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>T09</b><a href="#studio-stats">#studio-stats</a></p>
+        <h3 class="c__name">Proof stats</h3>
+        <p class="c__what">Four big numbers, each sitting on a full-ink rule with a short explanation under it. Columns split by hairlines; two by two on phones.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>01 Proof</dd>
+        <dt>Built from</dt><dd><code>.stats</code>, <code>.stat</code>, <code>.stat__n</code> in <code>studio.css</code></dd>
+        <dt>Edit</dt><dd><code>next/index.html</code>, <code>.proof</code></dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="studio" data-pad="44px 32px" data-label=".stats, four .stat">
+<script type="text/html" class="demo">
+<dl class="stats">
+  <div class="stat">
+    <dt class="stat__n">1st</dt>
+    <dd>Battle of the Rockets 2026, Deployable Sensor Payload. Captain and chief engineer of CHARGER.</dd>
+  </div>
+  <div class="stat">
+    <dt class="stat__n">100%</dt>
+    <dd>Feed indexing reliability on competition day. I owned all of Robo-Catcher's electronics and firmware.</dd>
+  </div>
+  <div class="stat">
+    <dt class="stat__n">13.8<small>ft/s</small></dt>
+    <dd>CHARGER payload descent rate, against a 15 ft/s limit, on a $716 hardware budget.</dd>
+  </div>
+  <div class="stat">
+    <dt class="stat__n">$70K</dt>
+    <dd>Seed funding raised for ModuFly, a rocketry education startup I co-founded.</dd>
+  </div>
+</dl>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="HTML" data-from="0"></script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li>A unit goes in <code>&lt;small&gt;</code> after the number.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Exactly four stats; the grid and phone layout expect it.</li><li>Number first, context in the sentence.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Use a number the case studies do not back up.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- T10 ------------------------------------------------------------ -->
+  <section class="c" id="studio-door" data-n="T10">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>T10</b><a href="#studio-door">#studio-door</a></p>
+        <h3 class="c__name">Doors</h3>
+        <p class="c__what">Two large link panels side by side, one per audience. On hover the panel fills from the bottom and the round arrow turns 45 degrees into signal orange.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>01 Proof, under the stats</dd>
+        <dt>Built from</dt><dd><code>.doors</code>, <code>.door</code>, <code>.door--dark</code>, <code>.door__go</code>, <code>.arrow</code> in <code>studio.css</code></dd>
+        <dt>Edit</dt><dd><code>next/index.html</code>, <code>.doors</code></dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="studio" data-pad="40px 32px" data-label=".door + .door--dark" data-stage-css=".doors{margin-top:0}">
+<script type="text/html" class="demo">
+<div class="doors">
+  <a class="door" href="#work">
+    <span class="label">For engineers</span>
+    <span class="door__title">Hardware, end to <em class="serif">end</em></span>
+    <span class="door__sub">Six builds, a first place, the full record.</span>
+    <span class="door__go" aria-hidden="true"><span class="arrow"></span></span>
+  </a>
+  <a class="door door--dark" href="#websites">
+    <span class="label">For businesses and makers</span>
+    <span class="door__title">Need a website people want to <em class="serif">explore</em>?</span>
+    <span class="door__sub">I design and build them by hand. An idea is enough to start.</span>
+    <span class="door__go" aria-hidden="true"><span class="arrow"></span></span>
+  </a>
+</div>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="HTML" data-from="0"></script>
+<script type="text/plain" title="Arrow only">
+<span class="arrow"></span>
+</script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li><code>.door--dark</code> ink panel.</li><li><code>.arrow</code> is a CSS arrow you can reuse anywhere; it takes <code>currentColor</code>.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Two doors, light then dark.</li><li>Title of four to seven words with one serif word.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Put buttons inside a door; the whole panel is the link.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- T11 ------------------------------------------------------------ -->
+  <section class="c" id="studio-project" data-n="T11">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>T11</b><a href="#studio-project">#studio-project</a></p>
+        <h3 class="c__name">Project entry</h3>
+        <p class="c__what">One build in the Work list: label, huge title, body, three spec cells, links. On desktop the image shows in the sticky stage beside the list; on phones the entry shows its own <code>.project__media</code>.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>02 Selected work, six entries</dd>
+        <dt>Built from</dt><dd><code>.project*</code>, <code>.specs</code> in <code>studio.css</code>; stage swap from <code>data-project</code> in <code>studio.js</code></dd>
+        <dt>Edit</dt><dd><code>next/index.html</code>: the <code>&lt;li&gt;</code>, plus a matching <code>&lt;img data-key&gt;</code> in <code>.work__frame</code></dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="studio" data-pad="0 32px" data-label=".project in .work__list" data-stage-css=".project{min-height:0}">
+<script type="text/html" class="demo">
+<ol class="work__list">
+  <li class="project" data-project="robo" data-name="Robo-Catcher" data-tag="84 part CAD assembly">
+    <figure class="project__media"><img src="assets/img/robo-catcher-1400.webp" alt="Robo-Catcher CAD assembly with net, ramps, indexer and flywheel thrower" loading="lazy" decoding="async" width="1020" height="855"></figure>
+    <p class="label">02 / Mechanism + firmware / Senior capstone, 2025</p>
+    <h3 class="project__title">Robo-Catcher</h3>
+    <p class="project__body">An automatic softball catching and return machine, built by a twelve person team. I co-led the feeding subsystem, then owned all of the electronics and firmware: flywheel drive, stepper feed indexing, interlocks, wireless start and stop, and hardware cutoffs wired independently of the microcontroller.</p>
+    <dl class="specs">
+      <div><dt>Indexing</dt><dd>100% on competition day</dd></div>
+      <div><dt>Build cost</dt><dd>Under $700</dd></div>
+      <div><dt>Weight</dt><dd>55 lb, fits a car trunk</dd></div>
+    </dl>
+    <p class="project__links"><a class="link" href="https://merttureli.com/projects/robo-catcher.html">Case study</a></p>
+  </li>
+</ol>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="HTML">
+<li class="project" data-project="robo" data-name="Robo-Catcher" data-tag="84 part CAD assembly">
+  <figure class="project__media"><img src="assets/img/robo-catcher-1400.webp" alt="..." loading="lazy" decoding="async" width="1020" height="855"></figure>
+  <p class="label">02 / Mechanism + firmware / Senior capstone, 2025</p>
+  <h3 class="project__title">Robo-Catcher</h3>
+  <p class="project__body">Two to four sentences.</p>
+  <dl class="specs">
+    <div><dt>Indexing</dt><dd>100% on competition day</dd></div>
+    <div><dt>Build cost</dt><dd>Under $700</dd></div>
+    <div><dt>Weight</dt><dd>55 lb, fits a car trunk</dd></div>
+  </dl>
+  <p class="project__links"><a class="link" href="https://merttureli.com/projects/robo-catcher.html">Case study</a></p>
+</li>
+
+<!-- and in .work__frame, the stage image with the same key -->
+<img data-key="robo" src="assets/img/robo-catcher-1400.webp" alt="" loading="lazy" decoding="async">
+</script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li>Blurred or white-ground renders: add <code>.project__media--mult</code> / <code>img.mult</code> for multiply.</li><li>No links row when there is no case study (HOTBOX).</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Exactly three specs, short values.</li><li>Keep <code>data-project</code>, <code>data-key</code> and the drift word index in step.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Skip <code>width</code> and <code>height</code> on the image; the stage reserves space from them.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- T12 ------------------------------------------------------------ -->
+  <section class="c" id="studio-rows" data-n="T12">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>T12</b><a href="#studio-rows">#studio-rows</a></p>
+        <h3 class="c__name">Experience rows</h3>
+        <p class="c__what">An accordion built on native <code>&lt;details&gt;</code>: when, role, organization in serif italic, a one-line summary, and a plus that turns to a minus. Rows shift right on hover.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>03 Experience</dd>
+        <dt>Built from</dt><dd><code>.rows</code>, <code>.row</code>, <code>.row__*</code> in <code>studio.css</code>; no JS</dd>
+        <dt>Edit</dt><dd><code>next/index.html</code>, <code>ol.rows</code></dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="studio" data-pad="8px 32px 40px" data-label="Two rows, the first open" data-stage-css=".rows{margin-top:0}">
+<script type="text/html" class="demo">
+<ol class="rows">
+  <li class="row">
+    <details open>
+      <summary>
+        <span class="row__when label">Jun to Sep 2026</span>
+        <span class="row__role">Engineering intern</span>
+        <span class="row__org">SunThru</span>
+        <span class="row__line">First in-house prototype units, PLC bring-up, a production blower sourced in one week.</span>
+        <span class="row__plus" aria-hidden="true"></span>
+      </summary>
+      <div class="row__more">
+        <p>SunThru is a Union College spin-out developing silica aerogel inserts that give double pane windows triple pane performance. I built and tested the company's first full in-house prototype units and led validation on thermal performance and optical clarity.</p>
+      </div>
+    </details>
+  </li>
+  <li class="row">
+    <details>
+      <summary>
+        <span class="row__when label">2024 to 2026</span>
+        <span class="row__role">Co-founder</span>
+        <span class="row__org">ModuFly</span>
+        <span class="row__line">Modular rocket kits for STEM education. Raised $70,000.</span>
+        <span class="row__plus" aria-hidden="true"></span>
+      </summary>
+      <div class="row__more">
+        <p>A startup around a modular interlocking rocket system for STEM education.</p>
+      </div>
+    </details>
+  </li>
+</ol>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="HTML">
+<li class="row">
+  <details>
+    <summary>
+      <span class="row__when label">Jun to Sep 2026</span>
+      <span class="row__role">Engineering intern</span>
+      <span class="row__org">SunThru</span>
+      <span class="row__line">One line, hidden below 1101px.</span>
+      <span class="row__plus" aria-hidden="true"></span>
+    </summary>
+    <div class="row__more">
+      <p>One or two paragraphs.</p>
+    </div>
+  </details>
+</li>
+</script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li>Add <code>open</code> to <code>&lt;details&gt;</code> to start expanded.</li><li>Five columns, four below 1101px, stacked below 761px.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Newest first.</li><li>Dates as <code>Mon to Mon YYYY</code> or <code>YYYY to YYYY</code>.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Put links inside <code>&lt;summary&gt;</code>.</li><li>Rely on <code>.row__line</code> for facts; it hides on tablets.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- T13 ------------------------------------------------------------ -->
+  <section class="c" id="studio-chips" data-n="T13">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>T13</b><a href="#studio-chips">#studio-chips</a></p>
+        <h3 class="c__name">Toolkit list</h3>
+        <p class="c__what">A label column beside an inline list split by light slashes, with a mono footnote. Reads as a sentence, wraps anywhere.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>03 Experience, under the rows</dd>
+        <dt>Built from</dt><dd><code>.tools</code>, <code>.chips</code>, <code>.tools__edu</code> in <code>studio.css</code></dd>
+        <dt>Edit</dt><dd><code>next/index.html</code>, <code>.tools</code></dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="studio" data-pad="40px 32px" data-label=".tools + .chips" data-stage-css=".tools{margin-top:0}">
+<script type="text/html" class="demo">
+<div class="tools">
+  <p class="label">Toolkit</p>
+  <ul class="chips">
+    <li>SolidWorks, expert</li><li>GD&amp;T to ASME Y14.5</li><li>Tolerance stack-up</li><li>DFM / DFA</li><li>FEA</li><li>CFD</li><li>MATLAB</li>
+    <li>C++</li><li>ESP32</li><li>Teensy</li><li>USB HID</li><li>PID control</li><li>PLC ladder logic</li>
+  </ul>
+  <p class="label tools__edu">B.S. Mechanical Engineering, Union College, 2026 / Turkish native, English professional, German intermediate</p>
+</div>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="HTML" data-from="0"></script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li>None.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Most important tools first.</li><li>Escape <code>&amp;</code> as <code>&amp;amp;</code>.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Turn items into pills or links.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- T14 ------------------------------------------------------------ -->
+  <section class="c" id="studio-photo" data-n="T14">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>T14</b><a href="#studio-photo">#studio-photo</a></p>
+        <h3 class="c__name">Photo scatter</h3>
+        <p class="c__what">Photographs placed off-grid on a 12-column field, each with a mono caption, drifting at its own scroll speed (<code>data-par</code>). Pursuits sit in two columns beside them.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>04 Beyond</dd>
+        <dt>Built from</dt><dd><code>.scatter</code>, <code>.ph</code>, <code>.ph--a..e</code>, <code>.pursuits</code> in <code>studio.css</code>; parallax in <code>studio.js</code></dd>
+        <dt>Edit</dt><dd><code>next/index.html</code>, <code>.scatter</code></dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="studio" data-bg="paper2" data-pad="8px 0 48px" data-label=".scatter with .ph--a, .ph--b and .pursuits" data-stage-css=".scatter{margin-top:24px}">
+<script type="text/html" class="demo">
+<div class="scatter wrap">
+  <figure class="ph ph--a" data-par="-.06"><img src="assets/img/balloon-600.webp" srcset="assets/img/balloon-600.webp 600w, assets/img/balloon-1000.webp 1000w" sizes="(max-width: 700px) 90vw, 40vw" alt="Hot air balloon over open country at sunrise" loading="lazy" decoding="async" width="1000" height="563"><figcaption class="label">Segovia / Aerial</figcaption></figure>
+  <figure class="ph ph--b" data-par=".08"><img src="assets/img/lake-framed-420.webp" srcset="assets/img/lake-framed-420.webp 420w, assets/img/lake-framed-720.webp 720w" sizes="(max-width: 700px) 60vw, 22vw" alt="Lake framed by pine branches" loading="lazy" decoding="async" width="720" height="900"><figcaption class="label">Photograph / Lake</figcaption></figure>
+  <figure class="ph ph--c" data-par="-.03"><img src="assets/img/lighthouse-420.webp" srcset="assets/img/lighthouse-420.webp 420w, assets/img/lighthouse-720.webp 720w" sizes="(max-width: 700px) 50vw, 18vw" alt="Lighthouse behind bare branches" loading="lazy" decoding="async" width="720" height="900"><figcaption class="label">Photograph / Lighthouse</figcaption></figure>
+  <dl class="pursuits">
+    <div><dt class="label">01 / Piloting</dt><dd>Licensed ultralight pilot, certified through the Turkish civil aviation authority. The rudder pedals came out of the same interest.</dd></div>
+    <div><dt class="label">03 / Photography</dt><dd>An ongoing thing rather than a project.</dd></div>
+  </dl>
+</div>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="HTML">
+<figure class="ph ph--b" data-par=".08"><img src="assets/img/lake-framed-420.webp" srcset="assets/img/lake-framed-420.webp 420w, assets/img/lake-framed-720.webp 720w" sizes="(max-width: 700px) 60vw, 22vw" alt="Lake framed by pine branches" loading="lazy" decoding="async" width="720" height="900"><figcaption class="label">Photograph / Lake</figcaption></figure>
+</script>
+<script type="text/plain" title="Scatter" data-from="0"></script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li>Five slots <code>.ph--a</code> to <code>.ph--e</code>, each with its own column span and offset; re-laid on phones.</li><li><code>data-par</code> between -.12 and .12.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Ship <code>-420</code>/<code>-720</code> (or <code>-600</code>/<code>-1000</code>) webp with <code>srcset</code>.</li><li>Caption as <code>Place / Kind</code>.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Add a sixth photo without adding a slot class for it.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- T15 ------------------------------------------------------------ -->
+  <section class="c" id="studio-steps" data-n="T15">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>T15</b><a href="#studio-steps">#studio-steps</a></p>
+        <h3 class="c__name">Steps and spec card</h3>
+        <p class="c__what">On the ink Websites section: a lead beside three numbered steps, and a bordered card of measured facts in mono.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>05 Websites</dd>
+        <dt>Built from</dt><dd><code>.web__grid</code>, <code>.web__lead</code>, <code>.steps</code>, <code>.spec-card</code> in <code>studio.css</code></dd>
+        <dt>Edit</dt><dd><code>next/index.html</code>, <code>.web</code></dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="studio" data-bg="ink" data-pad="0" data-label=".web__grid + .steps + .spec-card, inside .web" data-stage-css=".web{padding:40px 32px 48px}.web__grid{margin-top:0}">
+<script type="text/html" class="demo">
+<section class="web">
+  <div class="web__grid">
+    <p class="web__lead">I design and build websites around your work, your business and the things that make them worth exploring. Same approach as my hardware: work out what it has to do, build it properly, then test it.</p>
+    <ol class="steps">
+      <li><span class="label">01</span><b>A conversation</b><span>Tell me what you're building. A rough idea is a good place to start.</span></li>
+      <li><span class="label">02</span><b>A direction</b><span>I design around your work, so it looks like you and nobody else.</span></li>
+      <li><span class="label">03</span><b>A hand-built site</b><span>Written by hand, no template, fast on a phone.</span></li>
+    </ol>
+  </div>
+  <div class="spec-card" data-reveal>
+    <p class="label">This page, measured</p>
+    <dl>
+      <div><dt>First view</dt><dd>Under 0.5 MB, 3D after</dd></div>
+      <div><dt>Frameworks</dt><dd>0</dd></div>
+      <div><dt>3D</dt><dd>Real CAD model, rendered live</dd></div>
+      <div><dt>Motion</dt><dd>Respects reduced motion</dd></div>
+    </dl>
+  </div>
+</section>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="HTML" data-from="0"></script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li>Steps stack below 761px; the card's facts go two by two.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Three steps, a bold name and one sentence each.</li><li>Only measured facts in the spec card.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Use these outside <code>.web</code>; their colors assume ink.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- T16 ------------------------------------------------------------ -->
+  <section class="c" id="studio-drift" data-n="T16">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>T16</b><a href="#studio-drift">#studio-drift</a></p>
+        <h3 class="c__name">Drift words</h3>
+        <p class="c__what">Words floating behind the hero object. Each slot holds three words that take turns, floats on its own slow loop and parallaxes at depth <code>--d</code>. Four type sizes, from wide caps down to mono asides.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>Hero, behind the rocket</dd>
+        <dt>Built from</dt><dd><code>.drift</code>, <code>.slot</code>, <code>.s-xl/.s-l/.s-m/.s-s</code> in <code>studio.css</code>; word swap and showreel focus in <code>studio.js</code> and <code>js/showreel/</code></dd>
+        <dt>Edit</dt><dd><code>next/index.html</code>, <code>.drift</code>; the <code>&lt;sup&gt;</code> number is the project's work index</dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="studio" data-pad="0" data-height="440" data-behavior="drift" data-label="Four slots, one of each size (words cycle here as studio.js cycles them)">
+<script type="text/html" class="demo">
+<div class="drift" aria-hidden="true" data-drift>
+  <span class="slot s-xl" style="--x:5%;--y:52%;--d:.9">
+    <i>CHARGER<sup>01</sup></i><i>HOTBOX<sup>03</sup></i><i>Test rigs<sup>05</sup></i>
+  </span>
+  <span class="slot s-l" style="--x:59%;--y:38%;--d:.55">
+    <i>Robo-Catcher<sup>02</sup></i><i>Rudder pedals<sup>05</sup></i><i>Bend fixture<sup>06</sup></i>
+  </span>
+  <span class="slot s-m" style="--x:83%;--y:60%;--d:1.2">
+    <i>Rocketry</i><i>Electronics</i><i>CAD + GD&amp;T</i>
+  </span>
+  <span class="slot s-s front" style="--x:6%;--y:86%;--d:1.6">
+    <i>(Firmware)</i><i>(Ultralights)</i><i>(PLC logic)</i>
+  </span>
+</div>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="HTML" data-from="0"></script>
+<script type="text/plain" title="One slot">
+<!-- x, y in % of the stage; --d is scroll parallax depth -->
+<span class="slot s-l" style="--x:59%;--y:38%;--d:.55">
+  <i>Robo-Catcher<sup>02</sup></i><i>Rudder pedals<sup>05</sup></i><i>Bend fixture<sup>06</sup></i>
+</span>
+</script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li><code>.s-xl</code> wide caps, <code>.s-l</code> sentence, <code>.s-m</code> serif italic, <code>.s-s</code> mono in brackets.</li><li><code>.front</code> lifts a slot above the object.</li><li>Slots 3 and 6 hide on phones; the rest move by <code>nth-child</code>.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Three words per slot, about the same length.</li><li>Match <code>&lt;sup&gt;</code> numbers to the Work list.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Reorder slots without checking the phone positions in <code>studio.css</code>.</li><li>Put meaning only here; the whole drift is <code>aria-hidden</code>.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- T17 ------------------------------------------------------------ -->
+  <section class="c" id="studio-marquee" data-n="T17">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>T17</b><a href="#studio-marquee">#studio-marquee</a></p>
+        <h3 class="c__name">Name marquee</h3>
+        <p class="c__what">The page's h1: the name in giant wide caps, repeated with signal dots between, scrolling sideways. The first item is real; the copies are <code>aria-hidden</code>.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>Hero, under the stage</dd>
+        <dt>Built from</dt><dd><code>.marquee*</code> in <code>studio.css</code>; motion in <code>studio.js</code> (a plain loop stands in for it here)</dd>
+        <dt>Edit</dt><dd><code>next/index.html</code>, <code>h1.marquee</code></dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="studio" data-pad="20px 0 28px" data-behavior="marquee" data-label="h1.marquee, four items">
+<script type="text/html" class="demo">
+<h1 class="marquee" data-marquee>
+  <span class="marquee__track" data-marquee-track>
+    <span class="marquee__item">Mert Tureli<span class="marquee__sep" aria-hidden="true"></span></span><span class="marquee__item" aria-hidden="true">Mert Tureli<span class="marquee__sep"></span></span><span class="marquee__item" aria-hidden="true">Mert Tureli<span class="marquee__sep"></span></span><span class="marquee__item" aria-hidden="true">Mert Tureli<span class="marquee__sep"></span></span>
+  </span>
+</h1>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="HTML" data-from="0"></script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li>None. 30vw type on phones.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Keep four identical items so the loop is seamless.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Use a second marquee; it is the h1.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- T18 ------------------------------------------------------------ -->
+  <section class="c" id="studio-explorer" data-n="T18">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>T18</b><a href="#studio-explorer">#studio-explorer</a></p>
+        <h3 class="c__name">Feature link</h3>
+        <p class="c__what">A full-width ink panel that is one big link: outlined ghost word behind, a render that tilts on hover, copy at the bottom left and a round button at the bottom right.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>CHARGER explorer entry, between Work and Experience</dd>
+        <dt>Built from</dt><dd><code>.explorer*</code> in <code>studio.css</code>, T06 inside</dd>
+        <dt>Edit</dt><dd><code>next/index.html</code>, <code>.explorer</code></dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="studio" data-pad="0" data-height="520" data-label=".explorer__link">
+<script type="text/html" class="demo">
+<section class="explorer" aria-labelledby="explorer-title">
+  <a class="explorer__link" href="../assets/charger-explorer/index.html" data-explorer-link>
+    <span class="explorer__ghost" aria-hidden="true">CHARGER</span>
+    <img class="explorer__img" src="assets/img/hero-land.webp" alt="" loading="lazy" decoding="async">
+    <span class="explorer__copy wrap">
+      <span class="label">Interactive / The flight model</span>
+      <span id="explorer-title" class="explorer__title">Take CHARGER <em class="serif">apart</em></span>
+      <span class="explorer__sub">Every component at its true station. Drag it, cut it open, pick a part and read what it does.</span>
+    </span>
+    <span class="round round--signal explorer__btn" data-magnetic><span class="round__in">Open the<br>explorer</span></span>
+  </a>
+</section>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="HTML" data-from="0"></script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li>One instance; copy the block for a second feature.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Use a transparent render that reads on ink.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Make the round button a separate link; it is a <code>&lt;span&gt;</code> inside the panel link.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- T19 ------------------------------------------------------------ -->
+  <section class="c" id="studio-foot" data-n="T19">
+    <div class="c__head">
+      <div>
+        <p class="c__id mono"><b>T19</b><a href="#studio-foot">#studio-foot</a></p>
+        <h3 class="c__name">Footer</h3>
+        <p class="c__what">Three labeled facts in a row (version, Austin local time, socials) and a right-aligned credit, on a hairline. The clock ticks from <code>studio.js</code>.</p>
+      </div>
+      <dl class="c__facts">
+        <dt>Used in</dt><dd>End of <code>.contact</code></dd>
+        <dt>Built from</dt><dd><code>.foot</code>, <code>.foot__credit</code> in <code>studio.css</code>; <code>[data-clock]</code> in <code>studio.js</code></dd>
+        <dt>Edit</dt><dd><code>next/index.html</code>, <code>footer.foot</code></dd>
+      </dl>
+    </div>
+    <div class="pvs">
+      <figure class="pv" data-profile="studio" data-pad="0 0 8px" data-label="footer.foot" data-stage-css=".foot{margin-top:24px}">
+<script type="text/html" class="demo">
+<footer class="foot wrap">
+  <div><p class="label">Version</p><p>2026 Studio</p></div>
+  <div><p class="label">Local time</p><p data-clock>Austin</p></div>
+  <div><p class="label">Socials</p><p><a class="link" href="https://linkedin.com/in/merttureli" rel="noopener">LinkedIn</a> <a class="link" href="mailto:merttureli0@gmail.com">Email</a></p></div>
+  <p class="foot__credit">CAD renders from the source assemblies. Hand built, no framework.</p>
+</footer>
+</script>
+      </figure>
+    </div>
+    <div class="code">
+<script type="text/plain" title="HTML" data-from="0"></script>
+    </div>
+    <div class="notes">
+      <div class="vars"><h4>Variants</h4><ul class="rules"><li>Two columns below 761px, credit on its own row.</li></ul></div>
+      <div class="do"><h4>Do</h4><ul class="rules"><li>Label above, value below, in every cell.</li></ul></div>
+      <div class="dont"><h4>Don't</h4><ul class="rules"><li>Add a fourth fact; the grid is three plus the credit.</li></ul></div>
+    </div>
+  </section>
+</section>
+
+<footer class="foot mono">
+  <span>Previews render the real CSS in isolated frames. Links inside them are disabled.</span>
+  <span><a href="components.md">components.md</a> / <a href="#top">Back to top</a></span>
+</footer>
+
+</div>
+</div>
+<script src="catalog/catalog.js" defer></script>
+</body>
+</html>

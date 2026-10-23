@@ -1,0 +1,67 @@
+/* Site tokens: the current site's own names, on top of the design-system
+   export in _ds/.../tokens/*.css (ink ramp, --space-*, --fs-*, --radius-*,
+   --dur-*, --z-*, ...). Reference and the full inventory:
+   docs/design/site-tokens.md.
+
+   Loaded on every page through the @import at the top of css/fonts.css, so a
+   page that links css/fonts.css can use these names.
+
+   Rules
+   - Add only NEW names here. Never redefine a _ds token in this file: the
+     Display palettes retint the ink ramp in css/site-palette.css, and the
+     export stays untouched so a re-export cannot revert anything.
+   - Everything here is a fixed value. It does not follow the Display palette
+     or the .on-dark scope. For color that should, use the _ds semantic
+     tokens (--text-*, --line-*, --surface-*) or the ink ramp.
+   - Never alias a scoped token here (for example --x: var(--text-meta)).
+     A custom property resolves where it is defined, on :root, so the alias
+     would ignore .on-dark and the palettes.
+
+   Breakpoints cannot be custom properties inside @media. They are listed in
+   docs/design/site-tokens.md under "Breakpoints". */
+:root {
+  /* Touch: the smallest tap target, from WCAG 2.5.5. */
+  --touch-target: 44px;
+
+  /* Focus ring. Color is per component (currentColor, --paper or
+     --text-display); the width is the same everywhere it is 2px. */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 4px;
+
+  /* Layers above the _ds scale (--z-base 0 up to --z-overlay 90). */
+  --z-menu: 9999;              /* phone menu overlay, #mt-menu */
+  --z-loader: 2147483646;      /* page-load indicator, .site-loading */
+
+  /* Sizes off the _ds scale. */
+  --fs-ui-mono: 11px;          /* mono UI text: browser-frame bars, index chips, "try" pills */
+  --radius-card: 12px;         /* floating frames and cues: .websell-frame, .charger-launch-cue */
+  --radius-phone: 36px;        /* phone-width .websell-frame: the frame drawn as a phone body */
+  --radius-phone-screen: 29px; /* its .websell-screen: --radius-phone minus the 7px bezel */
+
+  /* Fixed colors. */
+  --color-live: #ff5a1f;       /* the "live" status dot in a browser frame */
+  --color-error: #842a25;      /* form error text, websites.html inquiry */
+
+  /* Browser frame: the live-study window on the home page (.websell-frame,
+     css/website-entry.css) and on websites.html (.study-frame,
+     css/website-studies.css). Both read these, so the two stay in step. */
+  --frame-tint: .3s;           /* screen background change, loader fade */
+  --frame-fade: .4s;           /* live page fades in */
+  --frame-swap: .22s;          /* faster fade while swapping studies */
+  --frame-load-cycle: 1.1s;    /* loader bar sweep */
+  --frame-blink-cycle: 1s;     /* status dot blink while loading */
+
+  /* First-paint colors of the four studies: each page's background (its
+     <meta name="theme-color"> in studies/<name>/index.html) and text color
+     (for example --ground and --ink in studies/hangar/css/hangar.css). The
+     frame wears them so nothing flashes while a study loads. Change a
+     study's background or ink and change its pair here. */
+  --study-hangar-bg: #e5e4e0;
+  --study-hangar-fg: #141518;
+  --study-launch-bg: #0a0b0d;
+  --study-launch-fg: #ecebe6;
+  --study-studio-bg: #e7e8ea;
+  --study-studio-fg: #121315;
+  --study-specimen-bg: #efefec;
+  --study-specimen-fg: #0d0d0c;
+}

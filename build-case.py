@@ -5,31 +5,76 @@ Build a case study page in the site's own theme.
 The point of generating rather than hand writing these is theme parity. The
 head, the helmet block (design tokens, the design-system bundle, the mobile
 stylesheet, the keyframes), the reveal/clip runtime and the footer colophon are
-all lifted straight out of index.html at build time, so a case page cannot drift
-from the home page when the home page changes. Only the content is authored
-here, as data.
+all lifted straight out of src/index.html at build time, so a case page cannot
+drift from the home page when the home page changes. The content is data in
+content/: content/projects.json sets the order (and so the Previous / Next
+buttons), content/projects/<slug>.json holds one case. Field reference and
+recipes: docs/recipes/content.md and docs/recipes/add-project.md.
 
-Paths are rewritten for one directory down, since the pages live in projects/.
+This writes the runtime templates, src/projects/*.html. They are not served:
+tools/build.py renders them in a browser and writes the static pages that are
+served, /index.html and /projects/*.html. src/ mirrors the served tree, so a
+template is written for its served location: src/index.html links "_ds/...",
+src/projects/x.html links "../_ds/...", exactly as the static pages do. Paths
+are rewritten for one directory down, since the case pages live in projects/.
 
-    python build-case.py            # rebuild every case page
+    python build-case.py            # rebuild every case template
     python build-case.py robo-catcher
+    python build-case.py --check    # build to a temp dir, diff against
+                                    # src/projects/, exit 1 on any difference
+
+Normally run python3 tools/build.py instead, which runs this and then the
+static render.
+
+Content errors (bad JSON, an unknown or missing field, a file not listed in
+the order) stop the build with exit 2 and name the file and field. Asset paths
+that do not exist are printed as warnings.
+
+Depth hooks (depth-hero, depth-stage, data-depth-*) are emitted by the helpers
+below so css/depth.css sees the same markup as on the home
+page. Do not hand edit src/projects/*.html or projects/*.html: run
+tools/build.py --check after any change here.
 """
 
+import difflib
+from html import escape
 import io
+import json
 import os
 import re
+import shutil
 import sys
+import tempfile
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-INDEX = os.path.join(ROOT, "index.html")
-OUT_DIR = os.path.join(ROOT, "projects")
+SRC = os.path.join(ROOT, "src")
+INDEX = os.path.join(SRC, "index.html")
+OUT_DIR = os.path.join(SRC, "projects")
 DS = "mert-t-reli-design-system-56763c60-2006-4913-8e27-d9c1c8053e6d"
 NS = "MertTReliDesignSystem_56763c"
 
-FAVICON = ("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E"
-           "%3Crect width='64' height='64' rx='12' fill='%230A0A0A'/%3E"
-           "%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='26' "
-           "font-weight='600' fill='%23FFFFFF'%3EMT%3C/text%3E%3C/svg%3E")
+# Smaller VP9-alpha encodes of the turntable clips. js/media-playback.js picks
+# <base>-<md>-alpha.webm above the phone breakpoint and <base>-<sm>-alpha.webm
+# at phone widths; the full size <base>-alpha.webm stays as data-src. Filled
+# from each case's "clip_sizes": [md, sm] in content/projects/<slug>.json.
+MOTION_VARIANTS = {}
+# Clips whose opaque .mp4 is the intended look (the blurred IP renders are white
+# tiles by design): "clip_opaque": true. Every other turntable is a transparent
+# cutout whose mp4 has a baked background that clashes with the palettes, so it
+# ships webm only: a browser without VP9 alpha keeps the WebP poster, which has
+# alpha.
+OPAQUE_CLIPS = set()
+
+
+def webm_source(base, alpha=True):
+    """A lazy <source> for js/media-playback.js, with the size variants when they exist."""
+    suffix = "-alpha" if alpha else ""
+    attrs = 'data-src="../assets/motion/%s%s.webm"' % (base, suffix)
+    if base in MOTION_VARIANTS:
+        md, sm = MOTION_VARIANTS[base]
+        attrs += (' data-src-md="../assets/motion/%s-%d-alpha.webm" '
+                  'data-src-sm="../assets/motion/%s-%d-alpha.webm"' % (base, md, base, sm))
+    return '<source %s type="video/webm">' % attrs
 
 
 # --------------------------------------------------------------- theme lifting
@@ -64,14 +109,43 @@ def runtime_script(index, vals_js):
     return block[:vs] + "return {\n" + vals_js + "\n    };" + block[ve:]
 
 
-def footer_block(index):
-    """The colophon, so every page ends the same way."""
+def flag(block_id, note, text="[TBD]"):
+    """
+    An open question for the owner, shown in place as <mark class="flag">.
+    tools/check-flags.py lists every one left in the built pages.
+    """
+    return ('<mark class="flag" data-flag="%s" data-note="%s">%s</mark>'
+            % (block_id, escape(note, quote=True), text))
+
+
+class FlagValue(object):
+    """A flagged SpecList value. SpecList renders values as React children, so
+    the mark goes in as an element rather than as markup in a string."""
+
+    def __init__(self, block_id, note, text):
+        self.block_id, self.note, self.text = block_id, note, text
+
+    def js(self):
+        return ('React.createElement("mark", { className: "flag", "data-flag": %s, "data-note": %s }, %s)'
+                % (json.dumps(self.block_id), json.dumps(self.note), json.dumps(self.text)))
+
+
+def footer_block(index, colophon=None):
+    """
+    The colophon, so every page ends the same way. `colophon` replaces the
+    home page's credit line where a case page needs its own.
+    """
     start = index.index("<footer")
     end = index.index("</footer>") + len("</footer>")
     foot = index[start:end]
     # the home page's footer links are in-page anchors; on a case page they must
     # point back at the home page
     foot = foot.replace('href="#contact"', 'href="../index.html#contact"')
+    # the resume link belongs to the home page's footer only
+    foot = re.sub(r'<a href="assets/Mert-Tureli-Resume\.pdf"[^>]*>Resume \(PDF\)</a> / ', '', foot)
+    if colophon is not None:
+        foot = re.sub(r'(<p [^>]*>)[^<]*(?= / <a href="privacy\.html")',
+                      lambda m: m.group(1) + colophon, foot, count=1)
     foot = foot.replace('href="privacy.html"', 'href="../privacy.html"')
     foot = foot.replace('href="assets/', 'href="../assets/')
     return foot
@@ -84,18 +158,26 @@ def meta(text, index_no=None, tone=None, wide=False, size="240px,16px"):
     if index_no: a += ' index="%s"' % index_no
     if tone: a += ' tone="%s"' % tone
     if wide: a += ' wide="true"'
-    return ('<x-import component-from-global-scope="%s.Meta"%s hint-size="%s">%s</x-import>'
+    return ('<x-import data-depth-label="true" component-from-global-scope="%s.Meta"%s hint-size="%s">%s</x-import>'
             % (NS, a, size, text))
 
 
-def rule(label, right=None):
+def rule(label, right=None, anchor=None):
+    """
+    A section rule whose label is the section's h2 (data-heading: the static
+    render turns the label into the heading). `anchor` adds a scroll target just
+    above it for deep links.
+    """
     r = ' right="%s"' % right if right else ''
-    return ('<x-import component-from-global-scope="%s.Rule" label="%s"%s hint-size="100%%,14px"></x-import>'
-            % (NS, label, r))
+    a = ('<span id="%s" style="scroll-margin-top:30px"></span>' % anchor) if anchor else ''
+    return ('%s<x-import data-depth-rule="true" data-heading="2" component-from-global-scope="%s.Rule" '
+            'label="%s"%s hint-size="100%%,14px"></x-import>' % (a, NS, label, r))
 
 
-def heading(text, level=2, treatment=None, size="100%,90px"):
+def heading(text, level=2, treatment=None, size="100%,90px", tag=None):
+    """DisplayHeading. `level` sets the size only; `tag` is the element (h2 by default)."""
     t = ' treatment="%s"' % treatment if treatment else ''
+    t += ' as="%s"' % tag if tag else ''
     return ('<x-import component-from-global-scope="%s.DisplayHeading" level="%d"%s hint-size="%s">%s</x-import>'
             % (NS, level, t, size, text))
 
@@ -121,10 +203,12 @@ def frame(src, alt, caption, ratio="3 / 2", idx=None, zoom=True, size="100%,300p
             % (NS, src, alt, ratio, caption, a, z, size))
 
 
-def button(text, href, variant="outline", dark=False, size="220px,44px"):
+def button(text, href, variant="outline", dark=False, size="220px,44px", trailing="→"):
     dp = ' dc-props="{{ linkOnDark }}"' if dark else ''
-    return ('<x-import component-from-global-scope="%s.Button" variant="%s" trailing="→" '
-            'href="%s"%s hint-size="%s">%s</x-import>' % (NS, variant, href, dp, size, text))
+    tr = ' trailing="%s"' % trailing if trailing else ''
+    return ('<x-import component-from-global-scope="%s.Button" data-depth-button="%s" variant="%s"'
+            '%s href="%s"%s hint-size="%s">%s</x-import>'
+            % (NS, variant, variant, tr, href, dp, size, text))
 
 
 def spec_list(name, cols="minmax(64px,110px) minmax(0,1fr)", size="100%,220px"):
@@ -192,19 +276,23 @@ def cards(items):
             '        %s\n      </div>' % "\n        ".join(out))
 
 
+# below-the-fold <img> tags never block first paint
+LAZY_IMG = 'loading="lazy" decoding="async" '
+
+
 def bleed(src, alt, caption):
     """A full width image band, to break the column rhythm once per page."""
     return ('  <section data-reveal="1" style="position: relative; padding: 0 0 var(--section-y)">\n'
             '    <div style="position: relative; width: 100%%; aspect-ratio: 21 / 9; overflow: hidden; '
             'background: var(--ink-900)">\n'
-            '      <img src="../%s" alt="%s" style="position: absolute; inset: 0; width: 100%%; '
+            '      <img %ssrc="../%s" alt="%s" style="position: absolute; inset: 0; width: 100%%; '
             'height: 100%%; object-fit: cover; display: block">\n'
             '    </div>\n'
             '    <div style="max-width: var(--max-width); margin: 0 auto; padding: var(--space-4) '
             'var(--page-margin) 0">\n'
             '      <span style="font-family: var(--font-mono); font-size: var(--fs-meta); '
             'letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta)">%s</span>\n'
-            '    </div>\n  </section>\n' % (src, alt, caption))
+            '    </div>\n  </section>\n' % (LAZY_IMG, src, alt, caption))
 
 
 def clip_band(base, caption, ratio="16 / 9"):
@@ -212,26 +300,27 @@ def clip_band(base, caption, ratio="16 / 9"):
     A wide autoplaying render, centred at page width.
 
     Unlike the hero clip, these carry their own lighting and floor, so they sit
-    in a framed band rather than floating transparent over the panel, and the
-    poster is a jpg rather than a cutout png.
+    in a framed band rather than floating transparent over the panel, and keep
+    their opaque mp4. Below the fold, so the poster waits for data-poster.
     """
     return ('  <section data-reveal="1" style="position: relative; padding: 0 var(--page-margin) '
             'var(--section-y)">\n'
             '    <div style="position: relative; max-width: var(--max-width); margin: 0 auto">\n'
             '      <div style="position: relative; width: 100%%; aspect-ratio: %s; overflow: hidden; '
             'border-radius: var(--radius-lg, 14px); background: var(--ink-900)">\n'
-            '        <video data-clip="1" poster="../assets/motion/%s-poster.jpg" autoplay loop muted '
-            'playsinline preload="metadata" style="position: absolute; inset: 0; width: 100%%; '
+            '        <video data-clip="1" data-poster="../assets/motion/%s-poster.webp" loop muted '
+            'playsinline preload="none" style="position: absolute; inset: 0; width: 100%%; '
             'height: 100%%; object-fit: cover; display: block">'
-            '<source src="../assets/motion/%s.webm" type="video/webm">'
-            '<source src="../assets/motion/%s.mp4" type="video/mp4"></video>\n'
+            '<source data-src="../assets/motion/%s.webm" data-src-md="../assets/motion/%s-1280.webm" '
+            'data-src-sm="../assets/motion/%s-960.webm" type="video/webm">'
+            '<source data-src="../assets/motion/%s.mp4" type="video/mp4"></video>\n'
             '      </div>\n'
             '      <div style="padding: var(--space-4) 0 0">\n'
             '        <span style="font-family: var(--font-mono); font-size: var(--fs-meta); '
             'letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--text-meta)">%s'
             '</span>\n'
             '      </div>\n'
-            '    </div>\n  </section>\n' % (ratio, base, base, base, caption))
+            '    </div>\n  </section>\n' % (ratio, base, base, base, base, base, caption))
 
 
 def media_col(frames):
@@ -250,13 +339,34 @@ def media_col(frames):
 
 
 def section(inner, dark=False, pad="var(--section-y) var(--page-margin)", extra="",
-            gap="var(--space-7)"):
+            gap="var(--space-7)", track=None):
     cls = ' class="on-dark"' if dark else ''
+    cls += ' data-track="%s"' % track if track else ''
     bg = ' background: var(--ink-900);' if dark else ''
     return ('  <section%s style="position: relative;%s padding: %s;%s">\n'
             '    <div style="position: relative; max-width: var(--max-width); margin: 0 auto; '
             'display: flex; flex-direction: column; gap: %s">\n%s\n    </div>\n'
             '  </section>\n' % (cls, bg, pad, extra, gap, inner))
+
+
+def track_id(sec):
+    """
+    The name js/track.js reports for a section: its anchor, its "track" name
+    (kept for sections whose label was dropped), or its label as a slug.
+    """
+    return (sec.get("anchor") or sec.get("track")
+            or re.sub(r"[^a-z0-9]+", "-", sec["label"].lower()).strip("-"))
+
+
+# A labelled part inside a run of light sections. The wrapper repeats the run's
+# own column and gap, so the layout is the same as without it; it exists so
+# js/track.js can time each part (data-track) separately.
+RUN_GAP = "var(--space-9)"
+
+
+def tracked_part(name, piece):
+    return ('      <div data-track="%s" style="display: flex; flex-direction: column; gap: %s">\n'
+            '%s\n      </div>' % (name, RUN_GAP, piece))
 
 
 def block(*parts, **kw):
@@ -284,28 +394,72 @@ def gallery(frames, min_col="220px"):
             % (min_col, "\n        ".join(frames)))
 
 
+def walkthrough(w):
+    """
+    An interactive <project-walkthrough> band straight after the hero. The
+    custom element is defined by WALKTHROUGH_JS, which build() adds to <head>
+    whenever a case declares one.
+    """
+    fallback = ("<p>%s</p>" % w["fallback"]) if w.get("fallback") else ""
+    return ('  <section id="%s" aria-label="%s" style="padding:var(--space-8) var(--page-margin);'
+            'scroll-margin-top:28px">\n'
+            '    <div style="max-width:var(--max-width);margin:0 auto">\n'
+            '      <project-walkthrough project="%s">%s</project-walkthrough>\n'
+            '    </div>\n  </section>\n' % (w["id"], w["label"], w["project"], fallback))
+
+
 # ---------------------------------------------------------------- page builder
 
-def build(case, index):
+# Everything a case page loads beyond the lifted helmet. site-palette.js runs
+# first, before any paint, so the chosen palette applies without a flash.
+PALETTE_JS = "../js/site-palette.js"
+WALKTHROUGH_JS = "../assets/portfolio-foundation/project-walkthrough.js"
+
+# The header nav, in the home page's order. Case pages link back to the home
+# page's sections, except Websites, which has its own page.
+NAV = [
+    ("work", "Work", "../index.html#work"),
+    ("beyond", "Beyond", "../index.html#beyond"),
+    ("websites", "Websites", "../websites.html"),
+    ("contact", "Contact", "../index.html#contact"),
+]
+
+
+def title_level(title):
+    """
+    Display size for a case title. At --fs-display-1 the copy column holds about
+    nine capitals, so a longer word ran under the clip (CHARGER's DEPLOYABLE at
+    1440 reached 360px past its column). Such titles use --fs-display-2.
+    Hyphenated words can break at the hyphen, so they count by their parts.
+    """
+    longest = max(len(w) for w in re.split(r"[\s-]+", title) if w)
+    return 2 if longest >= 10 else 1
+
+
+def build(case, index, out_dir=OUT_DIR):
     hero_clip = case.get("clip")
     clip_markup = ""
+    # The hero clip carries no autoplay attribute and lazy sources:
+    # js/media-playback.js loads and starts it when it is on screen and leaves it
+    # paused under reduced motion. Its poster is eager because it is the first
+    # thing on the page. It is not preloaded: the case LCP is the lede, and a
+    # high-priority poster preload measured 60 ms slower FCP/LCP on throttled
+    # mobile by competing with the stylesheets.
+    aria = (' aria-label="%s"' % escape(case["clip_aria"], quote=True)) if case.get("clip_aria") else ''
     if hero_clip:
         clip_markup = (
-            '<div data-reveal="1" style="position: relative; width: 100%%; aspect-ratio: %s">\n'
-            '          <video data-clip="1" poster="../assets/motion/%s-poster.%s" autoplay loop muted '
-            'playsinline preload="metadata" style="width: 100%%; height: 100%%; object-fit: contain; display: block">'
-            '<source src="../assets/motion/%s-alpha.webm" type="video/webm">'
-            '<source src="../assets/motion/%s.mp4" type="video/mp4"></video>\n        </div>'
-            % (case.get("clip_ratio", "4 / 3"), hero_clip, case.get("poster_ext", "png"),
-               hero_clip, hero_clip))
+            '<div class="depth-stage" data-reveal="1" style="position: relative; width: 100%%; aspect-ratio: %s">\n'
+            '          <video data-clip="1"%s poster="../assets/motion/%s-poster.webp" loop muted '
+            'playsinline preload="none" style="width: 100%%; height: 100%%; object-fit: contain; display: block">'
+            '%s%s</video>\n        </div>'
+            % (case.get("clip_ratio", "4 / 3"), aria, hero_clip, webm_source(hero_clip),
+               ('<source data-src="../assets/motion/%s.mp4" type="video/mp4">' % hero_clip)
+               if hero_clip in OPAQUE_CLIPS else ""))
     elif case.get("hero_image"):
         clip_markup = ('<div data-reveal="1">%s</div>'
                        % frame(case["hero_image"], case["title"], case.get("hero_caption", ""),
                                ratio=case.get("clip_ratio", "4 / 3"), zoom=False, size="100%,420px"))
 
-    if case.get("clip_aria") and clip_markup:
-        from html import escape
-        clip_markup = clip_markup.replace('<video ', '<video aria-label="' + escape(case["clip_aria"], quote=True) + '" ', 1)
     if case.get("clip_note") and clip_markup:
         clip_markup = clip_markup.replace(
             '        </div>',
@@ -318,17 +472,15 @@ def build(case, index):
             '          </div>\n        </div>')
 
     hero = (
-        '  <section class="on-dark" style="position: relative; min-height: min(720px, 88vh); '
+        '  <section class="on-dark depth-hero" style="position: relative; min-height: min(720px, 88vh); '
         'background: var(--ink-900); overflow: hidden; display: flex; flex-direction: column">\n'
         '    %s\n'
-        '    <x-import component-from-global-scope="%s.SiteHeader" items="{{ nav }}" active="work" '
-        'inverse="true" floating="true" hint-size="100%%,88px"></x-import>\n'
         '    <x-import component-from-global-scope="%s.SocialRail" items="{{ social }}" inverse="true" '
         'fixed="true" hint-size="36px,120px"></x-import>\n'
         '    <div style="position: relative; flex: 1; display: grid; grid-template-columns: '
         'minmax(0, 1fr) minmax(0, 1.15fr); align-items: center; gap: var(--space-8); '
         'padding: calc(var(--header-h) + var(--space-8)) var(--page-margin) var(--space-8); '
-        'max-width: var(--max-width); margin: 0 auto; width: 100%%">\n'
+        'max-width: calc(var(--max-width) + 2 * var(--page-margin)); margin: 0 auto; width: 100%%">\n'
         '      <div style="display: flex; flex-direction: column; gap: var(--space-5)">\n'
         '        %s\n        %s\n        %s\n'
         '        <div style="display: flex; gap: var(--space-4); flex-wrap: wrap; margin-top: var(--space-2)">\n'
@@ -337,36 +489,52 @@ def build(case, index):
         '      %s\n'
         '    </div>\n'
         '  </section>\n'
-        % (grain(), NS, NS,
+        % (grain(), NS,
            meta(case["eyebrow"], wide=True, size="300px,16px"),
-           heading(case["title"], level=1, treatment="inverse", size="100%,140px"),
+           heading(case["title"], level=title_level(case["title"]), treatment="inverse",
+                   size="100%,140px", tag="h1"),
            para_dark(case["lede"], big=True),
            button("All work", "../index.html#work", variant="glass", dark=True, size="150px,44px"),
            clip_markup))
 
+    # The banner sits outside <main>, before the hero it floats over, as on the
+    # home page.
+    site_header = ('  <x-import component-from-global-scope="%s.SiteHeader" items="{{ nav }}" active="work" '
+                   'inverse="true" floating="true" dc-props="{{ headerRow }}" hint-size="100%%,88px">'
+                   '</x-import>\n' % NS)
     body = [hero]
+    if case.get("walkthrough"):
+        body.append(walkthrough(case["walkthrough"]))
 
-    # brief
+    # brief. A case can drop the Brief label ("brief_label": None); the
+    # section numbers then start at 01 on the first labelled section.
+    brief_label = case.get("brief_label", "Brief")
     body.append(section(
-        block(rule("Brief", right="01")) + "\n" +
+        (block(rule(brief_label, right="01")) + "\n" if brief_label else "") +
         two_col(spec_list("brief", size="100%%,260px"),
                 block(*[para(p) for p in case["brief_note"]]) if case.get("brief_note") else "",
                 cols="minmax(0, 1fr) minmax(0, 1fr)"),
-        pad="var(--section-y) var(--page-margin) var(--space-9)"))
+        pad="var(--section-y) var(--page-margin) var(--space-9)", track="brief"))
 
     # Consecutive light sections share one <section> so the article reads as
     # continuous prose. Text and media sit side by side rather than stacking,
     # which both fills the empty half the measure width leaves behind and cuts
     # the page length roughly in half.
-    n = 2
+    n = 2 if brief_label else 1
     run = []
+    # A light run normally continues the light section above it, so it has no
+    # top padding. After a dark plate or a stats band it starts a new light
+    # section and needs the full section spacing, or its Rule sits on the plate.
+    after_dark = [False]
 
     def flush():
         if run:
+            top = "var(--section-y)" if after_dark[0] else "0"
             body.append(section("\n".join(run),
-                                pad="0 var(--page-margin) var(--section-y)",
-                                gap="var(--space-9)"))
+                                pad="%s var(--page-margin) var(--section-y)" % top,
+                                gap=RUN_GAP))
             del run[:]
+            after_dark[0] = False
 
     for sec in case["sections"]:
         kind = sec.get("kind")
@@ -374,22 +542,31 @@ def build(case, index):
         if kind == "stats":
             flush()
             body.append(section(stats_band(sec["stats"]), dark=True,
-                                pad="var(--space-9) var(--page-margin)"))
+                                pad="var(--space-9) var(--page-margin)", track="results"))
+            after_dark[0] = True
             continue
 
         if kind == "bleed":
             flush()
             body.append(bleed(sec["src"], sec["alt"], sec["caption"]))
+            after_dark[0] = False
             continue
 
         if kind == "clip_band":
             flush()
             body.append(clip_band(sec["base"], sec["caption"],
                                   sec.get("ratio", "16 / 9")))
+            after_dark[0] = False
             continue
 
-        head = block(rule(sec["label"], right="%02d" % n))
-        n += 1
+        if sec.get("label"):
+            head = block(rule(sec["label"], right="%02d" % n, anchor=sec.get("anchor")))
+            n += 1
+        else:
+            # no label: the part continues the one above it, keeping only its
+            # deep-link anchor
+            head = ('<span id="%s" style="scroll-margin-top:30px"></span>' % sec["anchor"]
+                    if sec.get("anchor") else "")
 
         text = []
         if sec.get("paras"):
@@ -406,26 +583,29 @@ def build(case, index):
             right = media_col(media)
             if sec.get("flip"):
                 left, right = right, left
-            piece = head + "\n" + two_col(left, right,
+            piece = (head + "\n" if head else "") + two_col(left, right,
                                         cols=sec.get("cols", "minmax(0, 1.05fr) minmax(0, 1fr)"))
         elif media:
             # nothing to sit beside, so the pictures take the full width. A half
             # width column here stacked four plates into 1781px of dead page.
-            piece = "\n".join([head] + text + [gallery(media, min_col=sec.get("min_col", "220px"))])
+            piece = "\n".join(([head] if head else []) + text
+                              + [gallery(media, min_col=sec.get("min_col", "220px"))])
         else:
-            piece = "\n".join([head] + text)
+            piece = "\n".join(([head] if head else []) + text)
 
         if sec.get("dark"):
             flush()
-            body.append(section(piece, dark=True))
+            body.append(section(piece, dark=True, track=track_id(sec)))
+            after_dark[0] = True
         else:
-            run.append(piece)
+            run.append(tracked_part(track_id(sec), piece))
     flush()
 
     # next / prev
     nav_btns = []
     if case.get("prev"):
-        nav_btns.append(button("Previous: " + case["prev"][0], case["prev"][1], variant="link", size="240px,24px"))
+        nav_btns.append(button("← Previous: " + case["prev"][0], case["prev"][1], variant="outline",
+                               size="260px,44px", trailing=""))
     if case.get("next"):
         nav_btns.append(button("Next: " + case["next"][0], case["next"][1], variant="outline", size="260px,44px"))
     body.append(section(
@@ -434,573 +614,331 @@ def build(case, index):
         % "\n        ".join(nav_btns or [button("All work", "../index.html#work")]),
         pad="var(--space-8) var(--page-margin) var(--space-9)"))
 
-    vals = ["      nav: [",
-            '        { id: "work", label: "Work", href: "../index.html#work" },',
-            '        { id: "experience", label: "Experience", href: "../index.html#experience" },',
-            '        { id: "beyond", label: "Beyond", href: "../index.html#beyond" },',
-            '        { id: "contact", label: "Contact", href: "../index.html#contact" },',
-            "      ],",
+    vals = ["      nav: ["]
+    vals += ['        { id: "%s", label: "%s", href: "%s" },' % item for item in NAV]
+    vals += ["      ],",
             "      social: [",
             '        { name: "LinkedIn", icon: "linkedin", href: "https://linkedin.com/in/merttureli" },',
             '        { name: "Mail", icon: "mail", href: "../index.html#contact" },',
             "      ],",
             '      linkOnDark: { tone: "inverse" },',
+            '      headerRow: { style: { padding: "0 max(var(--page-margin), calc((100% - var(--max-width)) / 2))" } },',
             "      brief: ["]
     for label, value, aside in case["brief"]:
-        row = '        { label: "%s", value: "%s"' % (label, value)
+        row = '        { label: "%s", value: %s' % (
+            label, value.js() if isinstance(value, FlagValue) else '"%s"' % value)
         if aside:
             row += ', aside: "%s"' % aside
         vals.append(row + " },")
     vals.append("      ],")
 
+    # The case title is the page's h1; CHARGER's <title> also names the rocket.
+    page_title = case.get("seo_title", case["title"])
+    head_modules = "".join('<script type="module" src="%s"></script>\n' % m
+                           for m in ([WALKTHROUGH_JS] if case.get("walkthrough") else []))
     html = (
-        '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
+        '<!DOCTYPE html>\n<html lang="en">\n<head>\n'
+        '<script src="%s"></script>\n'
+        '<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         '<title>%s · Mert Tureli</title>\n'
         '<meta name="description" content="%s">\n'
-        '<link rel="icon" href="%s">\n'
+        '<link rel="icon" href="/assets/icons/favicon.ico" sizes="32x32">\n'
+        '<link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml">\n'
+        '<link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">\n'
         '<link rel="canonical" href="https://merttureli.com/projects/%s.html">\n'
         '<meta property="og:title" content="%s · Mert Tureli">\n'
         '<meta property="og:description" content="%s">\n'
         '<meta property="og:type" content="article">\n'
         '<meta property="og:url" content="https://merttureli.com/projects/%s.html">\n'
-        '<meta property="og:image" content="https://merttureli.com/assets/og-cover.png">\n'
+        '<meta property="og:site_name" content="Mert Tureli">\n'
+        '<meta property="og:image" content="https://merttureli.com/assets/og/case-%s-v1.png">\n'
+        '<meta property="og:image:width" content="1200">\n'
+        '<meta property="og:image:height" content="630">\n'
+        '<meta property="og:image:alt" content="%s">\n'
+        '<meta name="twitter:card" content="summary_large_image">\n'
         '<script src="../support.js"></script>\n'
+        '%s'
         '<script src="../js/media-playback.js" defer></script>\n'
-        '<script src="../js/depth-motion.js" defer></script>\n'
         '<link rel="stylesheet" href="../css/interaction-polish.css">\n'
         '<script src="../js/interaction-polish.js" defer></script>\n'
-        '</head>\n<body class="depth-design">\n<x-dc>\n<helmet>\n%s\n</helmet>\n\n'
-        '<div style="background: var(--paper); overflow-x: hidden">\n\n%s\n%s\n</div>\n</x-dc>\n%s\n'
+        '</head>\n<body class="depth-design">\n'
+        '<a class="skip-link" href="#main">Skip to content</a>\n<x-dc>\n<helmet>\n%s\n</helmet>\n\n'
+        '<div style="background: var(--paper); overflow-x: hidden">\n\n%s\n  <main id="main">\n%s  </main>\n%s\n'
+        '</div>\n</x-dc>\n%s\n'
         '<script src="../js/mobile-nav.js"></script>\n'
         '<script src="../js/analytics-config.js"></script>\n'
         '<script src="../js/track.js"></script>\n'
         '<script src="../js/clarity.js"></script>\n</body>\n</html>\n'
-        % (case["title"], case["description"], FAVICON, case["slug"], case["title"],
-           case["description"], case["slug"], helmet_block(index), "\n".join(body),
-           footer_block(index), runtime_script(index, "\n".join(vals))))
+        % (PALETTE_JS, page_title, escape(case["description"], quote=True), case["slug"], page_title,
+           escape(case["description"], quote=True), case["slug"], case["slug"],
+           escape(case["og_alt"], quote=True), head_modules, helmet_block(index),
+           site_header, "\n".join(body),
+           footer_block(index, case.get("colophon")), runtime_script(index, "\n".join(vals))))
 
-    out = os.path.join(OUT_DIR, case["slug"] + ".html")
+    out = os.path.join(out_dir, case["slug"] + ".html")
     io.open(out, "w", encoding="utf-8", newline="\n").write(html)
     return out, len(html)
 
 
 # ------------------------------------------------------------------- the cases
 
+# The case content lives in content/: content/projects.json holds the order,
+# content/projects/<slug>.json holds one case each. docs/recipes/content.md has
+# the field reference. load_cases() turns the JSON into the shapes build()
+# expects and rejects unknown fields, so a typo fails loudly instead of
+# silently dropping copy.
+
+CONTENT = os.path.join(ROOT, "content")
+
+# Fields a case file may carry. Required ones must be present.
+CASE_REQUIRED = {"nav_title", "title", "eyebrow", "description", "og_alt", "lede", "brief",
+                 "sections"}
+CASE_OPTIONAL = {"seo_title", "clip", "clip_ratio", "clip_aria", "clip_note", "clip_sizes",
+                 "clip_opaque", "hero_image", "hero_caption", "walkthrough", "brief_label",
+                 "brief_note", "colophon"}
+SECTION_FIELDS = {"kind", "label", "anchor", "track", "dark", "strong", "paras", "cards", "list",
+                  "stats", "frames", "ratio", "flip", "cols", "min_col", "src", "alt", "caption",
+                  "base"}
+SECTION_KINDS = {None, "stats", "bleed", "clip_band"}
+
+
+class ContentError(Exception):
+    pass
+
+
+def _rich(value, where):
+    """
+    Rich text: a string (HTML allowed), or a list of strings and flag objects
+    {"flag": id, "note": question, "text": shown text (default [TBD])}.
+    """
+    if isinstance(value, str):
+        return value
+    if isinstance(value, dict):
+        value = [value]
+    if not isinstance(value, list):
+        raise ContentError("%s: expected text or a list of text and flags" % where)
+    out = []
+    for part in value:
+        if isinstance(part, str):
+            out.append(part)
+        elif isinstance(part, dict) and set(part) <= {"flag", "note", "text"} and "flag" in part:
+            out.append(flag(part["flag"], part.get("note", ""), part.get("text", "[TBD]")))
+        else:
+            raise ContentError("%s: a list item must be text or {\"flag\", \"note\", \"text\"}" % where)
+    return "".join(out)
+
+
+def _case(slug, data, where):
+    if not isinstance(data, dict):
+        raise ContentError("%s: expected a JSON object" % where)
+    missing = sorted(CASE_REQUIRED - set(data))
+    unknown = sorted(k for k in set(data) - CASE_REQUIRED - CASE_OPTIONAL if not k.startswith("_"))
+    if missing:
+        raise ContentError("%s: missing field(s): %s" % (where, ", ".join(missing)))
+    if unknown:
+        raise ContentError("%s: unknown field(s): %s (allowed: %s)" % (
+            where, ", ".join(unknown), ", ".join(sorted(CASE_REQUIRED | CASE_OPTIONAL))))
+    case = {"slug": slug}
+    for key, value in data.items():
+        if key.startswith("_") or key in ("clip_sizes", "clip_opaque"):
+            continue
+        case[key] = value
+    for key in ("lede", "colophon"):
+        if case.get(key) is not None:
+            case[key] = _rich(case[key], "%s: %s" % (where, key))
+    if "brief_note" in case:
+        case["brief_note"] = [_rich(p, "%s: brief_note[%d]" % (where, i))
+                              for i, p in enumerate(case["brief_note"])]
+    rows = []
+    for i, row in enumerate(data["brief"]):
+        w = "%s: brief[%d]" % (where, i)
+        if not isinstance(row, dict) or set(row) - {"label", "value", "aside"} or "label" not in row:
+            raise ContentError('%s: expected {"label", "value", "aside"}' % w)
+        value = row.get("value", "")
+        if isinstance(value, dict):
+            # a flagged value renders as a React element, not as markup
+            if "flag" not in value or set(value) - {"flag", "note", "text"}:
+                raise ContentError('%s: value must be text or {"flag", "note", "text"}' % w)
+            value = FlagValue(value["flag"], value.get("note", ""), value.get("text", "[TBD]"))
+        elif not isinstance(value, str):
+            raise ContentError("%s: value must be text or a single flag object" % w)
+        rows.append((row["label"], value, row.get("aside", "")))
+    case["brief"] = rows
+    sections = []
+    for i, sec in enumerate(data["sections"]):
+        w = "%s: sections[%d]" % (where, i)
+        if not isinstance(sec, dict):
+            raise ContentError("%s: expected an object" % w)
+        unknown = sorted(k for k in set(sec) - SECTION_FIELDS if not k.startswith("_"))
+        if unknown:
+            raise ContentError("%s: unknown field(s): %s (allowed: %s)" % (
+                w, ", ".join(unknown), ", ".join(sorted(SECTION_FIELDS))))
+        if sec.get("kind") not in SECTION_KINDS:
+            raise ContentError("%s: kind must be one of stats, bleed, clip_band (or absent)" % w)
+        s = {k: v for k, v in sec.items() if not k.startswith("_")}
+        for key in ("paras", "cards", "list"):
+            if key in s:
+                s[key] = [_rich(p, "%s: %s[%d]" % (w, key, j)) for j, p in enumerate(s[key])]
+        if "stats" in s:
+            s["stats"] = [(st["value"], st["label"]) for st in s["stats"]]
+        if "frames" in s:
+            frames = []
+            for j, fr in enumerate(s["frames"]):
+                if set(fr) - {"src", "alt", "caption", "index"} or not {"src", "alt", "caption"} <= set(fr):
+                    raise ContentError('%s: frames[%d]: expected {"src", "alt", "caption", "index"}' % (w, j))
+                frames.append(("F", fr["src"], fr["alt"], fr["caption"], fr.get("index")))
+            s["frames"] = frames
+        sections.append(s)
+    case["sections"] = sections
+    return case
+
+
+def _missing_assets(case):
+    """Asset paths a case names that are not on disk (reported, not fatal)."""
+    paths = ["assets/og/case-%s-v1.png" % case["slug"]]
+    if case.get("clip"):
+        paths.append("assets/motion/%s-poster.webp" % case["clip"])
+    if case.get("hero_image"):
+        paths.append(case["hero_image"])
+    for sec in case["sections"]:
+        paths += [fr[1] for fr in sec.get("frames") or [] if isinstance(fr, tuple)]
+        if sec.get("kind") == "bleed":
+            paths.append(sec["src"])
+        if sec.get("kind") == "clip_band":
+            paths.append("assets/motion/%s-poster.webp" % sec["base"])
+    return [p for p in paths if not os.path.exists(os.path.join(ROOT, p))]
+
+
+def load_cases(content=CONTENT):
+    """
+    Read content/ into an ordered {slug: case} dict. Fills MOTION_VARIANTS and
+    OPAQUE_CLIPS from each case's clip_sizes / clip_opaque, and derives the
+    Previous / Next buttons from the order: the first case has no Previous, the
+    last case's Next loops back to the first.
+    """
+    index_path = os.path.join(content, "projects.json")
+    try:
+        order = json.load(io.open(index_path, encoding="utf-8"))["order"]
+    except (IOError, OSError, ValueError, KeyError) as e:
+        raise ContentError("%s: %s" % (os.path.relpath(index_path, ROOT), e))
+    folder = os.path.join(content, "projects")
+    on_disk = sorted(f[:-5] for f in os.listdir(folder) if f.endswith(".json"))
+    stray = [s for s in on_disk if s not in order]
+    if stray:
+        raise ContentError("content/projects/%s.json is not listed in content/projects.json "
+                           "\"order\"" % stray[0])
+    if len(set(order)) != len(order):
+        raise ContentError("content/projects.json: a slug is listed twice in \"order\"")
+    cases = {}
+    for slug in order:
+        where = "content/projects/%s.json" % slug
+        if not re.match(r"^[a-z0-9]+(-[a-z0-9]+)*$", slug):
+            raise ContentError("content/projects.json: bad slug %r (use lower-case-words)" % slug)
+        try:
+            data = json.load(io.open(os.path.join(folder, slug + ".json"), encoding="utf-8"))
+        except (IOError, OSError) as e:
+            raise ContentError("%s: listed in content/projects.json but %s" % (where, e.strerror))
+        except ValueError as e:
+            raise ContentError("%s: invalid JSON: %s" % (where, e))
+        cases[slug] = _case(slug, data, where)
+        clip = data.get("clip")
+        if clip and data.get("clip_sizes"):
+            MOTION_VARIANTS[clip] = tuple(data["clip_sizes"])
+        if clip and data.get("clip_opaque"):
+            OPAQUE_CLIPS.add(clip)
+    for i, slug in enumerate(order):
+        if i > 0:
+            prev = cases[order[i - 1]]
+            cases[slug]["prev"] = (prev["nav_title"], prev["slug"] + ".html")
+        if len(order) > 1:
+            nxt = cases[order[(i + 1) % len(order)]]
+            cases[slug]["next"] = (nxt["nav_title"], nxt["slug"] + ".html")
+    for slug, case in cases.items():
+        for path in _missing_assets(case):
+            sys.stderr.write("warning: content/projects/%s.json names %s, which does not exist\n"
+                             % (slug, path))
+        # plain text fields cannot hold a flag, so a scaffold leaves "TBD" there
+        for key in ("nav_title", "title", "seo_title", "eyebrow", "description", "og_alt"):
+            if "TBD" in (case.get(key) or ""):
+                sys.stderr.write("warning: content/projects/%s.json: %s is still a placeholder\n"
+                                 % (slug, key))
+    return cases
+
+
+# Filled by main() from content/.
 CASES = {}
 
-CASES["robo-catcher"] = {
-    "slug": "robo-catcher",
-    "eyebrow": "Case study / Senior capstone",
-    "title": "Robo-Catcher",
-    "description": ("A softball machine that catches an incoming throw and returns it, built by a "
-                    "12 person capstone team for under $700. I co-led the feeding subsystem and owned "
-                    "all of the electronics and firmware."),
-    "lede": ("Pitching machines are everywhere. Machines that catch the ball and return it do not "
-             "exist at any price, so our capstone team built one for under $700. I co-led the feeding "
-             "subsystem and owned all of the machine's electronics and firmware."),
-    "clip": "robo-catcher-360",
-    "clip_ratio": "4 / 3",
-    "brief": [
-        ("Role", "Feeding subsystem co-lead, all electronics and firmware", ""),
-        ("Team", "12 across capture, feeding and return", ""),
-        ("Tools", "ESP32, C++, MATLAB, NEMA 17 with TB6600, SolidWorks", ""),
-        ("Build", "Laser cut HDF and 3D printed parts", ""),
-        ("Timeline", "2025, two academic terms", ""),
-    ],
-    "brief_note": [
-        "Twelve of us split across three subsystems: capture, feeding and return. I co-led the "
-        "4 person feeding group and owned the machine's entire electrical and software system: "
-        "motor drive, control firmware, wireless interface and safety logic.",
-    ],
-    "sections": [
-        # results up front, at display size, so the page opens with weight
-        {"kind": "stats", "stats": [
-            ("100%", "Feed indexing, competition day"),
-            ("&lt;$700", "Total build cost"),
-            ("55 lb", "One person portable"),
-            ("1.5 hr", "Runtime, one 12 V 20 Ah battery"),
-        ]},
-        {"label": "The problem", "paras": [
-            "A solo player can buy a machine that pitches, but someone still has to walk every ball "
-            "back. We set out to close the loop: a machine that catches an incoming throw, feeds it "
-            "internally and returns it, with nobody in the middle.",
-            "Nothing off the shelf does this at any price, and ours had to come in under a $700 cap.",
-        ]},
-        {"label": "Constraints", "cards": [
-            "Under $700 all in, with every actuator and driver chosen against that cap",
-            "Portable by one person: 55 lb finished, fits in a car trunk",
-            "Assembles at the field with no tools",
-            "Battery powered, a full practice session on one 12 V 20 Ah SLA battery",
-            "Safe around players: wireless emergency stop plus hardware cut-offs",
-            "Catch, index and return without a human touching the ball",
-        ]},
-        {"label": "Sizing the feeder before cutting anything", "paras": [
-            "The feeder is a rotating dual chamber indexer: catch a ball in one chamber, rotate 180 "
-            "degrees, present it to the return flywheel. The failure mode that kills machines like "
-            "this is a stall mid rotation.",
-            "So before any parts were made I modelled the load case in MATLAB, a 0.19 kg ball lifted "
-            "through 180 degrees of rotation, and sized the NEMA 17 stepper and TB6600 driver to a "
-            "1.8x torque safety factor.",
-        ], "frames": [("F", "assets/photos/robo-catcher-photography/indexer-cross-section.jpg",
-                       "Indexer cross-section", "Chamber geometry self-centres the ball", "02"),
-                      ("F", "assets/photos/robo-catcher-photography/full-feeder.jpg",
-                       "The assembled feeder", "The assembled feeder", "03")],
-         "flip": True, "cols": "minmax(0, 1fr) minmax(0, 1.05fr)"},
-        {"label": "Electronics and firmware", "paras": [
-            "Everything runs on one ESP32. The firmware handles PWM speed control for the 120 W DC "
-            "return flywheel through a MOSFET stage, stepper indexing for the feeder, and limit "
-            "switch logic so the machine always knows where the chambers are.",
-            "A wireless remote gives start and stop from across the field, and the emergency "
-            "cut-offs kill motor power independently of the microcontroller.",
-        ], "frames": [("F", "assets/photos/robo-catcher-photography/working-on-electronics.jpg",
-                       "The team running the machine on the field", "Running it on the field", "03"),
-                      ("F", "assets/photos/robo-catcher-photography/flywheel-full.jpg",
-                       "Return flywheel assembly", "Return flywheel, 120 W DC motor", "04")]},
-        {"label": "The result", "list": [
-            "100% feed indexing on competition day: every ball delivered, no misses",
-            "Under $700 total build cost against a $700 cap",
-            "55 lb, one person portable, assembles with no tools",
-            "1.5 hours continuous runtime on a single 12 V 20 Ah SLA battery",
-        ], "frames": [("F", "assets/photos/shop-and-machine-photography/machine-field.jpg",
-                       "The finished machine on the field", "The finished machine, on the field", "05")]},
-        {"label": "What I learned", "strong": True, "paras": [
-            "The MATLAB torque study felt slow while teammates were already printing parts, and then "
-            "the feeder ran a full competition day without a single missed index. Analysis before "
-            "fabrication is cheaper than iteration after it.",
-            "If I built it again I would close the loop on flywheel RPM, so return speed holds "
-            "steady as the battery sags.",
-        ]},
-    ],
-    "next": ("CHARGER", "charger.html"),
-}
+
+def expand_frames(case):
+    """Expand the frame tuples now that the helpers exist. Idempotent."""
+    for sec in case["sections"]:
+        if sec.get("frames") and isinstance(sec["frames"][0], tuple):
+            # a single frame beside prose gets a wide crop so it does not
+            # tower over a short paragraph; pairs and galleries keep 3:2.
+            # A section can override both, which portrait sources need: a
+            # 16:9 crop of a vertical rocket keeps the middle of the tube
+            # and throws away the nose and the fins.
+            beside_text = bool(sec.get("paras") or sec.get("list")) and not sec.get("cards")
+            ratio = sec.get("ratio") or (
+                "16 / 9" if (beside_text and len(sec["frames"]) == 1) else "3 / 2")
+            sec["frames"] = [frame(src, alt, cap, ratio=ratio, idx=i)
+                             for (_tag, src, alt, cap, i) in sec["frames"]]
 
 
-CASES["charger"] = {
-    "slug": "charger",
-    "eyebrow": "Case study / Union College Rocket Team",
-    "title": "Deployable sensor payload",
-    "description": ("CHARGER, the rocket that won the Deployable Sensor Payload event at Battle "
-                    "of the Rockets 2026. Custom payload electronics, five live telemetry "
-                    "channels, and a team that did not exist three years earlier."),
-    "lede": ("The event asks for a rocket that puts a custom built sensor payload into a five "
-             "hundred foot window, drops it at apogee, sheds its nose cone partway down, and "
-             "streams five channels of telemetry to a handheld ground station until it lands. "
-             "We built CHARGER, and it won."),
-    "clip": "charger-square",
-    "clip_ratio": "1 / 1",
-    "brief": [
-        ("Role", "Captain and chief engineer", ""),
-        ("Team", "Union College Rocket Team, twelve competing", ""),
-        ("Event", "Battle of the Rockets 2026", "Deployable Sensor Payload"),
-        ("Where", "Culpeper, Virginia, April 2026", ""),
-        ("Result", "First place", ""),
-        ("Advisers", "Scott Suriano, Ashok Ramasubramanian", ""),
-    ],
-    "brief_note": [
-        "There was no rocket team at Union College when I started. I founded it, ran it as captain "
-        "and chief engineer, trained new members through build labs, owned NAR and Tripoli "
-        "safety compliance for high power launches, and grew the budget by seven hundred percent "
-        "by writing funding proposals. The team was chartered as an official section of the "
-        "National Association of Rocketry.",
-        "Published by " + '<a href="https://www.union.edu/news/stories/202604/rocket-club-soars-new-heights-first-place-finish-national-competition" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-hairline)">Union College</a>' + " and by " + '<a href="https://www.rocketbattle.org/winners.html" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-hairline)">the competition organizer</a>' + ".",
-    ],
-    "sections": [
-        {"kind": "stats", "stats": [
-            ("1st", "Deployable Sensor Payload event"),
-            ("1.80 cal", "Stability margin, 37 inch airframe"),
-            ("13.8 ft/s", "Descent, against a 15 ft/s limit"),
-            ("$716", "Total hardware cost"),
-        ]},
-        {"label": "The event", "paras": [
-            "The rocket flies a commercial G motor to between seven hundred and twelve hundred "
-            "feet, drops the payload at apogee, and at seventy five percent of peak altitude "
-            "the payload releases the nose cone, which has to reach the ground under fifteen "
-            "feet per second on its own.",
-            "With the nose cone gone the payload exposes a camera and films the ground until it "
-            "lands. Throughout, from the moment it goes on the pad, it transmits air pressure, "
-            "altitude, acceleration, temperature and rotation rate to a ground station that has "
-            "to plot all of it live and derive the descent rate as it happens.",
-        ]},
-        {"label": "Constraints", "cards": [
-            "Commercial G motor. Apogee at least seven hundred feet and no more than twelve hundred",
-            "Payload separates at apogee and descends at under fifteen feet per second",
-            "Nose cone released at seventy five percent of peak, and it must land gently on its own",
-            "Payload electronics must be custom designed. Commercial flight computers are not allowed",
-            "Five sensor channels transmitted at two hertz or better, from the pad until landing",
-            "Ground station portable, handheld antenna, two hours on battery, everything plotted live",
-        ]},
-        {"label": "Where the points are", "paras": [
-            "The flight is worth two hundred and fifteen points, plus a tenth of a point per "
-            "foot above seven hundred. Most of it sits on the data path rather than the rocket.",
-        ], "list": [
-            "Camera captures the ground from nose cone release until landing. 50 points",
-            "Ground station receives and displays telemetry live, at least ten packets after "
-            "liftoff. 30 points",
-            "Altitude, acceleration, rotation rate and temperature each plotted in real time. "
-            "20 points each",
-            "Descent rate calculated and displayed in real time. 20 points",
-            "Nose cone released at seventy five percent of peak altitude. 20 points",
-            "Apogee inside the window. 10 points, plus a tenth of a point per foot above seven "
-            "hundred",
-            "Payload deploys from the rocket at apogee. 5 points",
-        ]},
-        {"label": "The paperwork is scored too", "dark": True, "paras": [
-            "Flight points are added to the design review scores rather than compared against "
-            "them. A preliminary review is due in December and a critical review in March, both "
-            "presented live to judges and both scored.",
-            "Radio and antenna trades, a power budget, a software state list, flight "
-            "simulations, mass with the motor installed. The judges expect all of it written "
-            "down months before anything flies, and they score it twice.",
-        ]},
-        {"label": "The airframe", "paras": [
-            "Thirty seven inches, single stage, 2.63 inches across, three "
-            "trapezoidal balsa fins on a cardboard body tube. Centre of gravity "
-            "at 22 inches, stability margin 1.80 calibres.",
-            "The body tube is cardboard because the payload transmits "
-            "continuously from the pad to the ground. Carbon fibre would have "
-            "put a conductive shell around a 2.4 GHz antenna. Cardboard is "
-            "transparent at that frequency, so the radio set the airframe "
-            "material.",
-        ], "ratio": "3 / 4", "cols": "minmax(0, 1fr) minmax(0, 1fr)", "frames": [
-            ("F", "assets/photos/charger-rocket-photography/charger-pad-tall.jpg",
-             "CHARGER on the launch rail before a flight", "On the rail", "01"),
-            ("F", "assets/photos/charger-rocket-photography/charger-pad-close.jpg",
-             "CHARGER standing on pad one", "Pad one", "02"),
-        ]},
-        {"label": "Numbers that had to close", "paras": [
-            "An Aerotech G77R-7 at a thrust to weight ratio of 8.17, with a "
-            "G79 held as backup at 7.40. Simulated apogee 1,033 feet, targeted "
-            "mid window rather than near either limit. Descent 13.8 feet per "
-            "second under a 48 inch ripstop nylon canopy, against a limit "
-            "of 15.",
-        ], "list": [
-            "Length 37 in, maximum diameter 2.63 in, single stage",
-            "Three trapezoidal fins, root chord 2.76 in, height 2.36 in, sweep 2.17 in",
-            "Stability margin 1.80 cal, centre of gravity at 22 in",
-            "Aerotech G77R-7, thrust to weight 8.17, burn 1.25 s",
-            "Simulated apogee 1,033 ft, descent 13.8 ft/s on a 48 in parachute",
-            "Rail buttons at 2 in from the aft end and 22 in from the nose, near the CG",
-            "Rocket $465.42, payload $250.53, ground station $0.00 from existing kit",
-        ]},
-        {"label": "Two decisions the rules forced", "dark": True, "paras": [
-            "The rules do not accept a friction fit motor mount. There was no "
-            "retention design at the preliminary review, so I drew a screw-on "
-            "cap. The motor changed from a G80T to the G77R-7 in the same "
-            "period, once the mass budget settled and the simulation had a "
-            "real airframe rather than an estimate.",
-            "The rocket carries a commercial altimeter and does not use it for "
-            "recovery. The event bans commercial flight computers in the "
-            "payload, so every ejection charge fires off the team's own board "
-            "reading its own barometric sensor. The commercial unit is there "
-            "so a judge can read peak altitude off it after recovery, with "
-            "the power still on.",
-        ]},
-        {"label": "Where the margin was", "paras": [
-            "The shock cord attachment carries the whole rocket at the instant "
-            "the parachute opens. Peak simulated acceleration 24.4 feet per "
-            "second squared on a 2.2 pound rocket is 19 pounds of force through "
-            "an M3 screw with 0.11 square inches in shear. 1,641 psi against a "
-            "10,000 psi allowable, so six times margin.",
-        ], "strong": True},
-        {"kind": "bleed", "src": "assets/photos/charger-rocket-photography/charger-pad-band.jpg",
-         "alt": "CHARGER vertical on pad one at Battle of the Rockets, Culpeper, Virginia",
-         "caption": "Pad one, Culpeper, Virginia, April 2026"},
-        {"label": "Launch day", "paras": [
-            "Three attempts per team, and the range closes at four in the afternoon. Weather "
-            "can take the whole weekend, and if it does the awards are decided on the December "
-            "and March review scores alone.",
-            "We got two clean flights away on the first day while the weather held, then put up "
-            "the qualifying flight before noon on the second. One team member stands at the "
-            "launch control officer's position as mission control and nothing leaves the pad "
-            "until they say it does.",
-        ], "strong": True},
-        {"label": "The result", "dark": True, "paras": [
-            "Final standings, published by "
-            + '<a href="https://www.union.edu/news/stories/202604/rocket-club-soars-new-heights-first-place-finish-national-competition" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--paper-a45)">Union College on 23 April 2026</a>' + " and listed by " + '<a href="https://www.rocketbattle.org/winners.html" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--paper-a45)">the competition organizer</a>' + ".",
-        ], "list": [
-            "Union College Rocket Club",
-            "Chantilly Aerospace Club Team 3",
-            "Thomas Jefferson High School",
-            "Spring Grove Area High School Team 2",
-            "George Mason University",
-        ]},
-        {"label": "What I learned", "strong": True, "paras": [
-            "Competition rules allow only team members to work on any part of the entry: "
-            "design, simulation, build, repairs, launch. Advisers guide and mentors review, "
-            "but nobody outside the team touches the rocket.",
-            "That put the recruiting and the funding on the same critical path as the "
-            "airframe. The proposals paid for the hardware, the build labs produced twelve "
-            "people who could fly it, and the two design reviews forced the team to write "
-            "down exactly how the rocket worked before it flew.",
-        ]},
-    ],
-    "prev": ("Robo-Catcher", "robo-catcher.html"),
-    "next": ("The bend fixture", "bend-fixture.html"),
-}
+def check(index, wanted):
+    """Build into a temp dir and diff against the committed pages. Returns 0 or 1."""
+    tmp = tempfile.mkdtemp(prefix="build-case-check-")
+    dirty = 0
+    try:
+        for slug in wanted:
+            expand_frames(CASES[slug])
+            out, _ = build(CASES[slug], index, out_dir=tmp)
+            committed = os.path.join(OUT_DIR, slug + ".html")
+            new = io.open(out, encoding="utf-8").read().splitlines(True)
+            old = (io.open(committed, encoding="utf-8").read().splitlines(True)
+                   if os.path.exists(committed) else [])
+            diff = list(difflib.unified_diff(old, new, "src/projects/%s.html" % slug,
+                                             "build-case.py → %s.html" % slug))
+            if diff:
+                dirty = 1
+                sys.stdout.writelines(diff)
+                print("DIFFERS: src/projects/%s.html" % slug)
+            else:
+                print("ok: src/projects/%s.html" % slug)
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    if dirty:
+        print("build-case.py output does not match src/projects/. Regenerate, or port the "
+              "hand edit into content/ or build-case.py.")
+    return dirty
 
-
-CASES["bend-fixture"] = {
-    "slug": "bend-fixture",
-    "eyebrow": "Case study / SunThru",
-    "title": "Custom three-point bend fixture",
-    "description": ("A fully 3D printable 12 part three-point bend fixture, designed in SolidWorks "
-                    "2025 around specimens too delicate for commercial fixtures, with the rebuilds "
-                    "automated in VBA."),
-    "lede": ("Commercial bend fixtures are built for metals and plastics and will damage a fragile "
-             "specimen before the test begins. SunThru needed one matched to its own samples, so I "
-             "designed a fully printable 12 part fixture built around gentle handling."),
-    "clip": "bend-fixture-blurred",
-    "poster_ext": "jpg",
-    "clip_ratio": "16 / 9",
-    "clip_note": "IP protected",
-    "brief": [
-        ("Role", "Design engineer, solo", ""),
-        ("For", "SunThru, early stage hardware R&amp;D", ""),
-        ("Tools", "SolidWorks 2025, VBA macro automation, FDM printing", ""),
-        ("Timeline", "2026", ""),
-        ("Status", "Base plate and gauge plate printed and in lab use", ""),
-    ],
-    "brief_note": [
-        "Renders are blurred here because the fixture is SunThru hardware. The engineering worth "
-        "describing is the parametric structure and the design for printing, neither of which needs "
-        "the geometry shown.",
-    ],
-    "sections": [
-        {"kind": "stats", "stats": [
-            ("12", "Interlocking parts"),
-            ("100%", "FDM printable, no machining"),
-            ("M3", "One hardware size throughout"),
-            ("VBA", "Automated rebuilds"),
-        ]},
-        {"label": "The problem", "paras": [
-            "Three-point bend testing is a standard way to measure flexural strength, but commercial "
-            "fixtures assume a specimen that can take being clamped. When the sample cannot, the "
-            "fixture itself becomes the thing that breaks it.",
-            "SunThru needed a fixture sized to its own samples, gentle enough not to pre-damage "
-            "them, and cheap enough to iterate on, which meant printing it in house.",
-        ]},
-        {"label": "Constraints", "cards": [
-            "Every part printable on the lab's FDM printer, no machined components",
-            "12 interlocking parts on one coordinate system, so dimension changes ripple predictably",
-            "Standard M3 hardware throughout, with printable cross-hole channels",
-            "Compliant contact geometry at the load nose and both supports",
-            "Cheap enough to reprint a part rather than rework it",
-            "Sized to the lab's own specimens rather than a standard",
-        ]},
-        {"label": "Parametric part design", "paras": [
-            "A 12 part fixture with interlocked dimensions is a maintenance problem: change one "
-            "dimension by hand and eleven other parts silently stop fitting. Every part sits on a "
-            "shared coordinate system, and I automated the rebuilds with SolidWorks VBA so a "
-            "dimension change regenerates the affected parts consistently.",
-            "Each part's geometry is checked against its expected volume before it is accepted, which "
-            "catches a rebuild that succeeded but produced the wrong solid.",
-        ]},
-        {"label": "Designed for the printer, not around it", "paras": [
-            "The parts are shaped the way the machine builds them: additive layer friendly geometry "
-            "throughout, and horizontal M3 cross-holes drawn as printable channels so nothing needs "
-            "support material or post-drilling.",
-            "One hardware size across the whole fixture means one driver, one drill, and no chance of "
-            "an assembly step needing something that is not on the bench.",
-        ], "strong": True},
-        {"label": "What I learned", "strong": True, "paras": [
-            "The decisions that held up were the ones that thought like the manufacturing process. "
-            "Geometry built up in layers the way the printer builds it, holes shaped for printability "
-            "instead of for drills, hardware chosen from one standard size.",
-            "Designing for the process beat designing around it.",
-        ]},
-    ],
-    "prev": ("CHARGER", "charger.html"),
-    "next": ("Rudder pedals", "rudder-pedals.html"),
-}
-
-
-CASES["rudder-pedals"] = {
-    "slug": "rudder-pedals",
-    "eyebrow": "Case study / Personal project",
-    "title": "Flight sim rudder pedals",
-    "description": ("Three-axis flight sim rudder pedals with fighter style geometry, contactless "
-                    "Hall effect sensing and C++ USB HID firmware. Designed, printed, wired and "
-                    "programmed solo."),
-    "lede": ("I fly ultralights, and consumer sim pedals never felt right: short throw, toy-like "
-             "centring, and potentiometers that get jittery as they wear. So I built my own, with "
-             "fighter style geometry, three axes, and sensing that cannot wear out."),
-    "clip": "rudder-pedals-working",
-    "clip_ratio": "16 / 9",
-    "brief": [
-        ("Role", "Design, print, wiring and firmware, solo", ""),
-        ("Type", "Personal project", ""),
-        ("Tools", "SolidWorks, FDM printing, Arduino Pro Micro, A1301 Hall sensors, C++", ""),
-        ("Timeline", "2026", ""),
-        ("Status", "In daily use at my sim", ""),
-    ],
-    "brief_note": [
-        "Rudder pedals do three jobs at once: yaw through the sliding pedal motion, plus independent "
-        "left and right toe brakes. Consumer hardware compresses all of that into short springy "
-        "travel measured by potentiometers.",
-    ],
-    "sections": [
-        {"kind": "stats", "stats": [
-            ("3", "Independent axes"),
-            ("0", "Potentiometers in the signal path"),
-            ("USB HID", "No drivers, any simulator"),
-            ("A1301", "Contactless Hall sensing"),
-        ]},
-        {"label": "The problem", "paras": [
-            "Potentiometers drift, jitter and eventually wear out, because the measurement depends on "
-            "a wiper physically touching a track. On a control you stand on, that wear is not "
-            "hypothetical.",
-            "I wanted fighter style pedal geometry with sensing that reads the same on day one and "
-            "day one thousand.",
-        ]},
-        {"label": "Constraints", "cards": [
-            "Three independent axes, yaw plus left and right toe brakes, in one mechanism",
-            "Every structural part printable on a hobby FDM printer",
-            "No contact based sensing anywhere in the signal path",
-            "Recognised as a standard game controller by any PC, no drivers",
-            "Pedal geometry close to an F-15 or F-18 layout",
-            "Serviceable: a worn part can be reprinted, not replaced as an assembly",
-        ]},
-        {"label": "Mechanism first", "paras": [
-            "I designed the three-axis assembly in SolidWorks around fighter style pedal geometry and "
-            "printed it, iterating on pivot placement and return feel.",
-            "Rapid prototyping earns its name here. Pedal feel is subjective, and the fastest way to "
-            "evaluate a linkage is to stand on it.",
-        ]},
-        {"kind": "clip_band", "base": "rudder-pedals-mechanism",
-         "caption": "The CAD assembly driven through its real linkage: yaw both ways, each toe brake, "
-                    "then differential braking"},
-        {"label": "Sensing without touching", "paras": [
-            "Each axis is measured by an A1301 Hall effect sensor reading a magnet on the moving part. "
-            "No wiper, no contact, nothing to wear. The output is smooth and continuous, and it is "
-            "identical after a thousand hours.",
-            "That single component choice removes the entire failure mode that ruins potentiometer "
-            "based controls.",
-        ], "frames": [("F", "assets/renders/rudder-pedals/a1301-hall-sensor.jpg",
-                       "An A1301 Hall effect sensor in a TO-92 package",
-                       "The A1301 reads the magnet through the air gap, so nothing touches", "01")]},
-        {"label": "Firmware that gets out of the way", "paras": [
-            "The plan was a Teensy 2.0. The board that arrived was counterfeit and came with dead "
-            "pins, so I swapped to an Arduino Pro Micro: same ATmega32U4, same native USB, and the "
-            "firmware moved across unchanged.",
-            "It reads the three Hall sensors and enumerates as a standard USB HID gamepad, so every "
-            "simulator sees it the moment it is plugged in. No driver, no mapping utility.",
-            "I measured each axis's real travel on the bench, and the firmware maps those endpoints "
-            "onto the HID range and clamps anything past them. Rudder, left brake and right brake "
-            "go out as three independent axes at 100 Hz.",
-        ], "strong": True,
-         "frames": [("F", "assets/renders/rudder-pedals/pro-micro.jpg",
-                     "An Arduino Pro Micro board",
-                     "The Pro Micro that replaced the counterfeit Teensy", "02")],
-         "flip": True},
-        {"label": "What I learned", "strong": True, "paras": [
-            "The pedal feel comes from the linkage, but whether it is usable comes from the "
-            "firmware. Neither could be finished without the other.",
-        ]},
-    ],
-    "prev": ("The bend fixture", "bend-fixture.html"),
-    "next": ("Therma-Shift", "therma-shift.html"),
-}
-
-
-CASES["therma-shift"] = {
-    "slug": "therma-shift",
-    "eyebrow": "Case study / Personal project",
-    "title": "Therma-Shift coaster",
-    "description": ("A dual mode thermoelectric coaster that heats or cools any mug or glass. "
-                    "Peltier stack bench validated to 11 C on the cold face at 12 V, with layered "
-                    "thermal runaway protection."),
-    "lede": ("A solid state desktop coaster that actively heats or cools any standard mug, glass or "
-             "can, with no proprietary drinkware. One Peltier module, closed loop control, and a "
-             "safety architecture designed for unattended desk use."),
-    "clip": "therma-shift-airflow",
-    "clip_aria": "Airflow illustration: air enters all bottom grille slots, passes through the heatsink fins, descends into the blower and exits the oval side vent. Heating and cooling use the same flow direction.",
-    "clip_ratio": "4 / 3",
-    "brief": [
-        ("Role", "Design, thermal validation, firmware, solo", ""),
-        ("Built for", "SparkLab seed competition, March 2026", ""),
-        ("Tools", "TEC1-12703 Peltier, Arduino C++, NTC thermistors, DRV8871", ""),
-        ("Power", "USB-C Power Delivery", ""),
-        ("Status", "Thermal stack validated, closed loop electronics in progress", ""),
-    ],
-    "brief_note": [
-        "Existing options split into two bad camps: proprietary heated mugs that lock you into their "
-        "drinkware, and cheap USB warmers with no temperature regulation at all. The interesting "
-        "problem sits in between.",
-    ],
-    "sections": [
-        {"kind": "stats", "stats": [
-            ("11 &deg;C", "Cold face at 12 V, steady state"),
-            ("~5 min", "To thermal equilibrium"),
-            ("2", "Modes from one stack, by polarity"),
-            ("&plusmn;2 &deg;F", "Closed loop target"),
-        ]},
-        {"label": "The problem", "paras": [
-            "One compact device that both heats and cools, works with whatever cup is already on the "
-            "desk, and can be trusted to run unattended. The last of those is the hard one: a heater "
-            "left alone on a desk is a fire risk if nothing independent is watching it.",
-        ]},
-        {"label": "Constraints", "cards": [
-            "Universal: any mug, glass or can, the device adapts to the drinkware",
-            "Dual mode, heating and cooling from the same hardware",
-            "Powered over USB-C Power Delivery, within a desk power budget",
-            "Thermal runaway prevention independent of the control loop",
-            "Low profile and quiet enough for an office desk",
-            "No proprietary cup, ever",
-        ]},
-        {"label": "The design", "paras": [
-            "A thermoelectric module does both jobs: drive current one way and the top plate cools, "
-            "reverse it and the plate heats. The TEC1-12703 sits between an aluminium top plate and a "
-            "finned heatsink with a blower carrying away waste heat.",
-            "An NTC thermistor at the plate closes the loop, targeting about 2 degrees Fahrenheit "
-            "around setpoint, with the module driven through a DRV8871 H-bridge so firmware controls "
-            "both power and polarity.",
-            "Safety is layered the way my lab test rig is: the control loop regulates, and separate "
-            "firmware cutoffs watch for thermal runaway independently of it, so an unattended fault "
-            "shuts the device down.",
-        ]},
-        {"label": "Validate the physics before the electronics", "paras": [
-            "Before integrating any control loop I bench tested the bare thermal stack against a lab "
-            "supply with K-type thermocouples on both faces. At 12 V the cold face held 10.7 to 12 "
-            "degrees C with the heatsink at 53 to 56, reaching equilibrium in about five minutes.",
-            "A voltage sweep mapped cold face temperature against input power to find the efficient "
-            "operating window. Swapping the heatsink's stock adhesive pad for proper thermal paste "
-            "measurably improved performance: the interfaces matter as much as the module.",
-        ], "strong": True},
-        {"label": "Where it stands", "list": [
-            "10.7 to 12 degrees C cold face at 12 V, steady state",
-            "About 5 minutes to thermal equilibrium",
-            "Dual mode verified: the same stack heats and cools by polarity",
-            "Staged firmware test suite written; closed loop integration in progress",
-        ]},
-    ],
-    "prev": ("Rudder pedals", "rudder-pedals.html"),
-    "next": ("Robo-Catcher", "robo-catcher.html"),
-}
 
 def main():
+    args = sys.argv[1:]
+    if "-h" in args or "--help" in args:
+        print(__doc__.strip())
+        return
+    checking = "--check" in args
+    args = [a for a in args if a != "--check"]
+    try:
+        CASES.update(load_cases())
+    except ContentError as e:
+        sys.stderr.write("content error: %s\n" % e)
+        sys.exit(2)
     index = read_index()
+    wanted = args or list(CASES)
+    unknown = [slug for slug in wanted if slug not in CASES]
+    for slug in unknown:
+        print("no such case:", slug)
+    wanted = [slug for slug in wanted if slug in CASES]
+    if checking:
+        sys.exit(check(index, wanted) or (1 if unknown else 0))
     if not os.path.isdir(OUT_DIR):
         os.makedirs(OUT_DIR)
-    wanted = sys.argv[1:] or list(CASES)
     for slug in wanted:
-        if slug not in CASES:
-            print("no such case:", slug)
-            continue
         case = CASES[slug]
-        # expand the frame tuples now that the helpers exist
-        for sec in case["sections"]:
-            if sec.get("frames") and isinstance(sec["frames"][0], tuple):
-                # a single frame beside prose gets a wide crop so it does not
-                # tower over a short paragraph; pairs and galleries keep 3:2.
-                # A section can override both, which portrait sources need: a
-                # 16:9 crop of a vertical rocket keeps the middle of the tube
-                # and throws away the nose and the fins.
-                beside_text = bool(sec.get("paras") or sec.get("list")) and not sec.get("cards")
-                ratio = sec.get("ratio") or (
-                    "16 / 9" if (beside_text and len(sec["frames"]) == 1) else "3 / 2")
-                sec["frames"] = [frame(src, alt, cap, ratio=ratio, idx=i)
-                                 for (_tag, src, alt, cap, i) in sec["frames"]]
+        expand_frames(case)
         out, size = build(case, index)
         print("built %s (%.1f KB)" % (os.path.relpath(out, ROOT), size / 1024))
 

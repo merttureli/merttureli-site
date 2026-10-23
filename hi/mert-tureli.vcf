@@ -6,6 +6,8 @@ TITLE:Mechanical Engineer
 EMAIL;TYPE=INTERNET,PREF:merttureli0@gmail.com
 TEL;TYPE=CELL,VOICE:+18382519707
 URL:https://merttureli.com/
+item1.URL:https://www.linkedin.com/in/merttureli
+item1.X-ABLabel:LinkedIn
+X-SOCIALPROFILE;TYPE=linkedin:https://www.linkedin.com/in/merttureli
 ADR;TYPE=WORK:;;;Austin;TX;;United States
-NOTE:LinkedIn: https://www.linkedin.com/in/merttureli
 END:VCARD

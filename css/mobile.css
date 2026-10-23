@@ -2,6 +2,13 @@
    desktop layout unconditionally and only turned on inside the media query. */
 #mt-menu { display: none; }
 
+/* The Menu button is only useful where the header links are hidden. Above 860px
+   the links are in the header, so the button would be a visible control that
+   does nothing. The inline display on the button needs !important to lose. */
+@media (min-width: 861px) {
+  header nav button[aria-label="Menu"] { display: none !important; }
+}
+
 /*
  * Mobile layout for merttureli.com.
  *
@@ -72,8 +79,8 @@
   header nav > a { display: none !important; }
   header nav { gap: 0 !important; }
   header nav button[aria-label="Menu"] {
-    width: 44px !important;
-    height: 44px !important;
+    width: var(--touch-target) !important;
+    height: var(--touch-target) !important;
     margin-left: 0 !important;
   }
 
@@ -91,6 +98,8 @@
   header {
     position: fixed !important;
     background: rgba(10, 10, 10, .88) !important;
+    /* Follows the palette; Original resolves to the same rgba as above. */
+    background: color-mix(in srgb, var(--ink-900) 88%, transparent) !important;
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
   }
@@ -103,32 +112,61 @@
   #mt-menu {
     position: fixed;
     inset: 0;
-    z-index: 9999;
+    z-index: var(--z-menu);
     background: var(--ink-900);
     display: flex;
     flex-direction: column;
-    justify-content: center;
     gap: 2px;
-    padding: 0 32px;
+    padding: 72px 32px 32px;
+    overflow-y: auto;
     opacity: 0;
     pointer-events: none;
-    transition: opacity .22s ease;
+    transition: opacity var(--dur-2) var(--ease-out);
   }
+  @media (prefers-reduced-motion: reduce) { #mt-menu { transition: none; } }
+  #mt-menu[hidden] { display: none; }
   #mt-menu.on { opacity: 1; pointer-events: auto; }
+  /* margin: auto centres the list, and falls back to top-aligned (scrollable)
+     when many links or a short landscape screen leave no room. */
+  #mt-menu nav { display: flex; flex-direction: column; gap: 2px; margin: auto 0; }
   #mt-menu a {
     font-family: var(--font-display);
     font-size: 34px;
     line-height: 1.3;
     color: var(--paper);
     text-decoration: none;
-    padding: 12px 0;
+    padding: var(--space-3) 0;
+  }
+  /* Email and Resume sit under the section links, quieter and in the mono face
+     the rest of the site uses for metadata. */
+  #mt-menu .mt-menu-extra {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 28px;
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid var(--paper-a18, rgba(255, 255, 255, .18));
+  }
+  #mt-menu .mt-menu-extra a {
+    font-family: var(--font-mono, monospace);
+    font-size: 13px;
+    letter-spacing: var(--ls-nav);
+    text-transform: uppercase;
+    line-height: 1.3;
+    padding: var(--space-3) 0;
+    color: var(--paper-a70, rgba(255, 255, 255, .7));
+  }
+  #mt-menu a:focus-visible,
+  #mt-menu-close:focus-visible {
+    outline: var(--focus-ring-width) solid var(--paper);
+    outline-offset: var(--focus-ring-offset);
   }
   #mt-menu-close {
-    position: absolute;
+    position: fixed;
     top: 20px;
     right: 22px;
-    width: 44px;
-    height: 44px;
+    width: var(--touch-target);
+    height: var(--touch-target);
     background: none;
     border: 0;
     padding: 0;
@@ -137,6 +175,12 @@
     cursor: pointer;
   }
   body.mt-lock { overflow: hidden; }
+
+  /* The fixed social rail (LinkedIn, Mail) sits in the text column on a phone.
+     It covered the right end of the hero Resume link, took its taps, and sat
+     over the lede on case pages. LinkedIn is in the contact section and Email
+     is in the menu, so it is hidden here; the desktop rail is untouched. */
+  div[style*="--z-rail"] { display: none !important; }
 
   /* ---- type and touch --------------------------------------------------- */
 

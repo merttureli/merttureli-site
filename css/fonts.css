@@ -1,0 +1,118 @@
+/* Self-hosted webfonts: Archivo for everything read, Martian Mono for everything
+   measured. Files in assets/fonts/, licenses alongside (OFL-*.txt).
+
+   Archivo is one variable file per subset (latin, latin-ext): the Google Fonts
+   files instanced to the wdth range the site uses (100-125) with the full wght
+   range (100-900), which drops the condensed masters and about 28 KB per file.
+   Martian Mono is the Google Fonts wght-only variable file (100-800). Only the
+   latin files are preloaded; latin-ext loads only when a page needs it.
+
+   Width per role. The same Archivo file is declared under three family names,
+   each pinned to one width with the font-stretch descriptor (the browser clamps
+   the wdth axis into the face's range), so a role picks its width through its
+   font-family token and the inline styles the design system renders need no
+   font-stretch:
+     Archivo          wdth 100        running text, UI copy      (--font-body)
+     Archivo Display  wdth 110        headings, titles, nav, the
+                                      wordmark, big figures      (--font-display)
+     Archivo Name     wdth 116, 600   the name set large: home
+                                      hero and /hi/              (--font-name)
+   The name is a little short of the full 125 width, for restraint; its face
+   also pins the weight, so the name renders at 600 whatever weight the heading
+   component asks for. All three share the file and download it once. The
+   display sizes in tokens/typography.css are scaled to the 110 width.
+
+   Martian Mono has a tall x-height and wide cells; size-adjust scales it so its
+   cap height matches the old mono's at the 12 px / 10 px label sizes the layout
+   was drawn for, and a label keeps about its old length.
+   The custom properties match _ds/.../tokens/fonts.css, which imports this file
+   (the prerendered pages link this file in its place). */
+/* Every page links this file, so it also brings in the site tokens. */
+@import url("tokens.css");
+/* latin-ext */
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 100% 125%;
+  font-display: swap;
+  src: url(../assets/fonts/archivo-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 100% 125%;
+  font-display: swap;
+  src: url(../assets/fonts/archivo-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Archivo Display';
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 106%;
+  font-display: swap;
+  src: url(../assets/fonts/archivo-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Archivo Display';
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 106%;
+  font-display: swap;
+  src: url(../assets/fonts/archivo-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Archivo Name';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 116%;
+  font-display: swap;
+  src: url(../assets/fonts/archivo-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Archivo Name';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 116%;
+  font-display: swap;
+  src: url(../assets/fonts/archivo-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Martian Mono';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  size-adjust: 85%;
+  src: url(../assets/fonts/martian-mono-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Martian Mono';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  size-adjust: 85%;
+  src: url(../assets/fonts/martian-mono-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  --font-name: "Archivo Name", "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-display: "Archivo Display", "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-body: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-mono: "Martian Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}

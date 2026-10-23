@@ -1,11 +1,123 @@
-/* A small, static invitation. The inquiry assets load on their own page. */
-.website-entry{padding:0 var(--page-margin) var(--section-y);background:var(--paper);color:var(--ink-900)}
-.website-entry-inner{max-width:var(--max-width);margin:auto;border-top:1px solid var(--ink-a12);padding-top:32px;display:grid;grid-template-columns:1.4fr 1fr;gap:64px;align-items:end}
-.website-entry-label{font:10px/1.5 var(--font-mono);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-500);display:block;margin-bottom:28px}
-.website-entry h2{font:500 clamp(40px,5.5vw,82px)/.98 var(--font-display);letter-spacing:-.045em;text-transform:uppercase;margin:0}
-.website-entry h2 span{color:var(--ink-400)}
-.website-entry p{font:16px/1.7 var(--font-body);max-width:37ch;margin:0 0 24px;color:var(--ink-600)}
-.website-entry-link{color:var(--ink-900);border:1px solid var(--ink-a30);border-radius:999px;padding:14px 22px;text-decoration:none;display:inline-flex;align-items:center;gap:38px;font:12px/1.4 var(--font-mono);letter-spacing:.03em}
-.website-entry-link:focus-visible{outline:2px solid currentColor;outline-offset:5px}
-.website-entry-link span{font-size:20px;line-height:1}
-@media(max-width:700px){.website-entry-inner{grid-template-columns:1fr;gap:30px}.website-entry h2{font-size:clamp(38px,9vw,58px)}.website-entry p{font-size:15px}.website-entry-label{margin-bottom:20px}}
+/* Home: the websites section (js/home-websites.js). Ink, like the photo corridor above it and the contact
+   plate below, so the page stays dark through all three. One browser frame shows a live redesign of this
+   site; the frame wears each page's own first-paint background so nothing flashes while it loads. */
+.websell button,.websell a{-webkit-tap-highlight-color:transparent}
+.websell{position:relative;background:var(--ink-900);color:var(--text-display);padding:var(--section-y) var(--page-margin)}
+.websell-inner{max-width:var(--max-width);margin:0 auto;border-top:1px solid var(--line-hairline);padding-top:var(--space-7)}
+
+.websell-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,25rem);gap:var(--space-6) var(--space-9);align-items:end;margin-bottom:var(--space-8)}
+.websell-heading{display:flex;flex-direction:column;gap:var(--space-6);min-width:0}
+.websell-lead{margin:0;max-width:34ch;font-size:var(--fs-body-lg);line-height:1.55;color:var(--text-body)}
+
+.websell-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,300px);grid-template-areas:"stage picker" "stage actions" "stage more";grid-template-rows:auto auto 1fr;gap:var(--space-7) var(--space-8);align-items:start}
+.websell-stage{grid-area:stage;min-width:0}
+.websell-picker{grid-area:picker}
+.websell-actions{grid-area:actions}
+.websell-more{grid-area:more}
+
+/* Picker: four redesigns, a numbered list on wide screens. */
+.websell-picker{display:flex;flex-direction:column;border-top:1px solid var(--line-hairline)}
+.websell-option{position:relative;display:flex;align-items:center;gap:var(--space-4);width:100%;min-height:60px;padding:var(--space-4) 0;border:0;border-bottom:1px solid var(--line-hairline);border-radius:0;background:transparent;color:var(--text-display);text-align:left;cursor:pointer;font:inherit}
+.websell-option::before{content:"";position:absolute;left:0;right:0;top:-1px;height:1px;background:var(--line-strong);transform:scaleX(0);transform-origin:left;transition:transform var(--dur-3) var(--ease-out)}
+.websell-option[aria-pressed=true]::before{transform:scaleX(1)}
+.websell-option-index{flex:none;display:grid;place-items:center;width:26px;height:26px;border:1px solid var(--line-hairline);border-radius:50%;font:400 var(--fs-ui-mono)/1 var(--font-mono);color:var(--text-muted);transition:background var(--t-hover),color var(--t-hover),border-color var(--t-hover)}
+.websell-option-name{font:500 var(--fs-title-3)/1.1 var(--font-display);letter-spacing:var(--ls-title);text-transform:uppercase;color:var(--paper-a45);transition:color var(--t-hover)}
+.websell-option[aria-pressed=true] .websell-option-index{background:var(--paper);border-color:var(--paper);color:var(--ink-900)}
+.websell-option[aria-pressed=true] .websell-option-name{color:var(--text-display)}
+.websell-option:focus-visible{outline:var(--focus-ring-width) solid var(--text-display);outline-offset:var(--focus-ring-offset);border-radius:var(--radius-sm)}
+@media(hover:hover){.websell-option:hover .websell-option-name{color:var(--text-display)}.websell-option:hover .websell-option-index{border-color:var(--line-strong);color:var(--text-display)}.websell-option[aria-pressed=true]:hover .websell-option-index{color:var(--ink-900)}}
+
+/* Frame: a browser window. The live page renders at 1200 px (390 px on phones) and is scaled to fit. */
+.websell-frame{position:relative;border:1px solid var(--paper-a18);border-radius:var(--radius-card);background:var(--ink-800);overflow:hidden;box-shadow:0 1px 0 var(--paper-a08) inset,0 50px 110px -50px #000}
+.websell-bar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:var(--space-4);height:40px;padding-inline:var(--space-4);background:var(--ink-700);border-bottom:1px solid var(--paper-a08);font:400 var(--fs-ui-mono)/1 var(--font-mono);color:var(--paper-a70)}
+.websell-dots{letter-spacing:2px;font-size:12px;color:var(--paper-a45)}
+.websell-url{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
+.websell-state{justify-self:end;display:inline-flex;align-items:center;gap:var(--space-2);letter-spacing:var(--ls-caps);text-transform:uppercase;color:var(--paper-a45)}
+.websell-state-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.websell-frame[data-state=loading] .websell-state{color:var(--paper-a70)}
+.websell-frame[data-state=loading] .websell-state-dot{animation:websell-blink var(--frame-blink-cycle) steps(2,jump-none) infinite}
+.websell-frame[data-state=live] .websell-state{color:var(--paper)}
+.websell-frame[data-state=live] .websell-state-dot{background:var(--color-live)}
+.websell-frame[data-study=hangar]{--study-bg:var(--study-hangar-bg);--study-fg:var(--study-hangar-fg)}
+.websell-frame[data-study=launch]{--study-bg:var(--study-launch-bg);--study-fg:var(--study-launch-fg)}
+.websell-frame[data-study=studio]{--study-bg:var(--study-studio-bg);--study-fg:var(--study-studio-fg)}
+.websell-frame[data-study=specimen]{--study-bg:var(--study-specimen-bg);--study-fg:var(--study-specimen-fg)}
+.websell-screen{position:relative;aspect-ratio:16/10;overflow:hidden;background:var(--study-bg,#e5e4e0);transition:background-color var(--frame-tint) var(--ease-out)}
+.websell-screen iframe{position:absolute;left:0;top:0;border:0;transform-origin:0 0;background:var(--study-bg);opacity:0;pointer-events:none;transition:opacity var(--frame-fade) var(--ease-out)}
+.websell-frame[data-state=live] .websell-screen iframe{opacity:1}
+.websell-frame[data-state=swapping] .websell-screen iframe{transition-duration:var(--frame-swap)}
+.websell-frame.is-active .websell-screen iframe{pointer-events:auto}
+.websell-loading{position:absolute;left:50%;top:50%;translate:-50% -50%;width:56px;height:2px;border-radius:2px;background:color-mix(in srgb,var(--study-fg) 14%,transparent);overflow:hidden;opacity:0;transition:opacity var(--frame-tint) var(--ease-out)}
+.websell-loading::after{content:"";position:absolute;inset:0;width:40%;border-radius:2px;background:color-mix(in srgb,var(--study-fg) 55%,transparent);animation:websell-load var(--frame-load-cycle) var(--ease-out) infinite;animation-play-state:paused}
+.websell-frame[data-state=loading] .websell-loading{opacity:.9}
+.websell-frame[data-state=loading] .websell-loading::after{animation-play-state:running}
+
+/* The page stays out of the way of scrolling until someone asks to use it. */
+.websell-try{position:absolute;inset:0;z-index:1;display:flex;align-items:flex-end;justify-content:center;padding:0 0 var(--space-5);border:0;background:transparent;cursor:pointer;opacity:0;visibility:hidden;transition:opacity var(--t-hover),visibility 0s linear .24s}
+.websell-try span{display:inline-flex;align-items:center;min-height:40px;padding:0 18px;border:1px solid var(--paper-a18);border-radius:var(--radius-pill);background:rgba(10,10,10,.78);color:var(--paper);font:400 var(--fs-ui-mono)/1 var(--font-mono);letter-spacing:var(--ls-caps);text-transform:uppercase;box-shadow:0 8px 24px -10px #0009;transition:background var(--t-hover),transform var(--t-hover)}
+.websell-frame[data-state=live]:not(.is-active) .websell-try{opacity:1;visibility:visible;transition:opacity var(--t-hover)}
+.websell-try:focus-visible{outline:none}
+.websell-try:focus-visible span{outline:var(--focus-ring-width) solid var(--paper);outline-offset:3px}
+@media(hover:hover){.websell-try:hover span{background:#0a0a0a;transform:translateY(-2px)}}
+
+.websell-under{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-4) var(--space-6);margin-top:var(--space-5)}
+.websell-try-alt{display:none}
+.websell-open{display:inline-flex;align-items:center;gap:var(--space-3);padding-bottom:6px;border-bottom:1px solid var(--line-hairline);color:var(--text-display);font:400 var(--fs-meta)/1 var(--font-mono);letter-spacing:var(--ls-caps);text-transform:uppercase;text-decoration:none;transition:border-color var(--t-hover)}
+.websell-open:hover{border-bottom-color:var(--line-strong)}
+.websell-open:focus-visible{outline:var(--focus-ring-width) solid var(--text-display);outline-offset:var(--focus-ring-offset)}
+
+/* Actions: the inquiry lives on the websites page; this opens it there. */
+.websell-actions{display:flex;flex-direction:column;gap:var(--space-4)}
+.websell-cta{display:inline-flex;align-items:center;justify-content:space-between;gap:var(--space-3);min-height:48px;padding:15px 24px;border:1px solid var(--line-strong);border-radius:var(--radius-pill);background:transparent;color:var(--text-display);font:400 var(--fs-meta)/1 var(--font-mono);letter-spacing:var(--ls-caps);text-transform:uppercase;text-decoration:none;white-space:nowrap;transition:background var(--t-hover),color var(--t-hover),border-color var(--t-hover)}
+.websell-cta:hover{background:var(--paper);color:var(--ink-900)}
+.websell-cta--solid{background:var(--paper);color:var(--ink-900);border-color:var(--paper)}
+.websell-cta--solid:hover{background:var(--paper-a90);color:var(--ink-900)}
+.websell-cta:focus-visible{outline:var(--focus-ring-width) solid var(--paper);outline-offset:var(--focus-ring-offset)}
+
+.websell-more{display:flex;flex-direction:column}
+.websell-more-label{display:flex;align-items:center;gap:var(--space-4);margin:0 0 var(--space-2);font:400 var(--fs-meta)/var(--lh-meta) var(--font-mono);letter-spacing:var(--ls-caps);text-transform:uppercase;color:var(--paper-a70)}
+.websell-more-label::after{content:"";flex:1;height:1px;background:var(--line-hairline)}
+.websell-more a{display:flex;flex-direction:column;gap:6px;padding:var(--space-4) 0;border-bottom:1px solid var(--line-hairline);color:var(--text-display);font:400 var(--fs-meta)/var(--lh-meta) var(--font-mono);letter-spacing:var(--ls-caps);text-transform:uppercase;text-decoration:none;transition:border-color var(--t-hover)}
+.websell-more a span+span{color:var(--paper-a70);letter-spacing:.08em}
+.websell-more a:hover{border-bottom-color:var(--line-strong)}
+.websell-more a:focus-visible{outline:var(--focus-ring-width) solid var(--paper);outline-offset:var(--focus-ring-offset)}
+
+@keyframes websell-load{from{transform:translateX(-100%)}to{transform:translateX(250%)}}
+@keyframes websell-blink{50%{opacity:.25}}
+
+/* Narrower: the picker becomes a row of four above the frame; actions and links share a row below. */
+@media(max-width:1000px){
+  .websell-head{grid-template-columns:1fr;gap:var(--space-5);margin-bottom:var(--space-7)}
+  .websell-body{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"picker picker" "stage stage" "actions more";grid-template-rows:auto;gap:var(--space-6) var(--space-7)}
+  .websell-picker{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-3);border-top:0}
+  .websell-option{justify-content:center;gap:10px;min-height:48px;padding:10px 12px;border:1px solid var(--line-hairline);border-radius:var(--radius-pill)}
+  .websell-option::before{display:none}
+  .websell-option[aria-pressed=true]{border-color:var(--paper)}
+  .websell-option-index{width:22px;height:22px;font-size:10px}
+  .websell-option-name{font-size:15px;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}
+/* Phone: a phone frame; the live page renders at 390 px wide inside it. */
+@media(max-width:700px){
+  .websell-inner{padding-top:var(--space-6)}
+  .websell-body{grid-template-columns:minmax(0,1fr);grid-template-areas:"picker" "stage" "actions" "more";gap:var(--space-6)}
+  .websell-picker{gap:6px}
+  .websell-option{padding:var(--space-2) var(--space-1);min-height:var(--touch-target)}
+  .websell-option-index{display:none}
+  .websell-option-name{font:400 var(--fs-ui-mono)/1 var(--font-mono);letter-spacing:.06em}
+  .websell-stage{display:flex;flex-direction:column;align-items:center}
+  .websell-frame{width:min(70vw,280px);padding:7px;border-color:var(--paper-a18);border-radius:var(--radius-phone);background:#000}
+  .websell-bar{display:none}
+  .websell-screen{aspect-ratio:390/844;border-radius:var(--radius-phone-screen)}
+  .websell-try span{display:none}
+  .websell-under{justify-content:center}
+  .websell-try-alt{display:inline-flex;align-items:center;min-height:var(--touch-target);padding:0 20px;border:1px solid var(--line-hairline);border-radius:var(--radius-pill);background:transparent;color:var(--text-display);font:400 var(--fs-ui-mono)/1 var(--font-mono);letter-spacing:var(--ls-caps);text-transform:uppercase;cursor:pointer;visibility:hidden}
+  .websell-frame[data-state=live] + .websell-under .websell-try-alt{visibility:visible}
+  .websell-try-alt[aria-pressed=true]{background:var(--paper);border-color:var(--paper);color:var(--ink-900)}
+  .websell-try-alt:focus-visible{outline:var(--focus-ring-width) solid var(--paper);outline-offset:var(--focus-ring-offset)}
+  .websell-cta{justify-content:center;gap:var(--space-3)}
+}
+@media(prefers-reduced-motion:reduce){
+  .websell *,.websell *::before,.websell *::after{transition:none!important}
+  .websell-loading::after{animation:none;width:100%;opacity:.6}
+  .websell-frame[data-state=loading] .websell-state-dot{animation:none}
+}
