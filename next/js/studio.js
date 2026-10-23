@@ -8,6 +8,7 @@
   const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
   const $ = (s, el = document) => el.querySelector(s);
   const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+  window.__jumpUntil = 0;
 
   /* smooth scroll (desktop wheel only; touch keeps native momentum) */
   let lenis = null;
@@ -26,6 +27,7 @@
     const el = $(id);
     if (!el) return;
     e.preventDefault();
+    window.__jumpUntil = performance.now() + 2000;
     closeMenu();
     scrollTo(el);
     history.replaceState(null, '', id);
@@ -158,9 +160,25 @@
     projects.forEach(p => po.observe(p));
   }
 
-  /* reveal */
-  const ro = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('is-in'); ro.unobserve(e.target); } }), { rootMargin: '0px' });
-  $$('[data-reveal]').forEach(el => ro.observe(el));
+  /* reveal: every block is fully visible at rest. A block rises in only when it enters
+     from the bottom during a calm scroll. Blocks already on screen or above at load,
+     anchor jumps (2 s), fast scrolls, ?shot captures and reduced motion never animate,
+     and a started rise always runs to full opacity, on or off screen. */
+  if (!reduced && !/[?&]shot/.test(location.search)) {
+    let lastY = scrollY, lastT = performance.now(), fastUntil = 0;
+    addEventListener('scroll', () => {
+      const now = performance.now();
+      if (Math.abs(scrollY - lastY) / Math.max(1, now - lastT) > 2.5) fastUntil = now + 450;
+      lastY = scrollY; lastT = now;
+    }, { passive: true });
+    const ro = new IntersectionObserver(es => es.forEach(e => {
+      if (!e.isIntersecting) return;
+      ro.unobserve(e.target);
+      const now = performance.now();
+      if (now > fastUntil && now > window.__jumpUntil && e.boundingClientRect.top > innerHeight * 0.72) e.target.classList.add('is-in');
+    }));
+    $$('[data-reveal]').forEach(el => { if (el.getBoundingClientRect().top > innerHeight) ro.observe(el); });
+  }
 
   /* local time in Austin */
   const clock = $('[data-clock]');
