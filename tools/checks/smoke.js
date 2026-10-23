@@ -56,12 +56,15 @@ async function load(browser, base, page, width, opts) {
     r.consoleErrors.push(m.text().slice(0, 300) + (loc.url ? "  @ " + loc.url.replace(origin, "") + ":" + (loc.lineNumber + 1) : ""));
   });
   p.on("pageerror", e => r.pageErrors.push(String(e && e.stack || e).split("\n").slice(0, 3).join(" | ").slice(0, 400)));
+  const subframe = req => { try { return req.frame() !== p.mainFrame(); } catch (e) { return false; } };
   p.on("requestfailed", req => {
     const u = req.url();
     if (blockedUrl(u)) return;
     const err = (req.failure() || {}).errorText || "failed";
     // media elements cancel range requests by design when they switch source or pause
     if (/ERR_ABORTED/.test(err) && ["media", "other"].includes(req.resourceType())) return;
+    // a lazy iframe removed when its section scrolls away (js/home-websites.js) cancels its own load
+    if (/ERR_ABORTED/.test(err) && req.resourceType() === "document" && subframe(req)) return;
     r.failed.push({ url: u.replace(origin, ""), err, type: req.resourceType(), local: u.startsWith(origin) });
   });
   p.on("response", res => {
