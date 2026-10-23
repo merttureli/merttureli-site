@@ -10,6 +10,8 @@
 Content stays single source: every word and number comes from content/projects/<slug>.json.
 This script only decides presentation (which clip is the hero, which list becomes the spec
 sheet, the order of the "next project" loop). Those choices live in PRESENT below.
+Typography: one font, one style and one color per sentence, heading, label or line (no serif or
+recolored words inside a line, no bolded or shrunk parts of a value).
 Stdlib only, rerunnable, writes nothing outside next/projects/ (or PUB with --preview).
 
 Page skeleton (Studio v5, "product showcase"):
@@ -130,10 +132,41 @@ def toggle(vid):
             '<i aria-hidden="true"></i><span>Pause</span></button>' % vid)
 
 
+# Live 3D (next/js/case-stage.js): the opening stage and, further down, moments that replace a clip band
+# (base name -> stage key). Each live element shows the still rendered from it until it plays, and keeps
+# it under reduced motion or without WebGL. Stills: next/assets/img/stills/ (docs/recipes/media.md).
+LIVE = {
+    "therma-shift": {"stage": "therma-shift"},
+    "robo-catcher": {"stage": "robo-catcher"},
+    "rudder-pedals": {"stage": "rudder-pedals", "bands": {"rudder-pedals-mechanism": "rudder-pedals:side"}},
+}
+STILLS = IMG + "stills/"
+
+
+def live_media(key, label):
+    f = STILLS + key.replace(":", "-") + "-case"
+    return ('<div class="stage__live" data-case-stage="%s" role="img" aria-label="%s">'
+            '<picture class="stage__still"><source media="(max-width: 760px)" srcset="%s-port.webp">'
+            '<img src="%s-land.webp" alt="" decoding="async"></picture><canvas aria-hidden="true"></canvas></div>'
+            '<button class="clip-toggle" type="button" data-stage-toggle aria-pressed="false" hidden>'
+            '<i aria-hidden="true"></i><span>Pause</span></button>' % (key, esc(label), f, f))
+
+
+def product_img(slug, kind):
+    """The product still (stills/<slug>-16x9|4x5-<w>.webp) for live cases, else the card image."""
+    if slug in LIVE:
+        return STILLS + slug + ("-16x9-1200.webp" if kind == "wide" else "-4x5-600.webp")
+    return PRESENT[slug]["img"]
+
+
 def stage(case, p):
     h = p["hero"]
     idx = "%02d / %02d" % (ORDER.index(case["_slug"]) + 1, len(ORDER))
-    if "still" in h:
+    live = LIVE.get(case["_slug"])
+    if live:
+        media = live_media(live["stage"], "%s, live 3D model from the CAD assembly" % p["name"])
+        tog = ""
+    elif "still" in h:
         media = '<img src="%s" alt="%s" decoding="async" fetchpriority="high">' % (h["still"], esc(h["alt"]))
         tog = ""
     else:
@@ -141,10 +174,11 @@ def stage(case, p):
         label = label or "%s, turntable render from the CAD assembly" % p["name"]
         media = video("hero-clip", h["clip"], h["md"], h["sm"], M + h["clip"] + "-poster.webp", label=label)
         tog = toggle("hero-clip")
-    cls = "stage__card" + (" stage__card--square" if h.get("square") else " stage__card--wide")
+    cls = "stage__card" + (" stage__card--square" if h.get("square") else " stage__card--wide") + (" stage__card--live" if live else "")
+    media = media if live else '<div class="stage__media">%s</div>' % media
     return ('<div class="stage wrap"><div class="%s">\n'
             '  <span class="stage__idx label">%s</span>\n'
-            '  <div class="stage__media">%s</div>\n'
+            '  %s\n'
             '  <span class="stage__cap label">%s</span>\n  %s\n</div></div>'
             % (cls, idx, media, esc(h["cap"]), tog))
 
@@ -194,6 +228,11 @@ def how(case, p):
         if kind == "clip_band":
             flush()
             b = sec["base"]
+            moment = LIVE.get(case["_slug"], {}).get("bands", {}).get(b)
+            if moment:
+                blocks.append('<figure class="band band--live" data-reveal>%s<figcaption class="label">%s</figcaption></figure>'
+                              % (live_media(moment, sec.get("caption", "")), esc(sec.get("caption", ""))))
+                continue
             blocks.append('<figure class="band" data-reveal>%s%s<figcaption class="label">%s</figcaption></figure>'
                           % (video("band-" + b, b, 1280, 960, M + b + "-poster.webp", label=sec.get("caption"), alpha=False),
                              toggle("band-" + b), esc(sec.get("caption", ""))))
@@ -247,7 +286,7 @@ def specs(case, p):
     stats = next((s for s in case["sections"] if s.get("kind") == "stats"), None)
     if stats:
         rows.append(("Key figures", "<ul>%s</ul>" % "".join(
-            "<li><b>%s</b> %s</li>" % (s["value"], fix(s["label"])) for s in stats["stats"])))
+            "<li>%s %s</li>" % (s["value"], fix(s["label"])) for s in stats["stats"])))
     if p.get("specs_list"):
         sec = next((s for s in case["sections"] if heading_of(s) == p["specs_list"]), None)
         if sec and sec.get("list"):
@@ -258,7 +297,7 @@ def specs(case, p):
     col = ('<p class="specsheet__colophon">%s</p>' % fix(col.strip())) if col.strip() else ""
     return ('<div class="specsheet" data-reveal>\n  <div class="specsheet__head"><span class="label">Tech specs</span>'
             '<p class="specsheet__name">%s</p><img class="specsheet__img" src="%s" alt="" decoding="async" fetchpriority="low"></div>\n'
-            '  <div><dl>%s</dl>%s</div>\n</div>' % (esc(p["name"]), p["img"], dl, col))
+            '  <div><dl>%s</dl>%s</div>\n</div>' % (esc(p["name"]), product_img(case["_slug"], "tall"), dl, col))
 
 
 def facts(case):
@@ -268,17 +307,11 @@ def facts(case):
     return '<div class="wrap"><dl class="facts">%s</dl>%s</div>' % (items, notes)
 
 
-def stat_value(v):
-    """'13.8 ft/s' -> '13.8<small>ft/s</small>' when the first word holds the number."""
-    m = re.match(r"^(\S*\d\S*)\s+(.+)$", v)
-    return "%s<small>%s</small>" % (m.group(1), m.group(2)) if m else v
-
-
 def highlights(case):
     stats = next((s for s in case["sections"] if s.get("kind") == "stats"), None)
     if not stats:
         return ""
-    items = "".join('<div class="hl__item"><dt>%s</dt><dd>%s</dd></div>' % (stat_value(s["value"]), fix(s["label"]))
+    items = "".join('<div class="hl__item"><dt>%s</dt><dd>%s</dd></div>' % (s["value"], fix(s["label"]))
                     for s in stats["stats"])
     return items
 
@@ -384,7 +417,7 @@ def page(case):
 <section class="csec" id="how" aria-labelledby="how-title">
   <div class="wrap">
     <div class="rule"><span class="label">How it works</span><span class="label hide-s">{esc(p["meta"])}</span></div>
-    <div class="csec__head"><h2 id="how-title" class="display csec__title">How it <em class="serif">works</em></h2></div>
+    <div class="csec__head"><h2 id="how-title" class="display csec__title">How it works</h2></div>
     <div class="how">
 {how(case, p)}
     </div>
@@ -409,7 +442,7 @@ def page(case):
         <span class="nextp__line">{esc(np_["line"])}</span>
         <span class="pillbtn pillbtn--solid">See {esc(np_["name"])} <span class="arrow" aria-hidden="true"></span></span>
       </span>
-      <span class="nextp__media"><img src="{np_["img"]}" alt="" decoding="async" fetchpriority="low"></span>
+      <span class="nextp__media"><img src="{product_img(nxt, "wide") if slug in LIVE else np_["img"]}" alt="" decoding="async" fetchpriority="low"></span>
     </a>
     <p class="nextp__more"><a class="link" href="../index.html#work">All work</a><a class="link" href="mailto:merttureli0@gmail.com">Get in touch</a><a class="link link--quiet" href="../index.html">Studio home</a></p>
   </div>
@@ -425,7 +458,7 @@ def page(case):
 </main>
 
 <script src="../js/case.js" defer></script>
-<script src="../js/clips.js" defer></script>
+<script src="../js/clips.js" defer></script>{'\n<script type="module" src="../js/case-stage.js"></script>' if slug in LIVE else ""}
 </body>
 </html>
 '''

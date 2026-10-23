@@ -373,6 +373,28 @@ a.tile__link:focus-visible .tile__go { transform: rotate(-45deg); background: va
   .nextp__name { font-size: 15vw; }
 }
 
+/* ============================================ CASE STAGE: live 3D (next/js/case-stage.js)
+   The opening stage card and the moments further down (.band--live) draw the hero showreel's actor
+   on a canvas over a light grey studio ground (the hero's own paper), with the still rendered from
+   it underneath until the canvas is live (and for good under reduced motion or without WebGL). */
+.stage__card--live { background: radial-gradient(120% 95% at 50% 36%, var(--tile-2) 0%, var(--paper) 70%); }
+.stage__live { position: absolute; inset: 0; }
+.stage__still, .stage__still img, .stage__live canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.stage__still img { object-fit: contain; }
+.stage__live canvas { opacity: 0; transition: opacity var(--dur-800) linear; }
+.stage__live.is-live canvas { opacity: 1; }
+.stage__live.is-live .stage__still { opacity: 0; transition: opacity var(--dur-600) linear var(--dur-500); }
+.stage__card--live .stage__idx, .stage__card--live .stage__cap { z-index: 1; pointer-events: none; }
+.stage__card--live .clip-toggle, .band--live .clip-toggle { z-index: 2; }
+.band--live { background: radial-gradient(120% 95% at 50% 36%, var(--tile-2) 0%, var(--paper) 70%); }
+.band--live .stage__live { position: relative; aspect-ratio: 16 / 9; }
+.band--live figcaption { z-index: 1; color: var(--muted); }
+.band--live .clip-toggle { background: var(--tile-2); }
+@media (max-width: 760px) {
+  .stage__card--live.stage__card--wide { aspect-ratio: 4 / 4.4; }
+  .band--live .stage__live { aspect-ratio: 4 / 3; }
+}
+
 @media print { [data-reveal] { animation: none !important; } }
 
 @media (prefers-reduced-motion: reduce) {
