@@ -10,7 +10,7 @@
 <link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
 <!-- GitHub Pages serves this file for any missing path, so every reference is root-absolute.
-     Studio look: tokens.css + pages.css only, no studio.css, no 3D, no page runtime. -->
+     Studio look: tokens.css + pages.css. The live CHARGER (the hero's own rig) loads after first paint. -->
 <link rel="preload" href="/studies/shared/fonts/archivo-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/next/css/tokens.css">
 <link rel="stylesheet" href="/next/css/pages.css">
@@ -24,42 +24,34 @@
 <main class="nf wrap">
   <div class="nf__hero">
     <div class="nf__copy rise">
-      <h1 class="display nf__title">Nothing at this <em class="serif">address</em></h1>
+      <h1 class="display nf__title">Nothing at this address</h1>
       <p class="nf__line">This page is not here. If a link I gave you brought you here, <a href="mailto:merttureli0@gmail.com?subject=Broken%20link%20on%20merttureli.com">email me</a> and I will fix it.</p>
       <p class="nf__path label" id="path">Requested <b></b></p>
       <a class="pillbtn pillbtn--solid" href="/">Back home <span class="arrow" aria-hidden="true"></span></a>
     </div>
-    <svg class="nf__rocket" viewBox="0 0 220 170" aria-hidden="true" focusable="false">
-      <path class="trail" d="M6 166 C 50 150, 70 92, 112 104 S 150 70, 160 52"/>
-      <g class="nf__ship">
-        <g transform="translate(172 40) rotate(40) translate(-14 -30)">
-          <path class="flame" d="M9 56 Q14 74 19 56 Z"/>
-          <path class="fin" d="M6 34 L0 52 L6 48 Z M22 34 L28 52 L22 48 Z"/>
-          <rect class="nozzle" x="9" y="50" width="10" height="6" rx="1"/>
-          <path class="body" d="M14 0 C21 8 23 20 23 32 L23 50 L5 50 L5 32 C5 20 7 8 14 0 Z"/>
-          <circle class="port" cx="14" cy="24" r="4"/>
-        </g>
-      </g>
-    </svg>
+    <div class="nf__stage" data-lost aria-hidden="true">
+      <img class="nf__poster" src="/next/assets/img/charger-lost-440.webp" srcset="/next/assets/img/charger-lost-440.webp 440w, /next/assets/img/charger-lost-880.webp 880w" sizes="(max-width: 760px) 180px, 30vw" width="880" height="1100" alt="" decoding="async">
+      <canvas class="nf__canvas"></canvas>
+    </div>
   </div>
 
   <nav class="nf__go" aria-label="Where to go instead">
     <div class="nf__group rise rise--2">
       <span class="label">Sections</span>
       <ul class="nf__list">
-        <li><a href="/#work"><span class="label">01</span><span class="nf__name">Work</span><span class="arrow" aria-hidden="true"></span></a></li>
-        <li><a href="/#experience"><span class="label">02</span><span class="nf__name">Experience</span><span class="arrow" aria-hidden="true"></span></a></li>
-        <li><a href="/websites.html"><span class="label">03</span><span class="nf__name">Websites</span><span class="arrow" aria-hidden="true"></span></a></li>
+        <li><a href="/#work"><span class="nf__name">Work</span><span class="arrow" aria-hidden="true"></span></a></li>
+        <li><a href="/#experience"><span class="nf__name">Experience</span><span class="arrow" aria-hidden="true"></span></a></li>
+        <li><a href="/websites.html"><span class="nf__name">Websites</span><span class="arrow" aria-hidden="true"></span></a></li>
       </ul>
     </div>
     <div class="nf__group rise rise--3">
       <span class="label">Projects</span>
       <ul class="nf__list">
-        <li><a href="/projects/charger.html"><span class="label">01</span><span class="nf__name">CHARGER</span><span class="arrow" aria-hidden="true"></span></a></li>
-        <li><a href="/projects/robo-catcher.html"><span class="label">02</span><span class="nf__name">Robo-Catcher</span><span class="arrow" aria-hidden="true"></span></a></li>
-        <li><a href="/projects/rudder-pedals.html"><span class="label">03</span><span class="nf__name">Rudder pedals</span><span class="arrow" aria-hidden="true"></span></a></li>
-        <li><a href="/projects/therma-shift.html"><span class="label">04</span><span class="nf__name">Therma-Shift</span><span class="arrow" aria-hidden="true"></span></a></li>
-        <li><a href="/projects/bend-fixture.html"><span class="label">05</span><span class="nf__name">Bend fixture</span><span class="arrow" aria-hidden="true"></span></a></li>
+        <li><a href="/projects/charger.html"><span class="nf__name">CHARGER</span><span class="arrow" aria-hidden="true"></span></a></li>
+        <li><a href="/projects/robo-catcher.html"><span class="nf__name">Robo-Catcher</span><span class="arrow" aria-hidden="true"></span></a></li>
+        <li><a href="/projects/rudder-pedals.html"><span class="nf__name">Rudder pedals</span><span class="arrow" aria-hidden="true"></span></a></li>
+        <li><a href="/projects/therma-shift.html"><span class="nf__name">Therma-Shift</span><span class="arrow" aria-hidden="true"></span></a></li>
+        <li><a href="/projects/bend-fixture.html"><span class="nf__name">Bend fixture</span><span class="arrow" aria-hidden="true"></span></a></li>
       </ul>
     </div>
   </nav>
@@ -79,6 +71,26 @@
       p.className += " is-set";
     }
   })();
+</script>
+<script type="module">
+  /* CHARGER, lost: the hero's rocket rig, loaded after load + idle so the text and links paint first.
+     No WebGL, Save-Data or reduced motion: the poster (the same render) stays. */
+  const box = document.querySelector("[data-lost]");
+  const rq = matchMedia("(prefers-reduced-motion: reduce)");
+  const saveData = navigator.connection && navigator.connection.saveData;
+  const canGL = (() => { try { const c = document.createElement("canvas"); return !!(c.getContext("webgl2") || c.getContext("webgl")); } catch (e) { return false; } })();
+  if (box && canGL && !saveData) {
+    let mounted = false;
+    const start = () => {
+      if (mounted || rq.matches) return;
+      mounted = true;
+      import("/next/js/lost-rocket.js").then(m => m.mountLost({ box }))
+        .catch(err => console.warn("3D rocket unavailable, keeping the still", err));
+    };
+    const later = () => (window.requestIdleCallback ? requestIdleCallback(start, { timeout: 1500 }) : setTimeout(start, 600));
+    if (document.readyState === "complete") later(); else addEventListener("load", later);
+    rq.addEventListener("change", () => { if (!rq.matches && document.readyState === "complete") start(); });
+  }
 </script>
 <script src="/js/analytics-config.js"></script>
 <script src="/js/track.js"></script>

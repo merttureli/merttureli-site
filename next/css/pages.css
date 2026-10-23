@@ -1,8 +1,10 @@
 /* STUDIO plain pages: 404.html, privacy.html and hi/index.html at the site root.
    Loaded after tokens.css, on its own (no studio.css, no showcase.css, no JS), so these
    pages stay light and render from any path. The shared pieces below copy the studio.css
-   and showcase.css rules of the same name (.label, .serif, .display, .link, .pillbtn,
-   .arrow, .wordmark) so they look identical; then one block per page.
+   and showcase.css rules of the same name (.label, .display, .link, .pillbtn, .arrow,
+   .wordmark) so they look identical; then one block per page. House rule: one font, one
+   style and one color per sentence, heading, label or line; the one exception is a company
+   name in Bodoni italic (.co).
    404.html links this file root-absolute (/next/css/pages.css): GitHub Pages serves it
    for any missing path. Font urls here are relative to this file, so they work too. */
 @font-face { font-family: Archivo; src: url(../../studies/shared/fonts/archivo-var.woff2) format('woff2'); font-weight: 100 900; font-stretch: 62% 125%; font-display: swap; }
@@ -27,12 +29,7 @@ ol, ul { list-style: none; }
 /* ---------------------------------------------- shared (studio.css) */
 .wrap { width: 100%; max-width: var(--wrap-max); margin: 0 auto; padding: 0 var(--gutter); }
 .label { font-family: var(--mono); font-size: var(--text-mono-m); line-height: 1.5; font-weight: 400; font-stretch: var(--mono-stretch); letter-spacing: var(--mono-tracking); text-transform: uppercase; color: var(--muted); }
-/* .co: a company name in italic serif, the one approved exception (docs/design/studio.md) */
-.co { font-family: var(--serif); font-style: italic; font-weight: 500; font-stretch: normal; text-transform: none; letter-spacing: -.01em; }
-/* .serif: retired as inline emphasis (docs/design/studio.md); kept until the 404 and /hi/ pass lands */
-.serif { font-family: var(--serif); font-style: italic; font-weight: 500; font-stretch: normal; text-transform: none; letter-spacing: -.01em; }
 .display { font-family: var(--display); font-stretch: var(--display-stretch); font-weight: var(--display-weight); text-transform: uppercase; font-size: clamp(42px, 7vw, 120px); line-height: .9; letter-spacing: -.025em; }
-.display .serif { font-size: 1.08em; line-height: .8; }
 .link { display: inline-block; position: relative; font-family: var(--mono); font-size: var(--text-mono-l); text-transform: uppercase; letter-spacing: var(--mono-tracking); font-stretch: var(--mono-stretch); padding: 4px 0; }
 .link::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: currentColor; transform-origin: right; transition: transform var(--dur-600) var(--ease); }
 .link--quiet { color: var(--muted); }
@@ -65,34 +62,29 @@ ol, ul { list-style: none; }
 
 /* ------------------------------------------------------------- 404 */
 .nf { padding-top: clamp(24px, 6vw, 96px); }
-.nf__hero { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px clamp(24px, 4vw, 64px); align-items: end; }
+.nf__hero { display: grid; grid-template-columns: minmax(0, 1fr) clamp(200px, 26vw, 420px); column-gap: clamp(24px, 3vw, 56px); align-items: center; }
 .nf__copy { display: flex; flex-direction: column; align-items: flex-start; gap: clamp(18px, 2vw, 28px); }
-.nf__title { font-size: clamp(50px, 9.4vw, 172px); line-height: .86; letter-spacing: -.04em; max-width: 9.5em; }
+.nf__title { font-size: clamp(40px, 6.6vw, 124px); line-height: .88; letter-spacing: -.04em; max-width: 9.5em; }
 .nf__line { max-width: 44ch; font-size: clamp(17px, 1.5vw, 22px); line-height: 1.38; letter-spacing: -.01em; color: var(--ink-soft); }
-.nf__line a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); text-decoration-thickness: 1px; text-underline-offset: 3px; transition: text-decoration-color var(--dur-400) var(--ease); }
+.nf__line a { color: inherit; text-decoration: underline; text-decoration-color: var(--line); text-decoration-thickness: 1px; text-underline-offset: 3px; transition: text-decoration-color var(--dur-400) var(--ease); }
 .nf__path { display: none; overflow-wrap: anywhere; }
-.nf__path b { font-weight: 500; color: var(--ink); }
+.nf__path b { font-weight: inherit; color: inherit; }
 .nf__path.is-set { display: block; }
 
-/* the cheap touch: a small rocket drifting off course on a dotted trail (inline SVG, CSS only) */
-.nf__rocket { align-self: center; width: clamp(150px, 20vw, 300px); }
-.nf__rocket .trail { fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 1 7; stroke-linecap: round; opacity: .6; }
-.nf__rocket .body { fill: var(--signal); }
-.nf__rocket .fin, .nf__rocket .nozzle { fill: var(--ink); }
-.nf__rocket .port { fill: var(--tile); stroke: var(--ink); stroke-width: 1.5; }
-.nf__rocket .flame { fill: var(--signal); opacity: .5; transform-box: fill-box; transform-origin: 50% 0; }
-.nf__ship { transform-box: fill-box; transform-origin: 50% 50%; }
-/* 7s and 1.2s: slow idle loops, no role token fits (motion.md rule 7) */
-@keyframes drift { 0% { transform: translate(0, 0) rotate(0deg); } 50% { transform: translate(-6px, 8px) rotate(-5deg); } 100% { transform: translate(0, 0) rotate(0deg); } }
-@keyframes flicker { 50% { transform: scaleY(.7); opacity: .3; } }
-.nf__ship { animation: drift 7s var(--ease-io) infinite; }
-.nf__rocket .flame { animation: flicker 1.2s var(--ease-io) infinite; }
+/* CHARGER, lost: the hero's rocket (next/js/lost-rocket.js) wandering in its own column beside the
+   text (above it on phones). Its whole wander is framed inside the stage, so it never covers the text.
+   The poster is the same render, so nothing jumps when the live canvas fades in. */
+.nf__stage { position: relative; width: 100%; aspect-ratio: 4 / 5; pointer-events: none; }
+.nf__poster, .nf__canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.nf__poster { transition: opacity var(--dur-600) linear; }
+.nf__canvas { opacity: 0; transition: opacity var(--dur-800) linear; }
+.nf__stage.is-live .nf__canvas { opacity: 1; }
+.nf__stage.is-live .nf__poster { opacity: 0; transition-delay: var(--dur-500); }
 
 .nf__go { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--bento-gap); margin-top: var(--space-40-90); }
 .nf__group { padding: clamp(20px, 2vw, 30px); border-radius: var(--radius-tile); background: var(--tile); box-shadow: var(--shadow-tile); }
 .nf__group > .label { display: block; padding-bottom: 12px; }
 .nf__list a { display: flex; align-items: center; gap: 16px; min-height: 58px; padding: 10px 0; border-top: var(--hairline); font-size: clamp(18px, 1.6vw, 24px); font-weight: 620; letter-spacing: -.02em; line-height: 1.15; }
-.nf__list .label { width: 2.4em; flex: none; }
 .nf__list .nf__name { flex: 1; min-width: 0; }
 .nf__list .arrow { width: 16px; transition: transform var(--dur-600) var(--ease); }
 .nf__list .arrow::after { width: 8px; height: 8px; top: -3.5px; }
@@ -107,8 +99,8 @@ ol, ul { list-style: none; }
 
 @media (max-width: 760px) {
   body { font-size: var(--text-m); }
-  .nf__hero { grid-template-columns: minmax(0, 1fr); }
-  .nf__rocket { grid-row: 1; justify-self: end; width: 128px; margin: 0 0 -28px; }
+  .nf__hero { display: flex; flex-direction: column; }
+  .nf__stage { order: -1; width: 168px; margin: -18px -6px 10px auto; }
   .nf__go { grid-template-columns: minmax(0, 1fr); }
   .nf__copy .pillbtn { width: 100%; }
 }
@@ -121,7 +113,7 @@ ol, ul { list-style: none; }
 .legal__body { max-width: 68ch; color: var(--ink-soft); line-height: 1.68; }
 .legal__body p + p { margin-top: 1.2em; padding-top: 1.2em; border-top: var(--hairline); }
 .legal__body p:first-child { font-size: clamp(18px, 1.5vw, 21px); line-height: 1.45; letter-spacing: -.01em; color: var(--ink); }
-/* each paragraph's lead ("What is collected.") is its own line: a whole element, not a bold run-in */
+/* each paragraph's lead ("What is collected.") sits on its own line: a whole element, not a bold run-in */
 .legal__body strong { display: block; margin-bottom: .35em; font-weight: 680; color: var(--ink); letter-spacing: -.005em; }
 .legal__body a { color: inherit; text-decoration: underline; text-decoration-color: var(--line); text-decoration-thickness: 1px; text-underline-offset: 3px; overflow-wrap: anywhere; transition: text-decoration-color var(--dur-400) var(--ease); }
 @media (hover: hover) { .legal__body a:hover { text-decoration-color: var(--signal-ink); } }
@@ -147,12 +139,13 @@ ol, ul { list-style: none; }
 .card__name { margin-top: 30px; font-size: clamp(54px, 17.5vw, 104px); line-height: .84; letter-spacing: -.04em; }
 .card__name span { display: block; }
 .card__role { margin-top: 18px; font-size: clamp(19px, 5.4vw, 24px); line-height: 1.2; letter-spacing: -.015em; font-weight: 560; }
-.card__role .serif { font-size: 1.12em; white-space: nowrap; }
+/* company names may stay Bodoni italic (owner); the only accent allowed in a line */
+.co { font-family: var(--serif); font-style: italic; font-weight: 500; font-stretch: normal; letter-spacing: -.01em; font-size: 1.12em; white-space: nowrap; }
 .card__save { width: 100%; height: 64px; margin-top: 30px; justify-content: space-between; padding: 0 26px; font-size: var(--text-l); }
 .card__save svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .card__hint { margin-top: 10px; padding: 0 4px; font-size: var(--text-2xs); line-height: 1.45; color: var(--muted); }
 .card__links { margin-top: 24px; border-bottom: var(--hairline); }
-.card__links a { display: grid; grid-template-columns: 5.6em minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 60px; padding: 8px 2px; border-top: var(--hairline); font-size: var(--text-m); font-weight: 520; letter-spacing: -.01em; overflow-wrap: anywhere; transition: color var(--dur-400) var(--ease); }
+.card__links a { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 60px; padding: 8px 2px; border-top: var(--hairline); font-size: var(--text-m); font-weight: 520; letter-spacing: -.01em; overflow-wrap: anywhere; transition: color var(--dur-400) var(--ease); }
 .card__links .arrow { width: 14px; transform: rotate(-45deg); transition: transform var(--dur-600) var(--ease); }
 .card__links .arrow::after { width: 7px; height: 7px; top: -3px; }
 .card__work { width: 100%; height: 58px; margin-top: 18px; justify-content: space-between; }
@@ -166,6 +159,46 @@ ol, ul { list-style: none; }
   .hi { padding: 40px var(--gutter); }
   .card { padding: 34px 36px 26px; border-radius: var(--radius-tile); }
   .card__face { width: 76px; height: 76px; }
+}
+
+/* /hi/ drift words: the Studio hero's .slot words (studio.css, same names and values), floating
+   behind the card. Far slots are larger, softer and blurred; near slots sharp. Phone: they live in
+   the band above the card. Only transform, opacity and filter move (composited). */
+.hi .card { position: relative; z-index: 1; }
+.drift { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.slot { position: absolute; left: var(--x); top: var(--y); white-space: nowrap; will-change: transform; animation: float var(--t, 11s) var(--ease-io) infinite alternate; }
+.slot:nth-child(2) { --t: 13s; animation-delay: -4s; }
+.slot:nth-child(3) { --t: 9s; animation-delay: -2s; }
+.slot:nth-child(4) { --t: 12s; animation-delay: -6s; }
+.slot:nth-child(5) { --t: 14s; animation-delay: -3s; }
+.slot:nth-child(6) { --t: 10s; animation-delay: -7s; }
+.slot:nth-child(7) { --t: 12.5s; animation-delay: -5s; }
+@keyframes float { from { translate: 0 0; } to { translate: var(--fx, 14px) var(--fy, -18px); } }
+/* the swap is the hero's rise and fade without its blur filter: a phone page gets transform and opacity only */
+/* out first, then in (never two words of a slot on screen at once); --stagger is set per slot by the page */
+.slot i { position: absolute; left: 0; top: 0; font-style: normal; opacity: 0; transform: translate3d(0, 18px, 0); transition: opacity var(--dur-400) var(--ease), transform var(--dur-400) var(--ease); transition-delay: var(--stagger, 0ms); }
+.slot i.on { opacity: 1; transform: none; transition-duration: var(--dur-900), var(--dur-1100); transition-delay: calc(var(--stagger, 0ms) + var(--dur-400)); }
+.slot i:first-child { position: relative; }
+.s-xl { font-size: clamp(30px, 3.9vw, 66px); font-weight: var(--display-weight); font-stretch: var(--display-stretch); letter-spacing: -.03em; line-height: 1; text-transform: uppercase; }
+.s-l { font-size: clamp(22px, 2.5vw, 40px); font-weight: 500; font-stretch: 100%; letter-spacing: -.02em; line-height: 1; }
+.s-m { font-family: var(--serif); font-style: italic; font-size: clamp(20px, 2vw, 32px); font-weight: 500; color: var(--ink-soft); }
+.s-s { font-family: var(--mono); font-size: var(--text-mono-m); font-stretch: var(--mono-stretch); text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
+/* far words: the blur is a text-shadow (painted once), not a filter (recomputed every frame while they float) */
+.slot.far { opacity: .38; scale: 1.4; transform-origin: 0 0; }
+.slot.far i { color: transparent; text-shadow: 0 0 4px var(--ink); }
+.slot.far.s-m i { text-shadow: 0 0 4px var(--ink-soft); }
+@media (max-width: 760px) {
+  /* the card stays at the top and fills the screen: words peek out below it and, blurred, at its edges */
+  .slot:nth-child(4), .slot:nth-child(6), .slot:nth-child(7) { display: none; }
+  .slot:nth-child(1), .slot:nth-child(3) { --fx: 10px; --fy: 4px; } /* the strip under the card is ~30px: float sideways, not up */
+  .slot:nth-child(1) { --x: 6% !important; --y: calc(100svh - 30px) !important; }
+  .slot:nth-child(3) { --x: 64% !important; --y: calc(100svh - 30px) !important; }
+  .slot:nth-child(2) { --x: -22% !important; --y: 30svh !important; }
+  .slot:nth-child(5) { --x: 90% !important; --y: 58svh !important; }
+  .s-xl { font-size: 24px; }
+  .s-l { font-size: 21px; }
+  .s-m { font-size: 19px; }
+  .slot.far { scale: 2.2; opacity: .3; }
 }
 
 /* ---------------------------------------------- reduced motion */
