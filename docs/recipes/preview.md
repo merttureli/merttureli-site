@@ -59,5 +59,5 @@ To add a mode or a copy root, edit `MODES` at the top of `tools/preview.py`.
 
 - The copy is a snapshot of the working tree, including uncommitted and untracked files.
 - The local server is not the artifact host: a request that works locally can still be refused there if the host adds a rule. Rules live in the constants at the top of `tools/preview.py`.
-- The home page embeds the CHARGER explorer with `?embed=1&modal=1&inline=1`. The host drops the query, so in a preview that iframe opens in its standalone layout.
+- The CHARGER explorer opens in place on the home page (`index.html#charger`). If the host's sandbox refuses `history.pushState`, the URL keeps no `#charger` entry: Esc and the close button still close it, Back does not.
 - `.step` and `.vcf` are not common web types. If a publish refuses one, pass it as `{"from": "<path>", "contentType": "application/octet-stream"}` or leave it out.
