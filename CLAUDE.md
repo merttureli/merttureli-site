@@ -30,6 +30,7 @@ What still has to move to the Studio design: [docs/transition.md](docs/transitio
 7. Playwright: `require('/opt/node22/lib/node_modules/playwright')`, never `playwright install`. Block `clarity.ms`, `bing.com`, `workers.dev`, `formspree.io` in every context. Never POST forms or send analytics. In headless, set `window.__reelNoSlowGuard = true` in an init script to see the hero showreel run.
 8. Never touch `vx/` or branch `claude/charming-pascal-wgx7a3`. Never push unless the owner says so.
 9. Pages under `next/`, `studies/`, `docs/` carry `<meta name="robots" content="noindex">`; a `next/` page that has a live twin also carries `<link rel="canonical">` to the live URL. Live pages never link to a `next/` page (the build refuses); they load `next/` CSS, JS and assets, which `robots.txt` keeps crawlable.
+10. One sentence, one voice: a sentence, heading, label or line gets one font, one style and one color (no `<em class="serif">` word in an Archivo line, no single word in an accent color or weight). The only exception is a company name in `<span class="co">`. The `typeset` check FAILs otherwise; a reviewed exception takes `data-type-ok`.
 
 ## Task -> command
 
