@@ -40,10 +40,7 @@ EXEMPT_CLASS = {"co"}
 STYLE = re.compile(r"(?:^|;)\s*(?:color|font-family|font-style|font)\s*:", re.I)
 
 # Temporary: (page glob, ancestor class or None for the whole page, note). Hits there WARN.
-ALLOW = [
-    ("index.html", "tile", "work tiles and .tile--explorer: remove when the tiles and explorer areas land"),
-    ("next/index.html", "tile", "work tiles and .tile--explorer: remove when the tiles and explorer areas land"),
-]
+ALLOW = []
 
 
 class Node(object):
