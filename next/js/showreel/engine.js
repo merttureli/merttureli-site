@@ -79,6 +79,9 @@ export function createEngine({ canvas, pixelRatio, preserve = false, envGain = .
   renderer.setPixelRatio(pixelRatio || Math.min(devicePixelRatio || 1, 1.75));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.setClearColor(0x000000, 0);
+  // shader status checks force the driver to finish compiling synchronously (a stall when a guest is built
+  // mid-reel); keep them for debugging only (?debug or #debug)
+  renderer.debug.checkShaderErrors = /[?&#]debug\b/.test(location.href);
   const scene = new THREE.Scene();
   const lights = addStudioLights(scene);
   const camera = new THREE.PerspectiveCamera(24, 16 / 9, .05, 30);

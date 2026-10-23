@@ -41,9 +41,11 @@ export const KEY = '{{KEY}}';
 export const WORD = '{{WORD}}';
 
 // ================================================================ EDIT: reel
-// [STATE, seconds], played between ROCKET_EXIT (2.1 s) and ROCKET_RETURN
-// (2.6 s). Names must be unique in the whole reel, hence the prefix. Keep the
-// order (sample() reads them by position) or update sample() to match.
+// [STATE, seconds], played after ROCKET_EXIT (2.1 s, first guest of a session)
+// or a HANDOVER lead-in (0.7 s, when it follows another guest); the next guest
+// starts halfway into the last state, so let the exit clear the stage by then.
+// Names must be unique in the whole reel, hence the prefix. Keep the order
+// (sample() reads them by position) or update sample() to match.
 export const SEQUENCE = [
   ['{{PREFIX}}_ENTER', 2.2],     // parts fly in from off screen, exploded
   ['{{PREFIX}}_ASSEMBLE', 2.6],  // exploded -> assembled
