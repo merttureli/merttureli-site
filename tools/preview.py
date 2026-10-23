@@ -151,7 +151,7 @@ CSS_IMPORT_RE = re.compile(r"""@import\s+(["'])([^"']+)\1""", re.I)
 JS_IMPORT_RE = re.compile(r"""(\bfrom\s*|\bimport\s*\(?\s*)(["'`])([^"'`\s]+)\2""")
 # new URL('x', import.meta.url) is relative to the script; new URL('x', document.baseURI) to the page
 NEW_URL_RE = re.compile(r"""new\s+URL\(\s*(["'`])([^"'`\s]+)\1\s*(,[^)]*)?\)""")
-JS_STR_RE = re.compile(r"""(["'`])((?:\.{0,2}/)?[\w@%~+-][\w@%~+./-]*\.(?:""" + ASSET_EXT +
+JS_STR_RE = re.compile(r"""(["'`])((?:(?:\.{1,2}/)+|/)?[\w@%~+-][\w@%~+./-]*\.(?:""" + ASSET_EXT +
                        r"""))((?:[?#][^"'`\s]*)?)\1""", re.I)
 SCRIPT_RE = re.compile(r"<script\b[^>]*>(.*?)</script>", re.I | re.S)
 STYLE_RE = re.compile(r"<style\b[^>]*>(.*?)</style>|\sstyle\s*=\s*([\"'])(.*?)\2", re.I | re.S)
@@ -275,6 +275,7 @@ class Build:
         self.issues = []         # (level, file, message)
         self.rewrites = {}       # copy path -> count
         self.queries = []
+        self.loaders = {}        # script -> folders of the pages that load it (directly or by import)
 
     def skip(self, f):
         return os.path.splitext(f)[1].lower() in self.cfg.get("exclude_ext", ())
@@ -344,6 +345,17 @@ class Build:
                     if why == "pull" and not target.endswith("/"):
                         queue += [n for n in self.pull(target) if n.lower().endswith(tuple(TEXT_EXT))]
                     if target:
+                        # remember which pages load which scripts: a script's loose and
+                        # document-relative paths resolve against those pages' folders
+                        if target.endswith((".js", ".mjs")) and kind in ("nav", "file"):
+                            dirs = ({posixpath.dirname(f)} if f.endswith((".html", ".htm"))
+                                    else self.loaders.get(f, set()))
+                            known = self.loaders.setdefault(target, set())
+                            if not dirs <= known:
+                                known |= dirs
+                                if target in seen:   # rescan it with the new bases
+                                    seen.discard(target)
+                                    queue.append(target)
                         break
 
     def bases(self, f, kind):
@@ -351,9 +363,11 @@ class Build:
         doc = self.cfg["doc_dir"].rstrip("/")
         if kind in ("nav", "file") or f.endswith((".html", ".htm")):
             return [here]
+        pages = sorted(self.loaders.get(f, ()))
         if kind == "doc":
-            return [doc]
-        return [here] if here == doc else [here, doc]
+            return pages + [d for d in [doc] if d not in pages]
+        out = [here] + [d for d in pages if d != here]
+        return out if doc in out else out + [doc]
 
     def read(self, f):
         try:

@@ -121,7 +121,7 @@ def video(vid, base, md, sm, poster, label=None, mode="view", alpha=True, ratio=
     style = (' style="--ratio: %s"' % ratio) if ratio else ""
     name = lambda n: "%s%s%s%s.webm" % (M, base, ("-%d" % n) if n else "", suf)
     return ('<video id="%s" class="clip" data-clip="%s" muted loop playsinline preload="none" poster="%s" %s%s>'
-            '<source data-src="%s" data-src-sm="%s" type="video/webm"></video>'
+            '<source data-src="%s" data-sm-src="%s" type="video/webm"></video>'
             % (vid, mode, poster, a, style, name(md), name(sm)))
 
 

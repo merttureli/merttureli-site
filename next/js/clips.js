@@ -1,6 +1,6 @@
 // SHOWCASE clips: turntable videos on the lineup tiles and the case pages.
-// Markup: <video data-clip="hover|view" muted loop playsinline preload="none" poster="...">
-//           <source data-src="full.webm" data-src-sm="phone.webm" type="video/webm"></video>
+// Markup (data-*-src names, so tools/preview.py rewrites them): <video data-clip="hover|view" muted loop playsinline preload="none" poster="...">
+//           <source data-src="full.webm" data-sm-src="phone.webm" type="video/webm"></video>
 // "hover": plays while a fine pointer is over its tile (or the tile has focus); on touch it
 //          plays while most of it is on screen.
 // "view":  plays while on screen. A [data-clip-toggle] button (aria-controls = video id) pauses it.
@@ -19,7 +19,7 @@
     if (s.loaded) return;
     s.loaded = true;
     v.querySelectorAll('source[data-src]').forEach(src => {
-      src.src = (phone && src.dataset.srcSm) || src.dataset.src;
+      src.src = (phone && src.dataset.smSrc) || src.dataset.src;
       src.removeAttribute('data-src');
     });
     v.load();
