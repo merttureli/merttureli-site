@@ -530,6 +530,8 @@ class Build:
                     "files": {d: d for d in b}}
             if i:
                 call["url"] = "<url returned by publish 1>"
+            else:
+                call["icon"] = "portfolio"  # the publish tool wants one generic word on a first publish
             calls.append(call)
         odd = sorted({os.path.splitext(d)[1].lower() for d in sizes} - COMMON_EXT - {""})
         return {"mode": self.mode, "out": out_abs, "files": len(sizes), "bytes": total,
@@ -561,7 +563,9 @@ def start_server(directory, port):
     try:
         srv = QuietServer(("127.0.0.1", port), handler)
     except OSError as e:
-        die(f"cannot serve on 127.0.0.1:{port}: {e}")
+        die(f"cannot serve on 127.0.0.1:{port}: {e}\n"
+            f"  The copy is complete in {directory}; only the smoke/serve step did not run.\n"
+            f"  Use a free --port (stop your own http.server on {port} first, e.g. kill $(lsof -ti :{port})).")
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     return srv
 
@@ -720,9 +724,17 @@ def main():
             for _, f, m in infos:
                 print(f"    info {f}: {m}")
         if not a.dry_run:
+            nflags = 0
+            for d in b.dst.values():
+                if d.endswith(".html") and os.path.isfile(os.path.join(out, d)):
+                    with open(os.path.join(out, d), encoding="utf-8", errors="replace") as fh:
+                        nflags += len(re.findall(r'<mark\b[^>]*\bclass="[^"]*\bflag\b', fh.read()))
+            if nflags:
+                print(f"  {nflags} open owner flag(s) in this copy: they show as dotted underlines with a question "
+                      "(python3 tools/check-flags.py lists them)")
             print(f"  publish plan: {os.path.join(out, PLAN_NAME)} (or rerun with --json)")
-            print(f"  publish: {len(plan['publish'])} Artifact publish call(s), file_path {out}/index.html; "
-                  "calls 2+ add url= from call 1")
+            print(f"  publish: {len(plan['publish'])} Artifact publish call(s), file_path {out}/index.html, "
+                  "icon \"portfolio\" on call 1; calls 2+ add url= from call 1")
     if a.strict and any(i[0] == "warn" for i in b.issues):
         plan["errors"].append("unresolved references (--strict)")
     if plan["errors"]:

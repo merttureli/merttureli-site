@@ -18,6 +18,7 @@ Resolve (only with the owner's own answer, never a guess):
 5. Commit source and built page: `git commit -m "Resolve flag <id>: <answer>"`.
 
 Add:
-1. Next free id: `grep -rhoE '(data-flag="|"flag": ")[a-z-]+-[0-9]+' src/index.html content *.html hi | sed -E 's/.*"//' | sort -u`
+1. Next free id: `python3 tools/check-flags.py --next-id <slug or page>` (e.g. `--next-id rudder-pedals` prints `rudder-pedals-036`).
 2. HTML: `<mark class="flag" data-flag="home-NNN" data-note="Question?">text</mark>`. Case JSON (rich text list item or a brief `value`): `{"flag": "<slug>-NNN", "note": "Question?", "text": "text"}`.
+   No text on the topic yet? Add the flag object with no `text` (it shows `[TBD]`) at the end of the closest paragraph; see flags.md "Add a flag". Keep the owner's own wording for the note.
 3. Build if needed, then `python3 tools/check-flags.py` lists it.

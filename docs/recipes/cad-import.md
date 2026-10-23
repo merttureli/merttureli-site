@@ -12,12 +12,17 @@ Pass the same `CAD_VENV=...` on every later `tools/cad.py` call (or `export` it)
 
 ## The five-minute path
 
-Keep the owner's STEP outside the repo (scratchpad) unless they ask for it to be published.
+Which format for which target: showreel actor = `cadmesh` (the default); the charger-style explorer = `explorer`;
+the rocket hero = `hero`; a download or another tool = `glb`. Details in "Where the files go" below.
+
+Keep the owner's STEP outside the repo (scratchpad) unless they ask for it to be published. IP rule: before you mesh,
+read the part list `inspect` prints; no part of HOTBOX or the bend fixture is ever imported or animated (CLAUDE.md rule 4).
 
 ```sh
 export CAD_VENV=<scratchpad>/cadvenv
 python3 tools/cad.py inspect OWNER.step                                   # parts, sizes, colors, unit
-python3 tools/cad.py inspect OWNER.step --map-out tools/cad/maps/NAME.json  # new model: starter map, one rule per part
+python3 tools/cad.py inspect OWNER.step --map-out <scratchpad>/NAME.json    # first look: starter map outside the repo
+python3 tools/cad.py inspect OWNER.step --map-out tools/cad/maps/NAME.json  # once the model is going on the site: commit this map
 # edit the map (table below). Therma-Shift already has one: tools/cad/maps/therma-shift.json
 python3 tools/cad.py import OWNER.step --map tools/cad/maps/NAME.json --out <scratchpad>/cad-NAME --dry-run
 python3 tools/cad.py import OWNER.step --map tools/cad/maps/NAME.json --out <scratchpad>/cad-NAME
@@ -153,7 +158,8 @@ export function createModel({ THREE: T = THREE, quality = 'high' } = {}) {
 | `no CAD venv at ...` | `CAD_VENV=... python3 tools/cad.py setup`, or pass the `CAD_VENV` you used before |
 | `pip install failed` | `export PIP_CERT=/root/.ccr/ca-bundle.crt` and rerun setup (see `/root/.ccr/README.md`) |
 | `OpenCascade could not read` | not a STEP file, or damaged: ask for an AP214 export |
-| `over the showreel budget` | skip hidden parts, merge, coarser `deflection`/`angle` on the heavy parts it names, or `--quality low` |
+| `over the showreel budget` with `parts ... OVER` | merge parts in the map (several CAD names -> one `name`) or skip hidden ones; the line says how many to lose |
+| `over the showreel budget` with `triangles ... OVER` | coarser `deflection`/`angle` on the heavy parts it names, or `--quality low` |
 | part flies the wrong way or sits off center | set `explode_mm` on its rule; check `up` and `origin` |
 | `unknown material` | pick a key from `tools/cad/palette.json`, or add one (3d.md) |
 | model lies on its side | `--up z` (or `-z`, `x`) |

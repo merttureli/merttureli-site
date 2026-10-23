@@ -280,10 +280,17 @@ def run_import(step, cfg, out, dry_run=False):
         print('\nnot in the map (kept with auto names):' if cfg.get('unmatched', 'keep') == 'keep' else '\nnot in the map (skipped):',
               ', '.join(rep['unmatched']))
     if 'cadmesh' in cfg['formats'] and (tris > BUDGET_TRIS or len(model['parts']) > BUDGET_PARTS):
-        heavy = sorted(model['parts'], key=lambda p: -len(p['I']))[:3]
-        print(f'\nover the showreel budget ({BUDGET_TRIS} triangles, {BUDGET_PARTS} parts): use --quality low, merge parts in the map, '
-              'skip hidden ones, or give heavy parts a coarser "deflection"/"angle" rule (docs/design/3d.md). Heaviest: '
-              + ', '.join(f'{p["name"]} {len(p["I"])}' for p in heavy))
+        nparts = len(model['parts'])
+        print('\nover the showreel budget (docs/design/3d.md):')
+        print(f'  parts      {nparts:>7,} (max {BUDGET_PARTS})' + ('  OVER' if nparts > BUDGET_PARTS else '  ok'))
+        print(f'  triangles  {tris:>7,} (max {BUDGET_TRIS:,})' + ('  OVER' if tris > BUDGET_TRIS else '  ok'))
+        if nparts > BUDGET_PARTS:
+            print(f'  too many parts: merge {nparts - BUDGET_PARTS} or more in the map (several CAD names -> one part), '
+                  'or skip hidden ones with a rule')
+        if tris > BUDGET_TRIS:
+            heavy = sorted(model['parts'], key=lambda p: -len(p['I']))[:3]
+            print('  too many triangles: use --quality low, or give heavy parts a coarser "deflection"/"angle" rule. '
+                  'Heaviest: ' + ', '.join(f'{p["name"]} {len(p["I"]):,}' for p in heavy))
     files = writers.outputs(model, cfg['formats'], cfg.get('files'))
     if dry_run:
         print(f'\ndry run: would write to {out}:', ', '.join(files))

@@ -57,7 +57,8 @@ Also replace the plain `TBD` in `eyebrow`, `description` and `og_alt` (the build
 
 ```sh
 python3 build-case.py --check        # fast: content loads, templates match
-python3 tools/build.py               # writes src/projects/ and projects/, and rebuilds the neighbors (Previous / Next)
+python3 tools/build.py               # writes src/projects/ and projects/, and rebuilds the neighbors (Previous / Next):
+                                     # git status then also shows the two neighbors' pages as changed, that is expected
 python3 tools/build.py --check       # must print ok for every page
 python3 tools/check-flags.py         # lists what is still [TBD]
 python3 check-writing.py projects/<slug>.html
@@ -80,5 +81,5 @@ git add content/ sitemap.xml src/projects/ projects/ assets/...   # plus src/ind
 
 ## Remove or rename a project
 
-- Remove: delete its slug from `content/projects.json` and its JSON file, delete `src/projects/<slug>.html` and `projects/<slug>.html`, remove the sitemap line, run `python3 tools/build.py`, then `python3 tools/scaffold/project.py <slug> --where` and clear every hit.
+- Remove: `python3 tools/new.py project <slug> --remove --dry-run`, then without `--dry-run`. It takes the slug out of `content/projects.json`, deletes the sitemap line, `content/projects/<slug>.json`, `src/projects/<slug>.html` and `projects/<slug>.html`, rebuilds (the neighbors' Previous / Next change), and prints the hand-written places that still name the project: clear each one by hand. It leaves `assets/og/case-<slug>-v1.png` in place. A scaffold run followed by `--remove` leaves git exactly as it was.
 - Rename the slug (URL change): rename the JSON file and the entry in `"order"`, rename the share image, run the build, delete the old generated pages, update the sitemap and every `--where` hit. Old links break; GitHub Pages has no redirects.

@@ -105,9 +105,9 @@
   .websell-option-index{display:none}
   .websell-option-name{font:400 var(--fs-ui-mono)/1 var(--font-mono);letter-spacing:.06em}
   .websell-stage{display:flex;flex-direction:column;align-items:center}
-  .websell-frame{width:min(70vw,280px);padding:7px;border-color:var(--paper-a18);border-radius:36px;background:#000}
+  .websell-frame{width:min(70vw,280px);padding:7px;border-color:var(--paper-a18);border-radius:var(--radius-phone);background:#000}
   .websell-bar{display:none}
-  .websell-screen{aspect-ratio:390/844;border-radius:29px}
+  .websell-screen{aspect-ratio:390/844;border-radius:var(--radius-phone-screen)}
   .websell-try span{display:none}
   .websell-under{justify-content:center}
   .websell-try-alt{display:inline-flex;align-items:center;min-height:var(--touch-target);padding:0 20px;border:1px solid var(--line-hairline);border-radius:var(--radius-pill);background:transparent;color:var(--text-display);font:400 var(--fs-ui-mono)/1 var(--font-mono);letter-spacing:var(--ls-caps);text-transform:uppercase;cursor:pointer;visibility:hidden}

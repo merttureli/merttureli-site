@@ -40,6 +40,8 @@ python3 tools/check.py              # one command that proves nothing broke
 ```
 
 `check-writing.py` must print no hits for the page you touched. `tools/check.py` must show no FAIL (WARN for open flags is fine).
+`git diff --stat` must list only what you meant to touch: for a case study, `content/projects/<slug>.json` and its two
+generated pages (`src/projects/<slug>.html`, `projects/<slug>.html`); for the home page, `src/index.html` and `index.html`.
 
 `python3 tools/build.py --help` prints the usage without building.
 
@@ -55,4 +57,4 @@ git commit -m "Copy: <what changed>"
 
 ## Same fact in many places
 
-A project's title, summary or numbers can appear on the home card, its case page, `websites.html` and Studio. See the field map in [content.md](content.md) and change every place in one commit. For contact details and the resume see [contact.md](contact.md). For page titles, descriptions and share images see [meta.md](meta.md).
+A project's title, summary or numbers can appear on the home card, its case page, `websites.html` and Studio. "What the owner's words mean" in [content.md](content.md) says which field each word is on every surface; `python3 tools/new.py project <slug> --where` lists the lines. Change every place in one commit. For contact details and the resume see [contact.md](contact.md). For page titles, descriptions and share images see [meta.md](meta.md).

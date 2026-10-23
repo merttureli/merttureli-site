@@ -18,6 +18,7 @@ defined, what to call it, and what is still a literal. Studio (`next/`) has its 
 | Change a palette color | `css/site-palette.css`, see [palette.md](../recipes/palette.md). Never edit `_ds/`. |
 | Hide something on phones | `@media (max-width: 860px) { ... }` (the site breakpoint; see Breakpoints) |
 | Find literals that should be tokens | `grep -nE -e '#[0-9a-fA-F]{3,8}\b' -e '[0-9]+px' css/<file>.css`, then check the tables below |
+| Change "the card" corner radius | there is no one card: see "Radius by component" below and change the token for the piece the owner means |
 | Prove a token swap changed nothing | `python3 tools/build.py --check`, then visual-regress on the pages that load the file (command at the end) |
 
 ## Where tokens live
@@ -74,7 +75,9 @@ Everything in `css/tokens.css` is fixed.
 | `--z-menu` | 9999 | phone menu overlay `#mt-menu` |
 | `--z-loader` | 2147483646 | `.site-loading` indicator |
 | `--fs-ui-mono` | 11px | mono UI text: browser-frame bars, index chips, "try" pills |
-| `--radius-card` | 12px | `.websell-frame`, `.charger-launch-cue` |
+| `--radius-card` | 12px | `.websell-frame`, `.charger-launch-cue` (desktop; the phone frame uses `--radius-phone`) |
+| `--radius-phone` | 36px | `.websell-frame` at phone width (`css/website-entry.css` `@media`), the frame drawn as a phone body |
+| `--radius-phone-screen` | 29px | its `.websell-screen` (`--radius-phone` minus the 7px bezel; change both together) |
 | `--color-live` | #ff5a1f | "live" dot in the home websites frame |
 | `--color-error` | #842a25 | inquiry form error text |
 | `--frame-tint` / `--frame-fade` / `--frame-swap` | .3s / .4s / .22s | browser frame (home `.websell-*` and websites `.study-*`): background change, page fade-in, swap fade |
@@ -124,10 +127,23 @@ Palettes (Card green, Slate, Warm) set the whole ramp, alphas, accent, depth, `-
 
 | Group | Tokens |
 |---|---|
-| Radius | `--radius-xs` 2, `-sm` 4, `-md` 8, `-lg` 20 (the panel curve), `-xl` 40, `-2xl` 64, `-pill` 999 (px); site: `--radius-card` 12 |
+| Radius | `--radius-xs` 2, `-sm` 4, `-md` 8, `-lg` 20 (the panel curve), `-xl` 40, `-2xl` 64, `-pill` 999 (px); site: `--radius-card` 12, `--radius-phone` 36, `--radius-phone-screen` 29 |
 | Border | `--border-hair` 1px hairline, `--border-strong` 1px strong, `--border-thick` 2px strong |
 | Shadow | `--shadow-panel` 0 24px 60px -20px ink .28, `--shadow-float` 0 40px 120px -32px ink .34; depth.css adds `--depth-shadow` on `.depth-design` |
 | Scrim | `--scrim-hero`, `--scrim-bottom-up` |
+
+### Radius by component
+
+| What the owner may call it | Element | Token | Defined in |
+|---|---|---|---|
+| browser frame, website card (home) | `.websell-frame`, desktop | `--radius-card` 12px | `css/tokens.css` |
+| phone frame (home, phone width) | `.websell-frame` + `.websell-screen` | `--radius-phone` 36px, `--radius-phone-screen` 29px | `css/tokens.css` |
+| "Explore in 3D" cue | `.charger-launch-cue` | `--radius-card` 12px | `css/tokens.css` |
+| panels, case study cards | `.depth-panel`, `cards()` panels (components.md S11) | `--radius-lg` 20px | `_ds` export (override in `css/tokens.css`, never edit `_ds/`) |
+| render stage (home work, case heroes) | `.depth-stage` | literal 14px | `css/depth.css` |
+| study frame (websites.html) | `.study-frame` | `--radius-md` 8px | `_ds` export |
+| study phone frame (websites.html, phone width) | `.study-frame` + `.study-screen` | literals 34px and 27px (not the home phone's 36/29) | `css/website-studies.css` `@media` |
+| pills, buttons | `.ds-button`, belt pills | `--radius-pill` 999px | `_ds` export |
 | Grain, blur | `--grain-url`, `--grain-opacity` .28, `--grain-opacity-strong` .5, `--blur-glass` saturate(120%) blur(14px), `--blur-heavy` |
 
 ### Motion

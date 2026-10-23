@@ -17,7 +17,7 @@ Python 3 stdlib + Node/Playwright tooling, no framework. All docs and tools: [do
 3. Voice for any new or rewritten copy: first person ("I", not "we"), past tense, specific, no hype, no editorializing, US spelling, no em or en dashes. Never read as job hunting (no "open to roles"). Run `python3 check-writing.py <file>`.
 4. IP limits: never add figures or details about HOTBOX or the bend fixture. They are never animated in the showreel.
 5. Open questions for the owner are `<mark class="flag">` flags. Nothing goes public with a flag: `python3 tools/check.py --public`.
-6. Zero visible change unless asked: prove CSS/JS/generator edits with `python3 tools/check.py --full` (visual-regress).
+6. Zero visible change unless asked: prove CSS/JS/generator edits with `python3 tools/check.py --full` (visual-regress on the site and `next/index.html`). When the visible change is the task, name the page: `--full --expect-change next/index.html`. A `visual` row that says NOT RUN proves nothing: do what it says.
 7. Playwright: `require('/opt/node22/lib/node_modules/playwright')`, never `playwright install`. Block `clarity.ms`, `bing.com`, `workers.dev`, `formspree.io` in every context. Never POST forms or send analytics.
 8. Never touch `vx/` or branch `claude/charming-pascal-wgx7a3`. Never push unless the owner says so.
 9. New pages under `next/`, `studies/`, `docs/` need `<meta name="robots" content="noindex">`.
@@ -26,17 +26,19 @@ Python 3 stdlib + Node/Playwright tooling, no framework. All docs and tools: [do
 
 | I want to | Command | Recipe |
 |---|---|---|
-| Prove nothing broke (before every commit) | `python3 tools/check.py` (`--fast` static only, `--full` + pixels) | [checks](docs/recipes/checks.md) |
+| Prove nothing broke (before every commit) | `python3 tools/check.py` (`--fast` static only, `--full` + pixels and lab pages) | [checks](docs/recipes/checks.md) |
 | Change words | edit the source, `python3 tools/build.py` if generated | [copy](docs/recipes/copy.md) |
 | Change a case study | `content/projects/<slug>.json`, then `python3 tools/build.py` | [content](docs/recipes/content.md) |
+| Know what "summary", "card image", "title", "hero image" mean | one table: field and every surface it shows on | [content: what the owner's words mean](docs/recipes/content.md#what-the-owners-words-mean) |
 | Add a project | `python3 tools/new.py project <slug> --title "T" --dry-run` | [add-project](docs/recipes/add-project.md) |
-| List or resolve owner flags | `python3 tools/check-flags.py` | [flags](docs/recipes/flags.md) |
+| Find or remove a project everywhere | `python3 tools/new.py project <slug> --where`, `--remove --dry-run` | [add-project](docs/recipes/add-project.md) |
+| List, add or resolve owner flags | `python3 tools/check-flags.py` (`--next-id <slug>` for a new id) | [flags](docs/recipes/flags.md) |
 | Make image or video sizes | `python3 tools/media.py image\|video\|poster SRC --out DIR` | [media](docs/recipes/media.md) |
 | Swap an image | `python3 tools/media.py image SRC --out <folder> --name <base> --preset <set> --force` | [images-swap](docs/recipes/images-swap.md) |
 | Show the owner a preview | `python3 tools/preview.py site\|studio --out <scratchpad dir>` | [preview](docs/recipes/preview.md) |
 | Add a page or section | `python3 tools/new.py page\|section <name>` | [new-page](docs/recipes/new-page.md) |
 | Edit the Studio | tokens in `next/css/tokens.css` | [studio-edit](docs/recipes/studio-edit.md) |
-| Add a showreel project | `python3 tools/new.py actor <key>`, later `--register` | [showreel-actor](docs/recipes/showreel-actor.md) |
+| Add a showreel project | `python3 tools/new.py actor <key>`, later `--register` (only with the owner's go: it goes live in the Studio hero) | [showreel-actor](docs/recipes/showreel-actor.md) |
 | Bring in a STEP file | `python3 tools/cad.py inspect\|import X.step` | [cad-import](docs/recipes/cad-import.md) |
 | Palette, contact, meta, tracking, release | see the recipe | [recipes index](docs/recipes/README.md) |
 

@@ -4,7 +4,8 @@ One command that proves nothing broke. Run it before every commit.
 
     python3 tools/check.py              # default: static checks + build + browser smoke (about a minute)
     python3 tools/check.py --fast       # static checks only, no browser (a few seconds)
-    python3 tools/check.py --full       # default + every case study in the smoke + visual-regress vs HEAD
+    python3 tools/check.py --full       # default + every case study and lab page in the smoke + visual-regress vs HEAD
+    python3 tools/check.py --full --expect-change next/index.html   # that page is meant to look different
     python3 tools/check.py --only links,js       # just these (any mode, visual included)
     python3 tools/check.py --skip smoke
     python3 tools/check.py --public     # open copy flags become fatal: use before going public
@@ -20,9 +21,11 @@ Checks (modes in brackets):
     robots   [fast default full]  noindex on next/ studies/ docs/, robots.txt, sitemap
     tokens   [fast default full]  CSS changed vs --base is a pure token rename (WARN if values move)
     smoke    [default full]       headless Chromium at 390+1440: console errors, failed requests
-    visual   [full]               tools/visual-regress vs --base (pixels + gates)
+                                  (and window.labReport on next/lab pages that set it)
+    visual   [full]               tools/visual-regress vs --base (pixels + gates), site pages in
+                                  both palettes and next/index.html; lists the screens that differ
 
-Exit status: 0 when nothing FAILs (WARN and SKIP are fine), 1 when a check
+Exit status: 0 when nothing FAILs (WARN and SKIP are fine; read them), 1 when a check
 FAILs, 2 on a usage error. Details for each WARN/FAIL print under the table.
 The helpers live in tools/checks/; the recipe is docs/recipes/checks.md.
 """
@@ -64,6 +67,8 @@ def parse(argv):
     p.add_argument("--base", default="HEAD", metavar="REF",
                    help="git ref for 'changed' files and the visual baseline (default HEAD)")
     p.add_argument("--pages", metavar="LIST", help="comma list of pages for smoke/visual, e.g. index.html,next/#reel-coaster")
+    p.add_argument("--expect-change", action="append", metavar="PAGE[,PAGE]",
+                   help="visual: diffs on these pages are intended (listed as CHANGED, not FAIL), e.g. next/index.html")
     p.add_argument("--port", type=int, default=0, help="port for the smoke server (default: any free port)")
     p.add_argument("--out", metavar="DIR", help="keep smoke screenshots and the visual report here")
     p.add_argument("--json", metavar="FILE", help="also write the results as JSON")
@@ -96,7 +101,7 @@ def main(argv=None):
         a.out = os.path.abspath(a.out)
         os.makedirs(a.out, exist_ok=True)
     ctx = Context(root=ROOT, mode=mode, public=a.public, base=a.base, port=a.port, verbose=a.verbose,
-                  out=a.out, pages=names([a.pages]) if a.pages else None)
+                  out=a.out, pages=names([a.pages]) if a.pages else None, expect=names(a.expect_change))
     color = sys.stdout.isatty() and not a.no_color and os.environ.get("NO_COLOR") is None
 
     print("tools/check.py: %s mode, %d checks: %s" % (mode if not only else "--only", len(selected),
@@ -149,8 +154,16 @@ def main(argv=None):
                 {"name": c.NAME, "status": results[c.NAME].status, "summary": results[c.NAME].summary,
                  "seconds": round(results[c.NAME].seconds, 1), "details": results[c.NAME].details}
                 for c in selected]}, fh, indent=2)
+    vis = results.get("visual")
+    if vis and vis.status in (WARN, SKIP) and vis.summary.startswith("NOT RUN"):
+        print("\nNOTE: visual did not run, so this run does NOT prove the pages look the same. "
+              "Fix: cd tools/visual-regress && npm install")
     if counts[FAIL]:
-        print("\nFAIL: fix the items above, then run python3 tools/check.py again.")
+        if vis and vis.status == FAIL and not any(results[n].status == FAIL for n in results if n != "visual"):
+            print("\nFAIL: screens differ (listed under == visual). Open the diff images; if every change is "
+                  "intended, rerun with --expect-change PAGE[,PAGE].")
+        else:
+            print("\nFAIL: fix the items above, then run python3 tools/check.py again.")
         return 1
     return 0
 

@@ -6,8 +6,10 @@ WARN  failed requests to other hosts (offline fonts, CDNs)
 INFO  external hosts contacted, attempts to reach the blocked analytics hosts
 
 The repo is served from a thread in this process on --port (default: a free
-port). Pages: SMOKE_PAGES below (one of each kind of page, Studio with
-#reel-coaster); --full adds every case study and plain next/. --pages overrides.
+port). Pages: SMOKE_PAGES below (one of each kind of page, Studio at rest and
+with #reel-coaster); --full adds every case study and every next/lab/*.html.
+--pages overrides. A lab page that sets window.labReport (the actor lab
+template) FAILs unless labReport.ok. The page list prints with -v.
 """
 import functools
 import glob
@@ -23,10 +25,10 @@ NAME = "smoke"
 TITLE = "Playwright smoke at 390 + 1440 (console, requests)"
 MODES = {"default", "full"}
 
-# default run: one of each kind of page. --full adds every case study and plain Studio.
+# default run: one of each kind of page, Studio at rest and with the reel. --full adds
+# every case study and every showreel lab page.
 SMOKE_PAGES = ["index.html", "websites.html", "projects/charger.html", "privacy.html", "404.html", "hi/",
-               "next/#reel-coaster"]
-FULL_EXTRA = ["next/"]
+               "next/", "next/#reel-coaster"]
 WIDTHS = "390,1440"
 
 
@@ -58,8 +60,8 @@ def pages(ctx):
         return ctx.pages
     if ctx.mode != "full":
         return SMOKE_PAGES
-    projects = sorted(os.path.relpath(p, ctx.root) for p in glob.glob(ctx.path("projects/*.html")))
-    return list(dict.fromkeys(SMOKE_PAGES[:2] + projects + SMOKE_PAGES[3:] + FULL_EXTRA))
+    rel = lambda pattern: sorted(os.path.relpath(p, ctx.root).replace(os.sep, "/") for p in glob.glob(ctx.path(pattern)))
+    return list(dict.fromkeys(SMOKE_PAGES[:2] + rel("projects/*.html") + SMOKE_PAGES[3:] + rel("next/lab/*.html")))
 
 
 def run(ctx):
@@ -70,8 +72,9 @@ def run(ctx):
     except OSError as e:
         return Result(FAIL, "cannot serve on port %s: %s (pass --port N)" % (ctx.port, e))
     base = "http://127.0.0.1:%d/" % httpd.server_address[1]
+    plist = pages(ctx)
     cmd = ["node", os.path.join(os.path.dirname(os.path.abspath(__file__)), "smoke.js"),
-           "--base", base, "--pages", ",".join(pages(ctx)), "--widths", WIDTHS]
+           "--base", base, "--pages", ",".join(plist), "--widths", WIDTHS]
     if ctx.out:
         cmd += ["--shots", os.path.join(ctx.out, "smoke")]
     try:
@@ -97,6 +100,8 @@ def run(ctx):
         page, w = r["page"], r["width"]
         for e in r["pageErrors"]:
             add(errors, page, w, "page error: " + e)
+        if r.get("lab") and not r["lab"].get("ok"):
+            add(errors, page, w, "labReport not ok: " + (r["lab"].get("why") or "see the lab page"))
         for e in r["consoleErrors"]:
             add(errors, page, w, "console: " + e)
         for f in r["failed"]:
@@ -110,13 +115,17 @@ def run(ctx):
     # one line per problem, with the widths it showed at
     errors = ["%s @%s %s" % (p, ",".join(ws), t) for (p, t), ws in errors.items()]
     warns = ["%s @%s %s" % (p, ",".join(ws), t) for (p, t), ws in warns.items()]
-    info = []
+    info = ["pages (%d, at %s): %s" % (len(plist), WIDTHS, ", ".join(plist))]
+    labs = [r for r in data["results"] if r.get("lab")]
+    good = sorted(set(r["page"] for r in labs if r["lab"].get("ok")))
+    if good:
+        info.append("lab reports ok: " + ", ".join(good))
     if external:
         info.append("external hosts: " + "; ".join("%s (%s)" % (h, ", ".join(sorted(p))) for h, p in sorted(external.items())))
     if blocked:
         info.append("blocked analytics attempts: " + "; ".join("%s (%s)" % (h, ", ".join(sorted(p))) for h, p in sorted(blocked.items())))
     slow = max(data["results"], key=lambda r: r["ms"]) if data["results"] else None
-    summary = "%d loads" % len(data["results"]) + (", slowest %s @%d %.1fs" % (slow["page"], slow["width"], slow["ms"] / 1000.0) if slow else "")
+    summary = "%d pages x 2 widths = %d loads" % (len(plist), len(data["results"])) + (", slowest %s @%d %.1fs" % (slow["page"], slow["width"], slow["ms"] / 1000.0) if slow else "")
     if errors:
         return Result(FAIL, "%d problems (%s)" % (len(errors), summary), errors + warns + info)
     if warns:

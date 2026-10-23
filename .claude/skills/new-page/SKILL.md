@@ -12,7 +12,7 @@ Page:
 2. It starts `noindex` with flagged placeholder copy. Public page: pass `--index` at creation or later delete the `robots noindex` line, add a `<url>` to `sitemap.xml`, give it an `og:image` (`docs/recipes/meta.md`).
 
 Section:
-1. `python3 tools/new.py section <name> --site studio|page|home --number 07 --label "Label"`. It prints the snippet; paste it into `next/index.html`, a websites-style page, or `src/index.html` (then `python3 tools/build.py`).
+1. `python3 tools/new.py section <name> --site studio|page|home --label "Label"` (`--number` defaults to the next free one; `home` needs `--number`). It prints the snippet; paste it into `next/index.html` after the last numbered section and before contact (placement and numbering: new-page.md "Where it goes and its number"), a websites-style page, or `src/index.html` (then `python3 tools/build.py`). A component body: paste its snippet from components.md into `NAME__body`.
 2. Studio CSS stub: paste it at the end of `next/css/studio.css`, using tokens from `next/css/tokens.css` (no new literals).
 
 Then:

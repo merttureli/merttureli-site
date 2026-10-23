@@ -8,7 +8,8 @@
  * Normally run through `python3 tools/check.py --only smoke`, which serves the
  * repo and passes --base. Prints one JSON object on stdout:
  *   { results: [{ page, width, consoleErrors, pageErrors, failed, httpErrors,
- *                 external, blocked, ms }] }
+ *                 external, blocked, ms, lab? }] }
+ * lab = { ok, why } for next/lab pages that publish window.labReport.
  *
  * Every context blocks clarity.ms, bing.com, workers.dev and formspree.io, so no
  * analytics or form post ever leaves the machine. Attempts are still counted.
@@ -56,15 +57,18 @@ async function load(browser, base, page, width, opts) {
     r.consoleErrors.push(m.text().slice(0, 300) + (loc.url ? "  @ " + loc.url.replace(origin, "") + ":" + (loc.lineNumber + 1) : ""));
   });
   p.on("pageerror", e => r.pageErrors.push(String(e && e.stack || e).split("\n").slice(0, 3).join(" | ").slice(0, 400)));
-  const subframe = req => { try { return req.frame() !== p.mainFrame(); } catch (e) { return false; } };
+  // a frame that is gone (removed iframe) can make req.frame() throw: that is a subframe too
+  const subframe = req => { try { return req.frame() !== p.mainFrame(); } catch (e) { return true; } };
   p.on("requestfailed", req => {
     const u = req.url();
     if (blockedUrl(u)) return;
     const err = (req.failure() || {}).errorText || "failed";
     // media elements cancel range requests by design when they switch source or pause
     if (/ERR_ABORTED/.test(err) && ["media", "other"].includes(req.resourceType())) return;
-    // a lazy iframe removed when its section scrolls away (js/home-websites.js) cancels its own load
-    if (/ERR_ABORTED/.test(err) && req.resourceType() === "document" && subframe(req)) return;
+    // ERR_ABORTED is a cancel, never a missing file (that is an HTTP 404, still caught below). In a
+    // subframe it happens by design: the lazy study iframe is removed on scroll-away
+    // (js/home-websites.js) or pointed at another study, cancelling whatever it was still fetching
+    if (/ERR_ABORTED/.test(err) && subframe(req)) return;
     r.failed.push({ url: u.replace(origin, ""), err, type: req.resourceType(), local: u.startsWith(origin) });
   });
   p.on("response", res => {
@@ -89,6 +93,22 @@ async function load(browser, base, page, width, opts) {
       scrollTo(0, 0);
     });
     await p.waitForTimeout(400);
+    // showreel lab pages made from templates/actor/lab.html.tmpl publish window.labReport
+    // when their interface checks finish; wait for it and record the verdict
+    if (/(^|\/)lab\//.test(page) && await p.evaluate(() => /\blabReport\b/.test(document.documentElement.innerHTML))) {
+      // poll: stop early when the page throws (the report will never come)
+      const until = Date.now() + 90000;
+      let ready = false;
+      while (Date.now() < until && !(ready = await p.evaluate(() => !!window.labReport))) {
+        if (r.pageErrors.length) break;
+        await p.waitForTimeout(250);
+      }
+      r.lab = ready ? await p.evaluate(() => {
+        const rep = window.labReport;
+        const bad = (rep.checks || []).filter(c => !c.ok).map(c => c.name + (c.note ? " (" + c.note + ")" : ""));
+        return { ok: !!rep.ok, why: bad.length ? bad.length + " failed: " + bad.join("; ").slice(0, 300) : (rep.errors || []).join("; ").slice(0, 300) };
+      }) : { ok: false, why: r.pageErrors.length ? "the lab threw before its report (page error above)" : "window.labReport never appeared (90 s)" };
+    }
     if (opts.shots) {
       const name = page.replace(/[^\w.-]+/g, "_") + "--" + width + ".png";
       await p.screenshot({ path: require("path").join(opts.shots, name) });

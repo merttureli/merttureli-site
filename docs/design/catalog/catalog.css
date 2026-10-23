@@ -1,6 +1,10 @@
 /* Component catalog chrome (docs/design/catalog.html).
    Only the page around the previews. Every preview renders inside its own
-   iframe with the real site CSS, so nothing here can leak into a component. */
+   iframe with the real site CSS, so nothing here can leak into a component.
+   The accent (--signal, --signal-ink) comes from the Studio tokens, so changing
+   it in next/css/tokens.css changes the catalog too. The :root below overrides
+   the other token names it shares with the Studio for the catalog chrome. */
+@import url(../../../next/css/tokens.css);
 @font-face { font-family: Archivo; src: url(../../../studies/shared/fonts/archivo-var.woff2) format('woff2'); font-weight: 100 900; font-stretch: 62% 125%; font-display: swap; }
 @font-face { font-family: 'Martian Mono'; src: url(../../../studies/shared/fonts/martian-mono-var.woff2) format('woff2'); font-weight: 100 800; font-stretch: 75% 112.5%; font-display: swap; }
 
@@ -13,8 +17,6 @@
   --muted: #6a6e75;
   --line: rgba(18, 19, 21, .1);
   --line-2: rgba(18, 19, 21, .2);
-  --signal: #ff4f00;
-  --signal-ink: #b83700;
   --code: #17181b;
   --code-2: #222327;
   --code-ink: #e8e8e4;
@@ -183,6 +185,25 @@ code, kbd { font-family: var(--mono); font-size: .86em; font-stretch: 87.5%; }
 .foot a { color: var(--ink-2); }
 
 /* ------------------------------------------------------------ tablet */
+/* ------------------------------------------------------------ find by task */
+.find { padding: clamp(28px, 4vw, 56px) var(--gut); border-bottom: 1px solid var(--line); }
+.find__label { color: var(--muted); }
+.find__title { margin-top: 8px; font-weight: 720; font-stretch: 112%; font-size: clamp(24px, 2.6vw, 38px); line-height: .95; letter-spacing: -.03em; text-transform: uppercase; }
+.find__scroll { margin-top: clamp(16px, 2vw, 24px); overflow-x: auto; }
+.find__table { width: 100%; min-width: 620px; border-collapse: collapse; font-size: 14px; line-height: 1.45; }
+.find__table th { text-align: left; font: 400 10px/1.9 var(--mono); font-stretch: 87.5%; letter-spacing: .03em; text-transform: uppercase; color: var(--muted); padding: 0 16px 8px 0; border-bottom: 1px solid var(--ink); }
+.find__table td { padding: 9px 16px 9px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.find__table td:first-child { font-weight: 560; }
+.find__table a { font: 400 11px/1.6 var(--mono); font-stretch: 87.5%; color: var(--signal-ink); margin-right: 6px; }
+.find__note { margin-top: 12px; color: var(--muted); }
+@media (max-width: 760px) {
+  .find__table { min-width: 0; }
+  .find__table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .find__table tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .find__table td { display: block; padding: 0; border: 0; }
+  .find__table td:last-child { grid-column: 1 / -1; color: var(--ink-2); }
+}
+
 @media (max-width: 1180px) {
   .cat { grid-template-columns: 1fr; }
   .side { display: none; }

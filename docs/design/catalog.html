@@ -62,6 +62,29 @@
   <a class="part" href="#studio"><span class="mono">Part 2 / merttureli.com/next/</span><span class="part__t">Studio</span><span class="mono">The next design, one page</span><span class="part__n mono" data-count="studio"></span></a>
 </nav>
 
+<!-- Find by what you want to change. Keep in step with "Find by what you want to change" in components.md. -->
+<section class="find" id="find" aria-labelledby="find-title">
+  <p class="mono find__label">Index / By task</p>
+  <h2 class="find__title" id="find-title">Find by what you want to change</h2>
+  <div class="find__scroll">
+  <table class="find__table">
+    <thead><tr><th>I want to change</th><th>Look at</th><th>Edit here</th></tr></thead>
+    <tbody>
+      <tr><td>Studio accent (the orange)</td><td><a href="#studio-round">T06</a> <a href="#studio-marquee">T17</a></td><td><code>--signal</code>, <code>--signal-ink</code> in <code>next/css/tokens.css</code></td></tr>
+      <tr><td>Site colors</td><td>Palette buttons, <a href="#site">Part 1</a></td><td><code>css/site-palette.css</code> (recipe: palette.md)</td></tr>
+      <tr><td>Site corner radius</td><td><a href="#site-lists">S11</a> (panels)</td><td>Frames and cues <code>--radius-card</code>, the phone frame <code>--radius-phone</code> in <code>css/tokens.css</code>; panels <code>--radius-lg</code> (site-tokens.md, "Radius by component")</td></tr>
+      <tr><td>Site nav links</td><td><a href="#site-header">S01</a></td><td><code>nav</code> in <code>src/index.html</code>; case pages <code>NAV</code> in <code>build-case.py</code></td></tr>
+      <tr><td>Studio nav links</td><td><a href="#studio-top">T01</a> <a href="#studio-menu">T02</a></td><td><code>.top__nav</code> and <code>.menu</code> in <code>next/index.html</code></td></tr>
+      <tr><td>A Studio project (text, specs, image)</td><td><a href="#studio-project">T11</a></td><td><code>&lt;li class="project"&gt;</code> and its stage <code>&lt;img data-key&gt;</code> in <code>next/index.html</code></td></tr>
+      <tr><td>Case study figures</td><td><a href="#site-stats">S10</a></td><td><code>"kind": "stats"</code> in <code>content/projects/&lt;slug&gt;.json</code>, then build</td></tr>
+      <tr><td>Add a Studio section with a component</td><td><a href="#studio-rule">T03</a> + <a href="#studio-chips">T13</a> <a href="#studio-stats">T09</a> <a href="#studio-steps">T15</a></td><td><code>python3 tools/new.py section NAME</code>, paste the snippet into <code>NAME__body</code></td></tr>
+      <tr><td>Mark a line for the owner</td><td><a href="#site-flag">S15</a></td><td><code>python3 tools/check-flags.py --next-id SLUG</code> (recipe: flags.md)</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="mono find__note">Ids work as links too: catalog.html#T13 opens the Toolkit list.</p>
+</section>
+
 <!-- ================================================================ SITE -->
 <section class="sect sect--site" id="site" data-part="site" data-title="Site" data-sub="merttureli.com">
   <div class="sect__head">

@@ -13,10 +13,34 @@ Case study pages are built from data in `content/`. Every other place that names
 | Add a new case study | `python3 tools/new.py project <slug> --title "Title"` | see [add-project.md](add-project.md) |
 | Change the home page card for a project | `src/index.html` (table below) | `python3 tools/build.py` |
 | Change the Studio work list or drift words | `next/index.html` (table below) | nothing to build |
-| Find every place a project is named | `python3 tools/scaffold/project.py <slug> --where` | |
-| Prove nothing else changed | | `python3 tools/build.py --check` |
+| Find every place a project is named | `python3 tools/new.py project <slug> --where` | |
+| Remove a case study | `python3 tools/new.py project <slug> --remove --dry-run` | see [add-project.md](add-project.md) |
+| Prove nothing else changed | | `python3 tools/build.py --check`, then `git diff --stat` lists only the JSON and its two generated pages (`src/projects/<slug>.html`, `projects/<slug>.html`) |
 
 Never edit `projects/*.html`, `src/projects/*.html` or the root `index.html`: they are generated.
+
+## What the owner's words mean
+
+The owner names things by what they see. Each row is the exact field or file, and every surface where that thing shows.
+The three surfaces are separate copy: changing one never changes the others. Ask which one when the request does not say;
+if it says "everywhere", change each surface listed.
+
+| The owner says | Case page (`projects/<slug>.html`) | Home card (`src/index.html`, `<section id="work">`) | Studio card (`next/index.html`, `<li class="project">`) |
+|---|---|---|---|
+| title, name | `title` (h1, also `<title>`); short name on other cases' Previous / Next: `nav_title` | `DisplayHeading` in the project's `<article>` | `.project__title` and `data-name` (the big ghost word) on the `<li>` |
+| summary, one-line summary, tagline, intro | `lede` (the paragraph under the title) | the `<p>` in the `<article>` (Robo-Catcher has two: summary, then result) | `.project__body` |
+| search or share blurb, description | `description` (meta and `og:description`, never visible on the page) | (home page has its own `<meta name="description">` in `src/index.html` head) | none |
+| label above the title, eyebrow, role line | `eyebrow` | the two `Meta` lines (discipline, then year / team) | `.label` above `.project__title` (`02 / Mechanism + firmware / Senior capstone, 2025`) |
+| numbers, metrics, results, stats | `stats` section (`"kind": "stats"`) and `brief` rows | inside the card's `<p>` text; CHARGER: `chargerSpecs` rows | `<dl class="specs">` (three rows) |
+| hero image, hero video, top image | `clip` (video set in `assets/motion/`) or `hero_image` (still); all five cases use `clip` today | the `<video>` in the card (`data-poster` is its still) | none (the Studio hero is the 3D showreel) |
+| card image, thumbnail, cover image | none (the case page has no card) | the card's `<video>` and its `data-poster` still; Robo-Catcher also has two `MediaFrame` photos under it | `.project__media` `<img>` in the `<li>` AND the stage `<img data-key="...">` near the top of the work list (same file twice: change both) |
+| photos, gallery, frames | `frames` in a text section; full-width image: `"kind": "bleed"` | the `MediaFrame` photos (Robo-Catcher only) | none |
+| caption | `caption` on a frame, `hero_caption` | `caption` on a `MediaFrame`, `Caption` under the video | `data-tag` on the `<li>` (stage caption) |
+| share image, link preview picture | `assets/og/case-<slug>-v1.png` (see [images-swap.md](images-swap.md) route D) | `cover` share image in `src/index.html` head | none |
+| order | `"order"` in `content/projects.json` (Previous / Next chain) | order of the `<article>`s and each `Meta index="0N"` | order of the `<li>`s and the `NN /` in each `.label` |
+| link, button | `walkthrough`; links inside rich text | the `Button` `href` at the end of the `<article>` | `.project__links` |
+
+Studio card image rule: the stage `<img data-key="robo">` must keep the same `data-key` as the `<li data-project="robo">`.
 
 ## How the build reads content
 
@@ -34,7 +58,7 @@ projects/<slug>.html             the served page (generated)
 - `python3 build-case.py --check` diffs the templates only (fast, no browser). `python3 tools/build.py --check` diffs everything.
 - Previous / Next come from `"order"`: the first case has no Previous button, the last case's Next loops back to the first.
 - A content error (bad JSON, unknown or missing field, a file not listed in `"order"`) stops the build with exit 2 and names the file and field. A missing asset or a leftover `TBD` in a plain text field prints a warning.
-- `python3 tools/scaffold/project.py --format` rewrites `content/*.json` in the house layout (2-space indent, short objects on one line). The data does not change.
+- `python3 tools/new.py project --format` rewrites `content/*.json` in the house layout (2-space indent, short objects on one line). The data does not change.
 
 ## Case fields (`content/projects/<slug>.json`)
 
@@ -107,7 +131,7 @@ A section without `kind` is a text section. Light text sections in a row share o
 
 ## Every place a project's facts appear
 
-Line numbers are as of commit 4c19af5; search for the anchor text if they moved. `python3 tools/scaffold/project.py <slug> --where` prints the live list.
+Line numbers are as of commit 4c19af5; search for the anchor text if they moved. `python3 tools/new.py project <slug> --where` prints the live list.
 
 | Surface | Fact | File:line | Generated | How to edit |
 |---|---|---|---|---|

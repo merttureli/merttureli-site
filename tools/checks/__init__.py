@@ -41,7 +41,7 @@ class Context(object):
     """What check.py hands every check."""
 
     def __init__(self, root=ROOT, mode="default", public=False, base="HEAD", port=0,
-                 verbose=False, out=None, pages=None):
+                 verbose=False, out=None, pages=None, expect=None):
         self.root = root
         self.mode = mode
         self.public = public
@@ -50,6 +50,7 @@ class Context(object):
         self.verbose = verbose
         self.out = out
         self.pages = pages
+        self.expect = expect or []   # pages whose visual diffs are intended (--expect-change)
         self._files = None
         self._ignored = None
 

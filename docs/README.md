@@ -22,7 +22,7 @@ Full list with skills: [recipes/README.md](recipes/README.md).
 |---|---|
 | Change words | [copy.md](recipes/copy.md) |
 | Open owner questions (flags) | [flags.md](recipes/flags.md) |
-| Case study facts, where a project appears | [content.md](recipes/content.md) |
+| Case study facts, where a project appears, what "summary" or "card image" means | [content.md](recipes/content.md) |
 | Add a project | [add-project.md](recipes/add-project.md) |
 | Image and video sizes | [media.md](recipes/media.md) |
 | Replace an image | [images-swap.md](recipes/images-swap.md) |
@@ -44,12 +44,12 @@ Every Python tool takes `--help` and works from any folder.
 
 | Command | Does |
 |---|---|
-| `python3 tools/check.py [--fast\|--full\|--public] [--only NAME]` | one command that proves nothing broke: build, writing, flags, links, js, json, robots, tokens, smoke, visual |
+| `python3 tools/check.py [--fast\|--full\|--public] [--only NAME] [--expect-change PAGE]` | one command that proves nothing broke: build, writing, flags, links, js, json, robots, tokens, smoke, visual |
 | `python3 tools/build.py [--check\|--serve PORT]` | rebuild `index.html` and `projects/*.html` from `src/` and `content/`; `--check` diffs without writing |
 | `python3 build-case.py --check` | fast content check of `content/projects/*.json` (no browser) |
 | `python3 check-writing.py [file.html ...]` | house writing rules on copy (default: the public pages) |
-| `python3 tools/check-flags.py` | list open `<mark class="flag">` owner questions on every served page; exit 1 while any remain |
-| `python3 tools/new.py actor\|page\|section\|project <name> [--dry-run]` | scaffolds from `templates/`; `project --where` finds a project's hand-written mentions |
+| `python3 tools/check-flags.py [--next-id SLUG]` | list open `<mark class="flag">` owner questions on every served page (exit 1 while any remain); `--next-id` prints the next free id |
+| `python3 tools/new.py actor\|page\|section\|project <name> [--dry-run]` | scaffolds from `templates/`; `python3 tools/new.py project <slug> --where` finds a project's hand-written mentions, `--remove` undoes a project |
 | `python3 tools/media.py image\|video\|poster\|snippet\|info\|audit` | web derivatives (webp sets, webm/mp4, posters) and the markup to paste; `audit` lists oversized or missing files |
 | `python3 tools/preview.py site\|studio --out DIR [--smoke]` | artifact-ready copy for owner review, with the publish plan |
 | `python3 tools/cad.py setup\|inspect\|import\|view\|shot\|loader` | STEP assembly -> cadmesh, glb, explorer and hero files, keeping part names |
