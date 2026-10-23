@@ -109,6 +109,7 @@ a.tile__link:focus-visible .tile__go { transform: rotate(-45deg); background: va
 .album__notes { grid-column: span 6; grid-row: span 2; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: var(--bento-gap); }
 .note { display: flex; flex-direction: column; justify-content: space-between; gap: 14px; padding: clamp(18px, 1.8vw, 26px); border-radius: var(--radius-tile-s); background: var(--tile); box-shadow: var(--shadow-tile); }
 .note dd { font-size: var(--text-s); line-height: 1.45; color: var(--ink-soft); }
+.beyond2__more { display: flex; justify-content: center; margin-top: var(--space-40-70); }
 
 /* ---------------------------------------- websites pitch: inset dark card */
 .web { margin: 0 clamp(8px, 1vw, 16px); border-radius: calc(var(--radius-tile) + 8px); }

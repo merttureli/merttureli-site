@@ -30,10 +30,10 @@ defined, what to call it, and what is still a literal. Studio (`next/`) has its 
 | Site tokens | `css/tokens.css` | the site's own names (table below) | Yes, new names only |
 | Palettes | `css/site-palette.css` | per-theme ink ramp, alpha steps, accent, depth, smoke, corridor; Original contrast fix | Yes |
 | Depth surfaces | `css/depth.css` `:root` | `--depth-stage-hi/mid/lo`, `--depth-panel-a/b` (palettes retint them) | Yes |
-| Stand-alone pages | `css/photography-lab.css`, `404.html` and `hi/index.html` inline `<style>` | their own small palettes (below) | Yes, in place |
+| Stand-alone pages | `css/photography-lab.css` (the live home corridor, in its shadow root), `404.html` and `hi/index.html` inline `<style>` | their own small palettes (below) | Yes, in place |
 
 `css/tokens.css` is pulled in by `@import url("tokens.css")` at the top of `css/fonts.css`, because `css/fonts.css`
-is the one stylesheet every page links (home, case studies, websites, privacy, 404, hi, photography lab; the
+is the one stylesheet every page links (home, case studies, websites, privacy, 404, hi; the
 src templates reach it through `_ds/.../tokens/fonts.css`). Cost: one small chained request.
 
 ### Which page loads what
@@ -44,10 +44,9 @@ src templates reach it through `_ds/.../tokens/fonts.css`). Cost: one small chai
 | `projects/*.html` (from `build-case.py`) | all | yes | interaction-polish, mobile, depth, site-palette, static-interactions |
 | `websites.html` | all | yes | interaction-polish, websites, website-studies, site-palette |
 | `privacy.html` | all but motion | yes | none (inline styles) |
-| `photography-lab.html` | none | yes | photography-lab |
 | `404.html`, `hi/index.html` | none | yes | inline `<style>` only |
 
-So a `_ds` token (`--space-*`, `--fs-*`, ...) works in every file above except `photography-lab.css`, 404 and hi.
+So a `_ds` token (`--space-*`, `--fs-*`, ...) works in every file above except `photography-lab.css` (home corridor), 404 and hi.
 A `css/tokens.css` token works everywhere.
 
 ## Safe and scoped tokens
@@ -168,7 +167,7 @@ Custom properties do not work inside `@media`, so these are names for the docs. 
 | studies picker | `max-width: 1100px`, `900px` | website-studies | |
 | wide hero | `min-width: 1600px` | websites | |
 | phone video | `max-width: 720px` | | `js/media-playback.js` |
-| photography | `max-width: 650px` | photography-lab | `js/photography-lab.js`, `js/photography-gallery.js` |
+| photography | `max-width: 650px` | photography-lab | `js/photography-gallery.js` |
 | small phone | `max-width: 360px` | `hi/index.html` | |
 | pointer | `(hover: hover) and (pointer: fine)`, `(hover: hover)` | depth, rocket, website-entry, website-studies | `js/rocket-flight.js` |
 | motion | `prefers-reduced-motion: reduce` plus `html[data-motion="off"]` | most files | see [motion.md](motion.md) |
@@ -177,7 +176,7 @@ Custom properties do not work inside `@media`, so these are names for the docs. 
 
 | Page | Tokens | Why not shared |
 |---|---|---|
-| `photography-lab.html` (`css/photography-lab.css`) | `--bg` #0a0a0a, `--paper` #eeeae4, `--muted` #a39f99, `--line` #ffffff26, `--accent` #c67650 | its own dark warm look, no `_ds`; same values feed the corridor fallbacks in `js/photography-loader.js` |
+| home corridor (`css/photography-lab.css`) | `--bg` #0a0a0a, `--paper` #eeeae4, `--muted` #a39f99, `--line` #ffffff26, `--accent` #c67650 | its own dark warm look, no `_ds`; same values feed the corridor fallbacks in `js/photography-loader.js` |
 | `404.html` | `--ink` #0A0A0A, `--paper` #FFF, `--p90/p70/p45/p14` paper alphas, `--body/--display/--mono` stacks, `--ease` = `--ease-out` | must render with nothing but `/css/fonts.css`, from any path |
 | `hi/index.html` | `--bg` #1c2520, `--ink` #e4e8dc, `--quiet` #b9c3b3, `--line` #53604f | the business-card page, in the Card green palette values |
 
@@ -233,6 +232,6 @@ node tools/visual-regress/visual-regress.js --baseline "$B" --candidate . --out 
   --widths 390,1440 --palettes original,slate
 ```
 
-Add `photography-lab.html` with `--mask .corridor` if `css/fonts.css` or `css/tokens.css` changed (its 3D
-corridor moves between shots). The home websites frame and websites.html studies load live iframes; a differing
+Mask `.corridor` on `index.html` if `css/photography-lab.css` changed (its 3D corridor moves between shots;
+`photography-lab.html` is now a redirect stub). The home websites frame and websites.html studies load live iframes; a differing
 shot there is usually the iframe still loading, so rerun that page alone before trusting it.

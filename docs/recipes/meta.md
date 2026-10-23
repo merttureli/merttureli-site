@@ -8,7 +8,8 @@
 | Case studies | `content/projects/<slug>.json` (`title`, optional `seo_title`, `description`, `og_alt`); the head template is in `build-case.py`. Then `python3 tools/build.py` | same, `og:type` article, image `assets/og/case-<slug>-v1.png` |
 | `websites.html` | the file head | same as home |
 | `hi/index.html` | the file head | same, plus `noindex` |
-| `privacy.html`, `404.html`, `photography-lab.html` | the file head | title, `noindex` |
+| `privacy.html`, `404.html` | the file head | title, `noindex` |
+| `photography-lab.html`, `photography-gallery.html` | redirect stubs to the Studio Beyond page (`next/beyond.html`) | `noindex`, canonical, meta refresh |
 | Studio `next/index.html` | the file head | title, description, `noindex` |
 
 A case page's `<title>` is `seo_title` if set, else `title`, plus ` · Mert Tureli`. The same `description` feeds `<meta name="description">` and `og:description`.
@@ -29,7 +30,7 @@ A case page's `<title>` is `seo_title` if set, else `title`, plus ` · Mert Ture
 |---|---|---|
 | Public page list | `sitemap.xml` | One `<url>` per indexable page. Bump `<lastmod>` when a page's content changes, at release ([release.md](release.md)). |
 | Crawl rules | `robots.txt` | `next/`, `studies/`, `src/`, `tools/`, `cards/` stay `Disallow`ed. |
-| Per page | `<meta name="robots" content="noindex">` | Every page not in the sitemap: `privacy`, `404`, `hi/`, `photography-lab`, Studio, studies. |
+| Per page | `<meta name="robots" content="noindex">` | Every page not in the sitemap: `privacy`, `404`, `hi/`, the photography redirect stubs, Studio, studies. |
 | Preview hosts | `_headers` | `noindex` for Cloudflare `*.pages.dev` previews. GitHub Pages ignores it. |
 
 A new public page needs: a `<url>` in `sitemap.xml`, a canonical link, an `og:image`, and no `noindex`. A new private page needs `noindex` and no sitemap entry. `python3 tools/new.py page <name>` writes the head for you, `noindex` by default; add `--index` for a public page ([new-page.md](new-page.md)).

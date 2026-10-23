@@ -12,6 +12,7 @@ From the repo history (136 commits to Oct 2026, by subject): handoff and merge c
 | Answer, list or add an open question for the owner | [flags.md](flags.md) | `resolve-flags` |
 | Replace a photo, render, poster, clip or share image | [images-swap.md](images-swap.md) | `images` |
 | Make web sizes of a new image or video | [media.md](media.md) | `images` |
+| Add a photo to the Studio Beyond page | [beyond-photos.md](beyond-photos.md) | `images` |
 | Change a project's facts everywhere | [content.md](content.md) | `add-project` |
 | Add or remove a project or case study | [add-project.md](add-project.md) | `add-project` |
 | Find which field "summary", "card image", "title" means | [content.md](content.md#what-the-owners-words-mean) | |
