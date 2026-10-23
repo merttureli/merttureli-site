@@ -23,6 +23,7 @@ From the repo history (136 commits to Oct 2026, by subject): handoff and merge c
 | Tweak or add a color palette | [palette.md](palette.md) | `palette` |
 | Edit the Studio page (`next/`) | [studio-edit.md](studio-edit.md) | `edit-copy` |
 | Add a project to the Studio showreel | [showreel-actor.md](showreel-actor.md) | `new-actor` |
+| Re-render the Studio home's product tile loops | [tile-loops.md](tile-loops.md) | `images` |
 | Add a page or section | [new-page.md](new-page.md) | `new-page` |
 | Bring a STEP file into 3D | [cad-import.md](cad-import.md) | `import-cad` |
 | Add a tracked event, keep the privacy page true | [tracking.md](tracking.md) | |

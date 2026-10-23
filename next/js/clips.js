@@ -5,6 +5,7 @@
 //          plays while most of it is on screen.
 // "view":  plays while on screen. A [data-clip-toggle] button (aria-controls = video id) pauses it.
 // Reduced motion or Save-Data: nothing loads, the poster stays (toggles stay hidden).
+// Each video gets .is-live once it has a frame playing (the home's product stages fade it in over their poster <img>).
 (() => {
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const saveData = navigator.connection && navigator.connection.saveData;
@@ -41,6 +42,7 @@
     const mode = v.dataset.clip || 'view';
     state.set(v, { mode, loaded: false, visible: false, hovered: false, userPaused: false, need: mode === 'hover' ? 0.6 : 0.25 });
     io.observe(v);
+    v.addEventListener('playing', () => v.classList.add('is-live'), { once: true });
     if (mode === 'hover' && fine) {
       const tile = v.closest('.tile') || v.parentElement;
       const on = () => { state.get(v).hovered = true; sync(v); };
