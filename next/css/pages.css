@@ -27,6 +27,9 @@ ol, ul { list-style: none; }
 /* ---------------------------------------------- shared (studio.css) */
 .wrap { width: 100%; max-width: var(--wrap-max); margin: 0 auto; padding: 0 var(--gutter); }
 .label { font-family: var(--mono); font-size: var(--text-mono-m); line-height: 1.5; font-weight: 400; font-stretch: var(--mono-stretch); letter-spacing: var(--mono-tracking); text-transform: uppercase; color: var(--muted); }
+/* .co: a company name in italic serif, the one approved exception (docs/design/studio.md) */
+.co { font-family: var(--serif); font-style: italic; font-weight: 500; font-stretch: normal; text-transform: none; letter-spacing: -.01em; }
+/* .serif: retired as inline emphasis (docs/design/studio.md); kept until the 404 and /hi/ pass lands */
 .serif { font-family: var(--serif); font-style: italic; font-weight: 500; font-stretch: normal; text-transform: none; letter-spacing: -.01em; }
 .display { font-family: var(--display); font-stretch: var(--display-stretch); font-weight: var(--display-weight); text-transform: uppercase; font-size: clamp(42px, 7vw, 120px); line-height: .9; letter-spacing: -.025em; }
 .display .serif { font-size: 1.08em; line-height: .8; }
@@ -118,8 +121,9 @@ ol, ul { list-style: none; }
 .legal__body { max-width: 68ch; color: var(--ink-soft); line-height: 1.68; }
 .legal__body p + p { margin-top: 1.2em; padding-top: 1.2em; border-top: var(--hairline); }
 .legal__body p:first-child { font-size: clamp(18px, 1.5vw, 21px); line-height: 1.45; letter-spacing: -.01em; color: var(--ink); }
-.legal__body strong { font-weight: 680; color: var(--ink); letter-spacing: -.005em; }
-.legal__body a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); text-decoration-thickness: 1px; text-underline-offset: 3px; overflow-wrap: anywhere; transition: text-decoration-color var(--dur-400) var(--ease); }
+/* each paragraph's lead ("What is collected.") is its own line: a whole element, not a bold run-in */
+.legal__body strong { display: block; margin-bottom: .35em; font-weight: 680; color: var(--ink); letter-spacing: -.005em; }
+.legal__body a { color: inherit; text-decoration: underline; text-decoration-color: var(--line); text-decoration-thickness: 1px; text-underline-offset: 3px; overflow-wrap: anywhere; transition: text-decoration-color var(--dur-400) var(--ease); }
 @media (hover: hover) { .legal__body a:hover { text-decoration-color: var(--signal-ink); } }
 .legal__back { grid-column: 2; margin-top: clamp(8px, 1.4vw, 20px); }
 @media (max-width: 1100px) {

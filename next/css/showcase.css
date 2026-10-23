@@ -94,7 +94,8 @@ a.tile__link:focus-visible .tile__go { transform: rotate(-45deg); background: va
 .roles__line li { display: flex; flex-direction: column; gap: 6px; padding: clamp(18px, 1.8vw, 26px); }
 .roles__line li + li { border-left: var(--hairline); }
 .roles__line b { font-size: clamp(16px, 1.25vw, 19px); font-weight: 620; letter-spacing: -.015em; line-height: 1.2; }
-.roles__line span:last-child { font-family: var(--serif); font-style: italic; font-weight: 500; font-size: clamp(16px, 1.2vw, 18px); color: var(--ink-soft); line-height: 1.25; }
+/* the company (.co, the one approved serif exception): italic serif, as the owner chose */
+.roles__line .co { font-family: var(--serif); font-style: italic; font-weight: 500; font-size: clamp(16px, 1.2vw, 18px); color: var(--ink-soft); line-height: 1.25; letter-spacing: normal; }
 .roles .rule h2 { font-weight: 400; }
 /* the current employer's mark: small, cap height, sitting on the baseline (no other role gets one) */
 .roles__logo { display: inline-block; width: auto; height: .86em; margin-right: .3em; vertical-align: baseline; }
