@@ -12,7 +12,7 @@ Detail: `docs/recipes/copy.md` (titles and descriptions: `docs/recipes/meta.md`)
    - `index.html` -> edit `next/index.html`. `websites.html` -> edit `next/websites.html`.
    - `projects/<slug>.html` or `next/projects/` -> edit `content/projects/<slug>.json` (fields: `docs/recipes/content.md`); the giant name, tile line, menus and footer are in `tools/build-studio-cases.py`.
    - A live `<title>`, share card or JSON-LD -> `LIVE` in `tools/build.py` (`docs/recipes/meta.md`).
-   - `privacy.html`, `404.html`, `hi/`, `photography-*.html` (old design) -> edit the file itself.
+   - `privacy.html`, `404.html`, `hi/`, `photography-*.html` -> edit the file itself.
    - `studies/`, `cards/` -> leave unless the owner named them.
 3. Change only the text. House voice: first person "I", past tense, specific, no hype, US spelling, no em or en dashes. No new facts, no figures about IP-protected work (HOTBOX, bend fixture), nothing that reads as job hunting. A fact you cannot confirm goes in a flag (`resolve-flags` skill, "Add a flag").
 4. If you edited anything in `next/`, `content/` or `tools/build*.py`: `python3 tools/build.py` (`--help` only prints usage).

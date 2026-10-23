@@ -107,7 +107,7 @@ inside the HTML string ([flags.md](flags.md)); `title`, `eyebrow`, `description`
 | Hero drift words | `next/index.html`, `.drift` slots | edit the `<i>` words, build |
 | Showreel actors | `next/js/showreel/` | [showreel-actor.md](showreel-actor.md) |
 | Sitemap | `sitemap.xml` | `tools/new.py project` adds the line; bump `lastmod` by hand |
-| 404 | `404.html` | edit (old design, [../transition.md](../transition.md)) |
+| 404 | `404.html`, `nav.nf__go` (all five, name only) | edit |
 | Design studies | `studies/{hangar,launch,studio,specimen}/` | only when asked; they are shown framed on the websites page |
 
 The home tiles are separate copy, not a duplicate of the case page, so they stay hand-written.

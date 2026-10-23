@@ -19,8 +19,9 @@ sources in `next/`. Do not edit them by hand.
 `python3 tools/build.py --check` builds in memory and fails if a committed page
 does not match its source.
 
-Other pages (`privacy.html`, `404.html`, `hi/`, the photography pages, the CHARGER
-explorer) are still in the old design and are edited directly. `docs/transition.md`
+`privacy.html`, `404.html` and `hi/` are hand-written pages in the Studio look
+(`next/css/pages.css`); the photography pages and the CHARGER explorer are still in
+the old design. All of them are edited directly. `docs/transition.md`
 lists what still has to move to the Studio design.
 
 Before committing copy changes, run `python3 check-writing.py`.

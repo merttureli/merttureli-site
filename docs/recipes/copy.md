@@ -16,7 +16,7 @@ A hit in a generated file means you edit its source instead:
 | `websites.html` | yes | `next/websites.html` | `python3 tools/build.py` |
 | `projects/<slug>.html` or `next/projects/<slug>.html` | yes | `content/projects/<slug>.json` (fields: [content.md](content.md)); the giant name, tile line and menus: `tools/build-studio-cases.py` | `python3 tools/build.py` |
 | a `<title>`, share card or JSON-LD on a live page | yes | `LIVE` in `tools/build.py`, case pages from their JSON ([meta.md](meta.md)) | `python3 tools/build.py` |
-| `privacy.html`, `404.html`, `hi/index.html`, `photography-*.html` (old design) | no | the file itself | nothing |
+| `privacy.html`, `404.html`, `hi/index.html`, `photography-*.html` | no | the file itself | nothing |
 | `next/js/studio.js` (Studio clock text "in Austin") | no | plain JS string in `next/js/studio.js`; edit in place | |
 | `studies/<name>/` | no | the study files. They are frozen prototypes: change only on request | |
 | `cards/` | no | print business cards, not served to visitors | |

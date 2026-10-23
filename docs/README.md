@@ -9,7 +9,7 @@ and the case pages at the root. What is still in the old design: [transition.md]
 
 | Doc | Covers |
 |---|---|
-| [design/site-tokens.md](design/site-tokens.md) | old-design tokens (privacy, photography, hi, 404): `css/tokens.css` on top of the `_ds/` export; colors, type, space, radius, z, breakpoints, palettes |
+| [design/site-tokens.md](design/site-tokens.md) | old-design tokens (photography pages, CHARGER explorer, design studies): `css/tokens.css` on top of the `_ds/` export; colors, type, space, radius, z, breakpoints, palettes |
 | [design/studio.md](design/studio.md) | the live design: Studio (`next/`) tokens in `next/css/tokens.css`, section skeleton, markup contracts |
 | [design/motion.md](design/motion.md) | easings and durations for both sites, reduced motion, offscreen pausing, Lenis, every timer |
 | [design/components.md](design/components.md) | every repeated UI pattern on both sites: snippet, variants, do and don't |
