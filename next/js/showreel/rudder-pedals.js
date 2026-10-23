@@ -87,7 +87,8 @@ const CADP = {
   hingeR: [671.98, 113.57], hingeL: [660.64, 113.57],               // pedal hinge bolts (axis z)
 };
 const PHI = 20 * Math.PI / 180;   // sensor lever travel each way (the levers swing about 11 degrees)
-const TOE = 12 * Math.PI / 180;   // toe brake travel (the pedal tips back on its hinge bolt)
+const TOE = 16 * Math.PI / 180;   // toe brake travel (the pedal tips back on its hinge bolt)
+let PEDAL_REST = .38;               // pedal rest tilt from its CAD pose (solved in createModel: magnet flush with the lever)
 
 // Build order, exploded offsets (model meters) and how far each part's fly-in
 // lags. Walls slide in sideways onto the supports, the sensor lever from behind,
@@ -177,7 +178,32 @@ export function createModel({ THREE: T = THREE } = {}) {
   function setProgress(p) { prog = p; place(); }
   // the parts the STEP does not carry (springs, screws, magnets, sensors, wiring, board)
   const baseOf = obj => { const r = list.find(r => r.mesh === obj); if (r) return r.base; return list.find(r => r.mesh === obj.parent).base.clone().add(obj.position); };
-  const details = createDetails(T, { P, toM, base: baseOf, m });
+  // Right side = mirror of the left (owner): a left-side STEP point attached to a lever
+  // or pedal goes to the left lever's neutral pose, mirrors across the center plane
+  // about the pivots, and back to the right lever's CAD pose; frame points just mirror.
+  const s0 = solve(0), dR0 = s0.d[0], dL0 = s0.d[1];
+  const rot = (p, piv, a) => { const x = p[0] - piv[0], y = p[1] - piv[1], c = Math.cos(a), n = Math.sin(a); return [piv[0] + x * c - y * n, piv[1] + x * n + y * c, p[2]]; };
+  function mirror(p, kind) {
+    if (kind === 'wall') return [p[0], p[1], 2 * DET.zc - p[2]];
+    const n = rot(p, CADP.pivL, dL0);
+    return rot([n[0] - CADP.pivL[0] + CADP.pivR[0], n[1] - CADP.pivL[1] + CADP.pivR[1], 2 * DET.zc - p[2]], CADP.pivR, -dR0);
+  }
+  const rzR = dL0 - dR0;                                            // right parts turn this much in their lever's frame
+  { // the right pedal turns about the mirror of the left hinge (1.6 mm from its own bore), so its magnet meets its sensor exactly
+    const hm = mirror([CADP.hingeL[0], CADP.hingeL[1], CADP.rearL[2]], 'lever'), w = toM(hm[0], hm[1], CADP.rearR[2]), lb = byName.leverR.base;
+    m.setPivot(pedalR, [w[0] - lb.x, w[1] - lb.y, w[2] - lb.z]);
+  }
+  const mirrorDir = d => { const c = Math.cos(rzR), n = Math.sin(rzR); return [d[0] * c - d[1] * n, d[0] * n + d[1] * c, -(d[2] || 0)]; };
+  // Pedal rest pose: the pedal tips forward on its hinge until its boss lies on the
+  // lever, the magnet's face flush with the lever's inner face (left geometry).
+  {
+    const g = DET.magnetL, f0 = g.floor.map((v, i) => v + (g.n[i] || 0) * DET.magnet.t), h = CADP.hingeL, e = DET.edgeL;
+    const off = a => { const q = rot(f0, h, -a); return q[0] - e.k * q[1] - e.c; };
+    let lo = 0, hi = .8;
+    for (let k = 0; k < 30; k++) { const mid = (lo + hi) / 2; if (off(mid) < 0) lo = mid; else hi = mid; }
+    PEDAL_REST = (lo + hi) / 2;
+  }
+  const details = createDetails(T, { P, toM, base: baseOf, m, mirror, mirrorDir, rzR });
   let toeL = 0, toeR = 0, drive = 0, gS = 1, gW = 1, lastKey = '';
   function refresh() {
     const key = `${drive.toFixed(5)},${toeL.toFixed(5)},${toeR.toFixed(5)},${prog.toFixed(5)},${gS.toFixed(4)},${gW.toFixed(4)}`;
@@ -200,15 +226,16 @@ export function createModel({ THREE: T = THREE } = {}) {
     });
     place();
   }
-  // toe brakes: each pedal tips back about its hinge bolt (0..1)
-  function setToe(l, r) { toeL = clamp01(l); toeR = clamp01(r); pedalL.rotation.z = TOE * toeL; pedalR.rotation.z = TOE * toeR; }
+  // toe brakes: from rest (boss on the lever, magnet flush) each pedal tips back about its hinge bolt (0..1)
+  const toeTravel = Math.min(TOE, PEDAL_REST);
+  function setToe(l, r) { toeL = clamp01(l); toeR = clamp01(r); pedalL.rotation.z = -PEDAL_REST + toeTravel * toeL; pedalR.rotation.z = -PEDAL_REST + toeTravel * toeR; }
   // springs hook on and wires run to the board: 0 none, 1 all (springs, wires may differ)
   function setGrow(s, w = s) { gS = s; gW = w; }
-  setDrive(0); setProgress(1); refresh();
+  setDrive(0); setToe(0, 0); setProgress(1); refresh();
   const size = new T.Vector3(); new T.Box3().setFromObject(m.group).getSize(size);
   return {
     group: m.group, height: size.y, footprint: Math.max(size.x, size.z), triangles: m.triangles + details.triangles,
-    cadTriangles: m.triangles, parts: P, materials: m.materials, details, toM,
+    cadTriangles: m.triangles, parts: P, materials: m.materials, details, toM, mirror,
     // a STEP point (mm, CAD pose) in the local space of a part or pedal (labels, review page)
     localOf(obj, cad) { const w = toM(...cad), b = baseOf(obj); return new T.Vector3(w[0] - b.x, w[1] - b.y, w[2] - b.z); },
     getParts: () => list.map(({ name, mesh, explode }) => ({ name, mesh, explode, delay: PARTS[name].delay })),
@@ -220,39 +247,45 @@ export function createModel({ THREE: T = THREE } = {}) {
 
 // ================================================================= details
 // Parts the STEP does not carry, placed from its geometry (STEP mm, CAD pose of
-// each lever; every assumption is listed in the owner's review page):
+// each lever). The left side is the reference (owner, round 1): every added
+// part on the right is the mirror of the left across the assembly's center
+// plane (mirror() in createModel), except the two brake spring hooks, which
+// stay on the right side's own CAD screw and clevis pin. Assumptions are
+// listed on the review page (next/lab/rudder-pedals-review.html).
 //   centering springs  each lever's rear (the 6 mm hole under its top bar, right
 //                      above the adjustment holes) to a screw in the wall's column
 //                      of nine M3 holes (x 571.6, y 105.8 to 153.8, 6 mm apart)
 //   anchor screws      M3 x 20 socket heads in the middle hole of each column
-//   brake springs      the pin through each pedal's clevis to an eye on the lever's
-//                      vertical inner edge, along the line square to the pin
-//   magnets            10 x 3 mm discs in the round pockets of the pedal bosses
-//   Hall sensors       A1301 (TO-92) in the left lever's slit facing the magnet;
-//                      the right lever (an older version) has no slit, so its
-//                      sensor sits at the mirrored spot
-//   wiring             three wires per sensor (red, black, signal) up the slit,
-//                      out through the notch, down the lever, a slack loop to the
-//                      frame; the right side goes through a slot in each wall
-//   controller board   a 50 x 34 perfboard with a Pro Micro on the left wall's
-//                      outer face, below the lever
+//   brake springs      the existing screw at the top of each lever's vertical side
+//                      to the pin through the pedal's clevis
+//   pedal magnets      10 x 3 mm discs in the round pockets of the pedal bosses;
+//                      at rest the boss lies on the lever, magnet face flush with
+//                      the lever's inner face where the sensor slit is
+//   Hall sensors       A1301 (TO-92) at the bottom of the left lever's slit
+//   center sensor      two discs in the round slots under the flaps of the
+//                      sensor lever's magnet holder, a third A1301 between them
+//                      on the fixed frame (legs in the back support's pocket)
+//   wiring             three wires per sensor (red, black, signal): up the slit,
+//                      out through the notch, down the lever, a slack loop into
+//                      the wall's inner slot, then inside the frame to the board
+//   controller board   an ESP board on a 50 x 34 perfboard, inside the frame on
+//                      the back face of the front middle support
 const DET = {
+  zc: 1264.55,                                                      // the assembly's center plane (between the walls)
   hole: { x: 571.6, y0: 105.8, step: 6, n: 9, k: 4 },
-  screw: { R: { head: 1191.5, tip: 1214.5, hook: 1198.0 }, L: { head: 1337.5, tip: 1314.5, hook: 1331.0 } },
-  springTop: { R: [562.5, 221.7, 1194.5], L: [562.3, 231.0, 1334.5] },
-  pin: { R: [613.6, 166.6, 1185.6], L: [607.7, 171.7, 1343.5] },
-  pinAxis: { R: [-.51, .86, 0], L: [-.43, .9, 0] },
-  eye: { R: [651.1, 188.8, 1185.6], L: [646.8, 190.4, 1343.0] },
-  magnet: { R: { c: [643.97, 129.82, 1195.6], n: [.91, .41, 0] }, L: { c: [634.5, 132.2, 1333.5], n: [.95, .32, 0] }, d: 10, t: 3 },
-  sensor: { R: [654.3, 134.1, 1194.6], L: [645.8, 138.3, 1334.5] },
-  board: { x0: 590, x1: 640, y0: 24, y1: 58, back: 1329.5, t: 1.6 },
-  // wire routes: lever part (lever-local, CAD pose), then a slack loop, then the
-  // part fixed to the frame (ends at the board connector)
+  screwL: { head: 1337.5, tip: 1314.5, hook: 1331.0 },
+  springTopL: [562.3, 231.0, 1334.5],
+  brake: { L: { hook: [644.5, 211.4, 1345.3], pin: [607.7, 171.7, 1343.5] }, R: { hook: [647.2, 209.6, 1183.7], pin: [613.6, 166.6, 1185.6] } },
+  magnetL: { floor: [633.1, 131.7, 1333.5], n: [.95, .32, 0] }, magnet: { d: 10, t: 3 },
+  edgeL: { k: .0445, c: 638.11 },                                   // left lever's inner face (slit side): x - k y = c
+  sensorL: [645.8, 138.3, 1334.5],
+  center: { magnets: [{ floor: [586.1, 91.3, 1252.9], n: [0, -.65, .76] }, { floor: [586.1, 93.2, 1277.9], n: [0, -.76, -.65] }], sensor: [586.1, 80.6, 1264.5] },
+  board: { x: 664.2, standoff: 4, t: 1.6, z0: 1239.5, z1: 1289.5, y0: 112, y1: 146, connY: 116.5, conn: [1252.1, 1264.5, 1277.0] },
   wires: {
     L: { lever: [[645.8, 153.6, 1334.5], [646.4, 166, 1334.5], [647.2, 173.5, 1337.5], [647.6, 173.5, 1345.4], [648.2, 160, 1345.7], [647.6, 125, 1345.7], [645.6, 103.5, 1345.9]],
-         fixed: [[634.6, 64, 1345.4], [633.9, 57.5, 1343.6], [633.9, 55.2, 1341.4]], slack: 1.22, out: 1, color: 0xd8a21b },
-    R: { lever: [[654.3, 148.6, 1194.6], [653.8, 152.5, 1192.4], [653.3, 152.5, 1187.0], [652.9, 150, 1183.6], [652.7, 132, 1183.5], [655.6, 117.5, 1183.4]],
-         fixed: [[634.6, 90, 1203.6], [634.6, 89.4, 1212], [634.6, 88.6, 1234.5], [634.6, 86.4, 1264.5], [634.6, 88.6, 1294.5], [634.6, 89, 1316], [634.6, 85, 1326.6], [633.4, 75, 1331.5], [628.6, 64.5, 1339.5], [624.9, 57.5, 1343.6], [624.9, 55.2, 1341.4]], slack: 1.28, out: -1, color: 0x2f8a4a },
+         fixed: [[634.6, 86, 1325.4], [634.6, 86, 1310], [634.6, 86.4, 1293.6], [640.5, 95, 1287.5], [645.5, 107, 1281.5], [646.2, 116.5, 1277.6], [650.4, 116.5, 1277.0]], slack: 1.3, out: 1, color: 0xd8a21b },
+    C: { fixed: [[569.8, 80.6, 1264.5], [563.2, 81.0, 1264.0], [563.2, 81.2, 1249], [569.5, 82, 1244.2], [584, 77, 1243.5], [612, 74, 1248], [638, 92, 1257], [645.8, 110, 1263.2], [646.2, 116.5, 1264.4], [650.4, 116.5, 1264.5]], color: 0x2c6fb7 },
+    R: { color: 0x2f8a4a },                                         // the mirror of L
   },
 };
 const DLOOK = {
@@ -262,9 +295,9 @@ const DLOOK = {
   wire: { color: 0xffffff, roughness: .55, metalness: 0, vertexColors: true },
   board: { color: 0xffffff, roughness: .62, metalness: 0 },
 };
-const C = { black: 0x18191c, tin: 0xb9bdc3, darkMetal: 0x2c2e33, blue: 0x1d4f8c, chip: 0x141518, silver: 0xc9ccd1, gold: 0xb8954a, green: 0x2f5a46, red: 0xb3261e, wireBlack: 0x1f2023 };
+const C = { black: 0x18191c, tin: 0xb9bdc3, darkMetal: 0x2c2e33, espBlack: 0x202226, chip: 0x141518, silver: 0xc9ccd1, gold: 0xb8954a, green: 0x2f5a46, red: 0xb3261e, wireBlack: 0x1f2023 };
 
-function createDetails(T, { P, toM, base, m }) {
+function createDetails(T, { P, toM, base, m, mirror, mirrorDir, rzR }) {
   const mm = v => v / 1000;
   const V = (a) => new T.Vector3(...a);
   const local = (obj, cad) => { const w = toM(...cad); const b = base(obj); return new T.Vector3(w[0] - b.x, w[1] - b.y, w[2] - b.z); };
@@ -295,10 +328,12 @@ function createDetails(T, { P, toM, base, m }) {
   }
   const o3 = new T.Object3D(), Y = new T.Vector3(0, 1, 0);
   // geometry placed at `at` (meters, parent space) with its +Y along `dir`
-  function put(g, at, dir = null, spin = 0) {
+  const Zax = new T.Vector3(0, 0, 1);
+  function put(g, at, dir = null, spin = 0, rz = 0) {
     o3.position.copy(at); o3.quaternion.identity();
     if (dir) o3.quaternion.setFromUnitVectors(Y, dir.clone().normalize());
     if (spin) o3.quaternion.multiply(new T.Quaternion().setFromAxisAngle(Y, spin));
+    if (rz) o3.quaternion.premultiply(new T.Quaternion().setFromAxisAngle(Zax, rz));
     o3.scale.set(1, 1, 1); o3.updateMatrix();
     return g.applyMatrix4(o3.matrix);
   }
@@ -312,11 +347,16 @@ function createDetails(T, { P, toM, base, m }) {
     return mesh;
   }
 
+  const side = S => (S === 'L' ? 'left' : 'right');
+  const pedal = { R: P.leverR.getObjectByName('pedalR'), L: P.leverL.getObjectByName('pedalL') };
+  // a left-side STEP point, and its mirror for the right side
+  const pick = (S, cadL, kind) => (S === 'L' ? cadL : mirror(cadL, kind));
+
   // ---- anchor screws in the adjustment holes (parent: the side walls)
   const holeY = DET.hole.y0 + DET.hole.step * DET.hole.k;
   for (const S of ['R', 'L']) {
-    const wall = P['wall' + S], d = DET.screw[S], out = Math.sign(d.head - d.tip);   // out: toward the lever
-    const headTop = local(wall, [DET.hole.x, holeY, d.head]), tip = local(wall, [DET.hole.x, holeY, d.tip]);
+    const wall = P['wall' + S], d = DET.screwL;
+    const headTop = local(wall, pick(S, [DET.hole.x, holeY, d.head], 'wall')), tip = local(wall, pick(S, [DET.hole.x, holeY, d.tip], 'wall'));
     const axis = headTop.clone().sub(tip).normalize();
     const L = headTop.distanceTo(tip);
     const list = [
@@ -324,88 +364,105 @@ function createDetails(T, { P, toM, base, m }) {
       { g: put(cyl(2.75, 3, 14), headTop.clone().addScaledVector(axis, -mm(1.5)), axis), color: C.darkMetal },
     ];
     addMesh(wall, list, 'parts', 'screws', 'anchorScrew' + S);
-    labels.push({ group: 'screws', name: `Anchor screw (${S === 'L' ? 'left' : 'right'})`, note: `M3 x 20 in adjustment hole ${DET.hole.k + 1} of ${DET.hole.n}`, obj: wall, at: headTop.clone() });
-    void out;
+    labels.push({ group: 'screws', name: `Anchor screw (${side(S)})`, note: `M3 x 20 in adjustment hole ${DET.hole.k + 1} of ${DET.hole.n}${S === 'R' ? ', mirrored from the left' : ''}`, obj: wall, at: headTop.clone() });
   }
 
-  // ---- magnets in the pedal pockets (parent: the pedal subs)
-  const pedal = { R: P.leverR.getObjectByName('pedalR'), L: P.leverL.getObjectByName('pedalL') };
+  // ---- pedal magnets in the round pockets (parent: the pedal subs)
+  const magFace = (S) => { const g = DET.magnetL, c = g.floor.map((v, i) => v + (g.n[i] || 0) * DET.magnet.t / 2); return pick(S, c, 'lever'); };
   for (const S of ['R', 'L']) {
-    const ped = pedal[S], g = DET.magnet[S];
-    const at = local(ped, g.c);
-    const mesh = new T.Mesh(put(cyl(DET.magnet.d / 2, DET.magnet.t, 20), at, V(g.n)), mat('magnet'));
+    const ped = pedal[S], at = local(ped, magFace(S)), n = S === 'L' ? V(DET.magnetL.n) : V(mirrorDir(DET.magnetL.n));
+    const mesh = new T.Mesh(put(cyl(DET.magnet.d / 2, DET.magnet.t, 20), at, n), mat('magnet'));
     geos.push(mesh.geometry); tris += 80;
     mesh.name = 'magnet' + S; mesh.userData.detail = 'magnets';
     ped.add(mesh); (group('magnets').userData.meshes = group('magnets').userData.meshes || []).push(mesh);
-    labels.push({ group: 'magnets', name: `Disc magnet (${S === 'L' ? 'left' : 'right'} pedal)`, note: '10 x 3 mm, nickel plated, in the round pocket', obj: ped, at });
+    labels.push({ group: 'magnets', name: `Disc magnet (${side(S)} pedal)`, note: `10 x 3 mm, nickel plated; at rest its face is flush with the lever${S === 'R' ? ' (mirrored from the left)' : ''}`, obj: ped, at });
   }
   if (!groups.magnets.parent) m.group.add(groups.magnets);
 
-  // ---- Hall sensors (TO-92 UA: 4.0 x 3.0 x 1.52, legs 15 mm) and the brake spring eyes (parent: the levers)
+  // ---- Hall sensors (TO-92 UA: 4.0 x 3.0 x 1.52, legs 15 mm), face toward the magnet, legs up the slit (parent: the levers)
+  const hall = (c, rz, face, legs, list) => {
+    // face: unit vector the flat face points along; legs: unit vector the legs run along (both in parent space)
+    const q = new T.Quaternion().setFromRotationMatrix(new T.Matrix4().makeBasis(face, legs, new T.Vector3().crossVectors(face, legs)));
+    const add = (g, off) => { g.applyQuaternion(q); g.translate(...off.clone().applyQuaternion(q).add(c).toArray()); if (rz) { g.translate(-c.x, -c.y, -c.z); g.applyMatrix4(new T.Matrix4().makeRotationZ(rz)); g.translate(c.x, c.y, c.z); } return g; };
+    list.push({ g: add(box(1.52, 3.0, 4.0), new T.Vector3()), color: C.black });
+    for (const dz of [-1.27, 0, 1.27]) list.push({ g: add(box(.42, 15, .42), new T.Vector3(-mm(.2), mm(1.5 + 7.5), mm(dz))), color: C.tin });
+  };
   for (const S of ['R', 'L']) {
-    const lever = P['lever' + S], c = local(lever, DET.sensor[S]);
-    const list = [{ g: put(box(1.52, 3.0, 4.0), c), color: C.black }];
-    for (const dz of [-1.27, 0, 1.27]) list.push({ g: put(box(.42, 15, .42), c.clone().add(new T.Vector3(mm(.2), mm(1.5 + 7.5), mm(dz)))), color: C.tin });
-    const eye = local(lever, DET.eye[S]);
-    list.push({ g: put(cyl(.9, 4.5, 8), eye.clone().add(new T.Vector3(-mm(1.6), 0, 0)), new T.Vector3(1, 0, 0)), color: C.darkMetal });
-    list.push({ g: put(new T.TorusGeometry(mm(1.6), mm(.45), 5, 10), eye.clone().add(new T.Vector3(-mm(4.4), 0, 0)), new T.Vector3(0, 0, 1)), color: C.darkMetal });
+    const lever = P['lever' + S], c = local(lever, pick(S, DET.sensorL, 'lever')), list = [];
+    hall(c, S === 'R' ? rzR : 0, new T.Vector3(-1, 0, 0), new T.Vector3(0, 1, 0), list);
     addMesh(lever, list, 'parts', 'sensors', 'sensor' + S);
-    labels.push({ group: 'sensors', name: `Hall sensor (${S === 'L' ? 'left' : 'right'} lever)`, note: S === 'L' ? 'A1301 in the slit, facing the magnet' : 'A1301; no slit in this lever version, placed by mirror', obj: lever, at: c.clone() });
+    labels.push({ group: 'sensors', name: `Hall sensor (${side(S)} lever)`, note: S === 'L' ? 'A1301 at the bottom of the slit, facing the magnet' : 'A1301, mirrored from the left (this lever version has no slit)', obj: lever, at: c.clone() });
   }
 
-  // ---- controller board on the left wall's outer face (parent: wallL)
+  // ---- center (rudder) sensor: two discs in the holder's round slots (parent: the sensor lever) and a third A1301 between them (parent: the frame)
   {
-    const wall = P.wallL, b = DET.board, z0 = b.back, z1 = b.back + b.t;
-    const cx = (b.x0 + b.x1) / 2, cy = (b.y0 + b.y1) / 2;
-    const at = (x, y, z) => local(wall, [x, y, z]);
-    const list = [
-      { g: put(box(b.x1 - b.x0, b.y1 - b.y0, b.t), at(cx, cy, (z0 + z1) / 2)), color: C.green },
-    ];
-    for (const [x, y] of [[b.x0 + 3, b.y0 + 3], [b.x1 - 3, b.y0 + 3], [b.x0 + 3, b.y1 - 3], [b.x1 - 3, b.y1 - 3]]) {
-      list.push({ g: put(cyl(2.2, z0 - 1324.5, 6), at(x, y, (1324.5 + z0) / 2), new T.Vector3(0, 0, 1)), color: C.tin });
-      list.push({ g: put(cyl(2.4, 1.6, 10), at(x, y, z1 + .8), new T.Vector3(0, 0, 1)), color: C.darkMetal });
+    const list = [];
+    for (const g of DET.center.magnets) {
+      const c = g.floor.map((v, i) => v + g.n[i] * DET.magnet.t / 2);
+      const mesh = new T.Mesh(put(cyl(DET.magnet.d / 2, DET.magnet.t, 20), local(P.rocker, c), V(g.n)), mat('magnet'));
+      geos.push(mesh.geometry); tris += 80;
+      mesh.name = 'centerMagnet'; mesh.userData.detail = 'magnets';
+      P.rocker.add(mesh); groups.magnets.userData.meshes.push(mesh);
     }
-    // Pro Micro on two header strips, USB toward the rear (-x)
-    const pz = z1 + 2.5, px = 607, py = 38.5;
-    list.push({ g: put(box(30.5, 2.5, 2.5), at(px, py - 7.62, z1 + 1.25)), color: C.black });
-    list.push({ g: put(box(30.5, 2.5, 2.5), at(px, py + 7.62, z1 + 1.25)), color: C.black });
-    list.push({ g: put(box(33, 18, 1.6), at(px, py, pz + .8)), color: C.blue });
-    list.push({ g: put(box(7, 7, 1), at(px + 3, py, pz + 2.1)), color: C.chip });
-    list.push({ g: put(box(3, 3, 1.2), at(px - 7, py + 4, pz + 2.2)), color: C.chip });
-    list.push({ g: put(box(2.6, 2.6, 1.2), at(px - 7, py - 3.5, pz + 2.2)), color: C.chip });
-    list.push({ g: put(box(5.6, 7.6, 2.8), at(px - 15.2, py, pz + 3.0)), color: C.silver });
-    for (let i = 0; i < 12; i++) for (const sy of [-7.62, 7.62]) list.push({ g: put(box(.9, .9, .9), at(px - 14 + i * 2.54, py + sy, pz + 2.05)), color: C.gold });
-    // sensor connectors (3-pin housings) near the top edge
-    for (const x of [633.9, 624.9]) {
-      list.push({ g: put(box(7.62, 2.54, 8), at(x, 55.2, z1 + 4.6)), color: C.black });
-      for (const dx of [-2.54, 0, 2.54]) list.push({ g: put(box(.64, .64, 2.6), at(x + dx, 55.2, z1 + 1.3)), color: C.gold });
+    labels.push({ group: 'magnets', name: 'Center magnets', note: 'two 10 x 3 mm discs in the round slots under the holder\'s flaps; they turn with the sensor lever', obj: P.rocker, at: local(P.rocker, [586.1, 88.0, 1264.5]) });
+    const c = local(P.core, DET.center.sensor);
+    hall(c, 0, new T.Vector3(0, 1, 0), new T.Vector3(-1, 0, 0), list);   // face up toward the hub, legs back into the support's pocket
+    addMesh(P.core, list, 'parts', 'sensors', 'sensorCenter');
+    labels.push({ group: 'sensors', name: 'Center Hall sensor', note: 'A1301 between the two center magnets, on the frame; reads the rudder axis', obj: P.core, at: c.clone() });
+  }
+
+  // ---- controller board inside the frame, on the back face of the front middle support (parent: the frame)
+  {
+    const b = DET.board, xBack = b.x - b.standoff, xFace = xBack - b.t;     // the board faces -x (toward the back)
+    const cy = (b.y0 + b.y1) / 2, cz = (b.z0 + b.z1) / 2;
+    const at = (x, y, z) => local(P.core, [x, y, z]);
+    const list = [{ g: put(box(b.t, b.y1 - b.y0, b.z1 - b.z0), at(xFace + b.t / 2, cy, cz)), color: C.green }];
+    for (const [y, z] of [[b.y0 + 3, b.z0 + 3], [b.y1 - 3, b.z0 + 3], [b.y0 + 3, b.z1 - 3], [b.y1 - 3, b.z1 - 3]]) {
+      list.push({ g: put(cyl(2.2, b.standoff, 6), at(xBack + b.standoff / 2, y, z), new T.Vector3(1, 0, 0)), color: C.tin });
+      list.push({ g: put(cyl(2.4, 1.6, 10), at(xFace - .8, y, z), new T.Vector3(1, 0, 0)), color: C.darkMetal });
     }
-    addMesh(wall, list, 'parts', 'board', 'boardBody');
-    // perfboard top: tinned pads on a 2.54 mm grid
+    // ESP board on two header strips: dark board, shielded module, antenna end, USB-C
+    const ex = xFace - 2.5, ey = cy + 4, ez = cz - 1;
+    list.push({ g: put(box(2.5, 2.5, 25), at(xFace - 1.25, ey - 7.62, ez)), color: C.black });
+    list.push({ g: put(box(2.5, 2.5, 25), at(xFace - 1.25, ey + 7.62, ez)), color: C.black });
+    list.push({ g: put(box(1.2, 20, 34), at(ex - .6, ey, ez)), color: C.espBlack });
+    list.push({ g: put(box(2.2, 13, 15), at(ex - 2.3, ey, ez + 6)), color: C.silver });
+    list.push({ g: put(box(.3, 13, 6), at(ex - 1.35, ey, ez + 16)), color: 0x3a3d43 });
+    list.push({ g: put(box(3.2, 8.9, 7.3), at(ex - 2.8, ey, ez - 15.5)), color: C.silver });
+    list.push({ g: put(box(1, 4, 4), at(ex - 1.7, ey - 4, ez - 6)), color: C.chip });
+    for (let i = 0; i < 10; i++) for (const sy of [-7.62, 7.62]) list.push({ g: put(box(.9, .9, .9), at(ex - 1.65, ey + sy, ez - 11.4 + i * 2.54)), color: C.gold });
+    // three sensor connectors (left, center, right) on the lower edge
+    for (const z of b.conn) {
+      list.push({ g: put(box(8, 2.54, 7.62), at(xFace - 4, b.connY, z)), color: C.black });
+      for (const dz of [-2.54, 0, 2.54]) list.push({ g: put(box(2.6, .64, .64), at(xFace - 1.3, b.connY, z + dz)), color: C.gold });
+    }
+    addMesh(P.core, list, 'parts', 'board', 'boardBody');
+    // perfboard face: tinned pads on a 2.54 mm grid
     const cv = document.createElement('canvas'); cv.width = 256; cv.height = 176;
     const g2 = cv.getContext('2d'); g2.fillStyle = '#2f5a46'; g2.fillRect(0, 0, 256, 176);
-    const sx = 256 / (b.x1 - b.x0), sy = 176 / (b.y1 - b.y0);
+    const sx = 256 / (b.z1 - b.z0), sy = 176 / (b.y1 - b.y0);
     g2.fillStyle = '#b9b49d';
-    for (let x = 2.5; x < b.x1 - b.x0; x += 2.54) for (let y = 2.5; y < b.y1 - b.y0; y += 2.54) { g2.beginPath(); g2.arc(x * sx, y * sy, 3.1, 0, 7); g2.fill(); }
+    for (let x = 2.5; x < b.z1 - b.z0; x += 2.54) for (let y = 2.5; y < b.y1 - b.y0; y += 2.54) { g2.beginPath(); g2.arc(x * sx, y * sy, 3.1, 0, 7); g2.fill(); }
     g2.fillStyle = '#1d2a24';
-    for (let x = 2.5; x < b.x1 - b.x0; x += 2.54) for (let y = 2.5; y < b.y1 - b.y0; y += 2.54) { g2.beginPath(); g2.arc(x * sx, y * sy, 1.2, 0, 7); g2.fill(); }
+    for (let x = 2.5; x < b.z1 - b.z0; x += 2.54) for (let y = 2.5; y < b.y1 - b.y0; y += 2.54) { g2.beginPath(); g2.arc(x * sx, y * sy, 1.2, 0, 7); g2.fill(); }
     const tex = new T.CanvasTexture(cv); tex.colorSpace = T.SRGBColorSpace; tex.anisotropy = 4;
     const topMat = new T.MeshStandardMaterial({ ...DLOOK.board, map: tex });
     mats.boardTop = topMat;
-    const top = new T.Mesh(new T.PlaneGeometry(mm(b.x1 - b.x0), mm(b.y1 - b.y0)), topMat);
-    top.position.copy(at(cx, cy, z1 + .02)); top.name = 'boardTop'; top.userData.detail = 'board';
+    const top = new T.Mesh(new T.PlaneGeometry(mm(b.z1 - b.z0), mm(b.y1 - b.y0)), topMat);
+    top.rotation.y = -Math.PI / 2;                                    // faces -x
+    top.position.copy(at(xFace - .02, cy, cz)); top.name = 'boardTop'; top.userData.detail = 'board';
     geos.push(top.geometry); tris += 2;
-    wall.add(top); groups.board.userData.meshes.push(top);
-    labels.push({ group: 'board', name: 'Controller board', note: 'Pro Micro on a 50 x 34 perfboard, standoffs to the left wall', obj: wall, at: at(px, py, pz + 3) });
-    labels.push({ group: 'board', name: 'Sensor connectors', note: 'one 3-pin connector per pedal', obj: wall, at: at(629.4, 55.2, z1 + 8.6) });
+    P.core.add(top); groups.board.userData.meshes.push(top);
+    labels.push({ group: 'board', name: 'ESP controller board', note: 'on a 50 x 34 perfboard, inside the frame on the back of the front support', obj: P.core, at: at(ex - 3.5, ey, ez + 6) });
+    labels.push({ group: 'board', name: 'Sensor connectors', note: 'one 3-pin connector each: left pedal, center, right pedal', obj: P.core, at: at(xFace - 8, b.connY, cz) });
   }
 
   // ---- springs: one dynamic tube geometry for all four
   const SPRINGS = [
-    { key: 'centerR', a: { obj: P.leverR, p: local(P.leverR, DET.springTop.R) }, b: { obj: P.wallR, p: local(P.wallR, [DET.hole.x, holeY, DET.screw.R.hook]) }, coils: 24, R: 3.6, r: .55, name: 'Centering spring (right)' },
-    { key: 'centerL', a: { obj: P.leverL, p: local(P.leverL, DET.springTop.L) }, b: { obj: P.wallL, p: local(P.wallL, [DET.hole.x, holeY, DET.screw.L.hook]) }, coils: 24, R: 3.6, r: .55, name: 'Centering spring (left)' },
-    { key: 'brakeR', a: { obj: P.leverR, p: local(P.leverR, DET.eye.R).add(new T.Vector3(-mm(4.4), 0, 0)) }, b: { obj: pedal.R, p: local(pedal.R, DET.pin.R) }, coils: 13, R: 2.5, r: .45, name: 'Brake spring (right)' },
-    { key: 'brakeL', a: { obj: P.leverL, p: local(P.leverL, DET.eye.L).add(new T.Vector3(-mm(4.4), 0, 0)) }, b: { obj: pedal.L, p: local(pedal.L, DET.pin.L) }, coils: 13, R: 2.5, r: .45, name: 'Brake spring (left)' },
+    { key: 'centerR', a: { obj: P.leverR, p: local(P.leverR, mirror(DET.springTopL, 'lever')) }, b: { obj: P.wallR, p: local(P.wallR, mirror([DET.hole.x, holeY, DET.screwL.hook], 'wall')) }, coils: 24, R: 3.6, r: .55, name: 'Centering spring (right)' },
+    { key: 'centerL', a: { obj: P.leverL, p: local(P.leverL, DET.springTopL) }, b: { obj: P.wallL, p: local(P.wallL, [DET.hole.x, holeY, DET.screwL.hook]) }, coils: 24, R: 3.6, r: .55, name: 'Centering spring (left)' },
+    { key: 'brakeR', a: { obj: P.leverR, p: local(P.leverR, DET.brake.R.hook) }, b: { obj: pedal.R, p: local(pedal.R, DET.brake.R.pin) }, coils: 13, R: 2.5, r: .45, name: 'Brake spring (right)' },
+    { key: 'brakeL', a: { obj: P.leverL, p: local(P.leverL, DET.brake.L.hook) }, b: { obj: pedal.L, p: local(pedal.L, DET.brake.L.pin) }, coils: 13, R: 2.5, r: .45, name: 'Brake spring (left)' },
   ];
   const PER = 8, RAD = 4;
   let nv = 0, ni = 0;
@@ -426,13 +483,15 @@ function createDetails(T, { P, toM, base, m }) {
 
   // ---- wires: one dynamic tube geometry, vertex colors, three per sensor
   const WR = [];
-  for (const S of ['L', 'R']) {
-    const w = DET.wires[S], lever = P['lever' + S];
-    const ctrl = w.lever.length + 5 + w.fixed.length;           // control points: lever, 5 loop points, fixed
+  for (const S of ['L', 'R', 'C']) {
+    const w = DET.wires[S], src = S === 'R' ? DET.wires.L : w, lever = S === 'C' ? null : P['lever' + S];
+    const lp = S === 'C' ? [] : src.lever.map(c => local(lever, pick(S, c, 'lever')));
+    const fixed = src.fixed.map(c => V(toM(...(S === 'R' ? mirror(c, 'wall') : c))));
+    const loop = S === 'C' ? 0 : 5;
+    const ctrl = lp.length + loop + fixed.length;                    // control points: lever, slack loop, fixed
     const SEG = 5, M = (ctrl - 1) * SEG + 1;
-    const fixed = w.fixed.map(c => V(toM(...c)));
     const pts = Array.from({ length: ctrl }, () => new T.Vector3());
-    WR.push({ S, lever, lp: w.lever.map(c => local(lever, c)), fixed, ctrl, SEG, M, pts, slack: w.slack, out: w.out, colors: [C.red, C.wireBlack, w.color], len: 0 });
+    WR.push({ S, lever, lp, loop, fixed, ctrl, SEG, M, pts, slack: src.slack, out: S === 'R' ? -1 : src.out, colors: [C.red, C.wireBlack, w.color], len: 0 });
   }
   const WRAD = 3;
   let wv = 0, wi = 0;
@@ -455,8 +514,9 @@ function createDetails(T, { P, toM, base, m }) {
   const wireMesh = new T.Mesh(wg, mat('wire')); wireMesh.name = 'wires'; wireMesh.frustumCulled = false;
   group('wiring').add(wireMesh); m.group.add(groups.wiring);
   geos.push(wg); tris += wi / 3;
-  labels.push({ group: 'wiring', name: 'Left sensor wires', note: 'red, black, yellow signal; slack loop to the board', wire: WR[0], frac: .58 });
-  labels.push({ group: 'wiring', name: 'Right sensor wires', note: 'red, black, green signal; through a wall slot on each side', wire: WR[1], frac: .5 });
+  labels.push({ group: 'wiring', name: 'Left sensor wires', note: 'red, black, yellow signal; slack loop into the wall slot, then inside to the board', wire: WR[0], frac: .55 });
+  labels.push({ group: 'wiring', name: 'Right sensor wires', note: 'red, black, green signal; the mirror of the left run', wire: WR[1], frac: .55 });
+  labels.push({ group: 'wiring', name: 'Center sensor wires', note: 'red, black, blue signal; along the back support pocket and under the holder to the board', wire: WR[2], frac: .5 });
 
   // ---- updates (model space): springs and wires follow their anchors
   const inv = new T.Matrix4(), A = new T.Vector3(), B = new T.Vector3(), ax = new T.Vector3(), u = new T.Vector3(), wv3 = new T.Vector3(), p = new T.Vector3(), t = new T.Vector3(), n1 = new T.Vector3(), n2 = new T.Vector3(), q = new T.Vector3(), tmp = new T.Vector3();
@@ -510,13 +570,15 @@ function createDetails(T, { P, toM, base, m }) {
     for (const r of WR) {
       let k = 0;
       for (const lp of r.lp) toModel(r.lever, lp, r.pts[k++]);
-      const E = r.pts[k - 1], F = r.fixed[0];
-      chord.subVectors(F, E); const Lc = chord.length(); chord.normalize();
-      if (!r.len) r.len = Lc * r.slack;
-      const sag = Math.sqrt(Math.max(0, 3 * Lc * (r.len - Lc) / 8));
-      bulge.copy(g).addScaledVector(chord, -g.dot(chord)).addScaledVector(tmp.set(0, 0, r.out), .8);
-      bulge.addScaledVector(chord, -bulge.dot(chord)).normalize();
-      for (let j = 1; j <= 5; j++) { const tt = j / 6; r.pts[k++].copy(E).addScaledVector(chord, Lc * tt).addScaledVector(bulge, 4 * sag * tt * (1 - tt)); }
+      if (r.loop) {   // the slack loop between the moving lever and the frame keeps its length
+        const E = r.pts[k - 1], F = r.fixed[0];
+        chord.subVectors(F, E); const Lc = chord.length(); chord.normalize();
+        if (!r.len) r.len = Lc * r.slack;
+        const sag = Math.sqrt(Math.max(0, 3 * Lc * (r.len - Lc) / 8));
+        bulge.copy(g).addScaledVector(chord, -g.dot(chord)).addScaledVector(tmp.set(0, 0, r.out), .8);
+        bulge.addScaledVector(chord, -bulge.dot(chord)).normalize();
+        for (let j = 1; j <= r.loop; j++) { const tt = j / (r.loop + 1); r.pts[k++].copy(E).addScaledVector(chord, Lc * tt).addScaledVector(bulge, 4 * sag * tt * (1 - tt)); }
+      }
       for (const f of r.fixed) r.pts[k++].copy(f);
       // smooth through the control points
       let i = 0;
