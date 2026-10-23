@@ -154,7 +154,7 @@ Line numbers are as of commit 4c19af5; search for the anchor text if they moved.
 | Studio | showreel actors (words must match the drift words) | `next/js/showreel/index.js:39` (`HOME`), `:278` (`registerProject`) | no | see docs/recipes/showreel-actor.md |
 | Walkthrough | Robo-Catcher, CHARGER, Rudder pedals, Therma-Shift stories | `assets/portfolio-foundation/project-stories.json:6`, `:73`, `:90`, `:116` | no | edit JSON |
 | Sitemap | one URL per case | `sitemap.xml:5`-`9` | no | `tools/new.py project` adds the line; bump `lastmod` by hand |
-| 404 | CHARGER link | `404.html:103` | no | edit |
+| 404 | project links (all five, name only) | `404.html`, `nav.nf__go` | no | edit |
 | Websites | CHARGER explorer proof item | `websites.html:80` | no | edit |
 | Prototypes | each project in four design studies | `studies/{hangar,launch,studio}/index.html`, `studies/specimen/assets/js/main.js` | no | only when the prototypes should match; they are shown on websites.html |
 | Resume | role, results | `assets/Mert-Tureli-Resume.pdf` | no | replace the PDF |

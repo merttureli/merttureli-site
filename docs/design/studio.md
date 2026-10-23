@@ -204,3 +204,4 @@ These cannot be CSS tokens. Edit them in place (grep the name). Motion timers ar
 | Add a drift word | add `<i>` to a `.slot` (three per slot), keep the first `<i>` text equal to the project's `word` if the showreel uses it |
 | Check nothing moved | `python3 tools/check.py --fast` (the `tokens` row names any token value that moved); pixels: `python3 tools/check.py --only visual --pages next/index.html` |
 | Add a section | `python3 tools/new.py section NAME` (studio is the default site), see docs/recipes/new-page.md |
+| Restyle a plain root page (`404.html`, `privacy.html`, `hi/index.html`) | `next/css/pages.css` (after `tokens.css`; no studio.css, no JS). It copies `.label`, `.display`, `.pillbtn` and friends from studio.css/showcase.css, then one block per page. 404 links it root-absolute (`/next/css/...`) because Pages serves it for any path |
