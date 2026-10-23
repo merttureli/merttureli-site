@@ -12,7 +12,7 @@ One command that proves nothing broke. Run it before every commit.
     python3 tools/check.py --list       # what each check does
 
 Checks (modes in brackets):
-    build    [default full]       tools/build.py --check: generated pages match their sources
+    build    [default full]       tools/build.py --check: live pages match their next/ sources
     writing  [fast default full]  check-writing.py on public pages + changed HTML
     flags    [fast default full]  tools/check-flags.py; WARN (FAIL with --public)
     links    [fast default full]  internal links and asset references resolve and will deploy
@@ -20,6 +20,7 @@ Checks (modes in brackets):
     json     [fast default full]  JSON files and inline JSON scripts parse
     robots   [fast default full]  noindex on next/ studies/ docs/, robots.txt, sitemap
     tokens   [fast default full]  CSS changed vs --base is a pure token rename (WARN if values move)
+    transition [fast default full] docs/transition.md: old-design items still to move; WARN only, never FAIL
     smoke    [default full]       headless Chromium at 390+1440: console errors, failed requests
                                   (and window.labReport on next/lab pages that set it)
     visual   [full]               tools/visual-regress vs --base (pixels + gates), site pages in
@@ -40,9 +41,9 @@ import traceback
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from checks import Context, Result, ROOT, PASS, WARN, FAIL, SKIP  # noqa: E402
-from checks import build, writing, flags, links, jssyntax, jsonfiles, robots, tokens, smoke, visual  # noqa: E402
+from checks import build, writing, flags, links, jssyntax, jsonfiles, robots, tokens, transition, smoke, visual  # noqa: E402
 
-CHECKS = [build, writing, flags, links, jssyntax, jsonfiles, robots, tokens, smoke, visual]
+CHECKS = [build, writing, flags, links, jssyntax, jsonfiles, robots, tokens, transition, smoke, visual]
 HEAVY = {"build", "smoke", "visual"}
 COLOR = {PASS: "32", WARN: "33", FAIL: "31", SKIP: "90"}
 
@@ -87,7 +88,7 @@ def main(argv=None):
     by_name = dict((c.NAME, c) for c in CHECKS)
     if a.list:
         for c in CHECKS:
-            print("%-8s %-22s %s" % (c.NAME, "[" + " ".join(m for m in ("fast", "default", "full") if m in c.MODES) + "]",
+            print("%-10s %-22s %s" % (c.NAME, "[" + " ".join(m for m in ("fast", "default", "full") if m in c.MODES) + "]",
                                      c.TITLE))
         return 0
     mode = "fast" if a.fast else "full" if a.full else "default"
@@ -116,7 +117,7 @@ def main(argv=None):
             r = Result(FAIL, "check crashed (bug in tools/checks/%s.py)" % c.__name__.split(".")[-1],
                        traceback.format_exc().splitlines())
         r.seconds = time.time() - t0
-        print("  %s %-8s %5.1fs  %s" % (paint("%-4s" % r.status, r.status, color), c.NAME, r.seconds, r.summary), flush=True)
+        print("  %s %-10s %5.1fs  %s" % (paint("%-4s" % r.status, r.status, color), c.NAME, r.seconds, r.summary), flush=True)
         return c.NAME, r
 
     started = time.time()
@@ -128,11 +129,11 @@ def main(argv=None):
             results[name] = r
     total = time.time() - started
 
-    print("\n%-8s  %-4s  %6s  %s" % ("check", "", "time", "result"))
+    print("\n%-10s  %-4s  %6s  %s" % ("check", "", "time", "result"))
     print("-" * 78)
     for c in selected:
         r = results[c.NAME]
-        print("%-8s  %s  %5.1fs  %s" % (c.NAME, paint("%-4s" % r.status, r.status, color), r.seconds, r.summary))
+        print("%-10s  %s  %5.1fs  %s" % (c.NAME, paint("%-4s" % r.status, r.status, color), r.seconds, r.summary))
     print("-" * 78)
     counts = dict((s, sum(1 for r in results.values() if r.status == s)) for s in (PASS, WARN, FAIL, SKIP))
     print("%d pass, %d warn, %d fail, %d skip in %.0fs" % (counts[PASS], counts[WARN], counts[FAIL], counts[SKIP], total))

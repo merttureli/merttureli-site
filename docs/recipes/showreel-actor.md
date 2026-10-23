@@ -78,14 +78,14 @@ Running it again is a no-op. It refuses a word that is not in the `.drift` marku
 
 It loads lazily, so a broken actor logs a warning, drops out of the rotation and the hero keeps working. The `word` must match a `.drift` `<i>` in `next/index.html`; add one there if it is missing.
 
-How the rotation works: each idle cycle plays the next registered project (rocket exit, that project's sequence, rocket return), in registration order, with its own drift word brought forward and its own framing. Only the project that plays next is built: on idle, while the hero is at REST, so its shaders and textures are ready before it is due and nothing compiles mid-reel. With more than two projects the one that just played is disposed (`dispose()`) and rebuilt when its turn comes round. A reel cut short by the visitor after the guest came on stage also hands over to the next project.
+How the rotation works: REST shows the rocket. After the idle delay the rocket exits once, then the registered projects play back to back in registration order, round and round, with no rocket in between: each guest's exit flows into the next guest's entry (the next guest starts with a short `HANDOVER` lead-in while the last one's parts leave), and the drift word follows the guest on stage. Any scroll or input: the guest leaves gracefully (`beginAbort`/`sampleAbort`) and the rocket returns to REST; the next session resumes with the following guest. Each guest is built and prewarmed the first time it is due, during the previous guest's calm middle, then kept for reuse (up to three; beyond that the one that just played is disposed with `dispose()`), so nothing compiles mid-transition and a long idle session stays flat. Design the exit so its parts are leaving by its midpoint: the next guest starts at the latest halfway into the exit.
 
 ## 5. See it in the hero and prove nothing broke
 
 ```sh
 # http://127.0.0.1:8000/next/#reel-robo-catcher        plays that project now (#reel-coaster = Therma-Shift)
 # http://127.0.0.1:8000/next/#reel-robo-catcher-fast   the same at 3x; #reel-fast plays the next one in the rotation at 3x
-# `c` on the hero plays the next project in the rotation
+# `c` on the hero starts a session with the next project in the rotation (it then continues round)
 # console: __reel.seek(9, 'robo-catcher') draws that reel at 9 s (do this rather than waiting for reels)
 #          __reel.project (playing), __reel.next, __reel.use('robo-catcher'), __reel.built
 python3 tools/check.py
@@ -108,7 +108,7 @@ for (const h of ['clarity.ms', 'bing.com', 'workers.dev', 'formspree.io']) await
 | Member | Called by the hero |
 |---|---|
 | `group` | added to the shared scene once |
-| `sequence` | `[[STATE, seconds], ...]`, placed between `ROCKET_EXIT` (2.1 s) and `ROCKET_RETURN` (2.6 s) |
+| `sequence` | `[[STATE, seconds], ...]`, placed after `ROCKET_EXIT` (2.1 s, first guest of a session) or `HANDOVER` (0.7 s, every later guest); read windows by name, never assume a start time |
 | `layout(frame)` | before each of its reels and on resize while it plays: `{ halfW, halfH, camera, w, h, free: {l,t,r,b}, avoid: [rects] }` in canvas px (`avoid` holds its own drift word) |
 | `sample(T, states)` | every reel frame; `states[NAME] = { t0, t1 }` in reel seconds |
 | `beginAbort()`, `sampleAbort(u)` | visitor input mid-reel; u goes 0 to 1 over `abortSeconds` (optional member, default 1.5 s) |
