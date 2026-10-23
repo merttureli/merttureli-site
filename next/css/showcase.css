@@ -63,13 +63,19 @@ a.tile__link:focus-visible .tile__go { transform: rotate(-45deg); background: va
 
 .tile--charger .tile__name { font-size: clamp(54px, 6.4vw, 112px); }
 .tile--charger .tile__stat b { font-size: clamp(64px, 7vw, 124px); }
-.tile--charger .tile__media { inset: 24% -4% 2% 30%; }
-.tile--charger .tile__media img { object-position: 60% 50%; }
-.tile--robo .tile__media { inset: 30% 4% 22% 4%; }
-.tile--pedals .tile__media { inset: 26% -14% 16% -14%; }
-.tile--therma .tile__media { inset: 0 -2% 0 40%; }
-.tile--therma .tile__media video { transform: scale(1.18); }
-@media (hover: hover) { .tile--therma:hover .tile__media video { transform: scale(1.22); } }
+/* product stages: CHARGER, Robo-Catcher, rudder pedals, Therma-Shift show a window onto the hero stage (its grey
+   ground, rig and soft shadow): a poster, and a loop rendered from the hero's own actors (tools/render-loops.js,
+   docs/recipes/tile-loops.md) that clips.js plays on hover (desktop) or in view (phone). The media keeps its aspect
+   (--ar) inside the window and its edges feather into the window's grey, so any window shape works. */
+.tile__media--stage { border-radius: var(--radius-tile-s); background: var(--paper); overflow: hidden; container-type: size; }
+.tile__media--stage img, .tile__media--stage video { inset: auto; left: 50%; top: 50%; translate: -50% -50%; width: min(100cqw, 100cqh * var(--ar, 1.5)); height: auto; aspect-ratio: var(--ar, 1.5); object-fit: cover;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent), linear-gradient(180deg, transparent, #000 7%, #000 93%, transparent); -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent), linear-gradient(180deg, transparent, #000 7%, #000 93%, transparent); mask-composite: intersect; }
+.tile__media--stage video { opacity: 0; transition: opacity var(--dur-600) linear, transform var(--dur-1100) var(--ease); }
+.tile__media--stage video.is-live { opacity: 1; }
+.tile--charger .tile__media { --ar: 1.7778; inset: 38% 12px 12px 30%; }
+.tile--robo .tile__media, .tile--pedals .tile__media { --ar: 1.5; inset: 32% 12px 21% 12px; }
+.tile--therma .tile__media { --ar: 2; inset: 12px 12px 12px max(40%, 360px); }
 .tile--bend .tile__media, .tile--hotbox .tile__media { inset: 10% 6% 10% 44%; }
 .tile--bend .tile__text, .tile--hotbox .tile__text { max-width: 60%; }
 
@@ -94,7 +100,10 @@ a.tile__link:focus-visible .tile__go { transform: rotate(-45deg); background: va
 .roles__line li { display: flex; flex-direction: column; gap: 6px; padding: clamp(18px, 1.8vw, 26px); }
 .roles__line li + li { border-left: var(--hairline); }
 .roles__line b { font-size: clamp(16px, 1.25vw, 19px); font-weight: 620; letter-spacing: -.015em; line-height: 1.2; }
-.roles__line span:last-child { font-family: var(--serif); font-style: italic; font-weight: 500; font-size: clamp(16px, 1.2vw, 18px); color: var(--ink-soft); line-height: 1.25; }
+/* the company line; only the company name itself (.co, the one approved serif exception) is italic serif,
+   the rest of the line (", $70,000 raised", ", Ankara") stays in the body face */
+.roles__line .co, .roles__org { font-size: clamp(16px, 1.2vw, 18px); color: var(--ink-soft); line-height: 1.25; }
+.roles__line .co { font-family: var(--serif); font-style: italic; font-weight: 500; letter-spacing: normal; }
 .roles .rule h2 { font-weight: 400; }
 /* the current employer's mark: small, cap height, sitting on the baseline (no other role gets one) */
 .roles__logo { display: inline-block; width: auto; height: .86em; margin-right: .3em; vertical-align: baseline; }
@@ -302,12 +311,11 @@ a.tile__link:focus-visible .tile__go { transform: rotate(-45deg); background: va
   .tile--charger .tile__link { min-height: 470px; }
   .tile--charger .tile__name { font-size: 52px; }
   .tile--charger .tile__stat b { font-size: 64px; }
-  .tile--charger .tile__media { inset: 34% -8% 16% 4%; }
+  .tile--charger .tile__media { inset: 160px 10px 122px; }
   .tile--robo .tile__link, .tile--pedals .tile__link { min-height: 420px; }
-  .tile--robo .tile__media { inset: 30% 6% 20% 6%; }
-  .tile--pedals .tile__media { inset: 26% -10% 16% -10%; }
-  .tile--therma .tile__link { min-height: 380px; }
-  .tile--therma .tile__media { inset: 30% -4% 18% -4%; }
+  .tile--robo .tile__media, .tile--pedals .tile__media { inset: 140px 10px 96px; }
+  .tile--therma .tile__link { min-height: 420px; }
+  .tile--therma .tile__media { inset: 156px 10px 96px; }
   .tile--bend .tile__link, .tile--hotbox .tile__link { min-height: 270px; padding: 16px; }
   .tile--bend .tile__name, .tile--hotbox .tile__name { font-size: 22px; }
   .tile--bend .tile__text, .tile--hotbox .tile__text { max-width: none; }
@@ -375,6 +383,32 @@ a.tile__link:focus-visible .tile__go { transform: rotate(-45deg); background: va
   .nextp__card { grid-template-columns: 1fr; min-height: 0; border-radius: 26px; padding: 24px 20px; }
   .nextp__media { min-height: 220px; order: -1; }
   .nextp__name { font-size: 15vw; }
+}
+
+/* ============================================ CASE STAGE: live 3D (next/js/case-stage.js)
+   The opening stage card and the moments further down (.band--live) draw the hero showreel's actor
+   on a canvas over a light grey studio ground (the hero's own paper), with the still rendered from
+   it underneath until the canvas is live (and for good under reduced motion or without WebGL). */
+.stage__card--live { background: radial-gradient(120% 95% at 50% 36%, var(--tile-2) 0%, var(--paper) 70%); }
+.stage__live { position: absolute; inset: 0; }
+.stage__still, .stage__still img, .stage__live canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.stage__still img { object-fit: contain; }
+.stage__live canvas { opacity: 0; transition: opacity var(--dur-800) linear; }
+.stage__live.is-live canvas { opacity: 1; }
+.stage__live.is-live .stage__still { opacity: 0; transition: opacity var(--dur-600) linear var(--dur-500); }
+.stage__card--live .stage__idx, .stage__card--live .stage__cap { z-index: 1; pointer-events: none; }
+.stage__card--live .clip-toggle, .band--live .clip-toggle { z-index: 2; }
+.band--live { background: radial-gradient(120% 95% at 50% 36%, var(--tile-2) 0%, var(--paper) 70%); }
+.band--live .stage__live { position: relative; aspect-ratio: 16 / 9; }
+.band--live figcaption { z-index: 1; color: var(--muted); }
+.band--live .clip-toggle { background: var(--tile-2); }
+/* a feature card's media as a live moment (Therma-Shift "The design": the open stack, hot then cold) */
+.feat__media--live { display: block; position: relative; aspect-ratio: 4 / 3; border-radius: var(--radius-tile-s); overflow: hidden;
+  background: radial-gradient(120% 95% at 50% 36%, var(--tile-2) 0%, var(--paper) 70%); }
+.feat__media--live .clip-toggle { z-index: 2; right: 12px; bottom: 12px; }
+@media (max-width: 760px) {
+  .stage__card--live.stage__card--wide { aspect-ratio: 4 / 4.4; }
+  .band--live .stage__live { aspect-ratio: 4 / 3; }
 }
 
 @media print { [data-reveal] { animation: none !important; } }

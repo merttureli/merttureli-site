@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Tile loop stage</title>
+<!-- Capture stage for tools/render-loops.js (recipe: docs/recipes/tile-loops.md). It mounts the real hero
+     showreel (next/js/showreel/index.js: same engine, rig, environment, actors and contact shadows), pauses it,
+     and poses one product per frame as a pure function of loop time: window.stage.setup(key, w, h), then
+     window.stage.frame(t). The base href makes the hero's relative asset paths (assets/3d/) resolve as on
+     next/index.html. Open by hand to preview: /tools/render-loops/stage.html#therma-shift (plays the loop). -->
+<base href="../../next/">
+<style>
+  /* the hero's ground (tokens.css --paper) and, for the rocket, the hero's own soft shadow (studio.css .hero__shadow) */
+  :root { --paper: #e7e8ea; --shadow-soft: rgba(18, 19, 21, .13); --shadow-clear: rgba(18, 19, 21, 0); }
+  html, body { margin: 0; background: var(--paper); overflow: hidden; }
+  .box { position: absolute; left: 0; top: 0; background: var(--paper); overflow: hidden; }
+  .box canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .shadow { position: absolute; border-radius: 50%; background: radial-gradient(closest-side, var(--shadow-soft), var(--shadow-clear)); display: none; }
+  .top { position: absolute; left: 0; top: 0; height: 0; }
+  .mq { position: absolute; left: 0; bottom: 0; height: 0; width: 100%; }
+</style>
+</head>
+<body>
+<header class="top"></header>
+<div class="box" id="box"><span class="shadow" id="shadow"></span><canvas></canvas></div>
+<div class="mq" data-marquee></div>
+<script type="module">
+import { createTimeline, screenExtents, ease, win, lerp, clamp01 } from './js/showreel/engine.js';
+import { mountShowreel } from './js/showreel/index.js';
+import { LAYOUTS, applyCamera } from './js/hero3d.js';
+
+const box = document.getElementById('box'), shadowEl = document.getElementById('shadow');
+const TAU = Math.PI * 2;
+let api = null, actor = null, loop = null, t0 = 0;
+
+// keyed values [[t, v], ...], eased between keys (the actors' own house curve)
+function keyed(K, u) {
+  if (u <= K[0][0]) return K[0][1];
+  for (let i = 1; i < K.length; i++) { const [b, vb] = K[i], [a, va] = K[i - 1]; if (u < b) return lerp(va, vb, ease.inOutSine((u - a) / (b - a))); }
+  return K[K.length - 1][1];
+}
+// a piecewise linear map from loop time to reel time: [[reelFrom, reelTo, loopSeconds], ...]
+function segments(list) {
+  let total = 0; const segs = list.map(([a, b, d]) => { const s = { a, b, d, t0: total }; total += d; return s; });
+  return { total, at(t) { for (const s of segs) if (t < s.t0 + s.d) return { T: lerp(s.a, s.b, (t - s.t0) / s.d), seg: segs.indexOf(s), u: (t - s.t0) / s.d }; const s = segs[segs.length - 1]; return { T: s.b, seg: segs.length - 1, u: 1 }; } };
+}
+
+// Scale and move the actor's outer group so the union of `objects` over the loop fills `fill` of the frame,
+// centered on `at` (fractions of w, h). Perspective makes one pass approximate, so it runs three.
+function fit(group, objects, fill, at, times) {
+  const { camera } = api.engine, w = box.clientWidth, h = box.clientHeight, vw = api.engine.viewAt(0);
+  const bbox = () => {
+    const B = { l: 1e9, r: -1e9, t: 1e9, b: -1e9 };
+    for (const t of times) {
+      loop.pose(t);
+      const e = screenExtents(objects(), group, camera, w, h);
+      const o = group.getWorldPosition(new api.engine.THREE.Vector3()).project(camera);
+      const ox = (o.x + 1) / 2 * w, oy = (1 - o.y) / 2 * h;
+      B.l = Math.min(B.l, ox - e.l); B.r = Math.max(B.r, ox + e.r); B.t = Math.min(B.t, oy - e.u); B.b = Math.max(B.b, oy + e.d);
+    }
+    return B;
+  };
+  for (let i = 0; i < 3; i++) {
+    const B = bbox();
+    const s = Math.min(fill[0] * w / (B.r - B.l), fill[1] * h / (B.b - B.t));
+    group.scale.multiplyScalar(s); group.position.multiplyScalar(s);
+    group.updateMatrixWorld(true);
+    const C = bbox(), cx = (C.l + C.r) / 2, cy = (C.t + C.b) / 2;
+    group.position.x += (at[0] * w - cx) / w * 2 * vw.halfW;
+    group.position.y -= (at[1] * h - cy) / h * 2 * vw.halfH;
+    group.updateMatrixWorld(true);
+  }
+  return bbox();
+}
+
+// ------------------------------------------------------------- the loops
+// Each: { seconds, setup(), pose(t) }. pose() is a pure function of loop time t in [0, seconds): frame 0 is the
+// poster, and pose(seconds) equals pose(0), so the clip loops without a seam.
+const LOOPS = {
+  // CHARGER: the hero rocket (never adopted, keeps its own look) in the hero's land framing, pulled back a little,
+  // one slow full roll about its own long axis (the livery passes by) with the hero's gentle bob. The hero's CSS
+  // shadow sits under it.
+  charger: {
+    seconds: 10,
+    async setup() {
+      const r = this.r = api.rocket, L = { ...LAYOUTS.land, dist: 2.0 }, { camera } = api.engine;
+      applyCamera(camera, L);
+      // center the airframe in the frame (the hero puts it left of center, clear of the words)
+      const w = box.clientWidth, h = box.clientHeight, vw = api.engine.viewAt(0);
+      this.dx = 0; this.dy = 0; this.pose(0);
+      const e = screenExtents([r.group], r.group, camera, w, h);
+      const o = r.group.getWorldPosition(new api.engine.THREE.Vector3()).project(camera);
+      const cx = (o.x + 1) / 2 * w + (e.r - e.l) / 2, cy = (1 - o.y) / 2 * h + (e.d - e.u) / 2;
+      const px = w * .5 - cx, py = h * .47 - cy;
+      this.dx = px / w * 2 * vw.halfW; this.dy = -py / h * 2 * vw.halfH;
+      // .hero__shadow (left 24%, right 20%, top 62%, height 7%, rotate 24deg, blur 10px), scaled about the center
+      // by the same move-in so it stays under the airframe, and moved with it
+      const k = LAYOUTS.land.dist / L.dist;
+      Object.assign(shadowEl.style, { display: 'block', left: (50 - 26 * k) + '%', right: (50 - 30 * k) + '%', top: (50 + 12 * k) + '%', height: 7 * k + '%', transform: `translate(${px}px, ${py}px) rotate(24deg)`, filter: `blur(${10 * k * w / 1584}px)` });
+    },
+    pose(t) {
+      const r = this.r;
+      r.state.spin = TAU * t / this.seconds;
+      r.state.scroll = 0; r.state.fly = 0;
+      r.pose(0);
+      r.group.position.x += this.dx;
+      r.group.position.y += this.dy + Math.sin(TAU * t / this.seconds) * .012;
+    },
+  },
+
+  // Robo-Catcher: a turntable, like the owner's old render (assets/motion/robo-catcher-360-*), of the hero's model in
+  // the hero's look: the assembled machine (no ball) turns once about its vertical axis from the hero's three-quarter
+  // view, the flywheels idling at the hero's speed (a whole number of turns, so the loop closes). The contact shadow
+  // turns with it.
+  'robo-catcher': {
+    seconds: 12,
+    async setup() {
+      const S = this.S = createTimeline(actor.sequence).states;
+      this.T = S.ROBO_PITCH.t0 + .02;                         // assembled, ball not yet in play
+      this.view = actor.model.group.parent;
+      this.turns = Math.round(15 * this.seconds / TAU);       // the hero's 15 rad/s, rounded to whole turns
+    },
+    pose(t) {
+      actor.sample(this.T, this.S);
+      const V = this.view, THREE = api.engine.THREE;
+      if (this.yaw0 === undefined) {
+        // the turntable axis: vertical through the machine's own center (not the view's origin), so it turns in place
+        this.yaw0 = V.rotation.y; this.pos0 = V.position.clone();
+        V.updateMatrixWorld(true);
+        const c = new THREE.Box3().setFromObject(actor.model.group).getCenter(new THREE.Vector3());
+        this.c = V.worldToLocal(c.clone());
+        this.c0 = V.parent.worldToLocal(c);
+      }
+      V.rotation.y = this.yaw0 + TAU * t / this.seconds;
+      V.position.copy(this.pos0);
+      V.updateMatrixWorld(true);
+      const now = V.parent.worldToLocal(V.localToWorld(this.c.clone()));
+      V.position.add(this.c0.clone().sub(now));
+      V.updateMatrixWorld(true);
+      const a = TAU * this.turns * t / this.seconds;
+      actor.model.setSpin(a, a);
+    },
+    objects: () => [actor.model.group],
+  },
+
+  // Rudder pedals: assembled, springs and wiring on, the aircraft left out (its path is the hero's). The pedals
+  // work right, left and center (the reel's first beat), then each toe brake is pressed, with the reel's slow turn
+  // as a small sway that closes on itself.
+  'rudder-pedals': {
+    seconds: 6.4,
+    async setup() {
+      this.S = createTimeline(actor.sequence).states;
+      this.T = this.S.RUDDER_PEDALS_ACTION.t0 + .3;          // assembled, drive 0, before the side turn
+      this.view = actor.model.group.parent;
+      this.flight = actor.accent.group.parent;
+      this.DRIVE = [[0, 0], [.35, 0], [1.05, .85], [1.75, .85], [2.55, -.9], [3.3, -.9], [3.95, 0], [6.4, 0]];
+      this.TOE_L = [[4.0, 0], [4.35, 1], [4.65, 1], [5.0, 0]];
+      this.TOE_R = [[4.9, 0], [5.25, 1], [5.55, 1], [5.9, 0]];
+    },
+    pose(t) {
+      actor.sample(this.T, this.S);
+      this.flight.visible = false;
+      this.yaw0 = this.yaw0 ?? this.view.rotation.y;
+      this.view.rotation.y = this.yaw0 + .09 * Math.sin(TAU * t / this.seconds);
+      actor.model.setDrive(keyed(this.DRIVE, t));
+      actor.model.setToe(keyed(this.TOE_L, t), keyed(this.TOE_R, t));
+      actor.model.refresh();
+    },
+    objects: () => [actor.model.group],
+  },
+
+  // Therma-Shift: the reel's warm and chill beats, the holds shortened: the mug lands on the plugged-in coaster,
+  // the plate warms and the coffee steams; the mug lifts away and the can lands, the plate chills and the can beads;
+  // the can lifts away and the plate returns to neutral, and the mug lands again. Starts with the mug steaming.
+  'therma-shift': {
+    seconds: 0,
+    async setup() {
+      const S = this.S = createTimeline(actor.sequence).states;
+      this.map = segments([
+        [S.MUG_DROP.t0 - .5, S.MUG_DROP.t1, 2.2],
+        [S.WARM.t0, S.WARM.t1, 2.4],
+        [S.SWAP.t0, S.SWAP.t1, 2.9],
+        [S.CHILL.t0, S.CHILL.t1, 2.3],
+        [S.CAN_EXIT.t0, S.CAN_EXIT.t1, 1.6],
+      ]);
+      this.seconds = this.map.total;
+      this.start = 2.2 + 2.4 * .85;                          // late in WARM: plate hot, steam full
+      this.fitTimes = [0, 4.56, 10.66];                       // framed on the seated mug and can, not the props in flight
+      if (actor.cable) actor.cable.showIn(1e3);
+    },
+    pose(t) {
+      const m = this.map.at((t + this.start) % this.seconds);
+      actor.sample(m.T, this.S);
+      if (actor.cable) actor.cable.showIn(1e3);               // plugged in and at rest the whole loop
+      if (m.seg === 4) actor.coaster.setPlateTemperature(lerp(11, 22, ease.inOutSine(m.u)));   // back to neutral before the mug
+    },
+    objects: () => actor.coaster.group.parent.children.filter(o => o.visible && !(actor.cable && o === actor.cable.group)),
+  },
+};
+// where each product sits and how much of the frame it may fill (the tile shows the clip with feathered edges)
+const FIT = { 'robo-catcher': { fill: [.78, .8], at: [.5, .52] }, 'rudder-pedals': { fill: [.7, .8], at: [.5, .52] }, 'therma-shift': { fill: [.58, .68], at: [.55, .58] } };
+
+async function setup(key, w, h) {
+  Object.assign(box.style, { width: w + 'px', height: h + 'px' });
+  api = await mountShowreel({ box, idleSeconds: 1e9 });
+  api.pause();
+  const { engine } = api;
+  engine.renderer.setPixelRatio(1);
+  engine.size(w, h);
+  applyCamera(engine.camera, LAYOUTS[w / h < 1 ? 'port' : 'land']);
+  engine.size(w, h);
+  loop = LOOPS[key];
+  if (key === 'charger') { await loop.setup(); loop.pose(0); engine.render(); return { seconds: loop.seconds }; }
+  api.rocket.group.visible = false;
+  const p = api.projects.find(q => q.key === key);
+  actor = await p.actor({ engine, quality: 'high' });
+  engine.scene.add(actor.group);
+  const vw = engine.viewAt(0);
+  const g = 16;
+  actor.layout({ halfW: vw.halfW, halfH: vw.halfH, camera: engine.camera, w, h, free: { l: g, r: w - g, t: g, b: h - g }, avoid: [], vp: { l: 0, t: 0, r: w, b: h } });
+  await actor.prewarm(engine.renderer, engine.camera, engine.scene);
+  await loop.setup();
+  const n = 16, times = loop.fitTimes || Array.from({ length: n }, (_, i) => loop.seconds * i / n);
+  const F = FIT[key];
+  const bb = fit(actor.group, loop.objects, F.fill, F.at, times);
+  loop.pose(0); engine.render();
+  return { seconds: loop.seconds, bbox: bb };
+}
+let lastT = null;
+function frame(t, dt = 1 / 30) {
+  loop.pose(t);
+  if (actor && actor.visible) actor.update(dt, t);   // steam and condensation advance with the clip's own clock
+  api.engine.render();
+  lastT = t;
+  return true;
+}
+window.stage = { setup, frame, get loop() { return loop; }, get actor() { return actor; }, get api() { return api; } };
+window.stageReady = true;
+
+// by hand: #<key> plays the loop in the window
+const key = location.hash.slice(1);
+if (key && LOOPS[key]) {
+  await setup(key, innerWidth, innerHeight);
+  const t00 = performance.now();
+  let prev = t00;
+  const tick = now => { const t = ((now - t00) / 1000) % loop.seconds; frame(t, Math.min(.1, (now - prev) / 1000)); prev = now; requestAnimationFrame(tick); };
+  requestAnimationFrame(tick);
+}
+</script>
+</body>
+</html>

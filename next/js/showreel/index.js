@@ -943,3 +943,6 @@ function placeholderCondensation(mesh) {
   const m = mesh && mesh.material, r0 = m ? m.roughness : 0;
   return { setAmount(a) { if (m) m.roughness = lerp(r0, Math.min(1, r0 + .35), a); }, dispose() {} };
 }
+
+// Export only, for the Studio case pages (next/js/case-stage.js), which mount this actor on their own canvas.
+export { createThermaShift };

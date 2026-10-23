@@ -141,6 +141,7 @@ document.addEventListener('visibilitychange', kick);
 |---|---|
 | `next/js/showreel/index.js` `frame()` | stops when the hero box is off screen or the tab is hidden; restarts on `kick()` |
 | `next/js/showreel/index.js` slow guard | median of 60 frames above 38 ms (after 2.5 s) gives up the loop at rest and draws single frames on scroll |
+| `next/js/case-stage.js` | Studio case pages: builds near the viewport, plays once half in view; only the live stage most on screen draws; stops off screen, in a hidden tab, on Pause; reduced motion keeps the still |
 | `js/shader-bg.js` | IntersectionObserver (200px margin) + `visibilitychange`; one still frame when motion is off |
 | `js/media-playback.js` | videos play only when visible, motion is on, tab is visible and no dialog is open |
 | `js/photography-gallery.js` | corridor pauses on hover, focus, drag, off screen, hidden tab, open viewer |

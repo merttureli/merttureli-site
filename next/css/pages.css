@@ -113,7 +113,8 @@ ol, ul { list-style: none; }
 .legal__body { max-width: 68ch; color: var(--ink-soft); line-height: 1.68; }
 .legal__body p + p { margin-top: 1.2em; padding-top: 1.2em; border-top: var(--hairline); }
 .legal__body p:first-child { font-size: clamp(18px, 1.5vw, 21px); line-height: 1.45; letter-spacing: -.01em; color: var(--ink); }
-.legal__body strong { font-weight: 680; color: inherit; }
+/* each paragraph's lead ("What is collected.") sits on its own line: a whole element, not a bold run-in */
+.legal__body strong { display: block; margin-bottom: .35em; font-weight: 680; color: var(--ink); letter-spacing: -.005em; }
 .legal__body a { color: inherit; text-decoration: underline; text-decoration-color: var(--line); text-decoration-thickness: 1px; text-underline-offset: 3px; overflow-wrap: anywhere; transition: text-decoration-color var(--dur-400) var(--ease); }
 @media (hover: hover) { .legal__body a:hover { text-decoration-color: var(--signal-ink); } }
 .legal__back { grid-column: 2; margin-top: clamp(8px, 1.4vw, 20px); }
