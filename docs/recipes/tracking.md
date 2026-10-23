@@ -10,7 +10,7 @@
 | Link clicks | built in by href: `resume-download`, `vcf-download`, `email-click`, `linkedin-click`, `github-click`, `phone-click`, `project-open:<slug>`, `outbound:<host>` |
 | Custom events | `window.mtTrack('<fixed-name>')` |
 
-Case pages name their sections from `anchor`, `track` or the label slug of each section in `content/projects/<slug>.json` (`track_id()` in `build-case.py`).
+Live pages report the sections `js/track.js` finds on screen; the Studio case pages are built by `tools/build-studio-cases.py`. Analytics includes on the live pages come from `LIVE` in `tools/build.py` (home and case pages: `analytics-config.js`, `track.js`, `clarity.js`; the websites page: no Clarity, as `privacy.html` says).
 
 ## Add a tracked section or event
 
@@ -25,7 +25,7 @@ Names: lowercase, hyphens, at most 64 characters, fixed strings. Never pass anyt
 ## Keep it true
 
 - If you start collecting something new (a new field, not a new event name), update `privacy.html` in the same commit. The privacy page must describe exactly what is sent.
-- Renaming `assets/Mert-Tureli-Resume.pdf` or changing `mailto:`/`tel:` hrefs changes what the built-in rules match: keep them.
+- Changing `mailto:`/`tel:` hrefs changes what the built-in rules match: keep them.
 - Keys live in `js/analytics-config.js` only.
 
 ## Test without sending

@@ -20,9 +20,9 @@ import sys
 from html.parser import HTMLParser
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# Every served page is scanned. Skipped: templates and sources (src/ holds the
-# un-built copies of the same flags), tooling, docs (the catalog shows flag demos).
-SKIP = ("src/", "tools/", "templates/", "docs/", "_ds/", "cards/", ".claude/", ".git/")
+# Every served page is scanned (next/ sources and the live pages built from them).
+# Skipped: templates, tooling, docs (the catalog shows flag demos).
+SKIP = ("tools/", "templates/", "docs/", "_ds/", "cards/", ".claude/", ".git/")
 
 
 def pages():
@@ -84,7 +84,7 @@ def flags_in(src):
 def next_id(prefix):
     """The next free <prefix>-NNN flag id across sources and built pages."""
     rx = re.compile(r'(?:data-flag="|"flag":\s*")%s-(\d+)"' % re.escape(prefix))
-    files = [os.path.join(ROOT, p) for p in pages()] + [os.path.join(ROOT, "src", "index.html")]
+    files = [os.path.join(ROOT, p) for p in pages()]
     for d, _, names in os.walk(os.path.join(ROOT, "content")):
         files += [os.path.join(d, n) for n in names if n.endswith(".json")]
     used = []
