@@ -21,6 +21,8 @@ Checks (modes in brackets):
     robots   [fast default full]  noindex on next/ studies/ docs/, robots.txt, sitemap
     tokens   [fast default full]  CSS changed vs --base is a pure token rename (WARN if values move)
     transition [fast default full] docs/transition.md: old-design items still to move; WARN only, never FAIL
+    typeset  [fast default full]  no font, style or color switch inside a sentence on live + next/ pages
+                                  (class="co" company names and data-type-ok are allowed)
     smoke    [default full]       headless Chromium at 390+1440: console errors, failed requests
                                   (and window.labReport on next/lab pages that set it)
     visual   [full]               tools/visual-regress vs --base (pixels + gates), site pages in
@@ -41,9 +43,9 @@ import traceback
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from checks import Context, Result, ROOT, PASS, WARN, FAIL, SKIP  # noqa: E402
-from checks import build, writing, flags, links, jssyntax, jsonfiles, robots, tokens, transition, smoke, visual  # noqa: E402
+from checks import build, writing, flags, links, jssyntax, jsonfiles, robots, tokens, transition, typeset, smoke, visual  # noqa: E402
 
-CHECKS = [build, writing, flags, links, jssyntax, jsonfiles, robots, tokens, transition, smoke, visual]
+CHECKS = [build, writing, flags, links, jssyntax, jsonfiles, robots, tokens, transition, typeset, smoke, visual]
 HEAVY = {"build", "smoke", "visual"}
 COLOR = {PASS: "32", WARN: "33", FAIL: "31", SKIP: "90"}
 

@@ -35,6 +35,7 @@ Full list with skills: [recipes/README.md](recipes/README.md).
 | Analytics events, privacy page | [tracking.md](recipes/tracking.md) |
 | Edit the Studio | [studio-edit.md](recipes/studio-edit.md) |
 | Add a showreel project | [showreel-actor.md](recipes/showreel-actor.md) |
+| Studio home tile loops | [tile-loops.md](recipes/tile-loops.md) |
 | New page or section | [new-page.md](recipes/new-page.md) |
 | STEP to 3D | [cad-import.md](recipes/cad-import.md) |
 | Prove nothing broke | [checks.md](recipes/checks.md) |
@@ -55,4 +56,5 @@ Every Python tool takes `--help` and works from any folder.
 | `python3 tools/media.py image\|video\|poster\|snippet\|info\|audit` | web derivatives (webp sets, webm/mp4, posters) and the markup to paste; `audit` lists oversized or missing files |
 | `python3 tools/preview.py site\|studio --out DIR [--smoke]` | artifact-ready copy for owner review, with the publish plan (`site` = the live site) |
 | `python3 tools/cad.py setup\|inspect\|import\|view\|shot\|loader` | STEP assembly -> cadmesh, glb, explorer and hero files, keeping part names |
+| `node tools/render-loops.js [key ...]` | renders the Studio home's product tile loops and posters from the showreel actors ([tile-loops.md](recipes/tile-loops.md)) |
 | `node tools/visual-regress/visual-regress.js --baseline A --candidate B` | pixel diff of two copies (check.py `--full` runs it for you) |

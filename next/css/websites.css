@@ -8,7 +8,8 @@ mark.flag { background: none; color: inherit; border-bottom: 1px dotted var(--si
 .menu__panel nav a[aria-current="page"] { color: var(--signal); }
 
 /* ------------------------------------------------------------ hero */
-.wphero__em { display: block; margin-top: .08em; font-size: .46em; line-height: 1; letter-spacing: -.02em; }
+/* one face, one size for the whole title; the line break sits after "Websites" */
+.wphero__name { font-size: clamp(42px, 7.2vw, 132px); line-height: .86; }
 .wstage { aspect-ratio: 16 / 8.6; background: var(--tile); }
 .browser { position: absolute; left: 8%; right: 18%; top: 11%; bottom: 13%; display: flex; flex-direction: column; border-radius: var(--radius-tile-s); background: var(--paper); box-shadow: 0 0 0 1px var(--line), var(--shadow-tile); overflow: hidden; }
 .browser__bar { display: flex; align-items: center; gap: 14px; height: 40px; padding: 0 16px; flex: none; border-bottom: var(--hairline); background: var(--tile); font-family: var(--mono); font-size: var(--text-mono-m); font-stretch: var(--mono-stretch); letter-spacing: var(--mono-tracking); color: var(--muted); }
@@ -81,7 +82,10 @@ mark.flag { background: none; color: inherit; border-bottom: 1px dotted var(--si
 
 /* --------------------------------------------------- spec sheet bits */
 .wspec__lead { font-size: var(--text-s); line-height: 1.5; color: var(--ink-soft); max-width: 40ch; }
-.specsheet__name .serif { font-size: 1.06em; text-transform: none; }
+/* run-in leads ("A conversation.", "First view") sit on their own line, a whole element, not a bold word inside the sentence */
+.webpage .specsheet dd b { display: block; margin-bottom: 2px; }
+.webpage .specsheet dd ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 20px; }
+.webpage .specsheet dd ul li + li { margin-top: 0; }
 
 /* ---------------------------------------------------- closing CTA */
 .wcta { margin-top: var(--space-70-140); }
@@ -109,9 +113,7 @@ mark.flag { background: none; color: inherit; border-bottom: 1px dotted var(--si
 #invitation-body { font-size: var(--text-s); line-height: 1.5; color: var(--paper-soft-hi); max-width: 40ch; }
 #inquiry .booking-top { padding: 22px 28px 0; }
 #inquiry .steps { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: var(--text-mono-m); font-stretch: var(--mono-stretch); letter-spacing: var(--mono-tracking); text-transform: uppercase; color: var(--muted); }
-#inquiry .steps b { font-weight: 500; }
 #inquiry .steps span.active { color: var(--ink); }
-#inquiry .steps span[aria-current="step"] b { color: var(--signal-ink); }
 #inquiry .steps i { flex: 1; height: 1px; background: var(--line); }
 #inquiry .booking-content { padding: 22px 28px 12px; }
 #inquiry .step-panel:not([hidden]) { animation: step-in var(--dur-400) var(--ease) both; }
@@ -149,7 +151,6 @@ mark.flag { background: none; color: inherit; border-bottom: 1px dotted var(--si
 #inquiry .back { font-family: var(--mono); font-size: var(--text-mono-l); font-stretch: var(--mono-stretch); text-transform: uppercase; letter-spacing: var(--mono-tracking); color: var(--ink-soft); padding: 8px 0; }
 #inquiry .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 #inquiry .fields label { display: flex; flex-direction: column; gap: 6px; font-family: var(--mono); font-size: var(--text-mono-m); font-stretch: var(--mono-stretch); text-transform: uppercase; letter-spacing: var(--mono-tracking); color: var(--muted); }
-#inquiry .fields label span { text-transform: none; }
 #inquiry .fields .full { grid-column: 1 / -1; }
 #inquiry input, #inquiry textarea { width: 100%; padding: 12px 14px; font-size: var(--text-m); text-transform: none; letter-spacing: 0; }
 #inquiry textarea { resize: vertical; min-height: 110px; line-height: 1.45; }
@@ -180,7 +181,7 @@ mark.flag { background: none; color: inherit; border-bottom: 1px dotted var(--si
 
 /* ------------------------------------------------------------- phone */
 @media (max-width: 760px) {
-  .wphero__em { font-size: .5em; }
+  .wphero__name { font-size: 11.4vw; }
   .wstage { aspect-ratio: 4 / 4.6; }
   .browser { left: 5%; right: 5%; top: 12%; bottom: 33%; }
   .browser__bar { height: 32px; padding: 0 12px; gap: 10px; font-size: var(--text-mono-xs); }
@@ -222,4 +223,5 @@ mark.flag { background: none; color: inherit; border-bottom: 1px dotted var(--si
 #inquiry .steps { border-top: 0; }
 #inquiry .steps span, #inquiry .steps span:last-child { display: inline; padding: 0; border: 0; font-size: inherit; color: inherit; line-height: inherit; }
 #inquiry .steps span:not(.active) { color: var(--muted); }
-#inquiry .steps b { font-size: inherit; font-weight: 500; letter-spacing: inherit; }
+#inquiry .steps span[aria-current="step"] { color: var(--signal-ink); }
+#inquiry .steps b { font-size: inherit; font-weight: inherit; letter-spacing: inherit; }
