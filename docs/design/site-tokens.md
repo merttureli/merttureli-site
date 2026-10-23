@@ -30,7 +30,7 @@ defined, what to call it, and what is still a literal. Studio (`next/`) has its 
 | Site tokens | `css/tokens.css` | the site's own names (table below) | Yes, new names only |
 | Palettes | `css/site-palette.css` | per-theme ink ramp, alpha steps, accent, depth, smoke, corridor; Original contrast fix | Yes |
 | Depth surfaces | `css/depth.css` `:root` | `--depth-stage-hi/mid/lo`, `--depth-panel-a/b` (palettes retint them) | Yes |
-| Stand-alone pages | `css/photography-lab.css` | its own small palette (below) | Yes, in place |
+| Stand-alone pages | `css/photography-lab.css` (old corridor; the photography pages now redirect to the Beyond page) | its own small palette (below) | Yes, in place |
 | Studio plain pages | `404.html`, `privacy.html`, `hi/index.html` | Studio tokens: `next/css/tokens.css` + `next/css/pages.css` (see [studio.md](studio.md)) | in `next/css/` |
 
 `css/tokens.css` is pulled in by `@import url("tokens.css")` at the top of `css/fonts.css`, because `css/fonts.css`
@@ -44,7 +44,7 @@ src templates reach it through `_ds/.../tokens/fonts.css`). Cost: one small chai
 | `index.html` (from `src/index.html`) | all | yes | rocket, interaction-polish, website-entry, mobile, depth, site-palette, static-interactions |
 | `projects/*.html` (from `build-case.py`) | all | yes | interaction-polish, mobile, depth, site-palette, static-interactions |
 | `websites.html` | all | yes | interaction-polish, websites, website-studies, site-palette |
-| `photography-lab.html` | none | yes | photography-lab |
+| `photography-lab.html`, `photography-gallery.html` | redirect stubs to `beyond.html` | | |
 | `404.html`, `privacy.html`, `hi/index.html` | none | no | Studio: `next/css/tokens.css`, `next/css/pages.css` |
 
 So a `_ds` token (`--space-*`, `--fs-*`, ...) works in every file above except `photography-lab.css`. The three Studio plain pages use Studio tokens only.
@@ -168,7 +168,7 @@ Custom properties do not work inside `@media`, so these are names for the docs. 
 | studies picker | `max-width: 1100px`, `900px` | website-studies | |
 | wide hero | `min-width: 1600px` | websites | |
 | phone video | `max-width: 720px` | | `js/media-playback.js` |
-| photography | `max-width: 650px` | photography-lab | `js/photography-lab.js`, `js/photography-gallery.js` |
+| photography | `max-width: 650px` | photography-lab | `js/photography-gallery.js` |
 | pointer | `(hover: hover) and (pointer: fine)`, `(hover: hover)` | depth, rocket, website-entry, website-studies | `js/rocket-flight.js` |
 | motion | `prefers-reduced-motion: reduce` plus `html[data-motion="off"]` | most files | see [motion.md](motion.md) |
 
@@ -229,6 +229,6 @@ node tools/visual-regress/visual-regress.js --baseline "$B" --candidate . --out 
   --widths 390,1440 --palettes original,slate
 ```
 
-Add `photography-lab.html` with `--mask .corridor` if `css/fonts.css` or `css/tokens.css` changed (its 3D
-corridor moves between shots). The home websites frame and websites.html studies load live iframes; a differing
+Mask `.corridor` on `index.html` if `css/photography-lab.css` changed (its 3D corridor moves between shots;
+`photography-lab.html` is now a redirect stub). The home websites frame and websites.html studies load live iframes; a differing
 shot there is usually the iframe still loading, so rerun that page alone before trusting it.
