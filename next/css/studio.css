@@ -30,8 +30,8 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 /* .co: a company name (Base Power, SunThru, ...) in italic serif. The one approved exception to
    "one sentence, one font, style and color" (docs/design/studio.md); the typeset check allows it. */
 .co { font-family: var(--serif); font-style: italic; font-weight: 500; font-stretch: normal; text-transform: none; letter-spacing: -.01em; }
-/* .serif: retired as inline emphasis (docs/design/studio.md). Kept only until the tile, beyond,
-   case and plain-page passes land; the typeset check FAILs on new inline use. */
+/* .serif: retired as inline emphasis (docs/design/studio.md). Kept only until the explorer tile
+   ("Take CHARGER apart") and case page ("How it works") passes land; the typeset check FAILs on new inline use. */
 .serif { font-family: var(--serif); font-style: italic; font-weight: 500; font-stretch: normal; text-transform: none; letter-spacing: -.01em; }
 .display { font-family: var(--display); font-stretch: var(--display-stretch); font-weight: var(--display-weight); text-transform: uppercase; font-size: clamp(42px, 7vw, 120px); line-height: .9; letter-spacing: -.025em; }
 .display .serif { font-size: 1.08em; line-height: .8; }
@@ -204,7 +204,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .row summary::-webkit-details-marker { display: none; }
 @media (hover: hover) { .row summary:hover { padding-left: 14px; } }
 .row__role { font-size: clamp(20px, 1.9vw, 30px); font-weight: 620; letter-spacing: -.02em; line-height: 1.1; }
-.row__org { font-size: clamp(17px, 1.4vw, 22px); font-weight: 500; }
+.row__org { font-size: clamp(17px, 1.4vw, 22px); font-family: var(--serif); font-style: italic; font-weight: 500; }
 .row__line { font-size: var(--text-s); color: var(--ink-soft); line-height: 1.4; }
 .row__plus { position: relative; width: 16px; height: 16px; justify-self: end; align-self: center; }
 .row__plus::before, .row__plus::after { content: ""; position: absolute; left: 0; top: 7.5px; width: 16px; height: 1.5px; background: currentColor; transition: transform var(--dur-500) var(--ease); }
@@ -222,7 +222,6 @@ details[open] .row__plus::after { transform: rotate(0deg); }
 /* ---------------------------------------------------------------- beyond */
 .beyond { padding: clamp(60px, 8vw, 120px) 0 var(--space-80-160); background: var(--paper-2); }
 .manifesto { font-weight: 790; font-stretch: 100%; text-transform: uppercase; font-size: clamp(34px, 5.6vw, 96px); line-height: .94; letter-spacing: -.035em; max-width: 17ch; }
-.manifesto .serif { font-size: 1.08em; font-weight: 500; color: var(--signal-ink); letter-spacing: -.02em; }
 .scatter { position: relative; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 0 var(--gutter); margin-top: clamp(50px, 7vw, 110px); }
 .ph { position: relative; will-change: transform; }
 .ph img { width: 100%; background: var(--paper-3); }
