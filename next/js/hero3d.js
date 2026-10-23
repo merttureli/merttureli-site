@@ -5,6 +5,7 @@
 // owns the renderer, camera and lights; showreel/index.js the sequence).
 import * as THREE from './three.module.min.js';
 import { createEngine } from './showreel/engine.js';
+import { createFlame, createSmoke, thrustAt, G77R } from './showreel/flame.js';
 
 const BODY_TOP = .370693, BODY_BOTTOM = -.570693, FRONT_ANGLE = Math.atan2(1, 2.8);
 
@@ -111,7 +112,83 @@ export async function createRocket({ layout = 'land', base = MODEL_BASE } = {}) 
   function setLayout(name) { Object.assign(L, LAYOUTS[name]); tilt.rotation.z = L.tiltZ; tilt.rotation.x = L.tiltX; }
   function settle(time = 0) { state.sx = state.px; state.sy = state.py; pose(time); }
   pose(0);
-  return { group: outer, state, layout: L, axis, pose, setLayout, settle };
+  return { group: outer, roll, state, layout: L, axis, pose, setLayout, settle };
+}
+
+// ------------------------------------------------------------------ intro
+// The hero's arrival: the rocket starts off screen, already sized and placed for its REST pose, and flies in
+// along its own axis from below and behind on a lit motor, easing into the sway. The motor's thrust follows
+// the G77R curve, time-scaled to the flight (1.277 s burn over FLY s), so it burns out as the rocket settles;
+// then a brief ember at the nozzle and a thin wisp. Optional smoke trail (`smoke`: { host, box, camera }).
+// Driven by the hero loop: start(exitDist) once, then step(dt, time, exitDist) every frame until !active.
+export const INTRO = { fly: 1.25, spin: -.9, ember: .55 };
+const NOZZLE_Y = -.6102 + (.02 - (BODY_TOP + BODY_BOTTOM) / 2);   // motor retainer's aft face, in roll space
+const easeIn = u => 1 - (1 - u) ** 4;                               // arrive fast, settle slowly (outQuart)
+
+export function createIntro(rocket, { scene, smoke = null } = {}) {
+  const flame = createFlame();
+  flame.group.position.y = NOZZLE_Y;
+  rocket.roll.add(flame.group);
+  if (scene) scene.add(flame.world);
+  const trail = smoke ? createSmoke(smoke) : null;
+  const D = INTRO.fly, burnScale = G77R.burn / D;
+  const nozzle = new THREE.Vector3(), exhaust = new THREE.Vector3(), lastEmit = new THREE.Vector3(), q = new THREE.Quaternion();
+  let t = 0, flying = false, wisped = false, done = false, emitT = 0, hasLast = false;
+  const where = () => {
+    flame.group.getWorldPosition(nozzle);
+    rocket.roll.getWorldQuaternion(q);
+    exhaust.set(0, -1, 0).applyQuaternion(q);
+  };
+  function start(exitDist) {
+    t = 0; flying = true; done = false;
+    rocket.state.fly = -exitDist; rocket.state.spin = INTRO.spin;
+    flame.set({ thrust: 0, time: 0 });
+  }
+  function finish() {
+    if (flying) { rocket.state.fly = 0; rocket.state.spin = 0; }
+    flying = false; t = D + INTRO.ember + 9;
+    flame.set({ thrust: 0, ember: 0 });
+    if (trail) { trail.dispose(); }
+    flame.world.visible = false;
+    done = true;
+  }
+  function step(dt, time, exitDist) {
+    if (done) return false;
+    t += dt;
+    const u = Math.min(1, t / D);
+    if (flying) {
+      const e = easeIn(u);
+      rocket.state.fly = -exitDist * (1 - e);
+      rocket.state.spin = INTRO.spin * (1 - e) * (1 - e);
+      if (u >= 1) { flying = false; rocket.state.fly = 0; rocket.state.spin = 0; }
+    }
+    const thrust = thrustAt(t * burnScale) / 80;
+    const ember = t < D ? 0 : Math.max(0, 1 - (t - D) / INTRO.ember) ** 2;
+    flame.set({ thrust, ember, time });
+    where();
+    if (!wisped && t >= D) { wisped = true; flame.puff(nozzle, exhaust, .022); }
+    if (trail && thrust > .05) {
+      // a puff every 50 ms, or every few px the nozzle travels, whichever comes first
+      emitT += dt;
+      const moved = hasLast ? nozzle.distanceTo(lastEmit) : 1;
+      if (emitT > .05 || moved > .045) {
+        emitT = 0; lastEmit.copy(nozzle); hasLast = true;
+        trail.emit(nozzle, Math.min(1, thrust), { x: exhaust.x, y: -exhaust.y }, 1);
+      }
+    }
+    const wisping = flame.update(dt);
+    const smoking = trail ? trail.update(dt) : false;
+    if (!flying && t > D + INTRO.ember && !wisping && !smoking) finish();
+    return !done;
+  }
+  return {
+    start, step, finish, flame,
+    get active() { return !done; },
+    get flying() { return flying; },
+    get busy() { return !done && t < D + INTRO.ember; },   // the reel waits while the rocket arrives
+    prewarm(renderer, camera, scene) { flame.group.visible = true; flame.prewarm(renderer, camera, scene); flame.group.visible = false; },
+    dispose() { finish(); flame.dispose(); },
+  };
 }
 
 export function applyCamera(camera, L) { camera.fov = L.fov; camera.position.set(0, 0, L.dist); camera.updateProjectionMatrix(); }

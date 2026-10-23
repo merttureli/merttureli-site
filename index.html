@@ -27,6 +27,11 @@
 </script>
 <link rel="stylesheet" href="studies/shared/study.css">
 <script src="studies/shared/study.js"></script>
+<script>
+// Hero intro: with motion on, the live CHARGER flies in, so the poster waits (studio.css .hero-fly). studio.js
+// shows the poster again if the 3D cannot start.
+try { if (!matchMedia('(prefers-reduced-motion: reduce)').matches && !/[?&]still/.test(location.search) && !(navigator.connection && navigator.connection.saveData)) document.documentElement.classList.add('hero-fly'); } catch (e) {}
+</script>
 <title>Mert Tureli · Mechanical Engineer</title>
 <meta name="description" content="Mert Tureli. Mechanical engineer in Austin, Texas, who designs, builds and tests hardware end to end, and designs and builds websites.">
 <meta name="theme-color" content="#e7e8ea">
