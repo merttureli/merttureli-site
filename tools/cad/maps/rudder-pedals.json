@@ -1,5 +1,5 @@
 {
-  "_doc": "Rudder pedals (owner's 'Full rudder assem COMPLETE.STEP', 41 parts, Y up, mm). Parts are grouped by what moves together: each lever arm swings on its top pivot bolt and carries its pedal (sub, turns on the hinge bolt at the lever's foot for the toe brake), its rear rod-end bolt and its screws; the rods link the lever rears to the sensor lever (rocker, turns about x on the center bolt, carries the magnet holder). Walls and middle supports never move. Colors follow the owner's mechanism render (assets/motion/rudder-pedals-mechanism.mp4): charcoal side walls, light grey printed levers and supports, orange pedals; the actor sets roughness per color. Instance suffixes (-1..-9) were matched to positions with tools/cad.py inspect --json. The STEP stays in the scratchpad (not published).",
+  "_doc": "Rudder pedals (owner's 'Full rudder assem COMPLETE.STEP', 41 parts, Y up, mm). Parts are grouped by what moves together: each lever arm swings on its top pivot bolt and carries its pedal (sub, turns on the hinge bolt at the lever's foot for the toe brake), its rear rod-end bolt and its screws; the rods link the lever rears to the sensor lever (rocker, turns about x on the center bolt, carries the magnet holder). Walls and middle supports never move. Colors follow the owner's mechanism render (assets/motion/rudder-pedals-mechanism.mp4): charcoal side walls, light grey printed levers and supports, orange pedals; the actor sets roughness per color. Instance suffixes (-1..-9) were matched to positions with tools/cad.py inspect --json. The STEP stays in the scratchpad (not published). Detail pass: the two spring anchor screws (SHCS -6/-8) are skipped and drawn by the actor at a mid adjustment hole; the clevis pins (SHCS -5/-7) ride with their pedals; bearings and bolts are meshed coarse.",
   "name": "rudder-pedals",
   "out": "next/assets/3d/",
   "formats": [
@@ -21,6 +21,14 @@
   ],
   "parts": [
     {
+      "match": [
+        "*20CHX-6",
+        "*20CHX-8"
+      ],
+      "skip": true,
+      "note": "centering spring anchor screws: the actor draws them at the chosen adjustment hole (the CAD has them in the lowest hole)"
+    },
+    {
       "match": "Pedal RIGHT*",
       "name": "leverR",
       "sub": "pedalR",
@@ -39,6 +47,15 @@
       "angle": 0.5
     },
     {
+      "match": "*20CHX-7",
+      "name": "leverR",
+      "sub": "pedalR",
+      "material": "darkMetal",
+      "deflection": 1.5,
+      "angle": 2.0,
+      "note": "brake spring pin through the pedal's clevis (moves with the pedal)"
+    },
+    {
       "match": "LEVER ARM",
       "name": "leverR",
       "label": "Right lever arm",
@@ -55,8 +72,8 @@
       "name": "leverR",
       "material": "steel",
       "note": "top pivot, rear rod end, pedal hinge bearings",
-      "deflection": 1.0,
-      "angle": 1.5
+      "deflection": 2.0,
+      "angle": 2.0
     },
     {
       "match": [
@@ -64,14 +81,22 @@
         "*35 --22WN-4",
         "*20 --20WN-4",
         "*20CHX-2",
-        "*20CHX-3",
-        "*20CHX-7"
+        "*20CHX-3"
       ],
       "name": "leverR",
       "material": "darkMetal",
       "note": "pivot, hinge, rod-end bolts and lever screws",
-      "deflection": 1.0,
-      "angle": 1.5
+      "deflection": 1.5,
+      "angle": 2.0
+    },
+    {
+      "match": "*20CHX-5",
+      "name": "leverL",
+      "sub": "pedalL",
+      "material": "darkMetal",
+      "deflection": 1.5,
+      "angle": 2.0,
+      "note": "brake spring pin through the pedal's clevis (moves with the pedal)"
     },
     {
       "match": "LEVER ARM L",
@@ -89,8 +114,8 @@
       ],
       "name": "leverL",
       "material": "steel",
-      "deflection": 1.0,
-      "angle": 1.5
+      "deflection": 2.0,
+      "angle": 2.0
     },
     {
       "match": [
@@ -98,29 +123,28 @@
         "*35 --22WN-5",
         "*20 --20WN-3",
         "*20CHX-1",
-        "*20CHX-4",
-        "*20CHX-5"
+        "*20CHX-4"
       ],
       "name": "leverL",
       "material": "darkMetal",
-      "deflection": 1.0,
-      "angle": 1.5
+      "deflection": 1.5,
+      "angle": 2.0
     },
     {
       "match": "alignment rod-2",
       "name": "rodR",
       "label": "Right link rod",
       "material": "steel",
-      "deflection": 0.6,
-      "angle": 1.0
+      "deflection": 0.9,
+      "angle": 1.3
     },
     {
       "match": "alignment rod-1",
       "name": "rodL",
       "label": "Left link rod",
       "material": "steel",
-      "deflection": 0.6,
-      "angle": 1.0
+      "deflection": 0.9,
+      "angle": 1.3
     },
     {
       "match": [
@@ -141,8 +165,8 @@
       "name": "rocker",
       "material": "steel",
       "note": "rod-end bearings at the rocker tips",
-      "deflection": 1.0,
-      "angle": 1.5
+      "deflection": 2.0,
+      "angle": 2.0
     },
     {
       "match": [
@@ -154,8 +178,8 @@
       "name": "rocker",
       "material": "darkMetal",
       "note": "center bolt and nut, rod-end bolts",
-      "deflection": 1.0,
-      "angle": 1.5
+      "deflection": 1.5,
+      "angle": 2.0
     },
     {
       "match": [
@@ -173,20 +197,18 @@
       "name": "core",
       "material": "steel",
       "note": "rocker pivot bearing",
-      "deflection": 1.0,
-      "angle": 1.5
+      "deflection": 2.0,
+      "angle": 2.0
     },
     {
       "match": [
         "*20 --20WN-5",
-        "*20 --20WN-6",
-        "*20CHX-6",
-        "*20CHX-8"
+        "*20 --20WN-6"
       ],
       "name": "core",
       "material": "darkMetal",
-      "deflection": 1.0,
-      "angle": 1.5
+      "deflection": 1.5,
+      "angle": 2.0
     },
     {
       "match": "Rudder side wall R",
