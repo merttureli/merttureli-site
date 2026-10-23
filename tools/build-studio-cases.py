@@ -61,7 +61,8 @@ PRESENT = {
         "line": "A solid state coaster that heats or cools any mug or glass.",
         "img": IMG + "therma-shift-1400.webp",
         "hero": {"clip": "therma-shift-360-noflow", "md": 1280, "sm": 960, "cap": "Peltier stack, closed loop"},
-        # the case JSON's own clip (the airflow illustration) explains the design section
+        # the case JSON's own clip (an airflow illustration on an older model) explained the design section;
+        # LIVE["therma-shift"]["feats"] now shows the live stack there instead (this stays as the fallback)
         "attach": {"The design": "json-clip"},
         "specs_list": "Where it stands",
     },
@@ -136,7 +137,8 @@ def toggle(vid):
 # (base name -> stage key). Each live element shows the still rendered from it until it plays, and keeps
 # it under reduced motion or without WebGL. Stills: next/assets/img/stills/ (docs/recipes/media.md).
 LIVE = {
-    "therma-shift": {"stage": "therma-shift"},
+    # "feats": a feature card's media (by heading) becomes a live moment in place of its clip
+    "therma-shift": {"stage": "therma-shift", "feats": {"The design": "therma-shift:stack"}},
     "robo-catcher": {"stage": "robo-catcher"},
     "rudder-pedals": {"stage": "rudder-pedals", "bands": {"rudder-pedals-mechanism": "rudder-pedals:side"}},
 }
@@ -245,7 +247,11 @@ def how(case, p):
             continue
         body = body_html(sec, rank=(title == p.get("rank")), skip_list=is_specs)
         media = ""
-        if title in attach and attach[title] == "json-clip":
+        feat_live = LIVE.get(case["_slug"], {}).get("feats", {}).get(title)
+        if feat_live:
+            media = ('<div class="feat__media feat__media--live">%s</div>'
+                     % live_media(feat_live, "%s, live 3D model from the CAD assembly" % p["name"]))
+        elif title in attach and attach[title] == "json-clip":
             ratio = case.get("clip_ratio", "16 / 9")
             sizes = case.get("clip_sizes", [1200, 800])
             media = ('<div class="feat__media feat__media--clip">%s</div>'
@@ -451,7 +457,7 @@ def page(case):
 <footer class="foot wrap">
   <div><p class="label">Version</p><p>2026</p></div>
   <div><p class="label">Local time</p><p data-clock>Austin</p></div>
-  <div><p class="label">Socials</p><p><a class="link" href="https://linkedin.com/in/merttureli" rel="noopener">LinkedIn</a> <a class="link" href="mailto:merttureli0@gmail.com">Email</a> <a class="link" href="../websites.html">Websites</a></p></div>
+  <div><p class="label">Socials</p><p><a class="link" href="https://linkedin.com/in/merttureli" rel="noopener">LinkedIn</a> <a class="link" href="mailto:merttureli0@gmail.com">Email</a> <a class="link" href="../websites.html">Websites</a> <a class="link" href="https://merttureli.com/privacy.html">Privacy</a></p></div>
   <p class="foot__credit">CAD renders from the source assemblies. Hand built, no framework.</p>
 </footer>
 

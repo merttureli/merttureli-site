@@ -50,6 +50,9 @@ STILLS = [
     # the rudder pedals mechanism moment (band, 16:9 on desktop, 4:3 on phones)
     ("rudder-pedals-side-case-land", "rudder-pedals:side", 1348, 758, 1.5, 0, 0),
     ("rudder-pedals-side-case-port", "rudder-pedals:side", 358, 268, 2.5, 0, 0),
+    # the Therma-Shift stack moment ("The design" card media, 4:3, at 1440 and at 390): the open stack
+    ("therma-shift-stack-case-land", "therma-shift:stack", 644, 483, 2, 0, 0),
+    ("therma-shift-stack-case-port", "therma-shift:stack", 322, 242, 2.5, 0, 0),
 ]
 
 NODE = r"""

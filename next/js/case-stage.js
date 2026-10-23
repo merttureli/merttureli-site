@@ -2,8 +2,9 @@
 // actor (same model, materials, studio rig, PMREM environment and contact shadow), mounted on its
 // own canvas inside the stage card, the way the next/lab/ pages mount one actor outside the hero.
 //
-// The same element also carries moments further down a page (a band in place of an old clip, e.g.
-// data-case-stage="rudder-pedals:side"); only the live stage most on screen draws at any time.
+// The same element also carries moments further down a page (a band or a feature card's media in place of
+// an old clip, e.g. data-case-stage="rudder-pedals:side" or "therma-shift:stack"); only the live stage most
+// on screen draws at any time.
 //
 // Markup (written by tools/build-studio-cases.py):
 //   <div class="stage__live" data-case-stage="therma-shift" role="img" aria-label="...">
@@ -137,6 +138,34 @@ const ADAPTERS = {
       };
     },
   },
+  // further down the Therma-Shift page, in "The design" card (in place of the old airflow illustration): the
+  // stack opened in place (top plate, Peltier module, heatsink, blower, board, case) and held while the same
+  // plate runs hot (orange), then cold (blue): one module, both modes, by the direction of the current. Then it
+  // closes and opens again. Starts (and so the still) on the open stack at room temperature.
+  'therma-shift:stack': {
+    load: () => import('./showreel/index.js').then(m => m.createThermaShift),
+    free: { land: [.06, .04, .06, .04], port: [.05, .04, .05, .04] }, grow: { land: 1.25, port: 1.2 },
+    plan(S, actor) {
+      const A = S.ASSEMBLE, open = A.t0, shut = A.t1;
+      const hold = (tag, d) => ({ tag, d, T0: open, T1: open });
+      return {
+        intro: [],
+        loop: [
+          hold('rest', .9), hold('warm', 3.2), hold('cool', 3.6), hold('back', 1.6),
+          { tag: 'close', d: 2.2, T0: open, T1: shut }, { tag: 'shut', d: 1.2, T0: shut, T1: shut },
+          { tag: 'open', d: 2.4, T0: shut, T1: open },
+        ],
+        post(a, at) {
+          if (a.cable) a.cable.hide();                             // the cable plugs in after ASSEMBLE: not here
+          const e = smooth, u = at.u;
+          const temp = at.tag === 'warm' ? 22 + 33 * e(u / .7)
+            : at.tag === 'cool' ? 55 - 44 * e(u / .75)
+            : at.tag === 'back' ? 11 + 11 * e(u) : 22;
+          a.coaster.setPlateTemperature(temp);
+        },
+      };
+    },
+  },
   // further down the rudder pedals page: the mechanism moment, the same beat seen from the side the
   // whole time (springs, Hall sensors and wiring in view), in place of the old mechanism clip
   'rudder-pedals:side': {
@@ -194,7 +223,7 @@ function pickActive() {
 
 function mount(box) {
   const key = box.dataset.caseStage, ad = ADAPTERS[key];
-  const card = box.closest('.stage__card, .band') || box;
+  const card = box.closest('.stage__card, .band, .feat__media') || box;
   const canvas = box.querySelector('canvas');
   const toggle = card.querySelector('[data-stage-toggle]');
   const qs = new URLSearchParams(location.search);

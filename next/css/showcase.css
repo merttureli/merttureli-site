@@ -394,6 +394,10 @@ a.tile__link:focus-visible .tile__go { transform: rotate(-45deg); background: va
 .band--live .stage__live { position: relative; aspect-ratio: 16 / 9; }
 .band--live figcaption { z-index: 1; color: var(--muted); }
 .band--live .clip-toggle { background: var(--tile-2); }
+/* a feature card's media as a live moment (Therma-Shift "The design": the open stack, hot then cold) */
+.feat__media--live { display: block; position: relative; aspect-ratio: 4 / 3; border-radius: var(--radius-tile-s); overflow: hidden;
+  background: radial-gradient(120% 95% at 50% 36%, var(--tile-2) 0%, var(--paper) 70%); }
+.feat__media--live .clip-toggle { z-index: 2; right: 12px; bottom: 12px; }
 @media (max-width: 760px) {
   .stage__card--live.stage__card--wide { aspect-ratio: 4 / 4.4; }
   .band--live .stage__live { aspect-ratio: 4 / 3; }
