@@ -127,7 +127,7 @@
       <div data-reveal="1" style="display: flex; flex-direction: column; gap: var(--space-5)">
         <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">A thermoelectric module heats or cools depending on current direction. The TEC1-12703 sits between an aluminum top plate and a finned heatsink with a blower.</p>
         <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">An NTC thermistor at the plate closes the loop, targeting about 2 degrees F around setpoint.</p>
-        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)"><mark class="flag" data-flag="therma-shift-021" data-note="Are the independent firmware thermal-runaway cutoffs built and running yet, or still planned? The Where It Stands list says closed loop integration is in progress. If they are planned, reword in future tense or cut.">Separate firmware cutoffs watch for thermal runaway independently of the control loop and shut the device down on a fault.</mark></p>
+        <p style="font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-body); max-width: var(--measure)">Separate firmware cutoffs watch for thermal runaway independently of the control loop and shut the device down on a fault.</p>
       </div>
       </div>
       <div data-track="bench-test" style="display: flex; flex-direction: column; gap: var(--space-9)">
@@ -162,7 +162,7 @@
         <x-import component-from-global-scope="MertTReliDesignSystem_56763c.Wordmark" name="MERT TURELI" size="md" hint-size="220px,20px"></x-import>
         <x-import data-depth-label="true" component-from-global-scope="MertTReliDesignSystem_56763c.Meta" hint-size="320px,16px">Austin, Texas / B.S. Mechanical Engineering, Union College, 2026</x-import>
       </div>
-      <p style="max-width: 96ch; font-family: var(--font-mono); font-size: var(--fs-meta-sm); line-height: 1.5; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-meta)"><mark class="flag" data-flag="therma-shift-028" data-note="The footer is now per-page (CAD credit only). Confirm the other project pages get credits that match their own content in the factual pass.">CAD animations rendered from the source assemblies.</mark> / <a href="../privacy.html" style="color: var(--text-meta); text-decoration: underline; text-underline-offset: 3px">Privacy</a></p>
+      <p style="max-width: 96ch; font-family: var(--font-mono); font-size: var(--fs-meta-sm); line-height: 1.5; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-meta)">CAD animations rendered from the source assemblies. / <a href="../privacy.html" style="color: var(--text-meta); text-decoration: underline; text-underline-offset: 3px">Privacy</a></p>
     </div>
   </footer>
 </div>
@@ -185,7 +185,7 @@ class Component extends DCLogic {
       linkOnDark: { tone: "inverse" },
       headerRow: { style: { padding: "0 max(var(--page-margin), calc((100% - var(--max-width)) / 2))" } },
       brief: [
-        { label: "Built for", value: React.createElement("mark", { className: "flag", "data-flag": "therma-shift-007", "data-note": "Confirm the competition name and date (SparkLabs Seed Competition, March 2026) in the factual pass." }, "SparkLabs seed competition, March 2026") },
+        { label: "Built for", value: "SparkLabs seed competition, March 2026" },
         { label: "Status", value: "Thermal stack validated, electronics in progress" },
       ],
     };

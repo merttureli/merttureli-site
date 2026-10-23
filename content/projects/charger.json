@@ -43,11 +43,7 @@
       "paras": [
         [
           "37 inches, single stage, ",
-          {
-            "flag": "charger-029",
-            "note": "Diameter: CAD measures 2.68 in. Confirm 2.63 or correct it.",
-            "text": "2.63"
-          },
+          "2.68",
           " inches across, four trapezoidal balsa fins on a cardboard body tube. Center of gravity at 22 inches, stability margin 1.80 calibers."
         ],
         "Cardboard because the payload transmits from the pad on, and carbon fiber would put a conductive shell around the 2.4 GHz antenna.",
@@ -78,11 +74,7 @@
       "list": [
         [
           "Length 37 in, maximum diameter ",
-          {
-            "flag": "charger-035",
-            "note": "Diameter: CAD measures 2.68 in. Confirm 2.63 or correct it.",
-            "text": "2.63"
-          },
+          "2.68",
           " in, single stage"
         ],
         "Four trapezoidal fins, root chord 2.76 in, height 2.36 in, sweep 2.17 in",
