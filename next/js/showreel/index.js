@@ -23,12 +23,20 @@
 //   sample(T, states)     pose everything as a pure function of reel time
 //   beginAbort()/sampleAbort(u)  leave gracefully from wherever it is, u 0..1
 //   reset(), update(dt, time), prewarm(renderer, camera, scene), visible
-// Projects take turns, one per reel. To add one: write its actor, then
-// registerProject() here before mountShowreel runs (its word must exist in
-// the .drift markup). HOTBOX and the bend fixture are never animated.
+//   dispose()             optional; called when a project is unloaded
+// Projects take turns, one per reel, in registration order. Only the project
+// that plays next is built: lazily, on idle, while the hero is at REST (never
+// mid-reel), so its shaders and textures are ready before it is due. With
+// more than two projects, the one that just played is disposed again. To add
+// one: write its actor, then registerProject() here before mountShowreel runs
+// (its word must exist in the .drift markup); `python3 tools/new.py actor
+// <key> --register` does both. HOTBOX and the bend fixture are never animated.
 //
-// Debug: #reel-coaster (or ?reel=coaster) or the `c` key starts the reel now;
-// #reel-fast runs it at 3x. window.__reel exposes seek/pause for capture.
+// Debug: #reel-<key> (or ?reel=<key>) plays that project now, e.g.
+// #reel-therma-shift, alias #reel-coaster; the `c` key plays the next one in
+// the rotation; #reel-fast plays the next one now at 3x (#reel-<key>-fast
+// both). window.__reel: project (playing), next, use(key), seek(t, key),
+// pause/resume/advance for capture.
 import { THREE, createEngine, createTimeline, ease, win, clamp01, lerp, placeInFrame, screenExtents } from './engine.js';
 import { createRocket, applyCamera } from '../hero3d.js';
 
@@ -348,10 +356,19 @@ registerProject({ key: 'therma-shift', word: 'Therma-Shift', actor: createTherma
 // registerProject(...) line just above this comment (docs/recipes/showreel-actor.md).
 
 // ================================================================== mount
+const ALIASES = { coaster: 'therma-shift' };
 function parseFlags() {
-  const h = location.hash, s = location.search;
-  const fast = /reel-fast/.test(h) || /[?&]reel=fast/.test(s);
-  return { now: fast || /reel-coaster/.test(h) || /[?&]reel=coaster/.test(s), fast };
+  const tokens = [];
+  for (const m of location.hash.matchAll(/reel-([a-z0-9-]+)/g)) tokens.push(m[1]);
+  const q = new URLSearchParams(location.search).get('reel');
+  if (q) tokens.push(...q.split(','));
+  let fast = false, key = null;
+  for (let t of tokens) {
+    if (t === 'fast') { fast = true; continue; }
+    if (t.endsWith('-fast')) { fast = true; t = t.slice(0, -5); }
+    key = ALIASES[t] || t;
+  }
+  return { now: fast || !!key, fast, key };
 }
 
 export async function mountShowreel({ box, drift = null, words = null, idleSeconds = 8 }) {
@@ -367,11 +384,16 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
 
   let flags = parseFlags(), speed = flags.fast ? 3 : 1;
   let mode = 'rest', T = 0, A = 0, idle = 0, loops = 0, timeline = null, guest = null, guestP = null, stateName = 'REST';
+  // Guests: key -> { p, actor, timeline, promise, failed, laidOut }. `turn` is
+  // the index (in `projects`) of the project that plays next.
+  const cache = new Map();
+  let turn = 0, pending = 0, warming = 0, layoutVersion = 0, abortT = 0;
   let exitDist = 3, abortFrom = { fly: 0, spin: 0, wrap: false, delay: 0, guestS: 1.5 }, scrollP = 0, scrollSeen = false, ABORT = 2.2;
-  let visible = true, raf = 0, slow = false, nSamples = 0, last = 0, paused = false, busy = false;
+  let visible = true, raf = 0, slow = false, nSamples = 0, last = 0, paused = false;
   const samples = new Float32Array(60);
   const t0 = performance.now();
   const stats = { frames: 0, tick: 0, render: 0, max: 0, reset() { this.frames = this.tick = this.render = this.max = 0; } };
+  const idleCb = window.requestIdleCallback || (f => setTimeout(f, 1500));
 
   function resize() {
     engine.size(box.clientWidth, box.clientHeight);
@@ -379,12 +401,13 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
     // distance along the airframe axis that puts the whole rocket off screen
     const ax = Math.abs(rocket.axis.x) || 1e-3, ay = Math.abs(rocket.axis.y) || 1e-3;
     exitDist = .75 + Math.min((vw.halfW + .2) / ax, (vw.halfH + .2) / ay);
-    if (guest) guest.layout(frameInfo(vw));
+    layoutVersion++;
+    if (guest) layoutActor(cache.get(guestP.key));
   }
   // The hero's free area (between the top bar and the marquee, inside the
   // viewport) and the focused word, in canvas-box pixels.
   const topBar = document.querySelector('.top'), marquee = document.querySelector('[data-marquee]');
-  function frameInfo(vw) {
+  function frameInfo(vw, key) {
     const b = box.getBoundingClientRect(), g = 16;
     const free = {
       l: Math.max(0, -b.left) + g, r: Math.min(b.width, innerWidth - b.left) - g,
@@ -392,7 +415,7 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
       b: Math.min(b.height, (marquee ? marquee.getBoundingClientRect().top : innerHeight) - b.top) - 6,
     };
     const avoid = [];
-    const w = guestP && wordFor.get(guestP.key);
+    const w = key && wordFor.get(key);
     if (w) { const r = w.slot.getBoundingClientRect(), m = 22; avoid.push({ l: r.left - b.left - m, r: r.right - b.left + m * 1.6, t: r.top - b.top - m, b: r.bottom - b.top + m }); }
     return { halfW: vw.halfW, halfH: vw.halfH, camera: engine.camera, w: b.width, h: b.height, free, avoid };
   }
@@ -423,22 +446,84 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
   }
   const projectOf = name => (name === EXIT || name === RETURN ? HOME.key : guestP ? guestP.key : null);
 
-  // ---- guest project: prepared on idle so the reel starts without a hitch
-  let preparing = null;
-  function prepare() {
-    if (preparing) return preparing;
-    const p = projects[loops % projects.length];
-    busy = true; nSamples = 0;
-    preparing = p.actor({ engine, quality }).then(async actor => {
-      guest = actor; guestP = p;
+  // ---- guests: the next project is built on idle so its reel starts without a hitch
+  const indexOf = key => projects.findIndex(p => p.key === key);
+  function projectAt(i) {
+    for (let k = 0; k < projects.length; k++) {
+      const p = projects[(i + k) % projects.length], c = cache.get(p.key);
+      if (!c || !c.failed) return p;
+    }
+    return null;
+  }
+  const upNext = () => projectAt(turn);
+  function layoutActor(c) {
+    if (!c || !c.actor || c.laidOut === layoutVersion) return;
+    c.laidOut = layoutVersion;
+    c.actor.layout(frameInfo(engine.viewAt(0), c.p.key));
+  }
+  function prepare(p = upNext()) {
+    if (!p) return Promise.reject(new Error('no project to play'));
+    let c = cache.get(p.key);
+    if (c && c.promise) return c.promise;
+    c = { p, actor: null, timeline: null, promise: null, failed: false, laidOut: -1 };
+    cache.set(p.key, c);
+    pending++; nSamples = 0;
+    c.promise = Promise.resolve().then(() => p.actor({ engine, quality })).then(async actor => {
       engine.scene.add(actor.group);
-      resize();
-      timeline = createTimeline([[EXIT, 2.1], ...actor.sequence, [RETURN, 2.6]]);
-      await actor.prewarm(engine.renderer, engine.camera, engine.scene);
-      busy = false; nSamples = 0;
-      return actor;
-    }).catch(err => { console.warn('[reel] guest unavailable', err); busy = false; preparing = null; guest = null; throw err; });
-    return preparing;
+      c.actor = actor;
+      c.timeline = createTimeline([[EXIT, 2.1], ...actor.sequence, [RETURN, 2.6]]);
+      layoutActor(c);
+      // no frame is drawn while the actor poses for the shader compiler
+      warming++;
+      try { await actor.prewarm(engine.renderer, engine.camera, engine.scene); warmDraw(actor); } finally { warming--; }
+      actor.reset();
+      pending--; nSamples = 0;
+      return c;
+    }).catch(err => {
+      console.warn(`[reel] ${p.key} unavailable`, err);
+      pending--; c.failed = true; c.promise = null;
+      if (c.actor) { engine.scene.remove(c.actor.group); c.actor = null; }
+      throw err;
+    });
+    return c.promise;
+  }
+  // One real draw of every part of the actor, through a 1x1 scissor on the
+  // canvas itself (same shader variants as the reel; a render target would
+  // compile linear-output variants instead), culling off, so drivers that
+  // finish shader work on first use (SwiftShader, some mobile GPUs) do it now
+  // and not on the reel's first frame. The next frame redraws that pixel.
+  const scissor = new THREE.Vector4();
+  function warmDraw(actor) {
+    const r = engine.renderer, changed = [], had = r.getScissorTest();
+    actor.group.traverse(o => { changed.push(o, o.visible, o.frustumCulled); o.visible = true; o.frustumCulled = false; });
+    r.getScissor(scissor);
+    r.setScissorTest(true); r.setScissor(0, 0, 1, 1);
+    r.render(engine.scene, engine.camera);
+    r.setScissor(scissor); r.setScissorTest(had);
+    for (let i = 0; i < changed.length; i += 3) { changed[i].visible = changed[i + 1]; changed[i].frustumCulled = changed[i + 2]; }
+  }
+  // build the next project in the background, at REST only
+  function prepareNextOnIdle() {
+    idleCb(() => { if (mode === 'rest' && !reducedQ.matches) { const p = upNext(); if (p) prepare(p).catch(() => {}); } }, { timeout: 4000 });
+  }
+  function use(c) {
+    if (guest && guest !== c.actor) guest.reset();
+    guest = c.actor; guestP = c.p; timeline = c.timeline;
+    layoutActor(c);
+  }
+  // after a reel: the next project's turn; with more than two projects the
+  // one that just played is unloaded again (it is rebuilt when it comes round)
+  function nextTurn() {
+    if (!guestP) return;
+    turn = (indexOf(guestP.key) + 1) % projects.length;
+    const nxt = upNext();
+    if (projects.length > 2 && nxt && nxt.key !== guestP.key) {
+      const c = cache.get(guestP.key);
+      if (c && c.actor) { engine.scene.remove(c.actor.group); if (c.actor.dispose) c.actor.dispose(); }
+      cache.delete(guestP.key);
+      guest = null; guestP = null; timeline = null;
+    }
+    prepareNextOnIdle();
   }
 
   // ---- states
@@ -450,7 +535,11 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
   }
   function startReel() {
     if (mode !== 'rest' || reducedQ.matches) return;
-    if (!guest) { prepare().then(() => { if (mode === 'rest') startReel(); }).catch(() => {}); return; }
+    const p = upNext();
+    if (!p) return;
+    const c = cache.get(p.key);
+    if (!c || !c.actor) { prepare(p).then(() => { if (mode === 'rest') startReel(); }).catch(() => { if (upNext()) startReel(); }); return; }
+    use(c);
     mode = 'reel'; T = 0; idle = 0;
     kick();
   }
@@ -468,7 +557,7 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
   }
   function beginAbort() {
     if (mode !== 'reel') return;
-    mode = 'abort'; A = 0;
+    mode = 'abort'; A = 0; abortT = T;
     const f = rocket.state.fly;
     abortFrom.wrap = f > exitDist * .55;                    // gone far enough: come back from behind
     abortFrom.fly = abortFrom.wrap ? -exitDist : f;
@@ -488,10 +577,13 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
     rocket.state.spin = abortFrom.spin * (1 - k);
   }
   function toRest() {
+    const was = mode;
     mode = 'rest'; T = 0; A = 0; idle = 0;
     rocket.state.fly = 0; rocket.state.spin = 0;
     if (guest) guest.reset();
     setState('REST');
+    // a reel that ran (or was cut short once the guest was on stage) hands over to the next project
+    if (timeline && (was === 'reel' || (was === 'abort' && abortT > timeline.states[EXIT].t1))) nextTurn();
   }
   let shadowO = 1;
   function syncDom() {
@@ -507,8 +599,9 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
       if (eligible) {
         idle += dt;
         const wait = (flags.now && loops === 0 ? .6 : loops ? idleSeconds * 1.5 : idleSeconds) / speed;
-        if (idle > wait * .5 && !preparing) prepare().catch(() => {});
-        if (idle > wait && guest) startReel();
+        const p = upNext(), c = p && cache.get(p.key);
+        if (idle > wait * .5 && p && !c) prepare(p).catch(() => {});
+        if (idle > wait && c && c.actor) startReel();
       }
     }
     if (mode === 'reel') {
@@ -529,7 +622,7 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
     const dt = last ? Math.min(.064, (now - last) / 1000) : 1 / 60;
     // slow devices: in REST give up the loop and draw single frames on scroll.
     // Judged on the median of 60 frames after load has settled.
-    if (last && mode === 'rest' && !flags.now && !slow && !busy && now - t0 > 2500 && !window.__reelNoSlowGuard) {
+    if (last && mode === 'rest' && !flags.now && !slow && !pending && now - t0 > 2500 && !window.__reelNoSlowGuard) {
       samples[nSamples++] = now - last;
       if (nSamples === samples.length) { samples.sort(); if (samples[30] > 38) slow = true; nSamples = 0; }
     }
@@ -537,7 +630,7 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
     const a = performance.now();
     tick(dt, now - t0);
     const b = performance.now();
-    engine.render();
+    if (!warming) engine.render();
     const c = performance.now();
     if (mode !== 'rest') { stats.frames++; stats.tick += b - a; stats.render += c - b; if (c - a > stats.max) { stats.max = c - a; stats.maxAt = stateName + '@' + T.toFixed(2); } }
     if (!slow || mode !== 'rest') raf = requestAnimationFrame(frame);
@@ -562,7 +655,9 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
     interact();
   });
   addEventListener('pointermove', e => { rocket.state.px = e.clientX / innerWidth * 2 - 1; rocket.state.py = e.clientY / innerHeight * 2 - 1; }, { passive: true });
-  addEventListener('hashchange', () => { flags = parseFlags(); speed = flags.fast ? 3 : 1; if (flags.now && mode === 'rest') { idle = 0; loops = 0; kick(); } });
+  const pick = key => { const i = indexOf(key); if (i >= 0) turn = i; else if (key) console.warn(`[reel] no project "${key}"`, projects.map(p => p.key)); };
+  if (flags.key) pick(flags.key);
+  addEventListener('hashchange', () => { flags = parseFlags(); speed = flags.fast ? 3 : 1; if (flags.key && mode === 'rest') pick(flags.key); if (flags.now && mode === 'rest') { idle = 0; loops = 0; kick(); } });
 
   // ---- visibility, reduced motion, resize
   new IntersectionObserver(e => { visible = e[0].isIntersecting; if (visible) kick(); }, { threshold: 0 }).observe(box);
@@ -578,8 +673,7 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
   }).observe(box);
 
   // warm the guest up once the page has settled, so the first reel is smooth
-  const idleCb = window.requestIdleCallback || (f => setTimeout(f, 1500));
-  if (!reducedQ.matches) idleCb(() => prepare().catch(() => {}), { timeout: 4000 });
+  if (!reducedQ.matches) prepareNextOnIdle();
   if (reducedQ.matches) still(); else kick();
 
   // debug and capture hooks
@@ -588,14 +682,21 @@ export async function mountShowreel({ box, drift = null, words = null, idleSecon
     get mode() { return mode; }, get state() { return stateName; }, get T() { return T; },
     get total() { return timeline ? timeline.total : 0; }, get guest() { return guest; }, get slow() { return slow; }, get quality() { return quality; },
     get speed() { return speed; }, set speed(s) { speed = s; },
-    prepare, start() { flags.now = true; startReel(); }, abort: beginAbort,
+    get project() { return guestP ? guestP.key : null; }, get next() { const p = upNext(); return p ? p.key : null; },
+    get built() { return [...cache.keys()].filter(k => cache.get(k).actor); },
+    use(key) { pick(key); return api.next; },
+    prepare: key => prepare(key ? projects[indexOf(key)] : upNext()),
+    start() { flags.now = true; startReel(); }, abort: beginAbort,
     pause() { paused = true; if (raf) { cancelAnimationFrame(raf); raf = 0; } },
     resume() { paused = false; kick(); },
     // advance the live state machine by dt seconds and draw (capture, tests)
     advance(dt, time = performance.now() - t0) { tick(dt, time); engine.render(); return mode + ':' + stateName; },
     // jump to reel time t (seconds) and draw one frame synchronously
-    async seek(t, time = performance.now() - t0) {
-      await prepare();
+    // (key: play that project's reel; default: the one playing, else the next)
+    async seek(t, key, time = performance.now() - t0) {
+      const p = key ? projects[indexOf(key)] : (guestP && mode !== 'rest' ? guestP : upNext());
+      const c = await prepare(p);
+      if (guest !== c.actor) use(c);
       mode = 'reel'; T = Math.min(t, timeline.total - 1e-3);
       setState(timeline.at(T).name); rocketAt(T); guest.sample(T, timeline.states); syncDom();
       rocket.pose(time); guest.update(1 / 60, time); engine.render();

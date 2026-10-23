@@ -22,7 +22,9 @@
 //     top of next/js/showreel/index.js:
 //     group, sequence, layout(frame), sample(T, states), beginAbort(),
 //     sampleAbort(u), reset(), update(dt, time), prewarm(renderer, camera,
-//     scene), visible, dispose()
+//     scene), visible, dispose(); optional abortSeconds (default 1.5)
+//     Registered projects take turns, one per reel; #reel-{{KEY}} plays this
+//     one in the hero, __reel.seek(t, '{{KEY}}') draws it at reel time t.
 //
 // Units meters, +Y up, model origin at the center of its footprint on the
 // ground. Lights and environment come from engine.js (engine.adopt): never
