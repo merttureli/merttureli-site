@@ -43,23 +43,28 @@ const CAD = await fetchCadMesh(new URL('../../assets/3d/rudder-pedals.json', imp
 export const SEQUENCE = [
   ['RUDDER_PEDALS_ENTER', 2.4],     // parts fly in from off screen into the exploded view
   ['RUDDER_PEDALS_ASSEMBLE', 2.5],  // exploded -> assembled, in build order
-  ['RUDDER_PEDALS_ACTION', 10.6],   // pedals work right/left, then each toe brake; the aircraft flies behind
+  ['RUDDER_PEDALS_ACTION', 11.4],   // rudder both ways; the assembly turns its left side to the camera; rudder again, each toe brake; turns back
   ['RUDDER_PEDALS_EXIT', 2.4],      // pedals centered, the assembly opens, parts leave
 ];
 const [ENTER, ASSEMBLE, ACTION, EXIT] = SEQUENCE.map(s => s[0]);
 
 // Pedal program in ACTION seconds: [time, drive], drive -1 = left pedal fully
 // forward (left rudder), +1 = right. Eased between keys (feet push, hold, ease off).
-const PROGRAM = [[0, 0], [.55, 0], [1.25, .85], [2.15, .85], [2.95, -1], [4.15, -1], [4.95, .9], [5.9, .9], [6.6, -.45], [7.35, -.45], [8.05, 0]];
+const PROGRAM = [[0, 0], [.55, 0], [1.25, .85], [2.05, .85], [2.85, -1], [3.85, -1], [4.45, 0], [5.6, 0], [6.15, .9], [6.85, .9], [7.55, -.9], [8.15, -.9], [8.65, 0]];
+// The assembly turns its left side (centering spring, brake spring, Hall slit, wiring) toward
+// the camera for the second half of the beat, then back before it opens: [time, 0 front .. 1 side].
+const TURN = [[4.3, 0], [5.6, 1], [10.6, 1], [11.4, 0]];
 // Toe brakes in ACTION seconds: [time, amount] (0 released, 1 full), the left
 // pedal first, then the right, each pressed, held and let go.
-const TOE_L = [[8.15, 0], [8.6, 1], [9.0, 1], [9.35, 0]];
-const TOE_R = [[9.25, 0], [9.7, 1], [10.05, 1], [10.4, 0]];
-// Aircraft: in ACTION seconds it enters (off screen) and leaves (off screen),
-// how far it lags the pedals, yaw rate per unit drive, bank and rudder yaw. It
-// flies between `near` and `far` (world z, behind the pedals at z = 0); its span
-// on screen at the nearest point is `spanNear` x the short side (clamped, px).
-const FLIGHT = { t0: .15, t1: 9.9, lag: .28, turn: 1.15, bank: .62, yaw: .14, near: -.45, far: -3.1, spanNear: [.13, 52, 100], haze: .42 };
+const TOE_L = [[8.7, 0], [9.1, 1], [9.45, 1], [9.8, 0]];
+const TOE_R = [[9.75, 0], [10.15, 1], [10.45, 1], [10.8, 0]];
+// Aircraft: two passes (ACTION seconds). Each starts far, small and hazy, high in
+// the frame, comes toward the camera through real depth (it grows `grow` times),
+// climbing, and sweeps up and out past the top edge; then the next comes from far
+// away. `near` is its closest world z (behind the pedals at z = 0); its span on
+// screen there is `spanNear` x the short side (clamped, px). It yaws and banks with
+// the pedals `lag` s later and weaves sideways by `weave` x the width.
+const FLIGHT = { passes: [[.15, 4.7], [5.0, 10.3]], lag: .28, turn: 1.15, bank: .62, yaw: .14, near: -.4, grow: 3.6, spanNear: [.235, 110, 240], haze: .45, weave: .06 };
 const PAPER = 0xe7e8ea;   // the Studio paper ground (tokens.css --paper): distant aircraft fade toward it
 
 // ================================================================= the look
@@ -73,7 +78,7 @@ const LOOK = {
   steel: { color: 0xbfc3c8, roughness: .4, metalness: .85 },       // link rods, bearings
   darkMetal: { color: 0x2c2e33, roughness: .5, metalness: .6 },    // bolts and nuts
 };
-const VIEW = { x: .42, y: -.8, drift: .14 };   // three-quarter view from the pilot's side, slow drift
+const VIEW = { x: .42, y: -.8, drift: .1, side: 1.6, zoom: .14 };   // three-quarter view from the pilot's side, slow drift; `side` turns the left side to the camera
 const FRAME = { share: [.3, .44], fillW: [.36, .74], fillH: [.66, .46], prefer: [.56, .46] };
 
 // CAD reference points (mm, STEP axes, Y up: x fore-aft with the pilot at +x,
@@ -108,7 +113,7 @@ const PARTS = {
 };
 
 // ==================================================================== model
-export function createModel({ THREE: T = THREE } = {}) {
+export function createModel({ THREE: T = THREE, legible = false } = {}) {
   const m = buildCadMesh(T, CAD.meta, CAD.buf);
   m.group.name = KEY;
   for (const [k, mat] of Object.entries(m.materials)) {
@@ -203,7 +208,7 @@ export function createModel({ THREE: T = THREE } = {}) {
     for (let k = 0; k < 30; k++) { const mid = (lo + hi) / 2; if (off(mid) < 0) lo = mid; else hi = mid; }
     PEDAL_REST = (lo + hi) / 2;
   }
-  const details = createDetails(T, { P, toM, base: baseOf, m, mirror, mirrorDir, rzR });
+  const details = createDetails(T, { P, toM, base: baseOf, m, mirror, mirrorDir, rzR, legible });
   let toeL = 0, toeR = 0, drive = 0, gS = 1, gW = 1, lastKey = '';
   function refresh() {
     const key = `${drive.toFixed(5)},${toeL.toFixed(5)},${toeR.toFixed(5)},${prog.toFixed(5)},${gS.toFixed(4)},${gW.toFixed(4)}`;
@@ -297,7 +302,9 @@ const DLOOK = {
 };
 const C = { black: 0x18191c, tin: 0xb9bdc3, darkMetal: 0x2c2e33, espBlack: 0x202226, chip: 0x141518, silver: 0xc9ccd1, gold: 0xb8954a, green: 0x2f5a46, red: 0xb3261e, wireBlack: 0x1f2023 };
 
-function createDetails(T, { P, toM, base, m, mirror, mirrorDir, rzR }) {
+function createDetails(T, { P, toM, base, m, mirror, mirrorDir, rzR, legible = false }) {
+  // legible: the hero draws spring wire 40% and sensor wires 35% thicker so they read at small sizes (geometry otherwise unchanged)
+  const springGauge = legible ? 1.4 : 1, wireGauge = legible ? 1.35 : 1;
   const mm = v => v / 1000;
   const V = (a) => new T.Vector3(...a);
   const local = (obj, cad) => { const w = toM(...cad); const b = base(obj); return new T.Vector3(w[0] - b.x, w[1] - b.y, w[2] - b.z); };
@@ -553,7 +560,7 @@ function createDetails(T, { P, toM, base, m, mirror, mirrorDir, rzR }) {
         (sLine[i] = sLine[i] || new T.Vector3()).copy(A).addScaledVector(ax, L * sp).addScaledVector(u, rr * Math.cos(th)).addScaledVector(wv3, rr * Math.sin(th));
       }
       s.length = L;
-      tube(sPos, sNrm, s.v0, sLine, s.M, mm(s.r), RAD, 'axis');
+      tube(sPos, sNrm, s.v0, sLine, s.M, mm(s.r * springGauge), RAD, 'axis');
     }
     sPos.needsUpdate = sNrm.needsUpdate = true;
   }
@@ -589,7 +596,7 @@ function createDetails(T, { P, toM, base, m, mirror, mirrorDir, rzR }) {
       for (let j = last + 1; j < r.M; j++) wLine[j].copy(wLine[last]);
       // three wires side by side, offset along a transported frame
       for (let wj = 0; wj < 3; wj++) {
-        const d = (wj - 1) * mm(1.15);
+        const d = (wj - 1) * mm(1.15 * wireGauge);
         n1.set(0, 0, 0);
         for (let j = 0; j < r.M; j++) {
           const a = wLine[Math.max(0, j - 1)], b = wLine[Math.min(r.M - 1, j + 1)];
@@ -598,7 +605,7 @@ function createDetails(T, { P, toM, base, m, mirror, mirrorDir, rzR }) {
           n1.addScaledVector(t, -n1.dot(t)); if (n1.lengthSq() < 1e-10) n1.set(1, 0, 0); n1.normalize();
           (off[j] = off[j] || new T.Vector3()).copy(wLine[j]).addScaledVector(n1, d);
         }
-        tube(wPos, wNrm, r.v0 + wj * r.M * WRAD, off, r.M, mm(.45), WRAD, 'transport');
+        tube(wPos, wNrm, r.v0 + wj * r.M * WRAD, off, r.M, mm(.45 * wireGauge), WRAD, 'transport');
       }
     }
     wPos.needsUpdate = wNrm.needsUpdate = true;
@@ -729,7 +736,7 @@ export function actionPose(u) { return { drive: driveAt(u), toeL: keyed(TOE_L, u
 export async function createActor(ctx) {
   const { engine, quality = 'high' } = ctx;
   const base = { THREE, renderer: engine.renderer, quality };
-  const model = createModel(base);
+  const model = createModel({ ...base, legible: true });
   const plane = createAccent(base);
 
   // root > stage (placed and scaled by layout) > view (viewing angle) > model, shadow
@@ -774,121 +781,106 @@ export async function createActor(ctx) {
   });
   const N = parts.length;
 
-  const REST = { p: 0, drive: 0, toeL: 0, toeR: 0, growS: 0, growW: 0, shadow: 0, yaw: 0, fly: -1, flyExtra: 0, flyOut: 0, flyFade: 0 };
+  const REST = { p: 0, drive: 0, toeL: 0, toeR: 0, growS: 0, growW: 0, shadow: 0, yaw: 0, zoom: 0, fly: -1, flyExtra: 0, flyOut: 0, flyFade: 0 };
   const v = { ...REST }, a0 = { ...REST };
   let dist = 2;
   const q = new THREE.Quaternion(), tmp = new THREE.Vector3(), piv = new THREE.Vector3();
 
-  // ---- the flight path: a real 3D path behind the pedals, fitted per layout.
-  // Its shape is the pedal program integrated once (heading rate = -turn x
-  // drive, a beat later) in the horizontal plane; a candidate places it in the
-  // scene: travel direction (a rotation keeps every turn's sense), speed, the
-  // depth and height where it enters off one side. It must enter and leave off
-  // screen, stay between `near` and `far`, between the top bar and the marquee,
-  // and never touch the focused word. It is always deeper than the pedals, so
-  // it can only pass behind them (kept short). Then: long on screen, a real
-  // change of depth (it comes nearer and recedes), close to the word.
-  const DT = 1 / 30, NS = Math.ceil((FLIGHT.t1 - FLIGHT.t0) / DT) + 1;
-  const unit = { x: new Float32Array(NS), y: new Float32Array(NS), psi: new Float32Array(NS) };
-  {
-    let x = 0, y = 0, psi = 0;
-    for (let i = 0; i < NS; i++) {
-      unit.x[i] = x; unit.y[i] = y; unit.psi[i] = psi;
-      psi += -FLIGHT.turn * driveAt(FLIGHT.t0 + i * DT - FLIGHT.lag) * DT;
-      x += Math.cos(psi) * DT; y += Math.sin(psi) * DT;
-    }
-  }
-  const path = { x: new Float32Array(NS), y: new Float32Array(NS), z: new Float32Array(NS), scale: .05, speed: 0, ok: false, camZ: 2.2, dNear: 2.6, dFar: 5.3 };
-  const mvp = new THREE.Matrix4();
-
+  // ---- the flight path, fitted per layout. Each pass is drawn in screen space
+  // (where it may go: upper half only, clear of the focused word and, as far as
+  // possible, of the pedals) and in depth (far to near, eased); every point is
+  // placed at its true depth in the scene, so its size and motion come from the
+  // camera's own perspective. The sideways weave follows the pedals' heading.
+  const DT = 1 / 30;
+  const passes = FLIGHT.passes.map(([t0, t1]) => {
+    const n = Math.ceil((t1 - t0) / DT) + 1, lat = new Float32Array(n);
+    let psi = 0, x = 0;
+    for (let i = 0; i < n; i++) { psi += -FLIGHT.turn * driveAt(t0 + i * DT - FLIGHT.lag) * DT; x += Math.sin(psi) * DT; lat[i] = x; }
+    let mx = 1e-6; for (const v2 of lat) mx = Math.max(mx, Math.abs(v2));
+    for (let i = 0; i < n; i++) lat[i] /= Math.max(mx, .6);   // about -1..1 (small turns stay small)
+    return { t0, t1, n, lat, x: new Float32Array(n), y: new Float32Array(n), z: new Float32Array(n), haze: new Float32Array(n), px: new Float32Array(n), py: new Float32Array(n), span: new Float32Array(n) };
+  });
+  const path = { scale: .05, ok: false, camZ: 2.2, passes };
+  const qEase = t => t * t * (3 - 2 * t);
   function fitFlight(F, objBox) {
     const { camera, w, h, free, avoid } = F;
-    camera.updateMatrixWorld();
-    mvp.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
-    const e = mvp.elements, pr = { x: 0, y: 0, d: 0 };
-    const proj = (x, y, z) => { const W = e[3] * x + e[7] * y + e[11] * z + e[15]; pr.x = ((e[0] * x + e[4] * y + e[8] * z + e[12]) / W + 1) / 2 * w; pr.y = (1 - (e[1] * x + e[5] * y + e[9] * z + e[13]) / W) / 2 * h; pr.d = W; return pr; };
-    const camZ = camera.position.z, tanH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)), k1 = h / 2 / tanH;   // px per world unit at distance 1
-    const halfW = d => d * tanH * camera.aspect;
-    const dNear = camZ - FLIGHT.near, dFar = camZ - FLIGHT.far;
+    const camZ = camera.position.z, tanH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)), k = h / 2 / tanH;   // px per world unit at distance 1
+    const dNear = camZ - FLIGHT.near, dFar = dNear * FLIGHT.grow;
     const [fr, lo, hi] = FLIGHT.spanNear, spanNearPx = Math.max(lo, Math.min(hi, fr * Math.min(w, h)));
-    const span = spanNearPx * dNear / k1;                          // aircraft span, world units
-    path.scale = span / plane.span; path.camZ = camZ; path.dNear = dNear; path.dFar = dFar;
-    const margin = d => span * k1 / d * .7;                         // keep-out radius, px
-    const wr = avoid[0] || null;
-    let best = null;
-    const fh = free.b - free.t, STEP = 3, zMid = (FLIGHT.near + FLIGHT.far) / 2;
-    for (let r = 0; r < 24; r++) {
-      const rho = r * Math.PI / 12, c = Math.cos(rho), n = Math.sin(rho);
-      if (Math.abs(c) < .25) continue;                                // must enter across a side
-      for (const sp of [.8, 1, 1.3, 1.7, 2.2]) {
-        const s = sp * 2 * halfW(camZ - zMid) / 8.5;               // world units per second
-        // the path's own depth span decides where it can sit
-        let zr0 = Infinity, zr1 = -Infinity;
-        for (let i = 0; i < NS; i += STEP) { const dz = -s * (n * unit.x[i] + c * unit.y[i]); zr0 = Math.min(zr0, dz); zr1 = Math.max(zr1, dz); }
-        const zA = FLIGHT.far - zr0, zB = FLIGHT.near - zr1;
-        if (zA > zB) continue;
-        for (let iz = 0; iz < 4; iz++) {
-          const z0 = zA + (zB - zA) * (iz + .5) / 4, d0 = camZ - z0;
-          const x0 = (c > 0 ? -1 : 1) * (halfW(d0) + span * 1.2);
-          for (const fy of [.12, .3, .5, .7, .88]) for (const climb of [-1, 0, 1]) {
-            const y0 = (h / 2 - (free.t + fh * fy)) / k1 * d0;
-            const vy = climb * .55 * fh / k1 * d0 / (FLIGHT.t1 - FLIGHT.t0);   // a gentle climb or descent across the flight
-            let seen = 0, hidden = 0, dMin = Infinity, dMax = 0, yMin = Infinity, yMax = -Infinity, nearWord = Infinity, bad = false, endOut = false;
-            for (let i = 0; i < NS; i += STEP) {
-              const P = proj(x0 + s * (c * unit.x[i] - n * unit.y[i]), y0 + vy * i * DT, z0 - s * (n * unit.x[i] + c * unit.y[i]));
-              const m = margin(P.d);
-              if (P.x < -m || P.x > w + m || P.y < -m || P.y > h + m) { if (i + STEP >= NS) endOut = true; continue; }
-              seen++;
-              if (P.y < free.t + m * .45 || P.y > free.b - m * .45) { bad = true; break; }
-              if (wr) { const dd = rectDist(wr, P.x, P.y); if (dd < m) { bad = true; break; } nearWord = Math.min(nearWord, dd - m); }
-              if (objBox && rectDist(objBox, P.x, P.y) < m * .35) hidden++;   // passes behind the pedals (it is always deeper than they are)
-              dMin = Math.min(dMin, P.d); dMax = Math.max(dMax, P.d); yMin = Math.min(yMin, P.y); yMax = Math.max(yMax, P.y);
-            }
-            if (!bad && !endOut) {   // the last sample must be off screen too
-              const P = proj(x0 + s * (c * unit.x[NS - 1] - n * unit.y[NS - 1]), y0 + vy * (NS - 1) * DT, z0 - s * (n * unit.x[NS - 1] + c * unit.y[NS - 1])), m = margin(P.d);
-              endOut = P.x < -m || P.x > w + m || P.y < -m || P.y > h + m;
-            }
-            if (bad || !endOut || seen < 10) continue;
-            const vis = seen / Math.ceil(NS / STEP), depth = clamp01((dMax / dMin - 1) / .7), close = clamp01((dNear * 1.5 - dMin) / (dNear * .5));
-            const rise = clamp01((yMax - yMin) / (.3 * fh));             // seen from above or below, the turns read as curves
-            const score = 150 * vis + 110 * depth + 50 * close + 90 * rise - 260 * hidden / seen - .25 * Math.abs(Math.min(nearWord, 600) - 60) + (c > 0 ? 6 : 0) - 5 * Math.abs(sp - 1) / .25;
-            if (!best || score > best.score) best = { score, x0, y0, vy, z0, c, n, s, vis, dMin, dMax, nearWord, hidden: hidden / seen, rise };
-          }
+    const span = spanNearPx * dNear / k;                            // aircraft span, world units
+    path.scale = span / plane.span; path.camZ = camZ; path.dNear = dNear; path.dFar = dFar; path.k = k;
+    const wr = avoid[0] || null, mid = h * .5, amp = FLIGHT.weave * w;
+    // a pass shape: start (xs, ys) high, through ym, out past the top near xe; depth far -> near
+    const shape = (P, xs, xe, ys, ym, t, o) => {
+      const e = Math.pow(t, 1.25), d = dFar * Math.pow(dNear / dFar, e);
+      const sp = span * k / d, out = -(sp * .6 + 14);
+      const y = t < .55 ? lerp(ys, ym, ease.inOutSine(t / .55)) : lerp(ym, out, ease.inCubic((t - .55) / .45));
+      const x = lerp(xs, xe, qEase(t)) - P.lat[Math.min(P.n - 1, Math.round(t * (P.n - 1)))] * amp * Math.min(1, t * 3);
+      o.x = x; o.y = y; o.d = d; o.sp = sp; return o;
+    };
+    const o = { x: 0, y: 0, d: 0, sp: 0 }, fx = [.1, .22, .34, .5, .66, .78, .9];
+    let prevSide = 0;
+    path.ok = true;
+    for (const P of passes) {
+      let best = null;
+      for (const a of fx) for (const b of fx) for (const ys of [free.t + h * .06, free.t + h * .13]) for (const ym of [h * .2, h * .28, h * .36]) {
+        const xs = a * w, xe = b * w;
+        if (Math.abs(xe - xs) < .15 * w) continue;                    // it sweeps across, not straight up
+        let bad = false, behind = 0, seen = 0, near = Infinity;
+        for (let i = 0; i < 40; i++) {
+          shape(P, xs, xe, ys, ym, i / 39, o);
+          const m = o.sp * .55;
+          if (o.y + m < 0) break;                                     // gone past the top edge
+          if (o.x < -m || o.x > w + m) { bad = true; break; }         // only the top edge is a way out
+          seen++;
+          if (o.y + m * .5 > mid) { bad = true; break; }             // upper half only
+          if (wr) { const dd = rectDist(wr, o.x, o.y); if (dd < m) { bad = true; break; } near = Math.min(near, dd); }
+          if (objBox && rectDist(objBox, o.x, o.y) < m * .4) behind++;
         }
+        if (bad || seen < 12) continue;
+        const side = Math.sign(xe - w / 2);
+        const score = -300 * behind / seen + 60 * Math.min(1, Math.abs(xe - xs) / (.45 * w)) - .2 * Math.abs(Math.min(near, 400) - 70)
+          + (prevSide && side !== prevSide ? 40 : 0) - Math.abs(ym - h * .28) * .05;
+        if (!best || score > best.score) best = { score, xs, xe, ys, ym, behind: behind / seen, side };
+      }
+      P.ok = !!best;
+      if (!best) { path.ok = false; continue; }
+      prevSide = best.side;
+      Object.assign(P, { fit: best });
+      for (let i = 0; i < P.n; i++) {
+        const t = i / (P.n - 1);
+        shape(P, best.xs, best.xe, best.ys, best.ym, t, o);
+        P.px[i] = o.x; P.py[i] = o.y; P.span[i] = o.sp;
+        P.x[i] = (o.x - w / 2) * o.d / k; P.y[i] = (h / 2 - o.y) * o.d / k; P.z[i] = camZ - o.d;
+        P.haze[i] = Math.max(1 - ease.outCubic(clamp01(t / .14)), FLIGHT.haze * clamp01((o.d - dNear) / (dFar - dNear)));
       }
     }
-    path.ok = !!best;
-    if (!best) return;
-    for (let i = 0; i < NS; i++) {
-      path.x[i] = best.x0 + best.s * (best.c * unit.x[i] - best.n * unit.y[i]);
-      path.y[i] = best.y0 + best.vy * i * DT;
-      path.z[i] = best.z0 - best.s * (best.n * unit.x[i] + best.c * unit.y[i]);
-    }
-    path.speed = best.s; path.climb = best.vy;
-    Object.assign(path, { vis: best.vis, near: best.dMin, far: best.dMax, clear: best.nearWord, hidden: best.hidden, rise: best.rise });
   }
 
-  // aircraft pose at flight time s (seconds since FLIGHT.t0); past the end it keeps going straight
-  const fwd = new THREE.Vector3(), up = new THREE.Vector3(), side = new THREE.Vector3(), mtx = new THREE.Matrix4();
-  function posePlane(s, extra = 0, fade = 0) {
-    const fi = s / DT, i = Math.max(0, Math.min(NS - 2, Math.floor(fi))), k = clamp01(fi - i);
-    let x = lerp(path.x[i], path.x[i + 1], k), y = lerp(path.y[i], path.y[i + 1], k), z = lerp(path.z[i], path.z[i + 1], k);
-    const pitch = Math.atan2(path.climb || 0, path.speed || 1);
-    const dx = path.x[i + 1] - path.x[i], dz = path.z[i + 1] - path.z[i], L = Math.hypot(dx, dz) || 1;
-    const over = Math.max(0, s - (NS - 1) * DT) + extra;
-    x += dx / L * path.speed * over; z += dz / L * path.speed * over; y += (path.climb || 0) * over;
-    const heading = Math.atan2(-dz, dx) - FLIGHT.yaw * driveAt(FLIGHT.t0 + s - FLIGHT.lag * .6);   // rudder yaws the nose into the turn
-    fwd.set(Math.cos(heading) * Math.cos(pitch), Math.sin(pitch), -Math.sin(heading) * Math.cos(pitch));
-    side.set(Math.sin(heading), 0, Math.cos(heading));                // right wing (level)
-    const bank = FLIGHT.bank * driveAt(FLIGHT.t0 + s - FLIGHT.lag);
-    up.crossVectors(side, fwd).normalize().multiplyScalar(Math.cos(bank)).addScaledVector(side, Math.sin(bank));
-    side.crossVectors(up, fwd);                                   // local +X (left wing)
+  // aircraft pose at ACTION time u (inside a pass); `extra` s run on straight (abort), `fade` shrinks it away
+  const fwd = new THREE.Vector3(), up = new THREE.Vector3(), side = new THREE.Vector3(), mtx = new THREE.Matrix4(), Yup = new THREE.Vector3(0, 1, 0), qb = new THREE.Quaternion();
+  const passAt = u => passes.find(P => P.ok && u >= P.t0 && u <= P.t1) || null;
+  function posePlane(u, extra = 0, fade = 0) {
+    const P = passAt(u);
+    if (!P) return false;
+    const fi = (u - P.t0) / DT, i = Math.max(0, Math.min(P.n - 2, Math.floor(fi))), k = clamp01(fi - i);
+    let x = lerp(P.x[i], P.x[i + 1], k), y = lerp(P.y[i], P.y[i + 1], k), z = lerp(P.z[i], P.z[i + 1], k);
+    fwd.set(P.x[i + 1] - P.x[i], P.y[i + 1] - P.y[i], P.z[i + 1] - P.z[i]);
+    const speed = fwd.length() / DT || 1; fwd.normalize();
+    if (extra) { x += fwd.x * speed * extra; y += fwd.y * speed * extra; z += fwd.z * speed * extra; }
+    // rudder yaws the nose into the turn, the wings bank with it
+    fwd.applyAxisAngle(Yup, -FLIGHT.yaw * driveAt(u - FLIGHT.lag * .6));
+    side.crossVectors(fwd, Yup).normalize();                           // right wing
+    up.crossVectors(side, fwd).normalize();
+    qb.setFromAxisAngle(fwd, FLIGHT.bank * driveAt(u - FLIGHT.lag)); up.applyQuaternion(qb);
+    side.crossVectors(up, fwd).normalize();                            // local +X (left wing)
     mtx.makeBasis(side, up, fwd);
     plane.group.quaternion.setFromRotationMatrix(mtx);
     plane.group.position.set(x, y, z);
     plane.group.scale.setScalar(path.scale * (1 - .9 * fade));
-    plane.setProp((s + extra) * 47);
-    plane.setHaze(FLIGHT.haze * clamp01((path.camZ - z - path.dNear) / (path.dFar - path.dNear)));
+    plane.setProp(u * 47 + extra * 47);
+    plane.setHaze(lerp(P.haze[i], P.haze[i + 1], k));
+    return true;
   }
 
   function apply() {
@@ -897,6 +889,7 @@ export async function createActor(ctx) {
     model.setToe(v.toeL, v.toeR);
     model.setGrow(v.growS, v.growW);
     view.rotation.y = VIEW.y + v.yaw;
+    view.scale.setScalar(1 + v.zoom);
     let any = false;
     for (const P of parts) {
       if (P.f < .999) any = true;
@@ -908,9 +901,7 @@ export async function createActor(ctx) {
     }
     shadow.material.opacity = .32 * v.shadow;
     stage.visible = any;
-    const fl = path.ok && v.fly >= 0 && v.flyOut < 1;
-    flight.visible = fl;
-    if (fl) posePlane(v.fly, v.flyExtra, v.flyFade);
+    flight.visible = v.fly >= 0 && v.flyOut < 1 && posePlane(v.fly, v.flyExtra, v.flyFade);
     model.refresh();   // springs and wires follow their anchors (only when something moved)
   }
 
@@ -929,11 +920,12 @@ export async function createActor(ctx) {
     for (const P of parts) P.explode.copy(P.ex0);
     const measure = p => {
       let x = { l: 0, r: 0, u: 0, d: 0 };
-      for (const y of [VIEW.drift, -VIEW.drift]) {
-        v.p = p; v.yaw = y; apply();
+      for (const y of (p === 1 ? [VIEW.drift, -VIEW.drift, VIEW.side * .5, VIEW.side + VIEW.drift, VIEW.side - VIEW.drift] : [VIEW.drift, -VIEW.drift])) {
+        v.p = p; v.yaw = y; v.zoom = VIEW.zoom * clamp01((y - VIEW.drift) / (VIEW.side - 2 * VIEW.drift)); apply();
         const e = screenExtents([model.group], stage, camera, w, h);
         x = { l: Math.max(x.l, e.l), r: Math.max(x.r, e.r), u: Math.max(x.u, e.u), d: Math.max(x.d, e.d) };
       }
+      v.zoom = 0;
       return x;
     };
     ext = measure(1);
@@ -1002,8 +994,7 @@ export async function createActor(ctx) {
       }
     }
     // the assembled pedals' screen box (the aircraft passes clear of it)
-    v.p = 1; v.yaw = 0; apply();
-    const e = screenExtents([model.group], stage, camera, w, h);
+    const e = measure(1);   // across the turn
     const objBox = { l: ox - e.l * 1.05, r: ox + e.r * 1.05, t: oy - e.u * 1.05, b: oy + e.d * 1.05 };
     fitFlight(F, objBox);
     lastLayout = { objBox, free, avoid, w, h };
@@ -1036,8 +1027,10 @@ export async function createActor(ctx) {
     const off = 1 - ease.inOutSine(win(T, O.t0, O.t0 + .3));
     v.growS = ease.inOutSine(win(T, A.t1 - .35, A.t1 + .35)) * off;
     v.growW = ease.inOutSine(win(T, A.t1 - .1, A.t1 + 1.0)) * off;
-    v.yaw = VIEW.drift * (2 * win(T, E.t0, O.t1) - 1);                 // a slow turn across the whole act
-    v.fly = u >= FLIGHT.t0 && u <= FLIGHT.t1 ? u - FLIGHT.t0 : -1;
+    v.yaw = VIEW.drift * (2 * win(T, E.t0, O.t1) - 1)                  // a slow turn across the whole act
+      + VIEW.side * (T >= X.t0 && T <= X.t1 ? ease.inOutSine(keyed(TURN, u)) : 0);   // and the left side to the camera mid-beat
+    v.zoom = VIEW.zoom * (T >= X.t0 && T <= X.t1 ? ease.inOutSine(keyed(TURN, u)) : 0);   // with a slight push in
+    v.fly = passAt(u) ? u : -1;
     v.flyOut = 0; v.flyExtra = 0; v.flyFade = 0;
     v.shadow = Math.min(fin / N, 1 - fout / N) * (.35 + .65 * v.p);
     apply();
@@ -1061,7 +1054,7 @@ export async function createActor(ctx) {
     v.drive = a0.drive * (1 - ease.outCubic(win(u, 0, .35)));
     v.toeL = a0.toeL * (1 - ease.outCubic(win(u, 0, .3))); v.toeR = a0.toeR * (1 - ease.outCubic(win(u, 0, .3)));
     v.growS = a0.growS * (1 - ease.inOutSine(win(u, 0, .16))); v.growW = a0.growW * (1 - ease.inOutSine(win(u, 0, .16)));
-    v.yaw = a0.yaw;
+    v.yaw = a0.yaw; v.zoom = a0.zoom;
     v.fly = a0.fly;
     v.flyExtra = a0.fly >= 0 ? ease.inQuad(u) * ABORT_S * 3 : 0;
     v.flyOut = u >= .999 ? 1 : 0;
@@ -1073,7 +1066,7 @@ export async function createActor(ctx) {
   async function prewarm(renderer, camera, scene) {
     const hidden = [];
     for (const P of parts) P.f = 0;
-    Object.assign(v, { p: 1, drive: 0, shadow: 1, fly: 1, growS: 1, growW: 1 });
+    Object.assign(v, { p: 1, drive: 0, shadow: 1, fly: FLIGHT.passes[0][0] + .5, growS: 1, growW: 1 });
     apply();
     root.traverse(o => { if (!o.visible) { hidden.push(o); o.visible = true; } });
     try { await renderer.compileAsync(root, camera, scene); } catch (e) { /* compiles on first draw instead */ }
