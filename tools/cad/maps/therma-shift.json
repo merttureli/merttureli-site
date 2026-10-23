@@ -1,33 +1,21 @@
 {
-  "_doc": "Therma-Shift coaster, ready for the owner's STEP. The 8 names are fixed: they are coaster.js getParts() names and the keys of PART_DIRS in next/js/showreel/index.js. explode_mm copies coaster.js; 'order' is coaster.js build order. The match patterns are GUESSES at the CAD names: run inspect first and fix them. Rules are tried top to bottom and the first match wins, so specific patterns (blower housing) sit above generic ones (housing). Origin 'top' puts the highest point at y=0 (coaster.js puts the plate top there; if screw heads stand proud, use 'keep' and offset in the actor).",
+  "_doc": "Therma-Shift coaster from the owner's STEP (ThermaShift_FULL assembly.STEP, 16 parts, mm, +Y up). The assembly is turned 33 deg about Y in the CAD file; next/js/showreel/coaster.js turns each part back (port face to +Z) and puts the plate top center at the origin. Names are coaster.js getParts() names. The STEP has no button (it came later): coaster.js adds it procedurally from the turntable videos. explode_mm is a placeholder (coaster.js sets its own, vertical); 'order' is the build order.",
   "name": "therma-shift",
   "out": "next/assets/3d/",
-  "formats": [
-    "cadmesh"
-  ],
+  "formats": ["cadmesh"],
   "up": "y",
-  "origin": "top",
+  "origin": "center",
   "quality": "medium",
   "unmatched": "keep",
-  "order": [
-    "shell",
-    "blower",
-    "board",
-    "heatsink",
-    "peltier",
-    "thermistor",
-    "topPlate",
-    "screws"
-  ],
+  "order": ["shell", "blower", "board", "heatsink", "peltier", "topPlate", "lid", "screws"],
   "parts": [
-    {"match": ["*blower*rotor*", "*fan*rotor*", "*impeller*", "*blade*"], "name": "blower", "sub": "rotor", "material": "bladePlastic"},
-    {"match": ["*blower*", "*fan*"], "name": "blower", "label": "Blower", "material": "fanPlastic", "explode_mm": [0, -30, 0]},
-    {"match": ["*thermistor*", "*ntc*", "*sensor*"], "name": "thermistor", "label": "Thermistor", "material": "epoxy", "explode_mm": [24, 40, 18]},
-    {"match": ["*peltier*", "*tec*"], "name": "peltier", "label": "Peltier module", "material": "ceramic", "explode_mm": [0, 30, 0]},
-    {"match": ["*heatsink*", "*heat*sink*", "*sink*"], "name": "heatsink", "label": "Heatsink", "material": "heatsink", "explode_mm": [0, 4, 0]},
-    {"match": ["*pcb*", "*board*", "*controller*"], "name": "board", "label": "Control board", "material": "pcb", "explode_mm": [52, 46, 20]},
-    {"match": ["*screw*", "*bolt*", "*m3*", "*m2*"], "name": "screws", "label": "Screws", "material": "steel", "explode_mm": [0, 82, 0], "deflection": 0.1, "angle": 0.8},
-    {"match": ["*plate*", "*top*"], "name": "topPlate", "label": "Top plate", "material": "satinAluminum", "explode_mm": [0, 56, 0]},
-    {"match": ["*shell*", "*housing*", "*base*", "*enclosure*"], "name": "shell", "label": "Shell", "material": "matteShell", "explode_mm": [0, -112, 0]}
+    {"match": "CASE bottom", "name": "shell", "label": "Case", "material": "matteShell", "explode_mm": [0, -60, 0]},
+    {"match": "CASE upper", "name": "lid", "label": "Lid ring", "material": "matteShell", "explode_mm": [0, 48, 0]},
+    {"match": "1.5 MM80X80 6061", "name": "topPlate", "label": "Aluminium plate (6061, 1.5 mm)", "material": "satinAluminum", "explode_mm": [0, 36, 0]},
+    {"match": "PELTIER*", "name": "peltier", "label": "Peltier module (TEC, 40 x 40 x 3.6)", "material": "ceramic", "explode_mm": [0, 24, 0]},
+    {"match": ["Heat Sink", "SPACER*"], "name": "heatsink", "label": "Heatsink", "material": "heatsink", "explode_mm": [0, 12, 0]},
+    {"match": "FAN", "name": "blower", "label": "Fan", "material": "fanPlastic", "explode_mm": [0, -8, 0]},
+    {"match": ["12V USBC", "esp32*", "5V Buck*", "DRV8871*"], "name": "board", "label": "Electronics (ESP32-C3, 2x DRV8871, buck, USB-C PD)", "color": "#6aa592", "material": "pcb", "explode_mm": [0, 0, 0]},
+    {"match": "socket head cap screw*", "name": "screws", "label": "Screws (M2 x 6)", "material": "steel", "explode_mm": [0, 60, 0], "deflection": 0.12, "angle": 0.9}
   ]
 }

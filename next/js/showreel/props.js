@@ -1,4 +1,4 @@
-// Showreel props: a ceramic coffee mug and a plain red 355 ml soda can.
+// Showreel props: a ceramic coffee mug and a plain 355 ml soda can (brushed silver, one thin red band, no marks).
 //
 //   import { createMug, createCan } from './props.js';
 //   const mug = createMug({ renderer, quality: 'high' });   // quality: 'high' | 'low'
@@ -17,7 +17,8 @@
 //   Glaze is charcoal outside and warm off-white inside so the coffee reads against it.
 //
 // createCan() extras
-//   bodyMesh / bodyMaterial  the painted red body (MeshStandardMaterial). The FX artist hooks
+//   bodyMesh / bodyMaterial  the body: satin brushed aluminium with one thin painted red band, no logo or
+//                            lettering (MeshStandardMaterial, map + metalnessMap). The FX artist hooks
 //                            condensation here. UVs are isotropic in metres: u = angle / 2pi,
 //                            v = arc length / circumference, so bodyMesh.userData.uvMetres
 //                            (= circumference, 0.2077) converts 1 uv unit to metres in both axes.
@@ -153,6 +154,22 @@ function brushedTexture(seed = 7) {
   const t = new THREE.CanvasTexture(c);
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4;
   return t;
+}
+
+// Body colour + metalness maps for the can: aluminium everywhere, a painted (non-metal) red band between
+// v0 and v1. 1 x 512 strips; u wraps, so the band runs all the way round.
+function bandTextures([v0, v1]) {
+  const c = canvasOrNull(4, 512), m = canvasOrNull(4, 512); if (!c || !m) return null;
+  const cx = c.getContext('2d'), mx = m.getContext('2d');
+  cx.fillStyle = '#d4d7db'; cx.fillRect(0, 0, 4, 512);
+  mx.fillStyle = '#ffffff'; mx.fillRect(0, 0, 4, 512);           // metalness from the blue channel: 1
+  const y0 = Math.round((1 - v1) * 512), y1 = Math.round((1 - v0) * 512);
+  cx.fillStyle = '#b3121c'; cx.fillRect(0, y0, 4, y1 - y0);
+  mx.fillStyle = '#000000'; mx.fillRect(0, y0, 4, y1 - y0);      // the band is paint: metalness 0
+  const color = new THREE.CanvasTexture(c), metal = new THREE.CanvasTexture(m);
+  color.colorSpace = THREE.SRGBColorSpace;
+  for (const t of [color, metal]) { t.wrapS = THREE.RepeatWrapping; t.anisotropy = 4; }
+  return { color, metal };
 }
 
 // ---------------------------------------------------------------- mug
@@ -340,9 +357,19 @@ export function createCan({ quality = 'high' } = {}) {
   const panelY = 0.1162;
 
   // materials
-  const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0xb8141c, roughness: 0.4, metalness: 0.42 });
   const rough = brushedTexture();
   if (rough) rough.repeat.set(1, circumference / 0.03);
+  // body: brushed satin aluminium with one thin red band (Diet Coke in spirit; no logo, letters or wave).
+  // Body UVs: u around, v = arc length / circumference from the bottom of the body (neck at about 0.5).
+  const band = [0.318, 0.345], bodyTex = bandTextures(band);
+  // drawn-can streaks run along the height, not around it: the same brushing turned a quarter
+  const bodyRough = rough ? rough.clone() : null;
+  if (bodyRough) { bodyRough.center.set(0.5, 0.5); bodyRough.rotation = Math.PI / 2; bodyRough.repeat.set(circumference / 0.05, 1); bodyRough.needsUpdate = true; }
+  const bodyMaterial = new THREE.MeshStandardMaterial({
+    color: 0xffffff, map: bodyTex ? bodyTex.color : null, metalness: 1, metalnessMap: bodyTex ? bodyTex.metal : null,
+    roughness: 0.34, roughnessMap: bodyRough,
+  });
+  if (!bodyTex) { bodyMaterial.color.set(0xd2d5d9); bodyMaterial.metalness = 0.9; }
   const metal = new THREE.MeshPhysicalMaterial({
     color: 0xdfe2e5, metalness: 1, roughness: 0.34, roughnessMap: rough || null
   });
@@ -384,7 +411,7 @@ export function createCan({ quality = 'high' } = {}) {
   return {
     group, duration: 0,
     setProgress() {}, update() {},
-    dispose() { geos.forEach(g => g.dispose()); mats.forEach(m => m.dispose()); if (rough) rough.dispose(); },
+    dispose() { geos.forEach(g => g.dispose()); mats.forEach(m => m.dispose()); if (rough) rough.dispose(); if (bodyTex) { bodyTex.color.dispose(); bodyTex.metal.dispose(); } if (bodyRough) bodyRough.dispose(); },
     bodyMesh, bodyMaterial, baseMesh, topMesh, tabMesh,
     height: H, radius: R, tabAngle: 0, panelY,
     triangles: () => triCount(group)
