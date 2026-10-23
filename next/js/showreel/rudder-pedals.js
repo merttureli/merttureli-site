@@ -479,7 +479,7 @@ function createDetails(T, { P, toM, base, m, mirror, mirrorDir, rzR }) {
   const springMesh = new T.Mesh(sg, mat('spring')); springMesh.name = 'springs'; springMesh.frustumCulled = false;
   group('springs').add(springMesh); m.group.add(groups.springs);
   geos.push(sg); tris += ni / 3;
-  for (const s of SPRINGS) labels.push({ group: 'springs', name: s.name, note: s.key.startsWith('center') ? '24 coils, 8.3 mm outside, hooked on the anchor screw' : '13 coils, 5.9 mm outside, from the lever's top screw to the pedal clevis pin', spring: s });
+  for (const s of SPRINGS) labels.push({ group: 'springs', name: s.name, note: s.key.startsWith('center') ? '24 coils, 8.3 mm outside, hooked on the anchor screw' : '13 coils, 5.9 mm outside, from the top screw on the lever to the pedal clevis pin', spring: s });
 
   // ---- wires: one dynamic tube geometry, vertex colors, three per sensor
   const WR = [];

@@ -13,6 +13,7 @@ MODES = {"fast", "default", "full"}
 
 SCRIPT = re.compile(r"<script\b([^>]*)>(.*?)</script>", re.S | re.I)
 TYPE = re.compile(r'\btype\s*=\s*["\']?([^"\'\s>]+)', re.I)
+ESM = re.compile(r"^\s*(import\s*[\w{*'\"]|export\s)", re.M)
 CLASSIC = ("", "text/javascript", "application/javascript")
 
 
@@ -30,6 +31,16 @@ def run(ctx):
     tmp = tempfile.mkdtemp(prefix="check-js-")
     inline = 0
     try:
+        # node --check exits 0 on a .js module with a syntax error (module detection
+        # swallows it), so ES modules are checked as .mjs copies
+        for k, (label, path, line) in enumerate(jobs):
+            if path.endswith(".js"):
+                src = open(path, encoding="utf-8", errors="replace").read()
+                if ESM.search(src):
+                    name = os.path.join(tmp, label.replace("/", "__") + ".mjs")
+                    with open(name, "w", encoding="utf-8") as fh:
+                        fh.write(src)
+                    jobs[k] = (label, name, line)
         for f in ctx.site_files((".html",)):
             src = open(ctx.path(f), encoding="utf-8", errors="replace").read()
             for i, m in enumerate(SCRIPT.finditer(src)):
