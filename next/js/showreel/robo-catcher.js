@@ -56,11 +56,12 @@ const [ENTER, ASSEMBLE, PITCH, FEED, INDEX, THROW, EXIT] = SEQUENCE.map(s => s[0
 // front of it, and high enough to see the ball roll on the bed behind the ground ramps.
 const VIEWS = [{ x: .3, y: .26 }, { x: .3, y: .3 }];
 // How much of the hero's free area the assembled machine may take: [landscape, portrait].
-const FRAME = { fillW: [.62, .96], fillH: [.9, .62], prefer: [.46, .5] };
+const FRAME = { fillW: [.62, .92], fillH: [.9, .62], prefer: [.46, .5] };
 
 // Screen direction (degrees, 0 = right, 90 = up) each part flies in from and leaves by.
-// The drift word sits to the machine's upper right, so nothing flies in or out that way.
-const DIRS = { bed: -100, groundRamps: -130, backstop: 96, cage: 104, indexer: 88, tube: 112, throwerBase: -62, throwerPlates: -42, flywheelBottom: -52, flywheelTop: -30, idlers: -20 };
+// The drift word sits to the machine's upper right and the marquee below it, so parts come from
+// the left, from the upper left and level from the right, never across either.
+const DIRS = { bed: 182, groundRamps: 172, backstop: 108, cage: 150, indexer: 142, tube: 158, throwerBase: 3, throwerPlates: 8, flywheelBottom: 5, flywheelTop: 12, idlers: 16 };
 
 // ---- mechanism, CAD mm (catcher_mesh.npz part list)
 const AX = {
@@ -161,7 +162,7 @@ export function createModel({ THREE: T = THREE, quality = 'high' } = {}) {
     const { base: b, pos } = net;
     for (let i = 0; i < pos.length; i += 3) {
       const dx = b[i] - hx, dy = b[i + 1] - hy;
-      pos[i + 2] = b[i + 2] - a * Math.exp(-(dx * dx + dy * dy) / (2 * .16 * .16));
+      pos[i + 2] = b[i + 2] - a * Math.exp(-(dx * dx + dy * dy) / (2 * .2 * .2));
     }
     net.attr.needsUpdate = true;
   }
@@ -462,7 +463,7 @@ export async function createActor(ctx) {
     v.top = sp; v.bottom = sp;
     v.idx = Math.PI * ease.inOutCubic(win(T, Ix.t0 + .12, Ix.t1 - .12));
     const tn = T - S[PITCH].t0 - 1.0;   // net: dent with the ball, then a damped swing
-    v.net = tn < 0 ? 0 : tn < .08 ? .085 * Math.sin(Math.PI / 2 * tn / .08) : .085 * Math.exp(-(tn - .08) * 5.5) * Math.cos((tn - .08) * 15);
+    v.net = tn < 0 ? 0 : tn < .08 ? .13 * Math.sin(Math.PI / 2 * tn / .08) : .13 * Math.exp(-(tn - .08) * 5.5) * Math.cos((tn - .08) * 15);
     v.shadow = Math.min(fin / n, 1 - fout / n) * (.3 + .7 * v.p);
     ballAt(T, S);
     apply();
@@ -489,9 +490,12 @@ export async function createActor(ctx) {
     const k = 1 - win(u, 0, .7);
     v.top = a0.top + SPIN * ABORT_S * .7 * (1 - k * k) / 2; v.bottom = v.top;
     v.idx = a0.idx; v.net = a0.net * (1 - win(u, 0, .2));
-    v.ballOn = a0.ballOn && u < .7 ? 1 : 0;
+    // a ball in the open flies off; one inside the feeder or elbow fades with its x-ray and stays put
+    const inside = a0.xray > .5;
+    v.ballOn = a0.ballOn && u < (inside ? .25 : .7) ? 1 : 0;
     v.xray = a0.xray * (1 - win(u, 0, .25));
-    bp.copy(a0ball).addScaledVector(dirOut, dist * 1.3 * ease.inCubic(win(u, 0, .7)));
+    bp.copy(a0ball);
+    if (!inside) bp.addScaledVector(dirOut, dist * 1.3 * ease.inCubic(win(u, 0, .7)));
     v.shadow = Math.min(a0.shadow, fin / n);
     apply();
   }
