@@ -4,9 +4,16 @@ Disallow: /cards/
 Disallow: /src/
 Disallow: /tools/
 Disallow: /photography-gallery.html
-# Design studies duplicate the portfolio content.
+# Design studies duplicate the portfolio content. Their shared fonts and script stay
+# crawlable: the live pages load them.
 Disallow: /studies/
-Disallow: /next/
+Allow: /studies/shared/
+# Studio sources. The live pages are built from next/ and render from its CSS, JS,
+# fonts, images and 3D data, so only its pages (noindex copies of the live ones) and
+# its lab are kept out.
+Disallow: /next/$
+Disallow: /next/*.html$
+Disallow: /next/lab/
 # Repo tooling and docs, not site pages (.nojekyll makes Pages serve dot folders).
 Disallow: /docs/
 Disallow: /templates/

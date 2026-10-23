@@ -2,7 +2,9 @@
 
 FAIL
   - an HTML page under next/, studies/ or docs/ without <meta name="robots" content="noindex">
-  - robots.txt does not Disallow /next/, /studies/ or /docs/ (when the folder exists)
+  - robots.txt lets crawlers fetch an HTML page under next/, studies/ or docs/
+  - robots.txt blocks a CSS, JS, font, image or 3D file that a sitemap page loads
+    (Googlebot renders the live pages from next/css, next/js, next/assets, studies/shared)
   - robots.txt does not Disallow /.claude/ while .nojekyll exists (Pages then serves dot folders)
   - a sitemap.xml URL that robots.txt disallows or whose page says noindex
 WARN
@@ -10,6 +12,7 @@ WARN
     templates/, content/)
   - a sitemap page whose <link rel="canonical"> is not its sitemap URL
 """
+import posixpath
 import re
 from urllib.parse import urlsplit
 
@@ -23,6 +26,10 @@ STRICT = ("next/", "studies/", "docs/")
 SOFT = ("cards/", "src/", "tools/", "templates/", "content/")
 NOINDEX = re.compile(r"<meta\b(?=[^>]*\bname\s*=\s*[\"']?robots)(?=[^>]*\bcontent\s*=\s*[\"'][^\"']*noindex)[^>]*>",
                      re.I)
+# href/src of stylesheets, scripts, preloads and images on a page (relative refs only)
+RENDER_REF = re.compile(r"""\s(?:href|src|poster)=["'](?![a-z][a-z0-9+.-]*:|/|#)([^"']+)["']""", re.I)
+RENDER_EXT = (".css", ".js", ".mjs", ".woff2", ".woff", ".ttf", ".webp", ".png", ".jpg", ".jpeg", ".svg",
+              ".json", ".bin")
 CANONICAL = re.compile(r"<link\b(?=[^>]*\brel\s*=\s*[\"']?canonical)[^>]*\bhref\s*=\s*[\"']([^\"']+)", re.I)
 
 
@@ -73,16 +80,16 @@ def run(ctx):
     checked = 0
     for folder in STRICT:
         present = [f for f in files if f.startswith(folder)]
-        if not present:
-            continue
-        if allowed(rl, "/" + folder):
-            errors.append("robots.txt: add 'Disallow: /%s' (%d files under %s are crawlable)" % (folder, len(present), folder))
-        for f in sorted(present):
-            if f.endswith((".html", ".htm")) and "/node_modules/" not in f:
-                checked += 1
-                head = open(ctx.path(f), encoding="utf-8", errors="replace").read()
-                if not NOINDEX.search(head):
-                    errors.append('%s: add <meta name="robots" content="noindex"> to <head>' % f)
+        pages = [f for f in sorted(present) if f.endswith((".html", ".htm")) and "/node_modules/" not in f]
+        open_pages = [f for f in pages if allowed(rl, "/" + f)]
+        if open_pages:
+            errors.append("robots.txt: crawlers may fetch %d page(s) under /%s, e.g. /%s (Disallow them)"
+                          % (len(open_pages), folder, open_pages[0]))
+        for f in pages:
+            checked += 1
+            head = open(ctx.path(f), encoding="utf-8", errors="replace").read()
+            if not NOINDEX.search(head):
+                errors.append('%s: add <meta name="robots" content="noindex"> to <head>' % f)
     if ".nojekyll" in files and any(f.startswith(".claude/") for f in files) and allowed(rl, "/.claude/"):
         errors.append("robots.txt: add 'Disallow: /.claude/' (.nojekyll makes GitHub Pages serve it)")
     for folder in SOFT:
@@ -106,6 +113,10 @@ def run(ctx):
             if rel not in files:
                 continue  # the links check reports missing targets
             page = open(ctx.path(rel), encoding="utf-8", errors="replace").read()
+            for ref in sorted(set(RENDER_REF.findall(page))):
+                target = posixpath.normpath(posixpath.join(posixpath.dirname(rel), ref.split("?")[0].split("#")[0]))
+                if not target.startswith("..") and target.lower().endswith(RENDER_EXT) and not allowed(rl, "/" + target):
+                    errors.append("robots.txt blocks /%s, which %s needs to render" % (target, rel))
             if NOINDEX.search(page):
                 errors.append("sitemap.xml lists %s but %s says noindex" % (loc, rel))
             m = CANONICAL.search(page)

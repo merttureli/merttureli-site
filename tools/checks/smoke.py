@@ -29,6 +29,8 @@ MODES = {"default", "full"}
 # every case study and every showreel lab page.
 SMOKE_PAGES = ["index.html", "websites.html", "projects/charger.html", "privacy.html", "404.html", "hi/",
                "next/", "next/#reel-coaster"]
+# --full also loads the pages still in the old design (docs/transition.md)
+FULL_EXTRA = ["photography-gallery.html", "photography-lab.html", "assets/charger-explorer/index.html"]
 WIDTHS = "390,1440"
 
 
@@ -61,7 +63,8 @@ def pages(ctx):
     if ctx.mode != "full":
         return SMOKE_PAGES
     rel = lambda pattern: sorted(os.path.relpath(p, ctx.root).replace(os.sep, "/") for p in glob.glob(ctx.path(pattern)))
-    return list(dict.fromkeys(SMOKE_PAGES[:2] + rel("projects/*.html") + SMOKE_PAGES[3:] + rel("next/lab/*.html")))
+    return list(dict.fromkeys(SMOKE_PAGES[:2] + rel("projects/*.html") + SMOKE_PAGES[3:] + FULL_EXTRA
+                              + rel("next/lab/*.html")))
 
 
 def run(ctx):

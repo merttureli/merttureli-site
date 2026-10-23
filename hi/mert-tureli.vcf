@@ -2,7 +2,8 @@ BEGIN:VCARD
 VERSION:3.0
 N:Tureli;Mert;;;
 FN:Mert Tureli
-TITLE:Mechanical Engineer
+TITLE:Deployment Engineer
+ORG:Base Power
 EMAIL;TYPE=INTERNET,PREF:merttureli0@gmail.com
 TEL;TYPE=CELL,VOICE:+18382519707
 URL:https://merttureli.com/

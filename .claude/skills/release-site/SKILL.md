@@ -21,5 +21,5 @@ Merge (after the owner says yes):
 Release (only when the owner asks to go live):
 1. On the preview branch: `python3 tools/check.py --full --public` (visual regress, 0 open flags).
 2. Bump `<lastmod>` in `sitemap.xml` for changed public pages.
-3. `git switch main && git merge --no-ff claude/funny-sagan-acgved -m "Release: <one line>"`. Never reset main: it has commits the preview lacks.
+3. `git switch main && git merge --no-ff claude/funny-sagan-acgved -m "Release: <one line>"`. Never reset main: it has commits the preview lacks (vx/). Main deleted most of `next/` before the Studio went live: after the merge run `git checkout claude/funny-sagan-acgved -- next` so every file the live pages load is there, then `python3 tools/check.py`.
 4. Push only on the owner's word: `git push origin main`. Then check the live pages at phone and desktop width.

@@ -2,12 +2,15 @@
 
 Start here after [../CLAUDE.md](../CLAUDE.md). Every page answers "how do I do X" with the exact command.
 
+The Studio design (`next/`) is the live site: `tools/build.py` publishes `next/index.html`, `next/websites.html`
+and the case pages at the root. What is still in the old design: [transition.md](transition.md).
+
 ## Design system
 
 | Doc | Covers |
 |---|---|
-| [design/site-tokens.md](design/site-tokens.md) | current site tokens: `css/tokens.css` on top of the `_ds/` export; colors, type, space, radius, z, breakpoints, palettes |
-| [design/studio.md](design/studio.md) | Studio (`next/`) tokens in `next/css/tokens.css`, section skeleton, markup contracts |
+| [design/site-tokens.md](design/site-tokens.md) | old-design tokens (photography pages, CHARGER explorer, design studies): `css/tokens.css` on top of the `_ds/` export; colors, type, space, radius, z, breakpoints, palettes |
+| [design/studio.md](design/studio.md) | the live design: Studio (`next/`) tokens in `next/css/tokens.css`, section skeleton, markup contracts |
 | [design/motion.md](design/motion.md) | easings and durations for both sites, reduced motion, offscreen pausing, Lenis, every timer |
 | [design/components.md](design/components.md) | every repeated UI pattern on both sites: snippet, variants, do and don't |
 | [design/catalog.html](design/catalog.html) | the same components rendered live with the real CSS (serve the repo, open `/docs/design/catalog.html`) |
@@ -45,14 +48,13 @@ Every Python tool takes `--help` and works from any folder.
 
 | Command | Does |
 |---|---|
-| `python3 tools/check.py [--fast\|--full\|--public] [--only NAME] [--expect-change PAGE]` | one command that proves nothing broke: build, writing, flags, links, js, json, robots, tokens, smoke, visual |
-| `python3 tools/build.py [--check\|--serve PORT]` | rebuild `index.html` and `projects/*.html` from `src/` and `content/`; `--check` diffs without writing |
-| `python3 build-case.py --check` | fast content check of `content/projects/*.json` (no browser) |
+| `python3 tools/check.py [--fast\|--full\|--public] [--only NAME] [--expect-change PAGE]` | one command that proves nothing broke: build, writing, flags, links, js, json, robots, tokens, transition, smoke, visual |
+| `python3 tools/build.py [--check\|--serve PORT]` | publish the Studio sources: `next/projects/*.html` (via `tools/build-studio-cases.py`), then `index.html`, `websites.html`, `projects/*.html` and every other `PAGES` entry rebased to the root with the live head; `--check` diffs without writing |
 | `python3 check-writing.py [file.html ...]` | house writing rules on copy (default: the public pages) |
 | `python3 tools/check-flags.py [--next-id SLUG]` | list open `<mark class="flag">` owner questions on every served page (exit 1 while any remain); `--next-id` prints the next free id |
 | `python3 tools/new.py actor\|page\|section\|project <name> [--dry-run]` | scaffolds from `templates/`; `python3 tools/new.py project <slug> --where` finds a project's hand-written mentions, `--remove` undoes a project |
 | `python3 tools/media.py image\|video\|poster\|snippet\|info\|audit` | web derivatives (webp sets, webm/mp4, posters) and the markup to paste; `audit` lists oversized or missing files |
-| `python3 tools/preview.py site\|studio --out DIR [--smoke]` | artifact-ready copy for owner review, with the publish plan |
+| `python3 tools/preview.py site\|studio --out DIR [--smoke]` | artifact-ready copy for owner review, with the publish plan (`site` = the live site) |
 | `python3 tools/cad.py setup\|inspect\|import\|view\|shot\|loader` | STEP assembly -> cadmesh, glb, explorer and hero files, keeping part names |
 | `node tools/render-loops.js [key ...]` | renders the Studio home's product tile loops and posters from the showreel actors ([tile-loops.md](recipes/tile-loops.md)) |
 | `node tools/visual-regress/visual-regress.js --baseline A --candidate B` | pixel diff of two copies (check.py `--full` runs it for you) |

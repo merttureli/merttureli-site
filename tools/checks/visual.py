@@ -32,7 +32,8 @@ MODES = {"full"}
 WIDTHS = "390,1440"
 GROUPS = [
     # name, default pages (None: visual-regress default list), palettes, masks
-    ("site", None, "original,slate", "photo-corridor,.study-screen"),
+    # the live home and case pages are Studio pages now: mask the live hero canvas and the clock too
+    ("site", None, "original,slate", "photo-corridor,.study-screen,.hero__canvas,[data-clock]"),
     ("studio", "next/index.html", "original", ".hero__canvas,[data-clock]"),
 ]
 FIX = "cd tools/visual-regress && npm install, then python3 tools/check.py --only visual"
