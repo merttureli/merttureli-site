@@ -180,7 +180,7 @@ export function createFallbackView(canvas, geometry, flight, opts = {}) {
       const [gx2, gy2] = toScreen(xcg, 0);
       const marks = [];
       const xl = latticeXcp();
-      if (Number.isFinite(xl)) { const [lx2, ly2] = toScreen(xl, 0); ctx.strokeStyle = th.a90; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(lx2, ly2, 8, 0, Math.PI * 2); ctx.stroke(); marks.push({ a: xl, text: `CP LBM ${fixed(xl / M_PER_IN, 2)} IN` }); }
+      if (Number.isFinite(xl)) { const [lx2, ly2] = toScreen(xl, 0); ctx.strokeStyle = th.a90; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(lx2, ly2, 8, 0, Math.PI * 2); ctx.stroke(); marks.push({ a: xl, text: `CP 2D SECTION ${fixed(xl / M_PER_IN, 2)} IN` }); }
       if (Number.isFinite(xcp)) { const [px, py] = toScreen(xcp, 0); ctx.fillStyle = th.accent; ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2); ctx.fill(); marks.push({ a: xcp, text: `CP ${fixed(xcp / M_PER_IN, 2)} IN` }); }
       cgSymbol(ctx, gx2, gy2, 7, th.paper, th.ink900);
       marks.push({ a: xcg, text: `CG ${fixed(xcg / M_PER_IN, 2)} IN` });
@@ -231,7 +231,18 @@ export function createFallbackView(canvas, geometry, flight, opts = {}) {
     const cy = h * CG_SCREEN_Y;
     const span = h / TAPE_PX_PER_FT;
     ctx.font = `10px ${th.mono}`; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-    for (let f = Math.floor((alt - span) / 10) * 10, n = 0; f <= alt + span && n < 1000; f += 10, n++) {   // bounded: at 1e17 ft, f + 10 === f
+    // the tape ends at 0 ft (the pad): below it, ground hatched as in the view, and no negative altitudes
+    const groundTy = cy + alt * TAPE_PX_PER_FT;
+    if (groundTy < h) {
+      const gy = Math.round(Math.max(0, groundTy)) + 0.5;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(0, gy, TAPE_W - 1, h - gy); ctx.clip();
+      ctx.strokeStyle = th.a18;
+      for (let k = -TAPE_W, n = 0; k < h - gy + TAPE_W && n < 400; k += 10, n++) { ctx.beginPath(); ctx.moveTo(TAPE_W, gy + k); ctx.lineTo(0, gy + k + TAPE_W); ctx.stroke(); }
+      ctx.restore();
+      ctx.strokeStyle = th.a45; ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(TAPE_W - 1, gy); ctx.stroke();
+    }
+    for (let f = Math.max(0, Math.floor((alt - span) / 10) * 10), n = 0; f <= alt + span && n < 1000; f += 10, n++) {   // bounded: at 1e17 ft, f + 10 === f
       const ty = cy - (f - alt) * TAPE_PX_PER_FT;
       if (ty < -10 || ty > h + 10) continue;
       const major = f % 50 === 0;

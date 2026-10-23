@@ -3,13 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LAB / GEOM · Mert Tureli VX</title>
+<title>Lab / Geometry · Mert Tureli VX</title>
 <meta name="robots" content="noindex">
 <meta name="description" content="Test bench for the field study's geometry module: the CHARGER radius profile and fin planform measured from the CAD assembly, and the lattice solid mask built from them.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230A0A0A'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='26' font-weight='600' fill='%23FFFFFF'%3EMT%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="../css/tokens.css">
 <script type="importmap">{"imports":{"three":"../../assets/charger-explorer/vendor/three.module.js"}}</script>
 <style>
+  /* --livery-text: the livery orange lifted for small text (5.75:1 on ink-900; #D63B08 is 4.23:1); strokes and fills keep var(--livery) */
+  :root { --livery-text: #EC5B2A; }
   body { background: var(--ink-900); color: var(--paper-a90); }
   .gm-skip { position: absolute; left: 16px; top: -48px; z-index: 5; padding: 8px 12px; background: var(--paper); color: var(--ink-900); font: 12px/1.4 var(--font-mono); letter-spacing: var(--ls-caps); text-transform: uppercase; border-radius: var(--radius-xs); }
   .gm-skip:focus { top: 12px; }
@@ -61,7 +63,7 @@
   .gm-state dt { color: var(--paper-a70); }
   .gm-state dd { margin: 0; min-width: 0; color: var(--paper); text-align: right; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
   .gm-state .gm-t { text-align: right; color: var(--paper-a70); }
-  .gm-state .gm-bad dd { color: var(--livery); }
+  .gm-state .gm-bad dd { color: var(--livery-text); }
 
   .gm-low { display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; margin-top: 48px; padding-top: 28px; border-top: 1px solid var(--paper-a18); }
   .gm-tablebox { overflow-x: auto; border: 1px solid var(--paper-a18); border-radius: var(--radius-xs); }
@@ -72,7 +74,7 @@
   .gm-table td:first-child { color: var(--paper-a90); white-space: normal; min-width: 150px; }
   .gm-table tr:last-child td { border-bottom: 0; }
   .gm-table .gm-dim { color: var(--paper-a70); }
-  .gm-table .gm-off { color: var(--livery); }
+  .gm-table .gm-off { color: var(--livery-text); }
   .gm-tag { display: inline-block; margin-left: 6px; padding: 1px 4px 0; font: 9px/1.4 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--paper-a70); border: 1px solid var(--paper-a18); border-radius: var(--radius-xs); vertical-align: 1px; white-space: nowrap; }
   .gm-notes { display: grid; gap: 8px; margin-top: 12px; max-width: 80ch; font-size: var(--fs-body-sm); line-height: 1.55; color: var(--paper-a70); }
   .gm-notes p { margin: 0; }
@@ -143,7 +145,7 @@
 
     <aside class="gm-panel" id="controls" aria-label="Section controls" tabindex="-1">
       <h2>Controls</h2>
-      <label class="gm-field" for="finScale"><span class="gm-row">Fin scale <output id="oFin" for="finScale">1.00</output></span>
+      <label class="gm-field" for="finScale"><span class="gm-row">Fin scale <output aria-live="off" id="oFin" for="finScale">1.00</output></span>
         <input id="finScale" type="range" min="0" max="1.5" step="0.05" value="1"></label>
       <div class="gm-seg" role="group" aria-label="Fin scale presets">
         <button class="gm-btn" type="button" data-fin="0">None</button>

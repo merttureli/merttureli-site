@@ -45,7 +45,7 @@ body { background: var(--paper); color: var(--ink-700); overflow-x: clip; }
   background: var(--ink-900); color: var(--paper); overflow: hidden; outline: none;
 }
 .fd-viewport { overflow: hidden; background: var(--ink-900); isolation: isolate; }
-.fd-viewport > canvas.pn-fallback { position: absolute; inset: 0; }
+.fd-viewport > canvas.pn-fallback { position: absolute; inset: 0; touch-action: pan-y pinch-zoom; }   /* sideways drags flick; the browser keeps vertical scroll and pinch-zoom */
 .fd-viewport > .sc-canvas.fd-off { display: none; }
 /* the 2D view draws its own caption, tape and frame: the 3D overlays step aside */
 .fd-viewport.fd-2d .fd-cap, .fd-viewport.fd-2d .sc-ticks { display: none; }
@@ -55,7 +55,7 @@ body { background: var(--paper); color: var(--ink-700); overflow-x: clip; }
 /* bottom left, over the ground, stacked above the hint: the rocket's own labels ride with the rocket near the middle */
 .fd-cap { position: absolute; z-index: 2; left: calc(var(--space-3) + 22px); bottom: calc(var(--space-3) + 28px); right: 30%; margin: 0; pointer-events: none;
   font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; line-height: 1.6; color: var(--paper); }
-.fd-cap-l { margin: 0; }
+.fd-cap-l { width: fit-content; max-width: 100%; margin: 0 0 0 -6px; padding: 1px 6px; background: rgba(10, 10, 10, .74); }   /* an ink plate, as the scene's labels have: the rail, the ladder and the plume pass behind it */
 .fd-cap-dim { color: var(--paper-a70); }
 .fd-cap-warn::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 8px; background: var(--livery); vertical-align: 1px; }
 
@@ -73,6 +73,7 @@ body { background: var(--paper); color: var(--ink-700); overflow-x: clip; }
 .fd-status[hidden] { display: none; }
 .fd-viewport .sc-hint { right: 30%; }
 .no-js .fd-cap, .no-js .fd-status, .no-js .sc-hint, .no-js .sc-ticks, .no-js .fd-meta { display: none; }
+.no-js .fd-viewport.pn-viewport { right: 0; bottom: 0; }   /* --pn-rail-w and --pn-dock-h live on .pn-host, which only the panel adds */
 .fd-noscript { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: var(--space-5); padding: var(--space-6) var(--fd-gutter-r) var(--space-6) var(--fd-gutter); text-align: center; }
 .fd-noscript img { width: min(100%, 880px); height: auto; }
 .fd-noscript p { max-width: 52ch; font-size: var(--fs-body-sm); color: var(--paper-a90); }
@@ -100,7 +101,7 @@ body { background: var(--paper); color: var(--ink-700); overflow-x: clip; }
 .fd-index-n { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); color: var(--ink-500); }
 
 .fd-sec-head { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); margin-bottom: var(--space-8); }
-.fd-sec-head .display-2 { margin-top: var(--space-2); }
+.fd-sec-head .display-2 { margin-top: var(--space-2); font-size: min(var(--fs-display-2), 12vw); }   /* CONFIGURATION fits at 320 px */
 .fd-sec-intro { max-width: var(--measure); margin-top: var(--space-4); font-size: var(--fs-body-lg); line-height: 1.6; color: var(--ink-700); }
 
 /* source tags: mono caps in a hairline box, ink-500 on paper (5.3:1) */
@@ -108,7 +109,7 @@ body { background: var(--paper); color: var(--ink-700); overflow-x: clip; }
   letter-spacing: 0.12em; line-height: 15px; text-transform: uppercase; color: var(--ink-600); vertical-align: 1px; white-space: nowrap; }
 .on-dark .tag { border-color: var(--paper-a45); color: var(--paper-a90); }
 
-.fd-legend { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-6); margin: 0 0 var(--space-8); padding: var(--space-4) 0; border-top: 1px solid var(--ink-a12); border-bottom: 1px solid var(--ink-a12);
+.fd-legend { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-6); margin: 0 0 var(--space-8); padding: var(--space-4) 0; border-top: 1px solid var(--ink-a12);
   font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.06em; color: var(--ink-500); }
 .fd-legend > div { display: flex; gap: 8px; align-items: baseline; }
 .fd-legend dd { margin: 0; }
@@ -124,8 +125,8 @@ body { background: var(--paper); color: var(--ink-700); overflow-x: clip; }
 .fd-mi-b code { font-family: var(--font-mono); font-size: 13px; color: var(--ink-900); white-space: nowrap; }
 .fd-mi-b cite { font-style: italic; }
 .fd-mi-b a, .fd-sec-intro a { color: var(--ink-900); text-decoration-thickness: 1px; text-underline-offset: 3px; }
-.fd-mi-b sub { font-size: 0.72em; line-height: 0; }
-.fd-slot { font-family: var(--font-mono); font-size: 13px; color: var(--ink-900); }
+.fd-mi-b sub, .fd-table sub { font-size: 0.72em; line-height: 0; }
+.fd-slot { color: var(--ink-900); font-variant-numeric: tabular-nums; }   /* the measured validation numbers, read as prose */
 [data-k], [data-r] { font-variant-numeric: tabular-nums; }
 
 /* configuration table */
@@ -137,7 +138,7 @@ body { background: var(--paper); color: var(--ink-700); overflow-x: clip; }
 .fd-table td:nth-child(2) { font-family: var(--font-mono); font-size: 13px; color: var(--ink-900); white-space: nowrap; font-variant-numeric: tabular-nums; width: 22%; }
 .fd-table td:nth-child(3) { width: 72px; }
 .fd-table td:nth-child(4) { color: var(--ink-500); }
-.fd-tr-group th { padding: var(--space-7) 0 var(--space-3); border-bottom: 1px solid var(--ink-900); text-align: left; font-family: var(--font-mono); font-size: var(--fs-meta-sm); font-weight: 400; letter-spacing: var(--ls-caps-wide); text-transform: uppercase; color: var(--ink-900); }
+.fd-table tbody .fd-tr-group th { padding: var(--space-7) 0 var(--space-3); border-bottom: 1px solid var(--ink-900); text-align: left; font-family: var(--font-mono); font-size: var(--fs-meta-sm); font-weight: 400; letter-spacing: var(--ls-caps-wide); text-transform: uppercase; color: var(--ink-900); }
 .fd-table tbody tr:first-child th { padding-top: var(--space-5); }
 
 /* runs */
@@ -173,6 +174,14 @@ body { background: var(--paper); color: var(--ink-700); overflow-x: clip; }
 .fd-foot-note { grid-column: 1 / -1; color: var(--paper-a70); letter-spacing: 0.1em; }
 
 /* ---------------------------------------------------------------- wide screens */
+/* the cards share their rows (title, setup, results, note, button), so they line up side by side */
+@media (min-width: 860px) {
+  .fd-run { grid-row: span 6; grid-template-rows: subgrid; row-gap: var(--space-3); }
+}
+/* five across: each result label sits above its value instead of wrapping beside it */
+@media (min-width: 1280px) {
+  .fd-run-r > div { flex-direction: column; justify-content: flex-start; gap: 2px; }
+}
 @media (max-width: 1279.98px) {
   .fd-runs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .fd-run:nth-child(4) { border-left: 0; padding-left: 0; }
@@ -183,17 +192,24 @@ body { background: var(--paper); color: var(--ink-700); overflow-x: clip; }
 /* ---------------------------------------------------------------- phones (the panel's breakpoint) */
 @media (max-width: 859.98px) {
   :root { --fd-head-h: 44px; }
-  .fd-head { gap: var(--space-3); padding: 0 max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); }
+  .fd-head { gap: 8px; padding: 0 max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); }
   .fd-title { font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); }
   .fd-title-x, .fd-m-grid, .fd-m-tier, .fd-m-tc dt { display: none; }
-  .fd-nav { gap: var(--space-3); padding-left: var(--space-3); }
+  .fd-nav { gap: 0; padding-left: 0; }   /* the 44 px link boxes carry the spacing, so the title and the time code stay clear at 390 px */
   .fd-nav a[href="#runs"] { display: none; }
+  /* touch targets of 44 px; the underline moves to the text so it stays under the word */
+  .fd-nav a, .fd-foot-nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 0; border-bottom: 0; }
+  .fd-nav a { min-width: 44px; justify-content: center; }
+  .fd-nav a:hover { text-decoration: underline; text-underline-offset: 4px; }
+  .fd-foot-nav a { text-decoration: underline; text-decoration-color: var(--paper-a45); text-decoration-thickness: 1px; text-underline-offset: 4px; }
+  .fd-foot-nav { gap: 0 var(--space-5); }
+  .fd-run-b, .fd-badge-x { min-height: 44px; }
   .fd-stage { min-height: 540px; max-height: none; }
   /* phones: the captions sit along the bottom of the view, over the ground, clear of the
      rocket's labels; the badges stack above them */
   .fd-cap { top: auto; bottom: calc(var(--space-3) + 8px); left: calc(var(--space-3) + 12px); right: calc(var(--space-3) + 12px); }
-  .fd-cap-l { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .fd-badges { top: auto; bottom: calc(var(--space-3) + 50px); left: calc(var(--space-3) + 12px); right: auto; justify-items: start; }
+  .fd-cap-l { white-space: normal; overflow-wrap: anywhere; }   /* wrap, never cut: main.js writes a short form here with the caveat first */
+  .fd-badges { top: auto; bottom: calc(var(--space-3) + 58px); left: calc(var(--space-3) + 12px); right: auto; justify-items: start; }
   .fd-viewport .sc-hint { display: none; }
   .fd-lede-grid { grid-template-columns: 1fr; margin-top: var(--space-6); }
   .fd-index { grid-template-columns: 1fr; margin-top: var(--space-8); }
@@ -216,8 +232,12 @@ body { background: var(--paper); color: var(--ink-700); overflow-x: clip; }
   .fd-table td:nth-child(4) { grid-column: 1 / -1; margin-top: 2px; font-size: 13px; }
   .fd-table td:nth-child(4):empty { display: none; }
   .fd-table tr.fd-tr-group { display: block; padding: 0; border-bottom: 0; }
-  .fd-tr-group th { display: block; padding: var(--space-6) 0 var(--space-2); }
+  .fd-table tbody .fd-tr-group th { display: block; padding: var(--space-6) 0 var(--space-2); }
   .fd-foot-in { grid-template-columns: 1fr; }
+}
+@media (max-width: 389.98px) {
+  .fd-m-tc { display: none; }
+  .fd-badges { bottom: calc(var(--space-3) + 76px); }   /* the inflow line may wrap to a second line here */
 }
 /* the phone sheet is fixed to the viewport bottom: keep the footer's last line clear of it when it is still out */
 @media (max-width: 859.98px) { .fd-foot { padding-bottom: calc(var(--space-8) + 72px + env(safe-area-inset-bottom, 0px)); } }
@@ -230,7 +250,16 @@ body { background: var(--paper); color: var(--ink-700); overflow-x: clip; }
   .fd-head, .fd-foot { border-color: CanvasText; }
   .tag, .fd-badge, .fd-badge-x, .fd-run-b, .fd-status { border-color: CanvasText; color: CanvasText; forced-color-adjust: none; background: Canvas; }
   .fd-run[data-active] .fd-run-b, .fd-run-b:hover { background: Highlight; color: HighlightText; border-color: Highlight; }
+  /* these opt out of forced colours (above), so their author rings (ink on ink, paper on
+     paper) would vanish against Canvas: a system-colour ring instead */
+  .fd-run-b:focus-visible, .fd-badge-x:focus-visible { outline: 2px solid Highlight; outline-offset: 3px; }
   .fd-cap, .fd-cap-dim { color: CanvasText; }
   .fd-cap-warn::before { background: CanvasText; }
-  .fd-index, .fd-table thead th, .fd-tr-group th, .fd-runs { border-color: CanvasText; }
+  .fd-index, .fd-table thead th, .fd-table tbody .fd-tr-group th, .fd-runs { border-color: CanvasText; }
+  /* the dock grows upward here to show the chart summary (panel.css); main.js writes its
+     real height to --fd-dock-real so the view, its captions and the hint stay above it */
+  .fd-viewport.pn-viewport { bottom: var(--fd-dock-real, var(--pn-dock-h)); }
+}
+@media (forced-colors: active) and (max-width: 859.98px) {
+  .fd-viewport.pn-viewport { bottom: calc(var(--fd-dock-real, var(--pn-dock-h-phone)) + var(--pn-peek-h) + env(safe-area-inset-bottom, 0px)); }
 }

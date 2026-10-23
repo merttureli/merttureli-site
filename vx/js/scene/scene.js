@@ -43,7 +43,7 @@ import { dprFor } from '../core/governor.js';
 import { loadGeometry, describeParts, buildScene, disposeScene } from '../stage/loader.js';
 import { createCameraRig, FOV_DEG, NEAR_M, FAR_M, PRESETS } from './camera.js';
 import { createSlice, defaultDomain, NOSE_Y, LENGTH_M } from './slice.js';
-import { createMarkers, createLabel, createArrow, fitLabelSide, LABEL_PX } from './markers.js';
+import { createMarkers, createLabel, createArrow, fitLabelSide, fitLabelY, LABEL_PX, signed } from './markers.js';
 import { createExhaust } from './exhaust.js';
 
 const DEG = Math.PI / 180;
@@ -133,6 +133,11 @@ void main() {
 export function createScene(canvas, options = {}) {
   if (!canvas) throw new Error('createScene needs a canvas');
   const { geometry = null, tier: tier0, zoom = true, keyboard = true, touchAction = null } = options;
+  /* The lattice CP ring (CP 2D SECTION): a 2D section of a long body lifts like a wing,
+     so its CP lands ahead of the CG and is no stability figure for the rocket. It is
+     drawn where it is asked for: options.latticeCp, else on ?lab and on the lab pages. */
+  const labHere = typeof location !== 'undefined' && (/[?&]lab\b/.test(location.search) || /\/lab\//.test(location.pathname));
+  let latticeCp = options.latticeCp ?? labHere;
   const reducedMQ = matchMedia('(prefers-reduced-motion: reduce)');
   let reduced = reducedMQ.matches;
   let tier = Math.max(0, Math.min(3, (tier0 ?? (reduced ? 0 : 3)) | 0));
@@ -141,8 +146,9 @@ export function createScene(canvas, options = {}) {
   let raf = 0, lastTick = 0, dirty = true, animating = false, lastExternal = -1e9, extInterval = 0, lastDrawAt = 0;
   let frames = 0, lastMs = 0, lastAria = -1e9, ariaText = '', cursorText = -1e9;
   const flickFns = new Set();
-  const flight = { x: 0, y: 0, theta: 0, alpha: 0, v: 0, airspeed: NaN, thrust: 0, N: 0, phase: 'pad', t: 0 };
+  const flight = { x: 0, y: 0, theta: 0, alpha: 0, v: 0, airspeed: NaN, thrust: 0, N: 0, phase: 'pad', t: 0, altitude: NaN, xcp: NaN, xcpNow: NaN };
   const derived = { xcp: NaN, xcg: CG_DEFAULT_M, xref: CG_DEFAULT_M, xcpLattice: NaN, tags: {} };
+  const camModeFns = new Set();
   Object.assign(flight, padPose());
   let finScale = 1, railLength = PAD.railDefaultM, launchAngle = 0, markersOn = true, view = 'smoke';
   let error = null, cad = null, entries = [];
@@ -180,9 +186,10 @@ export function createScene(canvas, options = {}) {
       setView(name) { fbView = String(name); },
       setCamera: () => false,
       setMarkers(on) { fbMarkers = !!on; },
+      setLatticeCp(on) { latticeCp = !!on; }, get latticeCp() { return latticeCp; },
       setFinScale(k) { fbFins = Math.max(0, num(+k, 1)); },
       setRail: noop, setTier(t) { tier = Math.max(0, Math.min(3, t | 0)); }, resize: noop, render: noop,
-      onFlick: () => noop, checkSign: () => null, destroy: noop,
+      onFlick: () => noop, onCameraMode: () => noop, checkSign: () => null, destroy: noop,
       get stats() {
         return {
           fallback, built: false, tier, dpr: 1, frames: 0, ms: 0, calls: 0, triangles: 0, loop: 'idle',
@@ -319,13 +326,17 @@ export function createScene(canvas, options = {}) {
   scene.add(flickArrow.group, flickLabel.sprite);
 
   /* ---------- camera rig ---------- */
-  const rig = createCameraRig({ camera, canvas, reducedMotion: reduced, zoom, onChange: () => invalidate() });
+  const rig = createCameraRig({
+    camera, canvas, reducedMotion: reduced, zoom, onChange: () => invalidate(),
+    onModeChange: (mode, preset) => { for (const fn of [...camModeFns]) { try { fn({ mode, preset }); } catch (err) { console.error('[scene] onCameraMode listener threw', err); } } },
+  });
   if (touchAction) canvas.style.touchAction = touchAction;   // e.g. 'pan-y' on a scrolling page (sideways flicks still reach the scene)
   let preset = 'side';
 
   /* ---------- per-frame scratch ---------- */
   const v3 = { a: new THREE.Vector3(), b: new THREE.Vector3(), c: new THREE.Vector3(), d: new THREE.Vector3() };
-  const ctx = { frame: new THREE.Vector3(), flightDir: new THREE.Vector3(0, 1, 0), aspect: 1.6 };
+  const sliceCorners = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
+  const ctx = { frame: new THREE.Vector3(), flightDir: new THREE.Vector3(0, 1, 0), aspect: 1.6, theta: 0 };
   const raycaster = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
   const plane = new THREE.Plane();
@@ -349,6 +360,7 @@ export function createScene(canvas, options = {}) {
     body.localToWorld(ctx.frame.set(0, NOSE_Y - FRAME_FROM_NOSE_M, 0));
     ctx.flightDir.set(Math.sin(theta - alpha), Math.cos(theta - alpha), 0);
     ctx.aspect = width / height;
+    ctx.theta = theta;                         // the side and quarter presets fit the frame box turned by the pitch
     let moving = rig.update(dt, ctx);
     moving = slice.update() || moving;
     moving = exhaust.update(dt, num(flight.thrust, 0)) || moving;
@@ -372,25 +384,45 @@ export function createScene(canvas, options = {}) {
     shadow.scale.setScalar(0.5 + (1 - sh) * 0.6);
     shadowMat.opacity = 0.75 * sh;
 
-    markers.update({
-      body, noseY: NOSE_Y, tailY: TAIL_Y, xcg: num(derived.xcg, CG_DEFAULT_M), xcp: derived.xcp, xcpLattice: derived.xcpLattice,
-      theta, alpha, v: num(flight.v, 0), airspeed: flight.airspeed, thrust: num(flight.thrust, 0), N: flight.N, tags: derived.tags,
-    }, { camera, pxToScale, mpp, now: t0, width, labelK: labelK() });
-    moving = updateFlickVisual(t0) || moving;
-    const fitView = { camera, width, labelK: labelK() };
+    // the CP pair from the flight state when it has one: the static Barrowman CP for the
+    // dot, its label and the margin (what the panel prints), and xcpNow for the N arrow
+    const fitView = { camera, width, height, labelK: labelK() };
     const wpos = v3.b;
-    // ladder labels stay on the upwind side; where that side runs off screen they hide
-    // rather than flip into the rocket's markers (the cursor line and ticks remain)
-    for (const { lab } of ladderLabels) { lab.sprite.getWorldPosition(wpos); lab.sprite.visible = fitLabelSide(lab, wpos, 'left', 6, fitView) === 'left'; lab.place(pxToScale, 'left', 6); }
-    // the cursor sits at the reference station's height on the ladder's own scale (ft above the ground)
+    // the cursor tick sits at the reference station's height on the ladder's own scale (ft
+    // above the ground); its label prints the altitude above the pad, the panel's ALTITUDE
+    // (flight.state.altitude), so the two read the same number
     const refY = Math.max(0, num(flight.y, 0) + PAD.standM);
     cursor.position.y = refY;
     cursorLabel.sprite.position.set(-0.08, refY, 0);
-    if (t0 - cursorText > 100) { cursorText = t0; cursorLabel.set([[['ALT', 'rgba(255,255,255,0.72)'], [`${(refY / FT).toFixed(0)} FT AGL`], [derived.tags?.y || 'SIM', 'rgba(255,255,255,0.72)']]]); }
+    const altM = Number.isFinite(flight.altitude) ? flight.altitude : num(flight.y, 0) - padPose({ xref: num(derived.xref, CG_DEFAULT_M), launchAngle }).y;
+    if (t0 - cursorText > 100) { cursorText = t0; cursorLabel.set([[['ALT', 'rgba(255,255,255,0.72)'], [`${(Math.max(0, altM) / FT).toFixed(0)} FT`], [derived.tags?.altitude || derived.tags?.y || 'SIM', 'rgba(255,255,255,0.72)']]]); }
     cursorLabel.sprite.getWorldPosition(wpos);
-    cursorLabel.sprite.visible = fitLabelSide(cursorLabel, wpos, 'left', 6, fitView) === 'left';
-    cursorLabel.place(pxToScale, 'left', 6);
+    // The ladder's labels stay on the upwind side. Where that side has no room for the
+    // cursor's ALT label (a phone), the whole ladder hides: an unlabelled hairline and an
+    // orange stub would point at nothing, and the panel's ALTITUDE row carries the number.
+    ladder.visible = fitLabelSide(cursorLabel, wpos, 'left', 6, fitView) === 'left';
+    let cursorRect = null;                     // the ALT plate on screen, which the markers' plates keep clear of
+    if (ladder.visible) {
+      // single ladder labels that run off screen hide rather than flip into the rocket's markers
+      for (const { lab } of ladderLabels) { lab.sprite.getWorldPosition(wpos); lab.sprite.visible = fitLabelSide(lab, wpos, 'left', 6, fitView) === 'left'; lab.place(pxToScale, 'left', 6); }
+      cursorLabel.sprite.getWorldPosition(wpos);
+      const dy = fitLabelY(cursorLabel, wpos, 'left', 6, fitView);
+      cursorLabel.place(pxToScale, 'left', 6, dy);
+      v3.c.copy(wpos).project(camera);
+      if (v3.c.z < 1) {
+        const k = labelK(), x = (v3.c.x + 1) / 2 * width, y = (1 - v3.c.y) / 2 * height + dy * k;
+        cursorRect = { x0: x - (6 + cursorLabel.width) * k, y0: y - cursorLabel.height * k / 2, x1: x - 6 * k, y1: y + cursorLabel.height * k / 2 };
+      }
+    }
     axisLabel.place(pxToScale, 'right', 6);
+
+    const xcpStatic = Number.isFinite(flight.xcp) ? flight.xcp : derived.xcp;
+    const xcpForce = Number.isFinite(flight.xcpNow) ? flight.xcpNow : derived.xcp;
+    markers.update({
+      body, noseY: NOSE_Y, tailY: TAIL_Y, xcg: num(derived.xcg, CG_DEFAULT_M), xcp: xcpStatic, xcpForce, xcpLattice: latticeCp ? derived.xcpLattice : NaN,
+      theta, alpha, v: num(flight.v, 0), airspeed: flight.airspeed, thrust: num(flight.thrust, 0), N: flight.N, finScale, tags: derived.tags,
+    }, { camera, pxToScale, mpp, now: t0, width, height, labelK: labelK(), slice: slice.mesh.visible ? slice.corners(sliceCorners) : null, reserved: [cursorRect] });
+    moving = updateFlickVisual(t0) || moving;
 
     renderer.setRenderTarget(null);
     renderer.autoClear = true;
@@ -553,7 +585,7 @@ export function createScene(canvas, options = {}) {
     flickArrow.material.opacity = op;
     flickLabel.sprite.visible = shown;
     if (shown) {
-      flickLabel.set([[['FLICK', 'rgba(255,255,255,0.72)'], [`${flick.preview >= 0 ? '+' : '-'}${Math.abs(flick.preview / DEG).toFixed(0)} DEG/S`]]]);
+      flickLabel.set([[['FLICK', 'rgba(255,255,255,0.72)'], [`${signed(flick.preview / DEG, 0)} DEG/S`]]]);
       flickLabel.sprite.position.copy(c);
       flickLabel.sprite.material.opacity = op / 0.95;
       flickLabel.place(pxToScale, c.x >= g.x ? 'right' : 'left', 12);
@@ -586,6 +618,16 @@ export function createScene(canvas, options = {}) {
   }
   const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(() => resize()) : null;
   ro?.observe(canvas);
+  /* A devicePixelRatio change at the same CSS size (the window moved to a HiDPI
+     screen, the OS scale changed) never reaches the ResizeObserver: a resolution
+     query, re-armed at each new ratio, calls resize(), which compares the ratio. */
+  let dprMQ = null;
+  const onDpr = () => { armDpr(); resize(); };
+  function armDpr() {
+    dprMQ?.removeEventListener('change', onDpr);
+    try { dprMQ = matchMedia(`(resolution: ${devicePixelRatio || 1}dppx)`); dprMQ.addEventListener('change', onDpr); } catch { dprMQ = null; }
+  }
+  armDpr();
   const io = typeof IntersectionObserver === 'function' ? new IntersectionObserver((list) => {
     onScreen = list[list.length - 1].isIntersecting;
     if (onScreen) invalidate(); else cancel();
@@ -685,14 +727,19 @@ export function createScene(canvas, options = {}) {
         size: { width, height }, contextLost, reduced, mpp,
       };
     },
-    /* state {x, y, theta, alpha, v, airspeed?, thrust, N, phase, t?, refFromNose?}
-       SI (m, rad, m/s, N): v is the inertial speed, airspeed |v_air| (the relative
-       wind the markers print; v stands in when it is absent), refFromNose the body
-       station (x, y) refers to (flight.state carries all of these).
+    /* state {x, y, theta, alpha, v, airspeed?, thrust, N, phase, t?, refFromNose?,
+       altitude?, xcp?, xcpNow?} SI (m, rad, m/s, N): v is the inertial speed, airspeed
+       |v_air| (the relative wind the markers print; v stands in when it is absent),
+       refFromNose the body station (x, y) refers to, altitude the height above the pad
+       (the ladder cursor's number), xcp the static Barrowman CP (the CP dot, its label
+       and the margin) and xcpNow the CP at this alpha (where the N arrow acts); derived.xcp
+       stands in for either when the state has none (flight.state carries all of these).
        derived {xcp, xcg (m, or a function of t), xref?, xcpLattice, tags?} in metres
        from the nose tip. flight.state and flight.derived can be passed as they are. */
     setFlight(state, d) {
       if (state) for (const k of ['x', 'y', 'theta', 'alpha', 'v', 'airspeed', 'thrust', 'N', 't']) { const v = state[k]; if (Number.isFinite(v)) flight[k] = v; }
+      // optional: altitude above the pad and the CP pair; NaN when the state has none
+      if (state) for (const k of ['altitude', 'xcp', 'xcpNow']) flight[k] = Number.isFinite(state[k]) ? state[k] : NaN;
       if (state && typeof state.phase === 'string') flight.phase = state.phase;
       // the body station (x, y) refers to: the flight's fixed liftoff station, never
       // the moving CG (that would slide the airframe along its axis by the CG travel)
@@ -724,9 +771,15 @@ export function createScene(canvas, options = {}) {
       return true;
     },
     setMarkers(on) { markersOn = !!on; markers.setVisible(markersOn); invalidate(); },
+    /* Draw the lattice's 2D-section CP ring (CP 2D SECTION) or leave it out. */
+    setLatticeCp(on) { latticeCp = !!on; invalidate(); },
+    get latticeCp() { return latticeCp; },
     setFinScale(k) { finScale = Math.max(0, num(+k, 1)); applyFinScale(); invalidate(); },
     setRail(m, angle) { if (Number.isFinite(m) && m > 0) railLength = m; if (Number.isFinite(angle)) launchAngle = angle; layoutRail(); invalidate(); },
     onFlick(fn) { if (typeof fn !== 'function') return () => {}; flickFns.add(fn); return () => flickFns.delete(fn); },
+    /* fn({mode, preset}) whenever the camera mode changes: a preset, or 'free' after the
+       visitor orbits or zooms (preset is then the one a click would return to) */
+    onCameraMode(fn) { if (typeof fn !== 'function') return () => {}; camModeFns.add(fn); return () => camModeFns.delete(fn); },
     setTier(t) {
       tier = Math.max(0, Math.min(3, t | 0));
       exhaust.setTier(tier);
@@ -772,6 +825,7 @@ export function createScene(canvas, options = {}) {
       aborter.abort();
       cancel();
       ro?.disconnect(); io?.disconnect();
+      dprMQ?.removeEventListener('change', onDpr); dprMQ = null;
       document.removeEventListener('visibilitychange', onVisibility);
       reducedMQ.removeEventListener('change', onReduced);
       canvas.removeEventListener('pointerdown', onPointerDown, { capture: true });
@@ -785,7 +839,7 @@ export function createScene(canvas, options = {}) {
       canvas.removeEventListener('keydown', onKeyDown);
       canvas.removeEventListener('webglcontextlost', onLost);
       canvas.removeEventListener('webglcontextrestored', onRestored);
-      flickFns.clear();
+      flickFns.clear(); camModeFns.clear();
       rig.dispose();
       disposeScene(entries); entries = [];
       slice.dispose(); markers.dispose(); exhaust.dispose();

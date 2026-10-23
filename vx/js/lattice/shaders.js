@@ -374,7 +374,13 @@ void main() {
      pressure  C_p = (rho - 1) c_s^2 / (0.5 u_in^2); suction toward paper, positive
                toward the livery orange, isobars every 0.1
      vorticity omega D / u_in; counter-clockwise (grid) orange, clockwise paper
-     speed     |u| / u_in from ink to paper, isotachs every 0.1 */
+     speed     |u| / u_in from ink to paper, isotachs every 0.1
+   Every view draws an ink-900 rim on the fluid side of the wall, about 0.06 D wide
+   (one to three cells), from the cell texture's b channel (rim coverage, built with
+   the mask in lattice.js, linearly filtered like it): the positive end of the
+   pressure and vorticity ramps is the livery orange of the rocket body itself, and
+   the suction end is the paper of its nose, so without the rim the body's outline
+   would dissolve into the field it sits in. */
 export const COMPOSITE_FRAG = /* glsl */`${HEAD}
 uniform sampler2D tMacro;
 uniform sampler2D tDye;
@@ -399,8 +405,10 @@ float contour(float v, float step) {
 float soft(float v, float s) { return 1.0 - exp(-abs(v) / s); }
 void main() {
   vec2 uv = gl_FragCoord.xy / uOut;
-  float solid = texture(tCell, uv).r;
+  vec4 cell = texture(tCell, uv);
+  float solid = cell.r;
   float alpha = 1.0 - smoothstep(0.3, 0.7, solid);
+  float rim = smoothstep(0.25, 0.75, cell.b) * alpha;
   vec4 m = texture(tMacro, uv);
   float u0 = max(uUin, 1e-4);
   vec3 col;
@@ -423,6 +431,7 @@ void main() {
     col = mix(INK900, PAPER * 0.9, t * t * (3.0 - 2.0 * t));
     col = mix(col, INK600, 0.35 * contour(s, 0.1) * step(0.05, s));
   }
+  col = mix(col, INK900, rim);
   o = vec4(col, alpha);
 }
 `;

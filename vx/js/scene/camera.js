@@ -22,7 +22,17 @@
               jump, and its zoom limits scale with that view (the same framing range
               as at 32 deg) and always include the distance it started from.
    The rig never runs its own animation frame: the scene calls update(dt, ctx)
-   once per drawn frame and keeps drawing while update() returns true. */
+   once per drawn frame and keeps drawing while update() returns true.
+   onModeChange(mode, preset) is called whenever the mode changes (a preset, or
+   'free'), so a preset group can stop showing a preset the camera has left.
+
+   Gestures the browser takes over: on a scrolling page the canvas allows vertical
+   panning (touch-action pan-y), so a vertical swipe that starts on the view scrolls
+   the page. OrbitControls has already seen the first pointer moves inside the touch
+   slop when the browser cancels the pointer, and its damping would carry them on.
+   The pose at the start of every gesture is kept, and a pointercancel puts it back
+   (position, target, mode, preset, field of view) with the orbit momentum cleared,
+   so a page scroll or a browser pinch never moves the camera or leaves the preset. */
 import * as THREE from 'three';
 import { OrbitControls } from '../../../assets/charger-explorer/vendor/OrbitControls.js';
 
@@ -95,14 +105,23 @@ function fromSph(s, out) {
   return out.set(s.r * c * Math.sin(s.az), s.r * Math.sin(s.el), s.r * c * Math.cos(s.az));
 }
 
-/* Distance that fits the frame box at this aspect with the preset fov. */
-export function fitDistance(aspect, k = 1) {
+/* Distance that fits the frame box at this aspect with the preset fov. pitch is the
+   body axis's angle on screen from the vertical (rad): the box turns with the rocket,
+   so a rocket pitched over at apogee needs the long side across the frame,
+   H = |sin| axial + |cos| lateral and V = |cos| axial + |sin| lateral. */
+export function fitDistance(aspect, k = 1, pitch = 0) {
   const t = Math.tan(FOV_DEG * DEG / 2);
   const a = Math.max(0.2, aspect || 1.6);
-  return k * Math.max(FIT_HALF_AXIAL_M / t, FIT_HALF_LATERAL_M / (t * a));
+  const sn = Math.abs(Math.sin(pitch || 0)), cs = Math.abs(Math.cos(pitch || 0));
+  const H = sn * FIT_HALF_AXIAL_M + cs * FIT_HALF_LATERAL_M, V = cs * FIT_HALF_AXIAL_M + sn * FIT_HALF_LATERAL_M;
+  return k * Math.max(V / t, H / (t * a));
 }
+/* The body axis's angle on screen for a camera az round the +z axis toward +x: the
+   in-plane component along x shortens by cos az. */
+export function screenPitch(theta, az = 0) { return Math.atan2(Math.sin(theta || 0) * Math.cos(az), Math.cos(theta || 0)); }
+const FIT_TAU_S = 0.45;                    // the pitch fit eases with this time constant (s), so a reset does not jump the zoom
 
-export function createCameraRig({ camera, canvas, reducedMotion = false, zoom = true, onUserStart = null, onChange = null }) {
+export function createCameraRig({ camera, canvas, reducedMotion = false, zoom = true, onUserStart = null, onChange = null, onModeChange = null }) {
   const controls = new OrbitControls(camera, canvas);
   controls.enablePan = false;               // the target always follows the rocket
   controls.enableZoom = !!zoom;
@@ -128,6 +147,14 @@ export function createCameraRig({ camera, canvas, reducedMotion = false, zoom = 
   const tmp = new THREE.Vector3(), tmp2 = new THREE.Vector3(), lateral = new THREE.Vector3();
   const sA = { r: 1, az: 0, el: 0 }, sB = { r: 1, az: 0, el: 0 };
   let fov = FOV_DEG;
+  let fitK = NaN;                           // eased pitch factor of the side and quarter fit: the fit distance at this pitch over the one at 0
+  let notifiedMode = mode;
+  let gestureStart = null;                  // pose at the start of the visitor's gesture (restored on pointercancel)
+  function noteMode() {
+    if (mode === notifiedMode) return;
+    notifiedMode = mode;
+    if (onModeChange) { try { onModeChange(mode, preset); } catch (err) { console.error('[camera] onModeChange threw', err); } }
+  }
 
   /* OrbitControls fires 'start' on pointer down, before anything moves, so a plain
      click (focusing the canvas for the arrow keys, say) must not leave the preset:
@@ -136,6 +163,13 @@ export function createCameraRig({ camera, canvas, reducedMotion = false, zoom = 
      tan(16 deg) / tan(fov / 2), widened to the current distance, so neither a pad
      camera 249 m out nor a narrow fov is snapped by the first drag. */
   const onStart = () => {
+    if (!userActive) {
+      gestureStart = {
+        mode, preset, fov, freeFov, transition,
+        freeOffset: freeOffset.clone(), position: camera.position.clone(), target: controls.target.clone(),
+        minDistance: controls.minDistance, maxDistance: controls.maxDistance,
+      };
+    }
     userActive = true;
     const d = camera.position.distanceTo(controls.target);
     const k = Math.max(1, Math.tan(FOV_DEG * DEG / 2) / Math.tan(Math.max(0.1, camera.fov) * DEG / 2));
@@ -149,20 +183,51 @@ export function createCameraRig({ camera, canvas, reducedMotion = false, zoom = 
       mode = 'free'; transition = null;
       freeOffset.subVectors(camera.position, controls.target);
       freeFov = fov;
+      noteMode();
     }
     if (onChange) onChange();
   };
+  /* The browser took the gesture (a page scroll or a pinch): put the pose back. The
+     capture listener runs before OrbitControls' own pointercancel handler, while its
+     gesture is still marked active (a cancelled flick pointer, which OrbitControls never
+     saw, is ignored); the restore itself waits until that handler has run. */
+  const onPointerCancel = () => {
+    const g = gestureStart;
+    if (!g || !userActive) return;
+    queueMicrotask(() => restoreGesture(g));
+  };
+  function restoreGesture(g) {
+    if (gestureStart !== g) return;          // a preset chosen since, or a newer gesture
+    gestureStart = null;
+    // clear the orbit momentum: without damping, update() spends what is left and zeroes it
+    const damp = controls.enableDamping;
+    controls.enableDamping = false;
+    userActive = false;
+    controls.update();
+    controls.enableDamping = damp;
+    damping = false;
+    mode = g.mode; preset = g.preset; transition = g.transition;
+    freeFov = g.freeFov; freeOffset.copy(g.freeOffset);
+    camera.position.copy(g.position); controls.target.copy(g.target);
+    controls.minDistance = g.minDistance; controls.maxDistance = g.maxDistance;
+    applyFov(g.fov);
+    camera.lookAt(controls.target); camera.updateMatrixWorld();
+    noteMode();
+    if (onChange) onChange();
+  }
   controls.addEventListener('start', onStart);
   controls.addEventListener('end', onEnd);
   controls.addEventListener('change', onCtrlChange);
+  canvas.addEventListener('pointercancel', onPointerCancel, true);
 
   /* Desired pose of a preset now. ctx: { frame: V3 (frame point on the axis),
-     flightDir: V3 (unit, air-relative flight direction, world), aspect, dt }. */
+     flightDir: V3 (unit, air-relative flight direction, world), aspect, theta (body
+     pitch, rad), dt }. */
   function presetPose(name, ctx, outTarget, outOffset) {
     if (name === 'side' || name === 'quarter') {
       const p = name === 'side' ? SIDE : QUARTER;
       outTarget.copy(ctx.frame);
-      fromSph({ r: fitDistance(ctx.aspect, p.k), az: p.az, el: p.el }, outOffset);
+      fromSph({ r: fitDistance(ctx.aspect, p.k) * (Number.isFinite(fitK) ? fitK : 1), az: p.az, el: p.el }, outOffset);
       return FOV_DEG;
     }
     if (name === 'chase') {
@@ -217,6 +282,14 @@ export function createCameraRig({ camera, canvas, reducedMotion = false, zoom = 
     let moving = false;
     if (mode === 'chase' || preset === 'chase') moving = stepChase(ctx, dt) || moving;
     else { chaseReady = false; haveLast = false; }
+    // the side and quarter fit follows the on-screen pitch, eased (snapped under reduced motion)
+    if (mode === 'side' || mode === 'quarter') {
+      const az = mode === 'side' ? SIDE.az : QUARTER.az;
+      const want = fitDistance(ctx.aspect, 1, screenPitch(ctx.theta, az)) / fitDistance(ctx.aspect, 1, 0);
+      if (!Number.isFinite(fitK) || reduced) fitK = want;
+      else if (dt > 0) fitK += (want - fitK) * (1 - Math.exp(-Math.min(dt, 0.1) / FIT_TAU_S));
+      if (Math.abs(want - fitK) > 1e-3 * want) moving = true; else fitK = want;
+    }
 
     if (mode === 'free') {
       tmp.subVectors(ctx.frame, controls.target);
@@ -262,6 +335,8 @@ export function createCameraRig({ camera, canvas, reducedMotion = false, zoom = 
     const from = mode;
     preset = name; mode = name;
     if (name === 'chase') { chaseReady = false; haveLast = false; }
+    gestureStart = null;                    // a preset chosen mid-gesture is not undone by a later cancel
+    noteMode();
     if (reduced || !ctx || from === name && !transition) { transition = null; return true; }
     transition = {
       t0: performance.now(), dur: TRANSITION_MS,
@@ -288,6 +363,7 @@ export function createCameraRig({ camera, canvas, reducedMotion = false, zoom = 
       controls.removeEventListener('start', onStart);
       controls.removeEventListener('end', onEnd);
       controls.removeEventListener('change', onCtrlChange);
+      canvas.removeEventListener('pointercancel', onPointerCancel, true);
       controls.dispose();
     },
   };

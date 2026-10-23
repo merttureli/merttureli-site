@@ -78,15 +78,52 @@
      about 5 deg they are dominated by the confinement as well. A caller that lets the
      lattice fly the rocket shows what a 2D section would do: it diverges.
 
+   FORCES: WHAT A 2D SECTION CANNOT MEASURE, AND WHEN THE NUMBERS ARE SHOWN
+     Fin links (measured, not shipped). A review asked for the fin links' share as a
+     cross-check a section could make. An experimental fin-weighted reduction measured it
+     (SIM, SwiftShader): on the page's CAD section at tier 1 the fin links carried c_n -3.8
+     at 5 deg and -4.8 at 15 deg, toward the windward side, with c_m +32 and +41
+     (destabilising); on the lab's stand-in at 10 deg, +0.1 to +1.6 in the contract domain
+     and about 0 (-0.5 to +0.8) in a domain four times taller. The fins sit near the
+     trailing edge of a section that lifts like an airfoil, in the downwash of its own
+     circulation, so not even their share reproduces Barrowman's restoring fin force; and
+     their centre of pressure lands on the fin chord by construction (44.7 in from the nose
+     against Barrowman's 43.64 in), which measures nothing. The reduction was removed. A
+     pitch-plane section gives the flow and the pressure on the fins, not a stability
+     number.
+     Body rate. setBodyRate's target is approached at OMEGA_SLEW_U of wall speed per step.
+     A step change (a flick) at full speed rang the domain's acoustic modes for 700 steps
+     and more (c_m swinging -140 to +290 about a base of +50, the centre of pressure
+     leaving the body; tier 1, hold at 5 deg, SIM). With the ramp the same flicks moved
+     c_m without the ringing: +23 to +62 while q was +3.38 rad/s, then +63 to +69 at
+     q -4.62 rad/s (damping in the right sense about the base of +50).
+     A jump above OMEGA_JUMP_U also marks the forces undeveloped until the rate has
+     arrived and one acoustic crossing of the domain length (cols / c_s steps,
+     SETTLE_CROSSINGS) has passed.
+     Bounds. A centre of pressure outside the body's own columns, nose tip to tail, is
+     reported as null.
+     Step rate. stats.stepsPerSecond is the completed-work rate between the force readbacks
+     that resolved in the last RATE_SPAN_MS (stats.rateSource 'completed'), else the steps
+     issued in the 1 Hz window ('issued'), never for the first window after the stats
+     window (re)opens, and null until one of them exists.
+
    Grid frame: +x from nose to tail (column 0 upstream of the nose), +y the body's
    +x side; inflow direction (cos alpha, sin alpha) with alpha from section 2.
    Mask rows: row 0 is grid y = 0 (bottom of the texture), index row * cols + col.
    Moments (force.mz, force.cm) are positive in the flight convention (positive
    raises theta), so a restoring moment at positive alpha reads negative and
-   xcpCells = xcg - mz / fy (contract).
+   xcpCells = xcg - mz / fy (contract). xcpCells is null until the flow is developed
+   (force.developed, see devRun), below |alpha| 1 deg or |c_n| 1 (XCP_MIN_ALPHA,
+   XCP_MIN_CN) and outside the body's columns. Grid: createLattice(renderer, {cols,
+   rows, tier}) takes cols x rows as the grid at that tier and scales it by the tier
+   table on setTier (fixedGrid: true pins it); without cols and rows the grid is
+   TIERS[tier].
 
    The engine never listens to the pointer and owns no animation loop: the
-   caller drives frame(dt) from its own requestAnimationFrame. */
+   caller drives frame(dt) from its own requestAnimationFrame. Each frame() that runs
+   reports governor.work(tier), so the governor steps the tier back up only on frames
+   the lattice actually ran in (core/governor.js, Work), never on an idle page while
+   the stage is off screen or the flow is paused. */
 import * as THREE from 'three';
 import { bus } from '../core/bus.js';
 import { governor } from '../core/governor.js';
@@ -117,10 +154,37 @@ const U_MAX = 0.12;           /* lattice units; above this the lattice Mach numb
 const RAKE_DECAY = 1.0;       /* rake smoke e-folds over this many domain widths of freestream travel */
 const WALL_DECAY = 0.35;      /* wall dye e-folds over this many domain widths */
 const WALL_DYE = 0.9;         /* wall dye level held in the cells that touch the solid */
-const XCP_MIN_CN = 0.02;      /* below this |c_n| the centre of pressure is undefined (returns null) */
+const XCP_MIN_CN = 1.0;       /* below this |c_n| the centre of pressure is undefined (returns null) */
+const XCP_MIN_ALPHA = 1 * Math.PI / 180;   /* rad; below this |alpha| as well. Measured on the page's CAD section
+                                 at tier 1 (512 x 160, u_in 0.03, alpha 0, 2,000 to 4,300 steps, SIM): a steady
+                                 c_n of -0.12 to -0.40 and c_m of +0.5 to +0.9 from the rail buttons, which make
+                                 the mask asymmetric, with xcp wandering from 300 to 410 cells. At alpha 5 the same
+                                 section gives c_n 24.5, so 1 deg (about 5) keeps that offset under a few percent.
+                                 A 0/0 centre of pressure is reported as null, never as a number. */
+const PAUSE_MS = 1000;        /* ms: an interval longer than this and than 4 frame averages, after one that was not, is a
+                                 pause in framing (stage off screen, tab hidden), unless the caller says so first
+                                 (frame(dt, {resumed: true})). Two long intervals in a row are slow frames (software GL)
+                                 and count: the frame average, the step shedding and the 1 Hz stats all see them. */
+const EMA_CAP_MS = 4000;      /* ms: the longest interval the frame average takes in, so one stall cannot hold the
+                                 step count down for long */
+const RATE_SPAN_MS = 2500;    /* ms: stepsPerSecond is the work completed between the force readbacks that resolved in
+                                 this span (lattice steps at issue over resolve time: a fenced rate on any device) */
+const RATE_MIN_SPAN_MS = 800; /* ms: and only once those readbacks span at least this; null until then */
+const OMEGA_SLEW_U = 2e-5;    /* lattice units of wall speed at the far end of the body, per step: setBodyRate's target is
+                                 approached at this rate (EST; about 1.1e-7 rad per step per step at tier 1), so a flick
+                                 arrives as a ramp instead of an acoustic pulse, as the inflow does (SLEW) */
+const OMEGA_JUMP_U = 2e-3;    /* lattice units of wall speed: a setBodyRate change larger than this (a flick) restarts the
+                                 settling below; the page's per-frame changes in flight are under 2e-4 */
+const OMEGA_ARRIVED_U = 5e-4; /* lattice units of wall speed: the body rate counts as arrived within this of its target */
+const RIM_D = 0.06;           /* the views' ink rim around the solid: this many body diameters wide (cell texture b) */
+const RIM_MIN = 1, RIM_MAX = 3;   /* cells, its narrowest and widest */
+const SETTLE_CROSSINGS = 1;   /* after a body-rate jump the forces count as developed again only once the rate has
+                                 arrived and this many acoustic crossings of the domain length (cols / c_s steps) have
+                                 passed (EST, see FORCES in the header) */
 const SLEW = 1e-4;            /* lattice units per step per component: the boundary inflow approaches the setInflow
                                  target at this rate, so a jump in alpha or speed arrives as a ramp instead of a
                                  pressure wave (EST; 0.03 to 0.10 takes 700 steps, the page's boost needs about 3e-5) */
+const ARRIVED = 5 * SLEW;     /* the boundary inflow counts as arrived within this of its target, per component */
 const STARTUP_TAU = 0.75;     /* relaxation time right after a reset (nu 0.083) */
 const STARTUP_STEPS = 2000;   /* steps over which it eases back to tau0 (EST). A reset starts the tunnel already
                                  running (uniform inflow, the impulsive start of a model dropped into the stream);
@@ -171,14 +235,20 @@ function halfToFloat(h) {
 }
 
 export function createLattice(renderer, options = {}) {
-  const fixedGrid = Number(options.cols) > 0 && Number(options.rows) > 0;
+  /* {cols, rows} (contract, FIELD 4): the grid at the starting tier. The other tiers keep its
+     proportions and scale it by the tier table, so setTier() still swaps the grid (the page
+     passes TIERS[tier] and gets TIERS[t] after a change). {fixedGrid: true} keeps exactly
+     this grid at every tier; the validation gates use one grid and never change tier. */
+  const customGrid = Number(options.cols) > 0 && Number(options.rows) > 0;
+  const fixedGrid = customGrid && options.fixedGrid === true;
   const reducedMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
   let tier = Number.isInteger(options.tier) ? clamp(options.tier, 0, 3) : (reducedMotion ? 0 : governor.tier);
+  const baseTier = tier >= 1 ? tier : 3;   /* the tier the custom grid belongs to (tier 0 starts at the top grid) */
 
   const stats = {
-    grid: [0, 0], dye: [0, 0], tier, stepsPerFrame: 0, stepsPerSecond: 0, msPerFrame: 0, issueMs: 0,
+    grid: [0, 0], dye: [0, 0], tier, stepsPerFrame: 0, stepsPerSecond: null, msPerFrame: 0, issueMs: 0, developed: false,
     precision: 'none', re: 0, tau0: 0, tauNow: 0, nu: 0, uIn: 0.05, uNow: 0, alpha: 0, alphaDeg: 0, dCells: 0,
-    steps: 0, shed: 0, stepScale: 1, nanResets: 0, view: 'smoke', smagorinsky: SMAGORINSKY_C, regularised: options.regularised !== false, machK: Number.isFinite(options.machK) ? options.machK : MACH_K,
+    steps: 0, shed: 0, stepScale: 1, nanResets: 0, rateSource: null, view: 'smoke', smagorinsky: SMAGORINSKY_C, regularised: options.regularised !== false, machK: Number.isFinite(options.machK) ? options.machK : MACH_K,
     sponge: options.sponge !== false, positive: options.positive !== false, inflowNeq: options.inflowNeq === true,
     fallback: null, lost: false, forceReadback: true,
   };
@@ -195,8 +265,11 @@ export function createLattice(renderer, options = {}) {
   let destroyed = false;
   let fA = null, fB = null, macro = null, dyeA = null, dyeB = null, view = null, chain = [];
   let cellTex = null;
-  let stepCarry = 0, lastFrameAt = 0, lastStatsAt = 0, frameEma = 0, stepScale = 1;
-  const window1 = { start: 0, frames: 0, steps: 0, issue: 0, wall: 0 };
+  let stepCarry = 0, lastFrameAt = 0, frameEma = 0, stepScale = 1, lastLong = false, windowFresh = true;
+  let work = 0;        /* every step ever issued (never reset): the step rate counts completed work by it */
+  const window1 = { start: 0, frames: 0, steps: 0, issue: 0 };
+  const fence = [];    /* {t, work}: force readbacks as they resolved, newest last (RATE_SPAN_MS) */
+  let fenceEpoch = 0;  /* readbacks issued before the stats window last (re)opened do not count */
 
   /* ---------------------------------------------------------- capability */
   const gl = renderer && typeof renderer.getContext === 'function' ? renderer.getContext() : null;
@@ -318,7 +391,7 @@ export function createLattice(renderer, options = {}) {
 
   /* ------------------------------------------------------------ section */
   let sectionSource = null;
-  const section = { cols: 0, rows: 0, dCells: 24, cgX: 0, cgY: 0, solidCells: 0, links: 0, clippedEdge: 0 };
+  const section = { cols: 0, rows: 0, dCells: 24, cgX: 0, cgY: 0, solidCells: 0, links: 0, clippedEdge: 0, xMin: NaN, xMax: NaN, rMax: 1 };
   let gen = 0;         /* generation: bumped by reset(), a grid change and a new section; a force readback
                           issued under an older generation is dropped when it lands */
   let cellData = null;
@@ -348,7 +421,11 @@ export function createLattice(renderer, options = {}) {
     return { mask, dCells: d, cgX: cx, cgY: cy };
   }
   /* Cell texture: r = 255 inside the solid, g = bit k-1 set when the neighbour
-     x - e_k is solid (fluid cells only). Edge rows and columns stay fluid. */
+     x - e_k is solid (fluid cells only), b = the views' rim coverage (255 inside the
+     solid and within RIM_D body diameters of it, fading over the next cell; the
+     composite draws it in ink, see shaders.js). Edge rows and columns stay fluid.
+     The solid's column extent (xMin to xMax, nose tip to tail) bounds the centre of
+     pressure, and its distance from the CG (rMax) scales the body-rate slew. */
   function applySection() {
     const { cols, rows } = grid;
     const s = sectionFor(cols, rows);
@@ -360,16 +437,46 @@ export function createLattice(renderer, options = {}) {
     if (!cellData || cellData.length !== cols * rows * 4) cellData = new Uint8Array(cols * rows * 4);
     else cellData.fill(0);
     const E = S.D2Q9.e;
-    let solids = 0, links = 0;
+    let solids = 0, links = 0, xMin = Infinity, xMax = -Infinity;
     for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
       const i = r * cols + c, o = i * 4;
       cellData[o + 3] = 255;
-      if (solid[i]) { cellData[o] = 255; solids++; continue; }
+      if (solid[i]) {
+        cellData[o] = 255; solids++;
+        if (c < xMin) xMin = c; if (c + 1 > xMax) xMax = c + 1;
+        continue;
+      }
       if (r === 0 || c === 0 || r === rows - 1 || c === cols - 1) continue;
       let bits = 0;
       for (let k = 1; k <= 8; k++) if (solid[(r - E[k][1]) * cols + (c - E[k][0])]) { bits |= 1 << (k - 1); links++; }
       cellData[o + 1] = bits;
     }
+    /* rim: distance from each fluid cell near the wall to the nearest solid cell centre,
+       stamped from the solid cells that touch fluid */
+    const rimR = clamp(RIM_D * (s && s.dCells > 0 ? s.dCells : 0), RIM_MIN, RIM_MAX), reach = Math.ceil(rimR + 0.5);
+    const near = new Float32Array(cols * rows).fill(Infinity);
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+      const i = r * cols + c;
+      if (!solid[i]) continue;
+      cellData[i * 4 + 2] = 255;
+      let edge = false;
+      for (let k = 1; k <= 8 && !edge; k++) {
+        const cc = c + E[k][0], rr = r + E[k][1];
+        if (cc >= 0 && rr >= 0 && cc < cols && rr < rows && !solid[rr * cols + cc]) edge = true;
+      }
+      if (!edge) continue;
+      for (let dy = -reach; dy <= reach; dy++) {
+        const rr = r + dy;
+        if (rr < 0 || rr >= rows) continue;
+        for (let dx = -reach; dx <= reach; dx++) {
+          const cc = c + dx, j = rr * cols + cc;
+          if (cc < 0 || cc >= cols || solid[j]) continue;
+          const dd = Math.hypot(dx, dy);
+          if (dd < near[j]) near[j] = dd;
+        }
+      }
+    }
+    for (let i = 0; i < near.length; i++) if (near[i] < Infinity) cellData[i * 4 + 2] = Math.round(255 * clamp(rimR + 0.5 - near[i], 0, 1));
     if (!cellTex || cellTex.image.width !== cols || cellTex.image.height !== rows) {
       if (cellTex) cellTex.dispose();
       cellTex = new THREE.DataTexture(cellData, cols, rows, THREE.RGBAFormat, THREE.UnsignedByteType);
@@ -378,14 +485,19 @@ export function createLattice(renderer, options = {}) {
       cellTex.generateMipmaps = false; cellTex.flipY = false; cellTex.unpackAlignment = 1;
     } else cellTex.image.data = cellData;
     cellTex.needsUpdate = true;
-    Object.assign(section, { cols, rows, dCells: s ? s.dCells : 0, cgX: s ? s.cgX : cols / 2, cgY: s ? s.cgY : rows / 2, solidCells: solids, links, clippedEdge: clipped });
+    const cgX = s ? s.cgX : cols / 2;
+    if (!solids) { xMin = xMax = NaN; }
+    Object.assign(section, {
+      cols, rows, dCells: s ? s.dCells : 0, cgX, cgY: s ? s.cgY : rows / 2, solidCells: solids, links, clippedEdge: clipped,
+      xMin, xMax, rMax: solids ? Math.max(1, cgX - xMin, xMax - cgX) : Math.max(1, cols / 2),
+    });
     stats.dCells = section.dCells;
     gen++;               /* readbacks in flight belong to the previous section */
     updateViscosity();
   }
 
   /* ---------------------------------------------------------- parameters */
-  const flow = { uIn: 0.05, alpha: 0, omega: 0, view: 0 };
+  const flow = { uIn: 0.05, alpha: 0, omega: 0, omegaTarget: 0, view: 0 };   /* omega slews toward omegaTarget (setBodyRate) */
   const visc = { mode: 're', re: RE_TARGET, uRef: U_REF, tau0: 0.51, c: SMAGORINSKY_C, reg: options.regularised !== false, machK: Number.isFinite(options.machK) ? options.machK : MACH_K, sponge: options.sponge !== false, positive: options.positive !== false, inflowNeq: options.inflowNeq === true };
   function updateViscosity() {
     const d = section.dCells > 0 ? section.dCells : 24;
@@ -424,6 +536,18 @@ export function createLattice(renderer, options = {}) {
   }
 
   let accumSteps = 0, accumReset = true, pendingDye = 0, sinceReset = STARTUP_STEPS;
+  /* Developed flow: the start-up viscosity has eased back to tau0 (STARTUP_STEPS after a reset), the
+     boundary inflow has reached its setInflow target, the body rate has reached its setBodyRate
+     target, and since the last body-rate jump (a flick) the rate has been there for settleSteps().
+     devRun counts consecutive developed steps; a force window is developed when every step in it
+     was (force.developed, stats.developed). Before that the forces carry the start-up or the flick
+     transient (c_n about 100 at step 100; after a flick the acoustic ripples cross the whole domain)
+     and callers should show a dash. */
+  let devRun = 0;
+  let quiet = 0;       /* steps since the body rate last jumped or was still ramping */
+  const omegaSlew = () => OMEGA_SLEW_U / Math.max(1, section.rMax);
+  const omegaArrived = () => Math.abs(flow.omegaTarget - flow.omega) * section.rMax <= OMEGA_ARRIVED_U;
+  const settleSteps = () => Math.round(SETTLE_CROSSINGS * grid.cols * Math.sqrt(3));
   /* tau0 with the start-up easing (smoothstep from STARTUP_TAU down to tau0) */
   function tauNow() {
     if (sinceReset >= STARTUP_STEPS || STARTUP_TAU <= visc.tau0) return visc.tau0;
@@ -448,13 +572,19 @@ export function createLattice(renderer, options = {}) {
     m.uSpongeW.value = visc.sponge ? Math.max(SPONGE_MIN, Math.round(SPONGE_FRAC * grid.rows)) : 0;
     m.uPositive.value = visc.positive ? 1 : 0;
     m.uInflowNeq.value = visc.inflowNeq ? 1 : 0;
+    const dw = omegaSlew();
+    flow.omega += clamp(flow.omegaTarget - flow.omega, -dw, dw);
     m.uOmega.value = -flow.omega;                 /* flight rate (clockwise in the grid) to counter-clockwise */
     setVec(m.uCg, section.cgX, section.cgY);
     m.uAccum.value = (!half && !accumReset) ? 1 : 0;
     pass(mats.step, fB);
     const t = fA; fA = fB; fB = t;
-    accumReset = false; accumSteps++; pendingDye++; stats.steps++; window1.steps++; sinceReset++;
+    accumReset = false; accumSteps++; pendingDye++; stats.steps++; window1.steps++; sinceReset++; work++;
     stats.uNow = Math.hypot(inflow.x, inflow.y); stats.tauNow = m.uTau0.value;
+    const [tx, ty] = targetVec();
+    quiet = omegaArrived() ? quiet + 1 : 0;
+    devRun = sinceReset >= STARTUP_STEPS && Math.abs(tx - inflow.x) <= ARRIVED && Math.abs(ty - inflow.y) <= ARRIVED && quiet >= settleSteps() ? devRun + 1 : 0;
+    stats.developed = devRun > 0;
   }
   function dyePass(init) {
     const m = mats.dye.uniforms;
@@ -508,7 +638,10 @@ export function createLattice(renderer, options = {}) {
     const last = reduceChain(mats.reduce0, { tF2: fA.textures[2], tCell: cellTex }, mats.reduce);
     end();
     const n = half ? 1 : accumSteps;
-    const meta = { gen, steps: n, uIn: flow.uIn, alpha: flow.alpha, d: section.dCells, cgX: section.cgX, issued: performance.now(), stepIndex: stats.steps, countMul: countMul() };
+    const meta = {
+      gen, steps: n, uIn: flow.uIn, alpha: flow.alpha, d: section.dCells, cgX: section.cgX, xMin: section.xMin, xMax: section.xMax,
+      issued: performance.now(), stepIndex: stats.steps, work, countMul: countMul(), developed: devRun >= accumSteps,
+    };
     accumSteps = 0; accumReset = true;
     readsInFlight++;
     let p;
@@ -516,6 +649,10 @@ export function createLattice(renderer, options = {}) {
     return p.then((v) => {
       readsInFlight--;
       if (destroyed) return null;
+      /* completed work for the step rate: a monotonic count, so it holds across generations */
+      const t = performance.now();
+      if (meta.issued >= fenceEpoch) fence.push({ t, work: meta.work });
+      while (fence.length > 3 && t - fence[0].t > RATE_SPAN_MS) fence.shift();
       if (meta.gen !== gen) return api.force;   /* issued before a reset, a grid change or a new section */
       stats.forceReadback = true;
       const f = forceFrom(v, meta);
@@ -525,22 +662,25 @@ export function createLattice(renderer, options = {}) {
     }, () => { readsInFlight--; stats.forceReadback = false; return api.force; });
   }
   /* Coefficients use the dynamic pressure at the inflow; with no inflow (u_in <= 1e-4)
-     they are null, as is xcpCells. finite reports the field's force sums only. */
+     they are null, as is xcpCells. finite reports the field's force sums only. A centre of
+     pressure outside the body's own columns (xMin to xMax, nose tip to tail) is null. */
   function forceFrom(v, m) {
     const [sx, sy, sm, rawLinks] = v;
     const fx = sx / m.steps, fy = sy / m.steps, mz = sm / m.steps;
     const has = m.uIn > 1e-4;
-    const qd = has ? 0.5 * m.uIn * m.uIn * (m.d > 0 ? m.d : 1) : NaN;   /* dynamic pressure x D, rho_ref = 1 */
+    const d = m.d > 0 ? m.d : 1;
+    const qd = has ? 0.5 * m.uIn * m.uIn * d : NaN;   /* dynamic pressure x D, rho_ref = 1 */
     const ca = Math.cos(m.alpha), sa = Math.sin(m.alpha);
     const coef = (x) => (has && Number.isFinite(x) ? x : null);
+    const onBody = (x) => (Number.isFinite(x) && x >= m.xMin && x <= m.xMax ? x : null);
     const cn = coef(fy / qd);
     const issued = m.issued;
     return {
       fx, fy, mz,
-      cx: coef(fx / qd), cn, cm: coef(mz / (qd * (m.d > 0 ? m.d : 1))),
+      cx: coef(fx / qd), cn, cm: coef(mz / (qd * d)),
       cd: coef((fx * ca + fy * sa) / qd), cl: coef((-fx * sa + fy * ca) / qd),
-      xcpCells: cn !== null && Math.abs(cn) > XCP_MIN_CN ? m.cgX - mz / fy : null,
-      links: Math.round(rawLinks * m.countMul), steps: m.steps, step: m.stepIndex, uIn: m.uIn, alpha: m.alpha, dCells: m.d,
+      xcpCells: m.developed && cn !== null && Math.abs(cn) >= XCP_MIN_CN && Math.abs(m.alpha) >= XCP_MIN_ALPHA ? onBody(m.cgX - mz / fy) : null,
+      links: Math.round(rawLinks * m.countMul), steps: m.steps, step: m.stepIndex, uIn: m.uIn, alpha: m.alpha, dCells: m.d, developed: !!m.developed,
       finite: Number.isFinite(sx) && Number.isFinite(sy) && Number.isFinite(sm),
       get age_ms() { return performance.now() - issued; },
     };
@@ -568,6 +708,10 @@ export function createLattice(renderer, options = {}) {
   function gridForTier(t) {
     const spec = TIERS[t] || TIERS[1];
     if (fixedGrid) return { cols: options.cols | 0, rows: options.rows | 0, dyeScale: spec.dyeScale || 2, rake: spec.rake || 28 };
+    if (customGrid) {
+      const k = spec.cols / TIERS[baseTier].cols;
+      return { cols: Math.max(8, Math.round((options.cols | 0) * k)), rows: Math.max(8, Math.round((options.rows | 0) * k)), dyeScale: spec.dyeScale, rake: spec.rake };
+    }
     return { cols: spec.cols, rows: spec.rows, dyeScale: spec.dyeScale, rake: spec.rake };
   }
   function configure(t) {
@@ -582,9 +726,11 @@ export function createLattice(renderer, options = {}) {
     begin();
     gen++;                               /* readbacks in flight belong to the old state */
     [inflow.x, inflow.y] = targetVec();  /* uniform inflow: the tunnel is already running */
-    sinceReset = 0;
+    flow.omega = flow.omegaTarget;       /* and the body already turning: the start-up covers both */
+    sinceReset = 0; quiet = 0;
     stats.uNow = Math.hypot(inflow.x, inflow.y); stats.tauNow = tauNow();
     initState();
+    devRun = 0; stats.developed = false;
     pendingDye = 0;
     dyePass(true);
     renderViews();
@@ -655,8 +801,15 @@ export function createLattice(renderer, options = {}) {
     updateViscosity();
   }
   /* omegaLU: pitch rate in lattice units (rad per step), flight convention:
-     positive raises theta, which turns the body clockwise in the grid frame. */
-  function setBodyRate(omegaLU) { flow.omega = Number(omegaLU) || 0; }
+     positive raises theta, which turns the body clockwise in the grid frame. The wall
+     follows it at OMEGA_SLEW_U of wall speed per step; a change of more than
+     OMEGA_JUMP_U of wall speed at the far end of the body (a flick) marks the forces
+     undeveloped until the rate has arrived and settleSteps() have passed. */
+  function setBodyRate(omegaLU) {
+    const w = Number(omegaLU) || 0;
+    if (Math.abs(w - flow.omegaTarget) * section.rMax > OMEGA_JUMP_U) { quiet = 0; devRun = 0; stats.developed = false; }
+    flow.omegaTarget = w;
+  }
   function setView(name) {
     const i = VIEWS.indexOf(name);
     if (i < 0) return;
@@ -708,18 +861,32 @@ export function createLattice(renderer, options = {}) {
     begin(); renderViews(); end();
   }
 
-  function frame(dt) {
+  /* frame(dtSeconds, {resumed}): one frame of the caller's loop. resumed: true says the caller
+     had stopped framing and this is its first frame since (it then reopens the stats window and
+     keeps the gap out of the frame average); without it a pause is told from a slow frame by
+     PAUSE_MS (see there). */
+  function frame(dt, opts) {
     if (!live || destroyed || lost || tier === 0) return;
     const now = performance.now();
+    const iv = lastFrameAt ? now - lastFrameAt : Infinity;
+    const long = lastFrameAt > 0 && iv > Math.max(PAUSE_MS, 4 * frameEma);
+    const resumed = !lastFrameAt || !!(opts && opts.resumed === true) || (long && !lastLong);
+    lastLong = long;
     const base = Number.isFinite(api.stepsPerFrame) && api.stepsPerFrame > 0 ? api.stepsPerFrame : (TIERS[tier] || TIERS[1]).steps;
     const scale = Number.isFinite(dt) && dt > 0 ? clamp(dt / REF_FRAME_S, 0.25, 1) : 1;
-    /* back off when frames arrive slower than the budget (GPU-bound), recover when they are quick */
-    if (lastFrameAt) {
-      const iv = now - lastFrameAt;
-      if (iv < 1000) frameEma = frameEma ? frameEma * 0.8 + iv * 0.2 : iv;
-      if (frameEma > FRAME_BUDGET_MS) stepScale = Math.max(1 / base, stepScale * SHED_DOWN);
-      else if (frameEma < 0.6 * FRAME_BUDGET_MS) stepScale = Math.min(1, stepScale * SHED_UP);
-    }
+    /* back off when frames arrive slower than the budget (GPU-bound), recover when they are quick;
+       every interval but a pause feeds the average, slow frames included */
+    if (!resumed) frameEma = frameEma ? frameEma * 0.8 + Math.min(iv, EMA_CAP_MS) * 0.2 : Math.min(iv, EMA_CAP_MS);
+    if (frameEma > FRAME_BUDGET_MS) stepScale = Math.max(1 / base, stepScale * SHED_DOWN);
+    else if (frameEma && frameEma < 0.6 * FRAME_BUDGET_MS) stepScale = Math.min(1, stepScale * SHED_UP);
+    /* 1 Hz stats over the frames that started since the window opened. A pause reopens it (and
+       drops the completed-work samples, which would count the gap); the window is reported once
+       it is a full period old, before this frame's own steps are issued, so the steps counted are
+       the ones issued inside the span. */
+    if (resumed) {
+      Object.assign(window1, { start: now, frames: 0, steps: 0, issue: 0 });
+      fence.length = 0; fenceEpoch = now; windowFresh = true;
+    } else if (now - window1.start >= STATS_PERIOD_MS) emitStats(now);
     const want = base * scale;
     stepCarry += want * stepScale;
     const n = Math.max(0, Math.floor(stepCarry));
@@ -735,23 +902,29 @@ export function createLattice(renderer, options = {}) {
     renderViews();
     end();
     if (now - lastRead >= READ_PERIOD_MS) { lastRead = now; sampleForce(); }
-    const t1 = performance.now();
-    if (!window1.start) window1.start = now;
-    window1.frames++; window1.issue += t1 - now;
-    if (lastFrameAt) window1.wall = (window1.wall || 0) + (now - lastFrameAt);
+    window1.frames++; window1.issue += performance.now() - now;
     lastFrameAt = now;
-    if (now - lastStatsAt >= STATS_PERIOD_MS) {
-      const span = Math.max(1, now - window1.start);
-      stats.stepsPerSecond = Math.round(window1.steps * 1000 / span);
-      stats.msPerFrame = window1.frames > 1 ? (window1.wall || 0) / (window1.frames - 1) : 0;
-      stats.issueMs = window1.issue / Math.max(1, window1.frames);
-      lastStatsAt = now;
-      Object.assign(window1, { start: now, frames: 0, steps: 0, issue: 0, wall: 0 });
-      bus.emit('lattice:stats', {
-        grid: stats.grid.slice(), stepsPerSecond: stats.stepsPerSecond, force: api.force,
-        msPerFrame: stats.msPerFrame, precision: stats.precision, re: stats.re, tier,
-      });
-    }
+    governor.work(tier);   /* this frame ran the tier's work: only such frames can step the tier back up */
+  }
+  /* stepsPerSecond: the completed-work rate between the force readbacks of the last RATE_SPAN_MS
+     (fenced: a readback resolves only after the GPU has run every step issued before it), else
+     the steps issued in this window, but never for the first window after a (re)open, when a
+     command queue without backpressure takes steps far faster than the GPU runs them. */
+  function emitStats(now) {
+    const span = Math.max(1, now - window1.start);
+    const a = fence[0], b = fence[fence.length - 1];
+    const fenced = fence.length >= 3 && b.t - a.t >= RATE_MIN_SPAN_MS && now - b.t < 2 * RATE_SPAN_MS ? (b.work - a.work) * 1000 / (b.t - a.t) : null;
+    const issued = windowFresh ? null : window1.steps * 1000 / span;
+    stats.stepsPerSecond = fenced !== null ? Math.round(fenced) : issued !== null ? Math.round(issued) : null;
+    stats.rateSource = fenced !== null ? 'completed' : issued !== null ? 'issued' : null;
+    stats.msPerFrame = window1.frames > 0 ? span / window1.frames : 0;
+    stats.issueMs = window1.issue / Math.max(1, window1.frames);
+    Object.assign(window1, { start: now, frames: 0, steps: 0, issue: 0 });
+    windowFresh = false;
+    bus.emit('lattice:stats', {
+      grid: stats.grid.slice(), stepsPerSecond: stats.stepsPerSecond, force: api.force,
+      msPerFrame: stats.msPerFrame, precision: stats.precision, re: stats.re, tier,
+    });
   }
 
   function fieldsView() {

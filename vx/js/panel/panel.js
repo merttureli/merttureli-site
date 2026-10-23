@@ -54,9 +54,9 @@ const READOUTS = [
     ['pitch', 'PITCH', 'DEG'], ['rate', 'PITCH RATE', 'DEG/S'], ['qdyn', 'DYNAMIC PRESSURE', 'LBF/FT²'],
   ]],
   ['stab', 'STABILITY', [
-    ['margin', 'STATIC MARGIN', 'CAL'], ['cp', 'CP / BARROWMAN', 'IN'], ['cpl', 'CP / LATTICE', 'IN'], ['cg', 'CG / LIVE', 'IN'],
+    ['margin', 'STATIC MARGIN', 'CAL'], ['cp', 'CP / BARROWMAN', 'IN'], ['cpl', 'CP / LATTICE 2D', 'IN'], ['cg', 'CG / LIVE', 'IN'],   // integrate:b pass: the lattice rows are 2D section values (FIELD copy rule)
     ['cna', 'CN ALPHA', '/RAD'], ['fn', 'PITCH FREQUENCY', 'HZ'], ['zeta', 'DAMPING RATIO', ''],
-    ['normal', 'NORMAL FORCE', 'LBF'], ['moment', 'MOMENT / BARROWMAN', 'LBF IN'], ['cm', 'CM / LATTICE', ''],
+    ['normal', 'NORMAL FORCE', 'LBF'], ['moment', 'MOMENT / BARROWMAN', 'LBF IN'], ['cm', 'CM / LATTICE 2D', ''],   // integrate:b pass: as above
   ]],
   ['events', 'EVENTS', [
     ['railv', 'RAIL EXIT SPEED', 'FT/S'], ['maxaoa', 'MAX AOA / ASCENT', 'DEG'], ['apogee', 'APOGEE', 'FT'],
@@ -104,7 +104,7 @@ export function mountPanel(root, opts = {}) {
   const controls = buildControls({
     lab, level: level + 1,
     defaults: Object.assign({ fins: 1, cg: PAGE_CG_IN, rail: EST_RAIL_IN, angle: 0, wind: 0, gust: 5 / MPS_PER_MPH, rate: playback && typeof playback.rate === 'number' ? playback.rate : 1 / 8, view: 'smoke', section: 'through', camera: 'side', markers: true }, fromConfig(), opts.defaults || {}),
-    refs: { fins: 'CAD 1.00', cg: `PAGE ${PAGE_CG_IN.toFixed(1)}`, rail: `EST ${EST_RAIL_IN}`, gust: `EST ${(5 / MPS_PER_MPH).toFixed(1)}` },   // the tagged default beside each slider (gust: the 5 m/s of the FIELD 3 test)
+    refs: { fins: 'CAD 1.00', cg: `PAGE ${PAGE_CG_IN.toFixed(1)}`, rail: `EST ${EST_RAIL_IN}`, angle: 'EST 0.0', wind: 'EST 0.0', gust: `EST ${(5 / MPS_PER_MPH).toFixed(1)}` },   // the tagged default beside each slider (vertical rail and still air are EST, FIELD 3; gust: the 5 m/s of the FIELD 3 test)
   });
 
   /* ------------------------------------------------------------ DOM */
@@ -308,7 +308,7 @@ export function mountPanel(root, opts = {}) {
       const mB = Number.isFinite(st.N) && Number.isFinite(xcpB) && Number.isFinite(xcg) ? -st.N * (xcpB - xcg) : (st.lattice ? NaN : firstFinite(st.Maero));
       r('moment', fixed(mB / NM_PER_LBFIN, 2, true));
       const f = lattice && !lattice.fallback ? lattice.force : null;
-      r('cm', fixed(f && !(f.age_ms > 3000) ? f.cm : NaN, 3, true));
+      r('cm', fixed(f && !(f.age_ms > 3000) && f.developed !== false ? f.cm : NaN, 3, true));   // integrate:b pass: a dash while the lattice flow is still developing (force.developed)
       const rv = rx && rx.state ? rx.state.v : NaN;
       r('railv', fixed(rv / M_PER_FT, 1));
       r('maxaoa', fixed(maxAoa.v * DEG, 2));
@@ -333,6 +333,9 @@ export function mountPanel(root, opts = {}) {
         bar.draw();
         barKey = key;
       }
+      // lab: which moment flies the rocket while LATTICE FLIES IT is on (the flight falls
+      // back to Barrowman until a fresh lattice C_m arrives)
+      if (lab) controls.setInfo('latticeFlies', !st.lattice ? '' : st.latticeActive === false ? 'MOMENT IN USE / BARROWMAN, NO FRESH LATTICE FORCE' : Number.isFinite(st.latticeCm) ? `MOMENT IN USE / LATTICE CM ${fixed(st.latticeCm, 2, true)}` : '');
       const ps = playState(st, evs);
       controls.setPlayState(ps);
       rail.dataset.play = ps.done ? 'done' : ps.paused ? 'paused' : ps.running ? 'running' : 'idle';
@@ -345,6 +348,7 @@ export function mountPanel(root, opts = {}) {
       chart.setData(data);
       chart.setEvents(evs);
       chart.setNow(t);
+      chart.setLive({ t, alpha: st.alpha, theta: st.theta, v: st.v });   // the traces end at the state the readouts show
       chart.draw();
       stats.chartDraws++;
     }
@@ -406,8 +410,20 @@ export function mountPanel(root, opts = {}) {
       case 'rail': call(flight, 'setRail', value * M_PER_IN); call(scene, 'setRail', value * M_PER_IN); break;
       case 'angle': call(flight, 'setLaunchAngle', value / DEG); break;
       case 'wind': call(flight, 'setWind', value * MPS_PER_MPH); break;
-      case 'fireGust': { const mph = Number.isFinite(value) ? value : controls.get('gust'); call(flight, 'gust', mph * MPS_PER_MPH); announce(`Gust fired, ${fixed(mph, 1)} miles per hour.`); break; }
-      case 'flick': { if (!Number.isFinite(value) || value === 0) return; call(flight, 'flick', value); announce(`Flick, pitch rate ${value < 0 ? 'minus' : 'plus'} ${Math.abs(value * DEG).toFixed(1)} degrees per second.`); break; }
+      // the flight refuses a gust before ignition and a flick until the rail is clear (and
+      // both once the flight has ended); say so rather than announce what did not happen
+      case 'fireGust': {
+        const mph = Number.isFinite(value) ? value : controls.get('gust');
+        const ok = call(flight, 'gust', mph * MPS_PER_MPH);
+        announce(ok !== false ? `Gust fired, ${fixed(mph, 1)} miles per hour.` : flight && flight.done ? 'No gust: the flight has ended.' : 'No gust: launch first.');
+        break;
+      }
+      case 'flick': {
+        if (!Number.isFinite(value) || value === 0) return;
+        const ok = call(flight, 'flick', value);
+        announce(ok !== false ? `Flick, pitch rate ${value < 0 ? 'minus' : 'plus'} ${Math.abs(value * DEG).toFixed(1)} degrees per second.` : flight && flight.done ? 'No flick: the flight has ended.' : 'No flick: it works after rail exit.');
+        break;
+      }
       case 'view': call(lattice, 'setView', value); call(scene, 'setView', value); bus.emit('ui:view', { view: value, section: controls.get('section') }); break;
       case 'section': call(scene, 'setSliceView', value); bus.emit('ui:view', { view: controls.get('view'), section: value }); break;
       case 'camera': call(scene, 'setCamera', value); bus.emit('ui:camera', { preset: value }); break;
@@ -442,6 +458,23 @@ export function mountPanel(root, opts = {}) {
   }
   syncEnabled();
 
+  /* the camera group follows the scene's camera: after an orbit the rig is in free mode,
+     so no preset is shown pressed and a note says how to return (scene.onCameraMode) */
+  let offCam = null;
+  function showCameraMode(mode) {
+    const freeMode = mode === 'free';
+    controls.showNone('camera', freeMode);
+    controls.setInfo('camera', freeMode ? 'FREE / PRESS A PRESET TO RETURN' : '');
+  }
+  function bindScene() {
+    if (offCam) { try { offCam(); } catch { /* the scene is gone */ } offCam = null; }
+    showCameraMode(null);
+    if (!has(scene, 'onCameraMode')) return;
+    offCam = call(scene, 'onCameraMode', ({ mode } = {}) => showCameraMode(mode)) || null;
+    if (scene.cameraPreset === 'free') showCameraMode('free');
+  }
+  bindScene();
+
   /* ------------------------------------------------------------ sheet (phone) */
   function setSheet(next) {
     sheet = next === 'expanded' ? 'expanded' : 'collapsed';
@@ -459,32 +492,44 @@ export function mountPanel(root, opts = {}) {
     if (phone && away) peek.setAttribute('inert', ''); else peek.removeAttribute('inert');
     if (phone && away) handle.setAttribute('tabindex', '-1'); else handle.removeAttribute('tabindex');
   }
+  /* The whole collapsed row (handle plus peek, 72 px) drags the sheet; taps keep their
+     meaning (the handle and the peek cells toggle it, the peek button plays). Pointer
+     capture is taken only once the pointer has travelled, so a tap's click still lands
+     on the button it started on; the click that ends a drag is swallowed. */
   let drag = null;
+  const inGrip = (t) => t instanceof Node && (handle.contains(t) || peek.contains(t));
   handle.addEventListener('click', () => { if (drag && drag.moved) return; setSheet(sheet === 'expanded' ? 'collapsed' : 'expanded'); });
-  peekCells.addEventListener('click', () => { if (phoneMq.matches) setSheet(sheet === 'expanded' ? 'collapsed' : 'expanded'); });
-  handle.addEventListener('pointerdown', (e) => {
-    if (!phoneMq.matches || e.button > 0) return;
+  peekCells.addEventListener('click', () => { if (drag && drag.moved) return; if (phoneMq.matches) setSheet(sheet === 'expanded' ? 'collapsed' : 'expanded'); });
+  const swallowClick = (e) => { if (drag && drag.moved && inGrip(e.target)) { e.stopPropagation(); e.preventDefault(); } };
+  rail.addEventListener('click', swallowClick, true);
+  const onGripDown = (e) => {
+    if (!phoneMq.matches || e.button > 0 || !inGrip(e.target) || rail.dataset.away === '1') return;
     const rect = rail.getBoundingClientRect();
     drag = { id: e.pointerId, y0: e.clientY, dy: 0, moved: false, h: rect.height, peek: peek.offsetHeight + handle.offsetHeight };
-    try { handle.setPointerCapture(e.pointerId); } catch { /* synthetic */ }
-  });
-  handle.addEventListener('pointermove', (e) => {
+  };
+  const onGripMove = (e) => {
     if (!drag || e.pointerId !== drag.id) return;
     drag.dy = e.clientY - drag.y0;
-    if (Math.abs(drag.dy) > 6) drag.moved = true;
+    if (!drag.moved && Math.abs(drag.dy) > 6) {
+      drag.moved = true;
+      try { rail.setPointerCapture(e.pointerId); } catch { /* synthetic or already gone */ }
+    }
     if (!drag.moved) return;
     const base = sheet === 'expanded' ? 0 : drag.h - drag.peek;
     const y = Math.max(0, Math.min(drag.h - drag.peek, base + drag.dy));
     rail.style.transform = `translateY(${y}px)`; rail.dataset.dragging = '1';
-  });
+  };
   const endDrag = (e) => {
     if (!drag || e.pointerId !== drag.id) return;
     rail.style.transform = ''; delete rail.dataset.dragging;
     if (drag.moved) { if (drag.dy < -40) setSheet('expanded'); else if (drag.dy > 40) setSheet('collapsed'); }
+    try { if (rail.hasPointerCapture(e.pointerId)) rail.releasePointerCapture(e.pointerId); } catch { /* already released */ }
     const d0 = drag; setTimeout(() => { if (drag === d0) drag = null; }, 0);
   };
-  handle.addEventListener('pointerup', endDrag);
-  handle.addEventListener('pointercancel', endDrag);
+  rail.addEventListener('pointerdown', onGripDown);
+  rail.addEventListener('pointermove', onGripMove);
+  rail.addEventListener('pointerup', endDrag);
+  rail.addEventListener('pointercancel', endDrag);
   const onKeyEsc = (e) => { if (e.key === 'Escape' && phoneMq.matches && sheet === 'expanded') { setSheet('collapsed'); handle.focus(); } };
   rail.addEventListener('keydown', onKeyEsc);
 
@@ -519,7 +564,7 @@ export function mountPanel(root, opts = {}) {
   offs.push(governor.subscribe(({ tier: t }) => { tier = t; syncEnabled(); resizeCanvases(); wake(); }));
   // shortcuts apply only while the stage is on screen or focus is inside the panel, so
   // Space scrolls the page everywhere else (Method, Configuration, Runs)
-  const keysActive = () => keysOn || root.contains(document.activeElement) || (!!dock && dock.contains(document.activeElement));
+  const keysActive = () => controls.get('keys') !== false && (keysOn || root.contains(document.activeElement) || (!!dock && dock.contains(document.activeElement)));
   const offKeys = opts.keyboard === false ? () => {} : controls.bindKeys(document, { active: keysActive });
   const onMq = () => { syncInert(); syncEnabled(); resizeCanvases(); wake(); };
   phoneMq.addEventListener('change', onMq);
@@ -532,6 +577,16 @@ export function mountPanel(root, opts = {}) {
   }
   const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(() => { resizeCanvases(); update(performance.now(), true); }) : null;
   if (ro) { ro.observe(chartCanvas); ro.observe(barCanvas); }
+  /* A devicePixelRatio change at the same CSS size (the window moved to another
+     screen, the OS scale changed) never reaches the ResizeObserver: a resolution
+     query, re-armed at each new ratio, refits the backing stores. */
+  let dprMq = null;
+  const onDpr = () => { armDpr(); if (!destroyed) { resizeCanvases(); update(performance.now(), true); } };
+  function armDpr() {
+    if (dprMq) dprMq.removeEventListener('change', onDpr);
+    try { dprMq = matchMedia(`(resolution: ${devicePixelRatio || 1}dppx)`); dprMq.addEventListener('change', onDpr); } catch { dprMq = null; }
+  }
+  armDpr();
   const io = typeof IntersectionObserver === 'function' ? new IntersectionObserver((es) => {
     const e = es[es.length - 1];
     away = !e.isIntersecting || e.intersectionRatio < 0.2;      // the stage is mostly scrolled off: tuck the sheet away
@@ -575,7 +630,7 @@ export function mountPanel(root, opts = {}) {
     attach(next = {}) {
       if ('flight' in next) { flight = next.flight; busEvents = []; own = []; mirror = []; histCache = { key: '', data: [] }; maxAoa = { v: NaN, t: NaN, scanned: -Infinity }; lastT = NaN; bar.outlineKey = ''; }
       if ('lattice' in next) lattice = next.lattice;
-      if ('scene' in next) scene = next.scene;
+      if ('scene' in next && next.scene !== scene) { scene = next.scene; bindScene(); }
       if ('playback' in next) playback = next.playback;
       if ('geometry' in next) { geometry = next.geometry; bar.outlineKey = ''; }
       if ('section' in next) section = next.section;
@@ -597,10 +652,15 @@ export function mountPanel(root, opts = {}) {
       if (destroyed) return;
       destroyed = true;
       loop.destroy(); offs.forEach((f) => f()); offKeys();
+      if (offCam) { try { offCam(); } catch { /* the scene is gone */ } offCam = null; }
       phoneMq.removeEventListener('change', onMq); reducedMq.removeEventListener('change', onMq);
       ro && ro.disconnect(); io && io.disconnect();
+      if (dprMq) { dprMq.removeEventListener('change', onDpr); dprMq = null; }
       if (announceTimer) clearTimeout(announceTimer);
       rail.removeEventListener('keydown', onKeyEsc);
+      rail.removeEventListener('click', swallowClick, true);
+      rail.removeEventListener('pointerdown', onGripDown); rail.removeEventListener('pointermove', onGripMove);
+      rail.removeEventListener('pointerup', endDrag); rail.removeEventListener('pointercancel', endDrag);
       chart.destroy(); bar.destroy(); controls.destroy();
       rail.remove();
       if (ownDock) dock.remove(); else { chartCanvas.remove(); summary.remove(); live.remove(); dock.classList.remove('pn-dock'); }

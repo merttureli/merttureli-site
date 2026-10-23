@@ -477,12 +477,12 @@ export function mountLab(doc = document) {
       `STABILISE ${[s.positive ? 'POSITIVITY (STD BROWNLEE 2007)' : '', s.machK > 0 ? 'TAU FLOOR ABOVE |U| 0.15 (EST)' : '', s.sponge ? 'ABSORBING EDGES (EST)' : ''].filter(Boolean).join(' / ') || 'OFF'}`,
       `EDGES     INFLOW ${s.inflowNeq ? 'U_IN AT THE NEIGHBOUR DENSITY (STD GUO 2002)' : 'EQUILIBRIUM AT RHO 1 AND U_IN'} / OUTFLOW ZERO GRADIENT, RHO 1`,
       `GRID      ${g.cols} x ${g.rows} CELLS / DYE ${s.dye[0]} x ${s.dye[1]} / TIER ${lattice.tier} / ${lattice.stepsPerFrame || (TIERS[lattice.tier] || TIERS[0]).steps} STEPS PER FRAME${lattice.stepsPerFrame ? ' (SET)' : ''}`,
-      `RATE      ${s.stepsPerSecond} STEPS/S / ${fmt(s.msPerFrame, 1)} MS PER FRAME / ${fmt(s.issueMs, 2)} MS ISSUE / ${s.shed} SHED (SIM)`,
+      `RATE      ${s.stepsPerSecond === null ? '–' : s.stepsPerSecond} STEPS/S / ${fmt(s.msPerFrame, 1)} MS PER FRAME / ${fmt(s.issueMs, 2)} MS ISSUE / ${s.shed} SHED (SIM)`,
       `FLOW      U_IN ${fmt(s.uIn)} LU${Math.abs(s.uNow - s.uIn) > 5e-4 ? ` (RAMPING, ${fmt(s.uNow)})` : ''} / ALPHA ${fmt(s.alphaDeg, 1)} DEG / TAU0 ${fmt(s.tau0, 5)}${s.tauNow > s.tau0 + 1e-5 ? ` (START-UP ${fmt(s.tauNow, 3)})` : ''} / NU ${fmt(s.nu, 5)} / RE ${fmt(s.re, 0)} (SIM)`,
       `SECTION   ${current ? current.label : '–'} / D ${fmt(d, 1)} CELLS / ${lattice.stats.dCells ? '' : 'NO SOLID / '}CG ${current ? fmt(current.cgCell[0], 1) : '–'} CELLS${state.shape === 'rocket' ? ' (PAGE 22 IN ON THE CAD LENGTH)' : ''}`,
       f ? `FORCE     FX ${fmt(f.fx, 5)} / FY ${fmt(f.fy, 5)} / MZ ${fmt(f.mz, 4)} LU / MEAN OF ${f.steps} STEPS / ${f.links} LINKS / AGE ${fmt(f.age_ms, 0)} MS (SIM)`
         : 'FORCE     – (FIRST READBACK AFTER 100 MS OF RUNNING)',
-      f ? `COEFF     CN ${fmt(f.cn)} / CM ${fmt(f.cm)} / CD ${fmt(f.cd)} / CL ${fmt(f.cl)} / XCP ${f.xcpCells === null ? (f.cn === null ? '– (NO INFLOW)' : '– (|CN| < 0.02)') : `${fmt(f.xcpCells, 1)} CELLS = ${fmt(xcpCal, 2)} CAL FROM THE NOSE`} (SIM, 2D SECTION)`
+      f ? `COEFF     CN ${fmt(f.cn)} / CM ${fmt(f.cm)} / CD ${fmt(f.cd)} / CL ${fmt(f.cl)} / XCP ${f.xcpCells === null ? (f.cn === null ? '– (NO INFLOW)' : !f.developed ? '– (FLOW NOT DEVELOPED)' : Math.abs(f.alpha) < Math.PI / 180 ? '– (|ALPHA| < 1°)' : Math.abs(f.cn) < 1 ? '– (|CN| < 1)' : '– (OFF THE BODY)') : `${fmt(f.xcpCells, 1)} CELLS = ${fmt(xcpCal, 2)} CAL FROM THE NOSE`} (SIM, 2D SECTION)`
         : 'COEFF     –',
       `STATE     STEP ${s.steps} / ${state.running ? 'RUNNING' : 'PAUSED'} / VIEW ${state.view.toUpperCase()} / NAN RESETS ${s.nanResets}${s.lost ? ' / CONTEXT LOST' : ''}${lattice.fallback ? ` / FALLBACK ${lattice.fallback.toUpperCase()}` : ''}`,
     ];

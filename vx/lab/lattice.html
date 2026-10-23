@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LAB / LATTICE · Mert Tureli</title>
+<title>Lab / Lattice · Mert Tureli VX</title>
 <meta name="description" content="Test bench for the CHARGER field study's flow engine: a D2Q9 lattice Boltzmann solver with a Smagorinsky subgrid model on three.js render targets, momentum-exchange forces and four views. Page simulation in lattice units.">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#0A0A0A">
@@ -99,13 +99,13 @@
       <button class="lt-button" type="button" data-shape="plate" aria-pressed="false">Plate</button>
       <button class="lt-button" type="button" data-shape="cylinder" aria-pressed="false">Cylinder</button>
     </div>
-    <label class="lt-row" id="incidence-row" hidden>Plate incidence <output id="incidence-out">0°</output><input type="range" id="incidence" min="-30" max="30" step="0.5" value="0"><small>Adds to alpha</small></label>
+    <label class="lt-row" id="incidence-row" for="incidence" hidden>Plate incidence <output aria-live="off" id="incidence-out" for="incidence">0°</output><input type="range" id="incidence" aria-label="Plate incidence, degrees" min="-30" max="30" step="0.5" value="0"><small>Adds to alpha</small></label>
 
     <h2>Flow</h2>
-    <label class="lt-row">Alpha <output id="alpha-out">10.0°</output><input type="range" id="alpha" min="-35" max="35" step="0.5" value="10"></label>
-    <label class="lt-row">U_in, lattice units <output id="uin-out">0.080</output><input type="range" id="uin" min="0.01" max="0.12" step="0.005" value="0.08"><small>Page range 0.03 to 0.10</small></label>
-    <label class="lt-row">Re at u_in 0.10 <output id="re-out">3000</output><input type="range" id="re" min="100" max="6000" step="50" value="3000"><small>Sets tau0; Re follows u_in</small></label>
-    <label class="lt-row">Body rate, rad per step <output id="rate-out">0</output><input type="range" id="rate" min="-3" max="3" step="0.1" value="0"><small>Positive raises theta (flight sign)</small></label>
+    <label class="lt-row" for="alpha">Alpha <output aria-live="off" id="alpha-out" for="alpha">10.0°</output><input type="range" id="alpha" aria-label="Alpha, degrees" min="-35" max="35" step="0.5" value="10"></label>
+    <label class="lt-row" for="uin">U_in, lattice units <output aria-live="off" id="uin-out" for="uin">0.080</output><input type="range" id="uin" aria-label="Inflow speed u_in, lattice units" min="0.01" max="0.12" step="0.005" value="0.08"><small>Page range 0.03 to 0.10</small></label>
+    <label class="lt-row" for="re">Re at u_in 0.10 <output aria-live="off" id="re-out" for="re">3000</output><input type="range" id="re" aria-label="Reynolds number at u_in 0.10" min="100" max="6000" step="50" value="3000"><small>Sets tau0; Re follows u_in</small></label>
+    <label class="lt-row" for="rate">Body rate, rad per step <output aria-live="off" id="rate-out" for="rate">0</output><input type="range" id="rate" aria-label="Body rate, 10 to the minus 4 radians per step" min="-3" max="3" step="0.1" value="0"><small>Positive raises theta (flight sign)</small></label>
 
     <h2>Model</h2>
     <label class="lt-row">Smagorinsky C 0.12 <input type="checkbox" id="smag" checked></label>
@@ -125,7 +125,7 @@
 
     <h2>Run</h2>
     <label class="lt-row">Tier <select id="tier"><option value="auto">Auto, governor, 1 to 3</option><option value="3">3 / 1024 x 320 / 24 steps</option><option value="2">2 / 768 x 240 / 16 steps</option><option value="1">1 / 512 x 160 / 8 steps</option><option value="0">0 / off</option></select></label>
-    <label class="lt-row">Steps per frame <output id="spf-out">TIER</output><input type="range" id="spf" min="0" max="48" step="1" value="0"></label>
+    <label class="lt-row" for="spf">Steps per frame <output aria-live="off" id="spf-out" for="spf">TIER</output><input type="range" id="spf" aria-label="Steps per frame, 0 for the tier default" min="0" max="48" step="1" value="0"></label>
     <div class="lt-group">
       <button class="lt-button" type="button" id="play" aria-pressed="false">Pause</button>
       <button class="lt-button" type="button" id="step">Step</button>

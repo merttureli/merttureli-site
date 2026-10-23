@@ -46,7 +46,7 @@
 <a class="fd-skip" href="#study">Skip to the method and runs</a>
 
 <header class="fd-head on-dark">
-  <h1 class="fd-title"><span>CHARGER</span><span class="fd-sep" aria-hidden="true"> / </span><span>FIELD STUDY 01</span><span class="fd-title-x"><span class="fd-sep" aria-hidden="true"> / </span>PITCH PLANE</span></h1>
+  <h1 class="fd-title"><span>CHARGER</span> <span class="fd-sep" aria-hidden="true">/</span> <span>FIELD STUDY 01</span><span class="fd-title-x"> <span class="fd-sep" aria-hidden="true">/</span> PITCH PLANE</span></h1>
   <dl class="fd-meta">
     <div class="fd-m fd-m-engine"><dt>ENGINE</dt><dd data-h="engine">BARROWMAN 3-DOF / LBM D2Q9</dd></div>
     <div class="fd-m fd-m-grid"><dt>GRID</dt><dd data-h="grid">LATTICE PENDING</dd></div>
@@ -132,20 +132,22 @@
           <h3 class="fd-mi-h"><span class="fd-mi-n">02</span>Flow section</h3>
           <div class="fd-mi-b">
             <p>A two-dimensional lattice Boltzmann model, D2Q9 with BGK collision (Chen and Doolen 1998) and a Smagorinsky subgrid model with C = 0.12 (Hou, Sterling, Chen and Doolen 1996)&nbsp;<span class="tag">STD</span>, runs on the graphics card in this tab. The rocket's section through the pitch plane is the solid. Its walls use halfway bounce-back with the moving-wall term, so the body's pitch rate reaches the air (Ladd 1994)&nbsp;<span class="tag">STD</span>. The air arrives at the flight model's angle of attack.</p>
+            <p>To stay stable with a relaxation time τ<sub>0</sub> barely above 0.5 (0.504 at tier 3, set for a lattice Reynolds number of 3,000 at an inflow of 0.10 lattice units)&nbsp;<span class="tag">EST</span> the engine adds a regularised collision (Latt and Chopard 2006) and a positivity limiter (Brownlee, Gorban and Levesley 2007)&nbsp;<span class="tag">STD</span>, absorbing layers along the edges, and extra viscosity where the local speed passes 0.15 lattice units and for the first 2,000 steps after a reset&nbsp;<span class="tag">EST</span>. The outflow edges hold the density at 1 and extrapolate the rest (Guo, Zheng and Shi 2002)&nbsp;<span class="tag">STD</span>. Until those first steps are over and the inflow has reached the flight's angle, the panel's lattice readouts show a dash.</p>
             <p>Force and moment on the section come from momentum exchange at the wall links. The panel prints the lattice's centre of pressure and moment coefficient next to Barrowman's. They are a cross-check, not an input: the flight model flies the rocket. A lab toggle (open the page with <code>?lab</code>) hands the pitching moment to the lattice instead.</p>
           </div>
         </li>
         <li class="fd-mi">
           <h3 class="fd-mi-h"><span class="fd-mi-n">03</span>What the section is not</h3>
           <div class="fd-mi-b">
-            <p>It is a 2D slice of a body of revolution. In 2D the air cannot pass around the body, only over and under it, so the section overstates the body's share of the lift, and the fins act as plates of unlimited span. The lattice runs at a Reynolds number of 3,000&nbsp;<span class="tag">EST</span>; the real rocket at 70 m/s is near 3 × 10⁵ (diameter 68 mm&nbsp;<span class="tag">CAD</span>, ν = 1.5 × 10⁻⁵ m²/s for sea-level air&nbsp;<span class="tag">STD</span>).</p>
+            <p>It is a 2D slice of a body of revolution. In 2D the air cannot pass around the body, only over and under it, so the section overstates the body's share of the lift, and the fins act as plates of unlimited span. The lattice viscosity is set for a Reynolds number of 3,000 at an inflow u<sub>in</sub> of 0.10 lattice units&nbsp;<span class="tag">EST</span>. Since Re = u<sub>in</sub> D / ν, the Reynolds number follows the inflow: 900 on the pad, about 2,800 at CHARGER's peak airspeed of 87.5 m/s&nbsp;<span class="tag">SIM</span>. The real rocket at 70 m/s is near 3 × 10⁵ (diameter 68 mm&nbsp;<span class="tag">CAD</span>, ν = 1.46 × 10⁻⁵ m²/s, the International Standard Atmosphere at sea level and 15 °C&nbsp;<span class="tag">STD</span>).</p>
+            <p>So the lattice's centre of pressure and moment coefficient are 2D section values. In 2D the long body lifts like a wing along its whole length, with the centre of pressure near its front quarter (thin-airfoil theory, Anderson, <cite>Fundamentals of Aerodynamics</cite>)&nbsp;<span class="tag">STD</span>. At 5° and above, the top and bottom edges of the domain, 0.16 of its width from the axis of a body 0.66 of its width long, also confine the flow and raise the pressure on the windward side: at 5° the section's C<sub>n</sub> is 17 to 32&nbsp;<span class="tag">SIM</span>, where an unconfined flat plate of the same length gives 2π sin α L / D = 9.5&nbsp;<span class="tag">STD</span>. Nor does the held flow settle. Held at 5° on the 512 × 160 grid, once developed (after about 2,300 steps), the section's centre of pressure swings between about 9 and 21 in from the nose with a period of about 4,000 steps, several seconds of screen time on a graphics card, always ahead of the CG (21.6 in from the nose at that instant), with C<sub>m</sub> +6 to +79 about it, where Barrowman gives 33.1 in and a restoring moment&nbsp;<span class="tag">SIM</span>. The panel's lattice C<sub>m</sub> is taken about the live CG, which moves forward as the propellant burns, as Barrowman's moment is. The lattice CP shows a dash below 1° of inflow angle, where the section's small offset from the rail buttons (C<sub>n</sub> about −0.1 to −0.4 at 0°) would make it meaningless&nbsp;<span class="tag">SIM</span>. The lab toggle that lets the lattice moment fly the rocket therefore makes it diverge; it shows what a 2D section would do, not what CHARGER does.</p>
             <p>Inflow speed in lattice units is u<sub>in</sub> = 0.03 + 0.05 V / (70 m/s), held between 0.03 and 0.10&nbsp;<span class="tag">EST</span>. The 0.03 floor keeps the smoke moving on the pad, so the air there is not still. The inflow angle is held within ±35°&nbsp;<span class="tag">EST</span>: on the pad in a crosswind, and through the finless loop, the section shows 35° while the flight model reports more, and the stage says so.</p>
           </div>
         </li>
         <li class="fd-mi">
           <h3 class="fd-mi-h"><span class="fd-mi-n">04</span>Slow motion</h3>
           <div class="fd-mi-b">
-            <p>The replay runs at 1/8 of real time until 3 s after burnout, then at real time; the rate buttons in the panel override it&nbsp;<span class="tag">EST</span>. The flight model is stepped by screen time multiplied by the rate, so its events keep their real timing. The lattice runs a fixed number of steps per screen frame (24 at tier 3) whatever the rate, so the flow is a quasi-steady picture at the current angle of attack, not a time-accurate film of the flight.</p>
+            <p>The replay runs at 1/8 of real time until 3 s after burnout, then at real time; the rate buttons in the panel override it&nbsp;<span class="tag">EST</span>. The flight model is stepped by screen time multiplied by the rate, so its events keep their real timing while frames take under 0.25 s; a longer frame advances it by 0.25 s times the rate. The lattice runs up to 24 steps per 60 Hz frame at tier 3&nbsp;<span class="tag">EST</span>, fewer on faster displays and fewer when frames run long (the engine sheds steps to stay inside its 48 ms budget), whatever the playback rate, so the flow is a quasi-steady picture at the current angle of attack, not a time-accurate film of the flight.</p>
           </div>
         </li>
         <li class="fd-mi">
@@ -165,8 +167,8 @@
         <li class="fd-mi">
           <h3 class="fd-mi-h"><span class="fd-mi-n">07</span>Checks</h3>
           <div class="fd-mi-b">
-            <p>The flight model passes 20 tests under node (<code>node vx/js/flight/flight.test.mjs</code>): the four-fin C<sub>Nα</sub> and CP against a hand computation, the ogive nose CP at 0.466 of its length, the restoring sign of the moment, the still-air apogee within 1 percent of 1,033 ft after the fit, rail exit against its prediction, energy and NaN guards, and determinism.</p>
-            <p>The lattice's gate is a cylinder 24 cells across in a 512 × 192 grid at a Reynolds number of 100, run for 20,000 steps. For 2D flow at that Reynolds number and 12 percent blockage the literature gives a drag coefficient of 1.35 to 1.55 and a Strouhal number of 0.16 to 0.18&nbsp;<span class="tag">STD</span>. Measured here: <span class="fd-slot" data-slot="lattice-validation">pending; the gate runs in the <a href="lab/lattice.html?validate=cylinder">lattice lab</a></span>. Frame rates measured under software rendering are not representative of a graphics card.</p>
+            <p>The flight model passes its tests under node (<code>node vx/js/flight/flight.test.mjs</code>): the four-fin C<sub>Nα</sub> and CP against a hand computation, the ogive nose CP at 0.466 of its length, the restoring sign of the moment, the still-air apogee within 1 percent of 1,033 ft after the fit, rail exit against its prediction, energy and NaN guards, determinism, and the lattice toggle (the lattice moment replaces Barrowman's through a 10 Hz low-pass, Barrowman's stays until a lattice moment arrives, and pitch damping is not added twice).</p>
+            <p>The lattice's gate is a cylinder 24 cells across in a 512 × 192 grid at a Reynolds number of 100, run for 20,000 steps. An unconfined cylinder at that Reynolds number sheds at a Strouhal number of about 0.164 (Williamson 1996, <cite>Annual Review of Fluid Mechanics</cite> 28), and blockage raises both its drag and its shedding frequency (Sahin and Owens 2004, <cite>Physics of Fluids</cite> 16); for 12 percent blockage the gate takes a drag coefficient of 1.35 to 1.55 and a Strouhal number of 0.16 to 0.18&nbsp;<span class="tag">STD</span>. Measured here: <span class="fd-slot" data-slot="lattice-validation">a drag coefficient of 1.450 (standard deviation 0.010 over the last 5,000 steps) and a Strouhal number of 0.169 (a lift period of 2,833 steps from 4 zero crossings), after 20,000 steps</span>&nbsp;<span class="tag">SIM</span>, both inside the ranges. The run was headless Chromium on software rendering (SwiftShader) at 99 steps per second; it repeats in the <a href="lab/lattice.html?validate=cylinder">lattice lab</a>. Frame and step rates measured under software rendering are not representative of a graphics card.</p>
           </div>
         </li>
       </ol>
@@ -232,17 +234,19 @@
 
             <tr class="fd-tr-group"><th scope="rowgroup" colspan="4">Launch and air</th></tr>
             <tr><th scope="row">Rail length</th><td>72 in</td><td><span class="tag">EST</span></td><td>a 6 ft rail; slider 36 to 94 in</td></tr>
+            <tr><th scope="row">Launch angle</th><td>0°</td><td><span class="tag">EST</span></td><td>a vertical rail; slider ±10°</td></tr>
+            <tr><th scope="row">Wind</th><td>0 mph</td><td><span class="tag">EST</span></td><td>still air by default; slider 0 to 20 mph, uniform with height</td></tr>
             <tr><th scope="row">Rail exit speed</th><td><span data-k="railV">46.6</span> ft/s</td><td><span class="tag">SIM</span></td><td>forward button at the rail top</td></tr>
             <tr><th scope="row">Still-air apogee</th><td><span data-k="apogee">1033</span> ft</td><td><span class="tag">SIM</span></td><td>equal to the page's figure by the drag fit</td></tr>
             <tr><th scope="row">Air density</th><td>1.225 kg/m³</td><td><span class="tag">STD</span></td><td>sea-level ISA, constant with height</td></tr>
-            <tr><th scope="row">Gravity</th><td>9.80665 m/s²</td><td><span class="tag">STD</span></td><td></td></tr>
+            <tr><th scope="row">Gravity</th><td>9.80665 m/s²</td><td><span class="tag">STD</span></td><td>standard gravity, 3rd CGPM (1901), as in the ISA</td></tr>
             <tr><th scope="row">Gust shape</th><td>0.5 s</td><td><span class="tag">EST</span></td><td>one-minus-cosine pulse</td></tr>
 
             <tr class="fd-tr-group"><th scope="rowgroup" colspan="4">Lattice</th></tr>
             <tr><th scope="row">Grid, tiers 3 / 2 / 1</th><td>1024 × 320 / 768 × 240 / 512 × 160</td><td><span class="tag">EST</span></td><td>tier 0 runs no lattice</td></tr>
-            <tr><th scope="row">Steps per frame, tiers 3 / 2 / 1</th><td>24 / 16 / 8</td><td><span class="tag">EST</span></td><td></td></tr>
+            <tr><th scope="row">Steps per frame, tiers 3 / 2 / 1</th><td>24 / 16 / 8</td><td><span class="tag">EST</span></td><td>per 60 Hz frame, shed under load</td></tr>
             <tr><th scope="row">Cell size at tier 3</th><td><span data-k="cellMm">1.747</span> mm</td><td><span class="tag">SIM</span></td><td>body <span data-k="dCells">38.9</span> cells across</td></tr>
-            <tr><th scope="row">Reynolds number</th><td>3,000</td><td><span class="tag">EST</span></td><td>the real rocket is near 3 × 10⁵ at 70 m/s</td></tr>
+            <tr><th scope="row">Reynolds number</th><td>900 to 2,800</td><td><span class="tag">SIM</span></td><td>u<sub>in</sub> D / ν, from the pad to the 87.5 m/s peak; set for 3,000 at u<sub>in</sub> 0.10&nbsp;<span class="tag">EST</span>; the real rocket is near 3 × 10⁵ at 70 m/s</td></tr>
             <tr><th scope="row">Smagorinsky constant</th><td>0.12</td><td><span class="tag">STD</span></td><td>Hou, Sterling, Chen and Doolen 1996</td></tr>
             <tr><th scope="row">Inflow speed</th><td>0.03 to 0.10</td><td><span class="tag">EST</span></td><td>lattice units, 0.03 + 0.05 V / (70 m/s)</td></tr>
             <tr><th scope="row">Inflow angle limit</th><td>±35°</td><td><span class="tag">EST</span></td><td></td></tr>
@@ -259,7 +263,7 @@
       <header class="fd-sec-head">
         <p class="eyebrow">03 / Runs</p>
         <h2 class="display-2" id="runs-h">Runs</h2>
-        <p class="fd-sec-intro">Each run sets the panel, resets the rocket on the pad and launches it. CG 22 in&nbsp;<span class="tag">PAGE</span>, rail 72 in&nbsp;<span class="tag">EST</span>, launch angle 0°. The wind speeds and the gust are chosen here&nbsp;<span class="tag">EST</span>. The results are flown in this tab when the page loads&nbsp;<span class="tag">SIM</span>.</p>
+        <p class="fd-sec-intro">Each run sets the panel, resets the rocket on the pad and launches it. CG 22 in&nbsp;<span class="tag">PAGE</span>, rail 72 in&nbsp;<span class="tag">EST</span>, launch angle 0°&nbsp;<span class="tag">EST</span>. The wind speeds and the gust are chosen here&nbsp;<span class="tag">EST</span>. The results are flown in this tab when the page loads&nbsp;<span class="tag">SIM</span>.</p>
       </header>
       <ol class="fd-runs">
         <li class="fd-run" data-run="full">
@@ -269,7 +273,7 @@
           <dl class="fd-run-r">
             <div><dt>Margin at liftoff</dt><dd><span data-r="margin0">+4.15</span> cal&nbsp;<span class="tag">SIM</span></dd></div>
             <div><dt>AOA at rail exit</dt><dd><span data-r="alphaRail">+8.9</span>°&nbsp;<span class="tag">SIM</span></dd></div>
-            <div><dt>Under 2° AOA, after rail exit</dt><dd><span data-r="settle">0.22</span> s&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Under 2°&nbsp;AOA, after rail&nbsp;exit</dt><dd><span data-r="settle">0.22</span> s&nbsp;<span class="tag">SIM</span></dd></div>
             <div><dt>Apogee</dt><dd><span data-r="apogee">1028</span> ft&nbsp;<span class="tag">SIM</span></dd></div>
           </dl>
           <p class="fd-run-w">Watch the nose turn into the wind, overshoot a little, and hold.</p>
@@ -282,10 +286,10 @@
           <dl class="fd-run-r">
             <div><dt>Margin at liftoff</dt><dd><span data-r="margin0">−0.35</span> cal&nbsp;<span class="tag">SIM</span></dd></div>
             <div><dt>Margin at burnout</dt><dd><span data-r="marginBo">+0.14</span> cal&nbsp;<span class="tag">SIM</span></dd></div>
-            <div><dt>Under 2° AOA, after rail exit</dt><dd><span data-r="settle">0.42</span> s&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Under 2°&nbsp;AOA, after rail&nbsp;exit</dt><dd><span data-r="settle">0.42</span> s&nbsp;<span class="tag">SIM</span></dd></div>
             <div><dt>Apogee</dt><dd><span data-r="apogee">1033</span> ft&nbsp;<span class="tag">SIM</span></dd></div>
           </dl>
-          <p class="fd-run-w">Unstable at liftoff. The angle of attack fades only because the speed builds and the CG creeps forward.</p>
+          <p class="fd-run-w">Negative margin at small angles. Above about 3.5° at liftoff&nbsp;<span class="tag">SIM</span> the body lift behind the CG turns the nose back, and the margin turns positive at T+<span data-r="marginUp">0.87</span>&nbsp;s&nbsp;<span class="tag">SIM</span> as the CG moves forward.</p>
           <button type="button" class="fd-run-b" data-run-go="half" aria-describedby="run-half-h">Launch run 02</button>
         </li>
         <li class="fd-run" data-run="none">
@@ -295,7 +299,7 @@
           <dl class="fd-run-r">
             <div><dt>Margin at liftoff</dt><dd><span data-r="margin0">−6.63</span> cal&nbsp;<span class="tag">SIM</span></dd></div>
             <div><dt>Peak AOA, ascent</dt><dd><span data-r="peakAlpha">28.6</span>°&nbsp;<span class="tag">SIM</span></dd></div>
-            <div><dt>Pitch past 60° at</dt><dd>T+<span data-r="theta60">1.63</span> s&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Pitch past 60°</dt><dd>T+<span data-r="theta60">1.62</span>&nbsp;s&nbsp;<span class="tag">SIM</span></dd></div>
             <div><dt>Apogee</dt><dd><span data-r="apogee">342</span> ft&nbsp;<span class="tag">SIM</span></dd></div>
           </dl>
           <p class="fd-run-w">The nose falls away from the wind, the rocket pitches over and loops.</p>
@@ -320,8 +324,8 @@
           <p class="fd-run-s">Full fins, still air, an 11.2 mph (5 m/s) gust fired as the forward button leaves the rail.</p>
           <dl class="fd-run-r">
             <div><dt>Peak AOA</dt><dd><span data-r="peakAlpha">7.25</span>°&nbsp;<span class="tag">SIM</span></dd></div>
-            <div><dt>Under 2° AOA, after the gust</dt><dd><span data-r="settle">0.72</span> s&nbsp;<span class="tag">SIM</span></dd></div>
-            <div><dt>Pitch frequency, 98 ft/s</dt><dd><span data-r="fn">0.92</span> Hz&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Under 2°&nbsp;AOA, after the&nbsp;gust</dt><dd><span data-r="settle">0.72</span> s&nbsp;<span class="tag">SIM</span></dd></div>
+            <div><dt>Frequency at 98&nbsp;ft/s</dt><dd><span data-r="fn">0.92</span> Hz&nbsp;<span class="tag">SIM</span></dd></div>
             <div><dt>Apogee</dt><dd><span data-r="apogee">1027</span> ft&nbsp;<span class="tag">SIM</span></dd></div>
           </dl>
           <p class="fd-run-w">One wobble, damped. This is the disturbance the flight model's tests use.</p>

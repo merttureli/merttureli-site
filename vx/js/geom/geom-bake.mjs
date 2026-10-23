@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /* vx/js/geom/geom-bake.mjs
    Regenerates vx/js/geom/geom-cad.js, the baked copy of the CAD measurements that
    geom.js exports synchronously (finDefaults, sectionPolygons, buildSection without a

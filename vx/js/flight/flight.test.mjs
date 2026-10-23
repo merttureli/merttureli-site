@@ -5,8 +5,8 @@
    finless divergence, gust settling with fins, the drag fit to the published apogee, energy
    and NaN guards at dt extremes, determinism with a seed. Also: rail exit prediction and the
    rail-button geometry, the weathercock direction, event order, the maxQ and maxAlpha
-   detectors under turbulence, fin scaling, the lattice moment low-pass, geometry
-   sanitising and destroy(). */
+   detectors under turbulence, fin scaling, the lattice moment low-pass, its Barrowman
+   fallback and damping rule, geometry sanitising and destroy(). */
 import assert from 'node:assert/strict';
 import * as B from './barrowman.js';
 import { createFlight, CD_FIT, CAD_FINS, DEFAULTS, DT, FT, IN, APOGEE_FT_PAGE, LATTICE_LP_HZ, ALPHA_Q_MIN } from './flight.js';
@@ -336,6 +336,42 @@ test('lattice moment replaces the Barrowman moment through a 10 Hz low-pass', ()
   close(f.state.Maero, f.state.latticeCm * f.state.qdyn * f.derived.refArea * f.derived.refLength, 1e-9, 'moment from C_m');
   f.useLattice(false);
   return `63 percent after ${(1000 / (2 * Math.PI * LATTICE_LP_HZ)).toFixed(1)} ms`;
+});
+
+test('lattice toggle without a lattice moment keeps the Barrowman moment; NaN withdraws it', () => {
+  // a 10 mph crosswind launch with the toggle on and no setLatticeMoment: Barrowman flies it
+  const mph10 = 10 * 0.44704;
+  const ref = createFlight({ wind: mph10 }, quiet); ref.ignite(); ref.run(3);
+  const f = createFlight({ wind: mph10 }, quiet); f.useLattice(true); f.ignite(); f.run(3);
+  assert.equal(f.state.latticeActive, false, 'no lattice moment held');
+  assert.equal(f.state.theta, ref.state.theta, 'same pitch as the Barrowman flight');
+  const thetaOn = f.state.theta;
+  assert.ok(Math.abs(thetaOn) > 5 * DEG, `the crosswind still turns the nose (theta ${(thetaOn / DEG).toFixed(2)} deg)`);
+  // a finite value takes over, with the low-pass starting from the moment in use (no jump)
+  const cm0 = f.state.cm;
+  f.setLatticeMoment(-3);
+  assert.equal(f.state.latticeActive, true, 'lattice moment in use');
+  f.run(0.001);
+  assert.ok(Math.abs(f.state.latticeCm - cm0) < 0.1 * Math.max(1, Math.abs(-3 - cm0)), `handover starts at the Barrowman C_m (${cm0.toFixed(3)} -> ${f.state.latticeCm.toFixed(3)})`);
+  // NaN withdraws it: Barrowman again at once
+  f.setLatticeMoment(NaN); f.run(0.01);
+  assert.equal(f.state.latticeActive, false, 'withdrawn');
+  const L = f.momentAt(f.state.alpha, f.state.airspeed, f.state.t);
+  close(f.state.Maero, L.Maero, 1e-9, 'the moment in use is the Barrowman one');
+  return `theta at T+3 ${(thetaOn / DEG).toFixed(2)} deg with the toggle on and no lattice moment, as with Barrowman`;
+});
+
+test('while the lattice flies it, aerodynamic pitch damping is not added a second time', () => {
+  const f = createFlight({}, quiet);
+  f.ignite(); f.run(1.5);                       // coast: no motor mass flow, so no jet damping
+  f.flick(1); f.run(0.001);
+  const barrowmanC2 = f.state.Mdamp / -f.state.omega;
+  assert.ok(barrowmanC2 > 0, 'Barrowman damping present');
+  f.setLatticeMoment(0); f.useLattice(true); f.run(0.001);
+  assert.ok(Math.abs(f.state.Mdamp) < 1e-12, `only jet damping (none in the coast) is added to the lattice moment (Mdamp ${f.state.Mdamp})`);
+  f.useLattice(false); f.run(0.001);
+  assert.ok(f.state.Mdamp / -f.state.omega > 0, 'Barrowman damping back with the toggle off');
+  return `aerodynamic C2 ${barrowmanC2.toFixed(4)} N m s dropped while the lattice moment is in use`;
 });
 
 test('sanitise: missing or zero geometry falls back to finite CAD defaults', () => {

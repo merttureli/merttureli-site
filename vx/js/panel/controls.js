@@ -22,7 +22,12 @@
      flick                         pitch-rate impulse, rad/s (+ toward +x), from the FLICK buttons
    set(name, value) returns false and changes nothing when the control cannot hold
    the value (a view that is not one of VIEWS, a rate that is not positive, NaN).
-   Keyboard (bindKeys): L launch, R reset, space pause, 1 to 4 views, G gust. */
+   showNone(name, on) presses no button of a segment while its value is kept (the
+   camera group while the visitor orbits freely); setInfo(name, text) shows a note
+   under a control while it is enabled (setEnabled's text shows while it is not).
+   Keyboard (bindKeys): L launch, R reset, space pause, 1 to 4 views, G gust; the
+   SHORTCUTS switch in the keys legend ('keys', boolean, kept in localStorage) turns
+   all of them off. */
 
 export const RATES = [1 / 32, 1 / 8, 1 / 2, 1];
 export const VIEWS = ['smoke', 'pressure', 'vorticity', 'speed'];
@@ -30,6 +35,7 @@ export const SECTIONS = ['through', 'between'];
 export const CAMERAS = ['side', 'quarter', 'chase', 'pad'];
 export const FLICK_RADPS = 1;      // rad/s per FLICK button press (EST: a firm nudge, about a third of a hard drag on the view)
 export const KEYMAP = { l: 'launch', r: 'reset', ' ': 'pause', g: 'fireGust', 1: 'view:smoke', 2: 'view:pressure', 3: 'view:vorticity', 4: 'view:speed' };
+const KEYS_STORE = 'charger-field-keys';   // localStorage: 'off' when the visitor switched the single-key shortcuts off
 
 /* Ranges. Units: inches for CG and rail, degrees, mph. Bounds:
    rail 36 to 94 in is FIELD 3's 0.9 to 2.4 m slider; wind 0 to 20 mph is its 0 to
@@ -91,14 +97,19 @@ export function buildControls({ lab = false, defaults = {}, refs = {}, ranges = 
   function range(name) {
     const s = Object.assign({}, RANGE_SPEC[name], ranges[name] || {});
     const inputId = `${id}-${name}`;
-    const out = h('output', { class: 'pn-v', for: inputId });
-    const tag = refs[name] ? h('span', { class: 'pn-tag', text: refs[name] }) : null;
-    const input = h('input', { type: 'range', id: inputId, class: 'pn-range', min: s.min, max: s.max, step: s.step, name });
+    // The value is plain text hidden from assistive technology: the input's
+    // aria-valuetext already speaks it, and an <output> is a polite live region
+    // that would repeat every value on every input event (FIELD.md section 2: no
+    // live region faster than 1 Hz). The name is the visible label alone; the
+    // tagged reference value describes the slider.
+    const out = h('span', { class: 'pn-v', 'aria-hidden': 'true' });
+    const tag = refs[name] ? h('span', { class: 'pn-tag', id: `${inputId}-ref`, text: refs[name] }) : null;
+    const input = h('input', { type: 'range', id: inputId, class: 'pn-range', min: s.min, max: s.max, step: s.step, name, 'aria-labelledby': `${inputId}-k`, 'aria-describedby': tag ? `${inputId}-ref` : null });
     const row = h('div', { class: 'pn-ctl', dataset: { ctl: name } },
-      h('label', { class: 'pn-ctl-head', for: inputId }, h('span', { class: 'pn-k', text: s.label }), out, h('span', { class: 'pn-u', text: s.unit }), tag || h('span', { class: 'pn-tag' })),
+      h('label', { class: 'pn-ctl-head', for: inputId }, h('span', { class: 'pn-k', id: `${inputId}-k`, text: s.label }), out, h('span', { class: 'pn-u', text: s.unit }), tag || h('span', { class: 'pn-tag' })),
       input);
     const paint = (v) => {
-      out.value = fmt(v, s.dec, s.signed);
+      out.textContent = fmt(v, s.dec, s.signed);
       input.setAttribute('aria-valuetext', `${fmt(v, s.dec, s.signed).replace(MINUS, 'minus ')} ${s.words}`);
       input.style.setProperty('--pn-fill', `${(100 * (v - s.min)) / (s.max - s.min)}%`);
     };
@@ -121,14 +132,16 @@ export function buildControls({ lab = false, defaults = {}, refs = {}, ranges = 
       return b;
     });
     const group = h('div', { class: `pn-seg ${cls}`.trim(), role: 'group', 'aria-label': label, dataset: { ctl: name } }, btns);
+    let none = false;                 // showNone: nothing pressed, the value kept
+    const paint = () => btns.forEach((b, i) => b.setAttribute('aria-pressed', String(!none && options[i][0] === values[name])));
     function set(v) {
       if (coerce) v = coerce(v);
       if (!free && !options.some((o) => o[0] === v)) return false;
-      values[name] = v; btns.forEach((b, i) => b.setAttribute('aria-pressed', String(options[i][0] === v)));
+      values[name] = v; none = false; paint();
       return true;
     }
     set(values[name]);
-    reg.set(name, { get: () => values[name], set, enable: (on) => { btns.forEach((b) => { b.disabled = !on; }); }, els: [group] });
+    reg.set(name, { get: () => values[name], set, enable: (on) => { btns.forEach((b) => { b.disabled = !on; }); }, els: [group], showNone: (on) => { none = !!on; paint(); } });
     return group;
   }
 
@@ -143,16 +156,18 @@ export function buildControls({ lab = false, defaults = {}, refs = {}, ranges = 
 
   const heading = (text) => h(`h${level}`, { class: 'pn-h', text });
   const note = (name) => { const p = h('p', { class: 'pn-note', hidden: true, dataset: { note: name } }); return p; };
+  const notes = new Map();          // name -> {enabled, why (shown while disabled), info (shown while enabled)}
 
   /* ---- playback */
   const launchB = button('launch', 'LAUNCH', { key: 'L', keyLabel: 'L', cls: 'pn-btn-primary' });
   const pauseB = button('pause', 'PAUSE', { key: 'Space', keyLabel: 'SPC' });
   pauseB.setAttribute('aria-pressed', 'false');
   const resetB = button('reset', 'RESET', { key: 'R', keyLabel: 'R' });
-  const rateSeg = segment('rate', 'Playback rate', RATES.map((r) => [r, rateText(r), `Playback at ${rateWords(r)}`]), { cls: 'pn-seg-4', coerce: nearestRate });
+  // accessible names start with the visible text (WCAG 2.5.3), then say what it means
+  const rateSeg = segment('rate', 'Playback rate', RATES.map((r) => [r, rateText(r), `${rateText(r)}, playback at ${rateWords(r)}`]), { cls: 'pn-seg-4', coerce: nearestRate });
   const stepRow = h('div', { class: 'pn-steps', hidden: true },
-    button('step', 'STEP 0.1 S', { value: 0.1, label: 'Step the flight forward 0.1 seconds' }),
-    button('step', 'STEP 1 S', { value: 1, label: 'Step the flight forward 1 second' }));
+    button('step', 'STEP 0.1 S', { value: 0.1, label: 'Step 0.1 s, the flight forward 0.1 seconds' }),
+    button('step', 'STEP 1 S', { value: 1, label: 'Step 1 s, the flight forward 1 second' }));
   const playback = h('section', { class: 'pn-sec pn-sec-play', 'aria-labelledby': `${id}-h-play` },
     Object.assign(heading('PLAYBACK'), { id: `${id}-h-play` }),
     h('div', { class: 'pn-btns' }, launchB, pauseB, resetB),
@@ -165,13 +180,13 @@ export function buildControls({ lab = false, defaults = {}, refs = {}, ranges = 
   listeners.add(({ name }) => { if (name === 'rate') paintRate(); });
 
   /* ---- configuration */
-  const finPresets = segment('finPreset', 'Fin presets', [[0, 'NONE', 'No fins'], [0.5, 'HALF', 'Half-size fins'], [1, 'FULL', 'Full CAD fins']], { cls: 'pn-seg-3', free: true });
+  const finPresets = segment('finPreset', 'Fin presets', [[0, 'NONE', 'None, no fins'], [0.5, 'HALF', 'Half, half-size fins'], [1, 'FULL', 'Full, the CAD fins']], { cls: 'pn-seg-3', free: true });
   values.finPreset = values.fins;
   const fireB = button('fireGust', 'FIRE GUST', { key: 'G', keyLabel: 'G', cls: 'pn-btn-wide' });
   // FLICK from the keyboard: the same pitch-rate impulse a drag on the view gives, in fixed steps
   const flickDeg = (FLICK_RADPS * 180 / Math.PI).toFixed(1);
   const flickBs = [-1, 1].map((sg) => {
-    const b = button('flick', `FLICK ${sg < 0 ? MINUS : '+'}`, { value: sg * FLICK_RADPS, label: `Flick: pitch rate ${sg < 0 ? 'minus' : 'plus'} ${flickDeg} degrees per second, nose toward ${sg < 0 ? 'minus' : 'plus'} x` });
+    const b = button('flick', `FLICK ${sg < 0 ? MINUS : '+'}`, { value: sg * FLICK_RADPS, label: `Flick ${sg < 0 ? MINUS : '+'}, pitch rate ${sg < 0 ? 'minus' : 'plus'} ${flickDeg} degrees per second, nose toward ${sg < 0 ? 'minus' : 'plus'} x` });
     b.dataset.value = String(sg);
     return b;
   });
@@ -196,20 +211,27 @@ export function buildControls({ lab = false, defaults = {}, refs = {}, ranges = 
 
   /* ---- view */
   const viewSeg = segment('view', 'Lattice view', VIEWS.map((v, i) => [v, v.toUpperCase(), `${v} view, key ${i + 1}`]), { cls: 'pn-seg-4 pn-seg-tight', keyFor: (v) => String(VIEWS.indexOf(v) + 1) });
-  const sectionSeg = segment('section', 'Section plane', [['through', 'THROUGH FINS', 'Section through the fins'], ['between', 'BETWEEN FINS', 'Section between the fins']], { cls: 'pn-seg-2' });
+  const sectionSeg = segment('section', 'Section plane', [['through', 'THROUGH FINS', 'Through fins, the section through the fins'], ['between', 'BETWEEN FINS', 'Between fins, the section between the fins']], { cls: 'pn-seg-2' });
   const camSeg = segment('camera', 'Camera preset', CAMERAS.map((c) => [c, c.toUpperCase(), `${c} camera`]), { cls: 'pn-seg-4 pn-seg-tight' });
   const markersT = toggle('markers', 'MARKERS', 'Markers: CG, CP, wind and force arrows');
-  const latticeT = toggle('latticeFlies', 'LATTICE FLIES IT', 'Lattice moment flies the rocket instead of Barrowman (lab)');
+  const latticeT = toggle('latticeFlies', 'LATTICE FLIES IT', 'Lattice flies it: the lattice moment replaces Barrowman (lab)');
   latticeT.hidden = !lab;
   const view = h('section', { class: 'pn-sec pn-sec-view', 'aria-labelledby': `${id}-h-view` },
     Object.assign(heading('VIEW'), { id: `${id}-h-view` }),
     h('p', { class: 'pn-sub', text: 'FLOW FIELD' }), viewSeg, note('view'),
     h('p', { class: 'pn-sub', text: 'SECTION' }), sectionSeg, note('section'),
     h('p', { class: 'pn-sub', text: 'CAMERA' }), camSeg, note('camera'),
-    h('div', { class: 'pn-btns pn-btns-2' }, markersT, latticeT));
+    h('div', { class: 'pn-btns pn-btns-2' }, markersT, latticeT), lab ? note('latticeFlies') : null);
 
-  const legend = h('p', { class: 'pn-keys' },
-    h('span', { class: 'pn-keys-k', text: 'KEYS' }),
+  /* The SHORTCUTS switch (WCAG 2.1.4): off, no single-key shortcut fires (bindKeys).
+     The choice is kept per visitor in localStorage where the browser allows it; a
+     private window or blocked storage simply starts with the shortcuts on. */
+  try { values.keys = localStorage.getItem(KEYS_STORE) !== 'off'; } catch { values.keys = true; }
+  const keysT = toggle('keys', 'SHORTCUTS', 'Shortcuts: the single-key shortcuts L, Space, R, 1 to 4 and G');
+  keysT.classList.add('pn-keys-t');
+  listeners.add(({ name, value }) => { if (name === 'keys') { try { localStorage.setItem(KEYS_STORE, value ? 'on' : 'off'); } catch { /* storage blocked: the switch still holds for this visit */ } } });
+  const legend = h('div', { class: 'pn-keys' },
+    h('div', { class: 'pn-keys-head' }, h('span', { class: 'pn-keys-k', text: 'KEYS' }), keysT),
     ...[['L', 'LAUNCH'], ['SPC', 'PAUSE'], ['R', 'RESET'], ['1–4', 'VIEW'], ['G', 'GUST']].map(([k, t]) => h('span', { class: 'pn-keys-i' }, h('kbd', { class: 'pn-kbd', text: k }), ` ${t}`)));
 
   /* compact play button for the phone sheet's collapsed row */
@@ -232,11 +254,24 @@ export function buildControls({ lab = false, defaults = {}, refs = {}, ranges = 
 
   function setReduced(on) { stepRow.hidden = !on; }
 
+  function paintNote(name) {
+    const n = view.querySelector(`[data-note="${name}"]`) || config.querySelector(`[data-note="${name}"]`);
+    if (!n) return;
+    const st = notes.get(name) || {};
+    const text = (st.enabled === false && st.why) || st.info || '';   // the reason it is off wins; otherwise the info note
+    if (n.textContent !== text) n.textContent = text;
+    if (n.hidden !== !text) n.hidden = !text;
+  }
   function setEnabled(name, on, text = '') {
     const r = reg.get(name); if (r) r.enable(on);
-    const n = view.querySelector(`[data-note="${name}"]`) || config.querySelector(`[data-note="${name}"]`);
-    if (n) { n.hidden = on || !text; n.textContent = on ? '' : text; }
+    notes.set(name, Object.assign(notes.get(name) || {}, { enabled: !!on, why: text }));
+    paintNote(name);
   }
+  function setInfo(name, text = '') {
+    notes.set(name, Object.assign(notes.get(name) || {}, { info: text || '' }));
+    paintNote(name);
+  }
+  function showNone(name, on) { const r = reg.get(name); if (r && r.showNone) r.showNone(on); }
 
   /* keyboard: document-level, ignored while typing or with modifiers; space is left
      to a focused button, checkbox or link so native activation still works. active()
@@ -252,6 +287,7 @@ export function buildControls({ lab = false, defaults = {}, refs = {}, ranges = 
       const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
       const action = KEYMAP[k];
       if (!action) return;
+      if (values.keys === false) return;          // the SHORTCUTS switch is off: the key keeps its default action
       if (typeof active === 'function' && !active()) return;
       if (k === ' ' && t && (tag === 'BUTTON' || tag === 'A' || tag === 'INPUT' || tag === 'SUMMARY' || t.getAttribute('role') === 'button')) return;
       if (e.repeat) { if (action === 'pause') e.preventDefault(); return; }   // a held Space neither scrolls nor toggles
@@ -276,7 +312,7 @@ export function buildControls({ lab = false, defaults = {}, refs = {}, ranges = 
     get(name) { return values[name]; },
     set(name, value) { const r = reg.get(name); if (!r) return false; return r.set(value) !== false; },
     values,
-    setEnabled, setReduced, setPlayState, bindKeys,
+    setEnabled, setInfo, showNone, setReduced, setPlayState, bindKeys,
     destroy() { listeners.clear(); reg.clear(); },
   };
 }

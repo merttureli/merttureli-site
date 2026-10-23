@@ -165,6 +165,13 @@ export function createSlice({ noseY = NOSE_Y, domain = null, reducedMotion = fal
     gridDirToWorld(gx, gy, out = new THREE.Vector3()) {
       return out.set(gy, -gx, 0).transformDirection(mesh.matrixWorld);
     },
+    /* The quad's four world corners in order round its edge (uv 00, 10, 11, 01), for
+       the label layout. */
+    corners(out = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()]) {
+      mesh.updateMatrixWorld();
+      [0, 1, 3, 2].forEach((v, i) => mesh.localToWorld(out[i].set(pos[v * 3], pos[v * 3 + 1], pos[v * 3 + 2])));
+      return out;
+    },
     /* Grid cell coordinates to a world point through the current world matrix. */
     gridToWorld(col, row, out = new THREE.Vector3()) {
       gridToLocal(col, row, dom, noseY, out);

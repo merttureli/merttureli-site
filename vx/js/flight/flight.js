@@ -21,6 +21,12 @@
      M_damp = -[ (1/2) rho |v_air| A_ref d^2 C_mq + mdot (x_nozzle - x_cg)^2 ] omega
        C_mq = sum over nose and fins of C_Na,i (x_i - x_cg)^2 / d^2   (Mandell, STD)
        the second term is jet damping (Mandell, STD), mdot from the thrust curve.
+       While the lattice flies it, the aerodynamic C_mq term is left out: the lattice
+       moment already carries the pitch-rate damping of its moving walls (Ladd), so only
+       the jet damping is added to it.
+     The lattice moment is used only once a finite C_m has been supplied: until the first
+     setLatticeMoment, and after setLatticeMoment(NaN or null), the Barrowman moment flies
+     the rocket even with useLattice(true) (state.latticeActive says which one is in use).
      Linearised pitch equation used for the derived frequency and damping:
        I theta'' + C2 theta' + C1 theta = 0, C1 = q A_ref C_Na (x_cp - x_cg) [N m/rad],
        C2 = the bracket in M_damp [N m s]; omega_n = sqrt(C1/I), zeta = C2 / (2 sqrt(C1 I)).
@@ -76,7 +82,8 @@
                       airspeed, qdyn (Pa), thrust, drag, N (N), M, Maero, Mdamp (N m, theta
                       sense), cn, cm, xcg, xcp, xcpNow (m from nose), margin (cal), wind (m/s incl.
                       gusts), altitude, downrange, railTravel, onRail, railLength, railAngle,
-                      refFromNose, maxAlpha, maxQ, apogee, railExitSpeed, phase, done, fault
+                      refFromNose, maxAlpha, maxQ, apogee, railExitSpeed, phase, done, fault,
+                      lattice (the toggle), latticeActive (a lattice C_m is in use), latticeCm
      flight.config / derived / events / history / phase / done / ignited
      step(dtPhysical), run(seconds) (ignites if needed), reset(), ignite(),
      gust(peak_mps), flick(pitchRate_radps), setWind, setFinScale, setFins, setCg, setRail,
@@ -277,7 +284,9 @@ function massAt(model, t, out) {
 
 /** Aerodynamic loads at angle of attack alpha (rad), airspeed V (m/s), CG station xcg (m),
     motor mass flow mdot (kg/s) and pitch rate om (rad/s). latticeCm replaces the Barrowman
-    static moment when it is a number. Writes into out and returns it:
+    static moment when it is a number; the aerodynamic part of the pitch damping is then
+    dropped (the lattice moment includes its moving-wall damping) and jet damping stays.
+    Writes into out and returns it:
       cnNose, cnFins, cnBody, cn (normal-force coefficients on A_ref), N (N, along +n),
       drag (N, along the relative wind), Maero, Mdamp, M (N m, theta sense), cm (Maero on
       q A_ref d), cmq, c2 (N m s), xcpNow (m, CP including body lift at this alpha). */
@@ -298,7 +307,7 @@ export function aeroLoads(model, cfg, alpha, V, xcg, mdot, om, latticeCm, out = 
   { const dn = aero.nose.xcp - xcg; cmq += aero.nose.cna * dn * dn; }
   if (model.finsActive) { const df = aero.fins.xcp - xcg; cmq += aero.fins.cna * df * df; }
   cmq /= d * d;
-  const c2 = 0.5 * cfg.airDensity * V * A * d * d * cmq + B.jetDamping(mdot, model.xMotorAft, xcg);
+  const c2 = (finite(latticeCm) ? 0 : 0.5 * cfg.airDensity * V * A * d * d * cmq) + B.jetDamping(mdot, model.xMotorAft, xcg);
   const Mdamp = -c2 * om;
   out.cnNose = cnNose; out.cnFins = cnFins; out.cnBody = cnBody; out.cn = cn; out.N = N;
   out.drag = q * A * cfg.cd; out.Maero = Maero; out.Mdamp = Mdamp; out.M = Maero + Mdamp;
@@ -333,7 +342,10 @@ export function createFlight(config = {}, { bus = sharedBus } = {}) {
   let railAngle = cfg.launchAngle, railLen = cfg.railLength;   // the rail in use, captured on the pad
   let gusts = [];                       // {t0, peak, dur}
   let turb = 0, rng = mulberry32(cfg.seed);
-  let latticeOn = false, latticeCmIn = 0, latticeCmF = 0;
+  // lattice moment: latticeHave is false until a finite C_m arrives (and again after
+  // setLatticeMoment(NaN)); until then the Barrowman moment flies it even with the toggle on
+  let latticeOn = false, latticeHave = false, latticeCmIn = 0, latticeCmF = 0;
+  const latticeActive = () => latticeOn && latticeHave;
   const events = [];
   const alphaSnap = {}, qSnap = {};     // state copies at the running peaks, so the maxAlpha and maxQ events carry the peak state
   const listeners = new Set();
@@ -366,7 +378,7 @@ export function createFlight(config = {}, { bus = sharedBus } = {}) {
     const q = 0.5 * cfg.airDensity * V2;
     let alpha = 0;
     if (V > 1e-6) alpha = wrapPi(th - Math.atan2(-vax, -vay));
-    const L = aeroLoads(model, cfg, alpha, V, xcg, mp.mdot, om, latticeOn ? latticeCmF : null, loads);
+    const L = aeroLoads(model, cfg, alpha, V, xcg, mp.mdot, om, latticeActive() ? latticeCmF : null, loads);
     const D = L.drag, N = L.N, M = L.M;
     const dx = V > 1e-6 ? vax / V : 0, dy = V > 1e-6 ? vay / V : 0;
     const g = cfg.gravity;
@@ -537,6 +549,7 @@ export function createFlight(config = {}, { bus = sharedBus } = {}) {
     state.railExitSpeed = railExitSpeed;
     state.ignited = ignited;
     state.lattice = latticeOn;
+    state.latticeActive = latticeActive();
     state.latticeCm = latticeCmF;
     state.fault = fault;
     state.groundHit = groundHit;
@@ -717,13 +730,32 @@ export function createFlight(config = {}, { bus = sharedBus } = {}) {
     setLaunchAngle(rad) { if (finite(rad)) reconfigure({ launchAngle: rad }); return cfg.launchAngle; },
     setTurbulence(rms) { if (finite(rms)) reconfigure({ turbulence: rms }); return cfg.turbulence; },
     setSeed(n) { if (finite(n)) reconfigure({ seed: n }); return cfg.seed; },
-    setLatticeMoment(cm) { if (!destroyed && finite(cm)) latticeCmIn = clamp(cm, ...LIMITS.latticeCm); return latticeCmIn; },
-    useLattice(on) { if (destroyed) return latticeOn; latticeOn = !!on; if (latticeOn) latticeCmF = latticeCmIn; state.lattice = latticeOn; return latticeOn; },
+    /** C_m from the lattice (theta sense, on q A_ref d). NaN or null withdraws it: the
+        Barrowman moment flies the rocket again until the next finite value. The first
+        value after a withdrawal starts the 10 Hz low-pass from the moment in use, so the
+        handover is smooth. Returns the value held, or NaN when none is held. */
+    setLatticeMoment(cm) {
+      if (destroyed) return latticeHave ? latticeCmIn : NaN;
+      if (cm === null || cm === undefined || Number.isNaN(cm)) { latticeHave = false; state.latticeActive = latticeActive(); return NaN; }
+      if (!finite(cm)) return latticeHave ? latticeCmIn : NaN;
+      if (!latticeHave) latticeCmF = finite(state.cm) ? clamp(state.cm, ...LIMITS.latticeCm) : 0;
+      latticeHave = true;
+      latticeCmIn = clamp(cm, ...LIMITS.latticeCm);
+      state.latticeActive = latticeActive();
+      return latticeCmIn;
+    },
+    useLattice(on) {
+      if (destroyed) return latticeOn;
+      latticeOn = !!on;
+      if (latticeOn && latticeHave) latticeCmF = latticeCmIn;   // a value already held takes over at once, as before
+      state.lattice = latticeOn; state.latticeActive = latticeActive();
+      return latticeOn;
+    },
     configure(patch) { if (patch && typeof patch === 'object') reconfigure(patch); return cfg; },
     onEvent(fn) { listeners.add(fn); return () => listeners.delete(fn); },
     /** Static loads at a given alpha (rad) and airspeed (m/s), mass properties at time tt
         (default liftoff), no pitch rate. For tests and the lab readout. */
-    momentAt(alpha, V, tt = 0) { const p = massAt(model, tt, {}); return aeroLoads(model, cfg, alpha, V, p.xcg, 0, 0, latticeOn ? latticeCmF : null, {}); },
+    momentAt(alpha, V, tt = 0) { const p = massAt(model, tt, {}); return aeroLoads(model, cfg, alpha, V, p.xcg, 0, 0, latticeActive() ? latticeCmF : null, {}); },
     /** World position of a body station (m from the nose). */
     bodyToWorld(station) {
       const d = refFromNose - station;

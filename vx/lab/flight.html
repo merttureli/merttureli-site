@@ -79,8 +79,8 @@
   .fl-btn { min-height: 36px; padding: 0 var(--space-2); border: 1px solid var(--paper-a18); border-radius: var(--radius-xs); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper); transition: border-color var(--dur-1) var(--ease-out), background-color var(--dur-1) var(--ease-out); }
   .fl-btn:hover:not(:disabled) { border-color: var(--paper-a70); }
   .fl-btn[aria-pressed="true"] { background: var(--paper); color: var(--ink-900); border-color: var(--paper); }
-  .fl-btn.primary { background: var(--livery); border-color: var(--livery); color: var(--ink-900); }
-  .fl-btn.primary:hover:not(:disabled) { background: #E5501F; border-color: #E5501F; }
+  .fl-btn.primary { background: var(--paper); border-color: var(--paper); color: var(--ink-900); }   /* paper on ink as on the page's LAUNCH (21:1); ink on the livery orange was 4.23:1 at 10 px */
+  .fl-btn.primary:hover:not(:disabled) { background: var(--ink-100); border-color: var(--ink-100); }
   .fl-btn:disabled { color: var(--paper-a45); cursor: default; }
   .fl-btn.primary:disabled { background: transparent; border-color: var(--livery); color: var(--livery-text); }
 
@@ -162,30 +162,30 @@
 
     <section class="fl-group" aria-labelledby="g-veh">
       <h2 id="g-veh">Vehicle</h2>
-      <label class="fl-row">Fin scale, about the root LE <output id="fins-v">1.00</output><input id="fins" type="range" min="0" max="1.5" step="0.01" value="1"></label>
+      <label class="fl-row" for="fins">Fin scale, about the root LE <output aria-live="off" id="fins-v" for="fins">1.00</output><input id="fins" aria-label="Fin scale, about the root leading edge" type="range" min="0" max="1.5" step="0.01" value="1"></label>
       <div class="fl-btns" style="--n: 3" role="group" aria-label="Fin presets">
         <button type="button" class="fl-btn" data-fins="0">None</button>
         <button type="button" class="fl-btn" data-fins="0.5">Half</button>
         <button type="button" class="fl-btn" data-fins="1">Full</button>
       </div>
-      <label class="fl-row">CG from nose, in <output id="cg-v">22.00</output><input id="cg" type="range" min="12" max="41" step="0.05" value="22"></label>
+      <label class="fl-row" for="cg">CG from nose, in <output aria-live="off" id="cg-v" for="cg">22.00</output><input id="cg" aria-label="CG from nose, in" type="range" min="12" max="41" step="0.05" value="22"></label>
     </section>
 
     <section class="fl-group" aria-labelledby="g-range">
       <h2 id="g-range">Range</h2>
-      <label class="fl-row">Rail length, in <output id="rail-v">72.0</output><input id="rail" type="range" min="35.4" max="94.5" step="0.1" value="72"></label>
-      <label class="fl-row">Launch angle, deg <output id="ang-v">0.0</output><input id="ang" type="range" min="-10" max="10" step="0.1" value="0"></label>
-      <label class="fl-row">Wind toward +x, mph <output id="wind-v">0.0</output><input id="wind" type="range" min="0" max="20.1" step="0.1" value="0"></label>
-      <label class="fl-row">Turbulence, mph RMS <output id="turb-v">0.0</output><input id="turb" type="range" min="0" max="8" step="0.1" value="0"></label>
+      <label class="fl-row" for="rail">Rail length, in <output aria-live="off" id="rail-v" for="rail">72.0</output><input id="rail" aria-label="Rail length, in" type="range" min="35.4" max="94.5" step="0.1" value="72"></label>
+      <label class="fl-row" for="ang">Launch angle, deg <output aria-live="off" id="ang-v" for="ang">0.0</output><input id="ang" aria-label="Launch angle, deg" type="range" min="-10" max="10" step="0.1" value="0"></label>
+      <label class="fl-row" for="wind">Wind toward +x, mph <output aria-live="off" id="wind-v" for="wind">0.0</output><input id="wind" aria-label="Wind toward +x, mph" type="range" min="0" max="20.1" step="0.1" value="0"></label>
+      <label class="fl-row" for="turb">Turbulence, mph RMS <output aria-live="off" id="turb-v" for="turb">0.0</output><input id="turb" aria-label="Turbulence, mph RMS" type="range" min="0" max="8" step="0.1" value="0"></label>
       <label class="fl-row">Turbulence seed <input id="seed" type="number" min="0" max="4294967295" step="1" value="1"></label>
     </section>
 
     <section class="fl-group" aria-labelledby="g-dist">
       <h2 id="g-dist">Disturb</h2>
-      <label class="fl-row">Gust peak, mph <output id="gust-v">11.2</output><input id="gust" type="range" min="0" max="33.6" step="0.1" value="11.2"></label>
+      <label class="fl-row" for="gust">Gust peak, mph <output aria-live="off" id="gust-v" for="gust">11.2</output><input id="gust" aria-label="Gust peak, mph" type="range" min="0" max="33.6" step="0.1" value="11.2"></label>
       <label class="fl-check"><input type="checkbox" id="gust-arm" checked> Fire at rail exit</label>
       <div class="fl-btns" style="--n: 1"><button type="button" class="fl-btn" id="gust-fire">Fire gust now</button></div>
-      <label class="fl-row">Flick, deg/s <output id="flick-v">20</output><input id="flick" type="range" min="0" max="120" step="1" value="20"></label>
+      <label class="fl-row" for="flick">Flick, deg/s <output aria-live="off" id="flick-v" for="flick">20</output><input id="flick" aria-label="Flick, deg/s" type="range" min="0" max="120" step="1" value="20"></label>
       <div class="fl-btns" style="--n: 2">
         <button type="button" class="fl-btn" id="flick-neg">Flick to -x</button>
         <button type="button" class="fl-btn" id="flick-pos">Flick to +x</button>
@@ -195,7 +195,7 @@
     <section class="fl-group" aria-labelledby="g-lat">
       <h2 id="g-lat">Lattice moment / bench</h2>
       <label class="fl-check"><input type="checkbox" id="lat-on"> Lattice flies it</label>
-      <label class="fl-row">C_m, theta sense <output id="lat-v">0.00</output><input id="lat" type="range" min="-10" max="10" step="0.05" value="0"></label>
+      <label class="fl-row" for="lat">C_m, theta sense <output aria-live="off" id="lat-v" for="lat">0.00</output><input id="lat" aria-label="Lattice C_m, theta sense" type="range" min="-10" max="10" step="0.05" value="0"></label>
       <p class="fl-note">On the page the lattice supplies C_m live through a 10 Hz low-pass. Here a fixed value replaces the Barrowman moment so the sign and the filter can be checked. Positive C_m raises theta.</p>
     </section>
   </aside>

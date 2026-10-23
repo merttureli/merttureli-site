@@ -17,7 +17,7 @@
    Playback (handed to the panel): {rate, setRate, launch, pause, resume, step, reset,
    paused, running, done}. The rate is automatic until the visitor or ?speed picks one:
    1/8 of real time until 3 s after burnout, then real time. The flight is stepped with
-   min(frame seconds, 0.1) x rate; the flight itself takes at most 0.25 s per call.
+   min(frame seconds, 0.25) x rate; the flight itself takes at most 0.25 s per call.
 
    URL state (read once at load; the panel's settings are written back with
    history.replaceState): ?fins=0..1.5|none|half|full ?cg=<in> ?rail=<in> ?angle=<deg>
@@ -57,6 +57,7 @@ const GUST_DEFAULT_MPH = 5 / MPS_PER_MPH;   // EST: the 5 m/s of the FIELD 3 tes
 const HOLD_WIND_MPH = 10;              // EST: the crosswind run's wind, used when ?hold has no ?wind
 const AUTOLAUNCH_WAIT_MS = 8000;       // launch anyway if the 3D scene is not ready by then
 const reducedMq = matchMedia('(prefers-reduced-motion: reduce)');
+const phoneMq = matchMedia('(max-width: 859.98px)');   // the panel's phone breakpoint (panel.css, field.css)
 const params = new URLSearchParams(location.search);
 
 const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
@@ -69,8 +70,9 @@ const fx = (v, d = 2, signed = false) => {
   return v < 0 && !zero ? MINUS + s : (signed && !zero ? '+' + s : s);
 };
 const timeCode = (t) => {
-  t = finite(t) ? Math.max(0, t) : 0;
-  const s = Math.floor(t), ms = Math.round((t - s) * 1000) % 1000;
+  // round to whole milliseconds first: the flight sums 1 ms steps, so 2 s is stored as 1.99999...
+  const all = Math.round((finite(t) ? Math.max(0, t) : 0) * 1000);
+  const s = Math.floor(all / 1000), ms = all % 1000;
   return `T+${String(s).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
 };
 const rateText = (r) => (!(r > 0) ? '—' : r >= 1 ? '1' : `1/${Math.round(1 / r)}`);
@@ -213,6 +215,13 @@ panel = mountPanel(stage, {
 });
 if (URL0.gust !== undefined) panel.set('gust', URL0.gust);
 const panelValue = (name, dflt) => { const v = panel.state.values[name]; return v === undefined ? dflt : v; };
+/* forced colours: panel.css lets the chart dock grow upward to show the chart's text
+   summary, so the view box follows the dock's real height (field.css) and the captions
+   and the hint line stay clear of it. Elsewhere the dock keeps its fixed height. */
+const dockEl = stage.querySelector('.pn-dock');
+if (dockEl && typeof ResizeObserver === 'function') {
+  new ResizeObserver(() => { stage.style.setProperty('--fd-dock-real', `${Math.ceil(dockEl.getBoundingClientRect().height)}px`); }).observe(dockEl);
+}
 
 /* ------------------------------------------------------------------ scene or 2D view */
 let scene3d = null;        // the 3D scene (createScene) once it exists
@@ -223,9 +232,10 @@ let fallbackWhy = '';
 function sceneDerived() {
   const st = flight.state, d = flight.derived;
   return {
-    // the CP the normal force acts at, this alpha (Barrowman plus body lift; equal to
-    // derived.xcp at small alpha), so the N arrow sits where the force acts
-    xcp: finite(st.xcpNow) ? st.xcpNow : d.xcp,
+    // the scene takes both CPs from flight.state (scene.js): the static Barrowman xcp for
+    // the CP dot, its label and MARGIN (the panel's CP / BARROWMAN), xcpNow for the
+    // normal-force arrow. This xcp is only its fallback for a state without them.
+    xcp: d.xcp,
     xcg: st.xcg,
     xref: st.refFromNose,
     xcpLattice: latticeXcpM(),
@@ -250,12 +260,16 @@ async function initView() {
   try { mod = await import('./scene/scene.js'); }
   catch (err) { console.warn('[field] the 3D scene did not load; using the 2D view', err); return useFallback('scene-module'); }
   let s;
-  try { s = mod.createScene(sceneCanvas, { tier: governor.tier, zoom: false, touchAction: 'pan-y' }); }
+  try { s = mod.createScene(sceneCanvas, { tier: governor.tier, zoom: false, touchAction: 'pan-y pinch-zoom' }); }
   catch (err) { console.warn('[field] the 3D scene failed; using the 2D view', err); return useFallback('scene-failed'); }
   if (s.fallback) { try { s.destroy(); } catch { /* the no-op fallback */ } return useFallback(s.fallback); }
   scene3d = s; viewKind = '3d';
   applyPanelToScene(s);
-  s.onFlick((r) => { flight.flick(r); panel.wake(); syncScene(); kick(); });
+  // drags and arrow keys on the view go through the panel, as its FLICK buttons do, so a
+  // flick is announced and a refused one (on the pad, or before the rail is clear) says so
+  s.onFlick((r) => { panel.press('flick', r); syncScene(); kick(); });
+  sceneCanvas.addEventListener('webglcontextlost', onContextLost);
+  sceneCanvas.addEventListener('webglcontextrestored', onContextRestored);
   panel.attach({ scene: s });
   syncScene();
   const ok = await s.ready;
@@ -268,10 +282,10 @@ async function initView() {
     }
     return false;
   }
-  write(statusEl, ''); statusEl.hidden = true;
-  if (governor.tier === 0 && governor.ceiling === 0) {
-    // reduced motion or a device that never leaves tier 0: no flow to show, so the
-    // engine is not even fetched until a tier above 0 appears (a ?tier pin)
+  if (!ctxLost) { write(statusEl, ''); statusEl.hidden = true; }
+  if (governor.tier === 0 && (governor.ceiling === 0 || governor.stats.pinned)) {
+    // reduced motion, a device that never leaves tier 0 or a ?tier=0 pin: no flow to
+    // show, so the engine is not even fetched until a tier above 0 appears
     lat.deferred = true; lat.reason = 'off at tier 0';
     panel.attach({ lattice: LATTICE_STUB('off at tier 0') });
     updateHeader(true); updateCaption(true);
@@ -288,9 +302,12 @@ function useFallback(reason) {
   const c = document.createElement('canvas');
   viewport.insertBefore(c, sceneCanvas.nextSibling);
   const v = panel.state.values;
+  // the second line is the source tag of every number the 2D view draws (its CG, CP,
+  // wind and angle readouts are the flight model's; the rail length is the 72 in estimate)
+  const why = reason === 'no-webgl2' ? 'NO WEBGL2 IN THIS BROWSER' : reason === 'context-lost' ? 'THE 3D VIEW LOST ITS CONTEXT' : 'THE 3D VIEW DID NOT LOAD';
   fbView = createFallbackView(c, geometry, flight, {
     finScale: flight.config.finScale, view: v.section || 'through', markers: v.markers !== false,
-    caption: ['2D VIEW', reason === 'no-webgl2' ? 'NO WEBGL2 IN THIS BROWSER' : 'THE 3D VIEW DID NOT LOAD'],
+    caption: [`2D VIEW / ${why}`, 'TRUE ANGLES / SIM / RAIL EST'],
   });
   panel.attach({ scene: fbView, lattice: LATTICE_STUB(reason === 'no-webgl2' ? 'no-webgl2' : 'no 3d view') });
   write(hintEl, 'DRAG THE ROCKET SIDEWAYS TO FLICK IT / L LAUNCH');
@@ -298,11 +315,81 @@ function useFallback(reason) {
   write(head.grid, reason === 'no-webgl2' ? 'OFF / NO WEBGL2' : 'OFF / NO 3D VIEW');
   write(head.engine, 'BARROWMAN 3-DOF / 2D VIEW');
   updateCaption(true);
+  updateLatticeRow();
   return true;
 }
 
+/* A lost WebGL context (a GPU reset, or the browser reclaiming the context) leaves the
+   canvas black and stops the lattice: the scene and the engine both stop drawing and wait
+   for a restore. The stage says so meanwhile. If the context is not back within
+   CONTEXT_WAIT_MS the 3D view and the lattice are dropped for the 2D view, so the flight
+   and the panel carry on; a restore inside that time picks up where it was (the engine
+   restarts its flow, so the cost guard's warm-up starts again too). */
+const CONTEXT_WAIT_MS = 5000;
+const HINT_3D = hintEl ? hintEl.textContent : '';
+let ctxLost = false, ctxTimer = 0, ctxLabel = null;
+function onContextLost() {
+  if (ctxLost || viewKind !== '3d') return;
+  ctxLost = true;
+  ctxLabel = sceneCanvas.getAttribute('aria-label');
+  sceneCanvas.setAttribute('aria-label', 'The 3D view lost its graphics context. The flight and the panel keep running.');
+  write(statusEl, '3D VIEW LOST / WAITING FOR THE GRAPHICS CONTEXT'); statusEl.hidden = false;
+  write(hintEl, 'L LAUNCH / THE FLIGHT AND THE PANEL KEEP RUNNING');
+  if (lat.lattice) panel.attach({ lattice: LATTICE_STUB('context lost') });
+  updateHeader(true); updateCaption(true);
+  clearTimeout(ctxTimer);
+  ctxTimer = setTimeout(contextGone, CONTEXT_WAIT_MS);
+}
+function onContextRestored() {
+  if (!ctxLost) return;
+  ctxLost = false; clearTimeout(ctxTimer); ctxTimer = 0;
+  if (ctxLabel !== null) sceneCanvas.setAttribute('aria-label', ctxLabel);
+  write(statusEl, ''); statusEl.hidden = true;
+  write(hintEl, HINT_3D);
+  if (lat.lattice) { panel.attach(lat.live ? { lattice: lat.panelView, section: lat.section } : { lattice: LATTICE_STUB(lat.cap === 0 ? 'paused, slow frames' : 'off at tier 0') }); costRestart(); }
+  updateHeader(true); updateCaption(true);
+  syncScene(); kick();
+}
+function contextGone() {
+  ctxTimer = 0;
+  if (!ctxLost || viewKind !== '3d') return;
+  ctxLost = false;
+  sceneCanvas.removeEventListener('webglcontextlost', onContextLost);
+  sceneCanvas.removeEventListener('webglcontextrestored', onContextRestored);
+  console.warn('[field] the graphics context did not come back; using the 2D view');
+  const l = lat.lattice;
+  lat.lattice = null; lat.section = null; lat.texture = null; lat.panelView = null; lat.appliedTier = null; lat.live = false; lat.deferred = false;
+  builtSection = null;
+  if (l) { try { l.destroy(); } catch { /* the context is gone */ } }
+  const s = scene3d; scene3d = null;
+  if (s) { try { s.destroy(); } catch { /* the context is gone */ } }
+  useFallback('context-lost');
+}
+
 /* ================================================================== LATTICE SLOT
-   LATTICE SLOT: verified by the second integrator.
+   LATTICE SLOT: verified by the second integrator (integrate:b, 2026-10-22, headless
+   Chromium on SwiftShader with ?tier=1 pinned, 512 x 160; the measurements are in the
+   README and the method):
+   - force.cm sign at ?hold=5&lab: the developed section's cm is positive while
+     flight.state.Maero is -0.42, because the 2D section's CP sits ahead of the CG
+     (destabilising), not because of the convention: cm = cn (xcg - xcp) / D holds in the
+     flight sign (positive raises theta), so CM_SIGN stays +1 (see below). The held flow
+     does not settle: sampled every 250 steps to 12,500 (fix pass, 2026-10-23), the
+     developed CP swings between 9.5 and 21.1 in from the nose (about 4,000 steps a
+     cycle), c_n 17 to 32, cm +11 to +82 about the 22 in section CG and +6 to +79 about
+     the live CG (21.57 in at the hold), which is the one shown and used (cmAtLiveCg).
+   - moving-wall damping: positive pitch rate gives a negative moment change, so
+     setBodyRate's sign matches the engine. The slewed response the engine now gives
+     (flicks to q +3.38 and -4.62 rad/s from the hold) is in the "Body rate" paragraph of
+     vx/js/lattice/lattice.js.
+   - slice orientation at alpha +15: scene.checkSign() passes (slice inflow and the drawn
+     wind arrow both (0.258, -0.966)); grid row 0, the body's -x side, projects left of
+     the axis, where the smoke and the high pressure arrive.
+   - lattice CP at alpha 0: a dash (the engine gates xcpCells on a developed flow,
+     |alpha| 1 deg and |c_n| 1; the section's rail buttons give c_n -0.1 to -0.4 at 0).
+   - tier change: pinning 1 -> 2 -> 1 swaps the grid (512 x 160 -> 768 x 240 -> 512 x
+     160), rebuilds the section (dCells 19.46 -> 29.19 -> 19.46, links 2264 -> 3410 ->
+     2264), keeps lattice.texture the same object and moves the slice domain with it.
 
    attachLattice(scene, geometry, flight) wires the lattice engine (FIELD.md section 4)
    to the scene, the panel and the flight. It depends only on the contract's API:
@@ -314,11 +401,13 @@ function useFallback(reason) {
 
    What it does
    - import('./lattice/lattice.js') inside try/catch, createLattice on scene.renderer
-     with the current tier's grid, await ready (15 s cap).
-   - Section: geometry.buildSection({cols, rows, finScale, view, cgM}) at that grid,
-     passed whole to setSection (cgCell is a value since the geom fix), then
-     scene.setSliceTexture(lattice.texture, section) and panel.attach({lattice}) plus
-     panel.setSection(section). Rebuilt on a fin scale, section view, CG or tier change.
+     with the current tier's grid ({cols, rows, tier}; the engine scales that grid by its
+     tier table on setTier), await ready (15 s cap).
+   - Section: geometry.buildSection({cols, rows, finScale, view, cgM}) at the engine's
+     grid, handed to setSection in the builder form (sectionBuilder; setTier rebuilds the
+     mask once at the new grid), then scene.setSliceTexture(lattice.texture, section),
+     panel.attach({lattice: panelLatticeView}) and panel.setSection(section). Rebuilt on a
+     fin scale, section view, CG or tier change, at most every 250 ms while a slider moves.
    - Every frame while the stage is on screen: setInflow(u_in, alpha) with
        u_in = clamp(0.03 + 0.05 V / 70, 0.03, 0.10)    (V = flight.state.airspeed, m/s)
      and alpha clamped to +-35 deg (the engine clamps too; the stage caption says so);
@@ -332,7 +421,8 @@ function useFallback(reason) {
      which is what the lattice header documents for setBodyRate.
      Then lattice.frame(dt); a new lattice.texture object is handed to the scene.
    - Lab toggle (LATTICE FLIES IT, ?lab): flight.setLatticeMoment(CM_SIGN * CM_SCALE *
-     force.cm) while flight.state.lattice is on and the force is under 0.5 s old.
+     cm about the live CG) while flight.state.lattice is on and the force is developed and under
+     0.5 s old (under SwiftShader the readback lags 1.5 to 3 s, so it never feeds there).
      CM_SIGN is +1: FIELD.md section 4 defines xcpCells = xcg - mz / fy, which holds
      only when mz (and cm) are in the flight convention (positive raises theta, so a
      restoring moment at positive alpha reads negative), and vx/js/lattice/lattice.js
@@ -341,10 +431,6 @@ function useFallback(reason) {
      double the flip and make the lattice destabilise the rocket. CM_SCALE is 1: the
      2D section coefficient is used as the 3D one, which the method calls a
      cross-check for this reason.
-   What the second integrator verifies (see the report): the sign of force.cm against
-   flight.state.Maero at ?hold=5 with full fins, the sign of the moving-wall term after
-   a flick, the slice texture orientation against the scene's checkSign(), the tier
-   change path (grid and texture swap) and the ?lab toggle in flight.
    ================================================================== */
 const LATTICE_GRIDS = { 3: { cols: 1024, rows: 320 }, 2: { cols: 768, rows: 240 }, 1: { cols: 512, rows: 160 } };
 const LATTICE_READY_MS = 15000;
@@ -355,15 +441,32 @@ const WALL_U_MAX = 0.05;             // lattice units: cap on the moving-wall sp
 const CM_SIGN = 1;                   // lattice cm (flight convention) to flight.setLatticeMoment; see above
 const CM_SCALE = 1;                  // 2D section coefficient taken as the 3D one (EST)
 const FORCE_FRESH_MS = 500;
-const lat = { lattice: null, section: null, texture: null, live: false, reason: 'lattice pending', clamped: false, rMaxCells: 1, mod: null, cap: 3, shedMs: 0, liveSince: 0 };
-/* Cost guard (EST). The governor decides only after a full 90-frame window and skips
-   intervals over 1 s as tab gaps (core/governor.js, frame()), so a software renderer that
-   needs 0.5 to 2 s per frame with the lattice running keeps it for a minute or more. Here
-   a sustained frame interval over SLOW_FRAME_MS for SLOW_HOLD_MS sheds one lattice tier;
-   below tier 1 the flow stops and the stage offers RESUME. A pinned tier (?tier=) is
-   never shed: that is how the lattice is forced on for verification. */
-const SLOW_FRAME_MS = 120, SLOW_HOLD_MS = 2500, SHED_WARMUP_MS = 1500;
-let slowSince = 0;
+const lat = { lattice: null, panelView: null, section: null, texture: null, live: false, reason: 'lattice pending', clamped: false, rMaxCells: 1, mod: null, cap: 3, shedMs: 0, appliedTier: null };
+/* Cost guard (EST), aware of the flow's development. The governor now samples slow
+   frames too (each interval clamped to 1 s, core/governor.js, frame()) and steps down
+   under software GL, but only on its whole-page p95 over a full 90-frame window, after
+   its 6 s start-up grace and a 2.2 s hold; and the engine sheds steps on its own (down to
+   one per frame). This guard is the second line, for frames neither can shed fast
+   enough: it judges only the frames the lattice runs in, and only after a warm-up:
+   - Warm-up starts whenever a grid is built (attach, a tier change, RESUME FLOW) and lasts
+     until the guard has seen WARM_FRAMES lattice frames AND the engine reports a developed
+     flow (lattice.stats.developed: its start-up viscosity has eased back to tau0, about
+     2,000 steps, and the inflow has reached its target), and never longer than WARM_MAX_MS
+     of wall time. Shader compilation, the first texture uploads, the CAD build and the
+     idle-time run previews all land inside it, so a working GPU (2,000 steps take 1.4 s at
+     tier 3 and 60 Hz) is never judged on them, while a renderer that needs seconds per
+     frame is judged after WARM_MAX_MS however few frames it has drawn.
+   - Verdict: the window is every consecutive lattice-frame interval of the last
+     SLOW_HOLD_MS, and at least the last SLOW_MIN_FRAMES. When the window spans at least
+     SLOW_HOLD_MS, its median is over SLOW_FRAME_MS, and the engine's own step shedding has
+     run out (stats.stepScale at its floor of one step per frame; not waited for when the
+     median is over HOPELESS_MS, since fewer steps cannot rescue a frame that slow), one
+     lattice tier is shed; below tier 1 the flow pauses and the stage offers RESUME FLOW.
+   - A pinned tier (?tier=) is never judged: that is how the lattice is forced on for
+     verification under software GL. */
+const SLOW_FRAME_MS = 120, SLOW_HOLD_MS = 2500, SLOW_MIN_FRAMES = 3, HOPELESS_MS = 1000, WARM_FRAMES = 20, WARM_MAX_MS = 12000;
+const cost = { since: 0, frames: 0, iv: [], at: [] };
+let prevFlowing = false;
 
 const inflowLU = (V) => clamp(U_FLOOR + U_SLOPE * ((finite(V) ? V : 0) / U_V_REF), U_FLOOR, U_MAX);
 function bodyRateLU(q, V, uIn) {
@@ -383,6 +486,40 @@ function latticeXcpM() {
   if (!f || !lat.section || !finite(f.xcpCells) || (finite(f.age_ms) && f.age_ms > 3000)) return NaN;
   return (f.xcpCells - lat.section.xNoseCol) * lat.section.cellM;
 }
+/* The engine takes the moment about the section's CG cell, the CG the section was built
+   with (the CG slider, the liftoff CG); the flight's CG moves forward as the propellant
+   burns (22.00 in at liftoff, 20.67 in at burnout). A moment moves with its reference
+   point, mz_b = mz_a + fy (b - a), so about the live CG
+     cm_live = cm + cn (x_cg,live - x_cg,section) / D        (x in cells, D = dCells)
+   which is what the panel prints next to CG / LIVE and what LATTICE FLIES IT hands the
+   flight. The CP (xcpCells) does not depend on the reference point. */
+function cmAtLiveCg(f) {
+  if (!f || !finite(f.cm)) return NaN;
+  const sec = lat.section, xcg = flight.state.xcg;
+  const d = finite(f.dCells) && f.dCells > 0 ? f.dCells : sec && sec.dCells;
+  if (!sec || !sec.cgCell || !finite(xcg) || !finite(f.cn) || !(d > 0)) return f.cm;
+  return f.cm + f.cn * (sec.xNoseCol + xcg / sec.cellM - sec.cgCell.x) / d;
+}
+/* What the panel reads: the engine's force with cm moved to the live CG (cmSection keeps
+   the engine's own), plus the stats, the fallback and setView it uses. */
+function panelLatticeView(l) {
+  let src = null, at = NaN, out = null;
+  return {
+    get fallback() { return l.fallback; },
+    get stats() { return l.stats; },
+    get force() {
+      const f = l.force;
+      if (!f || !finite(f.cm)) return f;
+      const xcg = flight.state.xcg;
+      if (f !== src || xcg !== at) {
+        src = f; at = xcg;
+        out = Object.create(f, { cm: { value: cmAtLiveCg(f), enumerable: true }, cmSection: { value: f.cm, enumerable: true } });
+      }
+      return out;
+    },
+    setView(name) { return l.setView(name); },
+  };
+}
 
 function latticePending(reason) {
   lat.live = false; lat.reason = reason || 'lattice pending';
@@ -392,16 +529,31 @@ function latticePending(reason) {
   updateCaption(true); updateHeader(true);
 }
 
+/* The section at a grid for the current fin scale, section view and CG. The geometry
+   caches masks and sections (geom.js), so asking again for an unchanged one is a lookup. */
+function sectionAt(cols, rows) {
+  const cfg = flight.config;
+  return geometry.buildSection({ cols, rows, finScale: cfg.finScale, view: panelValue('section', 'through'), cgM: cfg.cgFromNose });
+}
+/* Handed to lattice.setSection in the builder form: the engine calls it at its own grid, on
+   setSection and again on a tier change (setTier then builds the mask once, at the new
+   grid). builtSection is the section the engine holds. */
+let builtSection = null;
+const sectionBuilder = ({ cols, rows }) => (builtSection = sectionAt(cols, rows));
+
 function rebuildSection() {
   const l = lat.lattice;
   if (!l || !scene3d) return;
   const t = latticeTier();
   if (t === 0) { lat.live = false; scene3d.setSliceTexture(null); updateCaption(true); updateHeader(true); return; }
   const grid = latticeGrid(t);
-  const cfg = flight.config;
-  const sec = geometry.buildSection({ cols: grid.cols, rows: grid.rows, finScale: cfg.finScale, view: panelValue('section', 'through'), cgM: cfg.cgFromNose });
-  try { l.setSection(sec); }
-  catch (err) { console.warn('[field] lattice.setSection failed; running without the lattice', err); return detachLattice('lattice pending'); }
+  const sec = sectionAt(grid.cols, grid.rows);
+  // nothing that shapes the solid changed (wind, rail and angle changes emit flight:config too)
+  if (sec === lat.section && sec === builtSection && lat.live) return;
+  if (sec !== builtSection) {
+    try { l.setSection(sectionBuilder); lastSectionAt = performance.now(); }
+    catch (err) { console.warn('[field] lattice.setSection failed; running without the lattice', err); return detachLattice('lattice pending'); }
+  }
   lat.section = sec;
   const tailCol = sec.xNoseCol + (geometry.refs.length / sec.cellM);
   lat.rMaxCells = Math.max(sec.cgCell.x - sec.xNoseCol, tailCol - sec.cgCell.x);
@@ -410,7 +562,7 @@ function rebuildSection() {
   panel.setSection(sec);
   const was = lat.live;
   lat.live = true;                 // the texture may appear on a later frame; latticeFrame hands it over when it does
-  if (!was) lat.liveSince = performance.now();
+  if (!was) costRestart();
   updateCaption(true);
 }
 
@@ -419,38 +571,53 @@ function applyLatticeTier() {
   const l = lat.lattice;
   if (!l) return;
   const t = latticeTier();
+  // a governor step that leaves min(governor tier, cap) where it was changes nothing here:
+  // no new grid, so no rebuilt section (which drops the readbacks in flight) and no new warm-up
+  if (t === lat.appliedTier) { updateHeader(true); updateCaption(true); return; }
+  lat.appliedTier = t;
   try { l.setTier(t); } catch (err) { console.warn('[field] lattice.setTier failed', err); }
   if (t === 0) {
     lat.live = false;
     if (scene3d) scene3d.setSliceTexture(null);
     panel.attach({ lattice: LATTICE_STUB(lat.cap === 0 ? 'paused, slow frames' : 'off at tier 0') });
   } else {
-    panel.attach({ lattice: l });
-    rebuildSection();
-    lat.liveSince = performance.now(); slowSince = 0;     // a new grid recompiles: start the cost watch afresh
+    panel.attach({ lattice: lat.panelView });
+    rebuildSection();              // setTier has built the section at the new grid; this picks it up
+    costRestart();                 // a new grid: the flow restarts, so the warm-up does too
   }
   updateHeader(true); updateCaption(true);
 }
+function costRestart() { cost.since = performance.now(); cost.frames = 0; cost.iv.length = 0; cost.at.length = 0; }
+/* called once per frame the lattice ran in; intervalMs is NaN unless the frame before ran it too */
 function watchLatticeCost(intervalMs, now) {
-  if (!lat.live || governor.stats.pinned || now - lat.liveSince < SHED_WARMUP_MS) { slowSince = 0; return; }
-  if (!(intervalMs > SLOW_FRAME_MS)) { slowSince = 0; return; }
-  if (!slowSince) { slowSince = now; return; }
-  if (now - slowSince < SLOW_HOLD_MS) return;
-  slowSince = 0;
-  lat.shedMs = intervalMs;
+  const l = lat.lattice;
+  if (!l || !lat.live || governor.stats.pinned) { cost.iv.length = 0; cost.at.length = 0; return; }
+  const s = l.stats || {};
+  cost.frames++;
+  const warm = now - cost.since < WARM_MAX_MS && (cost.frames < WARM_FRAMES || !s.developed);
+  if (warm || !finite(intervalMs)) { cost.iv.length = 0; cost.at.length = 0; return; }
+  cost.iv.push(intervalMs); cost.at.push(now);
+  // drop the oldest interval while the rest still cover SLOW_HOLD_MS with SLOW_MIN_FRAMES or more
+  while (cost.iv.length > SLOW_MIN_FRAMES && now - (cost.at[1] - cost.iv[1]) >= SLOW_HOLD_MS) { cost.iv.shift(); cost.at.shift(); }
+  if (cost.iv.length < SLOW_MIN_FRAMES || now - (cost.at[0] - cost.iv[0]) < SLOW_HOLD_MS) return;
+  const median = cost.iv.slice().sort((a, b) => a - b)[cost.iv.length >> 1];
+  const atFloor = median > HOPELESS_MS || !(s.stepsPerFrame > 0 && s.stepScale > 1.5 / s.stepsPerFrame);
+  if (!(median > SLOW_FRAME_MS) || !atFloor) return;
+  lat.shedMs = median;
   lat.cap = Math.max(0, latticeTier() - 1);
-  console.info(`[field] frames at ${Math.round(intervalMs)} ms with the lattice running: lattice tier capped at ${lat.cap}`);
+  console.info(`[field] lattice frames at a median ${Math.round(median)} ms after warm-up: lattice tier capped at ${lat.cap}`);
   applyLatticeTier();
 }
 function resumeLattice() {
-  lat.cap = 3; slowSince = 0;
+  lat.cap = 3;
   applyLatticeTier();
   kick();
 }
 
 function detachLattice(reason) {
   const l = lat.lattice;
-  lat.lattice = null; lat.section = null; lat.texture = null;
+  lat.lattice = null; lat.panelView = null; lat.section = null; lat.texture = null; lat.appliedTier = null;
+  builtSection = null;
   if (l) { try { l.destroy(); } catch { /* already gone */ } }
   latticePending(reason);
 }
@@ -466,10 +633,10 @@ async function attachLattice(scene, geometry, flight) {
   lat.mod = mod;
   const t = latticeTier();
   let l;
-  // {tier} only: the engine reads cols and rows as a fixed grid (lattice.js, gridForTier),
-  // which would keep one grid through every tier drop; without them the FIELD 4 tier
-  // table (LATTICE_GRIDS here) sets the grid and setTier() can shrink it.
-  try { l = mod.createLattice(scene.renderer, { tier: t }); }
+  // the contract's {cols, rows, tier}: the grid at this tier, which the engine scales by its
+  // tier table on setTier (FIELD 4); tier 0 at attach starts from the tier-3 grid
+  const g0 = LATTICE_GRIDS[t >= 1 ? t : 3];
+  try { l = mod.createLattice(scene.renderer, { cols: g0.cols, rows: g0.rows, tier: t }); }
   catch (err) { console.warn('[field] createLattice failed; the page runs without it', err); return latticePending('lattice pending'); }
   let res = null;
   try {
@@ -478,9 +645,13 @@ async function attachLattice(scene, geometry, flight) {
   const reason = (l && l.fallback) || (res && res.fallback) || null;
   if (reason || scene3d !== scene) { try { l.destroy(); } catch { /* nothing to free */ } return latticePending(reason || 'lattice pending'); }
   lat.lattice = l;
+  lat.panelView = panelLatticeView(l);
+  lat.appliedTier = t;
+  builtSection = null;
   try { l.setView(panelValue('view', 'smoke')); } catch { /* the view stays the engine's default */ }
   rebuildSection();
-  panel.attach(lat.live ? { lattice: l, section: lat.section } : { lattice: LATTICE_STUB('off at tier 0') });
+  costRestart();
+  panel.attach(lat.live ? { lattice: lat.panelView, section: lat.section } : { lattice: LATTICE_STUB('off at tier 0') });
   updateHeader(true);
   kick();
   return l;
@@ -488,7 +659,7 @@ async function attachLattice(scene, geometry, flight) {
 
 function latticeFrame(dt) {
   const l = lat.lattice;
-  if (!l || !lat.live || !scene3d || !stageOnScreen || document.hidden) return false;
+  if (!l || !lat.live || ctxLost || !scene3d || !stageOnScreen || document.hidden) return false;
   const st = flight.state;
   const V = finite(st.airspeed) ? st.airspeed : (finite(st.v) ? st.v : 0);
   const uIn = inflowLU(V);
@@ -497,7 +668,8 @@ function latticeFrame(dt) {
   lat.uIn = uIn; lat.alphaIn = clamp(a, -ALPHA_MAX, ALPHA_MAX);
   try {
     l.setInflow(uIn, lat.alphaIn);
-    l.setBodyRate(bodyRateLU(st.q, V, uIn));
+    lat.omegaLU = bodyRateLU(st.q, V, uIn);
+    l.setBodyRate(lat.omegaLU);
     l.frame(dt);
   } catch (err) {
     console.warn('[field] lattice frame failed; running without the lattice', err);
@@ -507,34 +679,35 @@ function latticeFrame(dt) {
   if (l.texture !== lat.texture) { lat.texture = l.texture; scene3d.setSliceTexture(l.texture || null, lat.section); }
   if (st.lattice) {
     const f = l.force;
-    if (f && finite(f.cm) && !(finite(f.age_ms) && f.age_ms > FORCE_FRESH_MS)) flight.setLatticeMoment(CM_SIGN * CM_SCALE * f.cm);
+    if (f && f.developed !== false && finite(f.cm) && !(finite(f.age_ms) && f.age_ms > FORCE_FRESH_MS)) flight.setLatticeMoment(CM_SIGN * CM_SCALE * cmAtLiveCg(f));
   }
   return true;
 }
 /* ================================================================== end of the LATTICE SLOT */
 
 /* ------------------------------------------------------------------ the loop */
-let raf = 0, lastNow = 0, stageOnScreen = true, sectionPending = 0;
+let raf = 0, lastNow = 0, stageOnScreen = true;
 function kick() { if (!raf && !document.hidden) { raf = requestAnimationFrame(tick); } }
 function tick(now) {
   raf = 0;
   const interval = lastNow ? now - lastNow : NaN;
   const dt = lastNow ? Math.min(MAX_FRAME_S, Math.max(0, interval / 1000)) : 1 / 60;
   lastNow = now;
-  if (finite(interval)) watchLatticeCost(interval, now);
   let busy = false;
   if (playback.running) {
     flight.step(dt * playback.rate);
     busy = true;
   }
   const flowing = latticeFrame(dt);
+  if (flowing) watchLatticeCost(prevFlowing ? interval : NaN, now);
+  prevFlowing = flowing;
   busy = busy || flowing;
   if (scene3d) {
     syncScene();
     if (busy) scene3d.render(dt);
   }
   if (playback.rate !== shownRate) { shownRate = playback.rate; panel.sync(); }
-  updateHeader(false);
+  updateHeader(!busy);              // the frame that stops the loop always writes, so a STEP never leaves a stale time
   updateCaption(false);
   if (busy) raf = requestAnimationFrame(tick); else lastNow = 0;
 }
@@ -546,8 +719,22 @@ if (typeof IntersectionObserver === 'function') {
 /* the bus: resets and config changes move the rocket on the pad */
 bus.on('flight:reset', () => { syncScene(); kick(); });
 bus.on('flight:config', () => { syncScene(); scheduleSection(); kick(); });
+/* Section rebuilds while a slider moves. The fin, CG and section controls emit on every
+   input event, and a new section costs the main thread tens of milliseconds at tier 3
+   (geom.buildSection rasterising the mask, then the engine's cell pass and texture upload
+   in setSection). The first change rebuilds on the next frame, later ones at most every
+   SECTION_MIN_MS, and the last one always lands (the trailing timer reads the config when
+   it fires). A change that leaves the solid as it was (wind, rail, angle) costs a lookup. */
+const SECTION_MIN_MS = 250;
+let sectionPending = 0, sectionTimer = 0, lastSectionAt = -Infinity;
 function scheduleSection() {
-  if (sectionPending || !lat.lattice) return;
+  if (sectionPending || sectionTimer || !lat.lattice) return;
+  const wait = SECTION_MIN_MS - (performance.now() - lastSectionAt);
+  if (wait > 0) sectionTimer = setTimeout(() => { sectionTimer = 0; queueSection(); }, wait);
+  else queueSection();
+}
+function queueSection() {
+  if (sectionPending) return;
   sectionPending = requestAnimationFrame(() => { sectionPending = 0; rebuildSection(); kick(); });
 }
 governor.subscribe(({ tier }) => {
@@ -580,15 +767,20 @@ function updateHeader(force) {
   write(head.tier, `T${t}${governor.stats.pinned ? ' PINNED' : ''}`);
   if (viewKind === '2d') return;
   const l = lat.lattice;
-  if (l && lat.live) {
+  if (ctxLost) {
+    write(head.grid, 'CONTEXT LOST');
+    write(head.engine, 'BARROWMAN 3-DOF / 3D VIEW LOST');
+  } else if (l && lat.live) {
     const s = l.stats || {};
     const g = Array.isArray(s.grid) ? `${s.grid[0]}×${s.grid[1]}` : lat.section ? `${lat.section.cols}×${lat.section.rows}` : '—';
     write(head.grid, g);
     write(head.engine, 'BARROWMAN 3-DOF / LBM D2Q9');
   } else if (l && lat.cap === 0) {
     write(head.grid, 'PAUSED, SLOW FRAMES');
+    write(head.engine, 'BARROWMAN 3-DOF / LBM PAUSED');
   } else if ((l && latticeTier() === 0) || lat.deferred) {
     write(head.grid, 'OFF AT TIER 0');
+    write(head.engine, 'BARROWMAN 3-DOF / LBM OFF');
   } else {
     write(head.grid, String(lat.reason || 'lattice pending').toUpperCase());
     write(head.engine, 'BARROWMAN 3-DOF / LBM PENDING');
@@ -600,16 +792,28 @@ function updateCaption(force) {
   const now = performance.now();
   if (!force && now - lastCap < 1000) return;      // the numbers in it change at most once a second
   lastCap = now;
-  const section = panelValue('section', 'through') === 'between' ? 'SECTION BETWEEN THE FINS' : 'SECTION THROUGH THE FINS';
+  const phone = phoneMq.matches;      // phones get short forms, so a narrow line keeps its last clause
+  const section = `${phone ? '' : 'SECTION '}${panelValue('section', 'through') === 'between' ? 'BETWEEN' : 'THROUGH'} THE FINS`;
   if (viewKind === '2d') {
     write(capFlow, `2D SIDE VIEW / ${fallbackWhy === 'no-webgl2' ? 'NO WEBGL2' : 'NO 3D VIEW'} / NO FLOW SECTION`);
     write(capNote, 'ROCKET, CG, CP, WIND AND FORCES FROM THE FLIGHT MODEL');
     capNote.classList.remove('fd-cap-warn');
+  } else if (ctxLost) {
+    write(capFlow, 'FLOW / 3D VIEW LOST');
+    write(capNote, 'WAITING FOR THE GRAPHICS CONTEXT / THE FLIGHT MODEL RUNS');
+    capNote.classList.add('fd-cap-warn');
   } else if (lat.lattice && lat.live) {
     write(capFlow, `FLOW / ${VIEW_WORDS[panelValue('view', 'smoke')] || 'SMOKE'} / ${section}`);
-    const a = finite(lat.alphaIn) ? lat.alphaIn * DEG : 0;
-    const u = finite(lat.uIn) ? lat.uIn : U_FLOOR;
-    write(capNote, lat.clamped ? `INFLOW HELD AT ${fx(a, 0, true)}° / THE FLIGHT IS PAST ±35°` : `2D SECTION / INFLOW ${u.toFixed(3)} LU AT ${fx(a, 1, true)}° / NOT TIME-ACCURATE`);
+    // before the first lattice frame has run, the inflow it is about to get
+    const st = flight.state;
+    const a = (finite(lat.alphaIn) ? lat.alphaIn : clamp(finite(st.alpha) ? st.alpha : 0, -ALPHA_MAX, ALPHA_MAX)) * DEG;
+    const u = finite(lat.uIn) ? lat.uIn : inflowLU(st.airspeed);
+    // phones: the clause that matters first
+    // the inflow is SIM (the flight's airspeed and alpha through the EST rule); the ±35°
+    // hold is the EST limit
+    write(capNote, lat.clamped
+      ? (phone ? `INFLOW HELD AT\u00a0${fx(a, 0, true)}°\u00a0EST / FLIGHT\u00a0PAST\u00a0IT` : `INFLOW HELD AT ${fx(a, 0, true)}° EST / THE FLIGHT IS PAST IT`)
+      : (phone ? `NOT TIME-ACCURATE / ${u.toFixed(3)}\u00a0LU\u00a0/\u00a0${fx(a, 1, true)}°\u00a0SIM` : `2D SECTION / INFLOW ${u.toFixed(3)} LU AT ${fx(a, 1, true)}° SIM / NOT TIME-ACCURATE`));
     capNote.classList.toggle('fd-cap-warn', lat.clamped);
   } else if (lat.lattice && lat.cap === 0) {
     write(capFlow, 'FLOW / PAUSED');
@@ -626,12 +830,13 @@ function updateCaption(force) {
   }
   // badges: the hold and an armed gust
   badgeHold.hidden = !hold;
-  if (hold) write(badgeHold, `HOLD / AOA ${fx(hold.alphaDeg, 1, true)}° / ${timeCode(hold.t)}`);
+  if (hold) write(badgeHold, `HOLD / AOA ${fx(hold.alphaDeg, 1, true)}° SIM / ${timeCode(hold.t)}`);
   badgeGust.hidden = !(armedGust > 0);
   if (armedGust > 0) write(badgeGustT, `GUST ${armedGust.toFixed(1)} MPH AT RAIL EXIT`);
   badgeFlow.hidden = !(lat.lattice && lat.cap === 0);
   badges.hidden = badgeHold.hidden && badgeGust.hidden && badgeFlow.hidden;
 }
+phoneMq.addEventListener('change', () => updateCaption(true));
 $('[data-resume]').addEventListener('click', () => { resumeLattice(); stage.focus({ preventScroll: true }); });
 $('[data-disarm]').addEventListener('click', () => { armedGust = 0; scheduleUrl(); updateCaption(true); stage.focus({ preventScroll: true }); });
 
@@ -698,7 +903,7 @@ function flyRun(r) {
   let gustT = NaN;
   if (r.gust > 0) f.onEvent((e) => { if (e.name === 'railExit' && !finite(gustT)) { gustT = e.t; f.gust(r.gust * MPS_PER_MPH); } });
   f.ignite();
-  const out = { margin0: f.derived.staticMargin, marginBo: f.derived.staticMarginBurnout, alphaRail: NaN, peakAlpha: 0, theta60: NaN, theta1: NaN, apogee: NaN, upwind: NaN, settle: NaN };
+  const out = { margin0: f.derived.staticMargin, marginBo: f.derived.staticMarginBurnout, alphaRail: NaN, peakAlpha: 0, theta60: NaN, theta1: NaN, apogee: NaN, upwind: NaN, settle: NaN, marginUp: NaN };
   let railT = NaN, lastBig = NaN, apoT = Infinity;
   const vMin = 50 * M_PER_FT;           // ascent samples above 50 ft/s, as the panel's MAX AOA (EST)
   for (let i = 0; i < 4000 && !f.done; i++) {
@@ -713,6 +918,8 @@ function flyRun(r) {
     }
     if (!finite(out.theta60) && Math.abs(s.theta) > Math.PI / 3 && s.t < apoT) out.theta60 = s.t;
     if (!finite(out.theta1) && s.t >= 1) out.theta1 = s.theta * DEG;
+    // the static margin (Barrowman CP against the live CG) crossing to positive as the CG moves forward
+    if (!finite(out.marginUp) && out.margin0 < 0 && finite(s.margin) && s.margin >= 0) out.marginUp = s.t;
   }
   const from = r.gust > 0 ? gustT : railT;
   out.settle = finite(lastBig) && finite(from) ? Math.max(0, lastBig - from) : 0;
@@ -733,6 +940,7 @@ function fillRun(key, o) {
   set('upwind', finite(o.upwind) ? o.upwind.toFixed(0) : '—');
   set('settle', fx(o.settle, 2));
   set('fn', fx(o.fn, 2));
+  set('marginUp', fx(o.marginUp, 2));
   if (key === 'none') put('apogeeNone', finite(o.apogee) ? String(Math.round(o.apogee / 10) * 10) : '—');
 }
 function computeRuns() {
@@ -828,11 +1036,14 @@ function watchGeometryCheck() {
 }
 function updateLatticeRow() {
   const l = lat.lattice;
-  if (l && lat.live) {
+  if (viewKind === '2d') put('latLive', fallbackWhy === 'no-webgl2' ? 'off / no WebGL2' : 'off / no 3D view');
+  else if (l && lat.live) {
     const s = l.stats || {};
     const grid = Array.isArray(s.grid) ? `${s.grid[0]} × ${s.grid[1]}` : '—';
     put('latLive', `${grid} / ${finite(s.stepsPerSecond) ? Math.round(s.stepsPerSecond) : '—'} steps/s / ${String(s.precision || '—')}`);
-  } else put('latLive', viewKind === '2d' ? 'off / no WebGL2' : String(lat.reason || 'pending'));
+  } else if (l && lat.cap === 0) put('latLive', 'paused, slow frames');
+  else if ((l && latticeTier() === 0) || lat.deferred) put('latLive', 'off at tier 0');
+  else put('latLive', String(lat.reason || 'pending'));
 }
 bus.on('lattice:stats', updateLatticeRow);
 

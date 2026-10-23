@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>LAB / FIELD / SCENE · Mert Tureli VX</title>
+<title>Lab / Scene · Mert Tureli VX</title>
 <meta name="robots" content="noindex">
 <meta name="description" content="Test bench for the CHARGER field study scene: the published CAD rocket in its livery, the lattice slice plane on a test card, CG and CP markers, force arrows, the exhaust, camera presets and the flick interaction.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230A0A0A'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='26' font-weight='600' fill='%23FFFFFF'%3EMT%3C/text%3E%3C/svg%3E">
@@ -37,6 +37,9 @@
   .note { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.06em; line-height: 1.6; color: var(--paper-a70); }
   .readout { font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: 0.04em; line-height: 1.6; color: var(--paper-a70); white-space: pre-wrap; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; margin: 0; }
   .readout b { color: var(--paper); font-weight: 400; }
+  .sc-skip { position: absolute; left: 8px; top: -48px; z-index: 10; padding: 8px 12px; background: var(--paper); color: var(--ink-900); font-family: var(--font-mono); font-size: var(--fs-meta-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; text-decoration: none; }
+  .sc-skip:focus { top: 8px; }
+  .sc-skip:focus-visible { outline: 2px solid var(--livery); outline-offset: 2px; }
   .readout em { font-style: normal; color: var(--livery); }
   @media (max-width: 860px) {
     .lab-body { display: block; height: auto; }
@@ -46,6 +49,7 @@
 </style>
 </head>
 <body class="on-dark">
+<a class="sc-skip" href="#controls">Skip to the controls</a>
 <div class="lab">
   <header class="lab-head" id="head">
     <h1>LAB / FIELD / SCENE</h1>
@@ -61,7 +65,7 @@
       <p class="sc-fallback" id="fallback" hidden><b>No WebGL2 / scene off</b><span>The page draws the 2D fallback here (panel/fallback.js).</span></p>
     </section>
 
-    <aside class="lab-panel" aria-label="Scene controls">
+    <aside class="lab-panel" id="controls" tabindex="-1" aria-label="Scene controls">
       <h2>Checks</h2>
       <div class="group">
         <button class="btn" id="check15" type="button">Alpha +15 check</button>
@@ -71,27 +75,27 @@
       <p class="note">Test motion is a scripted state, not flight data. Lab inputs below are hand-set (EST).</p>
 
       <h2>Flight state</h2>
-      <label class="row">x downrange <output id="oX"></output><input id="x" type="range" min="-3" max="3" step="0.01" value="0"></label>
-      <label class="row">y ref station <output id="oY"></output><input id="y" type="range" min="0" max="330" step="0.05" value="0.62"></label>
-      <label class="row">theta pitch <output id="oTheta"></output><input id="theta" type="range" min="-45" max="45" step="0.5" value="0"></label>
-      <label class="row">alpha <output id="oAlpha"></output><input id="alpha" type="range" min="-35" max="35" step="0.5" value="0"></label>
-      <label class="row">v airspeed <output id="oV"></output><input id="v" type="range" min="0" max="120" step="1" value="0"></label>
-      <label class="row">thrust <output id="oThrust"></output><input id="thrust" type="range" min="0" max="120" step="1" value="0"></label>
-      <label class="row">N normal force <output id="oN"></output><input id="N" type="range" min="-25" max="25" step="0.1" value="0"></label>
+      <label class="row" for="x">x downrange <output aria-live="off" id="oX" for="x"></output><input id="x" aria-label="x downrange, metres" type="range" min="-3" max="3" step="0.01" value="0"></label>
+      <label class="row" for="y">y ref station <output aria-live="off" id="oY" for="y"></output><input id="y" aria-label="y reference station, metres" type="range" min="0" max="330" step="0.05" value="0.62"></label>
+      <label class="row" for="theta">theta pitch <output aria-live="off" id="oTheta" for="theta"></output><input id="theta" aria-label="theta pitch, degrees" type="range" min="-45" max="45" step="0.5" value="0"></label>
+      <label class="row" for="alpha">alpha <output aria-live="off" id="oAlpha" for="alpha"></output><input id="alpha" aria-label="alpha, degrees" type="range" min="-35" max="35" step="0.5" value="0"></label>
+      <label class="row" for="v">v airspeed <output aria-live="off" id="oV" for="v"></output><input id="v" aria-label="v airspeed, metres per second" type="range" min="0" max="120" step="1" value="0"></label>
+      <label class="row" for="thrust">thrust <output aria-live="off" id="oThrust" for="thrust"></output><input id="thrust" aria-label="thrust, newtons" type="range" min="0" max="120" step="1" value="0"></label>
+      <label class="row" for="N">N normal force <output aria-live="off" id="oN" for="N"></output><input id="N" aria-label="N normal force, newtons" type="range" min="-25" max="25" step="0.1" value="0"></label>
 
       <h2>Airframe</h2>
-      <label class="row">Fin scale <output id="oFins"></output><input id="fins" type="range" min="0" max="1.5" step="0.05" value="1"></label>
+      <label class="row" for="fins">Fin scale <output aria-live="off" id="oFins" for="fins"></output><input id="fins" aria-label="Fin scale" type="range" min="0" max="1.5" step="0.05" value="1"></label>
       <div class="group" role="group" aria-label="Fin presets">
         <button class="btn" type="button" data-fins="0">None</button>
         <button class="btn" type="button" data-fins="0.5">Half</button>
         <button class="btn" type="button" data-fins="1">Full</button>
       </div>
-      <label class="row">CG from nose <output id="oCg"></output><input id="cg" type="range" min="15" max="30" step="0.1" value="22"></label>
-      <label class="row">CP from nose <output id="oCp"></output><input id="cp" type="range" min="15" max="40" step="0.1" value="27"></label>
+      <label class="row" for="cg">CG from nose <output aria-live="off" id="oCg" for="cg"></output><input id="cg" aria-label="CG from nose, inches" type="range" min="15" max="30" step="0.1" value="22"></label>
+      <label class="row" for="cp">CP from nose <output aria-live="off" id="oCp" for="cp"></output><input id="cp" aria-label="CP from nose, inches" type="range" min="15" max="40" step="0.1" value="27"></label>
       <label class="row">Lattice CP ring <input id="cplOn" type="checkbox" checked></label>
-      <label class="row">Lattice CP offset <output id="oCpl"></output><input id="cpl" type="range" min="-4" max="4" step="0.1" value="-0.6"></label>
-      <label class="row">Rail length <output id="oRail"></output><input id="rail" type="range" min="36" max="96" step="1" value="72"></label>
-      <label class="row">Launch angle <output id="oLaunch"></output><input id="launch" type="range" min="-10" max="10" step="0.5" value="0"></label>
+      <label class="row" for="cpl">Lattice CP offset <output aria-live="off" id="oCpl" for="cpl"></output><input id="cpl" aria-label="Lattice CP offset, inches" type="range" min="-4" max="4" step="0.1" value="-0.6"></label>
+      <label class="row" for="rail">Rail length <output aria-live="off" id="oRail" for="rail"></output><input id="rail" aria-label="Rail length, inches" type="range" min="36" max="96" step="1" value="72"></label>
+      <label class="row" for="launch">Launch angle <output aria-live="off" id="oLaunch" for="launch"></output><input id="launch" aria-label="Launch angle, degrees" type="range" min="-10" max="10" step="0.5" value="0"></label>
 
       <h2>View</h2>
       <div class="group" role="group" aria-label="Camera preset">

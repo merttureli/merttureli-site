@@ -141,7 +141,9 @@ canvas.pn-fallback[data-dragging] { cursor: grabbing; }
 .pn-note { margin-top: 6px; letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--paper-a70); }
 .pn-note[hidden] { display: none; }
 .pn-keys { display: flex; flex-wrap: wrap; gap: 8px 14px; padding: var(--space-4) 0; border-bottom: 1px solid var(--paper-a18); letter-spacing: 0.1em; color: var(--paper-a70); }
-.pn-keys-k { flex-basis: 100%; letter-spacing: var(--ls-caps-wide); }
+.pn-keys-head { flex-basis: 100%; display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.pn-keys-k { letter-spacing: var(--ls-caps-wide); }
+.pn-keys-t { min-height: 28px; gap: 12px; }
 .pn-keys-i { white-space: nowrap; }
 .pn-keys .pn-kbd { color: var(--paper); }
 .pn-legend { display: grid; gap: 2px; padding-top: var(--space-4); letter-spacing: 0.04em; color: var(--paper-a70); }
@@ -168,9 +170,11 @@ canvas.pn-fallback[data-dragging] { cursor: grabbing; }
   .pn[data-sheet="expanded"] { transform: translateY(0); }
   .pn[data-away="1"] { transform: translateY(calc(100% + 24px)); visibility: hidden; transition: transform var(--dur-3) var(--ease-out), visibility 0s linear var(--dur-3); }
   .pn[data-dragging] { transition: none; }
-  .pn-handle { display: flex; flex: 0 0 auto; align-items: center; justify-content: center; width: 100%; height: 22px; touch-action: none; cursor: grab; }
+  /* the handle and the peek row together (72 px) are the drag target (panel.js); the
+     handle is 28 px tall and the row 44 px, the play button's own height */
+  .pn-handle { display: flex; flex: 0 0 auto; align-items: center; justify-content: center; width: 100%; height: 28px; touch-action: none; cursor: grab; }
   .pn-grip { width: 40px; height: 4px; border-radius: var(--radius-pill); background: var(--paper-a45); }
-  .pn-peek { display: flex; flex: 0 0 auto; align-items: center; gap: 10px; height: calc(var(--pn-peek-h) - 22px); padding: 0 max(var(--pn-gutter), env(safe-area-inset-right, 0px)) 4px max(var(--pn-gutter), env(safe-area-inset-left, 0px)); border-bottom: 1px solid transparent; }
+  .pn-peek { display: flex; flex: 0 0 auto; align-items: center; gap: 10px; height: calc(var(--pn-peek-h) - 28px); padding: 0 max(var(--pn-gutter), env(safe-area-inset-right, 0px)) 0 max(var(--pn-gutter), env(safe-area-inset-left, 0px)); border-bottom: 1px solid transparent; touch-action: none; }
   .pn[data-sheet="expanded"] .pn-peek { border-bottom-color: var(--paper-a18); }
   .pn-peek-cells { flex: 1 1 auto; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 0.9fr) minmax(0, 0.9fr); gap: 8px; cursor: pointer; }
   .pn-peek-c { display: grid; gap: 1px; min-width: 0; }
@@ -185,8 +189,8 @@ canvas.pn-fallback[data-dragging] { cursor: grabbing; }
   .pn-head .pn-tc, .pn-head .pn-phase, .pn-head-meta > span:first-child { display: none; }
   .pn-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); padding-bottom: var(--space-3); }
   .pn-head-meta { margin-top: 0; }
-  .pn-btn { min-height: 40px; }
-  .pn-seg-b { min-height: 40px; }
+  .pn-btn, .pn-seg-b { min-height: 44px; }   /* touch targets of 44 px on phones */
+  .pn-range { height: 44px; }
   .pn-r { line-height: 1.9; }
   .pn-dock { border-top: 1px solid var(--paper-a18); }
 }
@@ -205,8 +209,15 @@ canvas.pn-fallback[data-dragging] { cursor: grabbing; }
 @media (forced-colors: active) {
   .pn, .pn-dock { border-color: CanvasText; }
   .pn-btn[aria-pressed="true"], .pn-btn[data-act="pause"][aria-pressed="true"], .pn-seg-b[aria-pressed="true"], .pn-btn-primary { forced-color-adjust: none; background: Highlight; color: HighlightText; border-color: Highlight; }
+  /* the pressed buttons and LAUNCH opt out of forced colours, so their paper ring would
+     vanish on a light Canvas: every outside ring takes CanvasText (the inset ring of a
+     pressed segment, next, sits on Highlight and takes HighlightText) */
+  .pn-btn:focus-visible, .pn-handle:focus-visible, .pn-peek-play:focus-visible { outline: 2px solid CanvasText; }
   .pn-seg-b[aria-pressed="true"]:focus-visible { outline-color: HighlightText; }
   .pn-grip { background: CanvasText; }
+  /* the play and pause glyphs are drawn with borders: keep the transparent ones transparent
+     (forced colours would paint them and turn the triangle into a stop square) */
+  .pn-peek-icon { forced-color-adjust: none; color: ButtonText; }
   /* the canvases paint their own ink ground; the dock stacks the chart (fixed height, so
      its backing store cannot feed back into its size) over the text summary, growing up */
   .pn-dock { display: flex; flex-direction: column; height: auto; }

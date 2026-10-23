@@ -2,9 +2,17 @@
 
    createStripChart(canvas, opts): angle of attack and pitch in degrees over a
    scrolling window (8 s by default), event ticks with labels (rail exit, burnout,
-   apogee), 2 px lines, the ink ramp for pitch and the livery orange for angle of
+   apogee: in the top band, else on the plot's top or bottom line over the traces,
+   else as RX, BO or AP with the time), 2 px lines, the ink ramp for pitch and the livery orange for angle of
    attack (the panel's one accent). The canvas is aria-hidden; summary() returns a
    sentence the panel writes to a visually hidden paragraph at most once per second.
+   setLive({t, alpha, theta, v}) hands over the flight's current state: the traces end
+   there and the end values read it, so a paused flight (between two 10 ms history
+   samples) shows the same numbers as the panel. The y range follows angle of attack
+   only where it means something: samples at or above SCALE_MIN_V (the panel's 50 ft/s
+   MAX AOA threshold, EST) or within SCALE_RAIL_S after rail exit, and not after apogee.
+   On the pad and the rail a crosswind gives alpha near 90 deg at a walking pace; that
+   spike is still drawn, clipped at the plot edge, but it does not set the scale.
 
    createCpCgBar(canvas, opts): a horizontal rocket outline (polygons in metres, see
    format.js) with the CG symbol, the Barrowman CP dot, the lattice CP ring and a
@@ -21,13 +29,17 @@ const PAD = { l: 40, r: 58, t: 22, b: 18 };   // CSS px plot margins (y labels, 
 const SCALES_DEG = [2, 5, 10, 20, 45, 90];      // symmetric y ranges; the smallest that holds the window wins
 const SHRINK_HOLD_MS = 1200;                    // a smaller range must hold this long before the axis shrinks
 const EVENT_LABELS = { railExit: 'RAIL EXIT', burnout: 'BURNOUT', apogee: 'APOGEE' };
+const EVENT_SHORT = { railExit: 'RX', burnout: 'BO', apogee: 'AP' };   // last resort on a narrow chart, before the label is dropped
 const MAX_TICKS = 256;                          // loop bound for the time and inch ticks
+const SCALE_MIN_V = 50 * 0.3048;                // m/s: alpha below this speed does not set the y range (the panel's MAX AOA threshold, EST)
+const SCALE_RAIL_S = 0.1;                       // s after rail exit that set the range whatever the speed (the rail exit peak itself)
+const META_GUTTER = 16;                         // CSS px: the meta text's right margin, the page's phone gutter
 
 export function createStripChart(canvas, { windowS = 8, theme = null, events = Object.keys(EVENT_LABELS) } = {}) {
   const ctx = canvas.getContext('2d');
   let th = theme || readTheme(canvas);
   let size = { w: 1, h: 1 }, dpr = 1;
-  let data = [], evts = [], tNow = 0;
+  let data = [], evts = [], tNow = 0, live = null;
   let scale = SCALES_DEG[1], shrinkSince = 0;
   let lastPeak = { v: 0, t: NaN };
 
@@ -36,6 +48,7 @@ export function createStripChart(canvas, { windowS = 8, theme = null, events = O
   function setData(samples) { data = Array.isArray(samples) ? samples : []; }
   function setEvents(list) { evts = Array.isArray(list) ? list.filter((e) => events.includes(e.name) && Number.isFinite(e.t)) : []; }
   function setNow(t) { tNow = Number.isFinite(t) ? t : 0; }
+  function setLive(p) { live = p && Number.isFinite(p.t) ? { t: p.t, alpha: p.alpha, theta: p.theta, v: p.v } : null; }
 
   /* first index with t >= t0 (samples are time-ordered) */
   function lowerBound(t0) {
@@ -54,14 +67,23 @@ export function createStripChart(canvas, { windowS = 8, theme = null, events = O
     const X = (t) => x0 + ((t - tStart) / windowS) * (x1 - x0);
     const i0 = Math.max(0, lowerBound(tStart) - 1);
     const i1 = Math.min(data.length, lowerBound(tNow + 1e-6));
+    // the live state extends the traces when it is newer than the last sample drawn
+    const lastT = i1 > 0 ? data[i1 - 1].t : NaN;
+    const tail = live && i1 > 0 && live.t > lastT && live.t <= tEnd + 1e-6 ? live : null;
 
-    // y range from the visible window, with a hold before shrinking
+    // y range from the visible window, with a hold before shrinking; alpha counts only
+    // where it means something (see the header), pitch everywhere
+    const rx = evts.find((e) => e.name === 'railExit'), apo = evts.find((e) => e.name === 'apogee');
+    const tRx = rx ? rx.t : Infinity, tApo = apo ? apo.t : Infinity;
+    const alphaCounts = (s) => s.t <= tApo && (!(s.v < SCALE_MIN_V) || (s.t >= tRx && s.t <= tRx + SCALE_RAIL_S));
     let maxAbs = 0, peak = 0, peakT = NaN;
-    for (let i = i0; i < i1; i++) {
-      const s = data[i]; const a = Math.abs(s.alpha * DEG), p = Math.abs(s.theta * DEG);
-      if (Number.isFinite(a)) { if (a > maxAbs) maxAbs = a; if (a > peak) { peak = a; peakT = s.t; } }
+    const scan = (s) => {
+      const a = Math.abs(s.alpha * DEG), p = Math.abs(s.theta * DEG);
+      if (Number.isFinite(a) && alphaCounts(s)) { if (a > maxAbs) maxAbs = a; if (a > peak) { peak = a; peakT = s.t; } }
       if (Number.isFinite(p) && p > maxAbs) maxAbs = p;
-    }
+    };
+    for (let i = i0; i < i1; i++) scan(data[i]);
+    if (tail) scan(tail);
     lastPeak = { v: peak, t: peakT };
     const want = SCALES_DEG.find((s) => s >= maxAbs * 1.12) || SCALES_DEG[SCALES_DEG.length - 1];
     const now = performance.now();
@@ -92,9 +114,10 @@ export function createStripChart(canvas, { windowS = 8, theme = null, events = O
       if (x > x0 + 8 && x < x1 - 8) { ctx.fillStyle = th.a70; ctx.fillText('T+' + s, x, h - 4); }
     }
     // top band: legend on the left, unit and source on the right; event labels share
-    // the band when they fit and drop to a second row inside the plot when they do not
+    // the band when they fit, drop to a row along the plot's top and then its bottom
+    // edge when they do not, and take a short form before they give up
     ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
-    const taken = [[], []];                       // occupied [x0, x1] per label row
+    const taken = [[], [], []];                   // occupied [x0, x1] per label row
     let lx = x0;
     for (const [color, name] of [[th.accent, 'AOA'], [th.ink200, 'PITCH']]) {
       ctx.fillStyle = color; ctx.fillRect(lx, 9, 12, 2);
@@ -106,25 +129,29 @@ export function createStripChart(canvas, { windowS = 8, theme = null, events = O
     ctx.fillText('DEG', x0 - 6, 10);
     const meta = `${windowS} S / SIM`;
     const mw = ctx.measureText(meta).width;
-    ctx.fillText(meta, w - 2, 10);
-    taken[0].push([w - 2 - mw - 6, w]);
+    ctx.fillText(meta, w - META_GUTTER, 10);
+    taken[0].push([w - META_GUTTER - mw - 6, w]);
     ctx.textAlign = 'left';
     const free = (row, a, b) => taken[row].every(([p, q]) => b < p || a > q);
+    const rowY = [10, y0 + 9, y1 - 9];            // the top band, then the plot's top and bottom lines
+    const inPlot = [];                            // labels on the plot, painted over the traces below
     for (const e of evts.slice().sort((a, b) => a.t - b.t)) {
       if (e.t < tStart || e.t > tEnd) continue;
       const x = Math.round(X(e.t)) + 0.5;
       ctx.strokeStyle = th.a45; ctx.setLineDash([2, 3]);
       ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke();
       ctx.setLineDash([]);
-      const label = `${EVENT_LABELS[e.name] || e.name.toUpperCase()} ${e.t.toFixed(2)}`;
-      const tw = ctx.measureText(label).width;
-      const tx = Math.min(x + 4, w - PAD.r - tw - 2);
-      const row = free(0, tx - 3, tx + tw + 3) ? 0 : free(1, tx - 3, tx + tw + 3) ? 1 : -1;
-      if (row < 0) continue;                      // no room: the tick stays, the label is dropped
-      const ty = row === 0 ? 10 : y0 + 9;
-      if (row === 1) { ctx.fillStyle = th.ink900; ctx.fillRect(tx - 3, ty - 7, tw + 6, 13); }
-      ctx.fillStyle = th.a70; ctx.fillText(label, tx, ty);
-      taken[row].push([tx - 3, tx + tw + 3]);
+      const time = e.t.toFixed(2);
+      let spot = null;
+      for (const label of [`${EVENT_LABELS[e.name] || e.name.toUpperCase()} ${time}`, `${EVENT_SHORT[e.name] || e.name.slice(0, 2).toUpperCase()} ${time}`]) {
+        const tw = ctx.measureText(label).width;
+        const tx = Math.min(x + 4, w - PAD.r - tw - 2);
+        const row = [0, 1, 2].find((r) => free(r, tx - 3, tx + tw + 3));
+        if (row !== undefined) { spot = { label, tw, tx, row }; break; }
+      }
+      if (!spot) continue;                        // no room in any form: the tick stays, the label is dropped
+      taken[spot.row].push([spot.tx - 3, spot.tx + spot.tw + 3]);
+      if (spot.row === 0) { ctx.fillStyle = th.a70; ctx.fillText(spot.label, spot.tx, rowY[0]); } else inPlot.push(spot);
     }
     // the two traces: pitch first (ink), angle of attack on top (accent)
     const traces = [['theta', th.ink200], ['alpha', th.accent]];
@@ -134,20 +161,29 @@ export function createStripChart(canvas, { windowS = 8, theme = null, events = O
     ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     for (const [key, color] of traces) {
       ctx.strokeStyle = color; ctx.beginPath();
-      let started = false, lx = NaN, ly = NaN, pv = NaN;
-      for (let i = i0; i < i1; i++) {
-        const s = data[i]; const v = s[key] * DEG;
-        if (!Number.isFinite(v)) { started = false; continue; }
+      let started = false, lx = NaN, ly = NaN, pv = NaN, lv = NaN;
+      const point = (s) => {
+        const v = s[key] * DEG;
+        if (!Number.isFinite(v)) { started = false; return; }
         if (Math.abs(v - pv) > 180) started = false;     // an angle wrapping through +-180 deg is a jump, not a line
         pv = v;
         const x = X(s.t), y = Y(Math.max(-scale, Math.min(scale, v)));
         if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
-        lx = x; ly = y;
-      }
+        lx = x; ly = y; lv = v;
+      };
+      for (let i = i0; i < i1; i++) point(data[i]);
+      if (tail) point(tail);
       ctx.stroke();
-      if (Number.isFinite(lx)) ends.push({ key, color, x: lx, y: ly, v: data[i1 - 1] ? data[i1 - 1][key] * DEG : NaN });
+      if (Number.isFinite(lx)) ends.push({ key, color, x: lx, y: ly, v: lv });
     }
     ctx.restore();
+    // event labels on the plot sit on an ink plate over the traces, so a trace never cuts the text
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    for (const { label, tw, tx, row } of inPlot) {
+      const ty = rowY[row];
+      ctx.fillStyle = th.ink900; ctx.fillRect(tx - 3, ty - 7, tw + 6, 13);
+      ctx.fillStyle = th.a70; ctx.fillText(label, tx, ty);
+    }
     // end dots and current values beside the plot, nudged apart when close
     const lo = y0 + 6, hi = y1 - 6;                      // keep end labels inside the plot band, 12 px apart
     for (const e of ends) e.ly = Math.max(lo, Math.min(hi, e.y));
@@ -165,7 +201,8 @@ export function createStripChart(canvas, { windowS = 8, theme = null, events = O
   }
 
   function summary(units = 'degrees') {
-    const last = data.length ? data[data.length - 1] : null;
+    const lastSample = data.length ? data[data.length - 1] : null;
+    const last = lastSample && live && live.t > lastSample.t ? live : lastSample;
     if (!last || !Number.isFinite(last.t)) return 'Strip chart: no flight data yet.';
     const a = fixed(last.alpha * DEG, 1, true).trim().replace('−', 'minus '), p = fixed(last.theta * DEG, 1, true).trim().replace('−', 'minus ');
     let s = `Strip chart, last ${windowS} seconds to T plus ${last.t.toFixed(1)} s: angle of attack ${a} ${units}, pitch ${p} ${units}.`;
@@ -176,10 +213,10 @@ export function createStripChart(canvas, { windowS = 8, theme = null, events = O
   }
 
   return {
-    resize, setTheme, setData, setEvents, setNow, draw, summary,
+    resize, setTheme, setData, setEvents, setNow, setLive, draw, summary,
     get scale() { return scale; },
     get points() { return data.length; },
-    destroy() { data = []; evts = []; },
+    destroy() { data = []; evts = []; live = null; },
   };
 }
 
