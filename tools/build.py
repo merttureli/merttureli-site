@@ -80,7 +80,7 @@ TRACK = ["js/analytics-config.js", "js/track.js"]
 CLARITY = TRACK + ["js/clarity.js"]   # privacy.html: Clarity on the home and project pages only
 
 # Old home addresses with no section of the same name on the Studio home.
-LEGACY_HASHES = {"#charger": "#work", "#charger-explorer": "assets/charger-explorer/index.html"}
+LEGACY_HASHES = {"#charger-explorer": "#charger"}
 
 # next/ page -> live page at the root. One line per page: add a line to publish another
 # Studio page (docs/recipes/new-page.md). A line whose next/ file does not exist yet is

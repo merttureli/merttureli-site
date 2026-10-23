@@ -24,7 +24,7 @@
 </script>
 <script>
 // Addresses from the old home page that have no section of that name here.
-(function (to) { if (to) location.replace(to); })({"#charger":"#work","#charger-explorer":"assets/charger-explorer/index.html"}[location.hash]);
+(function (to) { if (to) location.replace(to); })({"#charger-explorer":"#charger"}[location.hash]);
 </script>
 <link rel="stylesheet" href="studies/shared/study.css">
 <script src="studies/shared/study.js"></script>
@@ -238,12 +238,12 @@ try { if (!matchMedia('(prefers-reduced-motion: reduce)').matches && !/[?&]still
       </li>
 
       <li class="tile tile--explorer">
-        <a class="tile__link" href="assets/charger-explorer/index.html" data-explorer-link>
+        <a class="tile__link" href="#charger" data-explorer-link>
           <span class="tile__ghost" aria-hidden="true">CHARGER</span>
           <span class="tile__media"><img src="next/assets/img/hero-land.webp" alt="" width="2400" height="1350" loading="lazy" decoding="async"></span>
           <span class="tile__text">
             <span class="label">Interactive / The flight model</span>
-            <span class="tile__name">Take CHARGER <em class="serif">apart</em></span>
+            <span class="tile__name">Take CHARGER apart</span>
             <span class="tile__line">Every component at its true station. Drag it, cut it open, pick a part and read what it does.</span>
           </span>
           <span class="tile__go" aria-hidden="true"><span class="arrow"></span></span>
@@ -358,6 +358,7 @@ try { if (!matchMedia('(prefers-reduced-motion: reduce)').matches && !/[?&]still
 <script src="next/js/lenis.min.js" defer></script>
 <script src="next/js/studio.js" defer></script>
 <script src="next/js/clips.js" defer></script>
+<script type="module" src="next/js/explorer/launch.js"></script>
 <script src="js/analytics-config.js"></script>
 <script src="js/track.js"></script>
 <script src="js/clarity.js"></script>

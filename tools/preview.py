@@ -79,7 +79,7 @@ MODES = {
         "doc_dir": "",
         "smoke": ["index.html", "index.html#reel-coaster", "websites.html", "projects/charger.html",
                   "projects/therma-shift.html", "privacy.html", "hi/index.html",
-                  "assets/charger-explorer/index.html"],
+                  "index.html#charger"],
     },
     "studio": {
         # every page under next/ (index.html, websites.html, projects/*.html, lab/...) at the copy root
@@ -91,7 +91,7 @@ MODES = {
         "entry": "next/index.html",
         "doc_dir": "next/",
         "smoke": ["index.html#reel-coaster", "websites.html", "projects/charger.html",
-                  "site/charger-explorer/index.html"],
+                  "index.html#charger"],
     },
 }
 

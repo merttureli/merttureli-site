@@ -14,7 +14,8 @@ The Studio design is the live site. Its sources are in `next/`; `tools/build.py`
 | Case studies | `content/projects/<slug>.json` (words) + `PRESENT`/`ORDER` in `tools/build-studio-cases.py` | `next/projects/<slug>.html` (noindex Studio copy) and `projects/<slug>.html` |
 | Another Studio page | `next/<name>.html` + one line in `PAGES` in `tools/build.py` | `<name>.html` |
 | Hand-written Studio-look pages | `privacy.html`, `404.html`, `hi/` (styles: `next/css/pages.css`, linked root-absolute), edited directly | the same files |
-| Still old design | `photography-*.html`, `assets/charger-explorer/` (edited directly) | the same files |
+| CHARGER explorer | `next/js/explorer/` (opens in place on the home page at `#charger`; `assets/charger-explorer/index.html` is a redirect, its model and font files stay for vx/) | none |
+| Still old design | `photography-*.html` (edited directly) | the same files |
 
 Shared Studio code: `next/css/tokens.css` + `studio.css` + `showcase.css`, `next/js/studio.js`, `next/js/hero3d.js`, `next/js/showreel/`.
 What still has to move to the Studio design: [docs/transition.md](docs/transition.md) (the `transition` check WARNs, never blocks).
