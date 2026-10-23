@@ -46,7 +46,7 @@ PRESENT = {
         "hero": {"clip": "charger-painted-wide", "md": None, "sm": None,
                  "cap": "Rendered from the flight model"},
         "specs_list": "The numbers", "rank": "The result",
-        "ctas": [("../#charger", "Take it apart in 3D")],
+        "ctas": [("../index.html#charger", "Take it apart in 3D")],
     },
     "robo-catcher": {
         "name": "Robo-Catcher", "meta": "Mechanism + firmware / 2025",
@@ -93,7 +93,7 @@ def fix(s):
     s = s.replace('href="../', 'href="../../')
     s = re.sub(r'(src|href)="assets/', r'\1="../../assets/', s)
     # the CHARGER explorer opens in place on the Studio home (next/js/explorer/)
-    s = s.replace('href="../../assets/charger-explorer/index.html"', 'href="../#charger"')
+    s = s.replace('href="../../assets/charger-explorer/index.html"', 'href="../index.html#charger"')
     return s
 
 
