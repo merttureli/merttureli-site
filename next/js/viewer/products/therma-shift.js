@@ -149,6 +149,7 @@ export default {
   base: () => [.42, -.62, 0],                     // the showreel's view of the coaster
   fit: .62,                                       // a small, square object: some paper around it
   groups: GROUPS,
+  controlsSheet: 'more',                          // phones: Mode, On plate and Cable sit under More controls
   cut: { point: [0, -.014, 0] },                  // vertical, through the stack axis
   ghost: { exterior: .1, interior: .18 },
   tour: { stops: ['topPlate', 'peltier', 'heatsink', 'blower', 'board'] },

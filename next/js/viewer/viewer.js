@@ -764,11 +764,13 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
     for (const P of parts) P.ghost = 1;
     const from = { q: pivot.quaternion.clone(), p: pivot.position.clone(), target: cur.target.clone(), dist: cur.dist, camRoll: cur.camRoll, R: { ...R } };
     const ex0 = S.explode, cut0 = S.cutT, vis0 = parts.map(P => P.opacity);
+    // parts a group chip hid come back on the way; parts the product hid (props) stay hidden
+    const vis1 = parts.map(P => P.visible || (P.shown && P.group != null && S.groups[P.group] === false));
     await runFly({
       from: target ? from : null, to: target, dur: reducedQ.matches ? 0 : target ? CLOSE_MS : 280,
       step(u, e) {
         S.explode = ex0 * (1 - e); S.explodeGoal = S.explode; S.cutT = cut0 * (1 - e);
-        parts.forEach((P, i) => { P.opacity = lerp(vis0[i], P.shown ? 1 : 0, e); P.visible = P.shown; });
+        parts.forEach((P, i) => { P.opacity = lerp(vis0[i], vis1[i] ? 1 : 0, e); P.visible = vis1[i]; });
         if (groundTo) {
           const g = lerpRect(fullRect(), groundTo, e);
           scissor = g;
