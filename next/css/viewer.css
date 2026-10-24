@@ -120,6 +120,7 @@ html.cx-covered main, html.cx-covered .top { visibility: hidden; }
   .cx__grab { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; padding: 8px 0 10px; border: 0; background: transparent; color: var(--muted); }
   .cx__grab::before { content: ""; width: 36px; height: 4px; border-radius: 4px; background: var(--line); }
   .cx__panel:not(.is-open) .cx__more { display: none; }
+  .cx__panel.is-controls-more:not(.is-open) .cx__custom { display: none; }   /* config.controlsSheet: 'more' */
   .cx__card { left: 12px; right: 12px; width: auto; bottom: calc(var(--cx-sheet, 140px) + 10px); max-height: 38vh; padding: 14px 16px; }
   .cx__card h3 { font-size: 24px; }
   .cx__tour { left: 12px; right: 12px; max-width: none; bottom: calc(var(--cx-sheet, 140px) + 10px); padding: 12px 12px 12px 16px; }

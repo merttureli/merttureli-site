@@ -61,6 +61,8 @@ export default {
   base: port => [.16, 0, port ? .14 : 1.42],
   center: false,                                   // the hero's model keeps its own offset (body axis on the roll axis)
   uniqueMaterials: false,                          // one material per part already (hero meshes and the per-part cadmesh override)
+  env: false,                                      // the rocket keeps the hero's look: never adopted (docs/design/3d.md)
+  clearHead: false,                                // the rocket's frame runs under the title, as it always has
   ghost: { exterior: .07, interior: .16 },
   cut: { point: [0, 0, 0], far: .12 },             // through the body axis, swept in from outside
   groups: GROUPS.map(([key, label]) => ({ key, label })),

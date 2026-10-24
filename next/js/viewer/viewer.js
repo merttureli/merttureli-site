@@ -23,19 +23,24 @@
 // renderer settings, through one three.js copy (next/js/three.module.min.js).
 // The CHARGER explorer is products/charger.js on this shell.
 import * as THREE from '../three.module.min.js';
-import { addStudioLights, ease, clamp01, lerp, win } from '../showreel/engine.js';
+import { addStudioLights, createStudioEnvironment, ease, clamp01, lerp, win } from '../showreel/engine.js';
 
 const reducedQ = matchMedia('(prefers-reduced-motion: reduce)');
 const OPEN_MS = 900, CLOSE_MS = 720;              // --dur-900; close a touch quicker
 const WARM_MS = 180000;
 const CUT_MS = 650;                               // section sweep
 const CAP_COLOR = 0xd2cdc4;                       // section caps: matte warm grey
+const VIEW_RATE = 7;                              // how fast the view eases to its goal (1/s)
+const envs = new WeakMap();                       // one studio environment (PMREM) per renderer
 const DEFAULTS = {
   fov: 24,                                        // the hero's lens (hero3d.js LAYOUTS)
   fit: .9,                                        // share of the frame the whole model fills
   roll0: 0,                                       // home turn about the model's +Y axis (rad)
   base: () => [.42, -.62, 0],                     // home orientation (Euler XYZ, rad): a three-quarter view from a little above
   center: true,                                   // centre the model's box on the orbit pivot
+  env: true,                                      // the studio environment on the model's standard materials (engine.js adopt)
+  clearHead: true,                                // the model's frame starts below the title block
+  controlsSheet: 'always',                        // phones: product controls always in the sheet, or 'more' (only when it is open)
   ghost: { exterior: .07, interior: .16 },        // opacity of the other parts while one is picked
   tourMs: 3300,
 };
@@ -88,7 +93,7 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
     h('h3', { class: 'label', text: T.parts }), list);
   const grab = h('button', { class: 'cx__grab', type: 'button', 'aria-expanded': 'false', 'aria-controls': id('more'), text: T.more });
   const custom = h('div', { class: 'cx__custom', hidden: true });
-  const panel = h('aside', { class: 'cx__panel cx__ui', 'aria-label': T.panel }, grab,
+  const panel = h('aside', { class: 'cx__panel cx__ui' + (C.controlsSheet === 'more' ? ' is-controls-more' : ''), 'aria-label': T.panel }, grab,
     h('div', { class: 'cx__row' }, h('label', { for: id('explode'), text: T.explode }), explode, explodeOut),
     h('div', { class: 'cx__btns' }, ...(CUT ? [cutBtn] : []), labelsBtn, ...(TOUR.length ? [tourBtn] : []), resetBtn), custom, more);
   const cardX = h('button', { class: 'cx__x', type: 'button', 'aria-label': T.closeCard });
@@ -116,6 +121,7 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
   let renderer = null, scene = null, camera = null, pivot = null, model = null, built = null;
   let capMesh = null, stencilMat = null, parts = [], byId = new Map(), raf = 0, last = 0, warmTimer = 0, buildP = null;
   let fly = null, R = { x: 0, y: 0, w: 1, h: 1 }, Rg = null, W = 1, H = 1, scissor = null;   // R: the frame drawn in; Rg: where it is heading
+  let env = null, keep = null, meshList = [], viewRate = VIEW_RATE;
   let cutFar = .12;
   const clipPlane = new THREE.Plane(new THREE.Vector3(0, 0, -1), 1e3), modelPlane = new THREE.Plane(), cutNormal = new THREE.Vector3(0, 0, -1), cutPoint = new THREE.Vector3();
   const qBase = new THREE.Quaternion(), qTmp = new THREE.Quaternion(), qRoll = new THREE.Quaternion(), Y = new THREE.Vector3(0, 1, 0);
@@ -137,6 +143,13 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
     get parts() { return parts; }, part: pid => byId.get(pid), state: S, invalidate: () => invalidate(), live: text => { live.textContent = text; },
     get rect() { return { ...R }; }, get size() { return { w: W, h: H }; }, get reduced() { return reducedQ.matches; },
     get roll0() { return ROLL0; }, get fov() { return FOV; },
+    get renderer() { return renderer; }, get env() { return env; },
+    setExplode: (v, o) => setExplodeQuiet(v, o), setShown: (pid, on) => setShown(pid, on),
+    // the camera, for a product's own motion (Play): goals the view eases to, as the user's own moves do
+    view: {
+      set: o => setView(o), home: () => setView({ yaw: 0, pitch: 0, roll: ROLL0, zoom: 1, pan: [0, 0, 0], focus: null, rate: VIEW_RATE }),
+      get: () => ({ orbit: goal.orbit.clone(), roll: goal.roll, zoom: goal.zoom, pan: goal.pan.toArray(), focus: goal.focus, rate: viewRate }),
+    },
   };
   // a hook from the build result, else from the config
   const hook = name => (built && built[name]) || C[name];
@@ -159,30 +172,62 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
       model.updateMatrixWorld(true);
       // the part list
       const inv = new THREE.Matrix4().copy(model.matrixWorld).invert();
-      const used = new Map();
+      const used = new Map(), owners = new Map();
+      const isIn = (o, root) => { for (; o; o = o.parent) if (o === root) return true; return false; };
       for (const p of built.parts) {
         const obj = p.obj;
-        const meshes = p.meshes || [];
+        const meshes = p.meshes ? [...p.meshes] : [];
+        if (!p.meshes) obj.traverse(o => { if (o.isMesh) meshes.push(o); });
+        for (const m of meshes) (owners.get(m) || owners.set(m, []).get(m)).push(p);
+      }
+      let warned = false;
+      for (const p of built.parts) {
+        const obj = p.obj;
+        const meshes = p.meshes ? [...p.meshes] : [];
         if (!p.meshes) obj.traverse(o => { if (o.isMesh) meshes.push(o); });
         let box = p.box;
         if (!box) {
           box = new THREE.Box3();
-          for (const m of meshes) { m.geometry.computeBoundingBox(); m.updateWorldMatrix(true, false); box.union(BOX.copy(m.geometry.boundingBox).applyMatrix4(M.copy(inv).multiply(m.matrixWorld))); }
+          const tight = p.tight != null ? p.tight : C.tightBoxes;
+          for (const m of meshes) {
+            m.updateWorldMatrix(true, false);
+            M.copy(inv).multiply(m.matrixWorld);
+            if (tight && m.geometry.attributes.position) {
+              // vertex by vertex: a turned part's own box, turned, would frame it too loose
+              const pos = m.geometry.attributes.position;
+              for (let i = 0; i < pos.count; i++) box.expandByPoint(V.fromBufferAttribute(pos, i).applyMatrix4(M));
+            } else { m.geometry.computeBoundingBox(); box.union(BOX.copy(m.geometry.boundingBox).applyMatrix4(M)); }
+          }
           if (box.isEmpty()) box.setFromCenterAndSize(obj.position, new THREE.Vector3(.004, .004, .004));
         }
-        // one material per part, so a part can ghost alone
+        // one material per part, so a part can ghost alone (a mesh several parts share keeps its own)
         if (C.uniqueMaterials !== false) for (const m of meshes) {
+          if (owners.get(m).length > 1) continue;
           const owner = used.get(m.material);
           if (owner !== undefined && owner !== p) m.material = m.material.clone();
           used.set(m.material, p);
         }
+        // a part with no group: config.defaultGroup, else none (always shown, never toggled)
+        let group = p.group != null ? p.group : C.defaultGroup != null ? C.defaultGroup : null;
+        if (group == null && GROUPS.length && C.defaultGroup === undefined && !warned) { warned = true; console.warn(`[viewer] ${C.slug}: part "${p.id}" has no group; it always shows (set config.defaultGroup, or null to silence this)`); }
         const P = {
           id: p.id, label: p.label, kind: p.kind || '', card: p.card || null, obj, meshes, base: obj.position.clone(), box,
-          center: box.getCenter(new THREE.Vector3()), dir: toV3(p.explode), opacity: 1, ghost: 1, visible: true, n: 0, tag: null, li: null,
-          group: p.group || (GROUPS[0] && GROUPS[0].key), exterior: p.exterior !== false, data: p,
+          center: box.getCenter(new THREE.Vector3()), dir: toV3(p.explode), opacity: 1, ghost: 1, visible: p.shown !== false, n: 0, tag: null, li: null,
+          group, exterior: p.exterior !== false, data: p, shown: p.shown !== false, listed: p.list !== false,
+          frame: p.frame !== false,
         };
+        // anchors that follow a moving object (p.follow): its matrix in model space at rest, inverted
+        if (p.follow) { p.follow.updateWorldMatrix(true, false); P.followRest = new THREE.Matrix4().copy(inv).multiply(p.follow.matrixWorld).invert(); P.followInObj = isIn(p.follow, obj); }
         parts.push(P); byId.set(P.id, P);
       }
+      // every mesh once, with the parts that show it (a shared mesh follows the most opaque of them)
+      meshList = [];
+      for (const P of parts) for (const m of P.meshes) {
+        if (m.userData.viewerOwners && m.userData.viewerOwners.shell === meshList) { if (!m.userData.viewerOwners.includes(P)) m.userData.viewerOwners.push(P); continue; }
+        const own = [P]; own.shell = meshList; m.userData.viewerOwners = own;
+        meshList.push({ m, owners: own, outside: false });
+      }
+      for (const E of meshList) E.outside = !E.owners.some(P => isIn(E.m, P.obj));
       // centre the model on the pivot (the orbit turns about its middle)
       if (C.center) {
         const b = new THREE.Box3();
@@ -203,14 +248,14 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
         stencilWrite: true, stencilFunc: THREE.AlwaysStencilFunc, stencilFail: THREE.InvertStencilOp, stencilZFail: THREE.InvertStencilOp, stencilZPass: THREE.InvertStencilOp,
       });
       const noRay = () => {};
-      for (const P of parts) for (const m of P.meshes) {
+      for (const { m, owners: own } of meshList) {
         m.material.clippingPlanes = [clipPlane];
         m.material.needsUpdate = true;
-        m.userData.part = P;
+        m.userData.part = own[0];
         if (!CUT) continue;
         const s = new THREE.Mesh(m.geometry, stencilMat);
         s.renderOrder = 1; s.visible = false; s.raycast = noRay; s.userData.stencil = true;
-        m.add(s);
+        m.add(s); m.userData.stencilMesh = s;
       }
       if (CUT) {
         capMesh = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), new THREE.MeshStandardMaterial({
@@ -222,7 +267,8 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
       }
       // numbering: the config's order, or its sort
       if (C.sortParts) parts.sort(C.sortParts);
-      parts.forEach((P, i) => { P.n = i + 1; });
+      let n = 0;
+      for (const P of parts) P.n = P.listed ? ++n : 0;
       buildList();
       if (C.controls && !custom.childElementCount) {
         const els = [].concat(C.controls(ctx) || []);
@@ -247,16 +293,53 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
         renderer.debug.checkShaderErrors = /[?&#]debug\b/.test(location.href);
         canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); live.textContent = T.lost; });
       }
+      // the studio environment (engine.js createStudioEnvironment, one per renderer) on every standard
+      // material of the model that has none yet, at x .55 as engine.adopt() gives the showreel's guests
+      if (C.env !== false) {
+        env = envs.get(renderer);
+        if (!env) { env = createStudioEnvironment(renderer); envs.set(renderer, env); }
+        model.traverse(o => {
+          for (const m of o.material ? [].concat(o.material) : []) {
+            if (!m.isMeshStandardMaterial || m.envMap || m.userData.viewerEnv) continue;
+            m.userData.viewerEnv = true; m.envMap = env; m.envMapIntensity *= .55; m.needsUpdate = true;
+          }
+        });
+      }
+      hook('gpu') && hook('gpu')(ctx);
       layoutBase();
       R = stageRect();
       // compile every variant now (opaque and ghosted parts, stencil passes, caps), not on first use
       const all = [];
       scene.traverse(o => { if (o.isMesh) { all.push([o, o.visible]); o.visible = true; } });
       setPose(); renderer.setSize(Math.max(2, W), Math.max(2, H), false);
-      for (const transparent of [true, false]) {
-        for (const P of parts) for (const m of P.meshes) { m.material.transparent = transparent; m.material.needsUpdate = true; }
+      const compile = async () => {
         if (renderer.extensions.has('KHR_parallel_shader_compile')) await renderer.compileAsync(scene, camera).catch(() => {});
         else renderer.compile(scene, camera);
+      };
+      for (const transparent of [true, false]) {
+        for (const { m } of meshList) { m.material.transparent = transparent; m.material.needsUpdate = true; }
+        await compile();
+      }
+      // keep both variants warm: three.js frees a program once no material uses it, so the ghosted
+      // (transparent) programs would go with the pass above and the first pick would compile again.
+      // An invisible copy of each part material in each state holds its program for as long as the scene lives.
+      if (!keep) {
+        keep = new THREE.Group();
+        const seen = new Set();
+        for (const { m } of meshList) {
+          if (seen.has(m.material)) continue;
+          seen.add(m.material);
+          for (const transparent of [true, false]) {
+            const k = m.material.clone();
+            k.transparent = transparent; k.depthWrite = !transparent; k.opacity = transparent ? .5 : 1;
+            const km = new THREE.Mesh(m.geometry, k);
+            km.frustumCulled = false; km.raycast = () => {}; km.userData.keep = true;
+            keep.add(km);
+          }
+        }
+        scene.add(keep);
+        await compile();
+        keep.visible = false;
       }
       for (const [o, v] of all) o.visible = v;
       stats.buildMs = Math.round(performance.now() - t0);
@@ -272,14 +355,14 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
     built && built.dispose && built.dispose();
     scene.traverse(o => {
       if (!o.isMesh || o.userData.stencil) return;
-      o.geometry.dispose();
+      if (!o.userData.keep) o.geometry.dispose();
       for (const m of [].concat(o.material)) { if (m.map) m.map.dispose(); m.dispose(); }
     });
     stencilMat.dispose();
     renderer.renderLists.dispose();
     renderer.info.reset();
-    scene = camera = pivot = model = built = capMesh = stencilMat = null;
-    parts = []; byId = new Map(); buildP = sceneP = null; S.built = false;
+    scene = camera = pivot = model = built = capMesh = stencilMat = keep = null;
+    parts = []; byId = new Map(); meshList = []; buildP = sceneP = null; S.built = false;
     list.replaceChildren(); tags.replaceChildren();
   }
 
@@ -289,7 +372,7 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
       const b = h('button', { type: 'button' }, h('span', { class: 'cx__n', 'aria-hidden': 'true', text: pad(P.n) }), h('span', { class: 'cx__pname', text: P.label }), h('span', { class: 'cx__pcat', text: P.kind }));
       b.setAttribute('aria-label', `${pad(P.n)}, ${P.label}`);
       b.addEventListener('click', () => select(P.id, { fromList: true }));
-      const li = h('li', {}, b);
+      const li = h('li', { hidden: !P.listed }, b);
       list.append(li); P.li = li; P.btn = b;
       const t = h('button', { class: 'cx__tag', type: 'button', tabindex: '-1', text: String(P.n) }, h('span', { class: 'tip', text: P.label }));
       t.addEventListener('click', e => { e.stopPropagation(); select(P.id); });
@@ -298,11 +381,29 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
   }
 
   // ---------------------------------------------------------------- geometry helpers
-  function partWorldCenter(P, out) { return model.localToWorld(out.copy(P.center).addScaledVector(P.dir, S.explode)); }
+  // a part's point in model space as it is drawn now: explode, and the motion of what it follows (p.follow)
+  const FM = new THREE.Matrix4(), MI = new THREE.Matrix4();
+  function partLocal(P, out, pt = P.center) {
+    out.copy(pt);
+    if (!P.followRest || !P.followInObj) out.addScaledVector(P.dir, S.explode);
+    if (P.followRest) {
+      model.updateWorldMatrix(true, false); P.data.follow.updateWorldMatrix(true, false);
+      out.applyMatrix4(FM.copy(MI.copy(model.matrixWorld).invert()).multiply(P.data.follow.matrixWorld).multiply(P.followRest));
+    }
+    return out;
+  }
+  function partWorldCenter(P, out) { return model.localToWorld(P.followRest ? partLocal(P, out) : out.copy(P.center).addScaledVector(P.dir, S.explode)); }
+  // where its numbered label sits: anchor(out, P, ctx) (model space, every frame), an offset from the box centre, or the centre
+  function tagWorld(P, out) {
+    const a = P.data.anchor;
+    if (typeof a === 'function') return model.localToWorld(a(out, P, ctx) || out);
+    if (a) return model.localToWorld(partLocal(P, out, V2.copy(P.center).add(toV3(a))));
+    return partWorldCenter(P, out);
+  }
   function visibleBox(explodeAmt, out) {
     out.makeEmpty();
     for (const P of parts) {
-      if (!P.visible) continue;
+      if (!P.visible || !P.frame) continue;
       BOX.copy(P.box).translate(V2.copy(P.dir).multiplyScalar(explodeAmt));
       out.union(BOX);
     }
@@ -337,6 +438,8 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
     if (fly && fly.p) pivot.position.copy(fly.p); else pivot.position.set(0, 0, 0);
     placeParts();
     for (const P of parts) P.obj.visible = P.visible && P.opacity > .004;
+    // a mesh outside its part's object (shared, or handed over by the config) shows while any of its parts does
+    for (const E of meshList) if (E.outside) E.m.visible = E.owners.some(P => P.visible && P.opacity > .004);
     const poseH = hook('pose'); if (poseH) poseH(S, ctx);
     pivot.updateMatrixWorld(true);
     // section plane: through the cut point in model space, swept in from outside
@@ -348,9 +451,9 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
       clipPlane.coplanarPoint(capMesh.position);
       capMesh.quaternion.setFromUnitVectors(V.set(0, 0, 1), V2.copy(clipPlane.normal).negate());
     } else { clipPlane.normal.set(0, 0, -1); clipPlane.constant = 1e3; if (capMesh) capMesh.visible = false; }
-    if (CUT) for (const P of parts) for (const m of P.meshes) {
-      const s = m.children[0];
-      if (s && s.userData.stencil) s.visible = k > 0 && P.ghost > .99;
+    if (CUT) for (const E of meshList) {
+      const s = E.m.userData.stencilMesh;
+      if (s) s.visible = k > 0 && E.owners.some(P => P.ghost > .99);
     }
     // camera: on +Z of the target, the frame R of the canvas spans the lens
     camera.position.copy(cur.target); camera.position.z += cur.dist;
@@ -395,15 +498,18 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
     for (const P of parts) {
       const g = !P.visible ? 0 : P.ghost;
       if (Math.abs(P.opacity - g) > .003) { P.opacity = lerp(P.opacity, g, kg); moving = true; } else P.opacity = g;
-      const t = P.opacity < .999;
-      for (const m of P.meshes) {
-        if (m.material.transparent !== t) { m.material.transparent = t; m.material.depthWrite = !t; m.material.needsUpdate = true; }
-        m.material.opacity = P.opacity;
-      }
+    }
+    // a mesh shared by several parts follows the most opaque of them, so a picked part never fades with its neighbours
+    for (const E of meshList) {
+      let o = E.owners[0].opacity;
+      for (let i = 1; i < E.owners.length; i++) if (E.owners[i].opacity > o) o = E.owners[i].opacity;
+      const m = E.m, t = o < .999;
+      if (m.material.transparent !== t) { m.material.transparent = t; m.material.depthWrite = !t; m.material.needsUpdate = true; }
+      m.material.opacity = o;
     }
     if (!fly) {
       // view: damp toward the goal
-      const kv = damp(dt, 7);
+      const kv = damp(dt, viewRate);
       if (Rg) {
         const off = Math.abs(R.x - Rg.x) + Math.abs(R.y - Rg.y) + Math.abs(R.w - Rg.w) + Math.abs(R.h - Rg.h);
         if (off > .5) { R = lerpRect(R, Rg, kv); moving = true; } else R = { ...Rg };
@@ -442,15 +548,21 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
     W = innerWidth; H = innerHeight;
     if (mobile()) {
       // between the title and the sheet, or the part card when one is up (it sits on the sheet)
-      const top = 74, sheetTop = panel.getBoundingClientRect().top || H - 150;
+      const top = C.clearHead ? Math.max(74, headBottom() + 8) : 74, sheetTop = panel.getBoundingClientRect().top || H - 150;
       dialog.style.setProperty('--cx-sheet', Math.round(H - sheetTop) + 'px');
       const cardTop = card.hidden ? 0 : card.getBoundingClientRect().top;
       const bottom = cardTop > top + 160 ? cardTop : sheetTop;
       return { x: 0, y: top, w: W, h: Math.max(140, bottom - top - 8) };
     }
     const left = panel.getBoundingClientRect().left || W - 380;
+    if (C.clearHead) {
+      // below the title block, so the model never runs under the heading
+      const top = Math.min(H * .4, headBottom() + 12);
+      return { x: 0, y: top, w: Math.max(200, left - 12), h: H - top - 12 };
+    }
     return { x: 0, y: 0, w: Math.max(200, left - 12), h: H };
   }
+  function headBottom() { const b = head.getBoundingClientRect(); return b.height ? b.bottom : 0; }
   function resize() {
     if (!S.built) return;
     layoutBase();
@@ -620,7 +732,8 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
     S.cutOn = false; S.cutT = 0; cutBtn.setAttribute('aria-pressed', 'false');
     for (const g of GROUPS) S.groups[g.key] = true;
     for (const c of chips) c.setAttribute('aria-pressed', 'true');
-    for (const P of parts) { P.visible = true; P.ghost = 1; P.opacity = 1; P.li.hidden = false; }
+    viewRate = VIEW_RATE;
+    for (const P of parts) { P.shown = P.data.shown !== false; P.visible = P.shown; P.ghost = 1; P.opacity = P.shown ? 1 : 0; P.li.hidden = !P.listed || !P.shown; }
     S.selected = null; hideCard(); setSheet(false);
     tourBtn.hidden = reducedQ.matches;
     S.t = 0;
@@ -655,7 +768,7 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
       from: target ? from : null, to: target, dur: reducedQ.matches ? 0 : target ? CLOSE_MS : 280,
       step(u, e) {
         S.explode = ex0 * (1 - e); S.explodeGoal = S.explode; S.cutT = cut0 * (1 - e);
-        parts.forEach((P, i) => { P.opacity = lerp(vis0[i], 1, e); P.visible = true; });
+        parts.forEach((P, i) => { P.opacity = lerp(vis0[i], P.shown ? 1 : 0, e); P.visible = P.shown; });
         if (groundTo) {
           const g = lerpRect(fullRect(), groundTo, e);
           scissor = g;
@@ -727,7 +840,7 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
   function select(pid, { fromList = false, quiet = false } = {}) {
     const P = byId.get(pid);
     if (!P) return;
-    if (!P.visible) { S.groups[P.group] = true; syncGroups(); }
+    if (!P.visible && P.group != null) { S.groups[P.group] = true; syncGroups(); }
     S.selected = pid;
     for (const Q of parts) Q.ghost = Q === P ? 1 : (Q.exterior ? C.ghost.exterior : C.ghost.interior);
     goal.focus = pid; goal.zoom = 1; goal.pan.set(0, 0, 0);
@@ -784,14 +897,37 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
   tourBtn.addEventListener('click', () => startTour());
   resetBtn.addEventListener('click', () => {
     endTour(true); deselect();
-    goal.orbit.identity(); goal.roll = ROLL0; goal.zoom = 1; goal.pan.set(0, 0, 0);
+    goal.orbit.identity(); goal.roll = ROLL0; goal.zoom = 1; goal.pan.set(0, 0, 0); viewRate = VIEW_RATE;
     S.explodeGoal = 0; explode.value = '0'; explodeOut.value = '0%'; setCut(false);
     hook('reset') && hook('reset')(S, ctx);
     invalidate();
   });
   function syncGroups() {
     for (const c of chips) c.setAttribute('aria-pressed', String(S.groups[c.dataset.group]));
-    for (const P of parts) { P.visible = P.group == null || S.groups[P.group] !== false; P.li.hidden = !P.visible; }
+    for (const P of parts) { P.visible = P.shown && (P.group == null || S.groups[P.group] !== false); P.li.hidden = !P.visible || !P.listed; }
+    invalidate();
+  }
+  // a product shows or hides one of its parts (a prop, an option): it fades like a group toggle
+  function setShown(pid, on) { const P = byId.get(pid); if (!P) return; P.shown = !!on; if (!on && S.selected === pid) deselect(); syncGroups(); }
+  // set the explode amount from a product's own code: the slider follows, nothing else reacts (no tour end, no input event)
+  function setExplodeQuiet(v, { instant = false } = {}) {
+    const k = clamp01(+v || 0);
+    S.explodeGoal = k; if (instant || reducedQ.matches) S.explode = k;
+    explode.value = String(Math.round(k * 100)); explodeOut.value = explode.value + '%';
+    invalidate();
+  }
+  // view goals for a product's own motion: yaw and pitch (rad, from home, the drag's axes), roll about +Y,
+  // zoom (1 = fit), pan (world metres), focus (a part id or null), rate (how fast it eases, 1/s; default 7)
+  function setView(o = {}) {
+    if (o.orbit) goal.orbit.copy(o.orbit);
+    else if (o.yaw != null || o.pitch != null) {
+      goal.orbit.setFromAxisAngle(Y, o.yaw || 0).premultiply(qTmp.setFromAxisAngle(V.set(1, 0, 0), o.pitch || 0));
+    }
+    if (o.roll != null) goal.roll = o.roll;
+    if (o.zoom != null) goal.zoom = Math.max(.12, Math.min(2.6, o.zoom));
+    if (o.pan) goal.pan.copy(toV3(o.pan));
+    if (o.focus !== undefined) goal.focus = o.focus != null && byId.has(o.focus) ? o.focus : null;
+    if (o.rate != null) viewRate = o.rate;
     invalidate();
   }
   for (const c of chips) c.addEventListener('click', () => {
@@ -824,6 +960,7 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
     if (S.phase !== 'open') return;
     canvas.setPointerCapture(e.pointerId);
     ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    viewRate = VIEW_RATE;
     if (ptrs.size === 1) { downAt = { x: e.clientX, y: e.clientY, t: performance.now() }; dragged = false; panMode = e.shiftKey || e.button === 2; }
     else { downAt = null; pinch = 0; }
     endTour(true);
@@ -852,7 +989,7 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
     else rotBy(dx, dy);
     invalidate();
   });
-  canvas.addEventListener('wheel', e => { e.preventDefault(); if (S.phase !== 'open') return; endTour(true); zoomBy(Math.exp(e.deltaY * .0012)); invalidate(); }, { passive: false });
+  canvas.addEventListener('wheel', e => { e.preventDefault(); if (S.phase !== 'open') return; endTour(true); viewRate = VIEW_RATE; zoomBy(Math.exp(e.deltaY * .0012)); invalidate(); }, { passive: false });
   canvas.addEventListener('keydown', e => {
     if (S.phase !== 'open') return;
     const k = e.key, step = e.shiftKey ? 30 : 12;
@@ -874,7 +1011,8 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
     let ghostHit = null;
     for (const hit of ray.intersectObjects(objs, false)) {
       if (cutting && clipPlane.distanceToPoint(hit.point) < 0) continue;
-      const P = hit.object.userData.part;
+      const own = hit.object.userData.viewerOwners;
+      const P = own && own.length > 1 ? (own.find(Q => Q.id === S.selected) || own.find(Q => Q.visible) || own[0]) : hit.object.userData.part;
       if (!P) continue;
       if (P.ghost > .5) return P;
       if (!ghostHit || (ghostHit.exterior && !P.exterior)) ghostHit = P;
@@ -902,11 +1040,9 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
     const only = S.tour ? TOUR[S.tour.i] : S.selected;
     for (const P of parts) {
       const t = P.tag;
-      let ok = show && P.visible && P.meshes.length > 0 && P.data.tag !== false && (only == null || P.id === only);
+      let ok = show && P.visible && P.listed && P.meshes.length > 0 && P.data.tag !== false && (only == null || P.id === only);
       if (ok) {
-        if (P.data.anchor) model.localToWorld(V.copy(P.center).addScaledVector(P.dir, S.explode).add(toV3(P.data.anchor)));
-        else partWorldCenter(P, V);
-        V.project(camera);
+        tagWorld(P, V).project(camera);
         const x = (V.x + 1) / 2 * W, y = (1 - V.y) / 2 * H;
         ok = V.z < 1 && x > R.x + 10 && x < R.x + R.w - 10 && y > R.y + 10 && y < R.y + R.h - 10;
         if (ok && only == null) for (const q of placed) if (Math.abs(q[0] - x) < 24 && Math.abs(q[1] - y) < 24) { ok = false; break; }
@@ -938,6 +1074,8 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
     tourStep.textContent = `${pad(Tr.i + 1)} / ${pad(TOUR.length)}`;
     tourName.textContent = P.label; tourLine.textContent = (P.card && P.card.lede) || '';
     tourTimer = setTimeout(nextStop, TOUR_MS);
+    hook('tourStop') && hook('tourStop')(Tr.i, P.id, ctx);
+    dialog.dispatchEvent(new CustomEvent('viewer:tourstop', { detail: { i: Tr.i, id: P.id } }));
   }
   // skipped (any input) or finished: back to the whole model, free orbit
   function endTour(byUser) {
@@ -947,6 +1085,8 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
     deselect();
     goal.roll = ROLL0;
     live.textContent = byUser ? 'Tour skipped.' : 'Tour finished.';
+    hook('tourEnd') && hook('tourEnd')(byUser, ctx);
+    dialog.dispatchEvent(new CustomEvent('viewer:tourend', { detail: { byUser } }));
     invalidate();
   }
   tourSkip.addEventListener('click', () => endTour(true));
@@ -958,7 +1098,7 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
     stats, state: S, dispose,
     get view() { return { cur: { ...cur, target: cur.target.toArray(), orbit: cur.orbit.toArray() }, goal: { ...goal, pan: goal.pan.toArray(), orbit: goal.orbit.toArray() }, R, W, H, home: S.built ? homeDist(S.explode) : 0 }; },
     get parts() { return parts.map(P => ({ id: P.id, n: P.n, label: P.label, group: P.group, visible: P.visible, center: P.center.toArray().map(v => +v.toFixed(3)), size: P.box.getSize(new THREE.Vector3()).toArray().map(v => +v.toFixed(3)), meshes: P.meshes.length })); },
-    select: pid => select(pid), deselect, setCut, startTour: () => startTour(), endTour: () => endTour(true),
+    select: pid => select(pid), deselect, setCut, startTour: () => startTour(), endTour: () => endTour(true), setView, setShown, ctx,
     setExplode(v) { explode.value = String(Math.round(v * 100)); explode.dispatchEvent(new Event('input')); },
     screenOf(pid) { const P = byId.get(pid); if (!P || !camera) return null; setPose(); partWorldCenter(P, V).project(camera); return { x: (V.x + 1) / 2 * W, y: (1 - V.y) / 2 * H }; },
     info() { return renderer ? { calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, programs: renderer.info.programs.length, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures } : null; },
