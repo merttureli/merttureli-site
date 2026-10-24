@@ -119,7 +119,8 @@ export default {
   ghostWord: 'PEDALS',
   text: { whole: 'Whole assembly.' },
   fov: 26,                                             // the review page's lens
-  base: () => [Math.PI / 2 - 1.12, -.62, 0],           // the review page's home view (theta .62, phi 1.12)
+  base: () => [.42, -.8, 0],                           // the showreel's view (VIEW in rudder-pedals.js), so the case stage hands over without a turn
+  fit: .82,
   uniqueMaterials: false,                              // every mesh gets its own material in build()
   ghost: { exterior: .07, interior: .16 },
   cut: false,
@@ -157,25 +158,27 @@ export default {
     // own material per mesh, so each part ghosts alone
     root.traverse(o => { if (o.isMesh) o.material = o.material.clone(); });
 
-    // ---- the studio environment (engine.adopt on the review page): made with the shell's renderer the
-    // first time a material compiles (the shell compiles every variant before the first frame)
+    // ---- the studio environment (engine.adopt on the review page and the case stage), made with the shell's
+    // renderer: a probe mesh first in the scene grabs it in the shell's first compile pass, so every
+    // variant (opaque and ghosted) compiles with the environment before the first frame
     const mats = [];
     root.traverse(o => { if (o.isMesh && o.material.isMeshStandardMaterial) mats.push(o.material); });
-    let renderer = null, envDone = false;
-    const applyEnv = () => {
-      if (envDone || !renderer) return;
+    let envDone = false;
+    const applyEnv = renderer => {
+      if (envDone) return;
       envDone = true;
       let env = envs.get(renderer);
       if (!env) { env = createStudioEnvironment(renderer); envs.set(renderer, env); }
       for (const m of mats) if (!m.envMap) { m.envMap = env; m.envMapIntensity *= .55; m.needsUpdate = true; }
-      if (probe.parent) probe.removeFromParent();
+      queueMicrotask(() => probe.removeFromParent());
     };
     const probe = new THREE.Mesh(new THREE.PlaneGeometry(1e-4, 1e-4), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false }));
-    probe.material.onBeforeCompile = (p, r) => { if (!renderer) { renderer = r; queueMicrotask(applyEnv); } };
+    probe.material.onBeforeCompile = (p, r) => applyEnv(r);
     probe.frustumCulled = false; probe.raycast = () => {};
     ctx.scene.add(probe);
+    ctx.scene.children.unshift(ctx.scene.children.pop());
     const sceneHook = ctx.scene.onBeforeRender;
-    ctx.scene.onBeforeRender = function (r, ...rest) { if (!renderer) renderer = r; applyEnv(); return sceneHook.call(this, r, ...rest); };
+    ctx.scene.onBeforeRender = function (r, ...rest) { applyEnv(r); return sceneHook.call(this, r, ...rest); };
 
     // ---- labels: the added parts first (springs, sensors and magnets, wiring, board, screws), then the STEP parts
     const pedalOf = S => Pm['lever' + S].getObjectByName('pedal' + S);
@@ -288,7 +291,8 @@ export default {
         for (const P of c.parts) {
           const R = rows.get(P.id);
           anchor(R, P.center);
-          if (R.L.spring || R.L.wire) P.box.setFromCenterAndSize(P.center, V.setScalar(.02));
+          if (R.L.spring) { const { a, b } = R.L.spring; P.box.makeEmpty().expandByPoint(V.copy(a.p).applyMatrix4(a.obj.matrixWorld).applyMatrix4(inv)).expandByPoint(V.copy(b.p).applyMatrix4(b.obj.matrixWorld).applyMatrix4(inv)).expandByScalar(.004); }
+          else if (R.L.wire) P.box.setFromPoints(R.L.wire.pts);
           else if (R.carrier) P.box.copy(R.rest).translate(V.copy(R.carrier.position).sub(R.carrier0));
           if (!R.secondary) {
             const on = P.visible && P.opacity > .004;
