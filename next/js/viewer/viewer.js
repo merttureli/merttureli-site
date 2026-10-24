@@ -1,80 +1,52 @@
-// CHARGER EXPLORER: the flight model, opened in place over the Studio home.
+// VIEWER SHELL: one in-place 3D viewer for every project (docs/recipes/viewer.md).
 //
-// launch.js imports this on prefetch and calls createExplorer() on the first open.
+// launch.js imports this and a product config (next/js/viewer/products/<slug>.js) on
+// prefetch, and calls createViewer(config, hooks) on the first open. The shell owns
+// everything that is the same for every product; the config owns only the model.
 //
-// The rocket is the hero's own: createRocket() from hero3d.js builds the same eleven
-// exterior meshes, livery and materials from next/assets/3d/charger-hero.* (the file
-// the hero already loaded), and this module adds the seventeen interior parts from
-// next/assets/3d/charger-explorer.* (cadmesh, tools/cad/explorer_to_cadmesh.py). It is
-// lit by the hero's rig (addStudioLights from showreel/engine.js) with the same
+// The shell: a full-screen modal <dialog> that grows from the element that was clicked
+// (a work tile, a case-page stage or the hero) while the model flies from where it was
+// drawn there to the centre (close is the same move backwards); orbit, zoom, pan and
+// reset; a glass controls panel (a bottom sheet on phones); numbered orange labels;
+// part-group toggles; an explode slider; an optional section cut with solid stencil
+// caps; part cards; an optional tour; an optional slot for product controls (sliders,
+// toggles) with an update(t, state) hook for product motion; focus trap, Esc, reduced
+// motion; dispose or keep warm. launch.js owns the URL hash, Back, deep links, prefetch
+// near the viewport and pausing the hero and any case stage while it is open.
+//
+// The renderer is created on the first open and kept warm after a close with its
+// canvas shrunk to 1 x 1 px (programs and buffers stay, the full-screen colour, depth
+// and MSAA buffers go), so a second open costs no shader compile; after WARM_MS closed
+// it is disposed completely. It draws only while something moves.
+//
+// Lit by the hero's rig (addStudioLights from showreel/engine.js) with the hero's
 // renderer settings, through one three.js copy (next/js/three.module.min.js).
-//
-// Open: the tile (or the hero canvas) grows to the full screen and the rocket flies
-// from where it was drawn there to the centre; close is the same move backwards. The
-// renderer is created on the first open and kept warm after a close with its canvas
-// shrunk to 1 x 1 px (programs and buffers stay, the full-screen colour, depth and
-// MSAA buffers go), so a second open costs no shader compile; after WARM_MS closed it
-// is disposed completely. While open, the hero showreel is paused (no rAF), and this
-// module draws only while something moves.
-//
-// Controls follow next/lab/rudder-pedals-review.html: numbered orange labels, part
-// group toggles, an explode slider (along the body axis: sections slide apart, each
-// part keeps its true station in its section) and a section cut (a clipping plane
-// through the body axis with solid stencil caps). Tap a part for its card: the text is
-// part-stories.js, unchanged. The Tour button plays an optional five stop tour (not
-// offered with reduced motion: no fly and no tour then).
+// The CHARGER explorer is products/charger.js on this shell.
 import * as THREE from '../three.module.min.js';
 import { addStudioLights, ease, clamp01, lerp, win } from '../showreel/engine.js';
-import { createRocket, LAYOUTS } from '../hero3d.js';
-import { fetchCadMesh, buildCadMesh } from '../cad/cadmesh.js';
-import { storyFor } from '../../../assets/charger-explorer/part-stories.js';
 
-const ASSETS = new URL('../../assets/3d/', import.meta.url).href;
 const reducedQ = matchMedia('(prefers-reduced-motion: reduce)');
-const FOV = 24;                                   // the hero's lens (hero3d.js LAYOUTS)
-const FRONT_ANGLE = Math.atan2(1, 2.8);           // hero3d.js: the livery's front
-const ROLL0 = -FRONT_ANGLE + LAYOUTS.land.roll;   // CHARGER lettering toward the camera
 const OPEN_MS = 900, CLOSE_MS = 720;              // --dur-900; close a touch quicker
 const WARM_MS = 180000;
-const GHOST_EXT = .07, GHOST_INT = .16;           // opacity of the other parts while one is picked
-const CUT_MS = 650, CUT_FAR = .12;                // section sweep; plane offset that clips nothing
+const CUT_MS = 650;                               // section sweep
 const CAP_COLOR = 0xd2cdc4;                       // section caps: matte warm grey
-
-// Explode: how far each part slides along the body axis (metres, model space) at 100 %.
-// Sections move apart in the order they are assembled: nose forward, the payload out of
-// the upper tube, the coupler, recovery mount and altimeter between the tubes, the motor
-// section out of the back (as it does for replacement) and the screw cap behind it.
-const SLIDE = {
-  0: .46,
-  14: .25, 15: .25, 17: .25, 23: .25, 24: .25, 25: .25,
-  1: 0, 10: 0,
-  16: -.12, 13: -.12, 20: -.12, 21: -.12, 22: -.12, 27: -.12, 28: -.12, 29: -.12,
-  26: .07, 12: .07,
-  2: -.36, 11: -.36,
-  18: -.62, 5: -.62, 6: -.62, 7: -.62, 8: -.62, 9: -.62,
-  19: -.7,
+const DEFAULTS = {
+  fov: 24,                                        // the hero's lens (hero3d.js LAYOUTS)
+  fit: .9,                                        // share of the frame the whole model fills
+  roll0: 0,                                       // home turn about the model's +Y axis (rad)
+  base: () => [.42, -.62, 0],                     // home orientation (Euler XYZ, rad): a three-quarter view from a little above
+  center: true,                                   // centre the model's box on the orbit pivot
+  ghost: { exterior: .07, interior: .16 },        // opacity of the other parts while one is picked
+  tourMs: 3300,
 };
-// Part groups for the toggles, by the story category (part-stories.js).
-const GROUPS = [
-  ['airframe', 'Airframe', ['Airframe', 'Launch interface']],
-  ['payload', 'Payload', ['Payload', 'Avionics', 'Electrical', 'Communications', 'Internal structure']],
-  ['recovery', 'Recovery', ['Recovery']],
-  ['motor', 'Motor', ['Propulsion', 'Motor retention']],
-];
-// Tour: nose, avionics bay, recovery, motor mount, fins. Each stop shows the part's
-// own subtitle from part-stories.js.
-const TOUR = [0, 24, 26, 18, 6];
-const TOUR_MS = 3300;
-
-let dataP = null;
-// Fetch the interior model (and warm the hero's metadata). Safe to call many times.
-export function prefetch() {
-  if (!dataP) {
-    dataP = Promise.all([fetchCadMesh(ASSETS + 'charger-explorer.json'), fetch(ASSETS + 'charger-hero.json').then(r => r.json())]);
-    dataP.catch(() => { dataP = null; });
-  }
-  return dataP;
-}
+// UI words; a product can replace any of them (config.text)
+const TEXT = {
+  canvas: 'Drag to turn, scroll or pinch to zoom, arrow keys to turn, plus and minus to zoom. Pick a part to read about it.',
+  close: 'Close the viewer', panel: 'Viewer controls', hint: 'Drag to turn / Scroll to zoom / Click a part',
+  explode: 'Explode', section: 'Section', labels: 'Labels', tour: 'Tour', reset: 'Reset view', skip: 'Skip tour',
+  show: 'Show', parts: 'Parts', more: 'More controls', fewer: 'Fewer controls', closeCard: 'Close the part card',
+  whole: 'Whole model.', lost: '3D paused. Close and open the viewer again to restore it.',
+};
 
 const h = (tag, attrs = {}, ...kids) => {
   const el = document.createElement(tag);
@@ -86,43 +58,49 @@ const h = (tag, attrs = {}, ...kids) => {
 };
 const pad = n => String(n).padStart(2, '0');
 const easeIO = ease.inOutCubic;
+const toV3 = v => (v == null ? new THREE.Vector3() : typeof v === 'number' ? new THREE.Vector3(0, v, 0) : v.isVector3 ? v.clone() : new THREE.Vector3().fromArray(v));
 
-export function createExplorer({ onRequestClose, onClosed }) {
+export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) {
+  const C = { ...DEFAULTS, ...product, ghost: { ...DEFAULTS.ghost, ...(product.ghost || {}) } };
+  const T = { ...TEXT, ...(product.text || {}) };
+  const id = s => `cx-${C.slug}-${s}`;
+  const GROUPS = (C.groups || []).map(g => (Array.isArray(g) ? { key: g[0], label: g[1] } : g));
+  const TOUR = (C.tour && (C.tour.stops || C.tour)) || [];
+  const TOUR_MS = (C.tour && C.tour.ms) || C.tourMs;
+  const CUT = C.cut === false || C.cut == null ? null : { cap: CAP_COLOR, ...(C.cut === true ? {} : C.cut) };
+  const FOV = C.fov;
   // ---------------------------------------------------------------- DOM
-  const canvas = h('canvas', { class: 'cx__canvas', tabindex: '0', role: 'img', 'aria-label': 'CHARGER flight model. Drag to turn, scroll or pinch to zoom, arrow keys to turn, plus and minus to zoom. Pick a part to read about it.' });
+  const canvas = h('canvas', { class: 'cx__canvas', tabindex: '0', role: 'img', 'aria-label': C.canvasLabel || `${C.name || C.title}. ${T.canvas}` });
   const ink = h('span', { class: 'cx__ink' });
-  const ground = h('div', { class: 'cx__ground', 'aria-hidden': 'true' }, ink, h('span', { class: 'cx__ghost', text: 'CHARGER' }));
+  const ground = h('div', { class: 'cx__ground', 'aria-hidden': 'true' }, ink, ...(C.ghostWord ? [h('span', { class: 'cx__ghost', text: C.ghostWord })] : []));
   const tags = h('div', { class: 'cx__tags cx__ui', 'aria-hidden': 'true' });
-  const title = h('h2', { class: 'cx__title', id: 'cx-title', text: 'Take CHARGER apart' });
-  const head = h('header', { class: 'cx__head cx__ui' }, h('p', { class: 'label', text: 'Interactive / The flight model' }), title);
-  const closeBtn = h('button', { class: 'cx__close cx__ui', type: 'button', 'aria-label': 'Close the explorer' });
-  const explode = h('input', { type: 'range', id: 'cx-explode', min: '0', max: '100', step: '1', value: '0' });
-  const explodeOut = h('output', { for: 'cx-explode', text: '0%' });
+  const title = h('h2', { class: 'cx__title', id: id('title'), text: C.title });
+  const head = h('header', { class: 'cx__head cx__ui' }, ...(C.eyebrow ? [h('p', { class: 'label', text: C.eyebrow })] : []), title);
+  const closeBtn = h('button', { class: 'cx__close cx__ui', type: 'button', 'aria-label': T.close });
+  const explode = h('input', { type: 'range', id: id('explode'), min: '0', max: '100', step: '1', value: '0' });
+  const explodeOut = h('output', { for: id('explode'), text: '0%' });
   const btn = (text, act, pressed) => h('button', { class: 'cx__btn', type: 'button', 'data-act': act, 'aria-pressed': pressed == null ? false : String(pressed), text });
-  const cutBtn = btn('Section', 'cut', false), labelsBtn = btn('Labels', 'labels', true), tourBtn = btn('Tour', 'tour'), resetBtn = btn('Reset view', 'reset');
-  const chips = GROUPS.map(([key, text]) => {
-    const b = h('button', { class: 'cx__btn cx__btn--chip', type: 'button', 'data-group': key, 'aria-pressed': 'true' }, h('span', { class: 'dot', 'aria-hidden': 'true' }), text);
-    return b;
-  });
+  const cutBtn = btn(T.section, 'cut', false), labelsBtn = btn(T.labels, 'labels', true), tourBtn = btn(T.tour, 'tour'), resetBtn = btn(T.reset, 'reset');
+  const chips = GROUPS.map(({ key, label }) => h('button', { class: 'cx__btn cx__btn--chip', type: 'button', 'data-group': key, 'aria-pressed': 'true' }, h('span', { class: 'dot', 'aria-hidden': 'true' }), label));
   const list = h('ol', { class: 'cx__parts' });
-  const more = h('div', { class: 'cx__more', id: 'cx-more' },
-    h('h3', { class: 'label', text: 'Show' }), h('div', { class: 'cx__chips' }, ...chips),
-    h('h3', { class: 'label', text: 'Parts' }), list);
-  const grab = h('button', { class: 'cx__grab', type: 'button', 'aria-expanded': 'false', 'aria-controls': 'cx-more', text: 'More controls' });
-  const panel = h('aside', { class: 'cx__panel cx__ui', 'aria-label': 'Explorer controls' }, grab,
-    h('div', { class: 'cx__row' }, h('label', { for: 'cx-explode', text: 'Explode' }), explode, explodeOut),
-    h('div', { class: 'cx__btns' }, cutBtn, labelsBtn, tourBtn, resetBtn), more);
-  const cardX = h('button', { class: 'cx__x', type: 'button', 'aria-label': 'Close the part card' });
-  const cardLabel = h('p', { class: 'label' }), cardTitle = h('h3', { id: 'cx-card-title', tabindex: '-1' }), cardLede = h('p', { class: 'lede' }), cardDesc = h('p', { class: 'desc' });
-  const cardRole = h('dd'), cardMat = h('dd'), cardMatRow = h('div', {}, h('dt', { text: 'Material' }), cardMat);
-  const card = h('section', { class: 'cx__card cx__ui', 'aria-labelledby': 'cx-card-title', hidden: true }, cardX, cardLabel, cardTitle, cardLede, cardDesc,
-    h('dl', {}, h('div', {}, h('dt', { text: 'Role' }), cardRole), cardMatRow));
+  const more = h('div', { class: 'cx__more', id: id('more') },
+    ...(chips.length > 1 ? [h('h3', { class: 'label', text: T.show }), h('div', { class: 'cx__chips' }, ...chips)] : []),
+    h('h3', { class: 'label', text: T.parts }), list);
+  const grab = h('button', { class: 'cx__grab', type: 'button', 'aria-expanded': 'false', 'aria-controls': id('more'), text: T.more });
+  const custom = h('div', { class: 'cx__custom', hidden: true });
+  const panel = h('aside', { class: 'cx__panel cx__ui', 'aria-label': T.panel }, grab,
+    h('div', { class: 'cx__row' }, h('label', { for: id('explode'), text: T.explode }), explode, explodeOut),
+    h('div', { class: 'cx__btns' }, ...(CUT ? [cutBtn] : []), labelsBtn, ...(TOUR.length ? [tourBtn] : []), resetBtn), custom, more);
+  const cardX = h('button', { class: 'cx__x', type: 'button', 'aria-label': T.closeCard });
+  const cardLabel = h('p', { class: 'label' }), cardTitle = h('h3', { id: id('card-title'), tabindex: '-1' }), cardLede = h('p', { class: 'lede' }), cardDesc = h('p', { class: 'desc' });
+  const cardDl = h('dl');
+  const card = h('section', { class: 'cx__card cx__ui', 'aria-labelledby': id('card-title'), hidden: true }, cardX, cardLabel, cardTitle, cardLede, cardDesc, cardDl);
   const tourStep = h('span', { class: 'label' }), tourName = h('span', { class: 'cx__tname' }), tourLine = h('span', { class: 'cx__tline' });
-  const tourSkip = h('button', { class: 'cx__btn', type: 'button', text: 'Skip tour' });
+  const tourSkip = h('button', { class: 'cx__btn', type: 'button', text: T.skip });
   const tourBox = h('div', { class: 'cx__tour cx__ui', hidden: true, role: 'status' }, h('div', { class: 'cx__ttext' }, tourStep, tourName, tourLine), tourSkip);
-  const hint = h('p', { class: 'cx__hint label cx__ui', text: 'Drag to turn / Scroll to zoom / Click a part' });
+  const hint = h('p', { class: 'cx__hint label cx__ui', text: T.hint });
   const live = h('div', { class: 'sr-only', 'aria-live': 'polite' });
-  const dialog = h('dialog', { class: 'cx', 'aria-labelledby': 'cx-title', 'data-lenis-prevent': '', tabindex: '-1' },
+  const dialog = h('dialog', { class: 'cx', 'aria-labelledby': id('title'), 'data-lenis-prevent': '', 'data-viewer-slug': C.slug, tabindex: '-1' },
     ground, canvas, tags, head, panel, card, tourBox, hint, closeBtn, live);
   document.body.append(dialog);
 
@@ -130,70 +108,93 @@ export function createExplorer({ onRequestClose, onClosed }) {
   const S = {
     phase: 'closed', origin: 'tile', tileEl: null, built: false,
     explode: 0, explodeGoal: 0, cutOn: false, cutT: 0, labels: true,
-    groups: Object.fromEntries(GROUPS.map(g => [g[0], true])),
-    selected: null, tour: null, sheetOpen: false,
+    groups: Object.fromEntries(GROUPS.map(g => [g.key, true])),
+    selected: null, tour: null, sheetOpen: false, t: 0,
   };
   const stats = { opens: 0, firstFrameMs: 0, openMs: 0, buildMs: 0, frames: 0, frameMs: [], cpuMs: [], cold: true };
 
-  let renderer = null, scene = null, camera = null, pivot = null, model = null, cad = null;
+  let renderer = null, scene = null, camera = null, pivot = null, model = null, built = null;
   let capMesh = null, stencilMat = null, parts = [], byId = new Map(), raf = 0, last = 0, warmTimer = 0, buildP = null;
   let fly = null, R = { x: 0, y: 0, w: 1, h: 1 }, Rg = null, W = 1, H = 1, scissor = null;   // R: the frame drawn in; Rg: where it is heading
-  const clipPlane = new THREE.Plane(new THREE.Vector3(0, 0, -1), 1e3), modelPlane = new THREE.Plane(), cutNormal = new THREE.Vector3(0, 0, -1);
+  let cutFar = .12;
+  const clipPlane = new THREE.Plane(new THREE.Vector3(0, 0, -1), 1e3), modelPlane = new THREE.Plane(), cutNormal = new THREE.Vector3(0, 0, -1), cutPoint = new THREE.Vector3();
   const qBase = new THREE.Quaternion(), qTmp = new THREE.Quaternion(), qRoll = new THREE.Quaternion(), Y = new THREE.Vector3(0, 1, 0);
   const V = new THREE.Vector3(), V2 = new THREE.Vector3(), TGT = new THREE.Vector3(), M = new THREE.Matrix4(), BOX = new THREE.Box3();
-  // the view: rocket orientation = orbit * base * roll(about the body axis); camera on +Z of target
+  const ROLL0 = C.roll0;
+  // the view: model orientation = orbit * base * roll(about the model's Y axis); camera on +Z of target
   const cur = { orbit: new THREE.Quaternion(), roll: ROLL0, target: new THREE.Vector3(), dist: 2.2, camRoll: 0 };
   const goal = { orbit: new THREE.Quaternion(), roll: ROLL0, zoom: 1, pan: new THREE.Vector3(), focus: null };
 
   const mobile = () => innerWidth <= 760;
   const layoutBase = () => {
     const port = innerWidth / innerHeight < 1;
-    qBase.setFromEuler(new THREE.Euler(.16, 0, port ? .14 : 1.42));
+    qBase.setFromEuler(new THREE.Euler(...C.base(port)));
   };
 
+  // what a product config's hooks receive
+  const ctx = {
+    THREE, Y, get scene() { return scene; }, get pivot() { return pivot; }, get model() { return model; }, get camera() { return camera; },
+    get parts() { return parts; }, part: pid => byId.get(pid), state: S, invalidate: () => invalidate(), live: text => { live.textContent = text; },
+    get rect() { return { ...R }; }, get size() { return { w: W, h: H }; }, get reduced() { return reducedQ.matches; },
+    get roll0() { return ROLL0; }, get fov() { return FOV; },
+  };
+  // a hook from the build result, else from the config
+  const hook = name => (built && built[name]) || C[name];
+
   // ---------------------------------------------------------------- build
-  // the scene graph (CPU only: decode, livery, part list). launch.js runs it on idle once the
+  // the scene graph (CPU only: decode, materials, part list). launch.js runs it on idle once the
   // model is prefetched, so the first open only has the renderer and the shaders to make
   let sceneP = null;
   function warm() {
     if (sceneP) return sceneP;
     sceneP = (async () => {
-      const [rocket, [data, heroMeta]] = await Promise.all([createRocket({ layout: 'land', base: ASSETS }), prefetch()]);
       scene = new THREE.Scene();
       addStudioLights(scene);
       camera = new THREE.PerspectiveCamera(FOV, 1, .01, 30);
       pivot = new THREE.Group();
       scene.add(pivot);
-      // the hero's model group: outer > tilt > roll > model (hero3d.js createRocket); it keeps its
-      // own offset that puts the body centre on the roll axis
-      model = rocket.group.children[0].children[0].children[0];
-      model.removeFromParent();
-      pivot.add(model);
-      const ids = heroMeta.parts.map(p => p.id);
-      if (ids.length !== model.children.length) throw new Error('explorer: hero model and its metadata disagree');
-      const over = {};
-      for (const p of data.meta.parts) over[p.name] = {};   // one material per part, so a part can ghost alone
-      cad = buildCadMesh(THREE, data.meta, data.buf, { materials: over });
-      model.add(cad.group);
-      // the part list: hero meshes by id, then the interior parts
-      const add = (id, obj, meshes, box) => {
-        const story = storyFor({ id });
-        if (!story || story.category === 'Reference') return;
-        const P = { id, story, obj, meshes, base: obj.position.clone(), box, center: box.getCenter(new THREE.Vector3()), slide: SLIDE[id] || 0, opacity: 1, ghost: 1, visible: true, n: 0, tag: null, li: null };
-        P.group = (GROUPS.find(g => g[2].includes(story.category)) || GROUPS[0])[0];
-        P.exterior = story.category !== 'Reference' && [0, 1, 2, 6, 7, 8, 9, 10, 11].includes(id);
-        parts.push(P); byId.set(id, P);
-      };
-      model.children.slice(0, ids.length).forEach((mesh, i) => {
-        mesh.geometry.computeBoundingBox();
-        add(ids[i], mesh, [mesh], mesh.geometry.boundingBox.clone());
-      });
-      for (const p of data.meta.parts) {
-        const g = cad.parts[p.name], meshes = [];
-        const box = new THREE.Box3();
-        g.traverse(o => { if (o.isMesh) { meshes.push(o); o.geometry.computeBoundingBox(); box.union(BOX.copy(o.geometry.boundingBox).translate(g.position)); } });
-        if (box.isEmpty()) box.setFromCenterAndSize(g.position, new THREE.Vector3(.004, .004, .004));
-        add(p.id, g, meshes, box);
+      built = await C.build(ctx);
+      model = built.model;
+      if (model.parent !== pivot) { model.removeFromParent(); pivot.add(model); }
+      model.updateMatrixWorld(true);
+      // the part list
+      const inv = new THREE.Matrix4().copy(model.matrixWorld).invert();
+      const used = new Map();
+      for (const p of built.parts) {
+        const obj = p.obj;
+        const meshes = p.meshes || [];
+        if (!p.meshes) obj.traverse(o => { if (o.isMesh) meshes.push(o); });
+        let box = p.box;
+        if (!box) {
+          box = new THREE.Box3();
+          for (const m of meshes) { m.geometry.computeBoundingBox(); m.updateWorldMatrix(true, false); box.union(BOX.copy(m.geometry.boundingBox).applyMatrix4(M.copy(inv).multiply(m.matrixWorld))); }
+          if (box.isEmpty()) box.setFromCenterAndSize(obj.position, new THREE.Vector3(.004, .004, .004));
+        }
+        // one material per part, so a part can ghost alone
+        if (C.uniqueMaterials !== false) for (const m of meshes) {
+          const owner = used.get(m.material);
+          if (owner !== undefined && owner !== p) m.material = m.material.clone();
+          used.set(m.material, p);
+        }
+        const P = {
+          id: p.id, label: p.label, kind: p.kind || '', card: p.card || null, obj, meshes, base: obj.position.clone(), box,
+          center: box.getCenter(new THREE.Vector3()), dir: toV3(p.explode), opacity: 1, ghost: 1, visible: true, n: 0, tag: null, li: null,
+          group: p.group || (GROUPS[0] && GROUPS[0].key), exterior: p.exterior !== false, data: p,
+        };
+        parts.push(P); byId.set(P.id, P);
+      }
+      // centre the model on the pivot (the orbit turns about its middle)
+      if (C.center) {
+        const b = new THREE.Box3();
+        for (const P of parts) b.union(P.box);
+        if (!b.isEmpty()) model.position.sub(b.getCenter(V));
+      }
+      // section plane: through cut.point (model space) or the middle of the model
+      if (CUT) {
+        const b = new THREE.Box3();
+        for (const P of parts) b.union(P.box);
+        cutPoint.copy(CUT.point ? toV3(CUT.point) : b.getCenter(V));
+        cutFar = CUT.far != null ? CUT.far : b.getSize(V).length() * .6;
       }
       // materials: clipping plane always set (a far plane clips nothing), so toggling the cut
       // never changes a shader; stencil passes for the caps
@@ -206,19 +207,28 @@ export function createExplorer({ onRequestClose, onClosed }) {
         m.material.clippingPlanes = [clipPlane];
         m.material.needsUpdate = true;
         m.userData.part = P;
+        if (!CUT) continue;
         const s = new THREE.Mesh(m.geometry, stencilMat);
         s.renderOrder = 1; s.visible = false; s.raycast = noRay; s.userData.stencil = true;
         m.add(s);
       }
-      capMesh = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), new THREE.MeshStandardMaterial({
-        color: CAP_COLOR, roughness: .82, metalness: 0, side: THREE.DoubleSide,
-        stencilWrite: true, stencilRef: 0, stencilFunc: THREE.NotEqualStencilFunc, stencilFail: THREE.KeepStencilOp, stencilZFail: THREE.KeepStencilOp, stencilZPass: THREE.ReplaceStencilOp,
-      }));
-      capMesh.renderOrder = 2; capMesh.visible = false; capMesh.raycast = noRay;
-      scene.add(capMesh);
-      // numbering: nose to tail by station
-      parts.sort((a, b) => b.center.y - a.center.y).forEach((P, i) => { P.n = i + 1; });
+      if (CUT) {
+        capMesh = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), new THREE.MeshStandardMaterial({
+          color: CUT.cap, roughness: .82, metalness: 0, side: THREE.DoubleSide,
+          stencilWrite: true, stencilRef: 0, stencilFunc: THREE.NotEqualStencilFunc, stencilFail: THREE.KeepStencilOp, stencilZFail: THREE.KeepStencilOp, stencilZPass: THREE.ReplaceStencilOp,
+        }));
+        capMesh.renderOrder = 2; capMesh.visible = false; capMesh.raycast = noRay;
+        scene.add(capMesh);
+      }
+      // numbering: the config's order, or its sort
+      if (C.sortParts) parts.sort(C.sortParts);
+      parts.forEach((P, i) => { P.n = i + 1; });
       buildList();
+      if (C.controls && !custom.childElementCount) {
+        const els = [].concat(C.controls(ctx) || []);
+        custom.append(...els); custom.hidden = !els.length;
+      }
+      hook('ready') && hook('ready')(ctx);
     })();
     sceneP.catch(() => { sceneP = null; });
     return sceneP;
@@ -235,7 +245,7 @@ export function createExplorer({ onRequestClose, onClosed }) {
         renderer.setClearColor(0x000000, 0);
         renderer.localClippingEnabled = true;
         renderer.debug.checkShaderErrors = /[?&#]debug\b/.test(location.href);
-        canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); live.textContent = '3D paused. Close and open the explorer again to restore it.'; });
+        canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); live.textContent = T.lost; });
       }
       layoutBase();
       R = stageRect();
@@ -259,7 +269,7 @@ export function createExplorer({ onRequestClose, onClosed }) {
   function dispose() {
     if (!S.built || S.phase !== 'closed') return;
     stop();
-    cad && cad.dispose();
+    built && built.dispose && built.dispose();
     scene.traverse(o => {
       if (!o.isMesh || o.userData.stencil) return;
       o.geometry.dispose();
@@ -268,7 +278,7 @@ export function createExplorer({ onRequestClose, onClosed }) {
     stencilMat.dispose();
     renderer.renderLists.dispose();
     renderer.info.reset();
-    scene = camera = pivot = model = cad = capMesh = stencilMat = null;
+    scene = camera = pivot = model = built = capMesh = stencilMat = null;
     parts = []; byId = new Map(); buildP = sceneP = null; S.built = false;
     list.replaceChildren(); tags.replaceChildren();
   }
@@ -276,25 +286,24 @@ export function createExplorer({ onRequestClose, onClosed }) {
   function buildList() {
     list.replaceChildren(); tags.replaceChildren();
     for (const P of parts) {
-      const b = h('button', { type: 'button' }, h('span', { class: 'cx__n', 'aria-hidden': 'true', text: pad(P.n) }), h('span', { class: 'cx__pname', text: P.story.label }), h('span', { class: 'cx__pcat', text: P.story.category }));
-      b.setAttribute('aria-label', `${pad(P.n)}, ${P.story.label}`);
+      const b = h('button', { type: 'button' }, h('span', { class: 'cx__n', 'aria-hidden': 'true', text: pad(P.n) }), h('span', { class: 'cx__pname', text: P.label }), h('span', { class: 'cx__pcat', text: P.kind }));
+      b.setAttribute('aria-label', `${pad(P.n)}, ${P.label}`);
       b.addEventListener('click', () => select(P.id, { fromList: true }));
       const li = h('li', {}, b);
       list.append(li); P.li = li; P.btn = b;
-      const t = h('button', { class: 'cx__tag', type: 'button', tabindex: '-1', text: String(P.n) }, h('span', { class: 'tip', text: P.story.label }));
+      const t = h('button', { class: 'cx__tag', type: 'button', tabindex: '-1', text: String(P.n) }, h('span', { class: 'tip', text: P.label }));
       t.addEventListener('click', e => { e.stopPropagation(); select(P.id); });
       tags.append(t); P.tag = t;
     }
   }
 
   // ---------------------------------------------------------------- geometry helpers
-  const slideOf = P => P.slide * S.explode;
-  function partWorldCenter(P, out) { return model.localToWorld(out.copy(P.center).setY(P.center.y + slideOf(P))); }
+  function partWorldCenter(P, out) { return model.localToWorld(out.copy(P.center).addScaledVector(P.dir, S.explode)); }
   function visibleBox(explodeAmt, out) {
     out.makeEmpty();
     for (const P of parts) {
       if (!P.visible) continue;
-      BOX.copy(P.box); BOX.min.y += P.slide * explodeAmt; BOX.max.y += P.slide * explodeAmt;
+      BOX.copy(P.box).translate(V2.copy(P.dir).multiplyScalar(explodeAmt));
       out.union(BOX);
     }
     if (out.isEmpty()) out.setFromCenterAndSize(V.set(0, 0, 0), V2.set(.1, .1, .1));
@@ -302,10 +311,10 @@ export function createExplorer({ onRequestClose, onClosed }) {
   }
   // distance that fits the visible parts in the frame at the home orientation (so turning never zooms)
   const fitBox = new THREE.Box3();
-  function homeDist(explodeAmt) {
+  function homeDist(explodeAmt, rect = R) {
     visibleBox(explodeAmt, fitBox);
-    const c = fitBox.getCenter(V2), q = qTmp.copy(qBase).multiply(qRoll.setFromAxisAngle(Y, ROLL0));
-    const tanV = Math.tan(THREE.MathUtils.degToRad(FOV / 2)) * .9, tanH = tanV * R.w / R.h;
+    const c = fitBox.getCenter(new THREE.Vector3()), q = qTmp.copy(qBase).multiply(qRoll.setFromAxisAngle(Y, ROLL0));
+    const tanV = Math.tan(THREE.MathUtils.degToRad(FOV / 2)) * C.fit, tanH = tanV * rect.w / rect.h;
     let d = .2;
     for (let i = 0; i < 8; i++) {
       V.set(i & 1 ? fitBox.max.x : fitBox.min.x, i & 2 ? fitBox.max.y : fitBox.min.y, i & 4 ? fitBox.max.z : fitBox.min.z).sub(c).applyQuaternion(q);
@@ -318,25 +327,28 @@ export function createExplorer({ onRequestClose, onClosed }) {
     const half = THREE.MathUtils.degToRad(FOV / 2) * Math.min(1, R.w / R.h);
     return Math.max(.12, r / Math.sin(half) * 1.9);
   }
-  function homeCenter(out) { visibleBox(S.explode, fitBox); return model.localToWorld(fitBox.getCenter(out)); }
+  function homeCenter(out, explodeAmt = S.explode) { visibleBox(explodeAmt, fitBox); return model.localToWorld(fitBox.getCenter(out)); }
 
   // where the parts and the plane are for the current state
+  function placeParts() { for (const P of parts) { P.obj.position.copy(P.base).addScaledVector(P.dir, S.explode); } }
   function setPose() {
     pivot.quaternion.copy(cur.orbit).multiply(qBase).multiply(qRoll.setFromAxisAngle(Y, cur.roll));
     if (fly && fly.q) pivot.quaternion.copy(fly.q);
     if (fly && fly.p) pivot.position.copy(fly.p); else pivot.position.set(0, 0, 0);
-    for (const P of parts) { P.obj.position.copy(P.base); P.obj.position.y += slideOf(P); P.obj.visible = P.visible && P.opacity > .004; }
+    placeParts();
+    for (const P of parts) P.obj.visible = P.visible && P.opacity > .004;
+    const poseH = hook('pose'); if (poseH) poseH(S, ctx);
     pivot.updateMatrixWorld(true);
-    // section plane: through the body axis in model space, swept in from outside
+    // section plane: through the cut point in model space, swept in from outside
     const k = S.cutT;
-    if (k > 0) {
-      modelPlane.normal.copy(cutNormal); modelPlane.constant = CUT_FAR * (1 - easeIO(k));
+    if (CUT && k > 0) {
+      modelPlane.normal.copy(cutNormal); modelPlane.constant = -cutNormal.dot(cutPoint) + cutFar * (1 - easeIO(k));
       clipPlane.copy(modelPlane).applyMatrix4(model.matrixWorld);
       capMesh.visible = true;
       clipPlane.coplanarPoint(capMesh.position);
       capMesh.quaternion.setFromUnitVectors(V.set(0, 0, 1), V2.copy(clipPlane.normal).negate());
-    } else { clipPlane.normal.set(0, 0, -1); clipPlane.constant = 1e3; capMesh.visible = false; }
-    for (const P of parts) for (const m of P.meshes) {
+    } else { clipPlane.normal.set(0, 0, -1); clipPlane.constant = 1e3; if (capMesh) capMesh.visible = false; }
+    if (CUT) for (const P of parts) for (const m of P.meshes) {
       const s = m.children[0];
       if (s && s.userData.stencil) s.visible = k > 0 && P.ghost > .99;
     }
@@ -370,6 +382,10 @@ export function createExplorer({ onRequestClose, onClosed }) {
   function step(dt, now) {
     let moving = false;
     if (fly) moving = stepFly(now) || true;
+    // product motion: the config's update(t, state) hook; true keeps the frames coming
+    S.t += dt;
+    const upd = hook('update');
+    if (upd && S.phase !== 'closing' && upd(S.t, S, ctx, dt)) moving = true;
     // explode slider (smoothed), section sweep, ghosting
     const ke = damp(dt, 9);
     if (Math.abs(S.explodeGoal - S.explode) > 1e-4) { S.explode = lerp(S.explode, S.explodeGoal, ke); moving = true; } else S.explode = S.explodeGoal;
@@ -396,7 +412,7 @@ export function createExplorer({ onRequestClose, onClosed }) {
       if (cur.orbit.angleTo(goal.orbit) > 1e-4) { cur.orbit.slerp(goal.orbit, kv); moving = true; } else cur.orbit.copy(goal.orbit);
       if (Math.abs(cur.roll - goal.roll) > 1e-4) { cur.roll = lerp(cur.roll, goal.roll, kv); moving = true; } else cur.roll = goal.roll;
       pivot.quaternion.copy(cur.orbit).multiply(qBase).multiply(qRoll.setFromAxisAngle(Y, cur.roll));
-      for (const P of parts) { P.obj.position.copy(P.base); P.obj.position.y += slideOf(P); }
+      placeParts();
       pivot.updateMatrixWorld(true);
       const F = goal.focus != null ? byId.get(goal.focus) : null;
       const tgt = F ? partWorldCenter(F, TGT) : homeCenter(TGT);
@@ -445,48 +461,34 @@ export function createExplorer({ onRequestClose, onClosed }) {
   addEventListener('resize', () => { if (S.phase !== 'closed') resize(); }, { passive: true });
 
   // ---------------------------------------------------------------- the fly
-  // A pose: where the rocket is (pivot quaternion and position), the camera (target,
+  // A pose: where the model is (pivot quaternion and position), the camera (target,
   // distance, roll) and the frame R it is drawn in. Ground: the panel rect it covers.
-  function posePoster(rect, rot = 0) {
-    const L = LAYOUTS.land;
-    const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(L.tiltX, 0, L.tiltZ)).multiply(new THREE.Quaternion().setFromAxisAngle(Y, ROLL0));
-    return { q, p: new THREE.Vector3(), target: new THREE.Vector3(), dist: L.dist, camRoll: rot, R: rect };
+  // A product can supply its own start poses (config.poses.tile(el, ctx), .hero(ctx), .stage(el, ctx));
+  // the default is the home view fitted into the clicked element's media box.
+  function homeQ() { return new THREE.Quaternion().copy(qBase).multiply(qRoll.setFromAxisAngle(Y, ROLL0)); }
+  // the home view, at explode 0, fitted into a screen rect
+  function fitPose(rect) {
+    const q = homeQ();
+    pivot.quaternion.copy(q); pivot.position.set(0, 0, 0); placeParts(); pivot.updateMatrixWorld(true);
+    return { q, p: new THREE.Vector3(), target: homeCenter(new THREE.Vector3(), 0), dist: homeDist(0, rect), camRoll: 0, R: { ...rect } };
   }
-  // the tile's image (hero-land.webp, the land layout's still) as a pose: its content box
-  // (object-fit: contain) and any hover transform on it
-  function tilePose(tile) {
-    const img = tile.querySelector('.tile__media img');
-    if (!img) return null;
-    const box = img.parentElement.getBoundingClientRect();
-    const a = 16 / 9, bw = box.width, bh = box.height;
-    let w = bw, hh = bw / a;
-    if (hh > bh) { hh = bh; w = bh * a; }
-    let cx = box.left + bw / 2, cy = box.top + bh / 2, s = 1, rot = 0;
-    const tr = getComputedStyle(img).transform;
-    if (tr && tr !== 'none') {
-      const m = new DOMMatrix(tr);
-      s = Math.hypot(m.a, m.b); rot = Math.atan2(m.b, m.a); cx += m.e; cy += m.f;
-    }
-    w *= s; hh *= s;
-    return posePoster({ x: cx - w / 2, y: cy - hh / 2, w, h: hh }, rot);
+  const rectOf = el => { const b = el.getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width, h: b.height }; };
+  const mediaOf = el => (el && (el.querySelector('[data-viewer-media], .tile__media, .stage__live') || el));
+  function startPose(origin, el) {
+    const P = C.poses || {};
+    if (origin === 'hero') return P.hero ? P.hero(ctx) : null;
+    if (!el) return null;
+    const custom = el.matches('.stage__card') ? P.stage : P.tile;
+    if (custom) return custom(el, ctx);
+    const r = rectOf(mediaOf(el));
+    return r.w > 4 && r.h > 4 ? () => fitPose(r) : null;
   }
-  function heroPose() {
-    const r = window.__reel;
-    if (!r || !r.rocket || !r.engine) return null;
-    const hm = r.rocket.group.children[0] && r.rocket.group.children[0].children[0] && r.rocket.group.children[0].children[0].children[0];
-    if (!hm) return null;
-    hm.updateWorldMatrix(true, false);
-    M.copy(hm.matrix).invert().premultiply(hm.matrixWorld);
-    const p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3();
-    M.decompose(p, q, s);
-    const b = r.engine.renderer.domElement.getBoundingClientRect();
-    return { q, p, target: new THREE.Vector3(), dist: r.engine.camera.position.z, camRoll: 0, R: { x: b.left, y: b.top, w: b.width, h: b.height } };
-  }
+  const resolve = p => (typeof p === 'function' ? p() : p);
   function homePose() {
     R = stageRect(); Rg = { ...R };
     goal.orbit.identity(); goal.roll = ROLL0; goal.zoom = 1; goal.pan.set(0, 0, 0); goal.focus = null;
     cur.orbit.identity(); cur.roll = ROLL0;
-    const q = new THREE.Quaternion().copy(qBase).multiply(qRoll.setFromAxisAngle(Y, ROLL0));
+    const q = homeQ();
     pivot.quaternion.copy(q); pivot.position.set(0, 0, 0); pivot.updateMatrixWorld(true);
     return { q, p: new THREE.Vector3(), target: homeCenter(new THREE.Vector3()), dist: homeDist(S.explode), camRoll: 0, R: { ...R } };
   }
@@ -513,6 +515,17 @@ export function createExplorer({ onRequestClose, onClosed }) {
     ink.style.opacity = inkA.toFixed(3);
     ground.style.opacity = alpha >= 1 ? '' : alpha.toFixed(3);
   }
+  // the clicked element's own fill and corner, so the ground starts as that element
+  function inkFrom(el) {
+    let e = el, cs = null;
+    while (e && e !== document.body) {
+      cs = getComputedStyle(e);
+      if (cs.backgroundImage !== 'none' || (cs.backgroundColor && cs.backgroundColor !== 'rgba(0, 0, 0, 0)' && cs.backgroundColor !== 'transparent')) break;
+      e = e.parentElement; cs = null;
+    }
+    ink.style.background = cs ? (cs.backgroundImage !== 'none' ? `${cs.backgroundImage}, ${cs.backgroundColor}` : cs.backgroundColor) : '';
+    return parseFloat(getComputedStyle(el).borderTopLeftRadius) || 28;
+  }
   function stepFly(now) {
     const F = fly;
     if (!F.t0) F.t0 = now;
@@ -530,32 +543,33 @@ export function createExplorer({ onRequestClose, onClosed }) {
 
   // ---------------------------------------------------------------- open / close
   const fullRect = () => ({ x: 0, y: 0, w: innerWidth, h: innerHeight });
-  async function open({ origin = 'tile', tile = null } = {}) {
+  const pauseHosts = () => (hosts ? hosts().filter(Boolean) : []);
+  async function open({ origin = 'tile', tile = null, focus = null } = {}) {
     if (S.phase !== 'closed') return;
     const t0 = performance.now(), still = reducedQ.matches;
     clearTimeout(warmTimer);
-    S.phase = 'opening'; S.origin = origin; S.tileEl = tile;
+    S.phase = 'opening'; S.origin = origin; S.tileEl = tile; S.focusEl = focus;
     stats.cold = !S.built;
     S.opener = document.activeElement;
-    const reel = window.__reel;
-    // read where the rocket is drawn before anything moves, then freeze the hero
+    // read where the model is drawn before anything moves, then freeze the hero and any case stage
     const tileR = origin === 'tile' && tile && !still ? tile.getBoundingClientRect() : null;
     const groundFrom = tileR ? { x: tileR.left, y: tileR.top, w: tileR.width, h: tileR.height } : null;
-    let start = still ? null : origin === 'hero' ? heroPose() : tileR ? tilePose(tile) : null;
-    if (reel) reel.pause();
+    const radius = tileR ? inkFrom(tile) : 28;
+    let start = still ? null : startPose(origin, tileR ? tile : null);
+    for (const host of pauseHosts()) host.pause();
     W = innerWidth; H = innerHeight;
     document.documentElement.classList.add('cx-lock');
     dialog.classList.remove('is-ui');
     dialog.showModal();
     dialog.focus({ preventScroll: true });
     canvas.style.opacity = '0';
-    // the ground grows at once, on the same clock as the fly; the rocket joins when it is built
+    // the ground grows at once, on the same clock as the fly; the model joins when it is built
     const fade = origin === 'link' || still;
     const groundAt = (u, e) => {
       if (groundFrom) {
         const g = lerpRect(groundFrom, fullRect(), e);
         scissor = u < 1 ? g : null;
-        setGround(u < 1 ? g : null, 28 * (1 - e), 1 - easeIO(win(u, .3, .85)));   // starts as the ink tile, turns to paper
+        setGround(u < 1 ? g : null, radius * (1 - e), 1 - easeIO(win(u, .3, .85)));   // starts as the element, turns to paper
       } else setGround(null, 0, 0, fade ? 1 : clamp01(u / .45));
       if (u > .62) dialog.classList.add('is-ui');
     };
@@ -567,12 +581,13 @@ export function createExplorer({ onRequestClose, onClosed }) {
     try { await build(); } catch (err) {
       cancelAnimationFrame(gRaf);
       S.phase = 'closed'; dialog.close(); document.documentElement.classList.remove('cx-lock');
-      if (reel) reel.resume();
+      for (const host of pauseHosts()) host.resume();
       throw err;
     }
     cancelAnimationFrame(gRaf);
     renderer.setSize(W, H, false);
     resetState();
+    start = resolve(start);
     const home = homePose();
     const u0 = dur ? (performance.now() - t0) / dur : 1;
     if (u0 > .55) start = null;                        // built late: no fly from a spot the eye has left
@@ -583,7 +598,7 @@ export function createExplorer({ onRequestClose, onClosed }) {
       from: start || home, to: () => homePose(), dur, t0,
       step(u, e) {
         if (!firstAt) { firstAt = performance.now(); stats.firstFrameMs = Math.round(firstAt - t0); }
-        // joined mid-way (or no fly): fade the rocket in
+        // joined mid-way (or no fly): fade the model in
         const a = start && u0 < .02 ? 1 : still ? 1 : clamp01((performance.now() - firstAt) / 260);
         canvas.style.opacity = a >= 1 ? '' : a.toFixed(3);
         groundAt(u, e);
@@ -603,11 +618,13 @@ export function createExplorer({ onRequestClose, onClosed }) {
   function resetState() {
     S.explode = S.explodeGoal = 0; explode.value = '0'; explodeOut.value = '0%';
     S.cutOn = false; S.cutT = 0; cutBtn.setAttribute('aria-pressed', 'false');
-    for (const g of GROUPS) S.groups[g[0]] = true;
+    for (const g of GROUPS) S.groups[g.key] = true;
     for (const c of chips) c.setAttribute('aria-pressed', 'true');
     for (const P of parts) { P.visible = true; P.ghost = 1; P.opacity = 1; P.li.hidden = false; }
     S.selected = null; hideCard(); setSheet(false);
     tourBtn.hidden = reducedQ.matches;
+    S.t = 0;
+    hook('reset') && hook('reset')(S, ctx);
   }
 
   async function close() {
@@ -621,12 +638,12 @@ export function createExplorer({ onRequestClose, onClosed }) {
     const origin = S.origin, reel = window.__reel;
     const tile = S.tileEl;
     // fly back to where it came from, if that is on screen; else fade out
-    let target = null, groundTo = null;
+    let target = null, groundTo = null, radius = 28;
     if (!reducedQ.matches) {
-      if (origin === 'hero' && reel) { reel.resume(); target = () => heroPose(); if (!target()) target = null; }
+      if (origin === 'hero' && reel && C.poses && C.poses.hero) { reel.resume(); target = () => C.poses.hero(ctx); if (!target()) target = null; }
       else if (tile) {
         const r = tile.getBoundingClientRect();
-        if (r.bottom > 40 && r.top < innerHeight - 40) { target = tilePose(tile); groundTo = { x: r.left, y: r.top, w: r.width, h: r.height }; }
+        if (r.bottom > 40 && r.top < innerHeight - 40) { target = resolve(startPose('tile', tile)); groundTo = { x: r.left, y: r.top, w: r.width, h: r.height }; radius = inkFrom(tile); }
       }
     }
     // everything goes back to rest on the way
@@ -642,7 +659,7 @@ export function createExplorer({ onRequestClose, onClosed }) {
         if (groundTo) {
           const g = lerpRect(fullRect(), groundTo, e);
           scissor = g;
-          setGround(g, 28 * e, easeIO(win(u, .15, .7)));
+          setGround(g, radius * e, easeIO(win(u, .15, .7)));
         } else if (origin === 'hero' && target) setGround(null, 0, 0, 1 - easeIO(win(u, .35, 1)));
         else { setGround(null, 0, 0, 1 - e); canvas.style.opacity = (1 - e).toFixed(3); }
       },
@@ -653,21 +670,18 @@ export function createExplorer({ onRequestClose, onClosed }) {
     stop();
     fly = null; scissor = null;
     S.phase = 'closed';
-    const wasHero = document.documentElement.classList.contains('cx-from-hero');
     document.documentElement.classList.remove('cx-lock', 'cx-from-hero', 'cx-covered');
     if (dialog.open) dialog.close();
     canvas.style.opacity = ''; setGround(null, 0, 0);
-    const reel = window.__reel;
-    if (reel) reel.resume();
-    // focus back to the tile (or wherever it was)
-    const back = S.origin === 'tile' && S.tileEl ? S.tileEl : S.opener;
+    for (const host of pauseHosts()) host.resume();
+    // focus back to the element that opened it (or wherever it was)
+    const back = S.origin === 'tile' && S.tileEl ? (S.focusEl || S.tileEl) : S.opener;
     const refocus = () => { if (back && back.focus && back.isConnected && document.activeElement !== back && S.phase === 'closed') back.focus({ preventScroll: true }); };
     refocus(); requestAnimationFrame(refocus);   // the closing dialog can take focus back for one frame
     // keep warm: drop the full-screen buffers now, everything else after WARM_MS
     if (renderer) renderer.setSize(1, 1, false);
     clearTimeout(warmTimer);
     warmTimer = setTimeout(dispose, WARM_MS);
-    void wasHero;
     onClosed && onClosed();
   }
   function waitOpen() { return new Promise(res => { const t = () => (S.phase === 'opening' ? setTimeout(t, 50) : res()); t(); }); }
@@ -679,10 +693,10 @@ export function createExplorer({ onRequestClose, onClosed }) {
   function esc() {
     if (S.tour) { endTour(true); return; }
     if (S.selected != null) { deselect(); return; }
-    onRequestClose();
+    onRequestClose ? onRequestClose() : close();
   }
-  closeBtn.addEventListener('click', () => onRequestClose());
-  // keep page scrolling (and Lenis, which listens on window) out of the explorer
+  closeBtn.addEventListener('click', () => (onRequestClose ? onRequestClose() : close()));
+  // keep page scrolling (and Lenis, which listens on window) out of the viewer
   for (const ev of ['wheel', 'keydown', 'pointerdown', 'touchstart']) dialog.addEventListener(ev, e => {
     if (ev === 'keydown' && e.key === 'Escape') { e.preventDefault(); escKey = true; setTimeout(() => { escKey = false; }); esc(); }
     if (ev === 'keydown' && e.key === 'Tab') trapTab(e);
@@ -691,7 +705,7 @@ export function createExplorer({ onRequestClose, onClosed }) {
 
   // focus trap: Tab cycles through the dialog's own controls and never reaches the browser bar
   function trapTab(e) {
-    const els = [...dialog.querySelectorAll('button, input, [tabindex="0"]')].filter(el => !el.disabled && el.tabIndex >= 0 && el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden');
+    const els = [...dialog.querySelectorAll('button, input, select, [tabindex="0"]')].filter(el => !el.disabled && el.tabIndex >= 0 && el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden');
     if (!els.length) return;
     const i = els.indexOf(document.activeElement), last = els.length - 1;
     if (e.shiftKey ? i <= 0 : i === last || i < 0) { e.preventDefault(); els[e.shiftKey ? last : 0].focus(); }
@@ -701,7 +715,7 @@ export function createExplorer({ onRequestClose, onClosed }) {
   function partFacingRoll(P) {
     const x = P.center.x, z = P.center.z;
     if (Math.hypot(x, z) < .006) return goal.roll;
-    // camera direction in the rocket's pre-roll frame, angle about the body axis
+    // camera direction in the model's pre-roll frame, angle about its Y axis
     qTmp.copy(goal.orbit).multiply(qBase).invert();
     V.set(0, 0, 1).applyQuaternion(qTmp);
     const a = Math.atan2(V.x, V.z), b = Math.atan2(x, z);
@@ -710,17 +724,17 @@ export function createExplorer({ onRequestClose, onClosed }) {
     while (r - goal.roll < -Math.PI) r += 2 * Math.PI;
     return r;
   }
-  function select(id, { fromList = false, quiet = false } = {}) {
-    const P = byId.get(id);
+  function select(pid, { fromList = false, quiet = false } = {}) {
+    const P = byId.get(pid);
     if (!P) return;
     if (!P.visible) { S.groups[P.group] = true; syncGroups(); }
-    S.selected = id;
-    for (const Q of parts) Q.ghost = Q === P ? 1 : (Q.exterior ? GHOST_EXT : GHOST_INT);
-    goal.focus = id; goal.zoom = 1; goal.pan.set(0, 0, 0);
-    goal.roll = partFacingRoll(P);
+    S.selected = pid;
+    for (const Q of parts) Q.ghost = Q === P ? 1 : (Q.exterior ? C.ghost.exterior : C.ghost.interior);
+    goal.focus = pid; goal.zoom = 1; goal.pan.set(0, 0, 0);
+    if (C.faceParts !== false) goal.roll = partFacingRoll(P);
     for (const Q of parts) { Q.btn.setAttribute('aria-current', String(Q === P)); Q.tag.classList.toggle('is-on', Q === P); }
     if (!quiet) showCard(P, fromList);
-    live.textContent = `${P.story.label} in focus.`;
+    live.textContent = `${P.label} in focus.`;
     invalidate();
   }
   function deselect() {
@@ -728,14 +742,17 @@ export function createExplorer({ onRequestClose, onClosed }) {
     S.selected = null; goal.focus = null; goal.zoom = 1; goal.pan.set(0, 0, 0);
     for (const Q of parts) { Q.ghost = 1; Q.btn.setAttribute('aria-current', 'false'); Q.tag.classList.remove('is-on'); }
     hideCard();
-    live.textContent = 'Full rocket.';
+    live.textContent = T.whole;
     invalidate();
   }
   function showCard(P, focusIt) {
-    const s = P.story;
-    cardLabel.textContent = `${pad(P.n)} / ${s.category}`;
-    cardTitle.textContent = s.label; cardLede.textContent = s.subtitle; cardDesc.textContent = s.description;
-    cardRole.textContent = s.role; cardMatRow.hidden = !s.material; cardMat.textContent = s.material || '';
+    const c = P.card || {};
+    cardLabel.textContent = c.label != null ? c.label : P.kind ? `${pad(P.n)} / ${P.kind}` : pad(P.n);
+    cardTitle.textContent = c.title || P.label; cardLede.textContent = c.lede || ''; cardDesc.textContent = c.desc || '';
+    cardLede.hidden = !c.lede; cardDesc.hidden = !c.desc;
+    const rows = (c.rows || []).filter(r => r && r[1]);
+    cardDl.replaceChildren(...rows.map(([dt, dd]) => h('div', {}, h('dt', { text: dt }), h('dd', { text: dd }))));
+    cardDl.hidden = !rows.length;
     card.hidden = false; hint.hidden = true;
     card.scrollTop = 0;
     if (mobile()) { setSheet(false); relayout(); }
@@ -749,11 +766,13 @@ export function createExplorer({ onRequestClose, onClosed }) {
   // ---------------------------------------------------------------- controls
   explode.addEventListener('input', () => { endTour(true); S.explodeGoal = +explode.value / 100; explodeOut.value = explode.value + '%'; invalidate(); });
   function setCut(on) {
+    if (!CUT) return;
     if (on && !S.cutOn) {
       // the half facing the camera comes away: plane normal, in model space, points away from the camera
       model.updateWorldMatrix(true, false);
       qTmp.setFromRotationMatrix(model.matrixWorld).invert();
-      cutNormal.set(0, 0, -1).applyQuaternion(qTmp); cutNormal.y = 0;
+      cutNormal.set(0, 0, -1).applyQuaternion(qTmp);
+      if (CUT.keepAxis !== false) cutNormal.y = 0;     // the plane holds the model's +Y axis
       if (cutNormal.lengthSq() < 1e-4) cutNormal.set(0, 0, -1);
       cutNormal.normalize();
     }
@@ -767,11 +786,12 @@ export function createExplorer({ onRequestClose, onClosed }) {
     endTour(true); deselect();
     goal.orbit.identity(); goal.roll = ROLL0; goal.zoom = 1; goal.pan.set(0, 0, 0);
     S.explodeGoal = 0; explode.value = '0'; explodeOut.value = '0%'; setCut(false);
+    hook('reset') && hook('reset')(S, ctx);
     invalidate();
   });
   function syncGroups() {
     for (const c of chips) c.setAttribute('aria-pressed', String(S.groups[c.dataset.group]));
-    for (const P of parts) { P.visible = S.groups[P.group]; P.li.hidden = !P.visible; }
+    for (const P of parts) { P.visible = P.group == null || S.groups[P.group] !== false; P.li.hidden = !P.visible; }
     invalidate();
   }
   for (const c of chips) c.addEventListener('click', () => {
@@ -785,7 +805,7 @@ export function createExplorer({ onRequestClose, onClosed }) {
     // phones: the open sheet and the part card share the space above it, so the card steps aside
     if (mobile() && S.selected != null && !S.tour) card.hidden = open;
     S.sheetOpen = open; panel.classList.toggle('is-open', open);
-    grab.setAttribute('aria-expanded', String(open)); grab.textContent = open ? 'Fewer controls' : 'More controls';
+    grab.setAttribute('aria-expanded', String(open)); grab.textContent = open ? T.fewer : T.more;
     if (S.built && S.phase !== 'closed') requestAnimationFrame(resize);
   }
   grab.addEventListener('click', () => setSheet(!S.sheetOpen));
@@ -855,6 +875,7 @@ export function createExplorer({ onRequestClose, onClosed }) {
     for (const hit of ray.intersectObjects(objs, false)) {
       if (cutting && clipPlane.distanceToPoint(hit.point) < 0) continue;
       const P = hit.object.userData.part;
+      if (!P) continue;
       if (P.ghost > .5) return P;
       if (!ghostHit || (ghostHit.exterior && !P.exterior)) ghostHit = P;
     }
@@ -881,9 +902,11 @@ export function createExplorer({ onRequestClose, onClosed }) {
     const only = S.tour ? TOUR[S.tour.i] : S.selected;
     for (const P of parts) {
       const t = P.tag;
-      let ok = show && P.visible && P.meshes.length > 0 && (only == null || P.id === only);
+      let ok = show && P.visible && P.meshes.length > 0 && P.data.tag !== false && (only == null || P.id === only);
       if (ok) {
-        partWorldCenter(P, V).project(camera);
+        if (P.data.anchor) model.localToWorld(V.copy(P.center).addScaledVector(P.dir, S.explode).add(toV3(P.data.anchor)));
+        else partWorldCenter(P, V);
+        V.project(camera);
         const x = (V.x + 1) / 2 * W, y = (1 - V.y) / 2 * H;
         ok = V.z < 1 && x > R.x + 10 && x < R.x + R.w - 10 && y > R.y + 10 && y < R.y + R.h - 10;
         if (ok && only == null) for (const q of placed) if (Math.abs(q[0] - x) < 24 && Math.abs(q[1] - y) < 24) { ok = false; break; }
@@ -896,7 +919,7 @@ export function createExplorer({ onRequestClose, onClosed }) {
   // ---------------------------------------------------------------- tour
   let tourTimer = 0;
   function startTour() {
-    if (S.phase !== 'open' || reducedQ.matches) return;
+    if (S.phase !== 'open' || reducedQ.matches || !TOUR.length) return;
     deselect();
     goal.orbit.identity(); goal.zoom = 1; goal.pan.set(0, 0, 0);
     S.explodeGoal = 0; explode.value = '0'; explodeOut.value = '0%';
@@ -905,17 +928,18 @@ export function createExplorer({ onRequestClose, onClosed }) {
     nextStop();
   }
   function nextStop() {
-    const T = S.tour;
-    if (!T) return;
-    T.i++;
-    if (T.i >= TOUR.length) { endTour(false); return; }
-    const P = byId.get(TOUR[T.i]);
+    const Tr = S.tour;
+    if (!Tr) return;
+    Tr.i++;
+    if (Tr.i >= TOUR.length) { endTour(false); return; }
+    const P = byId.get(TOUR[Tr.i]);
+    if (!P) { nextStop(); return; }
     select(P.id, { quiet: true });
-    tourStep.textContent = `${pad(T.i + 1)} / ${pad(TOUR.length)}`;
-    tourName.textContent = P.story.label; tourLine.textContent = P.story.subtitle;
+    tourStep.textContent = `${pad(Tr.i + 1)} / ${pad(TOUR.length)}`;
+    tourName.textContent = P.label; tourLine.textContent = (P.card && P.card.lede) || '';
     tourTimer = setTimeout(nextStop, TOUR_MS);
   }
-  // skipped (any input) or finished: back to the whole rocket, free orbit
+  // skipped (any input) or finished: back to the whole model, free orbit
   function endTour(byUser) {
     if (!S.tour) return;
     clearTimeout(tourTimer);
@@ -929,14 +953,14 @@ export function createExplorer({ onRequestClose, onClosed }) {
 
   // ---------------------------------------------------------------- API
   return {
-    open, close, warm,
+    slug: C.slug, open, close, warm, dialog,
     get isOpen() { return S.phase !== 'closed'; }, get phase() { return S.phase; }, get busy() { return raf !== 0 || !!fly; },
     stats, state: S, dispose,
     get view() { return { cur: { ...cur, target: cur.target.toArray(), orbit: cur.orbit.toArray() }, goal: { ...goal, pan: goal.pan.toArray(), orbit: goal.orbit.toArray() }, R, W, H, home: S.built ? homeDist(S.explode) : 0 }; },
-    get parts() { return parts.map(P => ({ id: P.id, n: P.n, label: P.story.label, group: P.group, visible: P.visible, center: P.center.toArray().map(v => +v.toFixed(3)), size: P.box.getSize(new THREE.Vector3()).toArray().map(v => +v.toFixed(3)), meshes: P.meshes.length })); },
-    select: id => select(id), deselect, setCut, startTour: () => startTour(), endTour: () => endTour(true),
+    get parts() { return parts.map(P => ({ id: P.id, n: P.n, label: P.label, group: P.group, visible: P.visible, center: P.center.toArray().map(v => +v.toFixed(3)), size: P.box.getSize(new THREE.Vector3()).toArray().map(v => +v.toFixed(3)), meshes: P.meshes.length })); },
+    select: pid => select(pid), deselect, setCut, startTour: () => startTour(), endTour: () => endTour(true),
     setExplode(v) { explode.value = String(Math.round(v * 100)); explode.dispatchEvent(new Event('input')); },
-    screenOf(id) { const P = byId.get(id); if (!P || !camera) return null; setPose(); partWorldCenter(P, V).project(camera); return { x: (V.x + 1) / 2 * W, y: (1 - V.y) / 2 * H }; },
+    screenOf(pid) { const P = byId.get(pid); if (!P || !camera) return null; setPose(); partWorldCenter(P, V).project(camera); return { x: (V.x + 1) / 2 * W, y: (1 - V.y) / 2 * H }; },
     info() { return renderer ? { calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, programs: renderer.info.programs.length, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures } : null; },
   };
 }

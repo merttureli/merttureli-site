@@ -50,6 +50,12 @@ body:has(.menu:not([hidden])) .top__nav { visibility: hidden; }
 .tile:has(a.tile__link:focus-visible) { transform: translateY(-4px); box-shadow: var(--shadow-tile-hi); }
 a.tile__link:focus-visible { outline-offset: -3px; border-radius: var(--radius-tile); }
 a.tile__link:focus-visible .tile__go { transform: rotate(-45deg); background: var(--signal); color: var(--ink); }
+/* the in-place 3D viewer (next/js/viewer/launch.js shows it; no JS or no WebGL: no button). A sibling of the
+   tile's link, top right, so the rest of the tile still opens the case page */
+.tile__3d { position: absolute; z-index: 4; top: clamp(16px, 1.6vw, 24px); right: clamp(16px, 1.6vw, 24px); display: inline-flex; align-items: center; height: 32px; padding: 0 13px; border: 1px solid var(--line); border-radius: var(--radius-pill); background: var(--tile); font-family: var(--mono); font-size: var(--text-mono-m); font-stretch: var(--mono-stretch); letter-spacing: var(--mono-tracking); text-transform: uppercase; color: var(--ink); cursor: pointer; transition: background var(--dur-400), color var(--dur-400), border-color var(--dur-400); }
+.tile__3d[hidden] { display: none; }
+@media (hover: hover) { .tile__3d:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); } }
+.tile__3d:focus-visible { background: var(--ink); color: var(--paper); border-color: var(--ink); outline: 2px solid var(--signal); outline-offset: 2px; }
 
 /* placement: 12 columns. CHARGER big, Robo tall, pedals tall, Therma wide, two small, two bands */
 .tile--charger { grid-column: 1 / span 8; grid-row: span 2; }
@@ -415,6 +421,13 @@ a.tile__link:focus-visible .tile__go { transform: rotate(-45deg); background: va
 .stage__live.is-live .stage__still { opacity: 0; transition: opacity var(--dur-600) linear var(--dur-500); }
 .stage__card--live .stage__idx, .stage__card--live .stage__cap { z-index: 1; pointer-events: none; }
 .stage__card--live .clip-toggle, .band--live .clip-toggle { z-index: 2; }
+/* the in-place 3D viewer (next/js/viewer/launch.js): a click on the stage or its button, top right */
+.stage__live.is-viewer { cursor: pointer; }
+.stage__3d { position: absolute; z-index: 2; right: 18px; top: 16px; display: inline-flex; align-items: center; height: 36px; padding: 0 14px; border: 0; border-radius: var(--radius-pill); background: var(--ink); font-family: var(--mono); font-size: var(--text-mono-m); font-stretch: var(--mono-stretch); letter-spacing: var(--mono-tracking); text-transform: uppercase; color: var(--paper); cursor: pointer; transition: background var(--dur-300), color var(--dur-300); }
+.stage__3d[hidden] { display: none; }
+@media (hover: hover) { .stage__3d:hover { background: var(--signal); color: var(--ink); } }
+.stage__3d:focus-visible { background: var(--signal); color: var(--ink); outline: 2px solid var(--signal); outline-offset: 2px; }
+@media (max-width: 760px) { .stage__3d { right: 12px; top: 12px; height: 32px; padding: 0 12px; font-size: var(--text-mono-xs); } }
 .band--live { background: radial-gradient(120% 95% at 50% 36%, var(--tile-2) 0%, var(--paper) 70%); }
 .band--live .stage__live { position: relative; aspect-ratio: 16 / 9; }
 .band--live figcaption { z-index: 1; color: var(--muted); }
