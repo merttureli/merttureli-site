@@ -65,6 +65,8 @@ PRESETS = {
     "lightbox": dict(widths=[512, 1280], labels=["thumb", "view"], aspect="4:5",
                      sizes="(max-width: 700px) 50vw, 25vw",
                      note="Photography gallery thumb + full view (assets/photos/beyond/gallery/*-thumb/-view.webp)"),
+    "beyond": dict(widths=[480, 960, 1280, 1920], json=True, max_long=2048, quality=72,
+                   note="Studio Beyond gallery, source aspect, long edge <= 2048; prints the photo list line"),
     "hero": dict(widths=[2400], aspect="16:9", no_suffix=True, eager=True,
                  note="Landscape hero poster, one file (next/assets/img/hero-land.webp)"),
     "hero-portrait": dict(widths=[1200], aspect="3:4", no_suffix=True, eager=True,
@@ -387,7 +389,7 @@ def cmd_image(a):
         raise MediaError("--no-suffix only works with a single width")
     sizes = a.sizes or preset.get("sizes")
     eager = a.eager or preset.get("eager", False)
-    quality = a.quality if a.quality is not None else WEBP_QUALITY
+    quality = a.quality if a.quality is not None else preset.get("quality", WEBP_QUALITY)
     name = a.name or slug(os.path.splitext(os.path.basename(src))[0])
     out_dir = os.path.abspath(a.out)
 
@@ -414,10 +416,12 @@ def cmd_image(a):
     log("image %s  %dx%d%s -> %s/" % (rel(src), w0, h0, " alpha" if alpha else "", rel(out_dir)))
     made = []
     plan = list(zip(widths, labels or [None] * len(widths)))
-    skipped = [w for w, _ in plan if w > cw]
-    plan = [(w, l) for w, l in plan if w <= cw]
+    max_long = preset.get("max_long")   # a portrait stops at the width whose height fits
+    too_big = lambda w: w > cw or (max_long and max(w, w * ch / cw) > max_long)
+    skipped = [w for w, _ in plan if too_big(w)]
+    plan = [(w, l) for w, l in plan if not too_big(w)]
     if skipped:
-        log("  note: source crop is %d px wide; not upscaling to %s" % (cw, ", ".join(map(str, skipped))))
+        log("  note: source crop is %d px wide; not making %s (no upscaling%s)" % (cw, ", ".join(map(str, skipped)), ", long edge cap %d" % max_long if max_long else ""))
         if not plan:  # keep one file at the real width so the set is never empty
             plan = [(cw, (labels or [None])[-1])]
     for w, label in plan:
@@ -444,6 +448,11 @@ def cmd_image(a):
             if not a.dry_run:
                 log("  wrote       %s  %dx%d  %s" % (rel(out), w, h, kb(os.path.getsize(out))))
         made.append((out, w, h))
+    if preset.get("json") and not a.dry_run:
+        # one line for the photo list in next/beyond.html (docs/recipes/beyond-photos.md)
+        big = max(made, key=lambda f: f[1])
+        print(json.dumps(dict(name=name, w=big[1], h=big[2], alt=a.alt or "", caption=""), ensure_ascii=False) + ",")
+        return 0
     print(img_snippet(made, a.page, sizes, a.alt or "", eager))
     return 0
 

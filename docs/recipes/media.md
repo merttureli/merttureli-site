@@ -7,9 +7,10 @@ One tool makes every web derivative and prints the HTML to paste: `python3 tools
 | Task | Command (add `--dry-run` to see the ffmpeg calls first) |
 |---|---|
 | Studio photo strip (4:5, 420 + 720) | `python3 tools/media.py image SRC --preset gallery --name dunes --out next/assets/img --page next/index.html --alt "Dunes at dusk"` |
-| Studio image (600 + 1000) | `python3 tools/media.py image SRC --preset card --name balloon --out next/assets/img --page next/index.html --alt "..."` |
-| Photography gallery (thumb 512 + view 1280) | `python3 tools/media.py image SRC --preset lightbox --name dunes --out assets/photos/beyond/gallery`, then add `{file:'dunes', title:'...', alt:'...'}` to the list in `js/photography-gallery.js` |
+| Studio card image (600 + 1000) | `python3 tools/media.py image SRC --preset card --name balloon --out next/assets/img --page next/index.html --alt "..."` |
+| Studio Beyond gallery (480 to 1920, source aspect) | `python3 tools/media.py image SRC --preset beyond --name dunes --out next/assets/img/beyond --alt "Dunes at dusk"`, then paste the printed line into the photo list in `next/beyond.html` ([beyond-photos.md](beyond-photos.md)) |
 | Hero poster, landscape + portrait | `... image SRC --preset hero --name hero-land --out next/assets/img` and `... image SRC2 --preset hero-portrait --name hero-port --out next/assets/img`, then `python3 tools/media.py snippet next/assets/img/hero-land.webp --portrait next/assets/img/hero-port.webp --eager --page next/index.html` |
+| Product stills from the live 3D (home tiles, spec sheets, case-page posters) | `python3 tools/stills.py` (`--list`, `--only case`): transparent WebP drawn by `next/js/case-stage.js` into `next/assets/img/stills/`; re-run after an actor or the case-stage framing changes |
 | Share image (1200 x 630 PNG) | `python3 tools/media.py image SRC --preset og --name case-<slug>-v2 --out assets/og` (bump `-vN`, see [images-swap.md](images-swap.md) D) |
 | Any other size set | `python3 tools/media.py image SRC --widths 640,1280 --aspect 3:2 --gravity top --name x --out DIR` |
 | Transparent turntable (VP9 alpha) | `python3 tools/media.py video render.mov --name hotbox-360 --out assets/motion --page index.html --alt "..."` |

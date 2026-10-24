@@ -191,6 +191,9 @@
      the live hero starts then (the showreel itself listens for changes too). */
   const saveData = navigator.connection && navigator.connection.saveData;
   const canGL = (() => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } })();
+  // The page head hides the poster for the fly-in (html.hero-fly); show it whenever the live hero will not come:
+  // no WebGL, a failed start, or nothing live 6 s after load (it then crossfades in later, without the flight).
+  const showPoster = () => root.classList.remove('hero-fly');
   if (!saveData && canGL && !/[?&]still/.test(location.search)) {
     const rq = matchMedia('(prefers-reduced-motion: reduce)');
     let mounted = false, loaded = document.readyState === 'complete';
@@ -198,10 +201,13 @@
       if (mounted || rq.matches) return;
       mounted = true;
       import('./showreel/index.js').then(m => m.mountShowreel({ box: object, drift, words }))
-        .catch(err => console.warn('3D hero unavailable, keeping the still', err));
+        .catch(err => { showPoster(); console.warn('3D hero unavailable, keeping the still', err); });
     };
-    const later = () => (window.requestIdleCallback ? requestIdleCallback(start, { timeout: 2500 }) : setTimeout(start, 1200));
+    const later = () => {
+      setTimeout(() => { if (!object.classList.contains('is-live')) showPoster(); }, 6000);
+      return window.requestIdleCallback ? requestIdleCallback(start, { timeout: 2500 }) : setTimeout(start, 1200);
+    };
     if (loaded) later(); else addEventListener('load', () => { loaded = true; later(); });
     rq.addEventListener('change', () => { if (!rq.matches && loaded) start(); });
-  }
+  } else showPoster();
 })();

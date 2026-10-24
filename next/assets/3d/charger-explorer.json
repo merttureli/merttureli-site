@@ -1,0 +1,884 @@
+{
+ "format": "cadmesh",
+ "version": 1,
+ "name": "charger-explorer",
+ "bin": "charger-explorer.bin",
+ "units": "m",
+ "up": "+y",
+ "generator": "tools/cad.py",
+ "source": {
+  "file": "assets/charger-explorer/assembly.json",
+  "unit": "mm",
+  "up": "y",
+  "origin": "keep",
+  "generator": "tools/cad/explorer_to_cadmesh.py",
+  "map": "tools/cad/maps/charger-explorer.json"
+ },
+ "center": [
+  -3.4e-05,
+  -0.100896,
+  0.0
+ ],
+ "scale": 0.4877965,
+ "bounds": [
+  [
+   -0.033443,
+   -0.588692,
+   -0.033426
+  ],
+  [
+   0.033374,
+   0.386901,
+   0.033426
+  ]
+ ],
+ "triangles": 22772,
+ "bytes": 307268,
+ "parts": [
+  {
+   "name": "motor",
+   "label": "Motor reference envelope",
+   "cad": [
+    "Motor reference envelope"
+   ],
+   "material": {
+    "key": "rocketRed",
+    "color": "#890919",
+    "roughness": 0.38,
+    "metalness": 0.1
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    0.0,
+    -0.526692,
+    0.0
+   ],
+   "explode": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "triangles": 332,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": "rocketRed",
+      "color": "#890919",
+      "roughness": 0.38,
+      "metalness": 0.1
+     },
+     "triangles": 332,
+     "pos": [
+      0,
+      336
+     ],
+     "nrm": 2016,
+     "idx": [
+      3024,
+      996,
+      16
+     ]
+    }
+   ],
+   "id": 5
+  },
+  {
+   "name": "altimeter",
+   "label": "Altimeter",
+   "cad": [
+    "Altimeter"
+   ],
+   "material": {
+    "key": "pcb",
+    "color": "#2d6b59",
+    "roughness": 0.55,
+    "metalness": 0.05
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    0.008198,
+    -0.399614,
+    0.021411
+   ],
+   "explode": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "triangles": 12,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": "pcb",
+      "color": "#2d6b59",
+      "roughness": 0.55,
+      "metalness": 0.05
+     },
+     "triangles": 12,
+     "pos": [
+      5016,
+      24
+     ],
+     "nrm": 5160,
+     "idx": [
+      5232,
+      36,
+      16
+     ]
+    }
+   ],
+   "id": 12
+  },
+  {
+   "name": "battery",
+   "label": "Battery",
+   "cad": [
+    "Battery"
+   ],
+   "material": {
+    "key": "black",
+    "color": "#17181b",
+    "roughness": 0.5,
+    "metalness": 0
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    0.0,
+    -0.038817,
+    0.0
+   ],
+   "explode": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "triangles": 332,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": "black",
+      "color": "#17181b",
+      "roughness": 0.5,
+      "metalness": 0
+     },
+     "triangles": 332,
+     "pos": [
+      5304,
+      336
+     ],
+     "nrm": 7320,
+     "idx": [
+      8328,
+      996,
+      16
+     ]
+    }
+   ],
+   "id": 13
+  },
+  {
+   "name": "payload",
+   "label": "Payload",
+   "cad": [
+    "Payload"
+   ],
+   "material": {
+    "key": "explorerInner",
+    "color": "#9c9c99",
+    "roughness": 0.4,
+    "metalness": 0.22
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    0.0,
+    0.326522,
+    0.0
+   ],
+   "explode": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "triangles": 9000,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": "explorerInner",
+      "color": "#9c9c99",
+      "roughness": 0.4,
+      "metalness": 0.22
+     },
+     "triangles": 9000,
+     "pos": [
+      10320,
+      6234
+     ],
+     "nrm": 47724,
+     "idx": [
+      66428,
+      27000,
+      16
+     ]
+    }
+   ],
+   "id": 14
+  },
+  {
+   "name": "camera",
+   "label": "Camera",
+   "cad": [
+    "Camera"
+   ],
+   "material": {
+    "key": "chip",
+    "color": "#141518",
+    "roughness": 0.45,
+    "metalness": 0
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    0.007909,
+    0.331917,
+    -0.013909
+   ],
+   "explode": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "triangles": 12,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": "chip",
+      "color": "#141518",
+      "roughness": 0.45,
+      "metalness": 0
+     },
+     "triangles": 12,
+     "pos": [
+      120428,
+      24
+     ],
+     "nrm": 120572,
+     "idx": [
+      120644,
+      36,
+      16
+     ]
+    }
+   ],
+   "id": 15
+  },
+  {
+   "name": "internalCoupler",
+   "label": "Internal coupler",
+   "cad": [
+    "Internal coupler"
+   ],
+   "material": {
+    "key": "explorerInner",
+    "color": "#9c9c99",
+    "roughness": 0.4,
+    "metalness": 0.22
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    -3.4e-05,
+    -0.078568,
+    0.0
+   ],
+   "explode": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "triangles": 4200,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": "explorerInner",
+      "color": "#9c9c99",
+      "roughness": 0.4,
+      "metalness": 0.22
+     },
+     "triangles": 4200,
+     "pos": [
+      120716,
+      3946
+     ],
+     "nrm": 144392,
+     "idx": [
+      156232,
+      12600,
+      16
+     ]
+    }
+   ],
+   "id": 16
+  },
+  {
+   "name": "antenna",
+   "label": "Antenna",
+   "cad": [
+    "Antenna"
+   ],
+   "material": {
+    "key": "rocketMetal",
+    "color": "#8c9096",
+    "roughness": 0.35,
+    "metalness": 0.5
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    -0.007616,
+    -0.101497,
+    0.014867
+   ],
+   "explode": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "triangles": 2400,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": "rocketMetal",
+      "color": "#8c9096",
+      "roughness": 0.35,
+      "metalness": 0.5
+     },
+     "triangles": 2400,
+     "pos": [
+      181432,
+      1403
+     ],
+     "nrm": 189852,
+     "idx": [
+      194064,
+      7200,
+      16
+     ]
+    }
+   ],
+   "id": 20
+  },
+  {
+   "name": "woodenRod1",
+   "label": "Wooden rod 1",
+   "cad": [
+    "Wooden rod 1"
+   ],
+   "material": {
+    "key": "ceramic",
+    "color": "#c4874f",
+    "roughness": 0.74,
+    "metalness": 0
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    -0.023347,
+    -0.076066,
+    0.007523
+   ],
+   "explode": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "triangles": 12,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": "ceramic",
+      "color": "#c4874f",
+      "roughness": 0.74,
+      "metalness": 0
+     },
+     "triangles": 12,
+     "pos": [
+      208464,
+      24
+     ],
+     "nrm": 208608,
+     "idx": [
+      208680,
+      36,
+      16
+     ]
+    }
+   ],
+   "id": 21
+  },
+  {
+   "name": "antennaHolder",
+   "label": "Antenna holder",
+   "cad": [
+    "Antenna holder"
+   ],
+   "material": {
+    "key": "explorerInner",
+    "color": "#9c9c99",
+    "roughness": 0.4,
+    "metalness": 0.22
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    0.0,
+    -0.104568,
+    0.0
+   ],
+   "explode": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "triangles": 864,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": "explorerInner",
+      "color": "#9c9c99",
+      "roughness": 0.4,
+      "metalness": 0.22
+     },
+     "triangles": 864,
+     "pos": [
+      208752,
+      928
+     ],
+     "nrm": 214320,
+     "idx": [
+      217104,
+      2592,
+      16
+     ]
+    }
+   ],
+   "id": 22
+  },
+  {
+   "name": "topPcbHolder",
+   "label": "Top PCB holder",
+   "cad": [
+    "Top PCB holder"
+   ],
+   "material": {
+    "key": "explorerInner",
+    "color": "#9c9c99",
+    "roughness": 0.4,
+    "metalness": 0.22
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    0.0,
+    0.299771,
+    0.0
+   ],
+   "explode": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "triangles": 656,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": "explorerInner",
+      "color": "#9c9c99",
+      "roughness": 0.4,
+      "metalness": 0.22
+     },
+     "triangles": 656,
+     "pos": [
+      222288,
+      672
+     ],
+     "nrm": 226320,
+     "idx": [
+      228336,
+      1968,
+      16
+     ]
+    }
+   ],
+   "id": 23
+  },
+  {
+   "name": "middlePcbHolder",
+   "label": "Middle PCB holder",
+   "cad": [
+    "Middle PCB holder"
+   ],
+   "material": {
+    "key": "explorerInner",
+    "color": "#9c9c99",
+    "roughness": 0.4,
+    "metalness": 0.22
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    0.0,
+    0.198346,
+    0.0
+   ],
+   "explode": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "triangles": 44,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": "explorerInner",
+      "color": "#9c9c99",
+      "roughness": 0.4,
+      "metalness": 0.22
+     },
+     "triangles": 44,
+     "pos": [
+      232272,
+      72
+     ],
+     "nrm": 232704,
+     "idx": [
+      232920,
+      132,
+      16
+     ]
+    }
+   ],
+   "id": 24
+  },
+  {
+   "name": "bottomPcbHolder",
+   "label": "Bottom PCB holder",
+   "cad": [
+    "Bottom PCB holder"
+   ],
+   "material": {
+    "key": "explorerInner",
+    "color": "#9c9c99",
+    "roughness": 0.4,
+    "metalness": 0.22
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    0.0,
+    0.096929,
+    -4.2e-05
+   ],
+   "explode": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "triangles": 672,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": "explorerInner",
+      "color": "#9c9c99",
+      "roughness": 0.4,
+      "metalness": 0.22
+     },
+     "triangles": 672,
+     "pos": [
+      233184,
+      688
+     ],
+     "nrm": 237312,
+     "idx": [
+      239376,
+      2016,
+      16
+     ]
+    }
+   ],
+   "id": 25
+  },
+  {
+   "name": "lowerShockCordMount",
+   "label": "Lower shock-cord mount",
+   "cad": [
+    "Lower shock-cord mount"
+   ],
+   "material": {
+    "key": "rocketMetal",
+    "color": "#8c9096",
+    "roughness": 0.35,
+    "metalness": 0.5
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    -7e-06,
+    -0.396688,
+    -6e-06
+   ],
+   "explode": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "triangles": 4200,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": "rocketMetal",
+      "color": "#8c9096",
+      "roughness": 0.35,
+      "metalness": 0.5
+     },
+     "triangles": 4200,
+     "pos": [
+      243408,
+      4199
+     ],
+     "nrm": 268604,
+     "idx": [
+      281204,
+      12600,
+      16
+     ]
+    }
+   ],
+   "id": 26
+  },
+  {
+   "name": "woodenRod2",
+   "label": "Wooden rod 2",
+   "cad": [
+    "Wooden rod 2"
+   ],
+   "material": {
+    "key": "ceramic",
+    "color": "#c4874f",
+    "roughness": 0.74,
+    "metalness": 0
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    0.007523,
+    -0.076066,
+    0.023347
+   ],
+   "explode": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "triangles": 12,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": "ceramic",
+      "color": "#c4874f",
+      "roughness": 0.74,
+      "metalness": 0
+     },
+     "triangles": 12,
+     "pos": [
+      306404,
+      24
+     ],
+     "nrm": 306548,
+     "idx": [
+      306620,
+      36,
+      16
+     ]
+    }
+   ],
+   "id": 27
+  },
+  {
+   "name": "woodenRod3",
+   "label": "Wooden rod 3",
+   "cad": [
+    "Wooden rod 3"
+   ],
+   "material": {
+    "key": "ceramic",
+    "color": "#c4874f",
+    "roughness": 0.74,
+    "metalness": 0
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    0.023347,
+    -0.076066,
+    -0.007523
+   ],
+   "explode": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "triangles": 12,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": "ceramic",
+      "color": "#c4874f",
+      "roughness": 0.74,
+      "metalness": 0
+     },
+     "triangles": 12,
+     "pos": [
+      306692,
+      24
+     ],
+     "nrm": 306836,
+     "idx": [
+      306908,
+      36,
+      16
+     ]
+    }
+   ],
+   "id": 28
+  },
+  {
+   "name": "woodenRod4",
+   "label": "Wooden rod 4",
+   "cad": [
+    "Wooden rod 4"
+   ],
+   "material": {
+    "key": "ceramic",
+    "color": "#c4874f",
+    "roughness": 0.74,
+    "metalness": 0
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    -0.007523,
+    -0.076066,
+    -0.023347
+   ],
+   "explode": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "triangles": 12,
+   "subs": {},
+   "prims": [
+    {
+     "sub": null,
+     "material": {
+      "key": "ceramic",
+      "color": "#c4874f",
+      "roughness": 0.74,
+      "metalness": 0
+     },
+     "triangles": 12,
+     "pos": [
+      306980,
+      24
+     ],
+     "nrm": 307124,
+     "idx": [
+      307196,
+      36,
+      16
+     ]
+    }
+   ],
+   "id": 29
+  },
+  {
+   "id": 17,
+   "name": "cameraHolder",
+   "label": "Camera holder",
+   "cad": [
+    "Camera holder"
+   ],
+   "material": {
+    "key": "explorerInner",
+    "color": "#9c9c99",
+    "roughness": 0.4,
+    "metalness": 0.22
+   },
+   "exterior": false,
+   "referenceOnly": false,
+   "pivot": [
+    0.007799,
+    0.358133,
+    -0.013799
+   ],
+   "explode": [
+    0,
+    0,
+    0
+   ],
+   "triangles": 0,
+   "subs": {},
+   "prims": []
+  }
+ ],
+ "shared": {
+  "file": "charger-hero.json",
+  "ids": [
+   0,
+   1,
+   2,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   18,
+   19
+  ]
+ }
+}

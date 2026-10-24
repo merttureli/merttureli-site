@@ -4,6 +4,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>@view-transition{navigation:auto}html{background:#e7e8ea}</style>
 <link rel="canonical" href="https://merttureli.com/websites.html">
 <link rel="icon" href="/assets/icons/favicon.ico" sizes="32x32">
 <link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml">
@@ -19,6 +20,7 @@
 <meta property="og:image:alt" content="Websites, designed and built by Mert Tureli. A browser window showing the Mert Tureli site with the CHARGER rocket.">
 <meta name="twitter:card" content="summary_large_image">
 <script src="studies/shared/study.js"></script>
+<script src="next/js/nav.js"></script>
 <title>Website design and build · Mert Tureli</title>
 <meta name="description" content="I design and build websites for individuals and small businesses. See what is live on this site, how I work, and pick a day for a first call. Austin, Texas.">
 <meta name="theme-color" content="#e7e8ea">
@@ -28,6 +30,7 @@
 <link rel="stylesheet" href="next/css/studio.css">
 <link rel="stylesheet" href="next/css/showcase.css">
 <link rel="stylesheet" href="next/css/websites.css">
+<link rel="stylesheet" href="next/css/nav.css">
 </head>
 <body class="case webpage">
 <a class="skip" href="#main">Skip to content</a>
@@ -76,7 +79,7 @@
 <section class="phero" id="overview" aria-labelledby="website-title">
   <div class="wrap">
     <span class="phero__eyebrow label">Web design / Austin, Texas</span>
-    <h1 id="website-title" class="phero__name">Websites <em class="serif wphero__em">designed and built</em></h1>
+    <h1 id="website-title" class="phero__name wphero__name">Websites<br>designed and built</h1>
     <p class="phero__lede">I design and build websites for individuals and small businesses. This site is one of them.</p>
     <div class="phero__ctas">
       <a class="pillbtn pillbtn--solid" data-open-inquiry href="#inquiry" aria-haspopup="dialog" aria-controls="inquiry">Get in touch <span class="arrow" aria-hidden="true"></span></a>
@@ -103,13 +106,13 @@
 <section class="csec" id="proof" aria-labelledby="proof-title">
   <div class="wrap">
     <div class="rule"><span class="label">01 / Work</span><span class="label hide-s">Live now</span></div>
-    <div class="csec__head"><h2 id="proof-title" class="display csec__title">Live <em class="serif">sites</em></h2></div>
+    <div class="csec__head"><h2 id="proof-title" class="display csec__title">Live sites</h2></div>
     <ol class="live" data-reveal>
       <li class="live__item live__item--dark"><a href="index.html#work">
         <span class="label">01</span><span class="live__name">This site</span>
         <span class="live__line">Static pages on GitHub Pages. No server or database.</span>
         <span class="live__go"><span>See the work</span><span class="arrow" aria-hidden="true"></span></span></a></li>
-      <li class="live__item"><a href="assets/charger-explorer/index.html">
+      <li class="live__item"><a href="index.html#charger">
         <span class="label">02</span><span class="live__name">CHARGER explorer</span>
         <span class="live__line">Interactive 3D model of the CHARGER rocket, built with three.js. 28 components, each one selectable.</span>
         <span class="live__go"><span>Open the explorer</span><span class="arrow" aria-hidden="true"></span></span></a></li>
@@ -129,7 +132,7 @@
 <section class="csec studies" id="studies" aria-labelledby="gallery-title">
   <div class="wrap">
     <div class="rule"><span class="label">02 / Studies</span><span class="label hide-s">Pick one to see it live here</span></div>
-    <div class="csec__head"><h2 id="gallery-title" class="display csec__title">Same work <em class="serif">four directions</em></h2></div>
+    <div class="csec__head"><h2 id="gallery-title" class="display csec__title">Same work<br>four directions</h2></div>
     <div class="studies__grid">
       <div class="picker" role="group" aria-label="Choose a direction">
         <button type="button" class="pick" data-study="hangar" data-name="Hangar" data-letter="A" data-src="studies/hangar/index.html" aria-pressed="true" aria-controls="study-viewer"><span class="pick__letter" aria-hidden="true">A</span><span class="pick__name">Hangar</span><span class="pick__line">Warm gray, with CHARGER rendered live across a huge MERT TURELI.</span></button>
@@ -156,7 +159,7 @@
 <section class="csec" id="process" aria-labelledby="process-title">
   <div class="wrap">
     <div class="rule"><span class="label">03 / Process</span><span class="label hide-s">Four steps</span></div>
-    <div class="csec__head"><h2 id="process-title" class="display csec__title">How I <em class="serif">work</em></h2></div>
+    <div class="csec__head"><h2 id="process-title" class="display csec__title">How I work</h2></div>
     <ol class="steps4" data-reveal>
       <li><span class="steps4__n" aria-hidden="true">01</span><h3>A day and an idea</h3></li>
       <li><span class="steps4__n" aria-hidden="true">02</span><h3>First call</h3></li>
@@ -174,7 +177,7 @@
     <div class="specsheet" data-reveal>
       <div class="specsheet__head">
         <span class="label">What you get</span>
-        <p class="specsheet__name">A hand-built <em class="serif">site</em></p>
+        <p class="specsheet__name">A hand-built site</p>
         <p class="wspec__lead">I design and build websites around your work, your business and the things that make them worth exploring. Same approach as my hardware: work out what it has to do, build it properly, then test it.</p>
       </div>
       <div>
@@ -193,7 +196,7 @@
 <section class="web wcta" id="start" aria-labelledby="invitation-title">
   <div class="wrap">
     <div class="rule rule--dark"><span class="label">05 / Start</span><span class="label"><span class="dot" aria-hidden="true"></span> Booking web projects</span></div>
-    <h2 id="invitation-title" class="display display--web">Start with <em class="serif">an idea</em></h2>
+    <h2 id="invitation-title" class="display display--web">Start with an idea</h2>
     <div class="web__grid">
       <p class="web__lead">Tell me what you are building. I reply by email to set a time.</p>
     </div>

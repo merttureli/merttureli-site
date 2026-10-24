@@ -9,7 +9,8 @@
 | Websites | description and canonical: `next/websites.html` head; title and share card: `LIVE["websites.html"]` in `tools/build.py` | same as home without JSON-LD and Clarity |
 | Another Studio page | its `next/` head; optional `LIVE` entry in `tools/build.py` | same as websites |
 | `hi/index.html` | the file head | same, plus `noindex` |
-| `privacy.html`, `404.html`, `photography-lab.html` | the file head | title, `noindex` |
+| `privacy.html`, `404.html` | the file head | title, `noindex` |
+| `photography-lab.html`, `photography-gallery.html` | redirect stubs to the Beyond page (`beyond.html`) | `noindex`, canonical, meta refresh |
 | `next/*.html` (the sources) | the file head | `noindex` and a canonical to the live twin; the build drops the `noindex` on the live copy |
 
 A case page's `<title>` is `seo_title` if set, else `title`, plus ` · Mert Tureli`. The same `description` feeds `<meta name="description">` and `og:description`.
@@ -30,7 +31,7 @@ A case page's `<title>` is `seo_title` if set, else `title`, plus ` · Mert Ture
 |---|---|---|
 | Public page list | `sitemap.xml` | One `<url>` per indexable page. Bump `<lastmod>` when a page's content changes, at release ([release.md](release.md)). |
 | Crawl rules | `robots.txt` | `next/` pages (`/next/*.html`) and `/next/lab/`, `studies/` (except `studies/shared/`), `tools/`, `cards/` stay `Disallow`ed. `next/css`, `next/js`, `next/assets` and `studies/shared/` stay crawlable: the live pages render from them (the robots check FAILs if a sitemap page loads a blocked file). |
-| Per page | `<meta name="robots" content="noindex">` | Every page not in the sitemap: `privacy`, `404`, `hi/`, `photography-lab`, `next/` sources, studies. |
+| Per page | `<meta name="robots" content="noindex">` | Every page not in the sitemap: `privacy`, `404`, `hi/`, the photography redirect stubs, `next/` sources, studies. |
 | Preview hosts | `_headers` | `noindex` for Cloudflare `*.pages.dev` previews. GitHub Pages ignores it. |
 
 A new public page needs: a `<url>` in `sitemap.xml`, a canonical link, an `og:image`, and no `noindex`. A new private page needs `noindex` and no sitemap entry. A new Studio page gets its live head from `tools/build.py` ([new-page.md](new-page.md)).

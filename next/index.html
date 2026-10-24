@@ -3,10 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>@view-transition{navigation:auto}html{background:#e7e8ea}</style>
 <meta name="robots" content="noindex">
 <link rel="canonical" href="https://merttureli.com/">
 <link rel="stylesheet" href="../studies/shared/study.css">
 <script src="../studies/shared/study.js"></script>
+<script>
+// Hero intro: with motion on, the live CHARGER flies in, so the poster waits (studio.css .hero-fly). studio.js
+// shows the poster again if the 3D cannot start.
+try { if (!matchMedia('(prefers-reduced-motion: reduce)').matches && !/[?&]still/.test(location.search) && !(navigator.connection && navigator.connection.saveData)) document.documentElement.classList.add('hero-fly'); } catch (e) {}
+</script>
+<script src="js/nav.js"></script>
 <title>Mert Tureli</title>
 <meta name="description" content="Mert Tureli. Mechanical engineer in Austin, Texas, who designs, builds and tests hardware end to end, and designs and builds websites.">
 <meta name="theme-color" content="#e7e8ea">
@@ -17,6 +24,7 @@
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/studio.css">
 <link rel="stylesheet" href="css/showcase.css">
+<link rel="stylesheet" href="css/nav.css">
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -105,7 +113,7 @@
   <div class="wrap">
     <div class="rule"><span class="label">01 / Selected work</span><span class="label hide-s">2024 to 2026</span></div>
     <div class="lineup__head">
-      <h2 id="work-title" class="display">The <em class="serif">lineup</em></h2>
+      <h2 id="work-title" class="display">The lineup</h2>
       <p class="lineup__sub">Six builds, a first place, the full record.</p>
     </div>
 
@@ -118,7 +126,13 @@
             <span class="tile__line">The competition rocket that won its event at Battle of the Rockets 2026.</span>
           </span>
           <span class="tile__stat"><b>1st</b><span>Deployable Sensor Payload event</span></span>
-          <span class="tile__media"><img src="assets/img/charger-work.webp" alt="CHARGER rocket render, orange airframe lettered down the body" width="1722" height="902" loading="lazy" decoding="async"></span>
+          <span class="tile__media tile__media--stage">
+            <img src="assets/loops/charger-loop-960.webp" srcset="assets/loops/charger-loop-960.webp 960w, assets/loops/charger-loop-1920.webp 1920w" sizes="(max-width: 760px) 92vw, (max-width: 1100px) 64vw, 42vw" alt="CHARGER rocket render, orange airframe lettered down the body" width="960" height="540" loading="lazy" decoding="async">
+            <video class="clip" data-clip="hover" muted loop playsinline preload="none" aria-hidden="true">
+              <source data-src="assets/loops/charger-loop.webm" type="video/webm">
+              <source data-src="assets/loops/charger-loop.mp4" type="video/mp4">
+            </video>
+          </span>
           <span class="tile__go" aria-hidden="true"><span class="arrow"></span></span>
         </a>
       </li>
@@ -130,7 +144,13 @@
             <span class="tile__name">Robo-Catcher</span>
             <span class="tile__line">A machine that catches the ball and returns it.</span>
           </span>
-          <span class="tile__media"><img src="assets/img/robo-catcher-1400.webp" alt="Robo-Catcher CAD assembly with net, ramps, indexer and flywheel thrower" width="945" height="792" loading="lazy" decoding="async"></span>
+          <span class="tile__media tile__media--stage">
+            <img src="assets/loops/robo-catcher-loop-720.webp" srcset="assets/loops/robo-catcher-loop-720.webp 720w, assets/loops/robo-catcher-loop-1440.webp 1440w" sizes="(max-width: 760px) 92vw, (max-width: 1100px) 46vw, 30vw" alt="Robo-Catcher CAD assembly with net, ramps, indexer and flywheel thrower" width="720" height="480" loading="lazy" decoding="async">
+            <video class="clip" data-clip="hover" muted loop playsinline preload="none" aria-hidden="true">
+              <source data-src="assets/loops/robo-catcher-loop.webm" type="video/webm">
+              <source data-src="assets/loops/robo-catcher-loop.mp4" type="video/mp4">
+            </video>
+          </span>
           <span class="tile__stat"><b>100%</b><span>Feed indexing, competition day</span></span>
           <span class="tile__go" aria-hidden="true"><span class="arrow"></span></span>
         </a>
@@ -143,9 +163,11 @@
             <span class="tile__name">Rudder pedals</span>
             <span class="tile__line">Fighter style rudder and toe brake pedals for flight sims.</span>
           </span>
-          <span class="tile__media">
-            <video class="clip" data-clip="hover" muted loop playsinline preload="none" poster="../assets/motion/rudder-pedals-working-poster.webp" aria-hidden="true">
-              <source data-src="../assets/motion/rudder-pedals-working-960-alpha.webm" type="video/webm">
+          <span class="tile__media tile__media--stage">
+            <img src="assets/loops/rudder-pedals-loop-720.webp" srcset="assets/loops/rudder-pedals-loop-720.webp 720w, assets/loops/rudder-pedals-loop-1440.webp 1440w" sizes="(max-width: 760px) 92vw, (max-width: 1100px) 46vw, 30vw" alt="" width="720" height="480" loading="lazy" decoding="async">
+            <video class="clip" data-clip="hover" muted loop playsinline preload="none" aria-hidden="true">
+              <source data-src="assets/loops/rudder-pedals-loop.webm" type="video/webm">
+              <source data-src="assets/loops/rudder-pedals-loop.mp4" type="video/mp4">
             </video>
           </span>
           <span class="tile__stat"><b>3</b><span>Independent axes</span></span>
@@ -161,9 +183,11 @@
             <span class="tile__line">A solid state coaster that heats or cools any mug or glass.</span>
           </span>
           <span class="tile__stat"><b>11 &deg;C</b><span>Cold face at 12 V, steady state</span></span>
-          <span class="tile__media">
-            <video class="clip" data-clip="hover" muted loop playsinline preload="none" poster="../assets/motion/therma-shift-360-noflow-poster.webp" aria-hidden="true">
-              <source data-src="../assets/motion/therma-shift-360-noflow-960-alpha.webm" type="video/webm">
+          <span class="tile__media tile__media--stage">
+            <img src="assets/loops/therma-shift-loop-900.webp" srcset="assets/loops/therma-shift-loop-900.webp 900w, assets/loops/therma-shift-loop-1800.webp 1800w" sizes="(max-width: 760px) 92vw, (max-width: 1100px) 58vw, 36vw" alt="" width="900" height="450" loading="lazy" decoding="async">
+            <video class="clip" data-clip="hover" muted loop playsinline preload="none" aria-hidden="true">
+              <source data-src="assets/loops/therma-shift-loop.webm" type="video/webm">
+              <source data-src="assets/loops/therma-shift-loop.mp4" type="video/mp4">
             </video>
           </span>
           <span class="tile__go" aria-hidden="true"><span class="arrow"></span></span>
@@ -194,12 +218,12 @@
       </li>
 
       <li class="tile tile--explorer">
-        <a class="tile__link" href="../assets/charger-explorer/index.html" data-explorer-link>
+        <a class="tile__link" href="#charger" data-explorer-link>
           <span class="tile__ghost" aria-hidden="true">CHARGER</span>
           <span class="tile__media"><img src="assets/img/hero-land.webp" alt="" width="2400" height="1350" loading="lazy" decoding="async"></span>
           <span class="tile__text">
             <span class="label">Interactive / The flight model</span>
-            <span class="tile__name">Take CHARGER <em class="serif">apart</em></span>
+            <span class="tile__name">Take CHARGER apart</span>
             <span class="tile__line">Every component at its true station. Drag it, cut it open, pick a part and read what it does.</span>
           </span>
           <span class="tile__go" aria-hidden="true"><span class="arrow"></span></span>
@@ -210,7 +234,7 @@
         <a class="tile__link" href="websites.html">
           <span class="tile__text">
             <span class="label">For businesses and makers</span>
-            <span class="tile__name">Need a website people want to <em class="serif">explore</em>?</span>
+            <span class="tile__name">Need a website people want to explore?</span>
           </span>
           <span class="tile__line">I design and build them by hand. An idea is enough to start.</span>
           <span class="tile__go" aria-hidden="true"><span class="arrow"></span></span>
@@ -225,11 +249,11 @@
   <div class="wrap">
     <div class="rule"><h2 id="exp-title" class="label">02 / Experience</h2></div>
     <ol class="roles__line" data-reveal>
-      <li><span class="label">Oct 2026 to present</span><b>Deployment engineer</b><span><img class="roles__logo" src="assets/img/logos/base-power.svg" alt="" width="114" height="116" decoding="async">Base Power</span></li>
-      <li><span class="label">Jun to Sep 2026</span><b>Engineering intern</b><span>SunThru</span></li>
-      <li><span class="label">2023 to 2026</span><b>Founder and president</b><span>Union College Rocket Team</span></li>
-      <li><span class="label">2024 to 2026</span><b>Co-founder</b><span>ModuFly, $70,000 raised</span></li>
-      <li><span class="label">Summer 2024</span><b>Design engineer and materials intern</b><span>TASECS, Ankara</span></li>
+      <li><span class="label">Oct 2026 to present</span><b>Deployment engineer</b><span class="co"><img class="roles__logo" src="assets/img/logos/base-power.svg" alt="" width="114" height="116" decoding="async">Base Power</span></li>
+      <li><span class="label">Jun to Sep 2026</span><b>Engineering intern</b><span class="co">SunThru</span></li>
+      <li><span class="label">2023 to 2026</span><b>Founder and president</b><span class="co">Union College Rocket Team</span></li>
+      <li><span class="label">2024 to 2026</span><b>Co-founder</b><span class="roles__org"><span class="co">ModuFly</span>, $70,000 raised</span></li>
+      <li><span class="label">Summer 2024</span><b>Design engineer and materials intern</b><span class="roles__org"><span class="co">TASECS</span>, Ankara</span></li>
     </ol>
   </div>
 </section>
@@ -238,21 +262,22 @@
 <section class="beyond2" id="beyond" aria-labelledby="beyond-title">
   <div class="wrap">
     <div class="rule"><span class="label">03 / Beyond engineering</span><span class="label hide-s">Izmir / New York / Austin</span></div>
-    <h2 id="beyond-title" class="manifesto">I <em class="serif">fly</em> ultralights, make short <em class="serif">films</em>, shoot <em class="serif">photographs</em> and cook the food I grew up with.</h2>
+    <h2 id="beyond-title" class="manifesto">I fly ultralights, make short films, shoot photographs and cook the food I grew up with.</h2>
 
     <div class="album" data-reveal>
-      <figure class="album__ph album__ph--wide"><img src="assets/img/balloon-1000.webp" srcset="assets/img/balloon-600.webp 600w, assets/img/balloon-1000.webp 1000w" sizes="(max-width: 760px) 92vw, 50vw" alt="Hot air balloon over open country at sunrise" loading="lazy" decoding="async" width="1000" height="563"><figcaption class="label">Segovia / Aerial</figcaption></figure>
-      <figure class="album__ph"><img src="assets/img/lake-framed-420.webp" srcset="assets/img/lake-framed-420.webp 420w, assets/img/lake-framed-720.webp 720w" sizes="(max-width: 760px) 46vw, 25vw" alt="Lake framed by pine branches" loading="lazy" decoding="async" width="720" height="900"><figcaption class="label">Lake</figcaption></figure>
-      <figure class="album__ph"><img src="assets/img/lighthouse-420.webp" srcset="assets/img/lighthouse-420.webp 420w, assets/img/lighthouse-720.webp 720w" sizes="(max-width: 760px) 46vw, 25vw" alt="Lighthouse behind bare branches" loading="lazy" decoding="async" width="720" height="900"><figcaption class="label">Lighthouse</figcaption></figure>
+      <figure class="album__ph album__ph--wide"><a class="album__go" href="beyond.html"><img src="assets/img/balloon-1000.webp" srcset="assets/img/balloon-600.webp 600w, assets/img/balloon-1000.webp 1000w" sizes="(max-width: 760px) 92vw, 50vw" alt="Hot air balloon over open country at sunrise" loading="lazy" decoding="async" width="1000" height="563"><span class="album__tag label">Photography, 21 <span class="arrow" aria-hidden="true"></span></span></a><figcaption class="label">Segovia / Aerial</figcaption></figure>
+      <figure class="album__ph"><a class="album__go" href="beyond.html" tabindex="-1"><img src="assets/img/lake-framed-420.webp" srcset="assets/img/lake-framed-420.webp 420w, assets/img/lake-framed-720.webp 720w" sizes="(max-width: 760px) 46vw, 25vw" alt="Lake framed by pine branches" loading="lazy" decoding="async" width="720" height="900"></a><figcaption class="label">Lake</figcaption></figure>
+      <figure class="album__ph"><a class="album__go" href="beyond.html" tabindex="-1"><img src="assets/img/lighthouse-420.webp" srcset="assets/img/lighthouse-420.webp 420w, assets/img/lighthouse-720.webp 720w" sizes="(max-width: 760px) 46vw, 25vw" alt="Lighthouse behind bare branches" loading="lazy" decoding="async" width="720" height="900"></a><figcaption class="label">Lighthouse</figcaption></figure>
       <dl class="album__notes">
         <div class="note"><dt class="label">01 / Piloting</dt><dd>Licensed ultralight pilot, certified through the Turkish civil aviation authority. The rudder pedals came out of the same interest.</dd></div>
         <div class="note"><dt class="label">02 / Film</dt><dd>Three short films screened at the Robert College Film Festival in 2022. One, a solo project, was nominated for cinematography, editing and sound design.</dd></div>
         <div class="note"><dt class="label">03 / Photography</dt><dd>An ongoing thing rather than a project.</dd></div>
         <div class="note"><dt class="label">04 / Cooking</dt><dd>I cook most days, mostly the food I grew up with in Izmir.</dd></div>
       </dl>
-      <figure class="album__ph"><img src="assets/img/moon-pines-420.webp" srcset="assets/img/moon-pines-420.webp 420w, assets/img/moon-pines-720.webp 720w" sizes="(max-width: 760px) 46vw, 25vw" alt="Crescent moon beside pine branches" loading="lazy" decoding="async" width="720" height="900"><figcaption class="label">Moon</figcaption></figure>
-      <figure class="album__ph"><img src="assets/img/rosa-rugosa-420.webp" srcset="assets/img/rosa-rugosa-420.webp 420w, assets/img/rosa-rugosa-720.webp 720w" sizes="(max-width: 760px) 46vw, 25vw" alt="Wild roses in front of a lake and hills" loading="lazy" decoding="async" width="720" height="900"><figcaption class="label">Roses</figcaption></figure>
+      <figure class="album__ph"><a class="album__go" href="beyond.html" tabindex="-1"><img src="assets/img/moon-pines-420.webp" srcset="assets/img/moon-pines-420.webp 420w, assets/img/moon-pines-720.webp 720w" sizes="(max-width: 760px) 46vw, 25vw" alt="Crescent moon beside pine branches" loading="lazy" decoding="async" width="720" height="900"></a><figcaption class="label">Moon</figcaption></figure>
+      <figure class="album__ph"><a class="album__go" href="beyond.html" tabindex="-1"><img src="assets/img/rosa-rugosa-420.webp" srcset="assets/img/rosa-rugosa-420.webp 420w, assets/img/rosa-rugosa-720.webp 720w" sizes="(max-width: 760px) 46vw, 25vw" alt="Wild roses in front of a lake and hills" loading="lazy" decoding="async" width="720" height="900"></a><figcaption class="label">Roses</figcaption></figure>
     </div>
+    <p class="beyond2__more"><a class="link link--quiet" href="beyond.html" aria-label="More beyond engineering">More</a></p>
   </div>
 </section>
 
@@ -260,7 +285,7 @@
 <section class="web" id="websites" aria-labelledby="web-title">
   <div class="wrap">
     <div class="rule rule--dark"><span class="label">04 / Websites</span><span class="label"><span class="dot" aria-hidden="true"></span> Booking web projects</span></div>
-    <h2 id="web-title" class="display display--web">Like what you see?<br>Let's build <em class="serif">yours</em>.</h2>
+    <h2 id="web-title" class="display display--web">Like what you see?<br>Let's build yours.</h2>
     <div class="web__grid">
       <p class="web__lead">I design and build websites around your work, your business and the things that make them worth exploring. Same approach as my hardware: work out what it has to do, build it properly, then test it.</p>
       <ol class="steps">
@@ -292,7 +317,7 @@
   <div class="wrap">
     <div class="close__card" data-reveal>
       <img class="close__face" src="assets/img/portrait-420.webp" alt="Mert Tureli" loading="lazy" decoding="async" width="420" height="525">
-      <h2 id="contact-title" class="display close__title">Let's work <em class="serif">together</em></h2>
+      <h2 id="contact-title" class="display close__title">Let's work together</h2>
       <div class="close__ctas">
         <a class="pillbtn pillbtn--solid" href="mailto:merttureli0@gmail.com">Get in touch</a>
         <a class="pillbtn" href="mailto:merttureli0@gmail.com?subject=Engineering">Talk engineering</a>
@@ -304,7 +329,7 @@
   <footer class="foot wrap">
     <div><p class="label">Version</p><p>2026</p></div>
     <div><p class="label">Local time</p><p data-clock>Austin</p></div>
-    <div><p class="label">Socials</p><p><a class="link" href="https://linkedin.com/in/merttureli" rel="noopener">LinkedIn</a> <a class="link" href="mailto:merttureli0@gmail.com">Email</a> <a class="link" href="websites.html">Websites</a></p></div>
+    <div><p class="label">Socials</p><p><a class="link" href="https://linkedin.com/in/merttureli" rel="noopener">LinkedIn</a> <a class="link" href="mailto:merttureli0@gmail.com">Email</a> <a class="link" href="websites.html">Websites</a> <a class="link" href="https://merttureli.com/privacy.html">Privacy</a></p></div>
     <p class="foot__credit">CAD renders from the source assemblies. Hand built, no framework.</p>
   </footer>
 </section>
@@ -313,5 +338,6 @@
 <script src="js/lenis.min.js" defer></script>
 <script src="js/studio.js" defer></script>
 <script src="js/clips.js" defer></script>
+<script type="module" src="js/explorer/launch.js"></script>
 </body>
 </html>

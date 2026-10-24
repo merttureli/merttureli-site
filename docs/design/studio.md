@@ -78,7 +78,9 @@ Three voices. Fonts load in `studio.css` (`@font-face`); files in `studies/share
 |---|---|---|---|
 | Display (Archivo, variable width) | `--display`, `--display-stretch: 112%`, `--display-weight: 760` | `.display`, `.s-xl` | headings, uppercase, tight negative tracking |
 | Mono (Martian Mono) | `--mono`, `--mono-stretch: 87.5%`, `--mono-tracking: .02em` | `.label`, `.link`, `.pill`, `.s-s` | labels, links, specs, uppercase |
-| Serif italic (Bodoni Moda) | `--serif` | `<em class="serif">` (inline accent) | one or two words inside a heading or line |
+| Serif italic (Bodoni Moda) | `--serif` | `.s-m` (hero words), `.co` (company names) | a whole element: the hero's floating words, a company name |
+
+**One sentence, one voice.** A sentence, heading, label or line gets one font, one style and one color: no serif or italic word dropped into an Archivo line, no single word in another color or weight for emphasis. Hierarchy comes from whole elements (a mono label over a heading, a heading over body, a button), sized and spaced. The one exception is a company name (`<span class="co">Base Power</span>`), which keeps the italic serif. `python3 tools/check.py --only typeset` enforces it; a reviewed exception takes `data-type-ok`.
 
 Body is Archivo at `--text-l` (17px; 16px on phone), line-height 1.55.
 
@@ -100,7 +102,7 @@ Snippets:
 
 ```html
 <p class="label">Selected work</p>                         <!-- mono label -->
-<h2 class="display">Things I <em class="serif">built</em></h2>
+<h2 class="display">Things I built</h2>                   <!-- one voice per heading -->
 <a class="link" href="#work">See the work</a>              <!-- mono link, underline wipes on hover -->
 ```
 
@@ -124,7 +126,7 @@ Section skeleton (copy this for a new section):
 <section class="NAME" id="NAME" aria-labelledby="NAME-title">
   <div class="wrap">
     <div class="rule"><span class="label">06 / Name</span><span class="label hide-s">Right label</span></div>
-    <h2 id="NAME-title" class="display">Heading <em class="serif">accent</em></h2>
+    <h2 id="NAME-title" class="display">Heading</h2>
     <div class="NAME__grid" data-reveal><!-- content --></div>
   </div>
 </section>
@@ -204,4 +206,4 @@ These cannot be CSS tokens. Edit them in place (grep the name). Motion timers ar
 | Add a drift word | add `<i>` to a `.slot` (three per slot), keep the first `<i>` text equal to the project's `word` if the showreel uses it |
 | Check nothing moved | `python3 tools/check.py --fast` (the `tokens` row names any token value that moved); pixels: `python3 tools/check.py --only visual --pages next/index.html` |
 | Add a section | `python3 tools/new.py section NAME` (studio is the default site), see docs/recipes/new-page.md |
-| Restyle a plain root page (`404.html`, `privacy.html`, `hi/index.html`) | `next/css/pages.css` (after `tokens.css`; no studio.css, no JS). It copies `.label`, `.display`, `.pillbtn` and friends from studio.css/showcase.css, then one block per page. 404 links it root-absolute (`/next/css/...`) because Pages serves it for any path |
+| Restyle a plain root page (`404.html`, `privacy.html`, `hi/index.html`) | `next/css/pages.css` (after `tokens.css`; no studio.css, no JS). It copies `.label`, `.display`, `.pillbtn` and friends from studio.css/showcase.css, then one block per page. 404 links it root-absolute (`/next/css/...`) because Pages serves it for any path. 404's live CHARGER is `next/js/lost-rocket.js` (the hero's `createRocket` + engine, loaded after idle; still: `next/assets/img/charger-lost-*.webp`, rendered from the same rig). `/hi/` drift words reuse the hero `.slot` markup with a text-shadow blur (no filters) |

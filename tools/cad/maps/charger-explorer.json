@@ -1,0 +1,29 @@
+{
+ "_doc": "CHARGER explorer interior: assets/charger-explorer/assembly.json/.bin (the explorer layout, mm) -> next/assets/3d/charger-explorer.json/.bin (cadmesh). The eleven exterior parts listed in 'shared' are NOT written: next/js/explorer/ loads them from next/assets/3d/charger-hero.json/.bin (the hero rocket, same tessellation, already downloaded by the hero), so the explorer shows exactly the hero's rocket and only adds the parts inside it. ids are the explorer ids that part-stories.js and hero3d.js expect. tris = decimation target (quadric, fast-simplification). Materials are palette keys (tools/cad/palette.json), taken from tools/cad/maps/charger.json. Run: $CAD_VENV/bin/python tools/cad/explorer_to_cadmesh.py --map tools/cad/maps/charger-explorer.json",
+ "name": "charger-explorer",
+ "source": "assets/charger-explorer/assembly.json",
+ "out": "next/assets/3d",
+ "weld_mm": 0.002,
+ "crease_deg": 34,
+ "shared": {"file": "charger-hero.json", "ids": [0, 1, 2, 6, 7, 8, 9, 10, 11, 18, 19]},
+ "skip": [3, 4],
+ "parts": [
+  {"id": 5,  "name": "motor",               "label": "Motor reference envelope", "material": "rocketRed"},
+  {"id": 12, "name": "altimeter",           "label": "Altimeter",                "material": "pcb"},
+  {"id": 13, "name": "battery",             "label": "Battery",                  "material": "black"},
+  {"id": 14, "name": "payload",             "label": "Payload",                  "material": "explorerInner", "tris": 9000},
+  {"id": 15, "name": "camera",              "label": "Camera",                   "material": "chip"},
+  {"id": 16, "name": "internalCoupler",     "label": "Internal coupler",         "material": "explorerInner", "tris": 4200},
+  {"id": 17, "name": "cameraHolder",        "label": "Camera holder",            "material": "explorerInner", "note": "no mesh in the source (bounds only): kept as an empty part for identity"},
+  {"id": 20, "name": "antenna",             "label": "Antenna",                  "material": "rocketMetal", "tris": 2400},
+  {"id": 21, "name": "woodenRod1",          "label": "Wooden rod 1",             "material": "ceramic"},
+  {"id": 22, "name": "antennaHolder",       "label": "Antenna holder",           "material": "explorerInner"},
+  {"id": 23, "name": "topPcbHolder",        "label": "Top PCB holder",           "material": "explorerInner"},
+  {"id": 24, "name": "middlePcbHolder",     "label": "Middle PCB holder",        "material": "explorerInner"},
+  {"id": 25, "name": "bottomPcbHolder",     "label": "Bottom PCB holder",        "material": "explorerInner"},
+  {"id": 26, "name": "lowerShockCordMount", "label": "Lower shock-cord mount",   "material": "rocketMetal", "tris": 4200},
+  {"id": 27, "name": "woodenRod2",          "label": "Wooden rod 2",             "material": "ceramic"},
+  {"id": 28, "name": "woodenRod3",          "label": "Wooden rod 3",             "material": "ceramic"},
+  {"id": 29, "name": "woodenRod4",          "label": "Wooden rod 4",             "material": "ceramic"}
+ ]
+}

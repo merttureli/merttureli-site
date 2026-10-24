@@ -1,0 +1,136 @@
+/* STUDIO Beyond page (next/beyond.html): photography grid, film card, piloting cards and the
+   in-place photo viewer. Loaded after tokens.css, studio.css and showcase.css (case page chrome).
+   Values come from tokens.css; the few literals are one-off component sizes. Docs:
+   docs/recipes/beyond-photos.md (add a photo), docs/design/motion.md (the viewer motion). */
+
+mark.flag { background: none; color: inherit; border-bottom: 1px dotted var(--signal-ink); cursor: help; }
+
+/* ------------------------------------------------------------------ hero */
+.bhero { padding: clamp(28px, 4vw, 64px) 0 0; }
+/* the home album's wide photo, opened up (next/js/nav.js grows the album photo into it). The
+   background is the home album's own file, already cached, so the photo shows while the larger
+   one loads. Height: the rule under it peeks above the fold. */
+.bhero__photo { position: relative; width: 100%; aspect-ratio: 16 / 9; max-height: calc(100svh - 300px); min-height: 220px; margin-bottom: clamp(28px, 4vw, 64px); border-radius: var(--radius-tile); overflow: hidden; background: var(--paper-3) url(../assets/img/balloon-1000.webp) center / cover; box-shadow: var(--shadow-tile); }
+.bhero__photo img { width: 100%; height: 100%; object-fit: cover; }
+.bhero__photo figcaption { position: absolute; left: 14px; bottom: 14px; padding: 6px 11px; border-radius: var(--radius-pill); background: var(--glass); color: var(--ink); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.bhero__title { font-family: var(--display); font-weight: 780; font-stretch: var(--display-stretch); text-transform: uppercase; font-size: clamp(54px, 10.4vw, 188px); line-height: .84; letter-spacing: -.045em; }
+.bhero__row { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: clamp(28px, 5vw, 90px); align-items: end; margin-top: clamp(26px, 3.4vw, 52px); }
+.bhero__lede { max-width: 24ch; font-size: clamp(24px, 2.7vw, 44px); font-weight: 560; line-height: 1.08; letter-spacing: -.025em; }
+.bhero__index { border-top: var(--hairline); }
+.bhero__index a { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 14px 4px 14px 0; border-bottom: var(--hairline); font-size: clamp(18px, 1.5vw, 23px); font-weight: 560; letter-spacing: -.015em; transition: padding var(--dur-500) var(--ease), color var(--dur-300); }
+.bhero__index .arrow { width: 18px; transform: rotate(90deg); transition: transform var(--dur-500) var(--ease); }
+@media (hover: hover) { .bhero__index a:hover { padding-left: 10px; } .bhero__index a:hover .arrow { transform: rotate(90deg) translateX(4px); } }
+.bhero__index a:focus-visible { padding-left: 10px; }
+
+/* -------------------------------------------------------------- sections */
+.bsec { padding: var(--space-70-140) 0 0; scroll-margin-top: 56px; }
+.bsec__head { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px 40px; flex-wrap: wrap; margin-bottom: var(--space-40-70); }
+.bsec__title { font-size: clamp(40px, 6vw, 104px); }
+.bsec__lead { max-width: 26ch; font-size: clamp(17px, 1.4vw, 21px); line-height: 1.35; color: var(--ink-soft); padding-bottom: .35em; }
+
+/* -------------------------------------------------------- the photo grid */
+/* Columns: 4 / 3 / 2. Rows are one 4:5 column cell tall; a landscape photo spans two columns.
+   js/beyond.js sets --span per tile so every row fills (photo order never changes). */
+.shots-box { container-type: inline-size; }
+.shots { --cols: 4; --gap: var(--bento-gap); display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); grid-auto-rows: calc((100cqw - (var(--cols) - 1) * var(--gap)) / var(--cols) * 1.25); gap: var(--gap); }
+.shot { grid-column: var(--start, auto) / span var(--span, 1); min-width: 0; }
+.shot__btn { position: relative; display: block; width: 100%; height: 100%; border-radius: var(--radius-tile-s); overflow: hidden; background: var(--paper-3); box-shadow: var(--shadow-tile); cursor: zoom-in; transition: transform var(--dur-700) var(--ease), box-shadow var(--dur-700) var(--ease); }
+.shot__btn img { width: 100%; height: 100%; object-fit: cover; transition: transform var(--dur-1400) var(--ease); }
+.shot__cap { position: absolute; left: 12px; bottom: 12px; max-width: calc(100% - 24px); padding: 5px 10px; border-radius: var(--radius-pill); background: var(--glass); color: var(--ink); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shot.is-lifted .shot__btn img { opacity: 0; }
+@media (hover: hover) {
+  .shot__btn:hover { transform: translateY(-3px); box-shadow: var(--shadow-tile-hi); }
+  .shot__btn:hover img { transform: scale(1.04); }
+}
+.shot__btn:focus-visible { outline-offset: 3px; border-radius: var(--radius-tile-s); transform: translateY(-3px); box-shadow: var(--shadow-tile-hi); }
+
+/* ---------------------------------------------------------------- film */
+.bfilm { padding: clamp(22px, 3vw, 48px); border-radius: var(--radius-tile); background: var(--tile-ink); color: var(--paper); box-shadow: var(--shadow-tile); }
+.bfilm .label { color: var(--paper-muted); }
+.bfilm__grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(28px, 5vw, 90px); margin-top: var(--space-40-70); align-items: start; }
+.bfilm__note { max-width: 32ch; font-size: clamp(20px, 1.8vw, 28px); line-height: 1.28; letter-spacing: -.015em; color: var(--paper-soft-hi); }
+.bfilm__list { border-top: var(--hairline-dark); }
+.bfilm__list li { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: baseline; gap: 12px; padding: 18px 0; border-bottom: var(--hairline-dark); }
+.bfilm__name { font-size: clamp(20px, 1.9vw, 30px); font-weight: 620; letter-spacing: -.02em; line-height: 1.1; }
+.bfilm mark.flag { border-bottom-color: var(--signal); }
+
+/* ------------------------------------------------------------ piloting */
+.bpilot { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--bento-gap); }
+.bpilot__card { display: flex; flex-direction: column; justify-content: space-between; gap: 40px; padding: clamp(22px, 3vw, 48px); border-radius: var(--radius-tile); background: var(--tile); box-shadow: var(--shadow-tile); }
+.bpilot__note { max-width: 30ch; font-size: clamp(22px, 2.3vw, 36px); font-weight: 560; line-height: 1.14; letter-spacing: -.025em; }
+.bpilot__facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: var(--hairline); }
+.bpilot__facts div { padding: 14px 16px 0 0; }
+.bpilot__facts div + div { padding-left: 16px; border-left: var(--hairline); }
+.bpilot__facts dd { margin-top: 4px; font-size: var(--text-s); font-weight: 560; line-height: 1.3; }
+.bpilot__pedals { position: relative; display: flex; flex-direction: column; gap: 8px; min-height: clamp(380px, 32vw, 520px); padding: clamp(22px, 2.4vw, 36px); border-radius: var(--radius-tile); background: var(--tile); box-shadow: var(--shadow-tile); overflow: hidden; isolation: isolate; transition: transform var(--dur-700) var(--ease), box-shadow var(--dur-700) var(--ease); }
+.bpilot__name { font-weight: 740; font-stretch: 108%; font-size: var(--text-tile); line-height: .94; letter-spacing: -.035em; }
+.bpilot__line { max-width: 26ch; font-size: var(--text-s); line-height: 1.42; color: var(--ink-soft); }
+.bpilot__pedals img { position: absolute; z-index: -1; right: 4%; bottom: -6%; width: auto; height: 74%; max-width: 62%; object-fit: contain; object-position: right bottom; transition: transform var(--dur-1100) var(--ease); }
+.bpilot__go { margin-top: auto; }
+@media (hover: hover) {
+  .bpilot__pedals:hover { transform: translateY(-4px); box-shadow: var(--shadow-tile-hi); }
+  .bpilot__pedals:hover img { transform: scale(1.04) rotate(-2deg); }
+  .bpilot__pedals:hover .link::after { transform: scaleX(0); }
+}
+.bpilot__pedals:focus-visible { outline-offset: 4px; border-radius: var(--radius-tile); transform: translateY(-4px); box-shadow: var(--shadow-tile-hi); }
+
+.bnext { padding: var(--space-70-140) 0 0; }
+.bnext__in { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.beyondpage .foot { margin-top: var(--space-70-140); }
+
+/* ---------------------------------------------------------- the viewer */
+.lb { position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: transparent; color: var(--paper); overflow: hidden; overscroll-behavior: contain; }
+.lb[open] { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; }
+.lb::backdrop { background: transparent; }
+.lb__bg { position: absolute; inset: 0; z-index: -1; background: var(--tile-ink); }
+.lb__bar, .lb__foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px var(--gutter); }
+.lb__title { display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--paper-soft); }
+.lb__cap:empty { display: none; }
+.lb__stage { position: relative; display: grid; place-items: center; min-width: 0; min-height: 0; overflow: hidden; padding: 0 var(--gutter); touch-action: none; user-select: none; -webkit-user-select: none; }
+.lb__img { display: block; max-width: none; border-radius: var(--radius-focus); transform-origin: 50% 50%; will-change: transform; -webkit-user-drag: none; }
+.lb__alt { max-width: 52ch; font-size: var(--text-xs); line-height: 1.45; color: var(--paper-soft); }
+.lb__nav { display: flex; gap: 8px; flex: none; }
+.lb__btn { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; box-shadow: inset 0 0 0 1px var(--paper-ring); color: var(--paper); transition: background var(--dur-400) var(--ease), color var(--dur-400) var(--ease), box-shadow var(--dur-400) var(--ease); }
+.lb__btn .arrow { width: 16px; }
+.lb__btn .arrow::after { width: 8px; height: 8px; top: -3.5px; }
+.lb__prev .arrow { transform: rotate(180deg); }
+.lb__x { position: relative; width: 18px; height: 18px; }
+.lb__x::before, .lb__x::after { content: ""; position: absolute; left: 0; top: 8.25px; width: 18px; height: 1.5px; background: currentColor; transform: rotate(45deg); }
+.lb__x::after { transform: rotate(-45deg); }
+@media (hover: hover) { .lb__btn:hover { background: var(--paper); color: var(--ink); box-shadow: inset 0 0 0 1px var(--paper); } .lb__close:hover { background: var(--signal); color: var(--ink); box-shadow: inset 0 0 0 1px var(--signal); } }
+.lb__btn:focus-visible { background: var(--paper); color: var(--ink); outline-offset: 3px; border-radius: 50%; }
+
+/* -------------------------------------------------------------- tablet */
+@media (max-width: 1100px) {
+  .shots { --cols: 3; }
+  .bhero__row { grid-template-columns: 1fr; align-items: start; }
+  .bfilm__grid, .bpilot { grid-template-columns: 1fr; }
+  .bpilot__pedals { min-height: 380px; }
+  .bpilot__pedals img { height: 80%; }
+}
+
+/* --------------------------------------------------------------- phone */
+@media (max-width: 760px) {
+  .bhero__title { font-size: 11.4vw; }   /* ENGINEERING is 7.8 em wide: fits 100vw minus the gutters, so phones keep their own width */
+  .bhero__photo { aspect-ratio: 16 / 10; max-height: none; min-height: 0; }
+  .bhero__photo figcaption { left: 10px; bottom: 10px; }
+  .bhero__lede { font-size: 25px; }
+  .shots { --cols: 2; --gap: 8px; }
+  .shot__cap { left: 8px; bottom: 8px; max-width: calc(100% - 16px); padding: 4px 8px; font-size: var(--text-mono-xs); }
+  .bfilm { padding: 22px 18px; }
+  .bfilm__list li { grid-template-columns: 34px minmax(0, 1fr) auto; padding: 14px 0; }
+  .bpilot__card { padding: 22px 18px; gap: 28px; }
+  .bpilot__pedals { min-height: 360px; padding: 20px; }
+  .bpilot__pedals img { height: 62%; right: 0; }
+  .bpilot__name { font-size: 32px; }
+  .bnext__in .pillbtn { width: 100%; }
+  .lb__bar, .lb__foot { padding: 10px 14px; }
+  .lb__stage { padding: 0; }
+  .lb__img { border-radius: 0; }
+  .lb__btn { width: 46px; height: 46px; }
+  .lb__alt { font-size: var(--text-2xs); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shot__btn:hover, .shot__btn:focus-visible, .bpilot__pedals:hover, .bpilot__pedals:focus-visible { transform: none; }
+}

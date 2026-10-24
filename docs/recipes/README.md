@@ -12,6 +12,7 @@ From the repo history (136 commits to Oct 2026, by subject): handoff and merge c
 | Answer, list or add an open question for the owner | [flags.md](flags.md) | `resolve-flags` |
 | Replace a photo, render, poster, clip or share image | [images-swap.md](images-swap.md) | `images` |
 | Make web sizes of a new image or video | [media.md](media.md) | `images` |
+| Add a photo to the Studio Beyond page | [beyond-photos.md](beyond-photos.md) | `images` |
 | Change a project's facts everywhere | [content.md](content.md) | `add-project` |
 | Add or remove a project or case study | [add-project.md](add-project.md) | `add-project` |
 | Find which field "summary", "card image", "title" means | [content.md](content.md#what-the-owners-words-mean) | |
@@ -23,6 +24,7 @@ From the repo history (136 commits to Oct 2026, by subject): handoff and merge c
 | Tweak or add a color palette (old-design pages only) | [palette.md](palette.md) | `palette` |
 | Edit the live design (`next/`) | [studio-edit.md](studio-edit.md) | `edit-copy` |
 | Add a project to the home showreel | [showreel-actor.md](showreel-actor.md) | `new-actor` |
+| Re-render the home's product tile loops | [tile-loops.md](tile-loops.md) | `images` |
 | Add a page or section | [new-page.md](new-page.md) | `new-page` |
 | Bring a STEP file into 3D | [cad-import.md](cad-import.md) | `import-cad` |
 | Add a tracked event, keep the privacy page true | [tracking.md](tracking.md) | |

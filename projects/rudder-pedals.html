@@ -4,6 +4,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>@view-transition{navigation:auto}html{background:#e7e8ea}</style>
 <link rel="canonical" href="https://merttureli.com/projects/rudder-pedals.html">
 <link rel="icon" href="/assets/icons/favicon.ico" sizes="32x32">
 <link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml">
@@ -19,6 +20,7 @@
 <meta property="og:image:alt" content="Render of the flight sim rudder pedal mechanism.">
 <meta name="twitter:card" content="summary_large_image">
 <script src="../studies/shared/study.js"></script>
+<script src="../next/js/nav.js"></script>
 <title>Flight sim rudder pedals · Mert Tureli</title>
 <meta name="description" content="Three-axis flight sim rudder pedals with fighter style geometry, Hall effect sensing and C++ USB HID firmware. Designed, printed, wired and programmed solo.">
 <meta name="theme-color" content="#e7e8ea">
@@ -27,6 +29,7 @@
 <link rel="stylesheet" href="../next/css/tokens.css">
 <link rel="stylesheet" href="../next/css/studio.css">
 <link rel="stylesheet" href="../next/css/showcase.css">
+<link rel="stylesheet" href="../next/css/nav.css">
 </head>
 <body class="case">
 <a class="skip" href="#main">Skip to content</a>
@@ -78,11 +81,11 @@
     <p class="phero__lede">I fly ultralights and consumer sim pedals never felt right, so I built my own. Fighter style geometry, three axes, Hall sensors instead of potentiometers.</p>
     
   </div>
-  <div class="stage wrap"><div class="stage__card stage__card--wide">
+  <div class="stage wrap"><div class="stage__card stage__card--wide stage__card--live">
   <span class="stage__idx label">04 / 05</span>
-  <div class="stage__media"><video id="hero-clip" class="clip" data-clip="view" muted loop playsinline preload="none" poster="../assets/motion/rudder-pedals-working-poster.webp" aria-label="Rudder pedals, turntable render from the CAD assembly"><source data-src="../assets/motion/rudder-pedals-working-1280-alpha.webm" data-sm-src="../assets/motion/rudder-pedals-working-960-alpha.webm" type="video/webm"></video></div>
+  <div class="stage__live" data-case-stage="rudder-pedals" role="img" aria-label="Rudder pedals, live 3D model from the CAD assembly"><picture class="stage__still"><source media="(max-width: 760px)" srcset="../next/assets/img/stills/rudder-pedals-case-port.webp"><img src="../next/assets/img/stills/rudder-pedals-case-land.webp" alt="" decoding="async"></picture><canvas aria-hidden="true"></canvas></div><button class="clip-toggle" type="button" data-stage-toggle aria-pressed="false" hidden><i aria-hidden="true"></i><span>Pause</span></button>
   <span class="stage__cap label">Contactless Hall sensing</span>
-  <button class="clip-toggle" type="button" data-clip-toggle aria-controls="hero-clip" aria-pressed="false" hidden><i aria-hidden="true"></i><span>Pause</span></button>
+  
 </div></div>
   <div class="wrap"><dl class="facts"><div><dt class="label">Timeline</dt><dd>2026</dd></div><div><dt class="label">Status</dt><dd>In daily use at my sim</dd></div></dl></div>
 </section>
@@ -98,10 +101,10 @@
 <section class="csec" id="how" aria-labelledby="how-title">
   <div class="wrap">
     <div class="rule"><span class="label">How it works</span><span class="label hide-s">Mechanism + firmware / 2026</span></div>
-    <div class="csec__head"><h2 id="how-title" class="display csec__title">How it <em class="serif">works</em></h2></div>
+    <div class="csec__head"><h2 id="how-title" class="display csec__title">How it works</h2></div>
     <div class="how">
 <div class="feat feat--text" data-reveal><div class="feat__text"><div class="feat__head"><span class="label">01</span><h3 class="feat__title">Mechanism</h3></div><div class="feat__body"><p>I designed it in SolidWorks and printed it, iterating on pivot placement and return feel.</p></div></div></div>
-<figure class="band" data-reveal><video id="band-rudder-pedals-mechanism" class="clip" data-clip="view" muted loop playsinline preload="none" poster="../assets/motion/rudder-pedals-mechanism-poster.webp" aria-label="The CAD assembly driven through its real linkage: yaw both ways, each toe brake, then differential braking"><source data-src="../assets/motion/rudder-pedals-mechanism-1280.webm" data-sm-src="../assets/motion/rudder-pedals-mechanism-960.webm" type="video/webm"></video><button class="clip-toggle" type="button" data-clip-toggle aria-controls="band-rudder-pedals-mechanism" aria-pressed="false" hidden><i aria-hidden="true"></i><span>Pause</span></button><figcaption class="label">The CAD assembly driven through its real linkage: yaw both ways, each toe brake, then differential braking</figcaption></figure>
+<figure class="band band--live" data-reveal><div class="stage__live" data-case-stage="rudder-pedals:side" role="img" aria-label="The CAD assembly driven through its real linkage: yaw both ways, each toe brake, then differential braking"><picture class="stage__still"><source media="(max-width: 760px)" srcset="../next/assets/img/stills/rudder-pedals-side-case-port.webp"><img src="../next/assets/img/stills/rudder-pedals-side-case-land.webp" alt="" decoding="async"></picture><canvas aria-hidden="true"></canvas></div><button class="clip-toggle" type="button" data-stage-toggle aria-pressed="false" hidden><i aria-hidden="true"></i><span>Pause</span></button><figcaption class="label">The CAD assembly driven through its real linkage: yaw both ways, each toe brake, then differential braking</figcaption></figure>
 <div class="feat" data-reveal><div class="feat__text"><div class="feat__head"><span class="label">02</span><h3 class="feat__title">Sensing</h3></div><div class="feat__body"><p>Each axis uses an A1301 Hall effect sensor reading a magnet on the moving part. No contact, nothing to wear.</p></div></div><div class="feat__media" style="--n: 1"><figure><img src="../assets/renders/rudder-pedals/a1301-hall-sensor.jpg" alt="An A1301 Hall effect sensor in a TO-92 package" loading="lazy" decoding="async"><figcaption class="label">A1301 Hall sensor and magnet</figcaption></figure></div></div>
 <div class="feat feat--flip" data-reveal><div class="feat__text"><div class="feat__head"><span class="label">03</span><h3 class="feat__title">Firmware</h3></div><div class="feat__body"><p>The Pro Micro shows up as a standard USB gamepad. No driver needed.</p></div></div><div class="feat__media" style="--n: 1"><figure><img src="../assets/renders/rudder-pedals/pro-micro.jpg" alt="An Arduino Pro Micro board" loading="lazy" decoding="async"><figcaption class="label">The Pro Micro that replaced the counterfeit Teensy</figcaption></figure></div></div>
     </div>
@@ -113,8 +116,8 @@
     <div class="rule"><span class="label">Specs</span><span class="label hide-s">Rudder pedals</span></div>
     <h2 id="specs-title" class="sr-only">Tech specs</h2>
     <div class="specsheet" data-reveal>
-  <div class="specsheet__head"><span class="label">Tech specs</span><p class="specsheet__name">Rudder pedals</p><img class="specsheet__img" src="../next/assets/img/rudder-pedals-1400.webp" alt="" decoding="async" fetchpriority="low"></div>
-  <div><dl><div><dt>Timeline</dt><dd>2026</dd></div><div><dt>Status</dt><dd>In daily use at my sim</dd></div><div><dt>Key figures</dt><dd><ul><li><b>3</b> Independent axes</li><li><b>0</b> Potentiometers in the signal path</li><li><b>USB HID</b> No drivers, any simulator</li><li><b>A1301</b> Contactless Hall sensing</li></ul></dd></div></dl><p class="specsheet__colophon">CAD animations rendered from the source assemblies. Aircraft models are third-party, illustration only.</p></div>
+  <div class="specsheet__head"><span class="label">Tech specs</span><p class="specsheet__name">Rudder pedals</p><img class="specsheet__img" src="../next/assets/img/stills/rudder-pedals-4x5-600.webp" alt="" decoding="async" fetchpriority="low"></div>
+  <div><dl><div><dt>Timeline</dt><dd>2026</dd></div><div><dt>Status</dt><dd>In daily use at my sim</dd></div><div><dt>Key figures</dt><dd><ul><li>3 Independent axes</li><li>0 Potentiometers in the signal path</li><li>USB HID No drivers, any simulator</li><li>A1301 Contactless Hall sensing</li></ul></dd></div></dl><p class="specsheet__colophon">CAD animations rendered from the source assemblies. Aircraft models are third-party, illustration only.</p></div>
 </div>
   </div>
 </section>
@@ -138,7 +141,7 @@
 <footer class="foot wrap">
   <div><p class="label">Version</p><p>2026</p></div>
   <div><p class="label">Local time</p><p data-clock>Austin</p></div>
-  <div><p class="label">Socials</p><p><a class="link" href="https://linkedin.com/in/merttureli" rel="noopener">LinkedIn</a> <a class="link" href="mailto:merttureli0@gmail.com">Email</a> <a class="link" href="../websites.html">Websites</a></p></div>
+  <div><p class="label">Socials</p><p><a class="link" href="https://linkedin.com/in/merttureli" rel="noopener">LinkedIn</a> <a class="link" href="mailto:merttureli0@gmail.com">Email</a> <a class="link" href="../websites.html">Websites</a> <a class="link" href="https://merttureli.com/privacy.html">Privacy</a></p></div>
   <p class="foot__credit">CAD renders from the source assemblies. Hand built, no framework.</p>
 </footer>
 
@@ -146,6 +149,7 @@
 
 <script src="../next/js/case.js" defer></script>
 <script src="../next/js/clips.js" defer></script>
+<script type="module" src="../next/js/case-stage.js"></script>
 <script src="../js/analytics-config.js"></script>
 <script src="../js/track.js"></script>
 <script src="../js/clarity.js"></script>

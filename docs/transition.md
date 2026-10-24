@@ -12,8 +12,6 @@ delete its line. Keep one item per line: the paths it covers in backticks, then
 
 ## Open
 
-- `photography-gallery.html` `photography-lab.html` The photography pages are old design. Done when they are Studio pages (or folded into the home's Beyond section) and nothing links the old files.
-- `assets/charger-explorer/index.html` The CHARGER explorer is a separate old-design page that the home tile and the CHARGER case page link to. Done when the in-page Studio replacement ships and no live page links this file (vx/ on main still loads its model files: keep those).
 - `assets/motion/` `assets/photos/` Case pages still show the old turntable videos and old stills from the old site. Done when every case page's hero and feature media is a Studio render or photo chosen for the Studio pages.
 - `docs/design/site-tokens.md` `docs/design/components.md` `docs/design/catalog.html` `docs/design/motion.md` Design docs still describe the old site next to the Studio. Done when they describe only the Studio, or the old parts are deleted with the last old page.
 - `docs/recipes/palette.md` `.claude/skills/palette/` `js/site-palette.js` Palettes only apply to the old-design pages. Done when the last old page is gone and the palette recipe, skill and scripts are deleted.

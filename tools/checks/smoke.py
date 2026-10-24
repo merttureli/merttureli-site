@@ -30,7 +30,7 @@ MODES = {"default", "full"}
 SMOKE_PAGES = ["index.html", "websites.html", "projects/charger.html", "privacy.html", "404.html", "hi/",
                "next/", "next/#reel-coaster"]
 # --full also loads the pages still in the old design (docs/transition.md)
-FULL_EXTRA = ["photography-gallery.html", "photography-lab.html", "assets/charger-explorer/index.html"]
+FULL_EXTRA = ["photography-gallery.html", "photography-lab.html"]
 WIDTHS = "390,1440"
 
 
