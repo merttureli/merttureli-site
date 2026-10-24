@@ -313,8 +313,8 @@ export default {
   groups: GROUPS,
   // a three-quarter view from the front right, a little above, with the feeder and the thrower nearest
   // (the owner's turntable angle); phones turn it more side-on so the long bed takes less width
-  base: port => (port ? [.36, -.95, 0] : [.34, -.62, 0]),
-  fit: .86,
+  base: port => (port ? [.4, -.95, 0] : [.42, -.62, 0]),
+  fit: .84,
   faceParts: false,                                     // a pick keeps the machine's heading
   cut: { point: [.56, .2, -.25], keepAxis: true },   // through the indexer shaft: the chamber inside the cage
   tour: { stops: TOUR.map(s => s[0]), ms: TOUR_MS },
