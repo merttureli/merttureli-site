@@ -91,6 +91,7 @@ const ORDERS = { springs: 1, sensors: 2, magnets: 2, wiring: 3, board: 4, screws
 const EXTERIOR = new Set(['walls', 'levers', 'pedals']);
 
 // ---------------------------------------------------------------- motion controls
+const FOCUS_MIN = .03;                                 // metres: the smallest box a picked part is framed by
 const PLAY_GAP = .6;                                   // rest between two plays of the beat (review page)
 const fmtRudder = v => (Math.abs(v) < .005 ? '0' : `${v < 0 ? 'L' : 'R'} ${Math.round(Math.abs(v) * 100)}%`);
 const fmtToe = v => `${Math.round(v * 100)}%`;
@@ -144,7 +145,7 @@ export default {
     const center = h('button', { class: 'cx__btn', type: 'button', text: 'Center' });
     center.addEventListener('click', () => { stopPlay(); M.drive = M.toeL = M.toeR = 0; show(); ctx.invalidate(); });
     return [
-      h('h3', { class: 'label', text: 'Motion' }),
+      h('div', { class: 'cx__more' }, h('h3', { class: 'label', text: 'Motion' })),
       h('div', { class: 'cx__btns' }, C.play, center),
       h('div', { class: 'cx__more cx__motion' }, row('rudder', 'Rudder', -1), row('toeL', 'Left toe', 0), row('toeR', 'Right toe', 0)),
     ];
@@ -209,7 +210,7 @@ export default {
 
     // ---- boxes (model space) at rest; each moves with the CAD part that carries it
     root.updateMatrixWorld(true);
-    const inv = new THREE.Matrix4().copy(root.matrixWorld).invert(), M4 = new THREE.Matrix4(), B = new THREE.Box3(), V = new THREE.Vector3();
+    const inv = new THREE.Matrix4().copy(root.matrixWorld).invert(), M4 = new THREE.Matrix4(), B = new THREE.Box3(), V = new THREE.Vector3(), V2 = new THREE.Vector3(), V3 = new THREE.Vector3();
     const topOf = o => { while (o && o.parent !== root) o = o.parent; return o; };
     const anchor = (R, out) => {
       const L = R.L;
@@ -294,6 +295,8 @@ export default {
           if (R.L.spring) { const { a, b } = R.L.spring; P.box.makeEmpty().expandByPoint(V.copy(a.p).applyMatrix4(a.obj.matrixWorld).applyMatrix4(inv)).expandByPoint(V.copy(b.p).applyMatrix4(b.obj.matrixWorld).applyMatrix4(inv)).expandByScalar(.004); }
           else if (R.L.wire) P.box.setFromPoints(R.L.wire.pts);
           else if (R.carrier) P.box.copy(R.rest).translate(V.copy(R.carrier.position).sub(R.carrier0));
+          // a part is framed with at least 3 cm around it, so a small part inside the frame keeps its surroundings in view
+          P.box.getSize(V); if (V.x < FOCUS_MIN || V.y < FOCUS_MIN || V.z < FOCUS_MIN) { P.box.getCenter(V2); P.box.expandByPoint(V3.copy(V2).addScalar(FOCUS_MIN / 2)).expandByPoint(V3.copy(V2).addScalar(-FOCUS_MIN / 2)); }
           if (!R.secondary) {
             const on = P.visible && P.opacity > .004;
             for (const m of R.real) m.visible = on;
