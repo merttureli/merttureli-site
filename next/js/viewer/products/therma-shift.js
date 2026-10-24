@@ -152,6 +152,26 @@ export default {
   cut: { point: [0, -.014, 0] },                  // vertical, through the stack axis
   ghost: { exterior: .1, interior: .18 },
   tour: { stops: ['topPlate', 'peltier', 'heatsink', 'blower', 'board'] },
+  // case page: start (and land back) exactly where the stage draws the coaster. The stage is the showreel
+  // actor on the engine camera (fov 24 at z 2.2, looking down -Z); its coaster group carries the stage's
+  // scale, so the scene and the camera are scaled together by 1 / s (the picture does not change).
+  poses: {
+    stage(el, ctx) {
+      const st = window.__caseStages && window.__caseStages['therma-shift'];
+      const cv = el.querySelector('.stage__live canvas');
+      if (!st || !st.ready || !st.actor || !st.actor.coaster || !cv) return null;
+      return () => {
+        const { THREE } = ctx, g = st.actor.coaster.group, b = cv.getBoundingClientRect();
+        if (!g.visible || b.width < 4 || b.height < 4 || !ctx.model) return null;
+        g.updateWorldMatrix(true, false);
+        const pos = new THREE.Vector3(), q = new THREE.Quaternion(), scl = new THREE.Vector3();
+        g.matrixWorld.decompose(pos, q, scl);
+        const s = scl.x || 1;
+        const p = pos.divideScalar(s).sub(ctx.model.position.clone().applyQuaternion(q));
+        return { q, p, target: new THREE.Vector3(), dist: 2.2 / s, camRoll: 0, R: { x: b.left, y: b.top, w: b.width, h: b.height } };
+      };
+    },
+  },
 
   controls() {
     const mode = segRow('Mode', 'mode', [['heat', 'Heat'], ['cool', 'Cool'], ['off', 'Off']]);
