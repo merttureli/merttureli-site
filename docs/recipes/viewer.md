@@ -68,7 +68,7 @@ supplies `prefetch` and `build`; any other field passes through.
 | `pose(state, ctx)` | | none | runs on every draw after the shell has placed the parts (base + explode): the place to add product motion to positions |
 | `reset(state, ctx)` | | none | on open and on Reset view: put your motion back to rest |
 | `ready(ctx)` | | none | once, after the scene graph is built |
-| `poses` | `{ tile(el, ctx), stage(el, ctx), hero(ctx) }` | fit into the media box | where the model starts when it flies in (and returns to): `{ q, p, target, dist, camRoll, R }` (pivot quaternion and position, camera target and distance, camera roll, screen rect). The default fits the home view into the clicked element's `.tile__media` / `.stage__live` box; CHARGER matches its tile poster and the hero exactly |
+| `poses` | `{ tile(el, ctx), stage(el, ctx), hero(ctx) }` | fit into the media box | where the model starts when it flies in (and returns to): `{ q, p, target, dist, camRoll, R }` (pivot quaternion and position, camera target and distance, camera roll, screen rect). The default fits the home view into the clicked element's `.tile__media` / `.stage__live` box; CHARGER matches its tile poster and the hero exactly. On a case page the stage shows the showreel actor (`window.__caseStages[slug].actor`), posed differently from the viewer's home view: a `stage` pose read from it makes the hand-over seamless (today the model starts in the home view fitted into the stage) |
 
 `update`, `pose`, `reset` and `ready` may also be returned from `build()` (handy when they need the
 objects `build` made); the build result wins.
