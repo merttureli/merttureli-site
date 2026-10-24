@@ -110,8 +110,11 @@ function onClosed() {
 }
 function route() {
   const slug = slugOfHash(location.hash);
-  if (isOpen() && (!slug || slug !== current.slug)) { pushed = false; current.ex.close(); }
-  else if (slug && !isOpen()) open(slug, 'link');
+  if (isOpen() && (!slug || slug !== current.slug)) {
+    pushed = false;
+    // another viewer's address: close this one, then open that one
+    Promise.resolve(current.ex.close()).then(() => { if (slug && slugOfHash(location.hash) === slug && !isOpen()) open(slug, 'link'); });
+  } else if (slug && !isOpen()) open(slug, 'link');
 }
 addEventListener('popstate', route);
 addEventListener('hashchange', route);

@@ -339,8 +339,13 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
         }
         scene.add(keep);
         await compile();
-        keep.visible = false;
       }
+      // compile() alone builds programs without the section plane's clipping state, so the first real
+      // frame (and the first pick) would build them again: draw once with everything on, the canvas still
+      // hidden (open() keeps it at opacity 0 until the fly starts)
+      keep.visible = true;
+      renderer.render(scene, camera);
+      keep.visible = false;
       for (const [o, v] of all) o.visible = v;
       stats.buildMs = Math.round(performance.now() - t0);
       S.built = true;
