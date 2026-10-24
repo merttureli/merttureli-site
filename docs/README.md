@@ -38,6 +38,7 @@ Full list with skills: [recipes/README.md](recipes/README.md).
 | Studio home tile loops | [tile-loops.md](recipes/tile-loops.md) |
 | New page or section | [new-page.md](recipes/new-page.md) |
 | STEP to 3D | [cad-import.md](recipes/cad-import.md) |
+| In-place 3D viewer for a project | [viewer.md](recipes/viewer.md) |
 | Prove nothing broke | [checks.md](recipes/checks.md) |
 | Preview for the owner | [preview.md](recipes/preview.md) |
 | Branch, hand off, release | [release.md](recipes/release.md) |

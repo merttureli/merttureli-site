@@ -35,7 +35,7 @@
 //
 // Stills: ?stage-capture[=dpr][&t=s] builds at once with a readable canvas, poses t and sets
 // window.__caseStage.ready; `python3 tools/stills.py` reads it on next/lab/stills.html.
-// Debug and capture: window.__caseStages[key] (and __caseStage, the first) { t, running, pause(), resume(), seek(t) }.
+// Debug and capture: window.__caseStages[key] (and __caseStage, the first) { t, running, pause(), resume(), seek(t), hold(on) }.
 
 // ------------------------------------------------------------------ adapters
 // plan(S, actor) -> { intro: [segment], loop: [segment], post(actor, at) }
@@ -234,14 +234,16 @@ function mount(box) {
   if (!ad || !canvas || !webgl() || (!cap && (reducedQ.matches || saveData || qs.has('still')))) { still(); return; }
 
   let engine = null, actor = null, S = null, plan = null, built = null;
-  let t = 0, raf = 0, last = 0, started = false, onScreen = false, userPaused = false, introD = 0, loopD = 0;
-  const self = { seen: 0, eligible: () => started && onScreen && !userPaused && !reducedQ.matches, kick: () => kick(), stop: () => stop() };
+  let t = 0, raf = 0, last = 0, started = false, onScreen = false, userPaused = false, held = false, introD = 0, loopD = 0;
+  const self = { seen: 0, eligible: () => started && onScreen && !userPaused && !held && !reducedQ.matches, kick: () => kick(), stop: () => stop() };
   stages.push(self);
   const api = {
     key, ready: false,
     get t() { return t; }, get running() { return !!raf; }, get actor() { return actor; },
     pause() { userPaused = true; pickActive(); stop(); },
     resume() { userPaused = false; pickActive(); kick(); },
+    // the in-place 3D viewer (next/js/viewer/) holds every stage while it is open; the visitor's Pause is kept
+    hold(on) { held = !!on; pickActive(); if (held) stop(); else kick(); },
     seek(tt, dt = 1 / 60) { if (!actor) return; t = Math.max(0, tt); pose(t); actor.update(dt, t); engine.render(); },
   };
   (window.__caseStages = window.__caseStages || {})[key] = api;

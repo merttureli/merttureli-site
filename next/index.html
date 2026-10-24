@@ -154,6 +154,7 @@ try { if (!matchMedia('(prefers-reduced-motion: reduce)').matches && !/[?&]still
           <span class="tile__stat"><b>100%</b><span>Feed indexing, competition day</span></span>
           <span class="tile__go" aria-hidden="true"><span class="arrow"></span></span>
         </a>
+        <button class="tile__3d" type="button" data-viewer="robo-catcher" aria-label="Open Robo-Catcher in 3D" hidden>3D</button>
       </li>
 
       <li class="tile tile--pedals">
@@ -173,6 +174,7 @@ try { if (!matchMedia('(prefers-reduced-motion: reduce)').matches && !/[?&]still
           <span class="tile__stat"><b>3</b><span>Independent axes</span></span>
           <span class="tile__go" aria-hidden="true"><span class="arrow"></span></span>
         </a>
+        <button class="tile__3d" type="button" data-viewer="rudder-pedals" aria-label="Open the rudder pedals in 3D" hidden>3D</button>
       </li>
 
       <li class="tile tile--therma">
@@ -192,6 +194,7 @@ try { if (!matchMedia('(prefers-reduced-motion: reduce)').matches && !/[?&]still
           </span>
           <span class="tile__go" aria-hidden="true"><span class="arrow"></span></span>
         </a>
+        <button class="tile__3d" type="button" data-viewer="therma-shift" aria-label="Open Therma-Shift in 3D" hidden>3D</button>
       </li>
 
       <li class="tile tile--bend">
@@ -338,6 +341,6 @@ try { if (!matchMedia('(prefers-reduced-motion: reduce)').matches && !/[?&]still
 <script src="js/lenis.min.js" defer></script>
 <script src="js/studio.js" defer></script>
 <script src="js/clips.js" defer></script>
-<script type="module" src="js/explorer/launch.js"></script>
+<script type="module" src="js/viewer/launch.js"></script>
 </body>
 </html>
