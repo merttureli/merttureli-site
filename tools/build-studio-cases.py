@@ -95,7 +95,7 @@ def fix(s):
     s = re.sub(r'\s+style="[^"]*"', "", s)
     s = s.replace('href="../', 'href="../../')
     s = re.sub(r'(src|href)="assets/', r'\1="../../assets/', s)
-    # the CHARGER explorer opens in place on the Studio home (next/js/explorer/)
+    # the CHARGER explorer opens in place on the Studio home (next/js/viewer/, #charger)
     s = s.replace('href="../../assets/charger-explorer/index.html"', 'href="../index.html#charger"')
     return s
 
@@ -145,6 +145,10 @@ LIVE = {
     "rudder-pedals": {"stage": "rudder-pedals", "bands": {"rudder-pedals-mechanism": "rudder-pedals:side"}},
 }
 STILLS = IMG + "stills/"
+# In-place 3D viewer (next/js/viewer/, docs/recipes/viewer.md): the opening stage of these cases opens it
+# (#explore), from a click on the stage or its "Explore in 3D" button. Slug = products/index.js key.
+# HOTBOX and the bend fixture never get one (IP-limited).
+VIEWER = {"therma-shift", "robo-catcher", "rudder-pedals"}
 
 
 def live_media(key, label):
@@ -170,6 +174,8 @@ def stage(case, p):
     if live:
         media = live_media(live["stage"], "%s, live 3D model from the CAD assembly" % p["name"])
         tog = ""
+        if case["_slug"] in VIEWER:
+            media += ('<button class="stage__3d" type="button" data-viewer="%s" hidden>Explore in 3D</button>' % case["_slug"])
     elif "still" in h:
         media = '<img src="%s" alt="%s" decoding="async" fetchpriority="high">' % (h["still"], esc(h["alt"]))
         tog = ""
@@ -469,7 +475,7 @@ def page(case):
 </main>
 
 <script src="../js/case.js" defer></script>
-<script src="../js/clips.js" defer></script>{'\n<script type="module" src="../js/case-stage.js"></script>' if slug in LIVE else ""}
+<script src="../js/clips.js" defer></script>{'\n<script type="module" src="../js/case-stage.js"></script>' if slug in LIVE else ""}{'\n<script type="module" src="../js/viewer/launch.js"></script>' if slug in VIEWER else ""}
 </body>
 </html>
 '''
