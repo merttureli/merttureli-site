@@ -277,7 +277,28 @@ async function build(ctx) {
   });
   return {
     model: model.group, parts, update, pose, reset, ready,
-    dispose() { actor.dispose(); env.dispose(); A = null; playBtn = spinBtn = null; },
+    dispose() { actor.dispose(); env.dispose(); A = null; },   // the buttons stay: the shell keeps its controls
+  };
+}
+
+// The case page's opening stage draws this same actor (case-stage.js): start the fly from the pose it
+// shows, so the hand-over is seamless. Its camera is the engine's (fov 24 at z = 2.2, engine.js); the
+// stage's scale goes into the camera distance, since the viewer's pivot only turns and moves.
+const STAGE_CAM_Z = 2.2;
+function stagePose(el, ctx) {
+  const st = window.__caseStages && window.__caseStages[SLUG];
+  const sa = st && st.ready && st.actor, cv = el.querySelector('.stage__live canvas');
+  if (!sa || !cv) return null;
+  return () => {
+    const { THREE } = ctx, b = cv.getBoundingClientRect();
+    if (b.width < 4 || b.height < 4) return null;
+    const g = sa.model.group;
+    g.updateWorldMatrix(true, false);
+    const t = new THREE.Vector3(), q = new THREE.Quaternion(), sc = new THREE.Vector3();
+    g.matrixWorld.decompose(t, q, sc);
+    const k = sc.x || 1;
+    const p = t.divideScalar(k).sub(ctx.model.position.clone().applyQuaternion(q));
+    return { q, p, target: new THREE.Vector3(), dist: STAGE_CAM_Z / k, camRoll: 0, R: { x: b.left, y: b.top, w: b.width, h: b.height } };
   };
 }
 
@@ -297,4 +318,5 @@ export default {
   faceParts: false,                                     // a pick keeps the machine's heading
   cut: { point: [.56, .2, -.25], keepAxis: true },   // through the indexer shaft: the chamber inside the cage
   tour: { stops: TOUR.map(s => s[0]), ms: TOUR_MS },
+  poses: { stage: stagePose },
 };
