@@ -144,8 +144,10 @@ export default {
   name: 'Therma-Shift 3D model',
   title: 'Therma-Shift',
   eyebrow: 'Interactive / The CAD model',
+  ghostWord: 'THERMA-SHIFT',               // the outlined word behind the model, as CHARGER's
   prefetch,
   base: () => [.42, -.62, 0],                     // the showreel's view of the coaster
+  fit: .62,                                       // a small, square object: some paper around it
   groups: GROUPS,
   cut: { point: [0, -.014, 0] },                  // vertical, through the stack axis
   ghost: { exterior: .1, interior: .18 },
@@ -198,14 +200,15 @@ export default {
     });
 
     // anchors are offsets from the part's box centre (coaster space = the shell's model space)
-    const centreOf = obj => { const b = new THREE.Box3(); for (const m of meshesOf(obj)) { m.geometry.computeBoundingBox(); b.union(m.geometry.boundingBox.clone().applyMatrix4(m.matrixWorld)); } return b.getCenter(new THREE.Vector3()); };
-    const anchors = { screws: screwAt ? screwAt.clone().sub(centreOf(cp.screws)).toArray() : null };
+    // precise boxes (vertex by vertex): the parts are turned, so a turned bounding box would frame them too loose
+    const boxOf = obj => { const b = new THREE.Box3(); for (const m of meshesOf(obj)) b.expandByObject(m, true); return b; };
+    const anchors = { screws: screwAt ? screwAt.clone().sub(boxOf(cp.screws).getCenter(new THREE.Vector3())).toArray() : null };
     const list = PARTS.map(([id, label, kind, group, exterior, anchor, card]) => ({
-      id, label, kind, group, exterior, obj: cp[id], meshes: meshesOf(cp[id]), explode: [0, STACK[id], 0],
+      id, label, kind, group, exterior, obj: cp[id], meshes: meshesOf(cp[id]), box: boxOf(cp[id]), explode: [0, STACK[id], 0],
       card: { title: label, ...card }, anchor: anchors[id] || anchor, tag: true,
     }));
     const props = [['mug', 'Mug', mug], ['can', 'Can', can]].map(([id, label, p]) => ({
-      id, label, kind: 'On the plate', group: 'stack', exterior: true, obj: p.group, meshes: meshesOf(p.group),
+      id, label, kind: 'On the plate', group: 'stack', exterior: true, obj: p.group, meshes: meshesOf(p.group), box: boxOf(p.group),
       explode: [0, STACK.topPlate, 0], card: { title: label, ...PROP_CARD }, tag: false,
     }));
 
