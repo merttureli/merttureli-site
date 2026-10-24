@@ -27,6 +27,7 @@ From the repo history (136 commits to Oct 2026, by subject): handoff and merge c
 | Re-render the home's product tile loops | [tile-loops.md](tile-loops.md) | `images` |
 | Add a page or section | [new-page.md](new-page.md) | `new-page` |
 | Bring a STEP file into 3D | [cad-import.md](cad-import.md) | `import-cad` |
+| Give a project an in-place 3D viewer (like the CHARGER explorer) | [viewer.md](viewer.md) | |
 | Add a tracked event, keep the privacy page true | [tracking.md](tracking.md) | |
 
 ## The commands behind them
