@@ -54,8 +54,9 @@ a.tile__link:focus-visible .tile__go { transform: rotate(-45deg); background: va
    tile's link, top right, so the rest of the tile still opens the case page */
 .tile__3d { position: absolute; z-index: 4; top: clamp(16px, 1.6vw, 24px); right: clamp(16px, 1.6vw, 24px); display: inline-flex; align-items: center; height: 32px; padding: 0 13px; border: 1px solid var(--line); border-radius: var(--radius-pill); background: var(--tile); font-family: var(--mono); font-size: var(--text-mono-m); font-stretch: var(--mono-stretch); letter-spacing: var(--mono-tracking); text-transform: uppercase; color: var(--ink); cursor: pointer; transition: background var(--dur-400), color var(--dur-400), border-color var(--dur-400); }
 .tile__3d[hidden] { display: none; }
-/* the label row keeps clear of it (it wraps on phones) */
-.tile:has(.tile__3d:not([hidden])) .tile__text > .label { padding-right: 52px; }
+/* the label row keeps clear of it where they share the top edge (narrow tiles, and every tile on phones) */
+.tile--robo:has(.tile__3d:not([hidden])) .tile__text > .label, .tile--pedals:has(.tile__3d:not([hidden])) .tile__text > .label { padding-right: 52px; }
+@media (max-width: 760px) { .tile:has(.tile__3d:not([hidden])) .tile__text > .label { padding-right: 52px; } }
 @media (hover: hover) { .tile__3d:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); } }
 .tile__3d:focus-visible { background: var(--ink); color: var(--paper); border-color: var(--ink); outline: 2px solid var(--signal); outline-offset: 2px; }
 
