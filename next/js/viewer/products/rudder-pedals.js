@@ -91,6 +91,8 @@ const ORDERS = { springs: 1, sensors: 2, magnets: 2, wiring: 3, board: 4, screws
 const EXTERIOR = new Set(['walls', 'levers', 'pedals']);
 
 // ---------------------------------------------------------------- motion controls
+const BASE = [.42, -.8, 0], FIT = .82;
+const STAGE_CAM_Z = 2.2;                               // showreel/engine.js: the stage camera
 const FOCUS_MIN = .03;                                 // metres: the smallest box a picked part is framed by
 const PLAY_GAP = .6;                                   // rest between two plays of the beat (review page)
 const fmtRudder = v => (Math.abs(v) < .005 ? '0' : `${v < 0 ? 'L' : 'R'} ${Math.round(Math.abs(v) * 100)}%`);
@@ -112,6 +114,32 @@ function show() {
 }
 function stopPlay() { if (!M.playing) return; M.playing = false; show(); }
 
+function stagePose({ THREE, model, parts }, box, R) {
+  if (!model) return null;
+  const st = window.__caseStages && window.__caseStages[box.dataset.caseStage || 'rudder-pedals'];
+  const actor = st && st.ready && st.actor;
+  const q = new THREE.Quaternion(), t = new THREE.Vector3(), sc = new THREE.Vector3();
+  if (actor && actor.model && actor.model.group.visible) {
+    actor.model.group.updateWorldMatrix(true, false);
+    actor.model.group.matrixWorld.decompose(t, q, sc);
+    const cam = new THREE.Vector3(0, 0, STAGE_CAM_Z);
+    t.sub(cam).divideScalar(sc.x).add(cam);                     // the same image with the model at scale 1
+    return { q, p: t.sub(model.position.clone().applyQuaternion(q)), target: new THREE.Vector3(), dist: STAGE_CAM_Z, camRoll: 0, R };
+  }
+  // no live stage (Save-Data, not built yet): the home view fitted into the stage, as the shell does by default
+  q.setFromEuler(new THREE.Euler(...BASE));
+  const all = new THREE.Box3();
+  for (const P of parts) all.union(P.box);
+  const c = all.getCenter(new THREE.Vector3()).add(model.position).applyQuaternion(q);
+  const tanV = Math.tan(THREE.MathUtils.degToRad(12)) * FIT, tanH = tanV * R.w / R.h, half = all.getSize(new THREE.Vector3()).multiplyScalar(.5);
+  let d = .2;
+  for (let i = 0; i < 8; i++) {
+    const v = new THREE.Vector3(i & 1 ? half.x : -half.x, i & 2 ? half.y : -half.y, i & 4 ? half.z : -half.z).applyQuaternion(q);
+    d = Math.max(d, v.z + Math.abs(v.x) / tanH, v.z + Math.abs(v.y) / tanV);
+  }
+  return { q, p: new THREE.Vector3(), target: c, dist: d, camRoll: 0, R };
+}
+
 export default {
   slug: 'rudder-pedals',
   name: 'Rudder pedals, the CAD assembly with the added springs, sensors, wiring and board',
@@ -119,15 +147,26 @@ export default {
   eyebrow: 'Interactive / The pedal assembly',
   ghostWord: 'PEDALS',
   text: { whole: 'Whole assembly.' },
-  fov: 26,                                             // the review page's lens
-  base: () => [.42, -.8, 0],                           // the showreel's view (VIEW in rudder-pedals.js), so the case stage hands over without a turn
-  fit: .82,
+  base: () => BASE,                                    // the showreel's view (VIEW in rudder-pedals.js), as on the case stage
+  fit: FIT,
   uniqueMaterials: false,                              // every mesh gets its own material in build()
   ghost: { exterior: .07, interior: .16 },
   cut: false,
   groups: GROUPS,
   tour: { stops: ['hall-l', 'magnet-l', 'hall-center', 'board', 'spring-center-l'], ms: 3300 },
   prefetch,
+
+  // the case page: the viewer starts exactly where the stage draws the showreel actor (same lens and camera
+  // as the stage's engine: fov 24 at z 2.2), so the hand-over has no jump; the stage is held while open
+  poses: {
+    // read where the stage is now; the pose itself once the viewer is built (the shell resolves a function)
+    stage(el, ctx) {
+      const box = el.querySelector('.stage__live') || el, b = box.getBoundingClientRect();
+      if (b.width < 4 || b.height < 4) return null;
+      const R = { x: b.left, y: b.top, w: b.width, h: b.height };
+      return () => stagePose(ctx, box, R);
+    },
+  },
 
   // product controls: Play motion and Center, then the three sliders (on phones, in the expanded sheet)
   controls(ctx) {
