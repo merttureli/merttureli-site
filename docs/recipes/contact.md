@@ -17,20 +17,20 @@ The filter hides generated pages (`index.html`, `websites.html`, `projects/`, `n
 
 | Detail | Source files |
 |---|---|
-| Email | `next/index.html`, `next/websites.html`, `tools/build-studio-cases.py` (case menu and footer), `404.html`, `privacy.html`, `hi/index.html`, `hi/mert-tureli.vcf`, `js/website-inquiry.js` |
-| Phone | `hi/index.html`, `hi/mert-tureli.vcf` (and print cards in `cards/cards.html`) |
-| LinkedIn | `next/index.html`, `next/websites.html`, `tools/build-studio-cases.py`, `tools/build.py` (JSON-LD `sameAs`), `hi/index.html`, `hi/mert-tureli.vcf` |
-| Location (Austin) | `next/index.html`, `next/js/studio.js` and `next/js/case.js` (clock), `tools/build.py` (JSON-LD), `404.html`, `hi/index.html`, `hi/mert-tureli.vcf` |
+| Email | `next/index.html`, `next/websites.html`, `tools/build-studio-cases.py` (case menu and footer), `404.html`, `privacy.html`, `hi/index.html`, `hi/*.vcf` (the contact card; its name is deliberately unguessable), `js/website-inquiry.js` |
+| Phone | `hi/*.vcf` only. The owner's number is never shown on any page: it reaches people only through the Save contact download on `/hi/`, the page behind his business card QR code. No page links to `/hi/` or the file. |
+| LinkedIn | `next/index.html`, `next/websites.html`, `tools/build-studio-cases.py`, `tools/build.py` (JSON-LD `sameAs`), `hi/index.html`, `hi/*.vcf` (the contact card; its name is deliberately unguessable) |
+| Location (Austin) | `next/index.html`, `next/js/studio.js` and `next/js/case.js` (clock), `tools/build.py` (JSON-LD), `404.html`, `hi/index.html`, `hi/*.vcf` (the contact card; its name is deliberately unguessable) |
 
 `studies/*/` are frozen design prototypes with their own copies; change them only if the owner asks. `cards/` is print artwork, not served to visitors.
 
 ## Change a detail
 
 1. Edit every source file the search lists. Keep each file's own format (`mailto:`, `tel:+1...`, display text).
-2. `hi/mert-tureli.vcf` must keep CRLF line endings (`.gitattributes` marks it `-text`). Edit it with Python, not a text editor that may convert endings:
+2. `hi/*.vcf` (the contact card; its name is deliberately unguessable) must keep CRLF line endings (`.gitattributes` marks it `-text`). Edit it with Python, not a text editor that may convert endings:
    ```sh
-   python3 -c "import sys;p='hi/mert-tureli.vcf';s=open(p,'rb').read();open(p,'wb').write(s.replace(sys.argv[1].encode(),sys.argv[2].encode()))" 'OLD' 'NEW'
-   file hi/mert-tureli.vcf   # still a vCard
+   python3 -c "import sys,glob;p=glob.glob('hi/*.vcf')[0];s=open(p,'rb').read();open(p,'wb').write(s.replace(sys.argv[1].encode(),sys.argv[2].encode()))" 'OLD' 'NEW'
+   file hi/*.vcf   # still a vCard
    ```
 3. `python3 tools/build.py` (the live pages are built from `next/` and `tools/build-studio-cases.py`).
 4. Search again: the only hits left should be `studies/`, `cards/` and anything you chose to leave.
