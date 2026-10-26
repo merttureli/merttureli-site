@@ -1,6 +1,5 @@
 User-agent: *
 Allow: /
-Disallow: /cards/
 Disallow: /src/
 Disallow: /tools/
 Disallow: /photography-gallery.html
