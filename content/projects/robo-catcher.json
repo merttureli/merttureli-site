@@ -37,12 +37,12 @@
       ],
       "frames": [
         {
-          "src": "assets/photos/robo-catcher-photography/indexer-cross-section.jpg",
+          "src": "assets/renders/robo-catcher/chamber.webp",
           "alt": "Indexer cross-section",
           "caption": "Chamber geometry"
         },
         {
-          "src": "assets/photos/robo-catcher-photography/full-feeder.jpg",
+          "src": "assets/renders/robo-catcher/feeder.webp",
           "alt": "The assembled feeder",
           "caption": "The assembled feeder"
         }
@@ -61,7 +61,7 @@
           "caption": "On the field"
         },
         {
-          "src": "assets/photos/robo-catcher-photography/flywheel-full.jpg",
+          "src": "assets/renders/robo-catcher/flywheel.webp",
           "alt": "Return flywheel assembly",
           "caption": "Return flywheel, 120 W DC motor"
         }

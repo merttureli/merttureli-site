@@ -116,9 +116,57 @@ export function createEngine({ canvas, pixelRatio, preserve = false, envGain = .
     return view;
   }
   function size(w, h) { renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
-  function render() { renderer.render(scene, camera); }
-  function dispose() { if (envMap) envMap.dispose(); renderer.dispose(); }
-  return { THREE, renderer, scene, camera, lights, adopt, viewAt, size, render, dispose, get envMap() { return envMap; } };
+  // Opt-in per-frame work an actor needs right before the draw (look.js: mirrored meshes follow their sources).
+  // With nothing registered, render() is exactly renderer.render(scene, camera). A pre-pass must leave the renderer
+  // as it found it (render target, viewport, scissor, clear colour, autoClear) and return at once when its actor is
+  // hidden. addPrePass returns the function that removes it.
+  const pre = new Set();
+  function render() {
+    if (pre.size) for (const f of pre) f(renderer, scene, camera);
+    renderer.render(scene, camera);
+  }
+  function dispose() { pre.clear(); if (envMap) envMap.dispose(); renderer.dispose(); }
+  const addPrePass = f => (pre.add(f), () => pre.delete(f));
+  return { THREE, renderer, scene, camera, lights, adopt, viewAt, size, render, dispose, addPrePass, get envMap() { return envMap; } };
+}
+
+// ---------------------------------------------------------------- governor
+// Frame-time governor (the live hero and the viewers): when the median frame time over about a second of
+// continuous frames stays above `limit` ms, the canvas steps its pixel ratio down one notch (2, 1.5, 1.25, 1).
+// After a step it judges a fresh window at the new ratio. It never steps back up within the session, with one
+// exception: if it reaches the floor and the frames are no faster than when it started (a display or power mode
+// that caps the frame rate, a busy main thread: not the pixels), it gives the canvas its first ratio back and
+// stops. Off under automation (window.__reelNoSlowGuard, navigator.webdriver), so captures are unchanged.
+// sample(ms) takes one frame's time (0 or a gap breaks the run) and returns true when it changed the ratio.
+export function createGovernor(renderer, { limit = 22, n = 60, onStep = null } = {}) {
+  let off = !!(window.__reelNoSlowGuard || navigator.webdriver);
+  const notches = [2, 1.5, 1.25, 1], buf = new Float32Array(n);
+  let k = 0, pr0 = 0, med0 = 0;
+  return {
+    get off() { return off; },
+    reset() { k = 0; },
+    sample(ms) {
+      if (off) return false;
+      if (!(ms > 0) || ms > 250) { k = 0; return false; }      // a gap (paused, hidden, a long build) is not a frame
+      buf[k++] = ms;
+      if (k < n) return false;
+      k = 0;
+      const med = buf.slice().sort()[n >> 1];
+      if (med <= limit) return false;
+      const pr = renderer.getPixelRatio(), next = notches.find(p => p < pr - 1e-3);
+      if (!pr0) { pr0 = pr; med0 = med; }
+      if (!next) {
+        off = true;                                             // the floor: it stops here either way
+        if (pr > pr0 - 1e-3 || med < med0 * .85) return false;
+        renderer.setPixelRatio(pr0);                            // the steps bought nothing: the pixels come back
+        if (onStep) onStep(pr0, med);
+        return true;
+      }
+      renderer.setPixelRatio(next);                             // keeps the CSS size (setSize with the stored size)
+      if (onStep) onStep(next, med);
+      return true;
+    },
+  };
 }
 
 // --------------------------------------------------------------- sequencer

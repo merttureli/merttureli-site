@@ -3,8 +3,11 @@
 //
 // The rocket is the hero's own: createRocket() from hero3d.js builds the same eleven exterior meshes,
 // livery and materials from next/assets/3d/charger-hero.* (the file the hero already loaded), and this
-// module adds the seventeen interior parts from next/assets/3d/charger-explorer.* (cadmesh,
-// tools/cad/explorer_to_cadmesh.py). Card text: assets/charger-explorer/part-stories.js, unchanged.
+// module adds the interior parts from next/assets/3d/charger-explorer.* (cadmesh,
+// tools/cad/explorer_to_cadmesh.py). Card text: assets/charger-explorer/part-stories.js, unchanged, with
+// OVER below laid over it.
+// The finish (what every part is made of, the boards and batteries on the PCB holder) is charger-finish.js,
+// which dresses the exterior with the hero's own look (showreel/look.js dressRocket) through the shell's dress(ctx).
 //
 // Explode slides along the body axis: sections slide apart, each part keeps its true station in its
 // section. The section cut runs through the body axis. The tour has five stops.
@@ -24,7 +27,7 @@ const SLIDE = {
   0: .46,
   14: .25, 15: .25, 17: .25, 23: .25, 24: .25, 25: .25,
   1: 0, 10: 0,
-  16: -.12, 13: -.12, 20: -.12, 21: -.12, 22: -.12, 27: -.12, 28: -.12, 29: -.12,
+  16: -.12, 20: -.12, 21: -.12, 22: -.12, 27: -.12, 28: -.12, 29: -.12,
   26: .07, 12: .07,
   2: -.36, 11: -.36,
   18: -.62, 5: -.62, 6: -.62, 7: -.62, 8: -.62, 9: -.62,
@@ -38,12 +41,36 @@ const GROUPS = [
   ['motor', 'Motor', ['Propulsion', 'Motor retention']],
 ];
 const EXTERIOR = [0, 1, 2, 6, 7, 8, 9, 10, 11];
+// The model's old Battery part (a placeholder at the coupler): the owner moved every battery behind the PCB
+// holder, where charger-finish.js draws them as part of the holder. The model file and its card text stay.
+const REMOVED = [13];
+// Card text laid over part-stories.js (which the old vx/ page on main also reads, so it stays as it is): only the
+// fields the owner's own facts change. Cardboard tubes, plywood fins, plastic rail buttons, every internal part
+// 3D printed but the circuit boards, the boards shown are placeholders (his designs are not to hand), and the
+// middle PCB holder's two sides with the three 9 V batteries.
+const PRINTED = { material: '3D printed' };
+const OVER = {
+  1: { material: 'Cardboard' }, 2: { material: 'Cardboard' },
+  6: { material: 'Plywood' }, 7: { material: 'Plywood' }, 8: { material: 'Plywood' }, 9: { material: 'Plywood' },
+  10: { material: 'Plastic' }, 11: { material: 'Plastic' },
+  12: { description: 'The altimeter records altitude for inspection after the rocket is recovered. The board shown is a placeholder.' },
+  14: PRINTED, 16: PRINTED, 17: PRINTED, 19: PRINTED, 22: PRINTED, 23: PRINTED, 25: PRINTED, 26: PRINTED,
+  24: {
+    description: 'This holder has two sides. One side carries the main PCB. The other carries the ejection charge control circuit and three 9 V batteries: two power the ejection charge circuit and one powers the main board. Two batteries sit side by side the long way and the third lies across their top, turned 90 degrees, like a pi symbol. The boards shown are placeholders.',
+    role: 'Circuit-board and battery support', material: '3D printed',
+  },
+};
+const storyOf = id => { const s = storyFor({ id }); return s && OVER[id] ? { ...s, ...OVER[id] } : s; };
+// The finish, loaded beside the model. If it or the studio look cannot load, the explorer keeps its flat colours.
+let finishP = null;
+const finish = () => finishP || (finishP = import('./charger-finish.js').catch(e => { console.warn('[explorer] finish unavailable, flat materials', e); return null; }));
 
 let dataP = null;
 // Fetch the interior model (and warm the hero's metadata). Safe to call many times.
 export function prefetch() {
   if (!dataP) {
     dataP = Promise.all([fetchCadMesh(ASSETS + 'charger-explorer.json'), fetch(ASSETS + 'charger-hero.json').then(r => r.json())]);
+    finish();
     dataP.catch(() => { dataP = null; });
   }
   return dataP;
@@ -61,7 +88,8 @@ export default {
   base: port => [.16, 0, port ? .14 : 1.42],
   center: false,                                   // the hero's model keeps its own offset (body axis on the roll axis)
   uniqueMaterials: false,                          // one material per part already (hero meshes and the per-part cadmesh override)
-  env: false,                                      // the rocket keeps the hero's look: never adopted (docs/design/3d.md)
+  env: false,                                      // no shell environment: the finish brings the hero's own studio (dress, from build)
+  buildAhead: true,                                // the look's programs are built when the tile nears the viewport, not at the click
   clearHead: false,                                // the rocket's frame runs under the title, as it always has
   ghost: { exterior: .07, interior: .16 },
   cut: { point: [0, 0, 0], far: .12 },             // through the body axis, swept in from outside
@@ -70,8 +98,8 @@ export default {
   tour: { stops: [0, 24, 26, 18, 6], ms: 3300 },   // nose, avionics bay, recovery, motor mount, fins
   prefetch,
 
-  async build({ THREE }) {
-    const [rocket, [data, heroMeta]] = await Promise.all([createRocket({ layout: 'land', base: ASSETS }), prefetch()]);
+  async build({ THREE, quality }) {
+    const [rocket, [data, heroMeta], F] = await Promise.all([createRocket({ layout: 'land', base: ASSETS }), prefetch(), finish()]);
     // the hero's model group: outer > tilt > roll > model (hero3d.js createRocket); it keeps its
     // own offset that puts the body centre on the roll axis
     const model = rocket.group.children[0].children[0].children[0];
@@ -82,9 +110,16 @@ export default {
     for (const p of data.meta.parts) over[p.name] = {};   // one material per part, so a part can ghost alone
     const cad = buildCadMesh(THREE, data.meta, data.buf, { materials: over });
     model.add(cad.group);
+    for (const p of data.meta.parts) if (REMOVED.includes(p.id)) cad.parts[p.name].removeFromParent();
+    // the finish adds what the part list must know before it is measured: the boards and batteries on the PCB
+    // holder and the inside of each body tube (hidden until the finish is on)
+    const exterior = {};
+    model.children.slice(0, ids.length).forEach((mesh, i) => { exterior[ids[i]] = mesh; });
+    let prep = null;
+    if (F) try { prep = F.prepare({ THREE, exterior, cad, quality }); } catch (e) { console.warn('[explorer] finish unavailable, flat materials', e); }
     const parts = [], BOX = new THREE.Box3();
     const add = (id, obj, meshes, box) => {
-      const story = storyFor({ id });
+      const story = storyOf(id);
       if (!story || story.category === 'Reference') return;
       parts.push({
         id, obj, meshes, box, label: story.label, kind: story.category,
@@ -95,16 +130,17 @@ export default {
     };
     model.children.slice(0, ids.length).forEach((mesh, i) => {
       mesh.geometry.computeBoundingBox();
-      add(ids[i], mesh, [mesh], mesh.geometry.boundingBox.clone());
+      add(ids[i], mesh, [mesh, ...((prep && prep.extra[ids[i]]) || [])], mesh.geometry.boundingBox.clone());
     });
     for (const p of data.meta.parts) {
+      if (REMOVED.includes(p.id)) continue;
       const g = cad.parts[p.name], meshes = [];
       const box = new THREE.Box3();
       g.traverse(o => { if (o.isMesh) { meshes.push(o); o.geometry.computeBoundingBox(); box.union(BOX.copy(o.geometry.boundingBox).translate(g.position)); } });
       if (box.isEmpty()) box.setFromCenterAndSize(g.position, new THREE.Vector3(.004, .004, .004));
       add(p.id, g, meshes, box);
     }
-    return { model, parts, dispose: () => cad.dispose() };
+    return { model, parts, dress: prep ? ctx => F.dress(ctx, prep, rocket) : null, dispose: () => cad.dispose() };
   },
 
   // where the rocket is drawn when it is clicked: the tile's poster or the hero

@@ -7,7 +7,9 @@
 // all three exactly as the hero and the case stage show them. Metal needs the studio environment the
 // showreel gives its guests (engine.js createStudioEnvironment through adopt()); the shell has no renderer
 // before the first open, so studioEnv() below paints the same environment on the CPU (same sphere, same three
-// panels, linear light) and three.js prefilters it on first use.
+// panels, linear light) and three.js prefilters it on first use. On open, dress() (below build) moves the reel's
+// own look onto the model; the plate then shows the mode as the reel does, a faint tint at its edge (frost when
+// cold), and the halo and pool stay off. Without the look the halo and pool remain as described above.
 //
 // Explode follows the real stack axis (+Y): the lid ring and its screws lift off, then the aluminum top plate,
 // the thermoelectric module and the finned heatsink climb in that order; the blower stays, the electronics
@@ -141,6 +143,7 @@ function segRow(label, key, options) {
 
 export default {
   slug: 'therma-shift',
+  buildAhead: true,                                // hover, focus or touch builds the look on idle, so the open only has to fly
   name: 'Therma-Shift 3D model',
   title: 'Therma-Shift',
   eyebrow: 'Interactive / The CAD model',
@@ -234,9 +237,14 @@ export default {
     }));
 
     // ---- product state: the mode (plate temperature), what is on the plate, the cable
-    const S = { mode: 'off', prop: 'none', cable: 'in', temp: TEMP.off, cableT: 1e3, propT: 1, tourMode: null, glowA: [0, 0] };
+    const S = { mode: 'off', prop: 'none', cable: 'in', temp: TEMP.off, cableT: 1e3, propT: 1, tourMode: null, glowA: [0, 0], look: null };
     const outDur = () => (cable.plugOut ? cable.plugOut.duration : 1.6), inDur = () => (cable.plugIn ? cable.plugIn.duration : 2.6);
-    const applyTemp = c => { coaster.setPlateTemperature(c); S.glowA = [plateGlow.material.opacity, groundGlow.material.opacity]; };
+    // with the studio look the plate shows the mode as the reel does (a faint tint toward its edge, frost when cold);
+    // without it, the halo on the lid ring and the pool on the ground
+    const applyTemp = c => {
+      if (S.look) { S.look.setPlateTemperature(c); S.glowA = [0, 0]; plateGlow.visible = groundGlow.visible = false; return; }
+      coaster.setPlateTemperature(c); S.glowA = [plateGlow.material.opacity, groundGlow.material.opacity];
+    };
     const sync = () => { if (!ui.rows) return; ui.rows.mode.sync(S.mode); ui.rows.prop.sync(S.prop); ui.rows.cable.sync(S.cable); };
     const say = { heat: 'Heat: the plate runs hot.', cool: 'Cool: the plate runs cold.', off: 'Off.', none: 'Nothing on the plate.', mug: 'Mug on the plate.', can: 'Can on the plate.', in: 'Cable in.', out: 'Cable out.' };
     ui.set = (key, v) => {
@@ -258,9 +266,71 @@ export default {
     };
     applyTemp(S.temp);
 
+    // ---- the hero reel's finish (showreel/look.js), on the viewer's renderer. The reel builds the coaster, the mug
+    // and the can with a renderer, so their materials are the look's own (coaster.js: presets, edge breaks, the
+    // closed interior, the edge tint and frost of the mode). This model was built without one, so the same three
+    // are built again with the renderer and their materials (and the coaster's draw-time state hook) move onto
+    // these meshes, mesh by mesh; the copies themselves are never drawn. The cable joins the look as it does in the
+    // reel, then dressThermaShift adopts the rest and runs the look's frame. Its page shadows are the reel's and are
+    // left out (a free orbit has no page); the baked contact shadow stays. If anything fails, the plain materials stay.
+    // (the shell's section stencils, children of the part meshes, are not the model's)
+    const meshList = (o, skip) => { const out = []; const walk = x => { if (x !== o && skip && skip.includes(x)) return; if (x.userData.stencil) return; if (x.isMesh) out.push(x); for (const k of x.children) walk(k); }; walk(o); return out; };
+    const pair = (a, b, skip) => {
+      const A = meshList(a, skip), B = meshList(b);
+      if (A.length !== B.length || A.some((m, i) => m.name !== B[i].name)) throw new Error(`therma-shift: the look model differs from the viewer model (${A.map(m => m.name)} / ${B.map(m => m.name)})`);
+      return A.map((m, i) => [m, B[i]]);
+    };
+    async function dress(c) {
+      const [L, [{ default: createCoaster2 }, { createMug: mug2f, createCan: can2f }]] = await Promise.all([import(ASSET + 'look.js'), prefetch()]);
+      const made = [], undo = [];
+      let d = null;
+      try {
+        const lc = createCoaster2({ THREE, renderer: c.renderer, quality }); made.push(lc);
+        const lm = mug2f({ quality, renderer: c.renderer }); made.push(lm);
+        const ln = can2f({ quality, renderer: c.renderer }); made.push(ln);
+        const pairs = [];
+        for (const n of Object.keys(cp)) pairs.push(...pair(cp[n], lc.parts[n], n === 'shell' ? [cp.button] : null));
+        pairs.push(...pair(mug.group, lm.group), ...pair(can.group, ln.group));
+        for (const [m, n] of pairs) {
+          if (decal(m)) continue;
+          undo.push([m, m.material, m.onBeforeRender]);
+          m.material = n.material; m.onBeforeRender = n.onBeforeRender;
+        }
+        // the look coaster's state hook reads where its parts are: it is told where these are before each draw
+        const parts2 = Object.keys(cp).map(n => [cp[n], lc.parts[n]]);
+        lc.group.matrixAutoUpdate = false;
+        const follow = () => {
+          coaster.group.updateWorldMatrix(true, false);
+          lc.group.matrix.copy(coaster.group.matrixWorld); lc.group.matrixWorld.copy(coaster.group.matrixWorld);
+          for (const [a, b] of parts2) b.matrixWorld.copy(a.matrixWorld);
+        };
+        // the cable takes the look at its first draw once its neighbours carry it: now, before the shell compiles
+        cable.group.traverse(o => { if (o.isMesh) o.onBeforeRender(c.renderer); });
+        d = await L.dressThermaShift({ engine: c.engine, quality: c.quality, stage: coaster.group, view: new THREE.Group(), coaster, mug: null, can: null, plate: null, parts: [], presets: false });
+        await Promise.race([lc.ready, new Promise(r => setTimeout(r, 1500))]);
+        S.look = lc;
+        applyTemp(S.temp);
+        return {
+          look: d.look, frame: follow,
+          dispose() {
+            S.look = null;
+            for (const [m, mt, f] of undo) { m.material = mt; m.onBeforeRender = f; }
+            d.dispose(); for (const x of made) x.dispose();
+          },
+        };
+      } catch (e) {
+        S.look = null;
+        for (const [m, mt, f] of undo) { m.material = mt; m.onBeforeRender = f; }
+        if (d) d.dispose();
+        for (const x of made) x.dispose();
+        throw e;
+      }
+    }
+
     return {
       model: coaster.group,
       parts: [...list, ...props],
+      dress,
       dispose() { coaster.dispose(); mug.dispose(); can.dispose(); cable.dispose(); env.dispose(); },
       ready() { rest(); },
       reset() { rest(); },

@@ -23,7 +23,7 @@
 // renderer settings, through one three.js copy (next/js/three.module.min.js).
 // The CHARGER explorer is products/charger.js on this shell.
 import * as THREE from '../three.module.min.js';
-import { addStudioLights, createStudioEnvironment, ease, clamp01, lerp, win } from '../showreel/engine.js';
+import { addStudioLights, createStudioEnvironment, createGovernor, ease, clamp01, lerp, win } from '../showreel/engine.js';
 
 const reducedQ = matchMedia('(prefers-reduced-motion: reduce)');
 const OPEN_MS = 900, CLOSE_MS = 720;              // --dur-900; close a touch quicker
@@ -116,12 +116,14 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
     groups: Object.fromEntries(GROUPS.map(g => [g.key, true])),
     selected: null, tour: null, sheetOpen: false, t: 0,
   };
-  const stats = { opens: 0, firstFrameMs: 0, openMs: 0, buildMs: 0, frames: 0, frameMs: [], cpuMs: [], cold: true };
+  const stats = { opens: 0, firstFrameMs: 0, openMs: 0, buildMs: 0, dressMs: 0, frames: 0, frameMs: [], cpuMs: [], cold: true };
 
   let renderer = null, scene = null, camera = null, pivot = null, model = null, built = null;
   let capMesh = null, stencilMat = null, parts = [], byId = new Map(), raf = 0, last = 0, warmTimer = 0, buildP = null;
   let fly = null, R = { x: 0, y: 0, w: 1, h: 1 }, Rg = null, W = 1, H = 1, scissor = null;   // R: the frame drawn in; Rg: where it is heading
   let env = null, keep = null, meshList = [], viewRate = VIEW_RATE;
+  let dressed = null;                                // what a product's dress(ctx) returned: { frame, dispose }
+  const pre = new Set();                             // pre-passes a dress function registered (ctx.engine.addPrePass)
   let cutFar = .12;
   const clipPlane = new THREE.Plane(new THREE.Vector3(0, 0, -1), 1e3), modelPlane = new THREE.Plane(), cutNormal = new THREE.Vector3(0, 0, -1), cutPoint = new THREE.Vector3();
   const qBase = new THREE.Quaternion(), qTmp = new THREE.Quaternion(), qRoll = new THREE.Quaternion(), Y = new THREE.Vector3(0, 1, 0);
@@ -144,6 +146,11 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
     get rect() { return { ...R }; }, get size() { return { w: W, h: H }; }, get reduced() { return reducedQ.matches; },
     get roll0() { return ROLL0; }, get fov() { return FOV; },
     get renderer() { return renderer; }, get env() { return env; },
+    // for dress(ctx): the reel's quality tier, a material copy that keeps a studio look, and a stand-in for the
+    // showreel engine that the dress functions of showreel/look.js take ({ engine, quality, ... })
+    get quality() { const r = window.__reel; return r && r.quality ? r.quality : (innerWidth < 760 || (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4) ? 'low' : 'high'; },
+    twin: m => twin(m),
+    engine: { THREE, get renderer() { return renderer; }, get scene() { return scene; }, get camera() { return camera; }, addPrePass: f => (pre.add(f), () => pre.delete(f)) },
     setExplode: (v, o) => setExplodeQuiet(v, o), setShown: (pid, on) => setShown(pid, on),
     // the camera, for a product's own motion (Play): goals the view eases to, as the user's own moves do
     view: {
@@ -153,6 +160,69 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
   };
   // a hook from the build result, else from the config
   const hook = name => (built && built[name]) || C[name];
+
+  // A copy of a material for the shell (a part's own material, the program keepers). A material that carries the
+  // studio look (showreel/look.js sets userData.look) keeps its shader hook, cache key and defines, so the copy
+  // links the same program and reads the same look uniforms, and its userData is shared, not JSON-copied (it
+  // holds the look's textures: Material.copy would serialise every texel). Any other material clones as before.
+  function twin(m) {
+    if (!m.userData || !m.userData.look) return m.clone();
+    const ud = m.userData; m.userData = {};
+    let c; try { c = m.clone(); } finally { m.userData = ud; }
+    c.userData = { ...ud }; c.defines = { ...m.defines }; c.onBeforeCompile = m.onBeforeCompile; c.customProgramCacheKey = m.customProgramCacheKey;
+    return c;
+  }
+  // After dress(ctx): a dress function swaps materials and geometry and shares one material between meshes. Every
+  // part mesh gets the section plane again, its own material (so it can ghost alone) and its cap stencil's geometry.
+  function afterDress() {
+    const used = new Map();
+    for (const { m, owners: own } of meshList) {
+      const o = used.get(m.material);
+      if (own.length === 1 && o !== undefined && o !== own[0]) m.material = twin(m.material);
+      used.set(m.material, own[0]);
+      m.material.clippingPlanes = [clipPlane]; m.material.needsUpdate = true;
+      const st = m.userData.stencilMesh;
+      if (st && st.geometry !== m.geometry) st.geometry = m.geometry;
+    }
+  }
+
+  // compile() takes the clipping plane count from the last draw. One empty clipped draw (nothing is cleared or
+  // drawn) sets it to the section plane, so compile() builds the programs the frames really use.
+  function primeClipping() {
+    const g = new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(9), 3)), prime = new THREE.Mesh(g, stencilMat), ps = new THREE.Scene();
+    const auto = renderer.autoClear;
+    prime.frustumCulled = false; ps.add(prime); renderer.autoClear = false; renderer.render(ps, camera); renderer.autoClear = auto; g.dispose();
+  }
+  // Dressed models: the ghosted variants of every part material (three draws a transparent double-sided part back
+  // faces first, then front faces, each with its own program), built after the first frame so they never delay it.
+  // An invisible transparent copy of each material holds them for as long as the scene lives.
+  async function warmGhosts(sc, compile) {
+    await new Promise(r => setTimeout(r, 150));
+    if (scene !== sc || keep) return;
+    keep = new THREE.Group(); keep.visible = false;
+    const seen = new Set();
+    for (const { m } of meshList) {
+      if (seen.has(m.material)) continue;
+      seen.add(m.material);
+      const k = twin(m.material);
+      k.transparent = true; k.depthWrite = false; k.opacity = .5;
+      const km = new THREE.Mesh(m.geometry, k);
+      km.frustumCulled = false; km.raycast = () => {}; km.userData.keep = true;
+      keep.add(km);
+    }
+    scene.add(keep);
+    primeClipping();
+    await compile(keep);
+    // drivers that link a program on its first draw (SwiftShader, some mobile GPUs) do it here, not on the first
+    // pick: one draw of the scene with the keepers on, through a 1 x 1 scissor; the next frame redraws that pixel
+    if (scene === sc && renderer) {
+      const had = renderer.getScissorTest(), box = renderer.getScissor(new THREE.Vector4());
+      keep.visible = true; renderer.setScissorTest(true); renderer.setScissor(0, 0, 1, 1);
+      try { renderer.render(scene, camera); } finally { renderer.setScissor(box); renderer.setScissorTest(had); keep.visible = false; }
+      invalidate();
+    }
+    stats.ghostsReady = true;
+  }
 
   // ---------------------------------------------------------------- build
   // the scene graph (CPU only: decode, materials, part list). launch.js runs it on idle once the
@@ -204,7 +274,7 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
         if (C.uniqueMaterials !== false) for (const m of meshes) {
           if (owners.get(m).length > 1) continue;
           const owner = used.get(m.material);
-          if (owner !== undefined && owner !== p) m.material = m.material.clone();
+          if (owner !== undefined && owner !== p) m.material = twin(m.material);
           used.set(m.material, p);
         }
         // a part with no group: config.defaultGroup, else none (always shown, never toggled)
@@ -287,24 +357,37 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
       if (!renderer) {
         renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, stencil: true, powerPreference: 'default' });
         renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.75));
+        gov = createGovernor(renderer, { onStep: (pr, ms) => console.info(`[viewer] median frame ${ms.toFixed(1)} ms: pixel ratio ${pr}`) });
         renderer.outputColorSpace = THREE.SRGBColorSpace;
         renderer.setClearColor(0x000000, 0);
         renderer.localClippingEnabled = true;
         renderer.debug.checkShaderErrors = /[?&#]debug\b/.test(location.href);
         canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); live.textContent = T.lost; });
       }
+      // a product's own studio look: dress(ctx) from the config or the build result (docs/recipes/viewer.md),
+      // awaited so the dressed materials compile once. If it fails the model keeps its plain materials.
+      // each step below is its own task (MessageChannel), so a build ahead on hover never holds the page for all of
+      // them at once: the renderer, the look, the environment, the programs, the warm draw
+      await nextTask();
+      const dressH = hook('dress');
+      if (dressH && !dressed) {
+        const d0 = performance.now();
+        try { dressed = (await dressH(ctx)) || {}; afterDress(); stats.dressMs = Math.round(performance.now() - d0); } catch (e) { dressed = null; console.warn(`[viewer] ${C.slug}: dress failed, plain materials`, e); }
+      }
       // the studio environment (engine.js createStudioEnvironment, one per renderer) on every standard
       // material of the model that has none yet, at x .55 as engine.adopt() gives the showreel's guests
+      await nextTask();
       if (C.env !== false) {
         env = envs.get(renderer);
         if (!env) { env = createStudioEnvironment(renderer); envs.set(renderer, env); }
         model.traverse(o => {
           for (const m of o.material ? [].concat(o.material) : []) {
-            if (!m.isMeshStandardMaterial || m.envMap || m.userData.viewerEnv) continue;
+            if (!m.isMeshStandardMaterial || m.envMap || m.userData.viewerEnv || m.userData.look) continue;
             m.userData.viewerEnv = true; m.envMap = env; m.envMapIntensity *= .55; m.needsUpdate = true;
           }
         });
       }
+      await nextTask();
       hook('gpu') && hook('gpu')(ctx);
       layoutBase();
       R = stageRect();
@@ -312,51 +395,79 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
       const all = [];
       scene.traverse(o => { if (o.isMesh) { all.push([o, o.visible]); o.visible = true; } });
       setPose(); renderer.setSize(Math.max(2, W), Math.max(2, H), false);
-      const compile = async () => {
-        if (renderer.extensions.has('KHR_parallel_shader_compile')) await renderer.compileAsync(scene, camera).catch(() => {});
-        else renderer.compile(scene, camera);
+      const compile = async (o = scene) => {
+        if (renderer.extensions.has('KHR_parallel_shader_compile')) await renderer.compileAsync(o, camera, scene).catch(() => {});
+        else renderer.compile(o, camera, scene);
       };
-      for (const transparent of [true, false]) {
-        for (const { m } of meshList) { m.material.transparent = transparent; m.material.needsUpdate = true; }
+      if (dressed) {
+        // a dressed model's programs are heavy: build only what the first frame draws (every part opaque), each
+        // program once; the ghosted variants follow after the first frame (warmGhosts)
+        primeClipping();
         await compile();
-      }
-      // keep both variants warm: three.js frees a program once no material uses it, so the ghosted
-      // (transparent) programs would go with the pass above and the first pick would compile again.
-      // An invisible copy of each part material in each state holds its program for as long as the scene lives.
-      if (!keep) {
-        keep = new THREE.Group();
-        const seen = new Set();
-        for (const { m } of meshList) {
-          if (seen.has(m.material)) continue;
-          seen.add(m.material);
-          for (const transparent of [true, false]) {
-            const k = m.material.clone();
-            k.transparent = transparent; k.depthWrite = !transparent; k.opacity = transparent ? .5 : 1;
-            const km = new THREE.Mesh(m.geometry, k);
-            km.frustumCulled = false; km.raycast = () => {}; km.userData.keep = true;
-            keep.add(km);
-          }
+      } else {
+        for (const transparent of [true, false]) {
+          for (const { m } of meshList) { m.material.transparent = transparent; m.material.needsUpdate = true; }
+          await compile();
         }
-        scene.add(keep);
-        await compile();
+        // keep both variants warm: three.js frees a program once no material uses it, so the ghosted
+        // (transparent) programs would go with the pass above and the first pick would compile again.
+        // An invisible copy of each part material in each state holds its program for as long as the scene lives.
+        if (!keep) {
+          keep = new THREE.Group();
+          const seen = new Set();
+          for (const { m } of meshList) {
+            if (seen.has(m.material)) continue;
+            seen.add(m.material);
+            for (const transparent of [true, false]) {
+              const k = twin(m.material);
+              k.transparent = transparent; k.depthWrite = !transparent; k.opacity = transparent ? .5 : 1;
+              const km = new THREE.Mesh(m.geometry, k);
+              km.frustumCulled = false; km.raycast = () => {}; km.userData.keep = true;
+              keep.add(km);
+            }
+          }
+          scene.add(keep);
+          await compile();
+        }
       }
       // compile() alone builds programs without the section plane's clipping state, so the first real
       // frame (and the first pick) would build them again: draw once with everything on, the canvas still
       // hidden (open() keeps it at opacity 0 until the fly starts)
-      keep.visible = true;
+      await nextTask();
+      if (keep) keep.visible = true;
       renderer.render(scene, camera);
-      keep.visible = false;
+      if (keep) keep.visible = false;
       for (const [o, v] of all) o.visible = v;
       stats.buildMs = Math.round(performance.now() - t0);
       S.built = true;
+      if (dressed) warmGhosts(scene, compile);
     })();
     buildP.catch(() => { buildP = null; });
     return buildP;
+  }
+  // What the launcher calls when a trigger is hovered, focused or touched (or near, for an eager product): the scene
+  // graph. A dressed product's programs take longer to make, so with `buildAhead: true` in its config the
+  // renderer, the look and the programs follow on idle and the open only has to fly. The full-size buffers are
+  // dropped again at once; never opened, it is freed like a closed viewer after WARM_MS. Any other product is
+  // warmed exactly as before.
+  function warmAhead() {
+    return warm().then(() => {
+      if (!C.buildAhead || !hook('dress') || buildP || S.phase !== 'closed') return;
+      (window.requestIdleCallback || (f => setTimeout(f, 200)))(() => {
+        if (buildP || S.phase !== 'closed') return;
+        build().then(() => {
+          if (S.phase !== 'closed') return;
+          renderer.setSize(1, 1, false);
+          clearTimeout(warmTimer); warmTimer = setTimeout(dispose, WARM_MS);
+        }).catch(() => {});
+      }, { timeout: 2000 });
+    });
   }
   // free the GPU memory (geometry, textures, programs); the renderer and its 1 x 1 canvas stay
   function dispose() {
     if (!S.built || S.phase !== 'closed') return;
     stop();
+    if (dressed) { try { dressed.dispose && dressed.dispose(); } catch (e) { console.warn(`[viewer] ${C.slug}: dress dispose`, e); } dressed = null; pre.clear(); }
     built && built.dispose && built.dispose();
     scene.traverse(o => {
       if (!o.isMesh || o.userData.stencil) return;
@@ -472,13 +583,15 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
   }
 
   // ---------------------------------------------------------------- frames
+  const nextTask = () => new Promise(r => { const c = new MessageChannel(); c.port1.onmessage = () => r(); c.port2.postMessage(0); });
+  let gov = null;   // frame-time governor (engine.js createGovernor), made with the renderer
   function invalidate() { if (!raf && S.phase !== 'closed' && S.built) raf = requestAnimationFrame(frame); }
   function stop() { if (raf) cancelAnimationFrame(raf); raf = 0; last = 0; }
   function frame(now) {
     raf = 0;
     if (S.phase === 'closed' || !S.built) return;
     const dt = last ? Math.min(.05, (now - last) / 1000) : 1 / 60;
-    if (last) { stats.frames++; if (stats.frameMs.length < 600) stats.frameMs.push(now - last); }
+    if (last) { stats.frames++; if (stats.frameMs.length < 600) stats.frameMs.push(now - last); if (gov) gov.sample(now - last); }
     last = now;
     const c0 = performance.now();
     const moving = step(dt, now);
@@ -538,6 +651,7 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
   }
   function draw() {
     setPose();
+    if (dressed) { for (const f of pre) f(); if (dressed.frame) dressed.frame(); }
     if (scissor) {
       renderer.setScissorTest(false); renderer.clear();
       renderer.setScissorTest(true);
@@ -1100,7 +1214,7 @@ export function createViewer(product, { onRequestClose, onClosed, hosts } = {}) 
 
   // ---------------------------------------------------------------- API
   return {
-    slug: C.slug, open, close, warm, dialog,
+    slug: C.slug, open, close, warm: warmAhead, dialog,
     get isOpen() { return S.phase !== 'closed'; }, get phase() { return S.phase; }, get busy() { return raf !== 0 || !!fly; },
     stats, state: S, dispose,
     get view() { return { cur: { ...cur, target: cur.target.toArray(), orbit: cur.orbit.toArray() }, goal: { ...goal, pan: goal.pan.toArray(), orbit: goal.orbit.toArray() }, R, W, H, home: S.built ? homeDist(S.explode) : 0 }; },

@@ -6,194 +6,174 @@
 <meta name="robots" content="noindex">
 <title>FX lab</title>
 <style>
-  :root { --paper: #e7e8ea; --ink: #121315; }
+  :root { --paper: #e7e6e3; --ink: #121315; --muted: #676b72; --line: rgba(18,19,21,.16); }
+  * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: var(--paper); color: var(--ink); font: 12px/1.4 ui-monospace, Menlo, monospace; overflow: hidden; }
   canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
-  .panel { position: fixed; left: 12px; right: 12px; bottom: 12px; max-width: 460px; background: rgba(255,255,255,.55); backdrop-filter: blur(6px); border: 1px solid rgba(18,19,21,.12); border-radius: 10px; padding: 10px 12px; display: grid; grid-template-columns: auto 1fr auto; gap: 4px 10px; align-items: center; }
-  .panel input[type=range] { width: 100%; }
-  .row { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 12px; }
-  .panel.hide { display: none; }
-  button { font: inherit; padding: 3px 8px; border: 1px solid rgba(18,19,21,.25); background: transparent; border-radius: 6px; cursor: pointer; }
-  button.on { background: var(--ink); color: var(--paper); }
-  output { min-width: 3ch; text-align: right; }
+  .panel { position: fixed; left: 12px; bottom: 12px; display: grid; grid-template-columns: auto 150px auto; gap: 3px 10px; align-items: center;
+    padding: 10px 12px; background: rgba(231,230,227,.86); backdrop-filter: blur(6px); border: 1px solid var(--line); border-radius: 10px; max-width: 520px; }
+  .row { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; }
+  button { font: inherit; color: inherit; padding: 4px 10px; background: transparent; border: 1px solid var(--ink); border-radius: 99px; cursor: pointer; }
+  button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  input[type=range] { width: 150px; }
+  .info { grid-column: 1 / -1; color: var(--muted); }
+  body.shot .panel { display: none; }
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
-<div class="panel" id="panel">
-  <label for="steam">steam</label><input id="steam" type="range" min="0" max="1" step="0.01" value="1"><output id="steamO"></output>
-  <label for="amount">condens.</label><input id="amount" type="range" min="0" max="1" step="0.01" value="0.6"><output id="amountO"></output>
-  <label for="ring">ring</label><input id="ring" type="range" min="0" max="1" step="0.01" value="0.6"><output id="ringO"></output>
-  <label for="shimmer">shimmer</label><input id="shimmer" type="range" min="0" max="1" step="0.01" value="0"><output id="shimmerO"></output>
-  <label for="az">orbit</label><input id="az" type="range" min="-180" max="180" step="1" value="0"><output id="azO"></output>
+<div class="panel">
   <div class="row">
-    <button data-view="both">both</button><button data-view="mug">mug</button><button data-view="can">can 30cm</button><button data-view="hero">hero</button>
-    <button id="anim">animate</button><button id="cycle">chill cycle</button><button id="env">env</button>
+    <button data-view="mug">Warm: mug</button><button data-view="can">Cold: can</button><button data-view="plate">Plate</button>
+    <button id="bPlay" aria-pressed="false">play time</button><button id="bCycle" aria-pressed="false">chill cycle</button>
+    <a href="?q=high"><button>high</button></a><a href="?q=low"><button>low</button></a>
   </div>
-  <div class="row" id="info"></div>
+  <label for="steam">steam amount</label><input id="steam" type="range" min="0" max="1.5" step="0.01"><span id="steamv"></span>
+  <label for="dist">disturbance</label><input id="dist" type="range" min="0" max="1" step="0.01"><span id="distv"></span>
+  <label for="push">push</label><input id="push" type="range" min="-0.08" max="0.08" step="0.002"><span id="pushv"></span>
+  <label for="shimmer">shimmer</label><input id="shimmer" type="range" min="0" max="1" step="0.01"><span id="shimmerv"></span>
+  <label for="cond">condensation</label><input id="cond" type="range" min="0" max="1" step="0.005"><span id="condv"></span>
+  <label for="ring">water ring</label><input id="ring" type="range" min="0" max="1" step="0.01"><span id="ringv"></span>
+  <label for="fog">cold fog</label><input id="fog" type="range" min="0" max="1" step="0.01"><span id="fogv"></span>
+  <label for="frost">frost film</label><input id="frost" type="range" min="0" max="1" step="0.01"><span id="frostv"></span>
+  <label for="t">time</label><input id="t" type="range" min="0" max="20" step="0.01"><span id="tv"></span>
+  <label for="zoom">zoom</label><input id="zoom" type="range" min="0.5" max="8" step="0.05"><span id="zoomv"></span>
+  <label for="yaw">view yaw</label><input id="yaw" type="range" min="-180" max="180" step="1"><span id="yawv"></span>
+  <div class="info" id="info"></div>
 </div>
 <script type="module">
+// FX lab: steam, heat shimmer, condensation, the water ring, cold fog and the frost film on the real mug and can,
+// under the studio look, on a stand-in of the coaster, framed like the hero.
+//   ?view=mug|can|plate  ?q=low  ?shot (no UI)  ?zoom=1 (1 = hero size at 1440 x 900)  ?yaw=deg ?pitch=deg  ?ty=m
+//   ?steam=0..1.5 ?dist=0..1 ?push=m ?shimmer=0..1 ?cond=0..1 ?ring=0..1 ?fog=0..1 ?frost=0..1  ?t=seconds
+//   ?can=0 (plate view: no can, the ring it left)  ?bg=hex  ?play=1
+// window.__lab = { ready (Promise), render(), set({ ... }), stats() }; window.labReport for the smoke check
 import * as THREE from '../js/three.module.min.js';
-import { createSteam, applyCondensation, createWaterRing, createHeatShimmer } from '../js/showreel/fx.js';
+import { addStudioLights } from '../js/showreel/engine.js';
+import { createLook } from '../js/showreel/look.js';
+import { createMug, createCan } from '../js/showreel/props.js';
+import { createSteam, applyCondensation, createWaterRing, createColdFog, createFrost, createHeatShimmer, ready as fxReady } from '../js/showreel/fx.js';
 
-const Q = new URLSearchParams(location.search);
-const num = (k, d) => (Q.has(k) ? parseFloat(Q.get(k)) : d);
-const state = {
-  view: Q.get('view') || 'both', steam: num('steam', 1), amount: num('amount', 0.6), ring: num('ring', 0.6), shimmer: num('shimmer', 0),
-  az: num('az', 0), anim: Q.get('anim') !== '0', cycle: Q.get('cycle') === '1', env: Q.get('env') !== '0', t: num('t', 2.5),
-};
-if (Q.get('ui') === '0') document.getElementById('panel').classList.add('hide');
-if (Q.get('bg')) document.body.style.background = '#' + Q.get('bg');
-
+const qs = new URLSearchParams(location.search);
+const num = (k, d) => (qs.has(k) ? parseFloat(qs.get(k)) : d);
+if (qs.has('shot')) document.body.classList.add('shot');
+if (qs.get('bg')) document.body.style.background = '#' + qs.get('bg');
+const quality = qs.get('q') === 'low' ? 'low' : 'high';
 const canvas = document.getElementById('c');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true, powerPreference: 'low-power' });
 renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.75));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.setClearColor(0x000000, 0);
 const scene = new THREE.Scene();
-// the engine's own studio rig + environment when engine.js exists, else a copy of hero3d.js lighting
-let engineMod = null;
-try { engineMod = await import('../js/showreel/engine.js'); } catch (e) { console.info('engine.js not available'); }
-if (engineMod && engineMod.addStudioLights) engineMod.addStudioLights(scene);
-else {
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x7d828c, 1.35));
-  const key = new THREE.DirectionalLight(0xfff8f0, 3.8); key.position.set(-2.5, 4, 5); scene.add(key);
-  const fill = new THREE.DirectionalLight(0xdfe6ff, 1.1); fill.position.set(4, -1, 3); scene.add(fill);
-  const rim = new THREE.DirectionalLight(0xffffff, 2.4); rim.position.set(3, 3, -4); scene.add(rim);
-}
-// environment applied per material like engine.adopt() (envMapIntensity x0.55), toggled by the env button
-let envTex = null;
-const adopted = [];
-function setEnv(on) {
-  if (on && !envTex) envTex = engineMod && engineMod.createStudioEnvironment ? engineMod.createStudioEnvironment(renderer) : null;
-  if (!adopted.length) scene.traverse(o => { const ms = o.material ? [].concat(o.material) : []; for (const m of ms) if (m.isMeshStandardMaterial && !adopted.includes(m)) { adopted.push(m); m.userData.labEnvGain = m.envMapIntensity * 0.55; } });
-  for (const m of adopted) { const want = on ? envTex : null; if (m.envMap !== want) { m.envMap = want; m.envMapIntensity = m.userData.labEnvGain; m.needsUpdate = true; } }
-}
-const camera = new THREE.PerspectiveCamera(35, 1, 0.01, 10);
-const stage = new THREE.Group(); scene.add(stage);
+addStudioLights(scene);
+const camera = new THREE.PerspectiveCamera(24, 1, 0.05, 30);
+camera.position.set(0, 0, 2.2);
 
-// stand-in plate (coaster top), real props swap in below when props.js exists
-const plate = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.004, 0.11), new THREE.MeshStandardMaterial({ color: 0xb9bcc0, roughness: 0.45, metalness: 0.6 }));
-plate.position.y = -0.002; stage.add(plate);
-const body = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.041, 0.11), new THREE.MeshStandardMaterial({ color: 0x6d7a88, roughness: 0.7 }));
-body.position.y = -0.0245; stage.add(body);
-
-function standInMug() {
-  const group = new THREE.Group();
-  const pts = [[0, 0], [0.036, 0], [0.039, 0.004], [0.041, 0.085], [0.0375, 0.085], [0.0355, 0.008], [0, 0.008]].map(([x, y]) => new THREE.Vector2(x, y));
-  const mug = new THREE.Mesh(new THREE.LatheGeometry(pts, 48), new THREE.MeshStandardMaterial({ color: 0xece9e2, roughness: 0.72 }));
-  const handle = new THREE.Mesh(new THREE.TorusGeometry(0.022, 0.006, 10, 24, Math.PI), mug.material);
-  handle.rotation.z = -Math.PI / 2; handle.position.set(0.04, 0.045, 0);
-  const coffeeSurface = new THREE.Mesh(new THREE.CircleGeometry(0.0368, 40), new THREE.MeshStandardMaterial({ color: 0x2a160c, roughness: 0.25 }));
-  coffeeSurface.rotation.x = -Math.PI / 2; coffeeSurface.position.y = 0.074;
-  group.add(mug, handle, coffeeSurface);
-  return { group, coffeeSurface, rimRadius: 0.0375, dispose() {} };
-}
-function standInCan() {
-  const group = new THREE.Group();
-  const bodyPts = [[0.026, 0.0], [0.031, 0.004], [0.033, 0.012], [0.033, 0.104], [0.030, 0.114], [0.027, 0.118]].map(([x, y]) => new THREE.Vector2(x, y));
-  const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0xb3121c, roughness: 0.42, metalness: 0.35 });
-  const bodyMesh = new THREE.Mesh(new THREE.LatheGeometry(bodyPts, 64), bodyMaterial);
-  const alu = new THREE.MeshStandardMaterial({ color: 0xc9ccd0, roughness: 0.35, metalness: 0.9 });
-  const top = new THREE.Mesh(new THREE.CylinderGeometry(0.0272, 0.027, 0.004, 48), alu); top.position.y = 0.12;
-  const bot = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.024, 0.002, 48), alu); bot.position.y = 0.001;
-  group.add(bodyMesh, top, bot);
-  return { group, bodyMesh, bodyMaterial, dispose() {} };
-}
-
-let mug, can, usingProps = false;
-try {
-  const props = await import('../js/showreel/props.js');
-  if (props.createMug && props.createCan && Q.get('standin') !== '1') {
-    mug = props.createMug({ THREE, renderer, quality: 'high' });
-    can = props.createCan({ THREE, renderer, quality: 'high' });
-    mug.setProgress && mug.setProgress(1); can.setProgress && can.setProgress(1);
-    usingProps = true;
-  }
-} catch (e) { console.info('props.js not available, using stand-ins', e.message); }
-if (!mug) { mug = standInMug(); can = standInCan(); }
-mug.group.position.set(-0.034, 0, -0.01); can.group.position.set(0.036, 0, 0.014);
-stage.add(mug.group, can.group);
-
-// steam rooted at the coffee surface centre (in mug-group space)
-stage.updateMatrixWorld(true);
-const coffeePos = new THREE.Vector3();
-if (mug.coffeeSurface) { mug.coffeeSurface.getWorldPosition(coffeePos); mug.group.worldToLocal(coffeePos); } else coffeePos.set(0, 0.075, 0);
-const steam = createSteam({ radius: (mug.rimRadius || 0.037) * 0.95, height: 0.19, quality: Q.get('q') || 'high' });
-steam.group.position.copy(coffeePos); mug.group.add(steam.group);
-const shimmer = createHeatShimmer({ radius: mug.rimRadius || 0.037 });
-shimmer.group.position.copy(coffeePos); mug.group.add(shimmer.group);
-
-const bodyMesh = can.bodyMesh || can.group.getObjectByName('body');
-const cond = applyCondensation(bodyMesh, {});
-const ring = createWaterRing({ radius: 0.033 });
-ring.group.position.set(can.group.position.x, 0, can.group.position.z); stage.add(ring.group);
-
-const VIEWS = {
-  both: { target: [0, 0.06, 0], dist: 0.42, el: 0.22, fov: 35 },
-  mug: { target: [-0.034, 0.13, -0.01], dist: 0.42, el: 0.12, fov: 35, mobileDist: 0.5 },
-  can: { target: [0.036, 0.06, 0.014], dist: 0.3, el: 0.08, fov: 35, mobileDist: 0.42 },
-  hero: { target: [0, 0.07, 0], dist: 0.9, el: 0.25, fov: 30 },
+const view0 = qs.get('view') || 'mug';
+const state = {
+  view: view0, yaw: num('yaw', -35.5), pitch: num('pitch', 22.9), zoom: num('zoom', 1.6), ty: num('ty', NaN),
+  steam: num('steam', view0 === 'mug' ? 1 : 0), dist: num('dist', 0), push: num('push', 0), shimmer: num('shimmer', 0),
+  cond: num('cond', view0 === 'mug' ? 0 : 0.7), ring: num('ring', view0 === 'mug' ? 0 : 0.6), fog: num('fog', view0 === 'mug' ? 0 : 0.7), frost: num('frost', view0 === 'mug' ? 0 : 0.6),
+  t: num('t', 2.5), can: qs.get('can') !== '0', play: qs.get('play') === '1', cycle: false,
 };
-function placeCamera() {
-  const v = VIEWS[state.view] || VIEWS.both;
-  const w = innerWidth, h = innerHeight, aspect = w / h;
-  let dist = v.dist; if (aspect < 0.8) dist = (v.mobileDist || v.dist * 1.45);
-  const az = THREE.MathUtils.degToRad(state.az);
-  camera.fov = v.fov; camera.aspect = aspect;
-  camera.position.set(v.target[0] + Math.sin(az) * Math.cos(v.el) * dist, v.target[1] + Math.sin(v.el) * dist, v.target[2] + Math.cos(az) * Math.cos(v.el) * dist);
-  camera.lookAt(v.target[0], v.target[1], v.target[2]);
-  camera.updateProjectionMatrix();
+
+const t0 = performance.now();
+const look = createLook({ renderer, quality });
+const stage = new THREE.Group(), view = new THREE.Group();
+scene.add(stage); stage.add(view);
+
+// stand-in for the coaster: case, lid rim, bead-blasted plate
+const HGT = 0.029, standIn = new THREE.Group(); view.add(standIn);
+const plastic = look.material('plasticMatte'), plateMat = look.material('aluminumBeadBlast');
+const box = (w, h, d, x, y, z, m) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); standIn.add(b); return b; };
+box(0.0852, HGT - 0.0002, 0.0902, 0, -HGT / 2 - 0.0001, 0, plastic);
+box(0.0802, 0.0015, 0.0802, 0, -0.00075, 0, plateMat);
+box(0.0852, 0.0033, 0.005, 0, 0.00145, 0.0426, plastic); box(0.0852, 0.0033, 0.005, 0, 0.00145, -0.0426, plastic);
+box(0.0025, 0.0033, 0.0802, 0.04135, 0.00145, 0, plastic); box(0.0025, 0.0033, 0.0802, -0.04135, 0.00145, 0, plastic);
+const caseBox = new THREE.Box3(new THREE.Vector3(-0.0426, -HGT, -0.0451), new THREE.Vector3(0.0426, 0.0031, 0.0451));
+
+const mug = createMug({ look, quality }), can = createCan({ look, quality });
+mug.group.rotation.y = 0.9; can.group.rotation.y = -0.4;
+view.add(mug.group, can.group);
+const steam = createSteam({ radius: mug.rimRadius, height: 0.12, quality });
+mug.group.add(steam.group); steam.group.position.y = mug.coffeeY;
+const shimmer = createHeatShimmer({ width: 0.1, height: 0.075, quality });
+view.add(shimmer.group); shimmer.group.position.y = 0.002;
+const cond = applyCondensation(can.bodyMesh, { quality, fillLine: can.fillLine });
+const ring = createWaterRing({ radius: can.radius, standRadius: can.footRadius, quality });
+view.add(ring.group); ring.group.position.y = 0.0001;
+const fog = createColdFog({ box: caseBox, quality });
+view.add(fog.group);
+const frost = createFrost({ size: 0.0802, quality });
+view.add(frost.group);
+look.adopt(view);
+
+const ground = look.createGround({ parent: view, y: -HGT - 0.0002, size: 0.36 });
+ground.add(standIn, {});
+const plateGround = look.createGround({ parent: view, y: 0.0003, size: 0.0802, fade: 0.36, sweep: 0.3, renderOrder: 1,
+  terms: { core: [0.0007, 0.05, 0.6, 0.004], key: [0.0030, 0.28, 0.35, 0.04], amb: [0.006, 0.3, 0.22, 0.05] } });
+const noHandle = m => /handle/i.test(m.name || '');
+for (const g of [ground, plateGround]) { g.add(mug.group, { shape: 'disc', radius: mug.outerRadius, exclude: noHandle }); g.add(can.group, { shape: 'disc', radius: can.radius }); }
+
+function place() {
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  const S = 2.55 * state.zoom;
+  stage.scale.setScalar(S);
+  view.rotation.set(THREE.MathUtils.degToRad(state.pitch), THREE.MathUtils.degToRad(state.yaw), 0);
+  mug.group.visible = state.view === 'mug'; can.group.visible = state.view === 'can' || (state.view === 'plate' && state.can);
+  const ty = Number.isFinite(state.ty) ? state.ty : ({ mug: 0.075, can: 0.045, plate: 0 })[state.view];
+  const c = new THREE.Vector3(0, ty, 0).applyEuler(view.rotation).multiplyScalar(S);
+  stage.position.set(-c.x, -c.y, 0);
+  steam.setIntensity(state.view === 'mug' ? state.steam : 0); steam.setDisturbance(state.dist, state.push, 0, 0); steam.setTime(state.t);
+  shimmer.setIntensity(state.shimmer); shimmer.setTime(state.t);
+  cond.setAmount(state.cond); ring.setAmount(state.view === 'mug' ? 0 : state.ring);
+  fog.setAmount(state.fog); fog.setTime(state.t); frost.setAmount(state.frost);
+  look.setStudioCenter(view, 0.2, [0, -HGT / 2, 0]);
 }
-function resize() { renderer.setSize(innerWidth, innerHeight, false); placeCamera(); }
-addEventListener('resize', () => { resize(); render(); });
-
-function apply() {
-  steam.setIntensity(state.steam); cond.setAmount(state.amount); ring.setAmount(state.ring); shimmer.setIntensity(state.shimmer);
-  setEnv(state.env);
-  for (const id of ['steam', 'amount', 'ring', 'shimmer', 'az']) { document.getElementById(id).value = state[id]; document.getElementById(id + 'O').textContent = (+state[id]).toFixed(id === 'az' ? 0 : 2); }
-  document.querySelectorAll('[data-view]').forEach(b => b.classList.toggle('on', b.dataset.view === state.view));
-  document.getElementById('anim').classList.toggle('on', state.anim);
-  document.getElementById('cycle').classList.toggle('on', state.cycle);
-  document.getElementById('env').classList.toggle('on', state.env);
-  document.getElementById('info').textContent = (usingProps ? 'props.js' : 'stand-ins') + ' | tris ' + renderer.info.render.triangles + ' | calls ' + renderer.info.render.calls;
-  placeCamera();
+function render() {
+  place();
+  look.frame();
+  renderer.render(scene, camera);
+  const i = renderer.info.render;
+  document.getElementById('info').textContent = `${quality} | frame: ${i.triangles} triangles, ${i.calls} draw calls | fog ${fog.triangles} triangles | shimmer ${shimmer.mesh ? 'one region copy' : 'off on low'}`;
+  return { triangles: i.triangles, calls: i.calls };
 }
-function render() { renderer.render(scene, camera); }
 
-for (const id of ['steam', 'amount', 'ring', 'shimmer', 'az']) document.getElementById(id).addEventListener('input', e => { state[id] = parseFloat(e.target.value); apply(); render(); });
-document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => { state.view = b.dataset.view; apply(); render(); }));
-document.getElementById('anim').addEventListener('click', () => { state.anim = !state.anim; apply(); kick(); });
-document.getElementById('cycle').addEventListener('click', () => { state.cycle = !state.cycle; apply(); kick(); });
-document.getElementById('env').addEventListener('click', () => { state.env = !state.env; apply(); render(); });
-
-steam.setTime(state.t); shimmer.setTime(state.t);
-let last = 0, raf = 0, cycleT = 0;
+// ---- UI
+const el = id => document.getElementById(id);
+const ids = ['steam', 'dist', 'push', 'shimmer', 'cond', 'ring', 'fog', 'frost', 't', 'zoom', 'yaw'];
+const show = id => { el(id).value = state[id]; el(id + 'v').textContent = (+state[id]).toFixed(id === 'yaw' ? 0 : id === 'push' ? 3 : 2); };
+for (const id of ids) { show(id); el(id).addEventListener('input', () => { state[id] = +el(id).value; show(id); render(); }); }
+const sync = () => {
+  for (const b of document.querySelectorAll('[data-view]')) b.setAttribute('aria-pressed', String(b.dataset.view === state.view));
+  el('bPlay').setAttribute('aria-pressed', String(state.play)); el('bCycle').setAttribute('aria-pressed', String(state.cycle));
+  for (const id of ids) show(id);
+};
+for (const b of document.querySelectorAll('[data-view]')) b.addEventListener('click', () => { state.view = b.dataset.view; sync(); render(); });
+el('bPlay').addEventListener('click', () => { state.play = !state.play; sync(); });
+el('bCycle').addEventListener('click', () => { state.cycle = !state.cycle; state.view = 'can'; sync(); });
+addEventListener('resize', render);
+let last = 0, cyc = 0;
 function loop(now) {
-  raf = 0;
   const dt = last ? Math.min((now - last) / 1000, 0.1) : 0; last = now;
-  if (state.cycle) { cycleT += dt; const p = (cycleT % 24) / 24; state.amount = Math.min(1, p * 1.25); state.ring = Math.max(0, p * 1.4 - 0.4); apply(); }
-  steam.update(dt); shimmer.update(dt);
-  render();
-  if (state.anim || state.cycle) raf = requestAnimationFrame(loop);
+  if (state.play || state.cycle) {
+    state.t += dt;
+    if (state.cycle) { cyc = (cyc + dt / 14) % 1; state.cond = Math.min(1, cyc * 1.2); state.frost = Math.min(1, cyc * 1.6); state.fog = Math.min(1, cyc * 3); state.ring = Math.max(0, cyc * 1.5 - 0.5); }
+    sync(); render();
+  }
+  requestAnimationFrame(loop);
 }
-function kick() { last = 0; if (!raf) raf = requestAnimationFrame(loop); }
-resize(); apply(); render(); apply();
-if (state.anim || state.cycle) kick();
+sync();
 
-// hooks for screenshots
-window.lab = {
-  set(o) { Object.assign(state, o); if (o.t != null) { steam.setTime(o.t); shimmer.setTime(o.t); } apply(); render(); return state; },
-  step(dt) { steam.update(dt); shimmer.update(dt); render(); },
-  bench(n = 20) {
-    const gl = renderer.getContext(), px = new Uint8Array(4);
-    render(); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
-    const t0 = performance.now();
-    for (let i = 0; i < n; i++) { steam.update(1 / 60); shimmer.update(1 / 60); render(); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); }
-    return (performance.now() - t0) / n;
-  },
-  usingProps, renderer, ready: true,
-};
+const ready = (async () => {
+  await look.ready(); await fxReady();
+  const r = render();
+  requestAnimationFrame(loop);
+  window.labReport = { ok: r.calls > 0 && look.envMap !== null, why: look.envMap ? '' : 'no environment', ...r, buildMs: performance.now() - t0, stats: look.stats() };
+  return true;
+})().catch(e => { window.labReport = { ok: false, why: String(e && e.message || e) }; throw e; });
+window.__lab = { ready, render, set(o) { Object.assign(state, o); sync(); return render(); }, stats: () => look.stats(), look, state, mug, can, steam, cond, ring, fog, frost, shimmer, THREE, renderer };
 </script>
 </body>
 </html>
