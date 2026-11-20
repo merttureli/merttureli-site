@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Look lab</title>
+<meta name="robots" content="noindex">
+<style>
+  :root { --paper: #e7e6e3; --ink: #121315; --line: rgba(18, 19, 21, .14); }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--paper); color: var(--ink); font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  .ui { position: fixed; left: 16px; right: 16px; bottom: 16px; display: grid; gap: 8px; max-width: 560px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255, 255, 255, .55); backdrop-filter: blur(8px); }
+  .row { display: grid; grid-template-columns: 110px 1fr 52px; align-items: center; gap: 10px; }
+  .row input { width: 100%; }
+  .btns { display: flex; flex-wrap: wrap; gap: 6px; }
+  button { font: inherit; border: 1px solid var(--line); background: rgba(255, 255, 255, .6); border-radius: 999px; padding: 5px 10px; cursor: pointer; color: inherit; }
+  button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  .stat { opacity: .7; }
+  .labels { position: fixed; left: 16px; right: 16px; top: 14px; display: flex; justify-content: space-around; pointer-events: none; opacity: .6; }
+  body.shot .ui, body.shot .labels { display: none; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="labels" id="labels"></div>
+<div class="ui">
+  <div class="btns" id="views">
+    <button data-view="materials">materials</button><button data-view="coaster">coaster old | new</button><button data-view="props">mug and can</button>
+  </div>
+  <div class="row"><label for="p">progress</label><input id="p" type="range" min="0" max="1" step="0.001" value="1"><span id="pv">1.00</span></div>
+  <div class="row"><label for="h">prop height</label><input id="h" type="range" min="0" max="0.12" step="0.001" value="0"><span id="hv">0</span></div>
+  <div class="row"><label for="az">turn</label><input id="az" type="range" min="-180" max="180" step="1" value="0"><span id="azv">0</span></div>
+  <div class="row"><label for="ex">exposure</label><input id="ex" type="range" min="0.4" max="2" step="0.01" value="0.95"><span id="exv">0.95</span></div>
+  <div class="btns">
+    <button id="shadow" aria-pressed="true">shadow</button><button id="mirror" aria-pressed="true">reflection</button>
+    <button id="prop">prop: none</button><button id="spin" aria-pressed="false">turntable</button>
+    <a href="?q=high"><button>high</button></a><a href="?q=low"><button>low</button></a>
+  </div>
+  <div class="stat" id="stat"></div>
+</div>
+<script type="module">
+// Look lab (look.js): every factory material on a sphere and a block, the coaster under today's shared rig next to
+// the same coaster under the look, the contact shadow and the reflection on and off, both tiers.
+//   ?view=materials|coaster|props  ?q=low  ?shot (no UI)  ?p=0..1 (assembly)  ?h=m (prop height)  ?prop=mug|can
+//   ?az=deg  ?shadow=0  ?mirror=0  ?ex=exposure  ?presets=0 (the new coaster keeps its CAD materials, adopted)  ?near=m (0 = far studio)
+// window.__lab = { ready (Promise), render(), set({ ... }), stats() }
+import * as THREE from '../js/three.module.min.js';
+import { addStudioLights, createStudioEnvironment } from '../js/showreel/engine.js';
+import { createLook, PRESETS } from '../js/showreel/look.js';
+
+const qs = new URLSearchParams(location.search);
+if (qs.has('shot')) document.body.classList.add('shot');
+const quality = qs.get('q') === 'low' ? 'low' : 'high';
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true, powerPreference: 'low-power' });
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.75));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.setClearColor(0x000000, 0);
+const scene = new THREE.Scene();
+addStudioLights(scene);
+const camera = new THREE.PerspectiveCamera(24, 1, 0.05, 30);
+camera.position.set(0, 0, 2.2);
+
+const state = {
+  view: qs.get('view') || 'coaster', p: qs.has('p') ? +qs.get('p') : 1, h: +(qs.get('h') || 0), az: +(qs.get('az') || 0), ex: +(qs.get('ex') || 0.95),
+  shadow: qs.get('shadow') !== '0', mirror: qs.get('mirror') !== '0', prop: qs.get('prop') || 'none', spin: false, presets: qs.get('presets') !== '0', near: qs.has('near') ? +qs.get('near') : 0.2,
+};
+const build = { t0: performance.now(), env: 0, tex: 0, total: 0 };
+const look = createLook({ renderer, quality });
+const envOld = createStudioEnvironment(renderer);
+const roots = { materials: new THREE.Group(), coaster: new THREE.Group(), props: new THREE.Group() };
+for (const k in roots) { scene.add(roots[k]); roots[k].visible = false; }
+const grounds = [];
+let coasters = null;
+
+// ---- materials: a sphere and a chamfered block per preset, on one shared ground
+function block(w, h, d, r) {
+  const s = new THREE.Shape(); const x = w / 2, z = d / 2;
+  s.moveTo(-x + r, -z); s.lineTo(x - r, -z); s.quadraticCurveTo(x, -z, x, -z + r); s.lineTo(x, z - r); s.quadraticCurveTo(x, z, x - r, z);
+  s.lineTo(-x + r, z); s.quadraticCurveTo(-x, z, -x, z - r); s.lineTo(-x, -z + r); s.quadraticCurveTo(-x, -z, -x + r, -z);
+  const g = new THREE.ExtrudeGeometry(s, { depth: h - 2 * r * 0.6, bevelEnabled: true, bevelThickness: r * 0.6, bevelSize: r * 0.6, bevelSegments: 3, curveSegments: 6 });
+  g.rotateX(-Math.PI / 2); g.translate(0, r * 0.6, 0); g.deleteAttribute('uv');
+  return g;
+}
+const names = Object.keys(PRESETS);
+async function buildMaterials() {
+  const root = roots.materials, view = new THREE.Group();
+  view.rotation.set(0.62, 0, 0); root.add(view);
+  const cols = 7, gap = 0.08, sph = new THREE.SphereGeometry(0.02, 64, 32), blk = block(0.03, 0.016, 0.03, 0.0015);
+  sph.deleteAttribute('uv');
+  const ground = look.createGround({ parent: view, y: 0, size: 0.75, fade: 0.45 });
+  names.forEach((n, i) => {
+    const m = look.material(n);
+    const c = i % cols, r = Math.floor(i / cols);
+    const x = (c - (cols - 1) / 2) * gap, z = (r - 1) * gap * 1.05;
+    const s = new THREE.Mesh(sph, m); s.position.set(x - 0.016, 0.02, z); s.name = n;
+    const b = new THREE.Mesh(blk, m); b.position.set(x + 0.02, 0, z + 0.012); b.rotation.y = 0.5;
+    view.add(s, b);
+    ground.add(s, { shape: 'disc', radius: 0.02, contact: 0.3 }); ground.add(b);
+  });
+  ground.reflect([...view.children.filter(o => o.isMesh && o !== ground.mesh)].slice(0, 6), { opacity: 0.08, fade: 0.02 });
+  grounds.push(ground);
+  root.userData.fit = 0.62; root.userData.view = view;
+}
+
+// ---- the coaster twice: left today's look (shared env at 0.55, its baked decal), right the look
+async function buildCoasters() {
+  const [{ default: createCoaster }, props] = await Promise.all([import('../js/showreel/coaster.js'), import('../js/showreel/props.js')]);
+  const make = (newLook) => {
+    const view = new THREE.Group(); view.rotation.set(0.4, -0.62, 0);
+    const holder = new THREE.Group(); holder.add(view);
+    const coaster = createCoaster({ THREE, renderer, quality });
+    const mug = props.createMug({ quality }), can = props.createCan({ quality });
+    mug.group.rotation.y = 0.9; can.group.rotation.y = -0.4;
+    view.add(coaster.group, mug.group, can.group);
+    let g = null, pg = null;
+    if (newLook) {
+      // factory presets on the CAD parts and the props (what the builders will do), then the look on the rest
+      if (state.presets) {
+        const P = { shell: 'plasticMatte', lid: 'plasticMatte', topPlate: 'aluminumBeadBlast', heatsink: 'aluminumExtruded', blower: 'plasticBlack', peltier: 'ceramic', board: 'solderMask', screws: 'blackOxide' };
+        const made = {};
+        for (const [part, preset] of Object.entries(P)) {
+          const g = coaster.parts[part]; if (!g) continue;
+          g.traverse(o => { if (o.isMesh && o.material && !o.material.transparent) { o.material = made[preset] || (made[preset] = look.material(preset, { side: THREE.DoubleSide })); } });
+        }
+        const glaze = look.material('glaze'), coffee = look.material('coffee');
+        mug.group.traverse(o => { if (o.isMesh) o.material = /coffee/i.test(o.name) ? coffee : /inner/i.test(o.name) ? look.material('glaze', { color: 0xe9e2d3 }) : glaze; });
+        can.group.traverse(o => { if (o.isMesh && o !== can.bodyMesh) o.material = look.material('aluminumCut', { roughness: 0.3 }); });
+        if (can.bodyMesh) can.bodyMesh.material = look.material('canLacquer');
+      }
+      look.adopt(view);
+      coaster.setShadowOpacity(0);
+      const parts = coaster.getParts();
+      g = look.createGround({ parent: view, y: -coaster.height - 0.0002, size: 0.36, follow: coaster.parts.shell, followMax: 0.075 });
+      for (const P of parts) if (!/screws|button/.test(P.name)) g.add(P.mesh, P.name === 'lid' ? { shape: 'frame', inset: 0.0045 } : P.name === 'board' ? { strength: 0.45 } : {});
+      const nh = m => /handle/i.test(m.name || '');
+      g.add(mug.group, { shape: 'disc', radius: mug.outerRadius || 0.04, exclude: nh });
+      g.add(can.group, { shape: 'disc', radius: can.radius || 0.033 });
+      const plate = coaster.parts.topPlate;
+      pg = look.createGround({ parent: plate, y: 0.0003 - plate.position.y, size: 0.0802, fade: 0.36, sweep: 0.3, renderOrder: 1,
+        terms: { core: [0.0007, 0.05, 0.6, 0.004], key: [0.0030, 0.28, 0.35, 0.04], amb: [0.006, 0.3, 0.22, 0.05] } });
+      pg.mesh.position.x = -plate.position.x; pg.mesh.position.z = -plate.position.z;
+      pg.add(mug.group, { shape: 'disc', radius: mug.outerRadius || 0.04, exclude: nh });
+      pg.add(can.group, { shape: 'disc', radius: can.radius || 0.033 });
+      g.reflect([coaster.parts.shell, coaster.parts.lid], { opacity: 0.07, fade: 0.025 });
+      grounds.push(g, pg);
+    } else {
+      view.traverse(o => { for (const m of [].concat(o.material || [])) if (m.isMeshStandardMaterial && !m.envMap) { m.envMap = envOld; m.envMapIntensity *= 0.55; m.needsUpdate = true; } });
+    }
+    return { holder, view, coaster, mug, can, g, pg };
+  };
+  coasters = [make(false), make(true)];
+  return coasters;
+}
+
+function place() {
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  const vh = camera.position.z * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)), vw = vh * camera.aspect;
+  const labels = document.getElementById('labels');
+  if (state.view === 'materials') {
+    const s = Math.min(vw, vh * 1.6) * 1.9 / 0.55;
+    roots.materials.scale.setScalar(s); roots.materials.position.set(0, -vh * 0.05, 0);
+    roots.materials.userData.view.rotation.y = THREE.MathUtils.degToRad(state.az);
+    labels.textContent = '';
+  } else if (coasters) {
+    const S = Math.min(vw * 0.5, vh) * 0.8 / 0.11;
+    coasters.forEach((c, i) => {
+      c.holder.scale.setScalar(S);
+      c.holder.position.set((i ? 1 : -1) * vw * 0.45, vh * 0.02, 0);
+      c.view.rotation.y = -0.62 + THREE.MathUtils.degToRad(state.az);
+      c.coaster.setProgress(state.p);
+      const up = state.view === 'props' ? state.prop : 'none';
+      c.mug.group.visible = up === 'mug'; c.can.group.visible = up === 'can';
+      c.mug.group.position.y = c.can.group.position.y = state.h;
+    });
+    labels.innerHTML = `<span>today: shared rig and env, baked decal</span><span>look.js${state.presets ? ' with factory presets' : ' (CAD materials adopted)'}</span>`;
+  }
+  for (const g of grounds) {
+    g.opacity = state.shadow ? 1 : 0;
+    for (const m of g.mirrors) m.r.userData.off = !state.mirror;
+  }
+  look.uniforms.lookExposure.value = state.ex;
+  if (state.view === 'materials') look.setStudioCenter(null);
+  else if (coasters) look.setStudioCenter(coasters[1].coaster.group, state.near ?? 0.35, [0, -0.015, 0]);
+}
+function render() {
+  for (const k in roots) roots[k].visible = k === (state.view === 'props' ? 'coaster' : state.view);
+  place();
+  look.frame();
+  for (const g of grounds) for (const m of g.mirrors) if (m.r.userData.off) m.r.visible = false;
+  renderer.render(scene, camera);
+  const i = renderer.info.render, s = look.stats();
+  document.getElementById('stat').textContent =
+    `${quality} | triangles ${i.triangles} | draw calls ${i.calls} | full-screen passes 0 | programs ${renderer.info.programs.length} | ` +
+    `build ${build.total.toFixed(0)} ms (env ${s.envMs.toFixed(0)}, textures ${s.texMs.toFixed(0)} in ${s.slices} slices, p95 ${s.p95SliceMs.toFixed(1)} ms, longest ${s.maxSliceMs.toFixed(1)} ms) | ` +
+    `${s.textures} textures ${(s.texBytes / 1024).toFixed(0)} KB | mirrors ${s.mirrors}`;
+  return { triangles: i.triangles, calls: i.calls };
+}
+
+// ---- UI
+const el = id => document.getElementById(id);
+const bind = (id, key, fmt = v => v.toFixed(2)) => {
+  const inp = el(id), out = el(id + 'v'); inp.value = state[key]; out.textContent = fmt(state[key]);
+  inp.addEventListener('input', () => { state[key] = +inp.value; out.textContent = fmt(state[key]); render(); });
+};
+bind('p', 'p'); bind('h', 'h', v => (v * 1000).toFixed(0) + ' mm'); bind('az', 'az', v => v.toFixed(0)); bind('ex', 'ex');
+for (const b of document.querySelectorAll('[data-view]')) b.addEventListener('click', () => { state.view = b.dataset.view; if (state.view === 'props' && state.prop === 'none') state.prop = 'mug'; sync(); render(); });
+const tog = (id, key) => el(id).addEventListener('click', () => { state[key] = !state[key]; sync(); render(); });
+tog('shadow', 'shadow'); tog('mirror', 'mirror'); tog('spin', 'spin');
+el('prop').addEventListener('click', () => { state.prop = { none: 'mug', mug: 'can', can: 'none' }[state.prop]; if (state.view === 'materials') state.view = 'props'; sync(); render(); });
+function sync() {
+  for (const b of document.querySelectorAll('[data-view]')) b.setAttribute('aria-pressed', String(b.dataset.view === state.view));
+  el('shadow').setAttribute('aria-pressed', String(state.shadow)); el('mirror').setAttribute('aria-pressed', String(state.mirror)); el('spin').setAttribute('aria-pressed', String(state.spin));
+  el('prop').textContent = 'prop: ' + state.prop;
+}
+sync();
+addEventListener('resize', render);
+let last = 0;
+function loop(t) { if (state.spin) { state.az = ((state.az + (last ? (t - last) / 1000 * 12 : 0) + 180) % 360) - 180; el('az').value = state.az; el('azv').textContent = state.az.toFixed(0); render(); } last = t; requestAnimationFrame(loop); }
+
+const ready = (async () => {
+  await look.env();
+  await Promise.all([buildMaterials(), buildCoasters()]);
+  for (const c of coasters) roots.coaster.add(c.holder);
+  await look.ready();
+  build.total = performance.now() - build.t0;
+  const r = render();
+  requestAnimationFrame(loop);
+  window.labReport = { ok: r.calls > 0 && look.envMap !== null, why: look.envMap ? '' : 'no environment', ...r, passes: 0, stats: look.stats() };
+  return true;
+})().catch(e => { window.labReport = { ok: false, why: String(e && e.message || e) }; throw e; });
+window.__lab = { ready, render, set(o) { Object.assign(state, o); sync(); return render(); }, stats: () => look.stats(), look, state };
+</script>
+</body>
+</html>

@@ -20,7 +20,7 @@ const ACTOR = () => import('../../showreel/robo-catcher.js');
 const ENGINE = () => import('../../showreel/engine.js');
 const SLUG = 'robo-catcher';
 
-// The case study's words (content/projects/robo-catcher.json), unchanged.
+// The case study's words (content/projects/robo-catcher.json), unchanged. The Material rows (MADE) are the owner's.
 const SAY = {
   lede: 'A machine that catches the ball and returns it.',
   feeder: 'The feeder is a rotating dual chamber: catch a ball, rotate 180 degrees, hand it to the return flywheel.',
@@ -28,6 +28,16 @@ const SAY = {
   learned: 'The MATLAB torque study felt slow while teammates were already printing parts. Then the feeder ran a full competition day without a missed index.',
   flywheel: 'Return flywheel, 120 W DC motor',
   portable: '55 lb, one person portable, assembles with no tools',
+};
+// What each part is made of, as the owner has stated it (not on the case page).
+const MADE = {
+  net: 'PVC poles and a rope net',
+  panels: 'Wood panels with a rubbery surface finish',
+  cage: 'A metal cage in a wire design',
+  indexer: '3D printed',
+  wheel: 'Plastic rim with real rubber on top for grip',
+  metal: 'Metal',
+  thrower: 'Metal enclosure and metal gears',
 };
 const GROUPS = [
   { key: 'frame', label: 'Frame' },
@@ -44,28 +54,28 @@ const GROUPS = [
 const THROWER = [.74, 0, .3];
 const add = (a, b) => a.map((v, i) => v + b[i]);
 const PARTS = [
-  { id: 'backstop', label: 'Backstop poles and net', group: 'net', explode: [0, .12, -.34], card: { lede: SAY.lede } },
-  { id: 'bed', label: 'Catch bed and ramps', group: 'frame', explode: [0, 0, 0], card: { lede: SAY.portable, rows: [['Build', 'Laser cut HDF and 3D printed parts'], ['Total build cost', '<$700']] } },
-  { id: 'cage', label: 'Feeder cage', group: 'feed', explode: [.3, 0, -.1], card: { lede: SAY.feeder, rows: [['Role', 'Feeding subsystem co-lead, all electronics and firmware']] } },
-  { id: 'indexer', label: 'Rotating dual chamber', group: 'indexer', explode: [.3, .52, -.1], exterior: false, card: { lede: SAY.index, desc: SAY.learned } },
+  { id: 'backstop', label: 'Backstop poles and net', group: 'net', explode: [0, .12, -.34], card: { lede: SAY.lede, rows: [['Material', MADE.net]] } },
+  { id: 'bed', label: 'Catch bed and ramps', group: 'frame', explode: [0, 0, 0], card: { lede: SAY.portable, rows: [['Build', 'Laser cut HDF and 3D printed parts'], ['Total build cost', '<$700'], ['Panels', MADE.panels]] } },
+  { id: 'cage', label: 'Feeder cage', group: 'feed', explode: [.3, 0, -.1], card: { lede: SAY.feeder, rows: [['Role', 'Feeding subsystem co-lead, all electronics and firmware'], ['Material', MADE.cage]] } },
+  { id: 'indexer', label: 'Rotating dual chamber', group: 'indexer', explode: [.3, .52, -.1], exterior: false, card: { lede: SAY.index, desc: SAY.learned, rows: [['Material', MADE.indexer]] } },
   { id: 'tube', label: 'Transfer elbow', group: 'feed', explode: [.5, .3, .04], exterior: false },
-  { id: 'flywheelTop', label: 'Upper flywheel', group: 'thrower', explode: add(THROWER, [0, .07, 0]), exterior: false, card: { lede: SAY.flywheel } },
-  { id: 'flywheelBottom', label: 'Lower flywheel', group: 'thrower', explode: THROWER, exterior: false, card: { lede: SAY.flywheel } },
-  { id: 'idlers', label: 'Idler gears', group: 'thrower', explode: add(THROWER, [.12, .04, 0]), exterior: false },
-  { id: 'throwerPlates', label: 'Thrower plates', group: 'thrower', explode: add(THROWER, [0, .17, 0]) },
-  { id: 'throwerBase', label: 'Thrower base', group: 'thrower', explode: THROWER, card: { lede: SAY.flywheel } },
-  { id: 'groundRamps', label: 'Ground ball ramps', group: 'frame', explode: [0, 0, .26] },
+  { id: 'flywheelTop', label: 'Upper flywheel', group: 'thrower', explode: add(THROWER, [0, .07, 0]), exterior: false, card: { lede: SAY.flywheel, rows: [['Material', MADE.wheel]] } },
+  { id: 'flywheelBottom', label: 'Lower flywheel', group: 'thrower', explode: THROWER, exterior: false, card: { lede: SAY.flywheel, rows: [['Material', MADE.wheel]] } },
+  { id: 'idlers', label: 'Idler gears', group: 'thrower', explode: add(THROWER, [.12, .04, 0]), exterior: false, card: { rows: [['Material', MADE.metal]] } },
+  { id: 'throwerPlates', label: 'Thrower plates', group: 'thrower', explode: add(THROWER, [0, .17, 0]), card: { rows: [['Material', MADE.metal]] } },
+  { id: 'throwerBase', label: 'Thrower base', group: 'thrower', explode: THROWER, card: { lede: SAY.flywheel, rows: [['Material', MADE.thrower]] } },
+  { id: 'groundRamps', label: 'Ground ball ramps', group: 'frame', explode: [0, 0, .26], card: { rows: [['Material', MADE.panels]] } },
 ];
 const KIND = Object.fromEntries(GROUPS.map(g => [g.key, g.label]));
 // Tour: one stop per step of the ball's path; each plays its stretch of the reel (actor seconds,
 // from the start of ROBO_PITCH) while the part is in focus.
 const TOUR_MS = 3600;
 const TOUR = [
-  ['backstop', 'ROBO_PITCH', 0, 'ROBO_PITCH', 1.9],     // the pitch, the net gives, the ball drops on the bed
-  ['bed', 'ROBO_PITCH', 1.9, 'ROBO_FEED', 1.6],          // it rolls down the sloped bed
-  ['cage', 'ROBO_FEED', 1.5, 'ROBO_FEED', 2.3],          // into the feeder and its lower chamber
-  ['indexer', 'ROBO_INDEX', 0, 'ROBO_INDEX', 1.5],       // the chamber turns 180 degrees
-  ['flywheelTop', 'ROBO_THROW', 0, 'ROBO_THROW', 1.5],   // the elbow, the flywheels grip it and throw it back
+  ['backstop', 'ROBO_PITCH', 0, 'ROBO_PITCH', 1.7],     // the pitch, the net gives, the ball drops on the bed
+  ['bed', 'ROBO_PITCH', 1.6, 'ROBO_FEED', 1.15],         // it rolls down the sloped bed
+  ['cage', 'ROBO_FEED', 1.0, 'ROBO_INDEX', 0],           // into the feeder and its lower chamber
+  ['indexer', 'ROBO_INDEX', 0, 'ROBO_INDEX', 1.05],      // the chamber turns 180 degrees
+  ['flywheelTop', 'ROBO_THROW', 0, 'ROBO_THROW', .9],    // the elbow, the flywheels grip it and throw it back
 ];
 const TAIL = 1.4;                                       // after a cycle: the wheels spin down (seconds)
 
@@ -216,7 +226,9 @@ function update(t, state, ctx, dt) {
   return moving;
 }
 
-// the net and the feeder's wire panels are line sets: ghost and cut them with their part
+// the net and the feeder's wire panels are line sets: ghost and cut them with their part. With the studio look
+// (dress below) they are a rope net and steel wire, and these meshes, the PVC fittings and the plywood sheets are
+// ones the look added after the shell listed the parts: they ghost, cut and cap here, with their part.
 function pose(state, ctx) {
   if (!A) return;
   for (const L of A.lines) {
@@ -225,7 +237,65 @@ function pose(state, ctx) {
     if (L.mat.transparent !== tr) { L.mat.transparent = tr; L.mat.needsUpdate = true; }
     L.mat.opacity = o;
   }
+  for (const E of A.added || []) {
+    const o = E.P.opacity, mt = E.m.material;
+    if (E.rope) mt.opacity = E.a0 * o;      // the rope net is always blended (its cords are drawn with coverage)
+    else {
+      const tr = o < .999;
+      if (mt.transparent !== tr) { mt.transparent = tr; mt.depthWrite = !tr; mt.needsUpdate = true; }
+      mt.opacity = o;
+    }
+    if (E.st) E.st.visible = state.cutT > 0 && E.P.ghost > .99;
+  }
 }
+
+// The hero reel's finish (showreel/look.js dressRoboCatcher) on the viewer's renderer: the owner's materials (PVC
+// poles and fittings, wood panels with a rubber top, the metal feeder cage in wire, the printed indexer, the
+// flywheel unit's metal plates and gears, plastic rims with a rubber tread, the softball), the rope net that gives
+// with the hit, rounded edges. Its ground shadows are the reel's page and are left out (a free orbit has no page).
+// If it fails, the plain materials and line sets stay.
+async function dress(ctx) {
+  const L = await import('../../showreel/look.js');
+  const { model, ball, src } = A, own = [...src.keys()], mine = own.map(m => m.material);
+  for (const m of own) m.material = src.get(m);   // the look recognises each mesh by the model's own materials
+  let d;
+  try { d = await L.dressRoboCatcher({ engine: ctx.engine, quality: ctx.quality, view: new ctx.THREE.Group(), model, balls: [ball], parts: [] }); }
+  catch (e) { own.forEach((m, i) => { m.material = mine[i]; }); throw e; }
+  own.forEach((m, i) => { if (!m.material.userData.look) m.material = mine[i]; });
+  // what the look added: give each its part (pick, ghost, section, caps), its own material copy and the section plane
+  const partOf = new Map(PARTS.map(p => [model.parts[p.id], p.id]));
+  const ref = ctx.parts.find(P => P.meshes.length).meshes[0], planes = ref.material.clippingPlanes, stencil = ref.userData.stencilMesh;
+  const added = [], twins = [];
+  model.group.traverse(o => {
+    if (!o.isMesh || src.has(o) || o.userData.stencil || o === ball.mesh || (ball.group && isIn(o, ball.group))) return;
+    let x = o; while (x && !partOf.has(x)) x = x.parent;
+    const P = x && ctx.part(partOf.get(x));
+    if (!P) return;
+    added.push({ m: o, P });
+  });
+  for (const E of added) {
+    const { m, P } = E;
+    E.rope = !!m.material.transparent;
+    if (!E.rope) { m.material = ctx.twin(m.material); twins.push(m.material); }
+    E.a0 = m.material.opacity;
+    m.material.clippingPlanes = planes; m.material.needsUpdate = true;
+    m.userData.part = P;
+    if (!E.rope) {
+      P.meshes.push(m);
+      if (stencil) { const st = new ctx.THREE.Mesh(m.geometry, stencil.material); st.renderOrder = 1; st.visible = false; st.raycast = () => {}; st.userData.stencil = true; m.add(st); E.st = st; }
+    }
+  }
+  A.added = added;
+  return {
+    look: d.look, frame: d.frame,
+    dispose() {
+      for (const E of added) { if (E.st) E.st.removeFromParent(); const i = E.P.meshes.indexOf(E.m); if (i >= 0) E.P.meshes.splice(i, 1); }
+      if (A) A.added = null;
+      d.dispose(); for (const t of twins) t.dispose();
+    },
+  };
+}
+const isIn = (o, root) => { for (; o; o = o.parent) if (o === root) return true; return false; };
 
 function reset(state, ctx) {
   if (!A) return;
@@ -265,7 +335,10 @@ async function build(ctx) {
   model.group.add(ball.group);
   const lines = [];
   model.group.traverse(o => { if (o.isLineSegments) lines.push({ part: o.name.split(':')[0], mat: o.material }); });
-  A = { actor, model, ball, S, lines, w, full, env };
+  // the model's own materials, by mesh, before the shell gives each part its own copy (for the look, dress)
+  const src = new Map();
+  model.group.traverse(o => { if (o.isMesh) src.set(o, o.material); });
+  A = { actor, model, ball, S, lines, w, full, env, src, added: null };
   rest();
   const parts = PARTS.map(p => {
     const obj = model.parts[p.id];
@@ -276,7 +349,7 @@ async function build(ctx) {
     };
   });
   return {
-    model: model.group, parts, update, pose, reset, ready,
+    model: model.group, parts, update, pose, reset, ready, dress,
     dispose() { actor.dispose(); env.dispose(); A = null; },   // the buttons stay: the shell keeps its controls
   };
 }
@@ -304,6 +377,7 @@ function stagePose(el, ctx) {
 
 export default {
   slug: SLUG,
+  buildAhead: true,                                // hover, focus or touch builds the look on idle, so the open only has to fly
   name: 'Robo-Catcher 3D model',
   title: 'Robo-Catcher',
   eyebrow: 'Interactive / The CAD model',

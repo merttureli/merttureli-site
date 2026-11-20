@@ -12,7 +12,7 @@
 // pedal tips back on its hinge, the brake spring stretches and the pedal's disc
 // magnet moves off its Hall sensor. The linkage is solved from the CAD joint
 // positions every frame, not keyframed. Behind, a small generic high-wing light
-// aircraft (procedural, matte, no markings) flies a real 3D path that comes
+// aircraft (procedural, glossy white, no markings) flies a real 3D path that comes
 // nearer and recedes: it yaws and banks with the pedals a beat later, never
 // crosses the focused drift word, the marquee or the pedals. Then the pedals
 // center, the assembly opens and the parts leave.
@@ -23,12 +23,14 @@
 //     magnets, Hall sensors, wiring, controller board)
 //     group, height, footprint, triangles, getParts(), parts, details, setProgress(p),
 //     setDrive(x), setToe(l, r), setGrow(g), refresh()
-//   createAccent({ THREE, quality }) -> the light aircraft: group, setProp(angle), setHaze(k), dispose()
+//   createAccent({ THREE }) -> the light aircraft: group, span, setProp(angle), setRudder(angle), setHaze(k), dispose()
 //   createActor(ctx)                 -> the reel actor (interface at the top of showreel/index.js)
 //
 // Units meters, +Y up, model origin at the center of its footprint on the
-// ground. Lights and environment come from engine.js (engine.adopt): never add
-// lights, fog or an environment here. Everything in sample() is a pure
+// ground. Lights and environment come from engine.js (engine.adopt); the studio look
+// (materials, tone, contact shadows) comes from look.js (dressRudderPedals), and without
+// it everything still builds with the plain materials below: never add lights, fog or
+// an environment here. Everything in sample() is a pure
 // function of reel time.
 import { THREE, ease, win, clamp01, lerp, placeInFrame, screenExtents } from './engine.js';
 import { fetchCadMesh, buildCadMesh } from '../cad/cadmesh.js';
@@ -48,23 +50,32 @@ export const SEQUENCE = [
 ];
 const [ENTER, ASSEMBLE, ACTION, EXIT] = SEQUENCE.map(s => s[0]);
 
-// Pedal program in ACTION seconds: [time, drive], drive -1 = left pedal fully
-// forward (left rudder), +1 = right. Eased between keys (feet push, hold, ease off).
-const PROGRAM = [[0, 0], [.55, 0], [1.25, .85], [2.05, .85], [2.85, -1], [3.85, -1], [4.45, 0], [5.6, 0], [6.15, .9], [6.85, .9], [7.55, -.9], [8.15, -.9], [8.65, 0]];
+// Pedal program in ACTION seconds: [time, drive, how], drive -1 = left pedal fully
+// forward (left rudder), +1 = right; both ways reach the full travel (PHI). A push
+// eases in with the foot's weight and holds; 'spring' = the foot lets off and the
+// centering springs bring the pedals back with a small damped overshoot.
+const PROGRAM = [[0, 0], [.55, 0], [1.25, 1], [2.05, 1], [2.85, -1], [3.85, -1], [4.5, 0, 'spring'], [5.6, 0], [6.15, 1], [6.85, 1], [7.55, -1], [8.15, -1], [8.75, 0, 'spring']];
 // The assembly turns its left side (centering spring, brake spring, Hall slit, wiring) toward
 // the camera for the second half of the beat, then back before it opens: [time, 0 front .. 1 side].
 const TURN = [[4.3, 0], [5.6, 1], [10.6, 1], [11.4, 0]];
 // Toe brakes in ACTION seconds: [time, amount] (0 released, 1 full), the left
-// pedal first, then the right, each pressed, held and let go.
-const TOE_L = [[8.7, 0], [9.1, 1], [9.45, 1], [9.8, 0]];
-const TOE_R = [[9.75, 0], [10.15, 1], [10.45, 1], [10.8, 0]];
+// pedal first, then the right, each pressed, held and let go: 'land' = the brake
+// spring pulls the pedal back onto its rest and it rebounds a little off it.
+const TOE_L = [[8.75, 0], [9.15, 1], [9.5, 1], [9.9, 0, 'land']];
+const TOE_R = [[9.8, 0], [10.2, 1], [10.5, 1], [10.9, 0, 'land']];
 // Aircraft: two passes (ACTION seconds). Each starts far, small and hazy, high in
 // the frame, comes toward the camera through real depth (it grows `grow` times),
 // climbing, and sweeps up and out past the top edge; then the next comes from far
 // away. `near` is its closest world z (behind the pedals at z = 0); its span on
 // screen there is `spanNear` x the short side (clamped, px). It yaws and banks with
-// the pedals `lag` s later and weaves sideways by `weave` x the width.
-const FLIGHT = { passes: [[.15, 4.7], [5.0, 10.3]], lag: .28, turn: 1.15, bank: .62, yaw: .14, near: -.4, grow: 3.6, spanNear: [.235, 110, 240], haze: .45, weave: .06 };
+// the pedals and weaves sideways by `weave` x the width (its heading follows the bank).
+// The second pass is nearest during the second rudder press.
+const FLIGHT = { passes: [[.15, 4.7], [5.0, 9.4]], turn: 1.15, near: -.4, grow: 3.6, spanNear: [.27, 120, 270], haze: .45, weave: .07 };
+// How the aircraft answers the pedals, per radian of sensor lever angle (drive x PHI), so a larger
+// pedal travel turns it further. At PHI = 30 degrees: rudder .48 rad (27 degrees), nose .24 rad,
+// bank .7 rad (40 degrees). The rudder answers first (`tau` s), the nose follows, the bank a beat later
+// and it rolls out smoothly (critically damped, no overshoot).
+const RESPONSE = { rudder: .917, yaw: .46, bank: 1.34, tau: { rudder: .05, yaw: .16, bank: .32 } };
 const PAPER = 0xe7e8ea;   // the Studio paper ground (tokens.css --paper): distant aircraft fade toward it
 
 // ================================================================= the look
@@ -91,8 +102,13 @@ const CADP = {
   rock: [557.89, 103.18, 1264.55],                                  // sensor lever center bolt (axis x)
   hingeR: [671.98, 113.57], hingeL: [660.64, 113.57],               // pedal hinge bolts (axis z)
 };
-const PHI = 20 * Math.PI / 180;   // sensor lever travel each way (the levers swing about 11 degrees)
-const TOE = 16 * Math.PI / 180;   // toe brake travel (the pedal tips back on its hinge bolt)
+// Travel measured on the CAD mesh: the sensor lever's first contact is at about 32 degrees each way (its arm on
+// the middle support's clamp bolt, each link rod on its lever's fork); 30 keeps 2 degrees of clearance. At 30 the
+// lever arms swing 16 to 17 degrees and the pedal faces move 19 to 21 mm fore and aft.
+const PHI = 30 * Math.PI / 180;   // sensor lever travel each way
+// toe brake travel: the pose the pedal is drawn at in the CAD (20.8 degrees back from its rest on the lever);
+// the CAD has no stop there (the pedal's top edge meets the sensor lever's fork near 68 degrees)
+const TOE = 20.8 * Math.PI / 180;
 let PEDAL_REST = .38;               // pedal rest tilt from its CAD pose (solved in createModel: magnet flush with the lever)
 
 // Build order, exploded offsets (model meters) and how far each part's fly-in
@@ -172,15 +188,17 @@ export function createModel({ THREE: T = THREE, legible = false } = {}) {
   const order = ['core', 'wallR', 'wallL', 'rocker', 'rodR', 'rodL', 'leverR', 'leverL'];
   const list = order.map(name => ({ name, mesh: P[name], base: P[name].position.clone(), explode: new T.Vector3(...PARTS[name].explode), mech: new T.Vector3() }));
   const byName = Object.fromEntries(list.map(r => [r.name, r]));
-  let prog = 1;
+  let prog = 1, land = 0;
   function place() {
     const n = list.length;
     list.forEach((r, i) => {
-      const a = i / (n - 1) * .5, k = ease.inOutSine(win(prog, a, a + .5));
+      const a = i / (n - 1) * .5, x = win(prog, a, a + .5);
+      // land 1: each part is set down on its seat, lifts a hair off it and settles (assembling); 0: a plain ease
+      const k = land ? lerp(ease.inOutSine(x), 1 - Math.abs(1 - SETTLE(x)), land) : ease.inOutSine(x);
       r.mesh.position.copy(r.base).add(r.mech).addScaledVector(r.explode, 1 - k);
     });
   }
-  function setProgress(p) { prog = p; place(); }
+  function setProgress(p, settle = 0) { prog = p; land = settle; place(); }
   // the parts the STEP does not carry (springs, screws, magnets, sensors, wiring, board)
   const baseOf = obj => { const r = list.find(r => r.mesh === obj); if (r) return r.base; return list.find(r => r.mesh === obj.parent).base.clone().add(obj.position); };
   // Right side = mirror of the left (owner): a left-side STEP point attached to a lever
@@ -211,7 +229,7 @@ export function createModel({ THREE: T = THREE, legible = false } = {}) {
   const details = createDetails(T, { P, toM, base: baseOf, m, mirror, mirrorDir, rzR, legible });
   let toeL = 0, toeR = 0, drive = 0, gS = 1, gW = 1, lastKey = '';
   function refresh() {
-    const key = `${drive.toFixed(5)},${toeL.toFixed(5)},${toeR.toFixed(5)},${prog.toFixed(5)},${gS.toFixed(4)},${gW.toFixed(4)}`;
+    const key = `${drive.toFixed(5)},${toeL.toFixed(5)},${toeR.toFixed(5)},${prog.toFixed(5)},${land},${gS.toFixed(4)},${gW.toFixed(4)}`;
     if (key === lastKey) return;
     lastKey = key;
     details.setGrow(gS, gW);
@@ -237,6 +255,13 @@ export function createModel({ THREE: T = THREE, legible = false } = {}) {
   // springs hook on and wires run to the board: 0 none, 1 all (springs, wires may differ)
   function setGrow(s, w = s) { gS = s; gW = w; }
   setDrive(0); setToe(0, 0); setProgress(1); refresh();
+  // the slack loops (lever to frame) get their length here, not from whatever pose is drawn first: the rest
+  // pose's slack, or enough to reach at both ends of the pedal travel (just straight there), whichever is longer
+  for (const d of [1, -1]) {
+    setDrive(d); details.update();
+    for (const r of details.wires) if (r.loop) r.len = Math.max(r.len, 1.02 * r.pts[r.lp.length - 1].distanceTo(r.fixed[0]));
+  }
+  setDrive(0); lastKey = ''; refresh();
   const size = new T.Vector3(); new T.Box3().setFromObject(m.group).getSize(size);
   return {
     group: m.group, height: size.y, footprint: Math.max(size.x, size.z), triangles: m.triangles + details.triangles,
@@ -300,7 +325,8 @@ const DLOOK = {
   wire: { color: 0xffffff, roughness: .55, metalness: 0, vertexColors: true },
   board: { color: 0xffffff, roughness: .62, metalness: 0 },
 };
-const C = { black: 0x18191c, tin: 0xb9bdc3, darkMetal: 0x2c2e33, espBlack: 0x202226, chip: 0x141518, silver: 0xc9ccd1, gold: 0xb8954a, green: 0x2f5a46, red: 0xb3261e, wireBlack: 0x1f2023 };
+const METAL = new Set([0xb9bdc3, 0x2c2e33, 0xc9ccd1, 0xb8954a]);   // tin, darkMetal, silver, gold (below)
+const C = { black: 0x18191c, tin: 0xb9bdc3, darkMetal: 0x2c2e33, espBlack: 0x202226, chip: 0x141518, pocket: 0x0b0c0e, silver: 0xc9ccd1, gold: 0xb8954a, green: 0x2f5a46, red: 0xb3261e, wireBlack: 0x1f2023 };
 
 function createDetails(T, { P, toM, base, m, mirror, mirrorDir, rzR, legible = false }) {
   // legible: the hero draws spring wire 40% and sensor wires 35% thicker so they read at small sizes (geometry otherwise unchanged)
@@ -316,11 +342,12 @@ function createDetails(T, { P, toM, base, m, mirror, mirrorDir, rzR, legible = f
   function bake(list) {
     const flat = list.map(({ g, color }) => { const n = g.index ? g.toNonIndexed() : g; if (n.attributes.uv) n.deleteAttribute('uv'); n.userData.color = color; return n; });
     const count = flat.reduce((s, g) => s + g.attributes.position.count, 0);
-    const pos = new Float32Array(count * 3), nrm = new Float32Array(count * 3), col = new Float32Array(count * 3), c = new T.Color();
+    const pos = new Float32Array(count * 3), nrm = new Float32Array(count * 3), col = new Float32Array(count * 3), metal = new Uint8Array(count), c = new T.Color();
     let o = 0;
     for (const g of flat) {
       pos.set(g.attributes.position.array, o * 3); nrm.set(g.attributes.normal.array, o * 3);
       c.setHex(g.userData.color, T.SRGBColorSpace);
+      if (METAL.has(g.userData.color)) metal.fill(255, o, o + g.attributes.position.count);   // bare metal: the studio look reads it, plain materials do not
       for (let i = 0; i < g.attributes.position.count; i++) col.set([c.r, c.g, c.b], (o + i) * 3);
       o += g.attributes.position.count;
     }
@@ -329,6 +356,7 @@ function createDetails(T, { P, toM, base, m, mirror, mirrorDir, rzR, legible = f
     out.setAttribute('position', new T.BufferAttribute(pos, 3));
     out.setAttribute('normal', new T.BufferAttribute(nrm, 3));
     out.setAttribute('color', new T.BufferAttribute(col, 3));
+    out.setAttribute('lookMetal', new T.BufferAttribute(metal, 1, true));
     out.computeBoundingSphere();
     geos.push(out); tris += count / 3;
     return out;
@@ -346,6 +374,16 @@ function createDetails(T, { P, toM, base, m, mirror, mirrorDir, rzR, legible = f
   }
   const box = (w, h, d) => new T.BoxGeometry(mm(w), mm(h), mm(d));
   const cyl = (r, h, s = 12) => new T.CylinderGeometry(mm(r), mm(r), mm(h), s, 1);
+  // a socket head cap screw's head (mm, +Y up, centered): the hex recess is real geometry, dark inside
+  function socketHead(r, h, hex, depth, at, dir) {
+    const pts = Array.from({ length: 6 }, (_, k) => new T.Vector2(mm(hex) * Math.sin(k * Math.PI / 3), -mm(hex) * Math.cos(k * Math.PI / 3)));
+    const ring = new T.Shape(); ring.absarc(0, 0, mm(r), 0, Math.PI * 2, false); ring.holes.push(new T.Path(pts));
+    const top = new T.ShapeGeometry(ring, 4).rotateX(-Math.PI / 2).translate(0, mm(h / 2), 0);
+    const floor = new T.ShapeGeometry(new T.Shape(pts)).rotateX(-Math.PI / 2).translate(0, mm(h / 2 - depth), 0);
+    const wall = new T.CylinderGeometry(mm(hex), mm(hex), mm(depth), 6, 1, true).translate(0, mm(h / 2 - depth / 2), 0);
+    const side = new T.CylinderGeometry(mm(r), mm(r), mm(h), 16, 1, true);
+    return [{ g: put(side, at, dir), color: C.darkMetal }, { g: put(top, at, dir), color: C.darkMetal }, { g: put(wall, at, dir), color: C.pocket }, { g: put(floor, at, dir), color: C.pocket }];
+  }
   function addMesh(parent, list, key, groupName, name) {
     const mesh = new T.Mesh(bake(list), mat(key));
     mesh.name = name; mesh.userData.detail = groupName;
@@ -368,7 +406,7 @@ function createDetails(T, { P, toM, base, m, mirror, mirrorDir, rzR, legible = f
     const L = headTop.distanceTo(tip);
     const list = [
       { g: put(cyl(1.5, (L - mm(3)) * 1000, 10), tip.clone().addScaledVector(axis, (L - mm(3)) / 2), axis), color: C.darkMetal },
-      { g: put(cyl(2.75, 3, 14), headTop.clone().addScaledVector(axis, -mm(1.5)), axis), color: C.darkMetal },
+      ...socketHead(2.75, 3, 1.45, 1.7, headTop.clone().addScaledVector(axis, -mm(1.5)), axis),
     ];
     addMesh(wall, list, 'parts', 'screws', 'anchorScrew' + S);
     labels.push({ group: 'screws', name: `Anchor screw (${side(S)})`, note: `M3 x 20 in adjustment hole ${DET.hole.k + 1} of ${DET.hole.n}${S === 'R' ? ', mirrored from the left' : ''}`, obj: wall, at: headTop.clone() });
@@ -404,10 +442,10 @@ function createDetails(T, { P, toM, base, m, mirror, mirrorDir, rzR, legible = f
   // ---- center (rudder) sensor: two discs in the holder's round slots (parent: the sensor lever) and a third A1301 between them (parent: the frame)
   {
     const list = [];
-    for (const g of DET.center.magnets) {
-      const c = g.floor.map((v, i) => v + g.n[i] * DET.magnet.t / 2);
-      const mesh = new T.Mesh(put(cyl(DET.magnet.d / 2, DET.magnet.t, 20), local(P.rocker, c), V(g.n)), mat('magnet'));
-      geos.push(mesh.geometry); tris += 80;
+    {
+      const discs = DET.center.magnets.map(g => put(cyl(DET.magnet.d / 2, DET.magnet.t, 20), local(P.rocker, g.floor.map((v, i) => v + g.n[i] * DET.magnet.t / 2)), V(g.n)));
+      const mesh = new T.Mesh(mergeGeometries(T, discs), mat('magnet'));   // both discs in one draw call
+      geos.push(mesh.geometry); tris += 160;
       mesh.name = 'centerMagnet'; mesh.userData.detail = 'magnets';
       P.rocker.add(mesh); groups.magnets.userData.meshes.push(mesh);
     }
@@ -471,7 +509,7 @@ function createDetails(T, { P, toM, base, m, mirror, mirrorDir, rzR, legible = f
     { key: 'brakeR', a: { obj: P.leverR, p: local(P.leverR, DET.brake.R.hook) }, b: { obj: pedal.R, p: local(pedal.R, DET.brake.R.pin) }, coils: 13, R: 2.5, r: .45, name: 'Brake spring (right)' },
     { key: 'brakeL', a: { obj: P.leverL, p: local(P.leverL, DET.brake.L.hook) }, b: { obj: pedal.L, p: local(pedal.L, DET.brake.L.pin) }, coils: 13, R: 2.5, r: .45, name: 'Brake spring (left)' },
   ];
-  const PER = 8, RAD = 4;
+  const PER = 8, RAD = 6;   // six sides: each coil's highlight runs round the wire
   let nv = 0, ni = 0;
   for (const s of SPRINGS) { s.M = s.coils * PER + 1; s.v0 = nv; nv += s.M * RAD; ni += (s.M - 1) * RAD * 6; }
   const sg = new T.BufferGeometry();
@@ -500,7 +538,7 @@ function createDetails(T, { P, toM, base, m, mirror, mirrorDir, rzR, legible = f
     const pts = Array.from({ length: ctrl }, () => new T.Vector3());
     WR.push({ S, lever, lp, loop, fixed, ctrl, SEG, M, pts, slack: src.slack, out: S === 'R' ? -1 : src.out, colors: [C.red, C.wireBlack, w.color], len: 0 });
   }
-  const WRAD = 3;
+  const WRAD = 4;
   let wv = 0, wi = 0;
   for (const r of WR) { r.v0 = wv; wv += r.M * WRAD * 3; wi += (r.M - 1) * WRAD * 6 * 3; }
   const wg = new T.BufferGeometry();
@@ -636,101 +674,234 @@ function createDetails(T, { P, toM, base, m, mirror, mirrorDir, rzR, legible = f
 }
 
 // ======================================================= accent: the aircraft
-// A generic high-wing light aircraft, about 1 unit of span, nose +Z, up +Y.
-// Merged per material: 3 draw calls plus the faint propeller disc.
-export function createAccent({ THREE: T = THREE, quality = 'high' } = {}) {
-  const seg = quality === 'low' ? 6 : 8;
-  const parts = { white: [], dark: [], accent: [] };
-  const add = (key, geo, pos = [0, 0, 0], rot = [0, 0, 0], scale = [1, 1, 1]) => {
-    const o = new T.Object3D(); o.position.set(...pos); o.rotation.set(...rot); o.scale.set(...scale); o.updateMatrix();
-    parts[key].push(geo.applyMatrix4(o.matrix));
-  };
-  const box = (w, h, d) => new T.BoxGeometry(w, h, d);
-  const cyl = (r0, r1, len, s = seg) => new T.CylinderGeometry(r1, r0, len, s, 1);   // from r0 (-y) to r1 (+y)
-  const X = Math.PI / 2;
-  // fuselage: cowling and cabin, tapering tail cone
-  add('white', cyl(.062, .05, .2), [0, 0, .22], [X, 0, 0], [1, 1.12, 1]);
-  add('white', cyl(.07, .062, .22), [0, .004, .01], [X, 0, 0], [1, 1.25, 1]);
-  add('white', cyl(.016, .07, .5), [0, .03, -.35], [X, 0, 0], [1, 1.1, 1]);
-  add('dark', box(.142, .05, .16), [0, .045, .04]);                                  // cabin glass band
-  add('dark', cyl(.03, .012, .05, 6), [0, 0, .345], [X, 0, 0]);                     // spinner
-  // high wing with a little dihedral, struts, tail
-  add('white', box(.5, .016, .15), [.25, .1, .03], [0, 0, .045]);
-  add('white', box(.5, .016, .15), [-.25, .1, .03], [0, 0, -.045]);
-  add('accent', box(.05, .017, .15), [.49, .111, .03], [0, 0, .045]);
-  add('accent', box(.05, .017, .15), [-.49, .111, .03], [0, 0, -.045]);
-  add('white', box(.24, .008, .022), [.12, .035, .04], [0, 0, .5]);
-  add('white', box(.24, .008, .022), [-.12, .035, .04], [0, 0, -.5]);
-  add('white', box(.34, .012, .085), [0, .04, -.56]);
-  add('white', box(.012, .13, .1), [0, .1, -.57], [-.28, 0, 0]);
-  add('accent', box(.013, .03, .07), [0, .17, -.6], [-.28, 0, 0]);
-  // fixed gear
-  add('dark', box(.012, .07, .012), [.06, -.075, .1], [0, 0, -.45]);
-  add('dark', box(.012, .07, .012), [-.06, -.075, .1], [0, 0, .45]);
-  add('dark', cyl(.022, .022, .014, 8), [.085, -.105, .1], [0, 0, X]);
-  add('dark', cyl(.022, .022, .014, 8), [-.085, -.105, .1], [0, 0, X]);
-  const MATS = {
-    white: { color: 0xe9e7e2, roughness: .62, metalness: 0 },
-    dark: { color: 0x2a2d33, roughness: .5, metalness: 0 },
-    accent: { color: 0xbe825a, roughness: .64, metalness: 0 },
-  };
-  const group = new T.Group(), geos = [], mats = [];
-  group.name = KEY + ':aircraft';
-  for (const [k, list] of Object.entries(parts)) {
-    const geo = mergeGeometries(T, list);
-    const mat = new T.MeshStandardMaterial(MATS[k]);
-    geos.push(geo); mats.push(mat);
-    group.add(new T.Mesh(geo, mat));
+// A generic high-wing light aircraft, no markings, about 1 unit of span, nose +Z, up +Y, left wing +X. Lofted
+// surfaces with smooth normals: a fuselage with a windscreen, side and rear glass, a wing with an airfoil section,
+// taper and rounded tips, struts, a tailplane with its elevator, a fin with a separate rudder, fixed tricycle gear,
+// a spinner and a propeller disc. One paint material (vertex colors: white, dark glass, the orange tips, tires), so
+// the airframe is one draw call, the rudder a second and the propeller disc a third.
+//   setProp(angle)    the propeller's angle (rad) from reel time; the disc shows it as a blurred two blade smear
+//   setRudder(angle)  rudder deflection (rad) about its hinge line, + = trailing edge to the aircraft's right (right pedal)
+//   setHaze(k)        0..1 fade toward the paper color with distance (in the shader, so highlights fade too)
+export function createAccent({ THREE: T = THREE } = {}) {
+  const COL = { white: 0xf2f1ed, glass: 0x15181d, accent: 0xbe825a, tire: 0x1c1d20, inlet: 0x2a2d33 };
+  const lerpN = (a, b, t) => a + (b - a) * t;
+  // a lofted grid: at(i, j) -> [x, y, z] for i < nu (round the section), j < nv (stations). Smooth normals (closed
+  // round the section when `wrap`), then one flat color per quad from colorOf(i, j). The material is double sided,
+  // so the winding does not matter.
+  function loft(nu, nv, at, colorOf, wrap = false) {
+    const pos = new Float32Array(nu * nv * 3);
+    for (let j = 0; j < nv; j++) for (let i = 0; i < nu; i++) pos.set(at(i, j), (j * nu + i) * 3);
+    const idx = [], cols = [], cu = wrap ? nu : nu - 1;
+    for (let j = 0; j < nv - 1; j++) for (let i = 0; i < cu; i++) {
+      const a = j * nu + i, b = j * nu + (i + 1) % nu, c = a + nu, d = b + nu;
+      idx.push(a, c, b, b, c, d); cols.push(colorOf(i, j));
+    }
+    const g = new T.BufferGeometry();
+    g.setAttribute('position', new T.BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+    return tint(g, q => cols[q >> 1]);
   }
-  // the propeller: a faint disc and one blade, turned from reel time
-  const discGeo = new T.CircleGeometry(.105, 20), discMat = new T.MeshBasicMaterial({ color: 0x2a2d33, transparent: true, opacity: .14, depthWrite: false, side: T.DoubleSide });
-  const disc = new T.Mesh(discGeo, discMat); disc.position.z = .372; group.add(disc);
-  const bladeGeo = box(.21, .016, .006), blade = new T.Mesh(bladeGeo, mats[1]); blade.position.z = .37; group.add(blade);
-  geos.push(discGeo, bladeGeo); mats.push(discMat);
-  // distance haze: the colors fade toward the paper ground (no fog, no transparency)
-  const baseCol = mats.slice(0, 3).map(m => m.color.clone()), paper = new T.Color(PAPER);
-  let lastHaze = -1;
+  // non-indexed copy with a color per triangle
+  function tint(g, colorOf) {
+    const n = g.index ? g.toNonIndexed() : g;
+    if (n !== g) g.dispose();
+    if (n.attributes.uv) n.deleteAttribute('uv');
+    const count = n.attributes.position.count, c = new Float32Array(count * 3), k = new T.Color();
+    for (let t = 0; t < count / 3; t++) { k.setHex(typeof colorOf === 'function' ? colorOf(t) : colorOf, T.SRGBColorSpace); for (let v = 0; v < 3; v++) c.set([k.r, k.g, k.b], (t * 3 + v) * 3); }
+    n.setAttribute('color', new T.BufferAttribute(c, 3));
+    return n;
+  }
+  const body = [], rud = [];
+
+  // ---- fuselage: sections along z [z, top, bottom, half width, squareness], monotone cubic between them
+  const FUS = [[.325, .020, -.044, .034, 2.3], [.30, .034, -.056, .046, 2.6], [.22, .041, -.064, .052, 2.8], [.14, .045, -.068, .055, 3], [.07, .084, -.068, .055, 3.2],
+    [-.06, .084, -.064, .052, 3.2], [-.14, .054, -.048, .041, 2.8], [-.28, .037, -.018, .023, 2.3], [-.44, .030, .010, .005, 2]];
+  function fus(z, k) {
+    let i = 0; while (i < FUS.length - 2 && z < FUS[i + 1][0]) i++;
+    const sec = j => (FUS[j + 1][k] - FUS[j][k]) / (FUS[j + 1][0] - FUS[j][0]);
+    const tan = j => { if (j === 0) return sec(0); if (j === FUS.length - 1) return sec(j - 1); const a = sec(j - 1), b = sec(j); return a * b <= 0 ? 0 : 2 * a * b / (a + b); };
+    const h = FUS[i + 1][0] - FUS[i][0], t = (z - FUS[i][0]) / h, t2 = t * t, t3 = t2 * t;
+    return (2 * t3 - 3 * t2 + 1) * FUS[i][k] + (t3 - 2 * t2 + t) * h * tan(i) + (-2 * t3 + 3 * t2) * FUS[i + 1][k] + (t3 - t2) * h * tan(i + 1);
+  }
+  const ANG = [-90, -60, -35, -12, 5, 22, 40, 62, 90, 118, 140, 158, 175, 192, 215, 240].map(a => a * Math.PI / 180);
+  const ZS = [.325, .31, .285, .25, .21, .175, .14, .105, .07, .058, 0, -.012, -.06, -.072, -.10, -.13, -.18, -.24, -.30, -.36, -.41, -.44];
+  const section = (z, a) => {
+    const top = fus(z, 1), bot = fus(z, 2), hw = fus(z, 3), e = 2 / fus(z, 4), c = Math.cos(a), s = Math.sin(a);
+    return [hw * Math.sign(c) * Math.pow(Math.abs(c), e), (top + bot) / 2 + (top - bot) / 2 * Math.sign(s) * Math.pow(Math.abs(s), e), z];
+  };
+  const glass = (i, j) => {
+    const z = (ZS[j] + ZS[j + 1]) / 2, side = i === 4 || i === 5 || i === 10 || i === 11, over = i >= 5 && i <= 10;
+    if (z < .14 && z > .07) return over;                              // windscreen, wrapped over the cowl
+    if ((z < .058 && z > 0) || (z < -.012 && z > -.06)) return side;  // side windows between the pillars
+    if (z < -.072 && z > -.10) return side || over;                   // rear glass, wrapped
+    if (z < -.10 && z > -.13) return over;
+    return false;
+  };
+  body.push(loft(16, ZS.length, (i, j) => section(ZS[j], ANG[i]), (i, j) => (glass(i, j) ? COL.glass : COL.white), true));
+  // cowl face (two dark inlets beside the spinner) and the spinner
+  body.push(loft(16, 2, (i, j) => (j ? section(.325, ANG[i]) : [.024 * Math.cos(ANG[i]), -.012 + .024 * Math.sin(ANG[i]), .329]), i => (i === 4 || i === 5 || i === 10 || i === 11 ? COL.inlet : COL.white), true));
+  const SPIN = [[0, 1], [.3, .93], [.6, .74], [.85, .45], [1, .03]];
+  body.push(loft(10, SPIN.length, (i, j) => { const a = i / 10 * Math.PI * 2, r = .026 * SPIN[j][1]; return [r * Math.cos(a), -.012 + r * Math.sin(a), .327 + .05 * SPIN[j][0]]; }, () => COL.white, true));
+
+  // ---- flying surfaces: an airfoil section between chord fractions F[0]..F[n], lofted through stations
+  // station: { o: leading edge [x, y, z], c: chord (toward -z), t: thickness ratio, m: camber, up: thickness direction }
+  const naca = f => 5 * (.2969 * Math.sqrt(f) - .126 * f - .3516 * f * f + .2843 * f * f * f - .1036 * f * f * f * f);
+  function surface(stations, F, colorOf) {
+    const ring = [...F.slice().reverse().map(f => [f, 1]), ...F.slice(F[0] === 0 ? 1 : 0).map(f => [f, -1])];
+    return loft(ring.length, stations.length, (i, j) => {
+      const S = stations[j], [f, sg] = ring[i], h = S.c * ((S.m || 0) * 4 * f * (1 - f) + sg * S.t * naca(f)), up = S.up || [0, 1, 0];
+      return [S.o[0] + up[0] * h, S.o[1] + up[1] * h, S.o[2] - S.c * f + up[2] * h];
+    }, (i, j) => colorOf(j));
+  }
+  const round = (a, a0) => (a <= a0 ? 1 : Math.max(.03, Math.sqrt(Math.max(0, 1 - ((a - a0) / (1 - a0)) ** 2))));
+  // wing: constant chord inboard, tapered outboard, rounded orange tips, a little dihedral, flat-bottomed section
+  const WS = [-1, -.992, -.97, -.94, -.9, -.85, -.68, -.45, 0, .45, .68, .85, .9, .94, .97, .992, 1];
+  const wing = WS.map(s => {
+    const a = Math.abs(s), c = (a <= .45 ? .16 : lerpN(.16, .118, Math.min(1, (a - .45) / .45))) * round(a, .9);
+    const mid = .10 - (a <= .45 ? .16 : lerpN(.16, .118, Math.min(1, (a - .45) / .45))) / 2 - (a > .9 ? .012 * ((a - .9) / .1) ** 2 : 0);
+    return { o: [.54 * s, .091 + .03 * .54 * a, mid + c / 2], c, t: .13, m: .035 };
+  });
+  body.push(surface(wing, [0, .025, .08, .2, .4, .65, 1], j => (Math.abs(WS[j]) >= .85 && Math.abs(WS[j + 1]) >= .85 ? COL.accent : COL.white)));
+  // tailplane and elevator
+  const TS = [-1, -.97, -.88, -.5, 0, .5, .88, .97, 1];
+  const tail = TS.map(s => { const a = Math.abs(s), c = lerpN(.098, .064, a) * round(a, .88); return { o: [.17 * s, .034, -.335 - .02 * a - (lerpN(.098, .064, a) - c) / 2], c, t: .09 }; });
+  body.push(surface(tail, [0, .04, .15, .35, .6], () => COL.white), surface(tail, [.62, .8, 1], () => COL.white));
+  // fin, and the rudder on its own hinge
+  const VS = [0, .3, .6, .86, .95, .99, 1];
+  const fin = VS.map(t => { const c0 = lerpN(.155, .08, t), c = c0 * round(t, .86); return { o: [0, .028 + .145 * t, -.28 - .095 * t - (c0 - c) / 2], c, t: .09, up: [1, 0, 0] }; });
+  const tip = j => (VS[j] >= .86 ? COL.accent : COL.white);
+  body.push(surface(fin, [0, .04, .15, .35, .55], tip));
+  rud.push(surface(fin, [.57, .78, 1], tip));
+  // ---- struts, gear legs (streamlined bars) and wheels
+  function bar(A, B, w0, w1, th, color) {
+    const d = new T.Vector3(B[0] - A[0], B[1] - A[1], B[2] - A[2]), n = new T.Vector3().crossVectors(d, new T.Vector3(0, 0, 1)).normalize();
+    return loft(6, 2, (i, j) => { const a = i / 6 * Math.PI * 2, w = j ? w1 : w0, P = j ? B : A; return [P[0] + n.x * th * Math.sin(a), P[1] + n.y * th * Math.sin(a), P[2] + w * Math.cos(a)]; }, () => color, true);
+  }
+  const wheel = (r, w, at) => tint(new T.CylinderGeometry(r, r, w, 12).rotateZ(Math.PI / 2).translate(...at), COL.tire);
+  for (const sx of [1, -1]) {
+    body.push(bar([sx * .05, -.05, .042], [sx * .235, .09, .04], .011, .009, .0032, COL.white));          // wing strut
+    body.push(bar([sx * .03, -.062, -.006], [sx * .112, -.134, -.006], .016, .009, .004, COL.white));      // main gear leg
+    body.push(wheel(.021, .013, [sx * .118, -.136, -.006]));
+  }
+  body.push(bar([.0001, -.05, .262], [0, -.128, .268], .005, .004, .004, COL.white), wheel(.018, .011, [0, -.132, .268]));
+
+  // ---- one glossy paint material (vertex colors), fading toward the paper with distance
+  const haze = { value: 0 }, paper = new T.Color(PAPER);
+  const mat = new T.MeshPhysicalMaterial({ color: 0xffffff, vertexColors: true, roughness: .3, metalness: 0, clearcoat: .45, clearcoatRoughness: .2, side: T.DoubleSide });
+  mat.onBeforeCompile = sh => {
+    sh.uniforms.accentHaze = haze; sh.uniforms.accentPaper = { value: new T.Vector3(...paper.clone().convertLinearToSRGB().toArray()) };
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float accentHaze;\nuniform vec3 accentPaper;')
+      .replace('#include <colorspace_fragment>', '#include <colorspace_fragment>\ngl_FragColor.rgb = mix(gl_FragColor.rgb, accentPaper, accentHaze);');
+  };
+  mat.customProgramCacheKey = () => 'accentHaze';
+  const group = new T.Group();
+  group.name = KEY + ':aircraft';
+  const bodyGeo = mergeGeometries(T, body), airframe = new T.Mesh(bodyGeo, mat);
+  airframe.name = 'airframe'; group.add(airframe);
+  // the rudder turns about its hinge line (the fin's 57% chord line, raked back): the mesh lives in the hinge's frame
+  const h0 = [0, fin[0].o[1], fin[0].o[2] - .57 * fin[0].c], h1 = [0, fin[3].o[1], fin[3].o[2] - .57 * fin[3].c];
+  const rake = Math.atan2(h0[2] - h1[2], h1[1] - h0[1]);
+  const rudGeo = mergeGeometries(T, rud).translate(-h0[0], -h0[1], -h0[2]).rotateX(rake);
+  const rudder = new T.Mesh(rudGeo, mat);
+  rudder.name = 'rudder'; rudder.position.set(...h0); rudder.rotation.set(-rake, 0, 0); group.add(rudder);
+  // the propeller: a disc that reads as two blades smeared over the exposure, turning slowly (the camera's shutter beat)
+  const PR = .098;
+  const discGeo = new T.CircleGeometry(PR, 28);
+  const discMat = new T.ShaderMaterial({
+    transparent: true, depthWrite: false, side: T.DoubleSide,
+    uniforms: { uA: { value: 0 }, uO: { value: 1 } },
+    vertexShader: 'varying vec2 vP; void main() { vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: `varying vec2 vP; uniform float uA, uO;
+      void main() {
+        float r = length(vP) / ${PR.toFixed(3)}, a = atan(vP.y, vP.x);
+        float blades = pow(0.5 + 0.5 * cos(2.0 * (a - uA)), 3.0);
+        float al = smoothstep(1.0, 0.94, r) * smoothstep(0.16, 0.26, r) * (0.085 + 0.2 * blades * (1.0 - 0.6 * r)) + 0.07 * smoothstep(0.04, 0.0, abs(r - 0.95));
+        gl_FragColor = vec4(0.13, 0.14, 0.16, al * uO);
+      }`,
+  });
+  const disc = new T.Mesh(discGeo, discMat);
+  disc.name = 'propDisc'; disc.position.set(0, -.012, .345); disc.renderOrder = 1; group.add(disc);
   return {
-    group, span: 1.08,
-    setProp(a) { blade.rotation.z = a; },
-    setHaze(k) {
-      if (Math.abs(k - lastHaze) < .004) return;
-      lastHaze = k;
-      mats.slice(0, 3).forEach((m, i) => m.color.copy(baseCol[i]).lerp(paper, k));
-      discMat.opacity = .14 * (1 - k);
-    },
-    dispose() { for (const g of geos) g.dispose(); for (const m of mats) m.dispose(); },
+    group, span: 1.08, material: mat, rudder,
+    setProp(a) { discMat.uniforms.uA.value = (a * .06) % (Math.PI * 2); },
+    setRudder(a) { rudder.rotation.y = a; },
+    setHaze(k) { haze.value = k; discMat.uniforms.uO.value = 1 - k; },   // every frame: a skip threshold made it depend on the seek path
+    dispose() { bodyGeo.dispose(); rudGeo.dispose(); discGeo.dispose(); mat.dispose(); discMat.dispose(); },
   };
 }
 
-// Concatenate non-indexed copies of geometries (position + normal only).
+// Concatenate non-indexed copies of geometries (position + normal, and color when every one has it).
 function mergeGeometries(T, list) {
-  const flat = list.map(g => { const n = g.index ? g.toNonIndexed() : g; n.deleteAttribute('uv'); return n; });
-  const count = flat.reduce((s, g) => s + g.attributes.position.count, 0);
-  const pos = new Float32Array(count * 3), nrm = new Float32Array(count * 3);
+  const flat = list.map(g => { const n = g.index ? g.toNonIndexed() : g; if (n.attributes.uv) n.deleteAttribute('uv'); return n; });
+  const count = flat.reduce((s, g) => s + g.attributes.position.count, 0), colored = flat.every(g => g.attributes.color);
+  const pos = new Float32Array(count * 3), nrm = new Float32Array(count * 3), col = colored ? new Float32Array(count * 3) : null;
   let o = 0;
-  for (const g of flat) { pos.set(g.attributes.position.array, o * 3); nrm.set(g.attributes.normal.array, o * 3); o += g.attributes.position.count; }
+  for (const g of flat) { pos.set(g.attributes.position.array, o * 3); nrm.set(g.attributes.normal.array, o * 3); if (col) col.set(g.attributes.color.array, o * 3); o += g.attributes.position.count; }
   for (const g of list) g.dispose();
+  for (const g of flat) g.dispose();
   const out = new T.BufferGeometry();
   out.setAttribute('position', new T.BufferAttribute(pos, 3));
   out.setAttribute('normal', new T.BufferAttribute(nrm, 3));
+  if (col) out.setAttribute('color', new T.BufferAttribute(col, 3));
   out.computeBoundingSphere();
   return out;
 }
 
-// eased key interpolation at time u: keys [[t, v], ...] (pure)
-function keyed(K, u) {
+// A spring return, 0 -> 1 over the segment: the foot eases off over the first `ramp` of it and a damped
+// spring (ratio `zeta`, natural frequency `wn` per segment) follows, overshoots a little and settles exactly
+// on 1. Tabulated once at load (a constant), read by linear interpolation: pure.
+function springCurve(zeta, wn, ramp, N = 240) {
+  const f = new Float32Array(N + 1), sub = 16, h = 1 / N / sub, ss = t => { t = clamp01(t); return t * t * (3 - 2 * t); };
+  let x = 0, vel = 0;
+  for (let i = 1; i <= N; i++) {
+    for (let k = 0; k < sub; k++) { const t = ((i - 1) * sub + k) * h; vel += (wn * wn * (ss(t / ramp) - x) - 2 * zeta * wn * vel) * h; x += vel * h; }
+    f[i] = x;
+  }
+  const e = 1 - f[N];
+  for (let i = 0; i <= N; i++) f[i] += e * ss(i / N);
+  return t => { const x2 = clamp01(t) * N, i = Math.min(N - 1, Math.floor(x2)); return lerp(f[i], f[i + 1], x2 - i); };
+}
+const SPRING = springCurve(.5, 15, .3);     // pedals back to center: about 10 percent past it, then settled
+const REBOUND = springCurve(.55, 16, .35);  // toe brake onto its rest: a rebound of about 6 percent
+const SETTLE = springCurve(.6, 16, .25);    // an assembled part set down: a small lift off its seat, then still
+// the push of a foot: slow while the weight comes on, then firm, then a soft arrival at full travel
+const PRESS = t => (t < .5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
+
+// eased key interpolation at time u: keys [[t, v, how], ...] (pure). `how` shapes the segment ending at
+// that key: default `def`, 'spring' (overshoots its target and settles), 'land' (rebounds off its target).
+function keyed(K, u, def = ease.inOutSine) {
   if (u <= K[0][0]) return K[0][1];
   for (let i = 1; i < K.length; i++) {
-    const [t1, v1] = K[i], [t0, v0] = K[i - 1];
-    if (u < t1) return lerp(v0, v1, ease.inOutSine((u - t0) / (t1 - t0)));
+    const [t1, v1, how] = K[i], [t0, v0] = K[i - 1];
+    if (u >= t1) continue;
+    const x = (u - t0) / (t1 - t0);
+    if (how === 'spring') return lerp(v0, v1, SPRING(x));
+    if (how === 'land') return v1 + (v0 - v1) * Math.abs(1 - REBOUND(x));
+    return lerp(v0, v1, def(x));
   }
   return K[K.length - 1][1];
 }
-const driveAt = u => keyed(PROGRAM, u);   // pedal drive at ACTION time u
+const driveAt = u => keyed(PROGRAM, u, PRESS);   // pedal drive at ACTION time u
+
+// The aircraft's answer to the pedals, tabulated once over ACTION time (pure lookups): each channel follows
+// the sensor lever angle (drive x PHI) through a critically damped lag, the rudder fastest, then the nose,
+// then the bank. `turn` is the heading rate's share (the bank, normalized) for the sideways weave.
+const RDT = 1 / 120, R0 = -1, RN = Math.ceil((SEQUENCE[2][1] + 2) / RDT);
+const REPLY = (() => {
+  const out = { rudder: new Float32Array(RN + 1), yaw: new Float32Array(RN + 1), bank: new Float32Array(RN + 1) };
+  for (const k of Object.keys(out)) {
+    const tau = RESPONSE.tau[k], g = RESPONSE[k], sub = 8, h = RDT / sub;
+    let x = 0, vel = 0;
+    for (let i = 0; i <= RN; i++) {
+      for (let j = 0; j < sub; j++) { const target = g * driveAt(R0 + i * RDT + j * h) * PHI; vel += ((target - x) / (tau * tau) - 2 * vel / tau) * h; x += vel * h; }
+      out[k][i] = x;
+    }
+  }
+  return out;
+})();
+const reply = (k, u) => { const x = clamp01((u - R0) / (RN * RDT)) * RN, i = Math.min(RN - 1, Math.floor(x)); return lerp(REPLY[k][i], REPLY[k][i + 1], x - i); };
 // the mechanism's pose at ACTION time u (review page "play motion")
 export const ACTION_SECONDS = SEQUENCE[2][1];
-export function actionPose(u) { return { drive: driveAt(u), toeL: keyed(TOE_L, u), toeR: keyed(TOE_R, u) }; }
+export function actionPose(u) { return { drive: driveAt(u), toeL: keyed(TOE_L, u, PRESS), toeR: keyed(TOE_R, u, PRESS) }; }
 
 // ==================================================================== actor
 export async function createActor(ctx) {
@@ -748,10 +919,7 @@ export async function createActor(ctx) {
   view.rotation.set(VIEW.x, VIEW.y, 0);
   view.add(model.group);
   flight.add(plane.group);
-  const shadow = contactShadow(model.footprint * 1.45);
-  shadow.rotation.z = Math.PI / 2; shadow.scale.y = .62;   // narrower fore-aft than across the walls
-  shadow.position.y = .0005;
-  view.add(shadow);
+  let dress = null, shadow = null;   // the studio look (look.js) and its contact shadows; without it, the baked decal
   root.visible = true; stage.visible = false; flight.visible = false;
   root.updateMatrixWorld(true);
 
@@ -781,7 +949,7 @@ export async function createActor(ctx) {
   });
   const N = parts.length;
 
-  const REST = { p: 0, drive: 0, toeL: 0, toeR: 0, growS: 0, growW: 0, shadow: 0, yaw: 0, zoom: 0, fly: -1, flyExtra: 0, flyOut: 0, flyFade: 0 };
+  const REST = { p: 0, land: 0, drive: 0, toeL: 0, toeR: 0, growS: 0, growW: 0, shadow: 0, yaw: 0, zoom: 0, fly: -1, flyExtra: 0, flyOut: 0, flyFade: 0 };
   const v = { ...REST }, a0 = { ...REST };
   let dist = 2;
   const q = new THREE.Quaternion(), tmp = new THREE.Vector3(), piv = new THREE.Vector3();
@@ -795,7 +963,7 @@ export async function createActor(ctx) {
   const passes = FLIGHT.passes.map(([t0, t1]) => {
     const n = Math.ceil((t1 - t0) / DT) + 1, lat = new Float32Array(n);
     let psi = 0, x = 0;
-    for (let i = 0; i < n; i++) { psi += -FLIGHT.turn * driveAt(t0 + i * DT - FLIGHT.lag) * DT; x += Math.sin(psi) * DT; lat[i] = x; }
+    for (let i = 0; i < n; i++) { psi += -FLIGHT.turn * reply('bank', t0 + i * DT) / (RESPONSE.bank * PHI) * DT; x += Math.sin(psi) * DT; lat[i] = x; }
     let mx = 1e-6; for (const v2 of lat) mx = Math.max(mx, Math.abs(v2));
     for (let i = 0; i < n; i++) lat[i] /= Math.max(mx, .6);   // about -1..1 (small turns stay small)
     return { t0, t1, n, lat, x: new Float32Array(n), y: new Float32Array(n), z: new Float32Array(n), haze: new Float32Array(n), px: new Float32Array(n), py: new Float32Array(n), span: new Float32Array(n) };
@@ -831,11 +999,11 @@ export async function createActor(ctx) {
           shape(P, xs, xe, ys, ym, i / 39, o);
           const m = o.sp * .55;
           if (o.y + m < 0) break;                                     // gone past the top edge
-          if (o.x < -m || o.x > w + m) { bad = true; break; }         // only the top edge is a way out
+          if (o.x - o.sp * .5 < free.l - 10 || o.x + o.sp * .5 > free.r + 10) { bad = true; break; }   // only the top edge is a way out (the canvas overhangs the page)
           seen++;
           if (o.y + m * .5 > mid) { bad = true; break; }             // upper half only
           if (wr) { const dd = rectDist(wr, o.x, o.y); if (dd < m) { bad = true; break; } near = Math.min(near, dd); }
-          if (objBox && rectDist(objBox, o.x, o.y) < m * .4) behind++;
+          if (objBox && rectDist(objBox, o.x, o.y) < m) behind++;              // its whole span clear of the pedals
         }
         if (bad || seen < 12) continue;
         const side = Math.sign(xe - w / 2);
@@ -868,23 +1036,24 @@ export async function createActor(ctx) {
     fwd.set(P.x[i + 1] - P.x[i], P.y[i + 1] - P.y[i], P.z[i + 1] - P.z[i]);
     const speed = fwd.length() / DT || 1; fwd.normalize();
     if (extra) { x += fwd.x * speed * extra; y += fwd.y * speed * extra; z += fwd.z * speed * extra; }
-    // rudder yaws the nose into the turn, the wings bank with it
-    fwd.applyAxisAngle(Yup, -FLIGHT.yaw * driveAt(u - FLIGHT.lag * .6));
+    // the rudder swings first, the nose follows it into the turn, the wings bank a beat later
+    fwd.applyAxisAngle(Yup, -reply('yaw', u));
     side.crossVectors(fwd, Yup).normalize();                           // right wing
     up.crossVectors(side, fwd).normalize();
-    qb.setFromAxisAngle(fwd, FLIGHT.bank * driveAt(u - FLIGHT.lag)); up.applyQuaternion(qb);
+    qb.setFromAxisAngle(fwd, reply('bank', u)); up.applyQuaternion(qb);
     side.crossVectors(up, fwd).normalize();                            // local +X (left wing)
     mtx.makeBasis(side, up, fwd);
     plane.group.quaternion.setFromRotationMatrix(mtx);
     plane.group.position.set(x, y, z);
     plane.group.scale.setScalar(path.scale * (1 - .9 * fade));
     plane.setProp(u * 47 + extra * 47);
+    plane.setRudder(reply('rudder', u));                               // the rudder surface answers the pedals at once
     plane.setHaze(lerp(P.haze[i], P.haze[i + 1], k));
     return true;
   }
 
   function apply() {
-    model.setProgress(v.p);
+    model.setProgress(v.p, v.land);
     model.setDrive(v.drive);
     model.setToe(v.toeL, v.toeR);
     model.setGrow(v.growS, v.growW);
@@ -899,7 +1068,7 @@ export async function createActor(ctx) {
       P.wrap.quaternion.copy(q);
       P.wrap.position.copy(P.dir).multiplyScalar(dist * P.f * (1 + P.delay)).add(piv).sub(tmp);
     }
-    shadow.material.opacity = .32 * v.shadow;
+    if (dress) { dress.setShadow(clamp01(v.shadow * 3)); dress.frame(); } else if (shadow) shadow.material.opacity = .32 * v.shadow;
     stage.visible = any;
     flight.visible = v.fly >= 0 && v.flyOut < 1 && posePlane(v.fly, v.flyExtra, v.flyFade);
     model.refresh();   // springs and wires follow their anchors (only when something moved)
@@ -918,14 +1087,18 @@ export async function createActor(ctx) {
     stage.scale.setScalar(S); stage.position.set(0, 0, 0);
     let ext = { l: 0, r: 0, u: 0, d: 0 };
     for (const P of parts) P.explode.copy(P.ex0);
+    // assembled: across the turn, with the pedals at both ends of their travel and the toe brakes pressed
+    const poses = [[0, 0], [1, 0], [-1, 0], [0, 1]];
     const measure = p => {
       let x = { l: 0, r: 0, u: 0, d: 0 };
       for (const y of (p === 1 ? [VIEW.drift, -VIEW.drift, VIEW.side * .5, VIEW.side + VIEW.drift, VIEW.side - VIEW.drift] : [VIEW.drift, -VIEW.drift])) {
-        v.p = p; v.yaw = y; v.zoom = VIEW.zoom * clamp01((y - VIEW.drift) / (VIEW.side - 2 * VIEW.drift)); apply();
-        const e = screenExtents([model.group], stage, camera, w, h);
-        x = { l: Math.max(x.l, e.l), r: Math.max(x.r, e.r), u: Math.max(x.u, e.u), d: Math.max(x.d, e.d) };
+        for (const [d, t] of (p === 1 ? poses : [[0, 0]])) {
+          v.p = p; v.yaw = y; v.drive = d; v.toeL = v.toeR = t; v.zoom = VIEW.zoom * clamp01((y - VIEW.drift) / (VIEW.side - 2 * VIEW.drift)); apply();
+          const e = screenExtents([model.group], stage, camera, w, h);
+          x = { l: Math.max(x.l, e.l), r: Math.max(x.r, e.r), u: Math.max(x.u, e.u), d: Math.max(x.d, e.d) };
+        }
       }
-      v.zoom = 0;
+      v.zoom = 0; v.drive = 0; v.toeL = v.toeR = 0;
       return x;
     };
     ext = measure(1);
@@ -1019,10 +1192,11 @@ export async function createActor(ctx) {
     }
     const open = ease.inOutSine(win(T, O.t0 + .2, O.t0 + 1.25));        // opens before the parts leave
     v.p = ease.inOutSine(win(T, A.t0 - .15, A.t1 - .1)) * (1 - open);
+    v.land = T < O.t0 ? 1 : 0;                                          // parts settle as they are set down, not as they leave
     const u = T - X.t0;
     v.drive = T >= X.t0 && T <= X.t1 ? driveAt(u) : 0;
-    v.toeL = T >= X.t0 && T <= X.t1 ? keyed(TOE_L, u) : 0;
-    v.toeR = T >= X.t0 && T <= X.t1 ? keyed(TOE_R, u) : 0;
+    v.toeL = T >= X.t0 && T <= X.t1 ? keyed(TOE_L, u, PRESS) : 0;
+    v.toeR = T >= X.t0 && T <= X.t1 ? keyed(TOE_R, u, PRESS) : 0;
     // springs hook on as the last parts land, then the wires run to the board; both let go before the assembly opens
     const off = 1 - ease.inOutSine(win(T, O.t0, O.t0 + .3));
     v.growS = ease.inOutSine(win(T, A.t1 - .35, A.t1 + .35)) * off;
@@ -1072,20 +1246,34 @@ export async function createActor(ctx) {
     try { await renderer.compileAsync(root, camera, scene); } catch (e) { /* compiles on first draw instead */ }
     const seen = new Set();
     const upload = t => { if (t && t.isTexture && !seen.has(t)) { seen.add(t); renderer.initTexture(t); } };
-    root.traverse(o => { for (const m of [].concat(o.material || [])) for (const k in m) upload(m[k]); });
+    root.traverse(o => { for (const m of [].concat(o.material || [])) { for (const k in m) upload(m[k]); upload(m.userData && m.userData.lookMicroMap); } });
     for (const o of hidden) o.visible = false;
     reset();
   }
   function reset() { for (const P of parts) P.f = 1; Object.assign(v, REST); apply(); }
   function update() {}
 
+  // LOOK (look.js): studio environment, tone, real materials, rounded edges and contact shadows, for this actor
+  // only. It measures the shadow proxies now, so the parts stand assembled and upright while it runs. If the
+  // module does not load or fails, the actor keeps the plain materials above and the baked decal.
+  for (const P of parts) P.f = 0;
+  Object.assign(v, REST, { p: 1 }); apply();
+  try { dress = await (await import('./look.js')).dressRudderPedals({ engine, quality, view, model, plane, parts }); }
+  catch (e) { console.warn('[reel] rudder pedals: look failed, using the shared rig', e); }
+  if (!dress) {
+    shadow = contactShadow(model.footprint * 1.45);
+    shadow.rotation.z = Math.PI / 2; shadow.scale.y = .62;   // narrower fore-aft than across the walls
+    shadow.position.y = .0005;
+    view.add(shadow);
+  }
   reset();
   engine.adopt(root);
   return {
     group: root, sequence: SEQUENCE, layout, sample, beginAbort, sampleAbort, abortSeconds: ABORT_S, reset, update, prewarm,
     get visible() { return stage.visible || flight.visible; },
+    get dress() { return dress; },
     model, accent: plane, parts, values: v, path, get frame() { return lastLayout; }, get explodeScale() { return explodeScale; }, get explodeKey() { return explodeKey; },
-    dispose() { model.dispose(); plane.dispose(); shadow.geometry.dispose(); shadow.material.map.dispose(); shadow.material.dispose(); root.removeFromParent(); },
+    dispose() { if (dress) dress.dispose(); model.dispose(); plane.dispose(); if (shadow) { shadow.geometry.dispose(); shadow.material.map.dispose(); shadow.material.dispose(); } root.removeFromParent(); },
   };
 }
 
@@ -1095,7 +1283,7 @@ function rectDist(r, x, y) {
   return Math.hypot(dx, dy);
 }
 
-// Soft round contact shadow (the same decal index.js uses for Therma-Shift).
+// Soft round contact shadow: only when the studio look (look.js) is not available.
 function contactShadow(size) {
   const c = document.createElement('canvas'); c.width = c.height = 128;
   const g = c.getContext('2d'), grd = g.createRadialGradient(64, 64, 8, 64, 64, 62);

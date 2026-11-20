@@ -196,11 +196,13 @@ const LOOPS = {
       if (actor.cable) actor.cable.showIn(1e3);               // plugged in and at rest the whole loop
       if (m.seg === 4) actor.coaster.setPlateTemperature(lerp(11, 22, ease.inOutSine(m.u)));   // back to neutral before the mug
     },
-    objects: () => actor.coaster.group.parent.children.filter(o => o.visible && !(actor.cable && o === actor.cable.group)),
+    // the coaster sits on its own turn group now; the mug and the can are its siblings one level up (the look's
+    // ground plane is not part of the product)
+    objects: () => { const turn = actor.coaster.group.parent; return [actor.coaster.group, ...turn.parent.children.filter(o => o !== turn && o.visible && o.name !== 'lookGround')]; },
   },
 };
 // where each product sits and how much of the frame it may fill (the tile shows the clip with feathered edges)
-const FIT = { 'robo-catcher': { fill: [.78, .8], at: [.5, .52] }, 'rudder-pedals': { fill: [.7, .8], at: [.5, .52] }, 'therma-shift': { fill: [.58, .68], at: [.55, .58] } };
+const FIT = { 'robo-catcher': { fill: [.78, .8], at: [.5, .52] }, 'rudder-pedals': { fill: [.7, .8], at: [.5, .52] }, 'therma-shift': { fill: [.5, .5], at: [.55, .6] } };
 
 async function setup(key, w, h) {
   Object.assign(box.style, { width: w + 'px', height: h + 'px' });

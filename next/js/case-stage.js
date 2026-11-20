@@ -21,8 +21,8 @@
 // view in place, closes, and shows what it does. The loop never repeats the opening.
 //   Therma-Shift   opens and closes, the USB-C cable plugs in, the mug warms (orange plate),
 //                  the silver can chills (blue plate); loop: mug, warm, can, chill, cable stays in
-//   Robo-Catcher   opens and closes; loop: the ball arcs into the net, rolls to the feeder, the
-//                  indexer turns it over, the flywheels throw it back out, the wheels spin down
+//   Robo-Catcher   opens and closes; loop: two balls (a toss and a ground ball) into the net, to the feeder, the
+//                  indexer turns each over, the flywheels throw them back out, the wheels spin down
 //   Rudder pedals  opens and closes (springs and wires come off first, go back on last); loop:
 //                  the hero's pedal beat, rudder both ways, the side turn that shows the springs,
 //                  Hall sensors and wiring, each toe brake. The aircraft stays out at this size
@@ -68,23 +68,11 @@ const ADAPTERS = {
     load: () => import('./showreel/robo-catcher.js').then(m => m.createActor),
     free: { land: [.08, .05, .08, .05], port: [.04, .08, .04, .08] }, grow: { land: 1.5, port: 1.4 }, fit: true,
     plan(S, actor) {
-      const AS = S.ROBO_ASSEMBLE, Pt = S.ROBO_PITCH, Fd = S.ROBO_FEED, Ix = S.ROBO_INDEX, Th = S.ROBO_THROW;
+      const AS = S.ROBO_ASSEMBLE, Pt = S.ROBO_PITCH, Th = S.ROBO_THROW2;
       const model = actor.model, v = actor.values;
-      // flywheel speed, measured from the actor itself while it holds full speed (rad/s)
-      actor.sample(Ix.t0 + .7, S); const a0 = v.top;
-      actor.sample(Ix.t0 + .8, S); const w = (v.top - a0) / .1;
-      // the actor's spin profile: up while the ball is fed, full for the throw, down after it
-      const t0 = Fd.t0 + .4, t1 = Ix.t0 + .6, t2 = Th.t1 - .1, t3 = Th.t1 + 1.2;
-      const spin = T => {
-        if (T <= t0) return 0;
-        const up = (t1 - t0) / 2 * w;
-        if (T < t1) return w * (T - t0) ** 2 / (2 * (t1 - t0));
-        if (T < t2) return up + w * (T - t1);
-        const hold = up + w * (t2 - t1);
-        if (T < t3) { const s = T - t2; return hold + w * s - w * s * s / (2 * (t3 - t2)); }
-        return hold + w * (t3 - t2) / 2;
-      };
-      const full = spin(1e3), TAIL = 1.6;
+      // both balls: the cycle runs from the first pitch to the second throw; the flywheel angles are the actor's own
+      // (spin up, a dip at each grip, spin down after), carried on from pass to pass
+      const full = actor.wheels(1e3, S), TAIL = 1.6;
       return {
         intro: [
           { tag: 'open', d: 2.2, T0: AS.t1, T1: AS.t0 },
@@ -97,12 +85,12 @@ const ADAPTERS = {
           { tag: 'tail', d: TAIL, T0: Th.t1 - 1e-3, T1: Th.t1 - 1e-3 },
         ],
         post(a, at) {
-          // the wheels spin down after the throw (the hero opens the machine there) and keep their angle
-          // from pass to pass; the indexer turns on by half a turn each pass (its two chambers are alike)
+          // the wheels spin down after the second throw (the hero opens the machine there) and keep their angle from
+          // pass to pass; the indexer makes two half turns per pass, so it starts each pass where it left off
           const T = at.tag === 'tail' ? Th.t1 + at.u * TAIL : at.T;
-          const ang = at.pass * full + spin(T);
-          model.setSpin(ang, ang);
-          model.setIndex(v.idx + at.pass * Math.PI);
+          const w = actor.wheels(T, S);
+          model.setSpin(at.pass * full[0] + w[0], at.pass * full[1] + w[1]);
+          model.setIndex(v.idx);
         },
       };
     },
@@ -132,7 +120,8 @@ const ADAPTERS = {
           if (at.T >= X.t0) view.rotation.y -= (at.T - X.t0) / (X.t1 - X.t0) * (y1 - y0);
           const v = actor.values;
           // springs and wires are on at the start pose and through every loop; they come off first when it opens
-          if (at.tag === 'open') grow(Math.max(v.growS, 1 - smooth(at.u / .3)));
+          // opening is the assembly played backwards: a plain ease here, not the set-down settle it ends on in the hero
+          if (at.tag === 'open') { model.setProgress(v.p); grow(Math.max(v.growS, 1 - smooth(at.u / .3))); }
           else if (at.tag === 'beat') grow(1);
         },
       };
@@ -140,23 +129,31 @@ const ADAPTERS = {
   },
   // further down the Therma-Shift page, in "The design" card (in place of the old airflow illustration): the
   // stack opened in place (top plate, Peltier module, heatsink, blower, board, case) and held while the same
-  // plate runs hot (orange), then cold (blue): one module, both modes, by the direction of the current. Then it
-  // closes and opens again. Starts (and so the still) on the open stack at room temperature.
+  // plate runs hot, then cold: one module, both modes, by the direction of the current. With the studio look
+  // (showreel/look.js) the plate does not change color: hot shows as a faint warm tint in its reflection, cold
+  // as dew and fine frost from the edge. Then it closes and opens again. Starts (and so the still) on the open stack at room temperature.
   'therma-shift:stack': {
     load: () => import('./showreel/index.js').then(m => m.createThermaShift),
     free: { land: [.06, .04, .06, .04], port: [.05, .04, .05, .04] }, grow: { land: 1.25, port: 1.2 },
     plan(S, actor) {
       const A = S.ASSEMBLE, open = A.t0, shut = A.t1;
       const hold = (tag, d) => ({ tag, d, T0: open, T1: open });
+      const loop = [
+        hold('rest', .9), hold('warm', 3.2), hold('cool', 3.6), hold('back', 1.6),
+        { tag: 'close', d: 2.2, T0: open, T1: shut }, { tag: 'shut', d: 1.2, T0: shut, T1: shut },
+        { tag: 'open', d: 2.4, T0: shut, T1: open },
+      ];
+      // where each segment starts in the loop, for the slow sway of the stack (0 at the loop's start: the still)
+      const at0 = {}, loopD = loop.reduce((s, g) => (at0[g.tag] = s, s + g.d), 0);
       return {
         intro: [],
-        loop: [
-          hold('rest', .9), hold('warm', 3.2), hold('cool', 3.6), hold('back', 1.6),
-          { tag: 'close', d: 2.2, T0: open, T1: shut }, { tag: 'shut', d: 1.2, T0: shut, T1: shut },
-          { tag: 'open', d: 2.4, T0: shut, T1: open },
-        ],
+        loop,
         post(a, at) {
           if (a.cable) a.cable.hide();                             // the cable plugs in after ASSEMBLE: not here
+          // the stack holds one reel time, so it turns on page time: out 7 degrees and back over each loop
+          if (a.turnTo) a.turnTo(7 * Math.PI / 180 * Math.sin(Math.PI * (at0[at.tag] + at.u * (loop.find(g => g.tag === at.tag) || { d: 0 }).d) / loopD) ** 2);
+          // the plate frosts with its own temperature here (the reel drives frost on its own clock)
+          if (a.coaster.setFrost) a.coaster.setFrost(null);
           const e = smooth, u = at.u;
           const temp = at.tag === 'warm' ? 22 + 33 * e(u / .7)
             : at.tag === 'cool' ? 55 - 44 * e(u / .75)

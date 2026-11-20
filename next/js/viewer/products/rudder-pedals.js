@@ -18,8 +18,9 @@
 // share it, so a picked part never fades out with its neighbours.
 //
 // Card text: the review page's approved part notes and the case page (content/projects/
-// rudder-pedals.json); no other facts. The controller is an ESP board (owner), not the Pro Micro
-// the case page still names.
+// rudder-pedals.json), and what the owner has stated since: the controller is an ESP board, not the
+// Pro Micro the case page still names; the travel (17 degrees a lever, 30 the sensor lever, 21 the toe
+// brake: the review page still has the older figures); the pedals are 3D printed.
 import { createStudioEnvironment } from '../../showreel/engine.js';
 
 let modP = null;
@@ -32,8 +33,10 @@ export function prefetch() {
 // ---------------------------------------------------------------- words
 const SENSE = 'Each axis uses an A1301 Hall effect sensor reading a magnet on the moving part. No contact, nothing to wear.';   // case page, Sensing
 const USB = 'The ESP controller board shows up as a standard USB gamepad. No driver needed.';                                   // case page, Firmware (owner: ESP board)
-const SWING = 'Full rudder swings each lever about 11 degrees.';                                                                // review page
-const TOE = 'A full toe brake tips it back 16 degrees.';                                                                        // review page
+const SWING = 'Full rudder swings each lever about 17 degrees.';                                                                // owner (the review page still says 11)
+const ROCK = 'Full rudder swings the sensor lever about 30 degrees.';                                                           // owner (the review page still says 20)
+const TOE = 'A full toe brake tips it back 21 degrees.';                                                                        // owner (the review page still says 16)
+const PRINTED = [['Material', '3D printed']];                                                                                    // owner: the pedals are 3D printed
 const POCKET = 'The round pockets measure 10.2 mm across and 2.8 mm deep.';                                                      // review page
 const sentence = s => (s ? s[0].toUpperCase() + s.slice(1) + (/[.)]$/.test(s) ? '' : '.') : '');
 
@@ -85,8 +88,10 @@ const MESH = {
 const DESC = {
   'magnet-r': `${POCKET} ${SENSE}`, 'magnet-l': `${POCKET} ${SENSE}`, 'magnets-center': SENSE,
   'hall-r': SENSE, 'hall-l': SENSE, 'hall-center': SENSE,
-  board: USB, 'lever-l': SWING, 'lever-r': SWING, 'pedal-l': TOE, 'pedal-r': TOE,
+  board: USB, 'lever-l': SWING, 'lever-r': SWING, 'pedal-l': TOE, 'pedal-r': TOE, rocker: ROCK,
 };
+// card rows (owner)
+const ROWS = { 'pedal-l': PRINTED, 'pedal-r': PRINTED };
 const ORDERS = { springs: 1, sensors: 2, magnets: 2, wiring: 3, board: 4, screws: 5 };
 const EXTERIOR = new Set(['walls', 'levers', 'pedals']);
 
@@ -142,6 +147,7 @@ function stagePose({ THREE, model, parts }, box, R) {
 
 export default {
   slug: 'rudder-pedals',
+  buildAhead: true,                                // hover, focus or touch builds the look on idle, so the open only has to fly
   name: 'Rudder pedals, the CAD assembly with the added springs, sensors, wiring and board',
   title: 'Rudder pedals',
   eyebrow: 'Interactive / The pedal assembly',
@@ -195,8 +201,10 @@ export default {
     const mod = await prefetch();
     const model = mod.createModel({ THREE });
     const D = model.details, root = model.group, Pm = model.parts;
-    // own material per mesh, so each part ghosts alone
-    root.traverse(o => { if (o.isMesh) o.material = o.material.clone(); });
+    // own material per mesh, so each part ghosts alone (the model's own materials are kept: the studio look below
+    // recognises each mesh by them)
+    const src = new Map();
+    root.traverse(o => { if (o.isMesh) { src.set(o, o.material); o.material = o.material.clone(); } });
 
     // ---- the studio environment (engine.adopt on the review page and the case stage), made with the shell's
     // renderer: a probe mesh first in the scene grabs it in the shell's first compile pass, so every
@@ -275,7 +283,7 @@ export default {
       return {
         id: R.id, label: R.name, kind: R.kind, group: R.group, exterior: EXTERIOR.has(R.group),
         obj: new THREE.Object3D(), meshes: R.shellMeshes, box,
-        card: { title: R.name, lede: sentence(R.note), desc: DESC[R.id] || '' },
+        card: { title: R.name, lede: sentence(R.note), desc: DESC[R.id] || '', ...(ROWS[R.id] ? { rows: ROWS[R.id] } : {}) },
       };
     });
     const rows = new Map(labels.map(R => [R.id, R]));
@@ -295,6 +303,20 @@ export default {
 
     const hooks = {
       model: root, parts,
+      // the hero reel's finish (showreel/look.js dressRudderPedals) on the viewer's renderer: printed plastic with
+      // layer lines, steel, black oxide, spring steel, magnets, jacketed wires, the board, rounded edges. Its page
+      // shadow is the reel's and is left out (a free orbit has no page). If it fails the plain materials stay.
+      async dress(c) {
+        const L = await import('../../showreel/look.js');
+        const own = [...src.keys()], mine = own.map(m => m.material);
+        for (const m of own) m.material = src.get(m);
+        let d;
+        try { d = await L.dressRudderPedals({ engine: c.engine, quality: c.quality, view: new THREE.Group(), model, parts: [] }); }
+        catch (e) { own.forEach((m, i) => { m.material = mine[i]; }); throw e; }
+        // a mesh the look leaves alone keeps its own copy
+        own.forEach((m, i) => { if (!m.material.userData.look) m.material = mine[i]; });
+        return { look: d.look, frame: d.frame, dispose: () => d.dispose() };
+      },
       dispose() { model.dispose(); if (probe.parent) probe.removeFromParent(); probe.geometry.dispose(); probe.material.dispose(); },
       ready() {
         // moving the explode slider stops the motion (review page)

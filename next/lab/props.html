@@ -6,152 +6,197 @@
 <meta name="robots" content="noindex">
 <title>Props lab</title>
 <style>
-  :root { --paper: #e7e8ea; --ink: #121315; --muted: #676b72; --line: rgba(18,19,21,.16); }
+  :root { --paper: #e7e6e3; --ink: #121315; --muted: #676b72; --line: rgba(18,19,21,.16); }
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; background: var(--paper); color: var(--ink); font: 13px/1.4 ui-monospace, Menlo, monospace; overflow: hidden; }
+  html, body { margin: 0; height: 100%; background: var(--paper); color: var(--ink); font: 12px/1.4 ui-monospace, Menlo, monospace; overflow: hidden; }
   canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
-  .panel { position: fixed; left: 16px; right: 16px; bottom: 16px; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center;
-    padding: 10px 12px; background: rgba(231,232,234,.82); backdrop-filter: blur(6px); border: 1px solid var(--line); border-radius: 10px; max-width: 760px; }
-  .panel button, .panel label { font: inherit; color: inherit; }
-  button { padding: 6px 12px; background: transparent; border: 1px solid var(--ink); border-radius: 99px; cursor: pointer; }
+  .panel { position: fixed; left: 12px; bottom: 12px; display: grid; grid-template-columns: auto 150px auto; gap: 4px 10px; align-items: center;
+    padding: 10px 12px; background: rgba(231,230,227,.86); backdrop-filter: blur(6px); border: 1px solid var(--line); border-radius: 10px; max-width: 520px; }
+  .row { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; }
+  button { font: inherit; color: inherit; padding: 4px 10px; background: transparent; border: 1px solid var(--ink); border-radius: 99px; cursor: pointer; }
   button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
-  label { display: inline-flex; align-items: center; gap: 6px; }
-  input[type=range] { width: 110px; }
-  .info { color: var(--muted); flex-basis: 100%; }
+  input[type=range] { width: 150px; }
+  .info { grid-column: 1 / -1; color: var(--muted); }
+  body.shot .panel { display: none; }
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 <div class="panel">
-  <button id="bMug" aria-pressed="true">Mug</button>
-  <button id="bCan" aria-pressed="false">Can</button>
-  <label><input id="tTurn" type="checkbox"> turn</label>
-  <label><input id="tWire" type="checkbox"> wire</label>
-  <label><input id="tEnv" type="checkbox" checked> env</label>
-  <label>yaw <input id="sYaw" type="range" min="-180" max="180" value="-35"></label>
-  <label>pitch <input id="sPitch" type="range" min="-10" max="80" value="22"></label>
-  <label>wetness <input id="sWet" type="range" min="0" max="100" value="0" title="darkens the can body a little, stand-in only"></label>
+  <div class="row">
+    <button data-prop="mug">Mug</button><button data-prop="can">Can</button><button data-prop="both">Both</button><button data-prop="plug">Plug</button>
+    <button id="bTurn" aria-pressed="false">turntable</button><button id="bSet" aria-pressed="false">set down</button>
+    <a href="?q=high"><button>high</button></a><a href="?q=low"><button>low</button></a>
+  </div>
+  <label for="yaw">view yaw</label><input id="yaw" type="range" min="-180" max="180" step="1"><span id="yawv"></span>
+  <label for="pitch">view pitch</label><input id="pitch" type="range" min="0" max="80" step="1"><span id="pitchv"></span>
+  <label for="turn">prop turn</label><input id="turn" type="range" min="-180" max="180" step="1"><span id="turnv"></span>
+  <label for="zoom">zoom</label><input id="zoom" type="range" min="0.5" max="6" step="0.05"><span id="zoomv"></span>
+  <label for="h">height</label><input id="h" type="range" min="0" max="0.12" step="0.001"><span id="hv"></span>
+  <label for="sx">slosh</label><input id="sx" type="range" min="-4" max="4" step="0.05"><span id="sxv"></span>
+  <label for="rp">rings</label><input id="rp" type="range" min="0" max="1" step="0.01"><span id="rpv"></span>
+  <label for="cond">condensation</label><input id="cond" type="range" min="0" max="1" step="0.01"><span id="condv"></span>
+  <label for="pt">plug time</label><input id="pt" type="range" min="0" max="2.6" step="0.01"><span id="ptv"></span>
   <div class="info" id="info"></div>
 </div>
 <script type="module">
+// Props lab: the mug and the can under the studio look (look.js), on a stand-in of the coaster's top, framed like the
+// hero (camera 24 degrees, the view turned as in the reel).
+//   ?prop=mug|can|both|plug  ?q=low  ?shot (no UI)  ?yaw=deg ?pitch=deg (the view)  ?turn=deg (the prop about its axis)
+//   ?zoom=1 (1 = hero size at 1440 x 900)  ?h=m (height above the plate)  ?plate=0 (no stand-in)  ?ex=exposure
+//   ?slosh=x,z,ring,phase (mm, mm, mm, rad)  ?settle=seconds since the touch  ?cond=0..1 (condensation, fx.js)
+//   ?pt=seconds into the plug-in (prop=plug; the cable and the plug of cable.js at a stand-in port)  ?po=seconds into the pull-out
+//   ?ty=m (look-at height)  ?tx=m ?tz=m  ?bg=hex
+// window.__lab = { ready (Promise), render(), set({ ... }), stats() }; window.labReport for the smoke check
 import * as THREE from '../js/three.module.min.js';
-import { createMug, createCan } from '../js/showreel/props.js';
+import { addStudioLights } from '../js/showreel/engine.js';
+import { createLook } from '../js/showreel/look.js';
+import { createMug, createCan, sloshAt } from '../js/showreel/props.js';
+import { createCable } from '../js/showreel/cable.js';
 
-const q = new URLSearchParams(location.search);
+const qs = new URLSearchParams(location.search);
+const num = (k, d) => (qs.has(k) ? parseFloat(qs.get(k)) : d);
+if (qs.has('shot')) document.body.classList.add('shot');
+if (qs.get('bg')) document.body.style.background = '#' + qs.get('bg');
+const quality = qs.get('q') === 'low' ? 'low' : 'high';
 const canvas = document.getElementById('c');
-const ALPHA = q.get('alpha') !== '0', MSAA = q.get('aa') !== '0';
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: MSAA, alpha: ALPHA, preserveDrawingBuffer: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true, powerPreference: 'low-power' });
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.75));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.setClearColor(ALPHA ? 0x000000 : 0xe7e8ea, ALPHA ? 0 : 1);
-
+renderer.setClearColor(0x000000, 0);
 const scene = new THREE.Scene();
-// the engine's lights (copied from hero3d.js)
-scene.add(new THREE.HemisphereLight(0xffffff, 0x7d828c, 1.35));
-const key = new THREE.DirectionalLight(0xfff8f0, 3.8); key.position.set(-2.5, 4, 5); scene.add(key);
-const fill = new THREE.DirectionalLight(0xdfe6ff, 1.1); fill.position.set(4, -1, 3); scene.add(fill);
-const rim = new THREE.DirectionalLight(0xffffff, 2.4); rim.position.set(3, 3, -4); scene.add(rim);
+addStudioLights(scene);
+const camera = new THREE.PerspectiveCamera(24, 1, 0.05, 30);
+camera.position.set(0, 0, 2.2);
 
-// small procedural studio environment (soft boxes) so metal and glaze have something to reflect
-function studioEnv() {
-  const env = new THREE.Scene();
-  const room = new THREE.Mesh(new THREE.BoxGeometry(10, 6, 10), new THREE.MeshBasicMaterial({ color: 0x9aa0a8, side: THREE.BackSide }));
-  room.position.y = 2; env.add(room);
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), new THREE.MeshBasicMaterial({ color: 0x8a8782 }));
-  floor.rotation.x = -Math.PI / 2; floor.position.y = -0.99; env.add(floor);
-  const box = (w, h, x, y, z, v, tint = 0xffffff) => {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: new THREE.Color(tint).multiplyScalar(v), side: THREE.DoubleSide }));
-    m.position.set(x, y, z); m.lookAt(0, 0.4, 0); env.add(m);
-  };
-  box(3.2, 2.2, -3.2, 3.0, 3.4, 9);                 // key softbox, front left high
-  box(0.7, 3.4, 4.2, 1.6, 0.8, 7, 0xe8f0ff);        // cool strip right
-  box(3.0, 0.9, 0.0, 3.8, -3.6, 6);                 // rim light behind
-  box(2.4, 1.6, 0.5, 1.0, 4.4, 2.2, 0xfff0e0);      // dim fill front
-  const rt = new THREE.PMREMGenerator(renderer).fromScene(env, 0.03);
-  return rt.texture;
-}
-const envTex = studioEnv();
-scene.environment = envTex; scene.environmentIntensity = 0.9;
+const state = {
+  prop: qs.get('prop') || 'mug', yaw: num('yaw', -35.5), pitch: num('pitch', 22.9), turn: num('turn', NaN), zoom: num('zoom', 2.4), h: num('h', 0),
+  sx: 0, sz: 0, rp: 0, ph: 0, settle: num('settle', NaN), cond: num('cond', 0), ex: num('ex', 0.95), ty: num('ty', NaN), tx: num('tx', NaN), tz: num('tz', NaN), pt: num('pt', 2.6), po: num('po', NaN), spin: false, play: false,
+};
+if (qs.has('slosh')) { const v = qs.get('slosh').split(',').map(Number); state.sx = v[0] || 0; state.sz = v[1] || 0; state.rp = v[2] || 0; state.ph = v[3] || 0; }
 
-// soft contact shadow decal (lab only; the engine owns the real one)
-const sc = document.createElement('canvas'); sc.width = sc.height = 128;
-{ const x = sc.getContext('2d'), g = x.createRadialGradient(64, 64, 6, 64, 64, 64);
-  g.addColorStop(0, 'rgba(0,0,0,.42)'); g.addColorStop(.45, 'rgba(0,0,0,.2)'); g.addColorStop(1, 'rgba(0,0,0,0)');
-  x.fillStyle = g; x.fillRect(0, 0, 128, 128); }
-const shadow = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.2), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(sc), transparent: true, depthWrite: false }));
-shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.00005; scene.add(shadow);
-const SHADOW = { mug: 0.135, can: 0.095 };
+const t0 = performance.now();
+const look = createLook({ renderer, quality });
+const stage = new THREE.Group(), view = new THREE.Group();
+scene.add(stage); stage.add(view);
 
-const camera = new THREE.PerspectiveCamera(24, 1, 0.02, 10);
-const view = { yaw: THREE.MathUtils.degToRad(+(q.get('yaw') ?? -35)), pitch: THREE.MathUtils.degToRad(+(q.get('pitch') ?? 22)), dist: +(q.get('dist') || 0), turn: q.get('turn') === '1' };
-const props = {};
-let active = null, ready = false;
+// a stand-in for the top of the coaster: case, lid rim, bead-blasted plate (the real one is coaster.js)
+const standIn = new THREE.Group(); view.add(standIn);
+const HGT = 0.029;
+if (qs.get('plate') !== '0') {
+  const plastic = look.material('plasticMatte'), plateMat = look.material('aluminumBeadBlast');
+  const box = (w, h, d, x, y, z, m) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); standIn.add(b); return b; };
+  box(0.0852, HGT - 0.0002, 0.0902, 0, -HGT / 2 - 0.0001, 0, plastic).name = 'case';
+  box(0.0802, 0.0015, 0.0802, 0, -0.00075, 0, plateMat).name = 'plate';
+  box(0.0852, 0.0033, 0.005, 0, 0.00145, 0.0426, plastic); box(0.0852, 0.0033, 0.005, 0, 0.00145, -0.0426, plastic);
+  box(0.0025, 0.0033, 0.0802, 0.04135, 0.00145, 0, plastic); box(0.0025, 0.0033, 0.0802, -0.04135, 0.00145, 0, plastic);
+}
+const mug = createMug({ look, quality }), can = createCan({ look, quality });
+view.add(mug.group, can.group);
+let cond = null;
+try {
+  const fx = await import('../js/showreel/fx.js');
+  cond = fx.applyCondensation(can.bodyMesh, { quality, fillLine: can.fillLine });
+} catch (e) { console.info('fx.js not available: no condensation in this lab'); }
 
-function show(name) {
-  if (active) scene.remove(active.group);
-  props[name] ||= (name === 'mug' ? createMug({ renderer, quality: q.get('quality') || 'high' }) : createCan({ renderer, quality: q.get('quality') || 'high' }));
-  active = props[name]; active.name = name; scene.add(active.group);
-  document.getElementById('bMug').setAttribute('aria-pressed', name === 'mug');
-  document.getElementById('bCan').setAttribute('aria-pressed', name === 'can');
-  view.dist = 0; shadow.scale.setScalar(SHADOW[name] / 0.2);
-  fit();
-  document.getElementById('info').textContent = name + ': ' + Math.round(active.triangles()) + ' triangles';
-  applyWire(); applyWet();
+// the USB-C cable at a stand-in port on the case front (the real port comes from coaster.js)
+const port = { position: new THREE.Vector3(-0.0256, -0.0114, 0.0451), normal: new THREE.Vector3(0, 0, 1), depth: 0.0052, width: 0.012, height: 0.0055 };
+const cable = createCable({ THREE, quality, port, ground: -HGT, box: new THREE.Box3(new THREE.Vector3(-0.0426, -HGT, -0.0451), new THREE.Vector3(0.0426, 0.0031, 0.0451)), look });
+cable.bake(new THREE.Vector3(-0.30, -HGT, 0.19));
+view.add(cable.group);
+{ // a dark recess where the port is, so the seated plug has something to sit in
+  const hole = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.0055, 0.004), look.material('plasticBlack', { color: 0x0e0f11 }));
+  hole.position.set(port.position.x, port.position.y, port.position.z - 0.0019); standIn.add(hole);
 }
-const H = { mug: 0.085, can: 0.1221 };
-function fit() { // frame the prop for the current aspect
-  const h = H[active.name], aspect = innerWidth / innerHeight;
-  const needH = h * 1.55 + 0.02, needW = (active.name === 'mug' ? 0.13 : 0.07) * 1.3;
-  const t = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-  view.base = Math.max(needH / (2 * t), needW / (2 * t * aspect));
+const ground = look.createGround({ parent: view, y: qs.get('plate') !== '0' ? -HGT - 0.0002 : -0.0002, size: 0.36 });
+if (qs.get('plate') !== '0') ground.add(standIn, {});
+const plateGround = look.createGround({ parent: view, y: 0.0003, size: 0.0802, fade: 0.36, sweep: 0.3, renderOrder: 1,
+  terms: { core: [0.0007, 0.05, 0.6, 0.004], key: [0.0030, 0.28, 0.35, 0.04], amb: [0.006, 0.3, 0.22, 0.05] } });
+const noHandle = m => /handle/i.test(m.name || '');
+for (const g of [ground, plateGround]) { g.add(mug.group, { shape: 'disc', radius: mug.outerRadius, exclude: noHandle }); g.add(can.group, { shape: 'disc', radius: can.radius }); }
+
+function place() {
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  const S = 2.55 * state.zoom;                                    // 2.55: the hero's scale at 1440 x 900
+  stage.scale.setScalar(S);
+  view.rotation.set(THREE.MathUtils.degToRad(state.pitch), THREE.MathUtils.degToRad(state.yaw), 0);
+  const both = state.prop === 'both';
+  const plugView = state.prop === 'plug';
+  mug.group.visible = state.prop === 'mug' || both; can.group.visible = state.prop === 'can' || both;
+  if (plugView || qs.has('cable')) { if (Number.isFinite(state.po)) cable.showOut(state.po); else cable.showIn(state.pt); } else cable.hide();
+  mug.group.position.set(both ? -0.062 : 0, state.h, 0); can.group.position.set(both ? 0.062 : 0, state.h, 0);
+  standIn.visible = !both || true;
+  mug.group.rotation.y = Number.isFinite(state.turn) ? THREE.MathUtils.degToRad(state.turn) : 0.9;
+  can.group.rotation.y = Number.isFinite(state.turn) ? THREE.MathUtils.degToRad(state.turn) : -0.4;
+  const ty = Number.isFinite(state.ty) ? state.ty : (plugView ? -0.012 : state.prop === 'can' ? 0.05 : 0.032);
+  const tx = Number.isFinite(state.tx) ? state.tx : (plugView ? -0.03 : 0), tz = Number.isFinite(state.tz) ? state.tz : (plugView ? 0.06 : 0);
+  // keep the look-at point in the middle of the frame
+  view.updateMatrix();
+  const c = new THREE.Vector3(tx, ty, tz).applyEuler(view.rotation).multiplyScalar(S);
+  stage.position.set(-c.x, -c.y, 0);
+  if (Number.isFinite(state.settle)) mug.settle(state.settle); else mug.setSlosh(state.sx / 1000, state.sz / 1000, state.rp / 1000, state.ph);
+  if (cond) cond.setAmount(state.cond);
+  look.uniforms.lookExposure.value = state.ex;
+  look.setStudioCenter(view, 0.2, [0, -HGT / 2, 0]);
 }
-function resize() {
-  renderer.setSize(innerWidth, innerHeight, false);
-  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
-  if (active) fit();
-}
-function applyWire() { active?.group.traverse(o => { if (o.isMesh) o.material.wireframe = document.getElementById('tWire').checked; }); }
-function applyWet() {
-  if (active?.bodyMaterial) { const w = document.getElementById('sWet').value / 100; active.bodyMaterial.color.setHex(0xb8141c).multiplyScalar(1 - w * 0.25); }
-}
-function frame(t) {
-  if (view.turn) view.yaw += 0.006;
-  const d = (view.dist || 1) * view.base, cy = H[active.name] * +(q.get('ty') ?? 0.5);
-  camera.position.set(Math.sin(view.yaw) * Math.cos(view.pitch) * d, cy + Math.sin(view.pitch) * d, Math.cos(view.yaw) * Math.cos(view.pitch) * d);
-  camera.lookAt(0, cy - 0.003, 0);
-  scene.environment = document.getElementById('tEnv').checked ? envTex : null;
+function render() {
+  place();
+  look.frame();
   renderer.render(scene, camera);
-  requestAnimationFrame(frame);
+  const i = renderer.info.render;
+  const tris = { mug: Math.round(mug.triangles()), can: Math.round(can.triangles()) };
+  document.getElementById('info').textContent = `${quality} | mug ${tris.mug} triangles, 3 draw calls | can ${tris.can} triangles, 3 draw calls | cable ${cable.triangles} triangles, 4 draw calls | frame: ${i.triangles} triangles, ${i.calls} calls`;
+  return { triangles: i.triangles, calls: i.calls, mug: tris.mug, can: tris.can };
 }
 
-// pointer: drag to orbit, wheel / pinch to zoom
+// ---- UI
+const el = id => document.getElementById(id);
+const fmt = { yaw: v => v.toFixed(0), pitch: v => v.toFixed(0), turn: v => (Number.isFinite(v) ? v.toFixed(0) : 'reel'), zoom: v => v.toFixed(2), h: v => (v * 1000).toFixed(0) + ' mm', sx: v => v.toFixed(2) + ' mm', rp: v => v.toFixed(2) + ' mm', cond: v => v.toFixed(2), pt: v => v.toFixed(2) + ' s' };
+for (const id of Object.keys(fmt)) {
+  const inp = el(id), out = el(id + 'v');
+  if (Number.isFinite(state[id])) inp.value = state[id];
+  out.textContent = fmt[id](state[id]);
+  inp.addEventListener('input', () => { state[id] = +inp.value; if (id === 'sx' || id === 'rp') state.settle = NaN; if (id === 'pt') state.po = NaN; out.textContent = fmt[id](state[id]); render(); });
+}
+const sync = () => {
+  for (const b of document.querySelectorAll('[data-prop]')) b.setAttribute('aria-pressed', String(b.dataset.prop === state.prop));
+  el('bTurn').setAttribute('aria-pressed', String(state.spin)); el('bSet').setAttribute('aria-pressed', String(state.play));
+};
+for (const b of document.querySelectorAll('[data-prop]')) b.addEventListener('click', () => { state.prop = b.dataset.prop; sync(); render(); });
+el('bTurn').addEventListener('click', () => { state.spin = !state.spin; sync(); });
+let playT = 0;
+el('bSet').addEventListener('click', () => { state.play = !state.play; playT = 0; if (!state.play) state.settle = NaN; sync(); render(); });
 let drag = null;
-canvas.addEventListener('pointerdown', e => { drag = [e.clientX, e.clientY]; canvas.setPointerCapture(e.pointerId); canvas.style.cursor = 'grabbing'; });
-canvas.addEventListener('pointerup', () => { drag = null; canvas.style.cursor = 'grab'; });
+canvas.addEventListener('pointerdown', e => { drag = [e.clientX, e.clientY]; canvas.setPointerCapture(e.pointerId); });
+canvas.addEventListener('pointerup', () => { drag = null; });
 canvas.addEventListener('pointermove', e => {
   if (!drag) return;
-  view.yaw -= (e.clientX - drag[0]) * 0.008; view.pitch = Math.min(1.4, Math.max(-0.2, view.pitch + (e.clientY - drag[1]) * 0.006));
-  drag = [e.clientX, e.clientY]; sync();
+  state.yaw += (e.clientX - drag[0]) * 0.4; state.pitch = Math.min(80, Math.max(0, state.pitch + (e.clientY - drag[1]) * 0.3)); drag = [e.clientX, e.clientY];
+  el('yaw').value = state.yaw; el('pitch').value = state.pitch; render();
 });
-canvas.addEventListener('wheel', e => { e.preventDefault(); view.dist = Math.min(2, Math.max(0.25, (view.dist || 1) * Math.exp(e.deltaY * 0.001))); }, { passive: false });
-const sync = () => { sYaw.value = THREE.MathUtils.radToDeg(((view.yaw + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI); sPitch.value = THREE.MathUtils.radToDeg(view.pitch); };
-const sYaw = document.getElementById('sYaw'), sPitch = document.getElementById('sPitch');
-sYaw.oninput = () => { view.yaw = THREE.MathUtils.degToRad(+sYaw.value); };
-sPitch.oninput = () => { view.pitch = THREE.MathUtils.degToRad(+sPitch.value); };
-document.getElementById('bMug').onclick = () => show('mug');
-document.getElementById('bCan').onclick = () => show('can');
-document.getElementById('tTurn').onchange = e => { view.turn = e.target.checked; };
-document.getElementById('tWire').onchange = applyWire;
-document.getElementById('sWet').oninput = applyWet;
-if (view.turn) document.getElementById('tTurn').checked = true;
-if (q.get('panel') === '0') document.querySelector('.panel').style.display = 'none';
-addEventListener('resize', resize);
+canvas.addEventListener('wheel', e => { e.preventDefault(); state.zoom = Math.min(6, Math.max(0.5, state.zoom * Math.exp(-e.deltaY * 0.001))); el('zoom').value = state.zoom; render(); }, { passive: false });
+addEventListener('resize', render);
+let last = 0;
+function loop(t) {
+  const dt = last ? Math.min(0.1, (t - last) / 1000) : 0; last = t;
+  if (state.spin || state.play) {
+    if (state.spin) state.yaw = ((state.yaw + dt * 14 + 180) % 360) - 180;
+    if (state.play) { playT += dt; state.settle = playT % 3; }
+    render();
+  }
+  requestAnimationFrame(loop);
+}
+sync();
 
-resize(); show(q.get('prop') === 'can' ? 'can' : 'mug'); sync();
-if (q.get('dist')) view.dist = +q.get('dist');
-requestAnimationFrame(frame);
-window.__lab = { show, view, THREE, scene, props, get active() { return active; } };
-window.__ready = true;
+const ready = (async () => {
+  await look.ready();
+  const r = render();
+  requestAnimationFrame(loop);
+  window.labReport = { ok: r.calls > 0 && look.envMap !== null, why: look.envMap ? '' : 'no environment', ...r, buildMs: performance.now() - t0, stats: look.stats() };
+  return true;
+})().catch(e => { window.labReport = { ok: false, why: String(e && e.message || e) }; throw e; });
+window.__lab = { ready, render, set(o) { Object.assign(state, o); sync(); return render(); }, stats: () => look.stats(), look, state, mug, can, cond, cable, sloshAt, THREE };
 </script>
 </body>
 </html>
