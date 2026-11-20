@@ -5,7 +5,6 @@ Local work, never pushed and never merged. The owner decides when it is pushed.
 | Branch | What | Base |
 |---|---|---|
 | `opt/hero-realism` | The realistic hero showreel, the four 3D viewers in the same look, the random opening, the lag pass | `main` `750185f` |
-| `opt/site-realism` | Experiment on top: the last flat images replaced by renders | `opt/hero-realism` |
 
 ## Recovery (2026-11-20)
 
@@ -18,10 +17,10 @@ Lost, because they were never published: the earlier hand-off notes, the edits t
 capture tools and pixel fences, and the measurements. The one tool change that was known is restored
 (`tools/render-loops/stage.html`, below).
 
-**Backup.** The preview artifact carries `backup/branches.bundle.wasm`: a git bundle of both branches (the `.wasm`
+**Backup.** The preview artifact carries `backup/branches.bundle.wasm`: a git bundle of the branch (the `.wasm`
 name is only so the host accepts a binary file). Restore: read that path with the Artifact tool, then
 `git fetch <saved file> 'refs/heads/*:refs/heads/*'`. After every commit: `git bundle create <file>
-main..opt/hero-realism main..opt/site-realism` and publish it to the same path (content type `application/wasm`).
+main..opt/hero-realism` and publish it to the same path (content type `application/wasm`).
 
 **Rebuilding from the preview again, if it is ever needed.** Published paths are `next/`-relative. Undo the preview's
 rewrites in text files: `.bin.wasm` to `.bin`, `site/` to the root `assets/`, `shared/` to `studies/shared/`. The
@@ -84,16 +83,24 @@ unchanged from `main`.
    coaster seen on a phone.
 5. Older: Robo-Catcher throw speed, toe brake real travel, frost or dew on Therma-Shift, og images in the old look.
 
-## The experiment (`opt/site-realism`)
+## The look pass on the remaining flat images
 
-The owner asked for a quick look at the site's images. Three places were out of step with the realistic look:
+The owner asked for a quick look at the site's images, then approved the result with two notes (below). It sits on
+top of the hero work as its own commits.
 
 | Page | Before | After |
 |---|---|---|
-| Robo-Catcher, "The feeder" and "Electronics and firmware" | Three small CAD screenshots | `assets/renders/robo-catcher/chamber.webp`, `feeder.webp`, `flywheel.webp`: the same parts rendered from the viewer's model (parts isolated, long lens, soft floor shadow, transparent ground) |
+| Robo-Catcher, "The feeder" and "Electronics and firmware" | Three small CAD screenshots | `assets/renders/robo-catcher/chamber.webp`, `feeder.webp`, `flywheel.webp`: the same parts rendered from the viewer's model (parts isolated, soft floor shadow, transparent ground) |
 | CHARGER spec sheet, "next project" card | `next/assets/img/charger-work.webp`, the older flat rocket | The same file, made from the current satin poster at the same size and place |
-| Websites, browser mock | `assets/motion/charger-painted-wide-poster.webp` | `next/assets/img/charger-browser.webp`, the current rocket in the same spot |
 
-Only image sources changed (`content/projects/robo-catcher.json`, `next/websites.html`); no words. For the owner:
-the first image's description still says "Indexer cross-section" and the render shows the chamber whole; the old
-feeder screenshot showed a laser cut box and the render shows the wire cage he described.
+Only image sources changed (`content/projects/robo-catcher.json`); no words.
+
+- The owner found the first renders warped: they used the viewer's tilted home view. They now stand on the model's
+  own up axis, turned and tipped .3 rad toward the camera, under a 12 degree lens (the viewer's `pivot` is turned
+  for one frame, its camera and lights stay). The flywheel is seen from the front in the viewer's narrow layout
+  (700 px wide): its idler gear meshes are low in detail and look crumpled from the side.
+- The owner asked that his photography stay exactly as on the live site. The home page's "Beyond engineering"
+  section, `beyond.html`, `photography-gallery.html` and the Websites page (its browser mock holds one of his
+  photos) are byte for byte `main`. A first version of this pass had changed the rocket in that mock; it is back.
+- For the owner: the first image's description still says "Indexer cross-section" and the render shows the chamber
+  whole; the old feeder screenshot showed a laser cut box and the render shows the wire cage he described.
