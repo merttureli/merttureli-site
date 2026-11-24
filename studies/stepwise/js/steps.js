@@ -27,19 +27,29 @@ const kb = bytes => (bytes / 1000).toFixed(1);
 const uniq = a => [...new Set(a)];
 export const count = n => n.toLocaleString('en-US');
 
+// Long CAD names are shortened in the middle to fit the block (the page says so); the end of a name, where the
+// instance number is, is kept. `cols` is how many characters fit across the block.
+export function shorten(s, n) {
+  if (s.length <= n) return s;
+  const tail = Math.floor((n - 1) * .45), head = n - 1 - tail;
+  return s.slice(0, head).trimEnd() + '\u2026' + s.slice(s.length - tail).trimStart();
+}
+
 // ---- 01 inspect
-export function inspectTerm(key, { meta }, map) {
+export function inspectTerm(key, { meta }, map, cols = 96) {
   const cfg = MODELS[key], rows = [];
   meta.parts.forEach((p, i) => { for (const cad of p.cad) rows.push({ cad, part: i }); });
   for (const cad of map.skipped || []) rows.push({ cad, part: -1 });
   const size = [0, 1, 2].map(i => (meta.bounds[1][i] - meta.bounds[0][i]) * 1000), longest = 'xyz'[size.indexOf(Math.max(...size))];
-  const w = Math.max(12, ...rows.map(r => r.cad.length));
+  // the CAD name gets about half the width and the suggested name the rest; each is shortened only if it must be
+  const sug = Math.max(14, ...rows.map(r => reelName(r.cad).length)), room = Math.max(32, cols - 4);
+  const w = Math.max(16, Math.min(56, Math.max(...rows.map(r => r.cad.length)), room - Math.min(sug, Math.floor(room / 2)))), ws = room - w;
   const lines = [
     { text: `${cfg.step}.step: ${rows.length} parts, unit ${meta.source.unit}, size ${size.map(v => v.toFixed(1)).join(' x ')} mm (x y z)`, cls: 'ok' },
     { text: `The longest side is ${longest}. Output is +Y up: pass --up z if the model is Z-up.` },
     { text: '' },
     { text: `  ${pad('CAD name', w)}  suggested name`, cls: 'head' },
-    ...rows.map(r => ({ text: `  ${pad(r.cad, w)}  ${reelName(r.cad)}`, part: r.part })),
+    ...rows.map(r => ({ text: `  ${pad(shorten(r.cad, w), w)}  ${shorten(reelName(r.cad), ws)}`, part: r.part })),
     { text: '' },
     { text: `wrote starter map ${cfg.file}.map.json`, cls: 'ok' },
   ];
@@ -47,7 +57,18 @@ export function inspectTerm(key, { meta }, map) {
 }
 
 // ---- 02 import
-export function importTerm(key, { meta, jsonBytes }, map) {
+// A part's CAD names, as many as fit in `room` (at most three), then "and N more", as the tooltip does.
+function cadList(cad, room) {
+  const more = n => (n ? `, and ${n} more` : '');
+  if (room < 24) room = room < 12 ? 36 : room;       // a block too narrow for any of it wraps the row, as a terminal does
+  for (let k = Math.min(3, cad.length); k >= 1; k--) {
+    const text = cad.slice(0, k).join(', ') + more(cad.length - k);
+    if (text.length <= room) return text;
+  }
+  const one = shorten(cad[0], room - more(cad.length - 1).length) + more(cad.length - 1);
+  return room - more(cad.length - 1).length >= 12 ? one : `${cad.length} names`;
+}
+export function importTerm(key, { meta, jsonBytes }, map, cols = 96) {
   const cfg = MODELS[key], src = meta.source, out = map.json.out;
   const w = Math.max(10, ...meta.parts.map(p => p.name.length));
   const how = [src.deflection_mm != null && `deflection ${src.deflection_mm.toFixed(3)} mm`, src.angle_rad != null && `angle ${src.angle_rad.toFixed(2)} rad`, `up ${src.up}`, `origin ${src.origin}`].filter(Boolean).join(', ');
@@ -57,11 +78,15 @@ export function importTerm(key, { meta, jsonBytes }, map) {
     { text: `  ${pad('name', w)}  ${lpad('tris', 7)}  ${pad('material', 15)} cad`, cls: 'head' },
     ...meta.parts.map((p, i) => {
       const mats = uniq(p.prims.map(pr => pr.material.key || pr.material.color)).join('+') || (p.material.key || p.material.color);
-      const subs = Object.keys(p.subs || {});
-      return { text: `  ${pad(p.name, w)}  ${lpad(p.triangles, 7)}  ${pad(mats, 15)} ${p.cad.join(', ')}${subs.length ? ` (subs: ${subs.join(', ')})` : ''}`, part: i, slow: true };
+      const subs = Object.keys(p.subs || {}), lead = `  ${pad(p.name, w)}  ${lpad(p.triangles, 7)}  ${pad(mats, 15)} `;
+      const tail = subs.length ? ` (subs: ${subs.join(', ')})` : '';
+      return { text: lead + cadList(p.cad, cols - lead.length - tail.length) + tail, part: i, slow: true };
     }),
   ];
-  if (map.skipped && map.skipped.length) lines.push({ text: '' }, { text: `skipped by a rule: ${map.skipped.join(', ')}`, cls: 'note' });
+  if (map.skipped && map.skipped.length) {
+    const each = Math.max(16, Math.floor((cols - 19 - 2 * (map.skipped.length - 1)) / map.skipped.length));
+    lines.push({ text: '' }, { text: `skipped by a rule: ${map.skipped.map(c => shorten(c, each)).join(', ')}`, cls: 'note' });
+  }
   lines.push(
     { text: '' },
     { text: `wrote ${out}`, cls: 'ok', done: true },

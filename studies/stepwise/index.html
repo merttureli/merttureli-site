@@ -16,8 +16,8 @@
 <script type="module" src="js/stepwise.js"></script>
 </head>
 <body>
-<a class="study-back study-back--stepwise" href="/websites.html#studies"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13 8H3.5M7.5 3.5 3 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Back to websites</a>
 <a class="skip" href="#main">Skip to content</a>
+<a class="study-back study-back--stepwise" href="/websites.html#studies"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13 8H3.5M7.5 3.5 3 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Back to websites</a>
 
 <div class="cols" aria-hidden="true"><div class="wrap"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
 
@@ -25,8 +25,8 @@
   <div class="wrap bar__in">
     <a class="bar__brand" href="#top" aria-label="Stepwise, back to top">stepwise</a>
     <nav class="bar__nav" aria-label="Sections">
-      <a href="#docs">Docs</a>
       <a href="#quickstart">Quickstart</a>
+      <a href="#get">What you get</a>
       <a href="#models">Models</a>
     </nav>
     <p class="bar__here" aria-hidden="true"><span id="hereNo">01</span> <span id="hereName">Start</span></p>
@@ -41,7 +41,7 @@
   <ol>
     <li><a href="#top" data-rail="top" aria-current="true"><span class="rail__no">01</span><span class="rail__name">Start</span></a></li>
     <li><a href="#quickstart" data-rail="quickstart"><span class="rail__no">02</span><span class="rail__name">Quickstart</span></a></li>
-    <li><a href="#docs" data-rail="docs"><span class="rail__no">03</span><span class="rail__name">Docs</span></a></li>
+    <li><a href="#get" data-rail="get"><span class="rail__no">03</span><span class="rail__name">What you get</span></a></li>
     <li><a href="#models" data-rail="models"><span class="rail__no">04</span><span class="rail__name">Models</span></a></li>
     <li><a href="#access" data-rail="access"><span class="rail__no">05</span><span class="rail__name">Access</span></a></li>
   </ol>
@@ -66,7 +66,7 @@
 
     <figure class="fig fig--hero" id="fig1">
       <figcaption class="fig__cap">
-        <span class="fig__no">FIG 01</span><span data-cap="model">Rudder-pedals</span><span data-cap="tris">23,946 triangles</span><span data-cap="kb">367 KB</span>
+        <span class="fig__no">FIG 01</span><span data-cap="model">Rudder pedals</span><span data-cap="tris">23,946 triangles</span><span data-cap="kb">367 KB</span>
         <span class="fig__mode" id="heroMode" aria-hidden="true">1-bit</span>
       </figcaption>
       <div class="fig__panel" id="heroPanel" role="tabpanel" aria-labelledby="tab-rudder-pedals">
@@ -78,7 +78,7 @@
           </picture>
           <canvas aria-hidden="true"></canvas>
         </div>
-        <p class="fig__hint" id="heroHint"><span class="fig__hint-mouse">Drag to turn. Point at a part for its CAD name.</span><span class="fig__hint-touch">Swipe to turn. Tap a part for its CAD name.</span></p>
+        <p class="fig__hint" id="heroHint"><span class="fig__hint-mouse">Drag to turn. Point at a part for its CAD name.</span><span class="fig__hint-touch">Swipe to turn. Tap a part for its CAD name.</span><span class="fig__hint-keys">Arrow keys turn. Home resets the view.</span></p>
       </div>
       <div class="fig__controls">
         <div class="ctl">
@@ -94,7 +94,6 @@
         <div class="tabs tabs--models" role="tablist" aria-label="Model" id="modelTabs">
           <button type="button" role="tab" id="tab-rudder-pedals" data-model="rudder-pedals" aria-selected="true" aria-controls="heroPanel">Rudder pedals</button>
           <button type="button" role="tab" id="tab-robo-catcher" data-model="robo-catcher" aria-selected="false" aria-controls="heroPanel" tabindex="-1">Robo-Catcher</button>
-          <button type="button" role="tab" id="tab-charger" data-model="charger" aria-selected="false" aria-controls="heroPanel" tabindex="-1">CHARGER</button>
         </div>
       </div>
     </figure>
@@ -114,7 +113,7 @@
     <header class="head">
       <p class="label"><span class="label__no">02</span>Quickstart</p>
       <h2 id="quickH">Inspect. Import. Load.</h2>
-      <p class="head__lead">Three steps take a STEP file to a model in your page. They run here on the model in FIG 01. Pick another model there and the steps follow.</p>
+      <p class="head__lead">Three steps take a STEP file to a model in your page. Steps 01 and 02 show the rudder pedals, the one model here imported from STEP. Step 03 loads the model picked in FIG 01.</p>
     </header>
 
     <ol class="steps">
@@ -123,7 +122,7 @@
           <p class="step__no"><span>01</span>Inspect</p>
           <h3>List what the file holds</h3>
           <p><code>inspect</code> reads the assembly and prints every part with its CAD name and the name Stepwise suggests for it. It reports the unit, the size and the longest side, so you know if the file is Z up before you mesh it.</p>
-          <p>Add <code>--map-out</code> and it writes a starter map with one rule per part.</p>
+          <p>Add <code>--map-out</code> and it writes a starter map with one rule per part. Long names are shortened in the middle on this page.</p>
           <figure class="fig fig--step">
             <figcaption class="fig__cap"><span class="fig__no">FIG 02</span><span>Inspect</span><span data-cap="names">41 CAD names</span></figcaption>
             <div class="fig__stage" data-fig="inspect">
@@ -196,7 +195,7 @@
           <p><code>loadCadMesh</code> fetches the two files and builds one <code>Group</code> per part, placed at its pivot. <code>setProgress(p)</code> moves every part along its explode vector: 0 is exploded, 1 is assembled.</p>
           <p>The loader has no imports. You pass it the three.js your page already uses.</p>
           <figure class="fig fig--step">
-            <figcaption class="fig__cap"><span class="fig__no">FIG 04</span><span>Load</span><span data-cap="mats">5 materials, studio light</span></figcaption>
+            <figcaption class="fig__cap"><span class="fig__no">FIG 04</span><span>Load</span><span data-cap="title">Rudder pedals</span><span data-cap="mats">5 materials, studio light</span></figcaption>
             <div class="fig__stage" data-fig="load">
               <img class="fig__still fig__still--shaded" src="assets/fig-load.webp" width="500" height="306" alt="The assembly fully shaded: charcoal walls, light gray levers and orange pedals." loading="lazy" decoding="async">
               <canvas aria-hidden="true"></canvas>
@@ -229,16 +228,18 @@
 </section>
 
 <!-- 03 WHAT YOU GET -->
-<section class="get" id="docs" data-section="docs" aria-labelledby="getH">
+<section class="get" id="get" data-section="get" aria-labelledby="getH">
   <div class="wrap">
     <header class="head">
-      <p class="label"><span class="label__no">03</span>Docs</p>
-      <h2 id="getH">What you get</h2>
+      <p class="label"><span class="label__no">03</span>What you get</p>
+      <h2 id="getH">Six things the import does for you.</h2>
     </header>
     <div class="bento">
       <article class="cell cell--a">
-        <h3>Keeps every part name</h3>
-        <p>The STEP product name is the key. A rule maps it to the name your code uses, and <code>model.parts</code> holds the part under that name.</p>
+        <div class="cell__text">
+          <h3>Keeps every part name</h3>
+          <p>The STEP product name is the key. A rule maps it to the name your code uses, and <code>model.parts</code> holds the part under that name.</p>
+        </div>
         <dl class="chain" aria-label="A name from the STEP file to the page">
           <div><dt>STEP name</dt><dd>Sensor lever</dd></div>
           <div><dt>Map rule</dt><dd>{ "match": ["Sensor lever", "Center magnet holder"], "name": "rocker" }</dd></div>
@@ -246,8 +247,10 @@
         </dl>
       </article>
       <article class="cell cell--b">
-        <h3>An explode vector per part</h3>
-        <p>Set it in millimeters with <code>explode_mm</code>. Leave it out and the part moves straight away from the assembly center.</p>
+        <div class="cell__text">
+          <h3>An explode vector per part</h3>
+          <p>Set it in millimeters with <code>explode_mm</code>. Leave it out and the part moves straight away from the assembly center.</p>
+        </div>
         <table class="vec">
           <caption class="visually-hidden">Explode vectors stored in rudder-pedals.json, in meters</caption>
           <thead><tr><th scope="col">Part</th><th scope="col">x</th><th scope="col">y</th><th scope="col">z</th></tr></thead>
@@ -260,38 +263,60 @@
         </table>
       </article>
       <article class="cell cell--c">
-        <h3>One small binary</h3>
-        <p>Positions are 16 bit, normals 8 bit, indices 16 or 32 bit.</p>
-        <ul class="bars" aria-label="Size of each .bin file on this page">
-          <li style="--v:.949"><span>rudder-pedals.bin</span><b>367 KB</b></li>
-          <li style="--v:.9"><span>robo-catcher.bin</span><b>348 KB</b></li>
-          <li style="--v:.795"><span>charger-explorer.bin</span><b>307 KB</b></li>
-        </ul>
-      </article>
-      <article class="cell cell--d">
-        <h3>Any unit, Y or Z up</h3>
-        <p>Inch, meter or millimeter in. Meters and +Y up out. <code>--up z</code> turns (x, y, z) into (x, z, -y).</p>
-        <div class="axes" aria-hidden="true">
-          <svg viewBox="0 0 96 72" width="96" height="72"><path d="M40 52V12M40 52l34 10M40 52 12 62" fill="none" stroke="currentColor" stroke-width="1"/><path d="M37 16l3-5 3 5" fill="none" stroke="currentColor"/><text x="46" y="14">z</text><text x="78" y="66">x</text><text x="2" y="62">y</text></svg>
-          <span class="axes__to">--up z</span>
-          <svg viewBox="0 0 96 72" width="96" height="72" class="axes__out"><path d="M40 52V12M40 52l34 10M40 52 12 62" fill="none" stroke="currentColor" stroke-width="1"/><path d="M37 16l3-5 3 5" fill="none" stroke="currentColor"/><text x="46" y="14">y</text><text x="78" y="66">x</text><text x="2" y="62">z</text></svg>
+        <div class="cell__text">
+          <h3>One small binary</h3>
+          <p>Positions are 16 bit, normals 8 bit, indices 16 or 32 bit.</p>
+        </div>
+        <div class="bin">
+          <ul class="bin__key" aria-hidden="true"><li class="t75">Positions</li><li class="t25">Normals</li><li class="t50">Indices</li></ul>
+          <ul class="bars" aria-label="Each .bin file on this page, in bytes: positions, normals and indices">
+            <li style="--v:1"><span>rudder-pedals.bin</span><b>367 KB</b><i aria-hidden="true"><s class="t75" style="--w:.4055"></s><s class="t25" style="--w:.2027"></s><s class="t50" style="--w:.3917"></s></i><em class="visually-hidden">Positions 148,716 bytes, normals 74,358, indices 143,676.</em></li>
+            <li style="--v:.9485"><span>robo-catcher.bin</span><b>348 KB</b><i aria-hidden="true"><s class="t75" style="--w:.4243"></s><s class="t25" style="--w:.2122"></s><s class="t50" style="--w:.3634"></s></i><em class="visually-hidden">Positions 147,612 bytes, normals 73,806, indices 126,414.</em></li>
+            <li style="--v:.8378"><span>charger-explorer.bin</span><b>307 KB</b><i aria-hidden="true"><s class="t75" style="--w:.3702"></s><s class="t25" style="--w:.1851"></s><s class="t50" style="--w:.4447"></s></i><em class="visually-hidden">Positions 113,748 bytes, normals 56,874, indices 136,632.</em></li>
+          </ul>
         </div>
       </article>
+      <article class="cell cell--d">
+        <div class="cell__text">
+          <h3>Any unit, Y or Z up</h3>
+          <p>Inch, meter or millimeter in. Meters and +Y up out. <code>--up z</code> turns (x, y, z) into (x, z, -y).</p>
+        </div>
+        <figure class="units">
+          <div class="units__stage fig__stage" data-fig="units" data-still>
+            <img class="fig__still" src="assets/units-out.png" width="133" height="100" alt="The rudder pedals in dither, standing upright: +Y up." loading="lazy" decoding="async">
+            <canvas aria-hidden="true"></canvas>
+            <svg class="units__axes" aria-hidden="true"><g class="ax ax--x"><line/><text>x</text></g><g class="ax ax--y"><line/><text>y</text></g><g class="ax ax--z"><line/><text>z</text></g></svg>
+          </div>
+          <figcaption class="units__bar"><span id="unitsState" aria-live="polite">Out: +Y up</span><button class="run" type="button" id="unitsPlay" aria-label="Play the --up z turn again">Replay</button></figcaption>
+        </figure>
+      </article>
       <article class="cell cell--e">
-        <h3>Repeated instances, one rule</h3>
-        <p>A glob catches every instance, and rules that share a <code>name</code> merge. This rule from the rudder pedals map puts three ball bearings in <code>leverR</code>.</p>
-        <pre class="snip" tabindex="0" role="region" aria-label="A merge rule"><code><span class="t-p">{</span>
+        <div class="cell__text">
+          <h3>Repeated instances, one rule</h3>
+          <p>A glob catches every instance, and rules that share a <code>name</code> merge. This rule from the rudder pedals map puts three ball bearings in <code>leverR</code>.</p>
+        </div>
+        <div class="merge">
+          <pre class="snip" tabindex="0" role="region" aria-label="A merge rule"><code><span class="t-p">{</span>
   <span class="t-f">"match"</span><span class="t-p">: [</span><span class="t-s">"*8_68-2"</span><span class="t-p">, </span><span class="t-s">"*8_68-6"</span><span class="t-p">, </span><span class="t-s">"*8_68-9"</span><span class="t-p">],</span>
   <span class="t-f">"name"</span><span class="t-p">: </span><span class="t-s">"leverR"</span><span class="t-p">,</span>
   <span class="t-f">"material"</span><span class="t-p">: </span><span class="t-s">"steel"</span>
 <span class="t-p">}</span></code></pre>
+          <dl class="hits">
+            <dt>Matches</dt>
+            <dd>instrument ball bearing&hellip;8_68-2</dd>
+            <dd>instrument ball bearing&hellip;8_68-6</dd>
+            <dd>instrument ball bearing&hellip;8_68-9</dd>
+          </dl>
+        </div>
       </article>
       <article class="cell cell--f">
-        <h3>A screenshot command that fails on console errors</h3>
-        <p><code>shot</code> opens the viewer in headless Chromium, saves the model assembled and exploded, and exits 1 on a console error or a failed request.</p>
+        <div class="cell__text">
+          <h3>A screenshot command that fails on console errors</h3>
+          <p><code>shot</code> opens the viewer in headless Chromium, saves the model assembled and exploded, and exits 1 on a console error or a failed request.</p>
+        </div>
         <div class="shots">
-          <figure><img src="assets/shot-assembled.png" width="112" height="70" alt="Small dithered still of the assembled model." loading="lazy" decoding="async"><figcaption>rudder-pedals-shot.png</figcaption></figure>
-          <figure><img src="assets/shot-exploded.png" width="112" height="70" alt="Small dithered still of the exploded model." loading="lazy" decoding="async"><figcaption>rudder-pedals-shot-exploded.png</figcaption></figure>
+          <figure><img src="assets/shot-assembled.webp" width="224" height="140" alt="Small shaded render of the assembled rudder pedals." loading="lazy" decoding="async"><figcaption>rudder-pedals-shot.png</figcaption></figure>
+          <figure><img src="assets/shot-exploded.webp" width="224" height="140" alt="Small shaded render of the exploded rudder pedals." loading="lazy" decoding="async"><figcaption>rudder-pedals-shot-exploded.png</figcaption></figure>
         </div>
       </article>
     </div>
@@ -332,13 +357,13 @@
           <td role="cell" class="mtable__go"><button type="button" class="link" data-open="robo-catcher">View in FIG 01</button></td>
         </tr>
         <tr role="row" data-row="charger">
-          <td role="cell" class="mtable__still"><img src="assets/still-charger.png" width="80" height="56" alt="The CHARGER rocket interior in dither." loading="lazy" decoding="async"></td>
+          <td role="cell" class="mtable__still"><img src="assets/still-charger.png" width="80" height="56" alt="The CHARGER avionics bay in dither: payload tube, PCB holders and coupler." loading="lazy" decoding="async"></td>
           <th role="rowheader" scope="row"><span class="mtable__name">CHARGER</span><span class="mtable__file">charger-explorer.json</span><span class="mtable__what">The interior of a rocket that drops a sensor payload.</span></th>
           <td role="cell" class="num" data-th="Parts">17</td>
           <td role="cell" class="num" data-th="Triangles">22,772</td>
           <td role="cell" class="num" data-th=".bin bytes">307,268</td>
           <td role="cell" class="num" data-th=".json bytes">12,977</td>
-          <td role="cell" class="mtable__go"><button type="button" class="link" data-open="charger">View in FIG 01</button></td>
+          <td role="cell" class="mtable__go"><span class="mtable__only">Still only</span></td>
         </tr>
       </tbody>
       <tfoot role="rowgroup">
@@ -386,7 +411,7 @@
       <p class="foot__h">On this page</p>
       <ul>
         <li><a href="#quickstart">Quickstart</a></li>
-        <li><a href="#docs">What you get</a></li>
+        <li><a href="#get">What you get</a></li>
         <li><a href="#models">Models</a></li>
         <li><a href="#access">Team access</a></li>
       </ul>

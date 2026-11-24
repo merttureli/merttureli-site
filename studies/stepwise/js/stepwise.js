@@ -3,6 +3,7 @@
 import { MODELS, loadMeta } from './models.js';
 import { inspectTerm, importTerm, viewerCode, pageCode, mapText, paintJson, paintJs, paintHtml, count } from './steps.js';
 import { mapFor } from './maps.js';
+import { resolveText } from './resolve.js';
 
 const still = document.documentElement.classList.contains('still');
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -11,13 +12,15 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const live = $('#live');
 const say = text => { live.textContent = ''; requestAnimationFrame(() => { live.textContent = text; }); };
 
+// Steps 01 and 02 always show the rudder pedals, the one model here that came from a STEP file through import.
+const STEP_KEY = 'rudder-pedals';
 let fig = null, currentKey = 'rudder-pedals';
 const hosts = {}, terms = {};
 
 // ---------------------------------------------------------------- progress
 // The rail (wide screens) and the strip under the bar (narrow ones) follow the section in view.
 const sections = $$('[data-section]'), railLinks = $$('[data-rail]'), navLinks = $$('.bar__nav a');
-const names = { top: 'Start', quickstart: 'Quickstart', docs: 'Docs', models: 'Models', access: 'Access' };
+const names = { top: 'Start', quickstart: 'Quickstart', get: 'What you get', models: 'Models', access: 'Access' };
 let spyQueued = false, lastSection = -1;
 function spy() {
   spyQueued = false;
@@ -177,7 +180,7 @@ terms.inspect = createTerm($('#term-inspect'), {
   point: part => { hot('inspect', part); terms.inspect.mark(part); },
 });
 terms.import = createTerm($('#term-import'), {
-  start: () => { if (hosts.import && fig.entry) hosts.import.set({ partK: new Float32Array(fig.entry.parts.length), hot: -1 }); },
+  start: () => { if (hosts.import && hosts.import.entry) hosts.import.set({ partK: new Float32Array(hosts.import.entry.parts.length), hot: -1 }); },
   line: l => {
     const h = hosts.import;
     if (!h || !h.state.partK) return;
@@ -191,29 +194,52 @@ for (const b of $$('.run')) b.addEventListener('click', () => { terms[b.dataset.
 
 // ------------------------------------------------------------------ models
 const cap = (name, text) => { for (const el of $$(`[data-cap=${name}]`)) el.textContent = text; };
+
+// Steps 01 and 02: filled once with the rudder pedals, and again when the blocks change width. A terminal's rows
+// are cut to the characters that fit across it, so a row never runs off sideways.
+let stepInfo = null, termCols = { inspect: 0, import: 0 };
+function colsOf(pre) {
+  const cs = getComputedStyle(pre), c = document.createElement('canvas').getContext('2d');
+  c.font = `${cs.fontSize} ${cs.fontFamily}`;
+  const ch = c.measureText('0'.repeat(20)).width / 20 || 7.8;
+  return Math.floor((pre.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 2) / ch);
+}
+function fillSteps(force) {
+  if (!stepInfo) return;
+  const ci = colsOf(terms.inspect.pre), cm = colsOf(terms.import.pre);
+  if (!force && ci === termCols.inspect && cm === termCols.import) return;
+  const map = mapFor(STEP_KEY, stepInfo), inspect = inspectTerm(STEP_KEY, stepInfo, map, ci);
+  if (force || ci !== termCols.inspect) terms.inspect.setContent(inspect);
+  if (force || cm !== termCols.import) terms.import.setContent(importTerm(STEP_KEY, stepInfo, map, cm));
+  termCols = { inspect: ci, import: cm };
+  if (!force) return;
+  const { meta } = stepInfo;
+  cap('names', `${inspect.names} CAD names`);
+  cap('parts', `${meta.parts.length} parts on their vectors`);
+  $('[data-name=map]').textContent = `${MODELS[STEP_KEY].file}.map.json`;
+  $('#code-map code').innerHTML = paintJson(mapText(map.json));
+}
+let colsTimer = 0;
+addEventListener('resize', () => { clearTimeout(colsTimer); colsTimer = setTimeout(() => fillSteps(false), 200); });
+
+// FIG 01, step 03 and the table follow the model tabs
 function fill(key, info) {
-  const { meta } = info, cfg = MODELS[key], map = mapFor(key, info);
-  const inspect = inspectTerm(key, info, map);
+  const { meta } = info, cfg = MODELS[key];
   const mats = new Set(meta.parts.flatMap(p => p.prims.map(pr => pr.material.key || pr.material.color))).size;
-  const stored = meta.parts.some(p => p.explode.some(Boolean));
-  cap('model', meta.name);
+  cap('model', cfg.title);
+  cap('title', cfg.title);
   cap('tris', `${count(meta.triangles)} triangles`);
   cap('kb', `${Math.round(meta.bytes / 1000)} KB`);
-  cap('names', `${inspect.names} CAD names`);
-  cap('parts', stored ? `${meta.parts.length} parts on their vectors` : `${meta.parts.length} parts, automatic vectors`);
   cap('mats', `${mats} materials, studio light`);
   $('#stageHero').setAttribute('aria-label', `${cfg.title}, ${meta.parts.length} parts. Arrow keys turn the model. Home resets the view.`);
   $('#heroPanel').setAttribute('aria-labelledby', 'tab-' + key);
-  $('[data-name=map]').textContent = `${cfg.file}.map.json`;
-  $('#code-map code').innerHTML = paintJson(mapText(map.json));
   $('#code-viewer code').innerHTML = paintJs(viewerCode(key, info));
   $('#code-page code').innerHTML = paintHtml(pageCode());
-  for (const id of ['code-map', 'code-viewer']) { const p = document.getElementById(id); p.scrollTop = 0; p.scrollLeft = 0; }
-  terms.inspect.setContent(inspect);
-  terms.import.setContent(importTerm(key, info, map));
+  const v = document.getElementById('code-viewer'); v.scrollTop = 0; v.scrollLeft = 0;
   for (const row of $$('[data-row]')) {
     const on = row.dataset.row === key, b = $('[data-open]', row);
     row.classList.toggle('is-current', on);
+    if (!b) continue;
     b.textContent = on ? 'Shown in FIG 01' : 'View in FIG 01';
     if (on) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
   }
@@ -232,7 +258,7 @@ async function selectModel(key) {
     if (currentKey !== key) return;
     if (filled !== key) { filled = key; fill(key, info); }
     setRange($('#explode'), 0); setRange($('#progress'), 100);
-    if (hosts.hero) { hosts.hero.set({ explode: 0 }); hosts.load.set({ explode: 0 }); hosts.import.set({ explode: 1 }); }
+    if (hosts.hero) { hosts.hero.set({ explode: 0 }); hosts.load.set({ explode: 0 }); }
   } catch (err) {
     console.error(err);
     say('That model did not load.');
@@ -252,17 +278,12 @@ function setRange(el, v) {
   const n = (el.value / 100).toFixed(2);
   document.getElementById(el.getAttribute('aria-describedby')).textContent = el === progress ? 'p = ' + n : n;
 }
-// what the resolve value means, in the figure's own steps (figure.js resolveSteps, 2 px cells)
-function modeText(r) {
-  const levels = Math.round(Math.pow(2, 1 + 5 * clamp01((r - .08) / .52))), mix = clamp01((r - .5) / .42);
-  return r < .09 ? '1-bit' : mix <= 0 ? `${levels} levels` : mix < 1 ? `${Math.round(mix * 100)}% shaded` : 'Shaded';
-}
 let manual = false, resolveNow = still ? 1 : 0;
 function setResolve(r) {
   resolveNow = r;
   setRange(resolve, Math.round(r * 100));
-  resolve.setAttribute('aria-valuetext', modeText(r));
-  $('#heroMode').textContent = modeText(r);
+  resolve.setAttribute('aria-valuetext', resolveText(r));
+  $('#heroMode').textContent = resolveText(r);
   if (hosts.hero) hosts.hero.set({ resolve: r });
 }
 // In the hero the scroll is the resolve control too, until the slider is touched. It is measured on the figure, not
@@ -317,16 +338,17 @@ async function start3d() {
     const { createFigure } = await import('./figure.js');
     fig = createFigure({ reduced: still });
     const stage = name => $(`.fig__stage[data-fig=${name}]`);
-    hosts.hero = fig.addHost(stage('hero'), { cell: 2, sway: .34, resolve: resolveNow, explode: explode.value / 100 });
-    hosts.inspect = fig.addHost(stage('inspect'), { cell: 2, sway: .22, resolve: 0 });
-    hosts.import = fig.addHost(stage('import'), { cell: 2, sway: .18, resolve: 0, explode: 1 });
-    hosts.load = fig.addHost(stage('load'), { cell: 2, spin: .3, resolve: 1, explode: 1 - progress.value / 100 });
+    hosts.hero = fig.addHost(stage('hero'), { cell: 2, sway: .34, resolve: resolveNow, explode: explode.value / 100 }, { follow: true });
+    hosts.inspect = fig.addHost(stage('inspect'), { cell: 2, sway: .22, resolve: 0 }, { model: STEP_KEY });
+    hosts.import = fig.addHost(stage('import'), { cell: 2, sway: .18, resolve: 0, explode: 1 }, { model: STEP_KEY });
+    hosts.load = fig.addHost(stage('load'), { cell: 2, spin: .3, resolve: 1, explode: 1 - progress.value / 100 }, { follow: true });
+    hosts.units = units(fig);
     fig.on('pick', (host, index, x, y) => {
-      if (index < 0 || !fig.entry) hideTip(); else showTip(fig.entry.parts[index], x, y);
+      if (index < 0 || !host.entry) hideTip(); else showTip(host.entry.parts[index], x, y);
       if (host === hosts.inspect) terms.inspect.mark(index);
       if (host === hosts.import) terms.import.mark(index);
     });
-    await fig.setModel(currentKey);
+    await Promise.all([fig.setModel(currentKey), ...fig.hosts.map(h => h.ready)]);
     document.documentElement.classList.add('has-3d');
     window.__stepwise.fig = fig;
   } catch (err) {
@@ -335,7 +357,47 @@ async function start3d() {
     console.warn('Stepwise: 3D is off.', err);
   }
 }
+// ------------------------------------------------------------------ --up z
+// The "Any unit" panel: the rudder pedals as a Z-up file would first stand in a +Y-up page (on their back), then
+// turned by --up z. The axes belong to the file: x, y, z before; after the turn (x, y, z) -> (x, z, -y), so the
+// axis that was z is now y and the one that was y is now -z.
+const QUARTER = Math.PI / 2;
+function units(fig) {
+  const el = $('.units__stage'), svg = $('.units__axes', el), state = $('#unitsState'), play = $('#unitsPlay');
+  const ax = { x: $('.ax--x', svg), y: $('.ax--y', svg), z: $('.ax--z', svg) };
+  let timer = 0;
+  // the axes are drawn as a small gizmo in the corner, as CAD tools do: they turn with the model, and keep their
+  // foreshortening, but stay out of the picture
+  const host = fig.addHost(el, { cell: 2, tilt: 0, yaw: -.35, pitch: .38, margin: .86 }, { model: STEP_KEY, sphere: true, after: (h, project) => {
+    const r = h.entry.radiusIn * .5, o = project(0, 0, 0), ch = el.clientHeight, at = [40, ch - 28];
+    // the file's axes in the model's own frame: x is x, the file's y is -z, the file's z is +y
+    const ends = { x: [r, 0, 0], y: [0, 0, -r], z: [0, r, 0] }, dirs = {};
+    for (const k of 'xyz') { const p = project(...ends[k]); dirs[k] = [p[0] - o[0], p[1] - o[1]]; }
+    const f = 34 / Math.max(...Object.values(dirs).map(([x, y]) => Math.hypot(x, y)), 1);
+    const done = h.cur.tilt < .02;
+    svg.classList.toggle('is-out', done);
+    for (const k of 'xyz') {
+      const [dx, dy] = dirs[k], line = ax[k].firstChild, t = ax[k].lastChild, len = Math.hypot(dx, dy) || 1;
+      line.setAttribute('x1', at[0]); line.setAttribute('y1', at[1]);
+      line.setAttribute('x2', (at[0] + dx * f).toFixed(1)); line.setAttribute('y2', (at[1] + dy * f).toFixed(1));
+      t.setAttribute('x', (at[0] + dx * f + dx / len * 10).toFixed(1)); t.setAttribute('y', (at[1] + dy * f + dy / len * 10).toFixed(1));
+      t.textContent = done ? { x: 'x', y: '-z', z: 'y' }[k] : k;
+    }
+  } });
+  const show = isOut => { state.textContent = isOut ? 'Out: +Y up' : 'In: Z up, read as is'; };
+  function run() {
+    clearTimeout(timer);
+    host.set({ tilt: QUARTER }); host.snap(); show(false); fig.claim(host);
+    timer = setTimeout(() => { host.set({ tilt: 0 }); timer = setTimeout(() => show(true), still ? 0 : 1300); }, still ? 1400 : 900);
+  }
+  play.addEventListener('click', run);
+  let seen = false;
+  new IntersectionObserver(([en]) => { if (en.isIntersecting && !seen) { seen = true; run(); } }, { threshold: .6 }).observe(el);
+  return host;
+}
+
 window.__stepwise = { hosts, terms, selectModel, get key() { return currentKey; } };
+loadMeta(STEP_KEY).then(info => { stepInfo = info; (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => fillSteps(true)); });
 selectModel(currentKey);
 spy();
 const idle = f => (window.requestIdleCallback ? requestIdleCallback(f, { timeout: 1500 }) : setTimeout(f, 300));
