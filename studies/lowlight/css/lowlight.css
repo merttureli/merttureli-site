@@ -105,8 +105,8 @@ html.js:not(.late) .wave:not([data-ready]){visibility:hidden}
 
 /* ---------- 02 hero ---------- */
 .hero{position:relative;height:100vh;height:100svh;min-height:620px;overflow:hidden;overflow:clip;
-  --pw:min(40vw,74svh);   /* width of the photograph on the page */
-  --shown:.585;           /* how much of its height stands above the bottom edge */
+  --pw:min(46vw,82svh);   /* width of the photograph on the page */
+  --shown:.52;            /* how much of its height stands above the bottom edge */
   --reserve:118px;        /* kept free under the two words */
   --hero-gap:16px}
 .hero-title{position:absolute;z-index:2;left:var(--g);right:var(--g);top:calc(var(--bar-h) + 8px);display:flex;flex-direction:column;gap:var(--hero-gap);font-size:inherit;font-weight:inherit}
@@ -117,11 +117,11 @@ html.js:not(.late) .wave:not([data-ready]){visibility:hidden}
    photograph over them must not be painted again each time */
 .hero-photo,.hero-people,.hero-title,.hero-ground{will-change:transform}
 .hero-photo img,.hero-people img{position:absolute;left:0;top:0;width:100%;height:auto}
-.hero-photo{z-index:1;opacity:.85;-webkit-mask-image:radial-gradient(ellipse 78% 96% at 64% 100%,#000 42%,transparent 100%);mask-image:radial-gradient(ellipse 78% 96% at 64% 100%,#000 42%,transparent 100%)}
+.hero-photo{z-index:1;opacity:.95;-webkit-mask-image:radial-gradient(ellipse 78% 96% at 64% 100%,#000 42%,transparent 100%);mask-image:radial-gradient(ellipse 78% 96% at 64% 100%,#000 42%,transparent 100%)}
 .hero-people{z-index:3}
 /* the ground the two people sit on, carried to the left edge at the height it has in the photograph */
 .hero-ground{position:absolute;z-index:3;left:0;right:calc(var(--pw) - 2px);bottom:0;height:calc(var(--pw)*1.25*(var(--shown) - .4885));background:var(--bg)}
-.hero-foot{position:absolute;z-index:4;left:var(--g);bottom:0;height:calc(var(--pw)*1.25*(var(--shown) - .4885));display:flex;align-items:center;gap:22px;max-width:calc(100% - var(--pw) - var(--g))}
+.hero-foot{position:absolute;z-index:4;left:var(--g);bottom:14px;display:flex;align-items:center;gap:22px}
 .hero-lede{font-size:13px;white-space:nowrap}
 .hero-lede span:last-child{display:block;width:fit-content}
 .hero-actions{display:flex;align-items:center;gap:10px}
