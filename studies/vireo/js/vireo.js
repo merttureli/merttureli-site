@@ -164,13 +164,18 @@ function setInsideUI(p) {
   caps.forEach((c, i) => rise(c, band(INSIDE_UI.caps[i], p)));
   const a = stageLive ? band(INSIDE_UI.chip, p) : 0;
   chip.style.opacity = a.toFixed(3); chip.style.visibility = a > 0 ? 'visible' : 'hidden';
-  // the model fades and steps back before the stage lets go of it
-  const [o0, o1] = INSIDE_UI.out, out = clamp01((p - o0) / (o1 - o0));
-  stage.style.setProperty('--out', out.toFixed(3));
+
   pin.classList.toggle('can-turn', stageLive && p >= TURN_FROM);
 }
 const insideProgress = () => { const r = inside.getBoundingClientRect(); return clamp01(-r.top / Math.max(1, r.height - vh())); };
 if (!isStatic()) { const f = () => { if (!stageLive) setInsideUI(insideProgress()); }; onScroll.add(f); f(); }
+// The release: the assembled rocket stays on stage after the pin lets go and rides up with it under the light
+// section, which comes in like a curtain; it fades and steps back as the curtain rises (no empty black screen).
+if (!isStatic()) {
+  const [o0, o1] = INSIDE_UI.out;
+  const out = () => { const after = (innerHeight - inside.getBoundingClientRect().bottom) / innerHeight; $('.film').style.setProperty('--out', clamp01((after - o0) / (o1 - o0)).toFixed(3)); };   // the stage and the chip read it
+  onScroll.add(out); onResize.add(out); out();
+}
 
 // ------------------------------------------------------------------ the short version: a gallery that snaps and advances
 {

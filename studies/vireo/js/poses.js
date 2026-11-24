@@ -72,8 +72,8 @@ export const FILM = {
 export const INSIDE_UI = {
   title: [-0.2, -0.08, 0.06, 0.1],
   caps: [[0.13, 0.17, 0.32, 0.36], [0.38, 0.42, 0.55, 0.59], [0.61, 0.65, 0.77, 0.81]],
-  chip: [0.82, 0.86, 0.95, 1.0],
-  out: [0.95, 1.0],                 // the model fades and steps back before the stage lets go
+  chip: [0.82, 0.86, 1.01, 1.02],
+  out: [0.05, 0.6],                 // screens past the release: the model fades and steps back as the light section rises over it
 };
 export const TURN_FROM = 0.84;     // p from which the model can be turned by hand
 

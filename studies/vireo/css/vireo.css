@@ -178,6 +178,7 @@ html:not(.js) .bar, html:not(.js) .study-back.study-back--vireo { position: abso
 .cap__text { margin-top: 8px; font-size: clamp(24px, 2.1vw, 28px); line-height: 1.18; font-weight: 600; letter-spacing: -.012em; text-wrap: pretty; }
 .chip { position: absolute; left: 50%; bottom: 13vh; translate: -50% 0; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 18px 0 14px; font-size: 14px; font-weight: 500; opacity: 0; visibility: hidden; cursor: inherit; }
 .chip svg { width: 18px; height: 18px; }
+.chip { filter: opacity(calc(1 - var(--out, 0))); }     /* leaves with the model at the release */
 .chip:focus-visible { border-radius: 980px; }
 .inside__still { display: none; }
 
