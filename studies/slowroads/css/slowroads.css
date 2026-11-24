@@ -520,7 +520,7 @@ a{color:inherit}
   .cluster .print--tall{width:56%}
   .cluster .print--tall:nth-child(even){margin-left:44%}
   .stop--odd .cluster .print:first-child{margin-left:-11%}
-  .stop--even .cluster .print:nth-child(even):last-child{margin-left:38%}
+  .stop--even .cluster .print:nth-child(2){margin-left:38%}
 }
 @media (max-width:420px){
   .label{padding:26px 22px 22px}
