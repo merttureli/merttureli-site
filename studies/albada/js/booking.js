@@ -44,7 +44,10 @@ export function initBooking({ reduce = false } = {}) {
   const sched = createSchedule(), firstOpen = sched.nextOpen(addDays(sched.today, 1)) || addDays(sched.today, 1);
   const state = { date: null, basket: 'shared', pax: 2, sharedPax: 2, cursor: firstOpen, y: firstOpen.getFullYear(), m: firstOpen.getMonth(), tried: false };
   const say = msg => { const s = $('bookStatus'); s.textContent = ''; requestAnimationFrame(() => { s.textContent = msg; }); };
-  const status = msg => { const s = $('calStatus'); s.textContent = ''; if (msg) requestAnimationFrame(() => { s.textContent = msg; }); };
+  /* the line under the calendar: brought into sight if a tap near the foot of the screen left it below */
+  const status = msg => { const s = $('calStatus'); s.textContent = ''; if (msg) requestAnimationFrame(() => {
+    s.textContent = msg; const r = s.getBoundingClientRect();
+    if (r.bottom > innerHeight - 8) scrollBy({ top: r.bottom - innerHeight + 24, behavior: reduce ? 'auto' : 'smooth' }); }); };
 
   /* ----- calendar ----- */
   function drawMonth() {

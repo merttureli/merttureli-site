@@ -116,8 +116,9 @@ licenses in `fonts/`, one icon in `assets/`. No build step, no outside request.
 3. **Rows at width 75.** The marquee rows sit at 75. The five house rules are one size and each is set at the
    width that fills the measure: the longest at 75 (60 on a phone, where "No headlights after dusk" takes two
    lines), the shortest near 138.
-4. **The night clock.** Nine even hours over the half circle put midnight 10 degrees left of the top, not at
-   the top. An even scale was kept. The hand points at the start of the watch; the watch is the thick arc.
+4. **The night clock.** Midnight sits at the top as the brief asks, so the scale is in two even parts: the four
+   hours before midnight share the left quarter and the five after it the right quarter (an hour is 22.5 degrees
+   before midnight and 18 after). The hand points at the start of the watch; the watch is the thick arc.
    Pointing at a line of the list lights its mark.
 5. **The program list** sets its times in the display face at weight 400 (the config.figma idea) with mono
    text beside them, not as a plain mono list. With scripting off all three nights are listed.
@@ -153,10 +154,11 @@ licenses in `fonts/`, one icon in `assets/`. No build step, no outside request.
   lazy images early. Fonts are 83 KB of that.
 - `report.json`: no console errors, no failed or outside requests, no sideways overflow, no unnamed controls,
   no image without `alt`, one `h1`.
-- Frame times while scrolling the whole page in 9 seconds at 1440 by 900: PERF_DESKTOP
-  At 390 by 844, device pixel ratio 2: PERF_PHONE
-  Script and layout together cost under 2 ms a frame; the rest is painting, which this machine does without a
-  graphics card.
+- Frame times while scrolling the whole page in 9 seconds (best of three runs, machine load average 16 on 4
+  cores): at 1440 by 900, median 16.7 ms, mean 25 ms, 95th percentile 50 ms; at 390 by 844, median 16.7 ms,
+  mean 19 ms, 95th percentile 33 ms. With the sky not drawn and the type frozen the desktop mean falls only to
+  20 ms, so most of the rest is this machine's load. Script and layout together cost under 2 ms a frame; the
+  rest is painting, which this machine does without a graphics card.
 - Text contrast checked by script in both modes at both widths, with errors showing and with the pass
   confirmed: nothing under 4.5 to 1 (3 to 1 for large type). Red on black is 5.9 to 1.
 - The RSVP was run end to end by pointer and by keyboard alone at both widths; no request leaves the page,

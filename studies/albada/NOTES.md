@@ -113,8 +113,9 @@ narrow band where neither reaches 4.5 to 1 it goes to pure white or pure black a
 
 **Deviations from the brief, and why**
 
-- **Display size.** Headlines are 6.8vw (98px at 1440, capped at 140px), line height 1.0, against 12px
-  labels and 16px text, after the note on casamomo.at: the effect is scale contrast. Tracking stays at the
+- **Display size.** Headlines are 6.8vw (98px at 1440, capped at 140px), line height 1.0. Text grows with
+  the screen (`clamp(1rem, .72rem + .5vw, 1.375rem)`: 16px on a phone, 19px at 1440, 21px at 1920); labels
+  are 12px, 13px from 1440; notes and captions are one 14px size. Nothing else in the sans. Tracking stays at the
   brief's +0.02em because the headlines are capitals.
 - **Three colors a screen.** The Book tag is burner amber on the dark grounds and terracotta on the light
   ones, so a screen never shows more than ground, ink and one action color. Terracotta as small text only
@@ -137,15 +138,41 @@ narrow band where neither reaches 4.5 to 1 it goes to pure white or pure black a
   and the balloon; the tall tower is outside the arch.
 - **Confirmation.** The boarding card replaces the form and the section headline becomes
   "Buenos días, (first name)." so there is one large statement on screen, not two.
-- **Bar.** Transparent over the first screen. Further down it carries a veil of the current ground color
-  with a soft lower edge, so text passing under it does not collide with the bar's labels.
-- **Phone menu.** The three bar links move into a full-screen sheet ("Menu"), with the arcade and the
-  booking added.
+- **Bar.** Transparent only at rest on the first screen. From scrollY 8 it carries a veil of the current
+  ground color with a soft lower edge, so text passing under it does not collide with the bar's labels.
+  The hero's top shade is .75 night under the bar, so the labels read at 10 to 1 or better at rest.
+- **Phone menu.** The three bar links move into a full-screen sheet ("Menu"), with the arcade, the
+  booking and "Back to websites" added. On short screens it starts under the bar and scrolls.
+
+**Review round (critic's punch list)**
+
+- **The way back** is no longer the shared pill. From 900 wide it is a 44px circle with an arrow in the left
+  gutter at the bottom, hairline, in the ink of the ground under it; the words show on hover and focus. Under
+  900 it is the same arrow docked in the bar before the wordmark. Checked over the whole scroll at 360, 390,
+  768, 1024, 1440 and 1920: it never sits on a headline, a control or a field (the calendar, the FAQ, the
+  hero line). The bar's clock now centers in the room between the name and the menu, and hides under 380.
+- **Long jumps** (more than two screens) cut inside a view transition instead of racing through every
+  ground; with reduced motion or without view transitions they jump. The booking's scroll margin is set by
+  the script so the calendar head and its rows land in view (checked at 1440 x 900 and 1280 x 640).
+- **The arcade** holds still for 40vh of the pin, the title fades over 300px and never slides under an
+  edge, and the six bays end whole with the same margin on both sides. Not pinned, the strip shows a thin
+  scrollbar.
+- **Footer wordmark** uses the hero's letters at the hero's width; centered at 1920 and 2560.
+- **Photographs:** `sizes` now follows the cover crop and zoom (audited at 1440, 1920 and 390 at 2x);
+  a 7 percent SVG grain lies over the hero.
+- **Air and alignment:** timetable numerals 64px with the note on the heading row; on a phone the numerals
+  have their own column. Under 900 every text block starts at the page margin; arches are capped at 70svh;
+  two fare columns from 600.
+- **Words:** "calm air", "about an hour and a half in the air" (both places), "nobody else in the basket",
+  "pick you up".
+- **States:** `:active` on every control, hover on FAQ rows and basket options, an arch outline on open
+  mornings at rest, and a visible line under the calendar when a full or closed day is clicked ("That
+  morning is full."), scrolled into sight if the tap was near the foot of the screen.
 
 **Known weak spots**
 
-- The hero photograph only exists 1280px wide (portrait), so it is enlarged on wide screens and is soft
-  above about 1600px.
+- The hero photograph only exists 1280px wide (portrait), so it is enlarged on wide screens. The grain
+  hides most of that, but above about 1600px it is still softer than the rest.
 - The collage captions are rotated with their photographs; rotated 12px capitals are slightly soft on
   low-density screens.
 - The right balloon in `balloons-dusk` clears the arch by a few pixels. It is whole, but close.

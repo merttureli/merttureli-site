@@ -336,13 +336,13 @@ html.sheet-open{overflow:hidden}
 .day[aria-pressed="true"]{color:#fff}
 .day[aria-pressed="true"]::before,.day[aria-pressed="true"]:active::before{background:var(--terra);border-color:var(--terra)}
 .day:focus-visible{outline:2px solid var(--ink);outline-offset:-3px}
-.cal__key{display:flex;flex-wrap:wrap;gap:10px 28px;margin-top:18px}
+.cal__key{display:flex;flex-wrap:wrap;gap:10px 28px;margin-top:12px}
 .key{display:flex;align-items:center;gap:10px;font:500 var(--t-label)/1 var(--sans);letter-spacing:.12em;text-transform:uppercase}
 .key::before{content:"";flex:none}
 .key--open::before{width:11px;height:15px;border-radius:9999px 9999px 0 0;border:1px solid var(--line-2)}
 .key--full::before{width:14px;height:1px;background:var(--off)}
 .key--yours::before{width:11px;height:15px;border-radius:9999px 9999px 0 0;background:var(--terra)}
-.cal__status{display:flex;gap:10px;align-items:baseline;min-height:1.45em;margin-top:14px;font-size:var(--t-note);line-height:1.45}
+.cal__status{display:flex;gap:10px;align-items:baseline;min-height:1.45em;margin-top:12px;font-size:var(--t-note);line-height:1.45}
 .cal__status:not(:empty)::before{content:"";flex:none;width:7px;height:7px;background:var(--terra);translate:0 -1px}
 .cal__nojs{margin-top:16px}
 
