@@ -1,6 +1,6 @@
 // Vireo: the page's own script. Everything here works without three.js; the 3D (stage.js, rig.js) is imported
 // after the first paint and takes over the stage canvas when it is ready.
-import { INSIDE_UI, TURN_FROM, band } from './poses.js';
+import { INSIDE_UI, TURN_FROM, HERO_BOX, band } from './poses.js';
 
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const html = document.documentElement;
@@ -45,14 +45,26 @@ addEventListener('resize', () => { cancelAnimationFrame(rz); rz = requestAnimati
   onScroll.add(update); update();
 }
 
-// ------------------------------------------------------------------ the phone's buy bar leaves when the form is on screen
+// ------------------------------------------------------------------ the phone's buy bar
+// Only on a phone tall enough for it (CSS), and only once the hero's own copy has left the screen. It steps away
+// while the page scrolls down and comes back when it scrolls up, and it is away while the gallery's controls, the
+// form or the footer are on screen.
 {
   const buybar = $('#buybar'), seen = new Set();
+  let lastY = scrollY, down = false;
+  const update = () => {
+    const y = scrollY;
+    if (Math.abs(y - lastY) > 6) { down = y > lastY; lastY = y; }
+    const away = y < vh() * 0.9 || seen.size > 0 || down;
+    buybar.classList.toggle('is-away', away);
+    buybar.inert = away;
+  };
   const io = new IntersectionObserver(es => {
     for (const e of es) { if (e.isIntersecting) seen.add(e.target); else seen.delete(e.target); }
-    buybar.classList.toggle('is-away', seen.size > 0);
-  }, { rootMargin: '0px 0px -25% 0px' });
-  io.observe($('#reserve')); io.observe($('.foot'));
+    update();
+  }, { rootMargin: '0px 0px -12% 0px' });
+  for (const el of [$('#reserve'), $('.foot'), $('.gallery__ctl')]) io.observe(el);
+  onScroll.add(update); update();
 }
 
 // ------------------------------------------------------------------ reveals: a 24 px rise, once
@@ -82,6 +94,37 @@ const sweepDone = new Promise(resolve => {
   if (posterImg.complete && posterImg.naturalWidth) go();
   else { posterImg.addEventListener('load', go, { once: true }); posterImg.addEventListener('error', go, { once: true }); setTimeout(go, 1500); }
 });
+// The hero rocket is fitted between the bar and the hero copy, 64px clear of both: the still and the live frame get the
+// same scale (about the rocket's nose end) and shift. HERO_BOX is where the rocket lies in the hero still's frame.
+const heroCopy = $('.hero__copy');
+function containRect(W, H, aspect, ay = 0.5) { let w = W, h = W / aspect; if (h > H) { h = H; w = H * aspect; } return { x: (W - w) / 2, y: (H - h) * ay, w, h }; }
+function heroFit() {
+  const W = stage.clientWidth, H = stage.clientHeight, port = matchMedia('(max-aspect-ratio: 68/100)').matches;
+  const R = containRect(W, H, port ? 0.62 : 1.6, port ? 0 : 0.5), b = HERO_BOX[port ? 'port' : 'land'];
+  const x1 = R.x + b[2] * R.w, y0 = R.y + b[1] * R.h, y1 = R.y + b[3] * R.h;
+  const m = Math.min(64, H * 0.1), top = $('#bar').offsetHeight + m;
+  const bottom = heroCopy.offsetTop + (hero.getBoundingClientRect().top - stage.getBoundingClientRect().top) - m;
+  const s = Math.max(0.45, Math.min(1, (bottom - top) / (y1 - y0)));
+  const ny0 = Math.min(Math.max(y0, top), bottom - (y1 - y0) * s);
+  const dx = s < 1 ? Math.min(x1 * (1 - s), Math.max(0, W - 24 - x1 * s)) : 0, dy = ny0 - y0 * s;
+  return { s, dx, dy: Math.abs(dy) < 0.5 ? 0 : dy };
+}
+const fitPoster = () => {
+  const f = heroFit(), t = f.s === 1 && !f.dx && !f.dy ? '' : `translate(${f.dx.toFixed(1)}px, ${f.dy.toFixed(1)}px) scale(${f.s.toFixed(4)})`;
+  for (const el of $$('.film__poster, .film__glow')) el.style.transform = t;
+};
+fitPoster(); onResize.add(fitPoster);
+// the hero copy fades and lifts over the first part of the scroll, before the rocket turns
+if (!isStatic()) {
+  const heroIn = $('.hero__in');
+  const lift = () => {
+    const t = clamp01(scrollY / (vh() * 0.16));
+    heroIn.style.opacity = (1 - t).toFixed(3);
+    heroIn.style.transform = t ? `translateY(${(-t * 40).toFixed(1)}px)` : '';
+    heroIn.style.visibility = t >= 1 ? 'hidden' : '';
+  };
+  onScroll.add(lift); lift();
+}
 // until the live rocket takes the stage, the still must not sit behind the statement: it fades with the scroll
 if (!isStatic()) {
   const fade = () => { if (!stageLive) $('#poster').style.opacity = String(1 - clamp01(scrollY / (vh() * 0.55))); };
@@ -116,6 +159,9 @@ function setInsideUI(p) {
   caps.forEach((c, i) => rise(c, band(INSIDE_UI.caps[i], p)));
   const a = stageLive ? band(INSIDE_UI.chip, p) : 0;
   chip.style.opacity = a.toFixed(3); chip.style.visibility = a > 0 ? 'visible' : 'hidden';
+  // the model fades and steps back before the stage lets go of it
+  const [o0, o1] = INSIDE_UI.out, out = clamp01((p - o0) / (o1 - o0));
+  stage.style.setProperty('--out', out.toFixed(3));
   pin.classList.toggle('can-turn', stageLive && p >= TURN_FROM);
 }
 const insideProgress = () => { const r = inside.getBoundingClientRect(); return clamp01(-r.top / Math.max(1, r.height - vh())); };
@@ -161,8 +207,9 @@ if (!isStatic()) { const f = () => { if (!stageLive) setInsideUI(insideProgress(
   }, { passive: true });
   dots.forEach((d, i) => d.addEventListener('click', () => { go(i); kick(); }));
   track.addEventListener('keydown', e => {
-    if (e.key === 'ArrowRight') { e.preventDefault(); go(Math.min(cards.length - 1, index + 1)); kick(); }
-    else if (e.key === 'ArrowLeft') { e.preventDefault(); go(Math.max(0, index - 1)); kick(); }
+    const to = { ArrowRight: Math.min(cards.length - 1, index + 1), ArrowLeft: Math.max(0, index - 1), Home: 0, End: cards.length - 1 }[e.key];
+    if (to === undefined) return;
+    e.preventDefault(); go(to); kick();
   });
   const hold = v => () => { held = v; if (!v) { elapsed = 0; } kick(); };
   track.addEventListener('pointerdown', hold(true)); addEventListener('pointerup', () => { if (held) hold(false)(); }); addEventListener('pointercancel', () => { if (held) hold(false)(); });
@@ -182,6 +229,24 @@ if (!isStatic()) { const f = () => { if (!stageLive) setInsideUI(insideProgress(
 }
 
 // ------------------------------------------------------------------ look closer: plus pills, one open at a time
+// Until (or unless) the live view runs, the panel shows a rendered still of the opened part.
+const closerPoster = $('.closer__poster');
+const CLOSER_ALT = {
+  whole: 'CHARGER whole, at an angle on a light gray studio.',
+  nose: 'The nose cone of CHARGER, solid, with the rest of the rocket drawn as a faint ghost behind it.',
+  payload: 'The payload inside the upper tube, solid, with the rest of the rocket drawn as a faint ghost.',
+  camera: 'The camera and its mount in the forward assembly, solid, with the rest of the rocket drawn as a faint ghost.',
+  mount: 'The motor mount, the motor and the screw cap, solid, with the rest of the rocket drawn as a faint ghost.',
+  fins: 'The four fins, solid, with the rest of the rocket drawn as a faint ghost.',
+  recovery: 'The lower shock cord mount, solid, with the rest of the rocket drawn as a faint ghost.',
+};
+function still(key) {
+  const k = key || 'whole', img = $('img', closerPoster), src = $('source', closerPoster);
+  if (closerPoster.dataset.part === k) return;
+  closerPoster.dataset.part = k;
+  src.srcset = `assets/closer-${k}-port.webp`; img.src = `assets/closer-${k}-land.webp`;
+  img.alt = CLOSER_ALT[k];
+}
 const closer = (() => {
   const items = $$('.plus'), listeners = new Set();
   let current = null;
@@ -192,6 +257,7 @@ const closer = (() => {
       li.classList.toggle('is-open', on);
       $('.plus__btn', li).setAttribute('aria-expanded', String(on));
     }
+    still(key);
     if (!quiet) for (const f of listeners) f(current);
   }
   for (const li of items) $('.plus__btn', li).addEventListener('click', () => open(li.dataset.part === current ? null : li.dataset.part));
@@ -332,7 +398,7 @@ if (!isStatic()) {
 {
   const api = {
     reduced: isStatic(), stage, canvas: $('#canvas'), poster: $('#poster'), film: $('.film'), statement: $('.statement'), inside, pin, chip,
-    closerView: $('#closerView'), closer, setInsideUI, sweepDone, onScroll, onResize,
+    closerView: $('#closerView'), closer, setInsideUI, sweepDone, onScroll, onResize, heroFit,
     live() { stageLive = true; },
   };
   let asked = false;

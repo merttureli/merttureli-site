@@ -85,7 +85,7 @@ sup a:hover { text-decoration: underline; }
    Same link and text; under 480px only its arrow shows (the text stays for assistive tech). 160px is the wordmark,
    the rule and the product name (144px) plus a gap. ---------- */
 .study-back.study-back--vireo {
-  left: calc(max(var(--gutter), (100% - var(--wide)) / 2) + 160px); top: 10px; bottom: auto; translate: none;
+  left: calc(max(var(--gutter), (100% - var(--col)) / 2) + 160px); top: 10px; bottom: auto; translate: none;
   min-height: 28px; height: 28px; padding: 0 11px 0 8px; gap: 5px;
   font-family: var(--font); font-size: 12px; font-weight: 500; letter-spacing: 0; line-height: 1; white-space: nowrap;
   color: var(--ink-d); background: rgba(255, 255, 255, .1); box-shadow: inset 0 0 0 1px var(--hair-d);
@@ -108,7 +108,7 @@ html:not(.js) .bar, html:not(.js) .study-back.study-back--vireo { position: abso
 .bar { position: fixed; inset: 0 0 auto 0; z-index: 50; height: var(--bar); color: var(--ink-d); transition: background-color .3s var(--ease), color .3s var(--ease), box-shadow .3s var(--ease); }
 .bar.is-glass { background: rgba(22, 22, 23, .72); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); box-shadow: inset 0 -1px 0 var(--hair-d); }
 .bar.is-glass[data-theme="light"] { background: rgba(250, 250, 252, .72); color: var(--ink); box-shadow: inset 0 -1px 0 var(--hair); }
-.bar__in { width: min(var(--wide), 100% - 2 * var(--gutter)); height: 100%; margin-inline: auto; display: flex; align-items: center; gap: 14px; }
+.bar__in { width: min(var(--col), 100% - 2 * var(--gutter)); height: 100%; margin-inline: auto; display: flex; align-items: center; gap: 14px; }
 .bar__brand { font-size: 21px; font-weight: 600; letter-spacing: -.035em; line-height: 1; text-decoration: none; padding: 8px 0; }
 .bar__product { font-size: 14px; font-weight: 600; letter-spacing: .01em; opacity: .64; padding-left: 14px; border-left: 1px solid currentColor; line-height: 1; border-image: linear-gradient(currentColor, currentColor) 1; }
 .bar__nav { margin-left: auto; display: flex; gap: clamp(18px, 2.4vw, 34px); }
@@ -119,10 +119,10 @@ html:not(.js) .bar, html:not(.js) .study-back.study-back--vireo { position: abso
 /* ---------- film: one sticky stage under the hero, the statement and the pinned scene ---------- */
 .film { position: relative; background: var(--black); color: var(--ink-d); }
 .film__stage { position: sticky; top: 0; height: var(--vh); overflow: hidden; z-index: 0; }
-.film__poster, .film__glow { position: absolute; inset: 0; }
+.film__poster, .film__glow { position: absolute; inset: 0; transform-origin: 0 0; }
 .film__poster img, .film__glow img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: contain; object-position: 50% 50%; }
 .film__stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity .6s var(--ease); }
-.film__stage.is-live canvas { opacity: 1; }
+.film__stage.is-live canvas { opacity: calc(1 - var(--out, 0)); transform: scale(calc(1 - .06 * var(--out, 0))); }
 .film__stage { --sweep: 68deg; }
 @media (max-aspect-ratio: 68/100) { .film__poster img, .film__glow img { object-position: 50% 0; } .film__stage { --sweep: 45deg; } }
 
@@ -147,7 +147,7 @@ html:not(.js) .bar, html:not(.js) .study-back.study-back--vireo { position: abso
 /* ---------- hero ---------- */
 .hero { position: relative; z-index: 1; height: var(--vh); min-height: 560px; margin-top: calc(-1 * var(--vh)); display: flex; align-items: flex-end; pointer-events: none; }
 .hero a, .hero p, .hero h1 { pointer-events: auto; }
-.hero__in { width: min(var(--wide), 100% - 2 * var(--gutter)); margin-inline: auto; padding-bottom: clamp(40px, 6.4vh, 64px); }
+.hero__in { width: min(var(--col), 100% - 2 * var(--gutter)); margin-inline: auto; padding-bottom: clamp(40px, 6.4vh, 64px); will-change: opacity, transform; }
 .hero h1 { font-size: clamp(48px, min(6.67vw, 11.2vh), 100px); line-height: 1.05; font-weight: 600; letter-spacing: -.015em; margin-top: 8px; }
 .hero__row { display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; margin-top: clamp(14px, 2vh, 22px); }
 .hero__lede { font-size: 21px; line-height: 1.38; letter-spacing: -.012em; color: var(--quiet-d); max-width: 26em; text-wrap: pretty; }
@@ -167,14 +167,14 @@ html:not(.js) .bar, html:not(.js) .study-back.study-back--vireo { position: abso
 .statement__text .w.on { color: var(--ink-d); }
 
 /* ---------- inside: pinned for four screens ---------- */
-.inside { position: relative; z-index: 1; height: calc(5 * var(--vh)); }
+.inside { position: relative; z-index: 1; height: calc(5.5 * var(--vh)); }
 .inside__pin { position: sticky; top: 0; height: var(--vh); overflow: hidden; }
 .inside__pin.can-turn { cursor: grab; touch-action: pan-y; }
 .inside__pin.is-turning { cursor: grabbing; }
-.inside__title { position: absolute; left: 0; right: 0; top: 15vh; padding-inline: var(--gutter); text-align: center; font-size: clamp(40px, min(6.67vw, 11.2vh), 96px); line-height: 1.05; font-weight: 600; letter-spacing: -.015em; opacity: 0; will-change: opacity, transform; }
-.inside__caps { position: absolute; left: max(var(--gutter), (100% - var(--wide)) / 2); bottom: 12vh; width: min(430px, 100% - 2 * var(--gutter)); }
+.inside__title { position: absolute; left: max(var(--gutter), (100% - var(--col)) / 2); right: var(--gutter); top: calc(var(--bar) + 9vh); text-align: left; font-size: clamp(40px, min(6.67vw, 11.2vh), 96px); line-height: 1.05; font-weight: 600; letter-spacing: -.015em; opacity: 0; will-change: opacity, transform; }
+.inside__caps { position: absolute; right: max(var(--gutter), (100% - var(--col)) / 2); bottom: 11vh; width: min(400px, 100% - 2 * var(--gutter)); }
 .cap { position: absolute; left: 0; bottom: 0; width: 100%; opacity: 0; will-change: opacity, transform; }
-.cap__text { margin-top: 8px; font-size: clamp(24px, 2.3vw, 32px); line-height: 1.14; font-weight: 600; letter-spacing: -.012em; text-wrap: pretty; }
+.cap__text { margin-top: 8px; font-size: clamp(24px, 2.1vw, 28px); line-height: 1.18; font-weight: 600; letter-spacing: -.012em; text-wrap: pretty; }
 .chip { position: absolute; left: 50%; bottom: 13vh; translate: -50% 0; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 18px 0 14px; font-size: 14px; font-weight: 500; opacity: 0; visibility: hidden; cursor: inherit; }
 .chip svg { width: 18px; height: 18px; }
 .chip:focus-visible { border-radius: 980px; }
@@ -190,11 +190,11 @@ html:not(.js) .plus__body p { opacity: 1; padding-bottom: 22px; }
 :is(html.static, html:not(.js)) .statement { min-height: 0; padding: clamp(96px, 16vh, 180px) 0; }
 :is(html.static, html:not(.js)) .inside { height: auto; }
 :is(html.static, html:not(.js)) .inside__pin { position: static; height: auto; overflow: visible; padding: clamp(40px, 8vh, 96px) 0 var(--pad); }
-:is(html.static, html:not(.js)) .inside__title { position: static; opacity: 1; }
+:is(html.static, html:not(.js)) .inside__title { position: static; opacity: 1; width: min(var(--col), 100% - 2 * var(--gutter)); margin-inline: auto; padding-inline: 0; }
 :is(html.static, html:not(.js)) .inside__still { display: block; order: 2; margin: clamp(24px, 4vh, 56px) auto; width: min(var(--wide), 100%); }
 :is(html.static, html:not(.js)) .inside__still img { width: 100%; }
 :is(html.static, html:not(.js)) .inside__pin { display: flex; flex-direction: column; }
-:is(html.static, html:not(.js)) .inside__caps { position: static; order: 3; width: min(var(--col), 100% - 2 * var(--gutter)); margin-inline: auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(24px, 3vw, 48px); }
+:is(html.static, html:not(.js)) .inside__caps { position: static; order: 3; right: auto; width: min(var(--col), 100% - 2 * var(--gutter)); margin-inline: auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(24px, 3vw, 48px); }
 :is(html.static, html:not(.js)) .cap { position: static; opacity: 1; }
 :is(html.static, html:not(.js)) .cap__text { font-size: 21px; line-height: 1.24; }
 :is(html.static, html:not(.js)) .chip { display: none; }
@@ -355,21 +355,23 @@ html:not(.js) .plus__body p { opacity: 1; padding-bottom: 22px; }
   .bar .btn { margin-left: auto; }
   .eyebrow { font-size: 19px; }
 
-  .hero__in { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+  .hero__in { padding-bottom: calc(40px + env(safe-area-inset-bottom)); }
   .hero__row { display: block; margin-top: 12px; }
   .hero__lede { font-size: 17px; line-height: 1.42; max-width: min(21em, 100% - 28px); }
   .hero .buy { display: none; }
-  .buybar { position: fixed; z-index: 40; left: max(12px, env(safe-area-inset-left)); right: max(12px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom)); display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 8px 8px 8px 22px; transition: opacity .3s var(--ease), transform .3s var(--ease), visibility 0s; }
-  .buybar[data-theme="light"] { background: rgba(250, 250, 252, .78); color: var(--ink); box-shadow: inset 0 0 0 1px var(--hair), 0 10px 30px -12px rgba(0, 0, 0, .25); }
+  .buybar { position: fixed; z-index: 40; background: rgba(22, 22, 23, .88); left: max(12px, env(safe-area-inset-left)); right: max(12px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom)); display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 8px 8px 8px 22px; transition: opacity .3s var(--ease), transform .3s var(--ease), visibility 0s; }
+  .buybar[data-theme="light"] { background: rgba(250, 250, 252, .9); color: var(--ink); box-shadow: inset 0 0 0 1px var(--hair), 0 10px 30px -12px rgba(0, 0, 0, .25); }
   .buybar.is-away { opacity: 0; transform: translateY(16px); visibility: hidden; transition: opacity .3s var(--ease), transform .3s var(--ease), visibility 0s .3s; }
 
   .statement { display: block; padding: 30vh 0 34vh; }
   .statement__text { width: auto; margin: 0 92px 0 var(--gutter); font-size: clamp(28px, 8.2vw, 40px); line-height: 1.12; text-align: left; text-wrap: pretty; }
 
-  .inside__title { top: calc(var(--bar) + 12vh); text-align: left; padding-right: 110px; font-size: clamp(40px, 11.5vw, 56px); }
-  .inside__caps { bottom: calc(98px + env(safe-area-inset-bottom)); width: min(330px, 100% - 2 * var(--gutter)); }
-  .cap__text { font-size: 24px; }
-  .chip { bottom: calc(98px + env(safe-area-inset-bottom)); }
+  .inside__title { left: var(--gutter); top: calc(var(--bar) + 5vh); font-size: clamp(40px, 11.5vw, 56px); }
+  .inside__caps { left: var(--gutter); right: auto; bottom: calc(40px + env(safe-area-inset-bottom)); width: min(340px, 100% - 2 * var(--gutter)); }
+  .cap__text { font-size: 22px; line-height: 1.2; }
+  .chip { bottom: calc(40px + env(safe-area-inset-bottom)); }
+  /* running text clears the buy bar when it comes back */
+  .short, .closer, .flight, .proof, .specs { padding-bottom: max(96px, var(--pad)); }
   :is(html.static, html:not(.js)) .inside__caps { grid-template-columns: 1fr; }
   :is(html.static, html:not(.js)) .inside__title { padding-right: var(--gutter); }
 
@@ -404,7 +406,21 @@ html:not(.js) .plus__body p { opacity: 1; padding-bottom: 22px; }
   .foot { padding-bottom: calc(110px + env(safe-area-inset-bottom)); }
 }
 
-@media (max-height: 520px) and (min-width: 761px) { .hero__lede { display: none; } }
+/* the buy bar: a phone tall enough for it, once the hero has gone (vireo.js) */
+@media (max-width: 760px) and (max-height: 559px) { .buybar { display: none; } }
+@media (max-width: 760px) and (min-height: 560px) { .foot { padding-bottom: calc(110px + env(safe-area-inset-bottom)); } }
+/* short screens (and 200 percent zoom): the hero headline smaller, the scene's words under the model */
+@media (max-height: 560px) {
+  .hero { min-height: 0; }
+  .hero h1 { font-size: clamp(40px, 9vh, 96px); }
+  .hero__lede { display: none; }
+  .hero__row { margin-top: 0; }
+  .inside__title { top: calc(var(--bar) + 16px); font-size: clamp(32px, 8vh, 48px); }
+  .inside__caps { left: max(var(--gutter), (100% - var(--col)) / 2); right: auto; bottom: 16px; width: min(560px, 100% - 2 * var(--gutter)); }
+  .cap .eyebrow { font-size: 15px; }
+  .cap__text { font-size: 17px; line-height: 1.3; margin-top: 4px; }
+  .chip { bottom: 16px; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

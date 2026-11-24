@@ -75,6 +75,7 @@ const layouts = [];
   layouts.push(() => {
     const r = box.getBoundingClientRect();
     w = r.width; h = r.height;
+    if (!w || !h) return;                                   // not laid out yet (a hidden frame)
     let d = '';
     for (let y = 0; y <= h; y += 6) d += (y ? 'L' : 'M') + xAt(y).toFixed(1) + ' ' + y;
     thread.setAttribute('d', d); stitch.setAttribute('d', d);

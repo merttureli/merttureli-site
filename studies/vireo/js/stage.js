@@ -23,6 +23,19 @@ export async function mount(api) {
   await api.sweepDone;
 
   let host = null, raf = 0, last = 0, shown = false;
+  // the hero's frame: fitted between the bar and the hero copy (vireo.js heroFit, the same transform as the poster);
+  // it eases back to the plain frame as the rocket turns to stand at the side
+  // On a short screen the pinned scene's frame stops above its words, which sit under the model there.
+  let base = { x: 0, y: 0, w: 1, h: 1 }, low = base, fit = { s: 1, dx: 0, dy: 0 }, fitK = '';
+  const fitFrame = (k, j) => {
+    const sig = k.toFixed(4) + j.toFixed(4);
+    if (sig === fitK) return;
+    fitK = sig;
+    const s = 1 + (fit.s - 1) * k, dx = fit.dx * k, dy = fit.dy * k, R = { x: base.x * s + dx, y: base.y * s + dy, w: base.w * s, h: base.h * s };
+    for (const key of ['x', 'y', 'w', 'h']) R[key] += (low[key] - R[key]) * j;
+    rig.setFrame(R);
+  };
+  const ks = u => [1 - smooth(0.24, 0.62, u), smooth(1.75, 2.0, u)];
   // ---- the film (stage)
   let uCur = 0, uGoal = 0, yA = 1, yIn0 = 2, yIn1 = 3, rollIdle = 0, rollOn = false;
   let turn = 0, turnVel = 0, leanOff = 0, dragging = false;
@@ -35,7 +48,10 @@ export async function mount(api) {
     if (host === 'stage') {
       const W = stage.clientWidth, H = stage.clientHeight, port = portQ.matches;
       rig.size(W, H, FRAME[port ? 'port' : 'land']);
-      rig.setFrame(containRect(W, H, FRAME[port ? 'port' : 'land'], { ay: port ? 0 : 0.5 }));
+      base = containRect(W, H, FRAME[port ? 'port' : 'land'], { ay: port ? 0 : 0.5 });
+      low = H < 560 ? containRect(W, H - 120, FRAME[port ? 'port' : 'land'], { ay: 0 }) : base;
+      fit = api.heroFit ? api.heroFit() : fit; fitK = '';
+      fitFrame(...ks(uCur));
       yA = H * 0.55;
       yIn0 = inside.offsetTop; yIn1 = inside.offsetTop + inside.offsetHeight - H;
     } else if (host === 'closer') {
@@ -74,7 +90,7 @@ export async function mount(api) {
     } else {
       closerView.append(canvas);
       rig.setGrade('light');
-      S.explode = 0; S.turn = 0;
+      S.explode = 0; S.pull = 0; S.side = 0; S.turn = 0;
       measure();
       pick(closer.current, true);
       rig.warmGhosts();
@@ -96,7 +112,8 @@ export async function mount(api) {
     if (!dragging) { turn += turnVel * dt; turnVel *= Math.exp(-dt * 3.2); if (Math.abs(turnVel) < 0.002) turnVel = 0; }
     if (w <= 0 && (turn || leanOff)) { turn = 0; leanOff = 0; turnVel = 0; }
     S.tilt = pose.tilt; S.lean = pose.lean + leanOff * w; S.roll = pose.roll + rollNow; S.turn = turn * w;
-    S.station = pose.station; S.dist = pose.dist; S.ox = pose.ox; S.oy = pose.oy; S.explode = pose.explode;
+    S.station = pose.station; S.dist = pose.dist; S.ox = pose.ox; S.oy = pose.oy; S.explode = pose.explode; S.pull = pose.pull; S.side = pose.side;
+    fitFrame(...ks(uCur));
     setInsideUI(clamp01(p));
     return uCur !== uGoal || idle > 0 || dragging || turnVel !== 0;
   }
@@ -116,7 +133,7 @@ export async function mount(api) {
     const dl = Math.log(goal.dist) - Math.log(cur.dist);
     if (Math.abs(dl) > 0.0008) { cur.dist = Math.exp(Math.log(cur.dist) + dl * k); moving = true; } else cur.dist = goal.dist;
     if (rig.stepOpacity(1 - Math.exp(-dt * 6))) moving = true;
-    S.tilt = cur.tilt; S.lean = cur.lean; S.roll = cur.roll; S.station = cur.station; S.dist = cur.dist; S.ox = cur.ox; S.oy = cur.oy; S.explode = 0; S.turn = 0;
+    S.tilt = cur.tilt; S.lean = cur.lean; S.roll = cur.roll; S.station = cur.station; S.dist = cur.dist; S.ox = cur.ox; S.oy = cur.oy; S.explode = 0; S.pull = 0; S.side = 0; S.turn = 0;
     return moving;
   }
 
@@ -148,7 +165,7 @@ export async function mount(api) {
     let px = 0, py = 0, pt = 0, id = null;
     pin.addEventListener('pointerdown', e => {
       if (!pin.classList.contains('can-turn') || !e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return;
-      if (e.target.closest('button') && e.target !== chip && !chip.contains(e.target)) return;
+      if (e.target.closest('button')) return;           // the chip turns the model a quarter on a press, not a drag
       dragging = true; id = e.pointerId; px = e.clientX; py = e.clientY; pt = performance.now(); turnVel = 0;
       pin.setPointerCapture(id); pin.classList.add('is-turning'); invalidate();
     });
@@ -161,6 +178,8 @@ export async function mount(api) {
     });
     const end = e => { if (!dragging || e.pointerId !== id) return; dragging = false; id = null; pin.classList.remove('is-turning'); turnVel = Math.max(-6, Math.min(6, turnVel)); invalidate(); };
     pin.addEventListener('pointerup', end); pin.addEventListener('pointercancel', end);
+    // a press on the chip (pointer, Enter or Space) turns the model a quarter
+    chip.addEventListener('click', () => { if (!pin.classList.contains('can-turn')) return; turnVel += (Math.PI / 2) * 3.2; invalidate(); });
     chip.addEventListener('keydown', e => {
       const step = { ArrowLeft: [-1.6, 0], ArrowRight: [1.6, 0], ArrowUp: [0, -0.12], ArrowDown: [0, 0.12] }[e.key];
       if (!step) return;

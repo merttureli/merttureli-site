@@ -5,63 +5,79 @@
 // have slid apart (0..1). `land` is the 16:10 frame, `port` the 0.62 frame of a phone.
 //
 // The film runs on one number u: 0 the hero, 1 the statement (rocket upright at the side), 2 the start of the
-// pinned "Inside" scene, 3 its end.
-const H = Math.PI / 2;
+// pinned "Inside" scene, 3 its end. `pull` (0..1) takes the interior parts out of their tubes to the side (rig.js
+// PULL); `side` moves the focus across the airframe by that many meters, so a close-up can sit on a pulled part.
+//
+// The rocket never leaves the stage: the hero copy fades and lifts first (vireo.js), then the rocket turns in
+// place to stand at the side of the statement. Before the pin it turns again to lie on the diagonal of the screen,
+// comes apart along it, the interior parts come out of the tubes, the camera moves in to the payload and to the
+// motor mount, and the rocket goes back together in the middle of the screen to be turned by hand.
 export const ROLL0 = 0.5;          // the lettering toward the camera
-
+const P = (u, tilt, lean, roll, station, dist, ox, oy, explode = 0, pull = 0, side = 0) => ({ u, tilt, lean, roll, station, dist, ox, oy, explode, pull, side });
+const D = 1.13;                    // the diagonal: the nose 25 degrees above the horizontal
 export const FILM = {
-  // The hero rocket leaves the way it points (it flies up and out before the page's words reach it), then comes
-  // back standing at the side, rising behind the hero's last line, and waits there through the statement.
   land: [
-    { u: 0.00, tilt: 1.19, lean: 0.22, roll: ROLL0, station: -0.02, dist: 2.1, ox: 0.06, oy: 0.31, explode: 0 },
-    { u: 0.70, tilt: 1.19, lean: 0.22, roll: ROLL0 + 0.5, station: -0.02, dist: 2.1, ox: 1.9, oy: 1.47, explode: 0 },
-    { u: 0.72, tilt: 0.5, lean: 0, roll: ROLL0 + 0.8, station: 0.5707, dist: 3.25, ox: 2.6, oy: -0.4, explode: 0 },
-    { u: 0.74, tilt: 0, lean: 0, roll: ROLL0 + 1.1, station: 0.5707, dist: 3.25, ox: 0.8, oy: -1.25, explode: 0 },
-    { u: 1.00, tilt: 0, lean: 0, roll: ROLL0 + 1.1, station: 0.5707, dist: 3.25, ox: 0.8, oy: 0.096, explode: 0 },
-    { u: 1.26, tilt: 0, lean: 0, roll: ROLL0 + 1.1, station: 0.5707, dist: 3.25, ox: 0.8, oy: 0.844, explode: 0 },
-    { u: 1.30, tilt: 0, lean: 0, roll: ROLL0 + 1.1, station: -0.02, dist: 3.25, ox: 0.8, oy: -0.011, explode: 0 },
-    { u: 2.00, tilt: 0, lean: 0, roll: ROLL0 + 1.1, station: -0.02, dist: 3.25, ox: 0.8, oy: -0.011, explode: 0 },
-    // apart, the whole length of it across the screen
-    { u: 2.15,tilt: H, lean: 0.16, roll: 0.6, station: -0.093, dist: 3.35, ox: 0.0, oy: -0.1, explode: 0.55 },
-    { u: 2.24,tilt: H, lean: 0.16, roll: 0.6, station: -0.093, dist: 3.35, ox: 0.0, oy: -0.1, explode: 0.55 },
+    P(0.00, 1.19, 0.22, ROLL0, -0.02, 2.1, 0.06, 0.31),
+    P(0.24, 1.19, 0.22, ROLL0 + 0.1, -0.02, 2.1, 0.06, 0.31),
+    P(0.62, 0.42, 0.08, ROLL0 + 0.5, -0.02, 2.75, 0.5, 0.06),
+    P(0.95, 0, 0, ROLL0 + 0.8, -0.02, 3.2, 0.66, 0.0),
+    P(1.70, 0, 0, ROLL0 + 1.0, -0.02, 3.2, 0.66, 0.06),
+    // onto the diagonal, whole, in the middle of the screen
+    P(2.00, D, 0.1, 0.6, -0.1, 3.0, 0.02, -0.06),
+    P(2.04, D, 0.1, 0.6, -0.1, 3.0, 0.02, -0.06),
+    // apart along it, then the insides out to the side
+    P(2.16, D, 0.1, 0.62, -0.1, 3.35, 0.0, -0.05, 0.58, 0),
+    P(2.25, D, 0.1, 0.64, -0.1, 3.4, 0.0, -0.05, 0.58, 1),
+    P(2.33, D, 0.1, 0.66, -0.1, 3.4, 0.0, -0.05, 0.58, 1),
     // the payload
-    { u: 2.40,tilt: H - 0.1, lean: 0.30, roll: 0.62, station: 0.40, dist: 0.86, ox: -0.04, oy: 0.1, explode: 0.62 },
-    { u: 2.54,tilt: H - 0.1, lean: 0.30, roll: 0.72, station: 0.40, dist: 0.86, ox: -0.04, oy: 0.1, explode: 0.62 },
+    P(2.44, D - 0.12, 0.3, 0.62, 0.4, 0.92, -0.06, 0.06, 0.58, 1, 0.105),
+    P(2.54, D - 0.12, 0.3, 0.72, 0.4, 0.92, -0.06, 0.06, 0.58, 1, 0.105),
     // the motor mount
-    { u: 2.66,tilt: H + 0.1, lean: -0.24, roll: 1.1, station: -0.98, dist: 0.9, ox: 0.04, oy: 0.1, explode: 0.62 },
-    { u: 2.80,tilt: H + 0.1, lean: -0.24, roll: 1.25, station: -0.98, dist: 0.9, ox: 0.04, oy: 0.1, explode: 0.62 },
-    // back together, to be turned by hand
-    { u: 2.93,tilt: 1.0, lean: 0.2, roll: ROLL0, station: -0.02, dist: 2.35, ox: 0.0, oy: 0.05, explode: 0 },
-    { u: 3.00, tilt: 1.0, lean: 0.2, roll: ROLL0, station: -0.02, dist: 2.35, ox: 0.0, oy: 0.05, explode: 0 },
+    P(2.66, D + 0.06, -0.24, 1.1, -0.95, 0.95, -0.02, 0.08, 0.58, 1, -0.03),
+    P(2.76, D + 0.06, -0.24, 1.25, -0.95, 0.95, -0.02, 0.08, 0.58, 1, -0.03),
+    // back together in the middle, to be turned by hand
+    P(2.87, 1.0, 0.2, ROLL0, -0.02, 2.5, 0.0, 0.02),
+    P(3.00, 1.0, 0.2, ROLL0, -0.02, 2.5, 0.0, 0.02),
   ],
+  // a phone: no wide shot (the stack would be a few pixels across); close-ups where the parts are large
   port: [
-    { u: 0.00, tilt: 0.79, lean: 0.22, roll: ROLL0, station: 0.5707, dist: 2.5, ox: 0.74, oy: 0.76, explode: 0 },
-    { u: 0.30, tilt: 0.79, lean: 0.22, roll: ROLL0 + 0.4, station: 0.5707, dist: 2.5, ox: 3.41, oy: 2.41, explode: 0 },
-    { u: 0.34, tilt: 0.3, lean: 0, roll: ROLL0 + 0.8, station: 0.5707, dist: 3.0, ox: 3.4, oy: -0.5, explode: 0 },
-    { u: 0.40, tilt: 0, lean: 0, roll: ROLL0 + 1.1, station: 0.5707, dist: 3.4, ox: 0.82, oy: -2.3, explode: 0 },
-    { u: 0.92, tilt: 0, lean: 0, roll: ROLL0 + 1.1, station: 0.5707, dist: 3.4, ox: 0.82, oy: 0.83, explode: 0 },
-    { u: 1.00, tilt: 0, lean: 0, roll: ROLL0 + 1.1, station: -0.02, dist: 3.4, ox: 0.82, oy: 0.013, explode: 0 },
-    { u: 2.00, tilt: 0, lean: 0, roll: ROLL0 + 1.1, station: -0.02, dist: 3.4, ox: 0.82, oy: 0.013, explode: 0 },
-    { u: 2.15,tilt: 0, lean: 0, roll: 0.6, station: -0.093, dist: 5.4, ox: 0.66, oy: 0.0, explode: 0.55 },
-    { u: 2.24,tilt: 0, lean: 0, roll: 0.6, station: -0.093, dist: 5.4, ox: 0.66, oy: 0.0, explode: 0.55 },
-    { u: 2.40,tilt: 1.0, lean: 0.28, roll: 0.62, station: 0.40, dist: 1.3, ox: 0.05, oy: 0.2, explode: 0.62 },
-    { u: 2.54,tilt: 1.0, lean: 0.28, roll: 0.72, station: 0.40, dist: 1.3, ox: 0.05, oy: 0.2, explode: 0.62 },
-    { u: 2.66,tilt: 1.0, lean: -0.2, roll: 1.1, station: -0.98, dist: 1.25, ox: 0.0, oy: 0.2, explode: 0.62 },
-    { u: 2.80,tilt: 1.0, lean: -0.2, roll: 1.25, station: -0.98, dist: 1.25, ox: 0.0, oy: 0.2, explode: 0.62 },
-    { u: 2.93,tilt: 0.6, lean: 0.2, roll: ROLL0, station: -0.02, dist: 3.3, ox: 0.0, oy: 0.08, explode: 0 },
-    { u: 3.00, tilt: 0.6, lean: 0.2, roll: ROLL0, station: -0.02, dist: 3.3, ox: 0.0, oy: 0.08, explode: 0 },
+    P(0.00, 0.79, 0.22, ROLL0, 0.5707, 2.5, 0.74, 0.76),
+    P(0.24, 0.79, 0.22, ROLL0 + 0.1, 0.5707, 2.5, 0.74, 0.76),
+    P(0.62, 0.3, 0.08, ROLL0 + 0.5, 0.2, 3.1, 0.8, 0.3),
+    P(0.95, 0, 0, ROLL0 + 0.8, -0.02, 3.4, 0.82, 0.02),
+    P(1.70, 0, 0, ROLL0 + 1.0, -0.02, 3.4, 0.82, 0.08),
+    // the upper half, whole, on the diagonal of the phone
+    P(2.00, 0.62, 0.12, 0.6, 0.22, 1.7, 0.0, -0.12),
+    P(2.04, 0.62, 0.12, 0.6, 0.22, 1.7, 0.0, -0.12),
+    // apart: nose cone, payload out to the side, the tube
+    P(2.16, 0.62, 0.12, 0.62, 0.36, 1.75, 0.0, -0.14, 0.58, 0),
+    P(2.25, 0.62, 0.12, 0.64, 0.36, 1.75, 0.04, -0.14, 0.58, 1, 0.05),
+    P(2.33, 0.62, 0.12, 0.66, 0.36, 1.75, 0.04, -0.14, 0.58, 1, 0.05),
+    // the payload
+    P(2.44, 0.55, 0.3, 0.62, 0.4, 1.05, 0.0, -0.1, 0.58, 1, 0.105),
+    P(2.54, 0.55, 0.3, 0.72, 0.4, 1.05, 0.0, -0.1, 0.58, 1, 0.105),
+    // the motor mount
+    P(2.66, 0.7, -0.2, 1.1, -0.95, 1.15, 0.0, -0.1, 0.58, 1, -0.03),
+    P(2.76, 0.7, -0.2, 1.25, -0.95, 1.15, 0.0, -0.1, 0.58, 1, -0.03),
+    P(2.87, 0.6, 0.2, ROLL0, -0.02, 3.3, 0.0, -0.06),
+    P(3.00, 0.6, 0.2, ROLL0, -0.02, 3.3, 0.0, -0.06),
   ],
 };
 
 // The pinned scene's words, by its own progress p = u - 2: [fade in from, full from, full to, gone by].
 export const INSIDE_UI = {
-  title: [-1, -0.5, 0.19, 0.25],
-  caps: [[0.11, 0.15, 0.31, 0.35], [0.37, 0.41, 0.58, 0.62], [0.64, 0.68, 0.85, 0.89]],
-  chip: [0.91, 0.95, 2, 3],
+  title: [-0.2, -0.08, 0.1, 0.15],
+  caps: [[0.13, 0.17, 0.32, 0.36], [0.38, 0.42, 0.55, 0.59], [0.61, 0.65, 0.77, 0.81]],
+  chip: [0.82, 0.86, 0.95, 1.0],
+  out: [0.95, 1.0],                 // the model fades and steps back before the stage lets go
 };
-export const TURN_FROM = 0.9;      // p from which the model can be turned by hand
+export const TURN_FROM = 0.84;     // p from which the model can be turned by hand
 
-const KEYS = ['tilt', 'lean', 'roll', 'station', 'ox', 'oy', 'explode'];
+// Where the rocket lies in the hero still's frame (left, top, right, bottom, as fractions), measured from the
+// render of FILM.*[0]: vireo.js fits it between the bar and the hero copy before three.js is loaded.
+export const HERO_BOX = { land: [0.158, 0.0789, 0.9309, 0.6422], port: [0, 0.1198, 0.8701, 0.7075] };
+
+const KEYS = ['tilt', 'lean', 'roll', 'station', 'ox', 'oy', 'explode', 'pull', 'side'];
 const ease = t => t * t * (3 - 2 * t);
 export function poseAt(list, u, out = {}) {
   let i = 0;

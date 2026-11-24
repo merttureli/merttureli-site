@@ -12,6 +12,7 @@ import * as THREE from '../../../next/js/three.module.min.js';
 import { addStudioLights } from '../../../next/js/showreel/engine.js';
 import { getLook } from '../../../next/js/showreel/look.js';
 import charger from '../../../next/js/viewer/products/charger.js';
+import { relabel } from './livery.js';
 
 export { THREE };
 export const FOV = 24;
@@ -51,7 +52,42 @@ export function containRect(W, H, aspect, { ax = 0.5, ay = 0.5 } = {}) {
   return { x: (W - w) * ax, y: (H - h) * ay, w, h };
 }
 
-export async function createRig({ canvas, quality = 'high', pixelRatio = Math.min(window.devicePixelRatio || 1, 2), preserve = false } = {}) {
+// Sideways pull of the interior parts in the exploded view (m, across the airframe on screen: + toward the upper
+// side). The sections slide apart along the body (charger.js); with `pull` the parts inside a tube also come out of
+// it to one side, so each can be seen and told apart. Exterior parts never leave the axis.
+export const PULL = {
+  14: 0.105, 15: 0.105, 17: 0.105, 23: 0.105, 24: 0.105, 25: 0.105,         // the payload: camera, its mount and holder, the three PCB holders
+  16: -0.1, 20: -0.1, 21: -0.1, 22: -0.1, 27: -0.1, 28: -0.1, 29: -0.1,      // the coupler with the antenna and the four rods
+  12: 0.1, 26: 0.1,                                                          // the altimeter and the shock cord mount
+  5: -0.095,                                                                 // the motor, out of its mount
+};
+// Weld a mesh's faces by position and give it smooth normals, keeping creases sharper than `deg` (the nose cone's
+// normals came from a quantized mesh and shaded mottled).
+function smoothNormals(THREE, g0, deg = 35) {
+  const g = g0.index ? g0.toNonIndexed() : g0, p = g.attributes.position, n = new Float32Array(p.count * 3), fn = new Float32Array(p.count);
+  const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3(), e1 = new THREE.Vector3(), e2 = new THREE.Vector3();
+  const faceN = [], byPos = new Map(), key = i => `${Math.round(p.getX(i) * 2e4)},${Math.round(p.getY(i) * 2e4)},${Math.round(p.getZ(i) * 2e4)}`;
+  for (let i = 0; i < p.count; i += 3) {
+    a.fromBufferAttribute(p, i); b.fromBufferAttribute(p, i + 1); c.fromBufferAttribute(p, i + 2);
+    const f = e1.subVectors(b, a).cross(e2.subVectors(c, a)).clone();     // length = twice the area: an area weight
+    faceN.push(f);
+    for (let j = 0; j < 3; j++) { const k = key(i + j); (byPos.get(k) || byPos.set(k, []).get(k)).push(i / 3); }
+  }
+  const cos = Math.cos(deg * Math.PI / 180), s = new THREE.Vector3(), u = new THREE.Vector3(), v = new THREE.Vector3();
+  for (let i = 0; i < p.count; i++) {
+    const own = u.copy(faceN[(i / 3) | 0]).normalize();
+    s.set(0, 0, 0);
+    for (const f of byPos.get(key(i))) { v.copy(faceN[f]); const l = v.length(); if (l > 0 && v.dot(own) / l >= cos) s.add(v); }
+    if (s.lengthSq() === 0) s.copy(own);
+    s.normalize(); n[i * 3] = s.x; n[i * 3 + 1] = s.y; n[i * 3 + 2] = s.z;
+  }
+  g.setAttribute('normal', new THREE.BufferAttribute(n, 3));
+  return g;
+}
+
+// At 1x the edges stair-step even with MSAA: the stage renders at 1.5x there (the governor steps it down if slow).
+const defaultRatio = q => { const d = window.devicePixelRatio || 1; return q === 'high' && d < 1.5 ? 1.5 : Math.min(d, 2); };
+export async function createRig({ canvas, quality = 'high', pixelRatio = defaultRatio(quality), preserve = false } = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: preserve, powerPreference: 'high-performance' });
   renderer.setPixelRatio(pixelRatio);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -91,18 +127,33 @@ export async function createRig({ canvas, quality = 'high', pixelRatio = Math.mi
   const look = dressed ? dressed.look : null;
   const rk = dressed ? dressed.rocket : null;       // look.js dressRocket result: aim(), frame(), materials
 
+  // the nose cone: one smooth surface
+  for (const p of built.parts) if (p.id === 0) for (const m of p.meshes) if (m.geometry && m.geometry.attributes.position) {
+    const g = smoothNormals(THREE, m.geometry);
+    if (g !== m.geometry) { g.computeBoundingBox(); g.computeBoundingSphere(); m.geometry = g; }
+  }
   // ---- parts
   const parts = [], byId = new Map(), meshes = [];
   for (const p of built.parts) {
-    const P = { id: p.id, label: p.label, kind: p.kind, group: p.group, exterior: p.exterior, obj: p.obj, meshes: [...p.meshes], base: p.obj.position.clone(), slide: p.explode[1], box: p.box, center: p.box.getCenter(new THREE.Vector3()), opacity: 1, goal: 1 };
+    const P = { id: p.id, label: p.label, kind: p.kind, group: p.group, exterior: p.exterior, obj: p.obj, meshes: [...p.meshes], base: p.obj.position.clone(), slide: p.explode[1], pull: PULL[p.id] || 0, box: p.box, center: p.box.getCenter(new THREE.Vector3()), opacity: 1, goal: 1, floor: 1 };
     parts.push(P); byId.set(P.id, P);
   }
   // one material per mesh, so a part can ghost alone
   const used = new Set();
+  // The ghost: one neutral gray, no tint from the part's own color. A depth pass of every ghosted surface first, then
+  // the color only where a surface is the nearest one, so the ghost never shows its own inside or sorting seams;
+  // solid parts are drawn before both, so what is solid shows through.
+  const ghostDepth = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: true, transparent: true, side: THREE.DoubleSide });
+  const ghostColor = new THREE.MeshStandardMaterial({ color: 0xd2d2d7, roughness: 0.62, metalness: 0, transparent: true, opacity: 0.3, depthWrite: false, depthFunc: THREE.LessEqualDepth, side: THREE.DoubleSide });
+  ghostDepth.name = 'vireo:ghostDepth'; ghostColor.name = 'vireo:ghost';
+  const GHOST_ALPHA = 0.3;
   for (const P of parts) for (const m of P.meshes) {
     if (used.has(m.material)) m.material = twin(m.material);
     used.add(m.material);
-    meshes.push({ m, P });
+    const d = new THREE.Mesh(m.geometry, ghostDepth);
+    d.renderOrder = 1; d.visible = false; d.frustumCulled = m.frustumCulled; d.name = 'ghostDepth';
+    m.add(d);
+    meshes.push({ m, P, own: m.material, depth: d, mode: 'solid' });
   }
   // the order the sections leave in: the farthest slide first
   const maxSlide = Math.max(...parts.map(P => Math.abs(P.slide)));
@@ -111,7 +162,7 @@ export async function createRig({ canvas, quality = 'high', pixelRatio = Math.mi
   const S = {
     frame: { x: 0, y: 0, w: 1, h: 1 }, W: 1, H: 1, aspect: FRAME.land,
     tilt: 0, lean: 0, roll: 0, turn: 0,       // rad: nose right of up on screen; nose toward the camera; about the body; orbit about screen-up
-    station: STATION.mid, dist: 2.6, ox: 0, oy: 0, explode: 0, slideIds: null,   // slideIds: only these parts slide (stills)
+    station: STATION.mid, dist: 2.6, ox: 0, oy: 0, explode: 0, pull: 0, side: 0, slideIds: null,   // slideIds: only these parts slide (stills); pull: interior parts out to the side (0..1)
     lift: 0.35, keyFront: 0.3,                  // the studio key: lift about the airframe (rad), how far in front it stays
   };
   const qT = new THREE.Quaternion(), qL = new THREE.Quaternion(), qR = new THREE.Quaternion(), qO = new THREE.Quaternion();
@@ -130,29 +181,50 @@ export async function createRig({ canvas, quality = 'high', pixelRatio = Math.mi
     S.keyFront = g.keyFront; S.lift = g.lift;
   }
   // slide the sections apart: k = 0 assembled .. 1 apart. A part that travels farther leaves a little earlier.
+  // the screen's "across the airframe" direction, in the model's own frame: the pull goes that way
+  const across = new THREE.Vector3(), qInv = new THREE.Quaternion();
   function placeParts(k) {
+    const pull = smoother(clamp01(S.pull));
+    if (pull > 0) across.copy(acrossW).applyQuaternion(qInv.copy(pivot.quaternion).invert());
     for (const P of parts) {
       const lead = 0.22 * (1 - Math.abs(P.slide) / maxSlide);
       const t = S.slideIds && !S.slideIds.includes(P.id) ? 0 : smoother(clamp01((k - lead * 0.6) / (1 - lead)));
       P.obj.position.copy(P.base); P.obj.position.y += P.slide * t;
+      if (pull > 0 && P.pull) P.obj.position.addScaledVector(across, P.pull * pull);
     }
   }
+  const axisW = new THREE.Vector3(), acrossW = new THREE.Vector3();
   function applyOpacity() {
-    for (const { m, P } of meshes) {
-      const o = P.opacity, t = o < 0.999, mat = m.material;
-      if (mat.transparent !== t) { mat.transparent = t; mat.forceSinglePass = true; mat.needsUpdate = true; }
-      mat.depthWrite = o > 0.5;                  // a part on its way to solid already hides what is behind it
-      mat.opacity = o;
-      m.visible = o > 0.004;
+    for (const E of meshes) {
+      const { m, P, own } = E;
+      // solidness 0 (ghost) .. 1 (solid); the part's own material above the middle, the ghost below it
+      const s = P.floor >= 1 ? 1 : clamp01((P.opacity - P.floor) / (1 - P.floor));
+      if (s >= 0.5) {
+        if (E.mode !== 'solid') { m.material = own; m.renderOrder = 0; E.depth.visible = false; E.mode = 'solid'; }
+        const o = s >= 0.999 ? 1 : (s - 0.5) * 2, t = o < 0.999;
+        if (own.transparent !== t) { own.transparent = t; own.forceSinglePass = true; own.needsUpdate = true; }
+        own.depthWrite = true; own.opacity = o;
+        m.visible = o > 0.004;
+      } else {
+        if (E.mode !== 'ghost') { m.material = ghostColor; m.renderOrder = 2; E.depth.visible = true; E.mode = 'ghost'; }
+        m.visible = true;
+      }
     }
+    ghostColor.opacity = GHOST_ALPHA;
   }
   function pose() {
     qT.setFromAxisAngle(Z, -S.tilt); qL.setFromAxisAngle(X, S.lean); qR.setFromAxisAngle(Y, S.roll); qO.setFromAxisAngle(Y, S.turn);
     pivot.quaternion.copy(qO).multiply(qT).multiply(qL).multiply(qR);
+    // across the airframe on screen, toward its upper side (the pull and `side` go this way)
+    axisW.set(0, 1, 0).applyQuaternion(pivot.quaternion); axisW.z = 0;
+    if (axisW.lengthSq() < 1e-6) axisW.set(0, 1, 0);
+    axisW.normalize();
+    acrossW.set(-axisW.y, axisW.x, 0);
+    if (acrossW.y < 0) acrossW.negate();
     placeParts(S.explode);
     // the focus (a station on the body axis) sits at (ox, oy) of the reference frame, in half widths and half heights
     const halfH = S.dist * Math.tan(THREE.MathUtils.degToRad(FOV / 2)), halfW = halfH * S.aspect;
-    V.set(0, S.station + MODEL_Y, 0).applyQuaternion(pivot.quaternion);
+    V.set(0, S.station + MODEL_Y, 0).applyQuaternion(pivot.quaternion).addScaledVector(acrossW, S.side || 0);
     pivot.position.set(S.ox * halfW - V.x, S.oy * halfH - V.y, -V.z);
     pivot.updateMatrixWorld(true);
     aimKey();
@@ -227,19 +299,20 @@ export async function createRig({ canvas, quality = 'high', pixelRatio = Math.mi
       if (seen.has(key)) continue;
       seen.add(key);
       const k = twin(m.material);
-      k.transparent = true; k.depthWrite = false; k.opacity = 0.5; k.forceSinglePass = true;
+      k.transparent = true; k.depthWrite = true; k.opacity = 0.5; k.forceSinglePass = true;
       const km = new THREE.Mesh(m.geometry, k);
       km.frustumCulled = false; keep.add(km);
     }
+    for (const gm of [ghostDepth, ghostColor]) { const km = new THREE.Mesh(meshes[0].m.geometry, gm); km.frustumCulled = false; keep.add(km); }
     scene.add(keep);
     keep.visible = true;
     await compile(keep);
     keep.visible = false;
   }
 
-  function setGhost(focusIds, { exterior = 0.07, interior = 0.16 } = {}) {
+  function setGhost(focusIds) {
     const on = focusIds && focusIds.length ? new Set(focusIds) : null;
-    for (const P of parts) P.goal = !on || on.has(P.id) ? 1 : (P.exterior ? exterior : interior);
+    for (const P of parts) { P.goal = !on || on.has(P.id) ? 1 : 0; P.floor = 0; }
   }
   // ease each part's opacity toward its goal; true while something still moves
   function stepOpacity(k) {
@@ -250,6 +323,9 @@ export async function createRig({ canvas, quality = 'high', pixelRatio = Math.mi
     return moving;
   }
   function snapOpacity() { for (const P of parts) P.opacity = P.goal; }
+  // the livery's words, turned to read along the body (livery.js); the paint's uniforms exist once it is compiled
+  const tubes = parts.filter(P => P.id === 1 || P.id === 2).flatMap(P => P.meshes.filter(m => m.material && m.material.map));
+  try { if (relabel(renderer, tubes)) for (const m of tubes) if (m.material.map) renderer.initTexture && renderer.initTexture(m.material.map); } catch (e) { console.warn('[vireo] livery left as drawn', e); }
 
   return {
     THREE, renderer, scene, camera, pivot, model, parts, byId, lights, look, dressed, state: S,

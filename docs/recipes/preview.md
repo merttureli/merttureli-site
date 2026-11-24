@@ -8,8 +8,9 @@ The owner reviews work as a private claude.ai artifact: a copy of the site with 
 |---|---|
 | Whole site copy | `python3 tools/preview.py site --out <scratchpad>/site-pub` |
 | Studio copy (next/) | `python3 tools/preview.py studio --out <scratchpad>/studio-pub` |
+| Sample sites copy (the catalog at studies/) | `python3 tools/preview.py samples --out <scratchpad>/samples-pub` |
 | Build and smoke test (Chromium, 390 + 1440) | add `--smoke --port <your port>`. The port must be free: stop your own `http.server` on it first (`kill $(lsof -ti :PORT)`). If it is taken, the copy is still written and only the smoke is skipped (exit 2) |
-| Smoke other pages | add `--pages index.html,websites.html --shots <dir>` |
+| Smoke other pages | add `--pages index.html,websites.html --shots <dir>` (`samples` smokes the catalog and every page it links to by default; one sample: `--pages vireo/index.html`) |
 | Look at it in a browser | add `--serve <your port>` (Ctrl-C stops it) |
 | Plan only, write nothing | add `--dry-run` |
 | Fail on any unresolved reference | add `--strict` |
@@ -50,8 +51,17 @@ References are found in HTML attributes (`href`, `src`, `srcset`, `poster`, `dat
 |---|---|
 | `site` | the live site: every tracked or new (not ignored) file except `tools/`, `templates/`, `content/`, dot folders, `*.py`, `*.sh`, `*.md` (except `docs/**/*.md`, so the catalog's doc links work), `CNAME`, `_headers`. Markup inside `<script type="text/html">` / `text/plain` (catalog demos) is not scanned for refs; `_ds/` strings in it are still rewritten |
 | `studio` | `next/index.html` as `index.html`, `next/css/` as `css/`, `next/js/` as `js/`, `next/assets/` as `assets/`, `studies/shared/` as `shared/`; root `assets/` files the Studio references go under `site/` (a linked page brings its whole folder, for example `site/charger-explorer/`) |
+| `samples` | every file under `studies/` at the copy root: `studies/index.html` (the catalog) as `index.html`, each study as `<key>/`, `shared/`, `catalog/`. Files the pages reference elsewhere keep their repo paths beside them: `next/...` as `next/`, root `assets/...` as `assets/`, root `js/` as `js/`, so `../../next/x` from a study becomes `../next/x` |
 
 `next/lab/` is not in the Studio copy. It is in the site copy under `next/lab/`.
+
+The `samples` copy also:
+
+- reads `data-srcset`, any `data-*` attribute that holds a file path (`data-video`), the `.bin` a model `.json` names, and the fixed folder of a template path (`` `../x/${name}.json` ``). A relative folder string in a script (`base: '../../assets/charger-explorer/'`) is a reference too, and it brings every file under that folder except its pages.
+- points each study's back pill (`/websites.html#studies`) to the catalog (`../index.html`). The catalog's `/websites.html` links and the owner's name (`/`), and links to the old explorer page (also in markup a script writes), become `https://merttureli.com/...` links that open in a new tab (`redirect` and `external` in `MODES`).
+- turns the catalog viewer's `` `${key}/` `` into `` `${key}/index.html` ``, so the framed sample loads on the host.
+- fails the smoke on any request that leaves the copy, and waits 7 s per page for 3D (a full smoke takes about 8 minutes).
+- if it is over the per-version limit, leaves out unreferenced files, heaviest first, starting with the four portfolio redesigns (catalog label "Redesign"); the report and the plan's `left_out` list them. A referenced file is never left out.
 
 To add a mode or a copy root, edit `MODES` at the top of `tools/preview.py`.
 

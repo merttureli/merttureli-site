@@ -101,7 +101,9 @@ img{display:block;max-width:100%;height:auto}
 .stage .still,.stage canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
 .stage canvas{touch-action:pan-y}
 .stage.live .still{visibility:hidden}
-.stage--hero{grid-column:1 / -1;grid-row:1;margin-left:200px}
+.stage--hero{grid-column:1 / -1;grid-row:1 / 3;margin-left:200px;margin-bottom:-32px}
+.strip{position:relative;z-index:1}
+.stage-tag{z-index:1}
 .stage-tag{position:absolute;right:0;top:0;display:flex;align-items:center;gap:8px}
 .stage-tag::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--seg-off)}
 .stage.live .stage-tag::before{background:var(--seg-on)}
@@ -148,9 +150,9 @@ img{display:block;max-width:100%;height:auto}
 .seg-btns .tb{border:0;height:32px;padding:0 16px}
 .tb[aria-pressed="true"]{background:var(--ink);color:var(--plate)}
 .tb[aria-pressed="true"] .ico{stroke:var(--seg-on)}
-.stage--try{background:var(--ground);border:1px solid var(--ink);border-radius:4px;min-height:520px}
+.stage--try{background:var(--ground);border:1px solid var(--ink);border-radius:4px;height:clamp(400px,calc(100svh - 336px),640px)}
 .pads{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.foot{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end}
+.pfoot{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end;align-content:start}
 .foot-lg{grid-column:1 / -1}
 .pad{display:flex;align-items:center;justify-content:space-between;gap:8px;height:64px;padding:0 16px;border:1px solid var(--ink);border-radius:var(--r);background:var(--ground);cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;transition:background-color .12s steps(2)}
 .pad--toe{border-style:dashed}
@@ -228,6 +230,10 @@ input[type=range]:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
 .card-batch{display:flex;flex-direction:column;gap:24px;padding-right:32px;border-right:1px solid var(--ink)}
 .readout{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
 .price{font-size:28px;line-height:32px;font-weight:300;letter-spacing:-.02em}
+.card{grid-template-columns:304px minmax(0,1fr) 320px}
+.card-preview{display:flex;flex-direction:column;gap:8px;align-self:stretch;justify-content:center}
+.card-preview img{width:100%;aspect-ratio:5/4;object-fit:contain;background:var(--ground);border:1px solid var(--ink);border-radius:4px}
+.done{grid-column:2}
 .card-form{display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:24px 32px;align-items:start}
 .field{display:flex;flex-direction:column;gap:8px}
 .field--email{grid-column:1 / -1}
@@ -265,6 +271,8 @@ input[type=range]:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
 
 /* ---------------------------------------------------------------- narrower */
 @media (max-width:1279px){
+  .card{grid-template-columns:304px minmax(0,1fr)}
+  .card-preview{display:none}
   .test{grid-template-columns:minmax(0,1fr) 360px}
   .instruments{grid-template-columns:repeat(2,minmax(0,1fr))}
   .instruments .inst:last-child{grid-column:1 / -1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:24px}
@@ -283,7 +291,7 @@ input[type=range]:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
   .study-back.study-back--sideslip{position:absolute;top:12px}
   .skip:focus{top:120px}
   .hero-grid{grid-template-columns:1fr;grid-template-rows:auto minmax(360px,1fr) auto;height:auto;max-height:none}
-  .stage--hero{grid-row:2;margin-left:0;height:min(64vw,560px)}
+  .stage--hero{grid-row:2;margin-left:0;margin-bottom:0;height:min(64vw,560px)}
   .strip{grid-row:3}
   .hero-copy{grid-row:1}
   .test{grid-template-columns:1fr}
@@ -332,10 +340,10 @@ input[type=range]:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
   .tools>.tb{flex:1 1 auto;justify-content:center}
   .seg-btns{flex:1 1 100%}
   .seg-btns .tb{flex:1 1 0;justify-content:center}
-  .stage--try{min-height:0;aspect-ratio:5/4}
+  .stage--try{height:auto;aspect-ratio:5/4}
   .test-view{grid-template-rows:auto auto auto}
   .pads{gap:16px}
-  .foot{grid-template-columns:1fr}
+  .pfoot{grid-template-columns:1fr}
   .pad{height:72px;padding:0 16px}
   .range .lg{width:96px}
   .instruments{grid-template-columns:1fr;gap:16px}

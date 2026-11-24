@@ -108,8 +108,12 @@ MODES = {
         "exclude_ext": {".step"},
         "entry": "studies/index.html",
         "doc_dir": "studies/",
-        "pull_folders": True,     # a folder a script uses as a base URL brings its files (not its pages)
-        "scan_json": True,        # model .json files name their .bin beside them
+        # a folder a script uses as a base URL ('../x/', or the fixed part of `../x/${name}.json`)
+        # brings every file under it (not its pages)
+        "pull_folders": True,
+        # also read data-srcset, data-video and the like, the .bin a model .json names beside it,
+        # and the folder of `../x/${name}.json`
+        "wide_scan": True,
         "folder_templates": True, # `${key}/` in a script (the catalog's viewer) -> `${key}/index.html`
         "local_only": True,       # the smoke fails on any request that leaves the copy
         "smoke_wait": 7000,       # 3D pages load their models after the first view
@@ -187,6 +191,11 @@ JS_IMPORT_RE = re.compile(r"""(\bfrom\s*|\bimport\s*\(?\s*)(["'`])([^"'`\s]+)\2"
 NEW_URL_RE = re.compile(r"""new\s+URL\(\s*(["'`])([^"'`\s]+)\1\s*(,[^)]*)?\)""")
 JS_STR_RE = re.compile(r"""(["'`])((?:(?:\.{1,2}/)+|/)?[\w@%~+-][\w@%~+./-]*\.(?:""" + ASSET_EXT +
                        r"""))((?:[?#][^"'`\s]*)?)\1""", re.I)
+# wide scan (samples): lazy-load attributes the pages' scripts read (data-srcset, data-video ...)
+WIDE_SRCSET_RE = re.compile(r"""(?<=[\s"'])(data-[\w-]*srcset)\s*=\s*(["'])(.*?)\2""", re.I | re.S)
+WIDE_ATTR_RE = re.compile(r"""(?<=[\s"'])(data-[\w-]+)\s*=\s*(["'])((?:(?:\.{1,2}/)+|/)?[\w@%~+-][\w@%~+./-]*\.(?:"""
+                          + ASSET_EXT + r""")(?:#[^"'\s]*)?)\2""", re.I)
+JS_DIR_RE = re.compile(r"""(["'`])((?:\.{1,2}/)+(?:[\w@%~+-][\w@%~+.-]*/)+)\1""")
 SCRIPT_RE = re.compile(r"<script\b[^>]*>(.*?)</script>", re.I | re.S)
 STYLE_RE = re.compile(r"<style\b[^>]*>(.*?)</style>|\sstyle\s*=\s*([\"'])(.*?)\2", re.I | re.S)
 
@@ -198,29 +207,43 @@ def is_path_spec(m):
     return bool(re.match(r"\.{1,2}/|/(?!/)", m.group(3)))
 
 
-def js_refs(text, add, off=0, loose="loose"):
+def js_refs(text, add, off=0, loose="loose", templates=False):
+    def spec(start, ref, kind):
+        # `../3d/${name}.json` with templates on: its fixed folder is the reference
+        if templates and "${" in ref:
+            ref = ref[:ref.index("${")]
+            ref = ref[:ref.rfind("/") + 1]
+            if not ref:
+                return
+        add(start, ref, kind)
     for m in NEW_URL_RE.finditer(text):
         base = m.group(3) or ""
         if "import.meta.url" in base:
-            add(off + m.start(2), m.group(2), "file")
+            spec(off + m.start(2), m.group(2), "file")
         elif re.search(r"document\.baseURI|location", base):
-            add(off + m.start(2), m.group(2), "doc")
+            spec(off + m.start(2), m.group(2), "doc")
     for m in JS_IMPORT_RE.finditer(text):
         if is_path_spec(m):
-            add(off + m.start(3), m.group(3), "file")
+            spec(off + m.start(3), m.group(3), "file")
     for m in JS_STR_RE.finditer(text):
         add(off + m.start(2), m.group(2) + m.group(3), loose)
+    if templates:   # a relative folder used as a base URL: base: '../../assets/charger-explorer/'
+        for m in JS_DIR_RE.finditer(text):
+            add(off + m.start(2), m.group(2), loose)
 
 
 INERT_RE = re.compile(r"<script\b[^>]*\btype\s*=\s*[\"']?text/(?:html|plain|template)[^>]*>(.*?)</script>", re.I | re.S)
 SKIP_SCHEMES = re.compile(r"^(?:[a-z][a-z0-9+.-]*:|//|#|\{|\$|<)", re.I)
 
 
-def find_refs(path, text, scan_json=False):
+def find_refs(path, text, wide=False):
     """Return [(start, end, ref, kind)] for one file. kind: 'nav' (an HTML attribute; a folder
     means its index.html), 'file' (relative to the file; a folder stays a folder), 'doc'
     (relative to the page that loads the script), 'loose' (a quoted path-like JS string:
-    try the file's folder, then the page's), 'sibling' (a string in a .json file: its folder only)."""
+    try the file's folder, then the page's), 'sibling' (a string in a .json file: its folder only).
+    `wide` (the samples copy) also reads data-*srcset and any data-* attribute holding a file path,
+    the .json files' strings, and the fixed folder of a `../x/${name}.json` template."""
+    templates = wide
     ext = os.path.splitext(path)[1].lower()
     spans = []
 
@@ -239,25 +262,28 @@ def find_refs(path, text, scan_json=False):
                     plain(start, ref, kind)
         for m in ATTR_RE.finditer(text):
             add(m.start(3), m.group(3), "nav")
-        for m in SRCSET_RE.finditer(text):
+        for m in [*SRCSET_RE.finditer(text), *(WIDE_SRCSET_RE.finditer(text) if wide else ())]:
             base = m.start(3)
             for cm in re.finditer(r"[^,\s][^,]*", m.group(3)):
                 url = cm.group(0).strip().split()[0]
                 add(base + cm.start(), url, "nav")
+        if wide:
+            for m in WIDE_ATTR_RE.finditer(text):
+                add(m.start(3), m.group(3), "nav")
         for m in STYLE_RE.finditer(text):
             body, off = (m.group(1), m.start(1)) if m.group(1) is not None else (m.group(3), m.start(3))
             for um in CSS_URL_RE.finditer(body):
                 add(off + um.start(2), um.group(2), "nav")
         for m in SCRIPT_RE.finditer(text):
-            js_refs(m.group(1), add, m.start(1))
+            js_refs(m.group(1), add, m.start(1), templates=templates)
     elif ext == ".css":
         for m in CSS_URL_RE.finditer(text):
             add(m.start(2), m.group(2), "file")
         for m in CSS_IMPORT_RE.finditer(text):
             add(m.start(2), m.group(2), "file")
     elif ext in (".js", ".mjs"):
-        js_refs(text, add)
-    elif ext == ".json" and scan_json:
+        js_refs(text, add, templates=templates)
+    elif ext == ".json" and wide:
         # a model .json names its .bin by bare file name, beside it
         for m in JS_STR_RE.finditer(text):
             add(m.start(2), m.group(2) + m.group(3), "sibling")
@@ -363,15 +389,25 @@ class Build:
                     new.append(f)
         return new
 
-    def link_rule(self, f, kind, path, base):
-        """('redirect', repo page) or ('external', url) for an HTML link that would leave the copy."""
-        if kind != "nav" or not f.endswith((".html", ".htm")):
-            return None
+    def link_rule(self, f, kind, path):
+        """('redirect', repo page) or ('external', url) for a link that would leave the copy: an
+        HTML attribute, or a page path in a script (markup a script writes, e.g. specimen's cards)."""
         redirect, external = self.cfg.get("redirect", {}), self.cfg.get("external", {})
         if not (redirect or external):
             return None
-        target, _ = resolve(base, path, self.universe, nav=True)
-        if not target or target in self.dst:
+        if kind == "nav" and f.endswith((".html", ".htm")):
+            bases = [posixpath.dirname(f)]
+        elif kind == "loose" and f.endswith((".js", ".mjs")) and split_ref(path)[0].endswith((".html", ".htm")):
+            bases = self.bases(f, kind)
+        else:
+            return None
+        for base in bases:
+            target, _ = resolve(base, path, self.universe, nav=True)
+            if target and (target in redirect or target in external):
+                break
+        else:
+            return None
+        if target in self.dst:
             return None
         if target in redirect and f != self.cfg["entry"] and redirect[target] in self.dst:
             return "redirect", redirect[target]
@@ -384,8 +420,10 @@ class Build:
         if target and target.endswith("/"):
             pre = "" if target == "/" else target
             inside = any(s.startswith(pre) for s in self.dst)
-            if not inside and self.cfg.get("pull_folders") and pre and self.pull_target(pre):
-                return target, "pull"
+            if self.cfg.get("pull_folders") and pre and self.pull_target(pre) and any(
+                    f.startswith(pre) and f not in self.dst and not self.skip(f)
+                    and not f.endswith((".html", ".htm")) for f in self.universe):
+                return target, "pull"   # the rest of a base-URL folder
             return (target, None) if inside else (None, "not in this copy")
         if target and self.skip(target):
             return None, "excluded from copy"
@@ -407,11 +445,11 @@ class Build:
             text = self.read(f)
             if text is None:
                 continue
-            for _, _, ref, kind in find_refs(f, text, self.cfg.get("scan_json")):
+            for _, _, ref, kind in find_refs(f, text, self.cfg.get("wide_scan", False)):
                 path, _, _ = split_ref(ref)
                 if not path or SKIP_SCHEMES.match(ref):
                     continue
-                if self.link_rule(f, kind, path, posixpath.dirname(f)):
+                if self.link_rule(f, kind, path):
                     continue
                 for base in self.bases(f, kind):
                     target, why = self.lookup(base, path, kind)
@@ -459,16 +497,17 @@ class Build:
         ext = os.path.splitext(f)[1].lower()
         pieces, pos, count = [], 0, 0
         external = False
-        for start, end, ref, kind in find_refs(f, text, self.cfg.get("scan_json")):
+        for start, end, ref, kind in find_refs(f, text, self.cfg.get("wide_scan", False)):
             path, query, frag = split_ref(ref)
             if not path or SKIP_SCHEMES.match(ref):
                 continue
-            rule = self.link_rule(f, kind, path, here_src)
+            rule = self.link_rule(f, kind, path)
             if rule:
                 if rule[0] == "redirect":   # the page it stood for is not in the copy: drop the #hash too
                     new = posixpath.relpath(self.dst[rule[1]], here_dst or ".")
                 else:
-                    new, external = rule[1] + "\0", True   # marks the tag for target="_blank"
+                    url = rule[1] + ("" if "#" in rule[1] else frag)
+                    new, external = url + "\0", True   # marks the tag for target="_blank"
                 if f == self.cfg["entry"] and rule[0] == "redirect":
                     self.entry_links.append(self.dst[rule[1]])
                 pieces.append(text[pos:start])
@@ -599,6 +638,8 @@ class Build:
     def trim(self):
         """Over the per-version limit: drop root files nothing references, heaviest first, those
         of the entries matching trim_first before the rest. Never a referenced file."""
+        if "trim_first" not in self.cfg:   # only the samples copy may leave files out
+            return
         size = lambda s: os.path.getsize(os.path.join(ROOT, s))
         total = sum(size(s) for s in self.dst)
         if len(self.dst) <= VERSION_MAX_FILES and total <= VERSION_MAX_BYTES:

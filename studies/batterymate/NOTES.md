@@ -88,3 +88,30 @@ firmware."
 First view (before three.js) under 350 KB, with a rendered still of the machine as the poster. Whole page
 under 2.5 MB. One WebGL view at a time on screen, paused when off screen. The hero must stay responsive
 while balls are in flight (cap balls in the air at 5).
+
+## What was built
+
+All eight sections as briefed, with the brief's words. The machine is the live Robo-Catcher model with the
+showreel's look (`dressRoboCatcher`) and actor (`createModel`, `createAccent` imported, not copied); three.js loads
+at idle after `load`. The throw is a small simulation (`js/sim.js`): flight with gravity and spin into the net, the
+net gives, the ball drops, rolls down the bed into the chamber, the chamber turns 180 degrees, the flywheels throw it
+back to the point it came from. At most five balls fly at once. The pinned "How it works" replays one recorded catch
+from a pose table keyed by scroll (`js/poses.js`).
+
+Deviations and why:
+- The back pill is docked in the bar as a small slanted tag (beside the wordmark; on the bar's second row on a
+  phone). Checked at every 10 px from 360 to 1920: inside the bar, clear of the wordmark, links and button. It is
+  outside the hero, so a tap on it never throws.
+- The canvas only runs while its scene moves. Before and after the pinned run, and when the hero is scrolled part
+  way off with no ball in the air, the rendered stills (same pose, same layout) stand in. In headless Chromium a
+  canvas that runs off the top of the window was captured cut short; the stills avoid that and rest the GPU.
+- The fixed field drawing is clipped by a `clip-path` on a layer of each band, not on the band itself.
+- Taken slots stay focusable so a click or tap on one can say it is taken.
+
+Stills: rendered from the page's own code with Playwright at 2x (scratch `tools/stills.js`), webp with alpha. Line
+drawings: a solid pass and a line pass of the same model, composed with Pillow into navy line art (`tools/draw.js`,
+`tools/ink.py`). Sofia Sans Extra Condensed italic holds up at 22vw; no other face was needed.
+
+Known weak spots: SwiftShader renders the hero at a few frames a second, so headless timing of a throw is not the
+real feel; the lineup card leaves the right half of the yellow band empty on a wide screen; the third line drawing
+is a close crop and reads busier than the other two.

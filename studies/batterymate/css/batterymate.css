@@ -227,10 +227,10 @@ html.js:not(.still) .inning.is-lit .flip { animation: flip .42s var(--snap) both
 
 /* ------------------------------------------------------ built for practice */
 .practice { padding-bottom: clamp(64px, 9vw, 130px); }
-.drills { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: clamp(34px, 5vw, 70px) var(--m) 0; border: 2px solid var(--navy); background: var(--chalk); }
-.drill { padding: 0 0 26px; }
+.drills { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto auto auto; margin: clamp(34px, 5vw, 70px) var(--m) 0; border: 2px solid var(--navy); background: var(--chalk); }
+.drill { display: grid; grid-row: span 3; grid-template-rows: subgrid; align-content: start; padding: 0 0 26px; }
 .drill + .drill { border-left: 2px solid var(--navy); }
-.drill img { width: 100%; aspect-ratio: 4 / 3; object-fit: contain; border-bottom: 2px solid var(--navy); }
+.drill img { width: 100%; height: 100%; aspect-ratio: 4 / 3; object-fit: contain; border-bottom: 2px solid var(--navy); }
 .drill__verb { font: italic 900 clamp(44px, 5vw, 80px)/.9 var(--display); text-transform: uppercase; padding: 20px 22px 0; display: flex; align-items: baseline; gap: 14px; }
 .drill__verb i { font: 800 .42em/1 var(--display); letter-spacing: .04em; }
 .drill p { padding: 12px 22px 0; font: 500 18px/1.4 var(--text); max-width: 24em; }
@@ -321,6 +321,8 @@ html:not(.still) .lineup.is-in .lineup__stamp { animation: stamp .3s .32s var(--
   .score__cell { padding: 8px 10px 7px; gap: 4px; }
   .score__label { font-size: 10px; }
   .score__num { font-size: 38px; }
+  /* the narrowest phones: the board shrinks so it stays clear of the headline's period */
+  @media (max-width: 385px) { .score__cell { padding: 6px 8px 6px; } .score__label { font-size: 9px; letter-spacing: .04em; } .score__num { font-size: 32px; } }
   .ticker__run li { font-size: 24px; }
   .ticker__run li::after { width: 12px; height: 12px; margin: 0 18px; }
   .step { grid-template-columns: 1fr; }
@@ -342,7 +344,8 @@ html:not(.still) .lineup.is-in .lineup__stamp { animation: stamp .3s .32s var(--
   .ls__val .flip { font-size: 78px; }
   .ls__note { grid-column: 1; grid-row: 2; padding: 0 12px 4px 0; font-size: 16px; }
   .numbers__kicker { font-size: min(24vw, 130px); }
-  .drills { grid-template-columns: 1fr; }
+  .drills { grid-template-columns: 1fr; grid-template-rows: none; }
+  .drill { grid-row: auto; grid-template-rows: none; }
   .drill + .drill { border-left: 0; border-top: 2px solid var(--navy); }
   .drill__verb { font-size: 56px; padding: 16px 16px 0; }
   .drill p { padding: 10px 16px 0; }

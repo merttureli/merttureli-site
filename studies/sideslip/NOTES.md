@@ -88,3 +88,40 @@ them, and they are in daily use at my sim."
 First view (before three.js) under 350 KB. Whole page under 2.5 MB. One WebGL view, shared by the hero and
 the test panel if both can be on screen, paused when off screen. With reduced motion: no lamp test, no
 sweep by itself, the model moves only in direct answer to input.
+
+## What was built
+
+- **Files.** `index.html`, `css/sideslip.css`, `js/sideslip.js` (input, springs, readouts, the one loop),
+  `js/seg.js` (seven-segment digits and LED bars in SVG and CSS, unlit segments visible), `js/hall.js`,
+  `js/reserve.js`, `js/stage3d.js` (the WebGL view), `fonts/` (Albert Sans variable, Latin, with its license),
+  `assets/` (two sizes of the hero still and the side view line drawing).
+- **Linkage.** Not redone: `stage3d.js` imports `createModel` from the showreel actor
+  (`next/js/showreel/rudder-pedals.js`), whose `setDrive(x)` and `setToe(l, r)` solve the lever arms, link rods,
+  sensor lever and toe hinges from the CAD joints. Lights, environment, finish and ground shadow are the shared
+  studio rig (`engine.js`, `look.js`). Three numbers pose it. The sweep program in `sideslip.js` follows the
+  sequence the project describes (yaw both ways, each toe brake, then differential braking).
+- **One WebGL view.** A single canvas moves between the hero and the test panel, whichever is more on screen,
+  and draws nothing when neither is (or the tab is hidden). three.js loads on idle after `load`.
+- **Stills.** Rendered from the same stage in a one-off Playwright script (scratch folder, `tools/still.js`):
+  the hero shot at 800 x 640 CSS pixels at 2x on a transparent background, saved as webp with alpha at 1600
+  and 800 wide, so the still and the live canvas line up in any box. The side view line drawing swaps every
+  material for plate white and draws `EdgesGeometry` lines in ink, then is cropped.
+
+### Deviations and why
+
+- Pedals are red (`#d62a1f`) and the signal wires plate white on the model: the brief's palette has no product
+  colors, and red is the page's one signal color. The levers and walls keep the studio grays.
+- Added a "keyboard, as your feet" key map under the hero placard (desktop only) to fill the column with an
+  instrument rather than whitespace, and a small render of the set in the reserve card at 1280 and wider.
+- The hero runs the sweep by itself after the lamp test until the first input (never with reduced motion).
+- The Hall instrument plots output against magnet position (the transfer curve, lit near the magnet), not
+  against time, so it reads the same with reduced motion. The field is a small bar magnet's, an illustration
+  without claimed numbers.
+- The phone hero leaves out the status lamps and key legends; the touch pads live in the test panel.
+
+### Known weak spots
+
+- In headless Chromium (SwiftShader) a frame of the large canvas takes a second or more; the input is
+  integrated in real time with substeps, so it stays right, but the motion there is not smooth.
+- The phone test panel puts the readouts below the pads, so a thumb on a pad sees the model but not the numbers.
+- The geometry drawing is the CAD side view as is; at its size the springs read as dense hatching.

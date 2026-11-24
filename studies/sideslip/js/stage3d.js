@@ -17,7 +17,7 @@ const FOV = 22;
 // yaw and tilt of the assembly (rad), camera distance (m), the point the camera looks at (model meters, before
 // the turn) and a shift of the picture in the frame (share of the frame height, + is up)
 export const SHOTS = {
-  hero: { yaw: -1.02, tilt: .36, dist: 1.1, at: [0, .118, 0], lift: .06 },
+  hero: { yaw: -1.02, tilt: .36, dist: 1.2, at: [0, .118, 0], lift: .1 },
   seat: { yaw: -Math.PI / 2, tilt: .5, dist: 1.12, at: [0, .118, 0], lift: 0 },
   side: { yaw: 0, tilt: .08, dist: 1.04, at: [0, .13, 0], lift: 0 },
 };
