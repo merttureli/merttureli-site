@@ -369,7 +369,8 @@ a{color:inherit}
 .study-back--slowroads::after{content:"";position:absolute;z-index:-1;right:calc(100% - 20px);top:50%;width:64px;height:17px;margin-top:-9px;
   border:1.6px solid #e9dfc6;border-radius:50%;rotate:27deg;transform-origin:100% 50%;pointer-events:none}
 .study-back--slowroads svg{width:15px;height:15px}
-.study-back--slowroads:hover{background:none;transform:none;rotate:-6deg}
+.study-back--slowroads:hover{background:none;transform:none}
+@media (hover:hover){.study-back--slowroads:hover{rotate:-6deg}}
 .study-back--slowroads:focus-visible{outline:3px solid var(--focus);outline-offset:4px;border-radius:2px;box-shadow:none;rotate:-6deg}
 
 /* ---- motion: only when the visitor has not asked for less ------------------------------------------------------------ */

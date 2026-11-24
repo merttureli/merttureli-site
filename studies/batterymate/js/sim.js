@@ -42,6 +42,9 @@ const V_IN = 9, V_OUT = 11;                        // the pitch and the return (
 const SPIN = 15, BOTTOM_K = 1.08, DIP = .14;       // wheel speed for the eye (rad/s), lower wheel faster, loss at a grip
 const PITCH_SPIN = 15;
 export const MAX_BALLS = 5;
+export const TURN_S = IDX_TURN;                    // how long the half turn takes (s)
+// how far through the half turn's time the chamber has turned the share f of its 180 degrees (the turn's ease, inverted)
+export const turnTime = f => (Math.acos(1 - 2 * Math.min(1, Math.max(0, f))) / Math.PI) ** (2 / 3);
 
 const clamp01 = v => (v < 0 ? 0 : v > 1 ? 1 : v);
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -111,7 +114,7 @@ export function createSim({ THREE, model, radius }) {
     b.v0.copy(b.c).sub(origin).divideScalar(b.tf); b.v0.y += G * b.tf / 2;
     b.axis.crossVectors(b.v0, UP).normalize();
     b.q.identity(); b.p.copy(origin); b.squash = 1; b.xray = 0;
-    b.on = 1; b.state = 'in'; b.t0 = T; b.id = ++ids; b.user = user;
+    b.on = 1; b.state = 'in'; b.t0 = T; b.id = ++ids; b.user = user; b.x = -99;
     return b;
   };
 
@@ -187,7 +190,7 @@ export function createSim({ THREE, model, radius }) {
         const zA = b.zLand + b.v.z * .12 * (1 - Math.exp(-s / .12));
         b.p.set(x, bedY(x) + R + hop, lerp(zA, trough.z, w));
         b.xray = clamp01((x * 1000 - SHIFT[0] + 240) / 90);      // under the bed's cover near the feeder
-        if (first && x >= X_WAIT - 1e-4 && !feederTaken() && hop < .01) { b.state = 'enter'; b.t0 = T; b.vEnd = Math.max(.7, b.vx); b.s = b.x; }
+        if (first && x >= X_WAIT - 1e-4 && !feederTaken() && hop < .01) { b.state = 'enter'; b.t0 = T; b.vEnd = Math.max(.7, b.vx); b.s = b.x; b.x = 99; }
         break;
       }
       case 'enter': {
