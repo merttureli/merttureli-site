@@ -23,13 +23,19 @@ function paint(el) {
 }
 function raise(el) { el.style.setProperty('--z', String(++top)); }
 
-/* How far this print may travel: its middle stays inside its zone (the cover, or its stop). */
+/* How far this print may travel. At least 60% of it stays on screen sideways, and its middle stays inside its
+   zone (the cover, or its stop) up and down, so a print can never be pushed out of reach. */
+const KEEP = 0.6;
 function limits(el) {
   const p = state(el), zone = el.closest('[data-zone]') || document.body;
-  const z = zone.getBoundingClientRect(), r = el.getBoundingClientRect();
-  const cx = r.left + r.width / 2, cy = r.top + r.height / 2, pad = 28;
+  const z = zone.getBoundingClientRect(), r = el.getBoundingClientRect(), vw = document.documentElement.clientWidth;
+  /* the box may still be easing toward p.x (keyboard steps glide): measure from where it is going, not where it is */
+  const now = parseFloat(getComputedStyle(el).translate) || 0, lag = p.x - now;
+  const cy = r.top + r.height / 2, pad = 28, out = r.width * (1 - KEEP);
+  let minX = p.x + (-out - r.left - lag), maxX = p.x + (vw + out - r.right - lag);
+  if (minX > maxX) minX = maxX = p.x;                       // wider than the screen allows: it stays where it is
   return {
-    minX: p.x + (Math.max(z.left, 0) + pad - cx), maxX: p.x + (Math.min(z.right, document.documentElement.clientWidth) - pad - cx),
+    minX: Math.min(minX, p.x), maxX: Math.max(maxX, p.x),   // never jump a print that is already further out
     minY: p.y + (z.top + pad - cy), maxY: p.y + (z.bottom - pad - cy),
   };
 }
@@ -44,7 +50,7 @@ export function initPrints({ still }) {
   else {
     const io = new IntersectionObserver(entries => {
       for (const e of entries) if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
-    }, { rootMargin: '0px 0px -12% 0px', threshold: 0.12 });
+    }, { rootMargin: '0px 0px 15% 0px', threshold: 0 });   // a print is already developing as it comes on screen
     prints.forEach(el => io.observe(el));
   }
 

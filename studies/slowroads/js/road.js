@@ -149,4 +149,26 @@ export function initRoads({ still }) {
   window.addEventListener('load', later);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(later);
   if (!still) window.addEventListener('scroll', kick, { passive: true });
+
+  /* A stamp does not wait for the pen: it lands as soon as its board's top passes 70% of the window height. */
+  if (!still && 'IntersectionObserver' in window) {
+    const io = new IntersectionObserver(entries => {
+      for (const e of entries) if (e.isIntersecting) { e.target.closest('.stop')?.classList.add('is-reached'); io.unobserve(e.target); }
+    }, { rootMargin: '0px 0px -30% 0px', threshold: 0 });
+    document.querySelectorAll('.stop .board').forEach(b => io.observe(b));
+  }
+
+  /* One stamp ran off the edge of the paper: on a desk, a third of it hangs past the page and is cut there. */
+  const cuts = [...document.querySelectorAll('.stamp-cut')], wide = window.matchMedia('(min-width: 861px)');
+  const fitCuts = () => cuts.forEach(cut => {
+    const page = cut.closest('.page'), stamp = cut.querySelector('.stamp');
+    if (!page || !stamp) return;
+    if (!wide.matches) { stamp.style.right = ''; cut.style.removeProperty('--cut'); return; }
+    const d = page.getBoundingClientRect().right - cut.getBoundingClientRect().right;
+    stamp.style.right = (-(d + stamp.getBoundingClientRect().width * 0.32)).toFixed(1) + 'px';
+    cut.style.setProperty('--cut', (-d).toFixed(1) + 'px');
+  });
+  fitCuts();
+  window.addEventListener('resize', fitCuts);
+  window.addEventListener('load', fitCuts);
 }

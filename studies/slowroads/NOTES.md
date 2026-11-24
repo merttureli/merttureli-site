@@ -102,9 +102,13 @@ Six sections as briefed, in `index.html`, `css/slowroads.css` and four small mod
   stylesheet places (`[data-road]`), so one line follows the layout at any width: down the gutter between
   prints and text on a desk, down the left margin on a phone. Every leg gets one off-center bend, then the
   line is pushed sideways by smooth noise and dashed with dashes of different lengths.
-- **Stamps.** Inline SVG: text on two arcs, a different border for each stop, a small drawn icon, and three
-  ink filters (`#ink-a`, `#ink-b`, `#ink-c`: fine grain plus large dry patches) so neighbors are worn
-  differently. A second, faint, offset copy is the lighter second impression.
+- **Stamps.** Inline SVG, six different ones: four round (one with a double heavy ring, one beaded, one
+  with three thin rings and the word OVERLOOK across the middle) and one rectangular, with the place on the
+  rim and a drawn icon in the middle. Ink strength runs from .75 to .95, and three ink filters (`#ink-a`,
+  `#ink-b`, `#ink-c`: fine grain plus large dry patches) wear neighbors differently. The coast stamp ran off
+  the edge of the paper: on a desk a third of it is cut at the page edge (`.stamp-cut`, placed by
+  `road.js`). A stamp lands as soon as its board's top passes 70% of the window, without waiting for the
+  pen. A second, faint, offset copy is the lighter second impression.
 - **Textures.** Paper grain, kraft fibers and desk felt are small SVG noise tiles used as repeating
   backgrounds, so no filter runs while the page scrolls. Live filters sit only on the six stamps, the
   postmark, the rubber stamp and the grease-pencil circle.
@@ -121,12 +125,15 @@ Six sections as briefed, in `index.html`, `css/slowroads.css` and four small mod
 
 - The cover note reads "one lighthouse, one pond, a lot of granite". The photographs do not say how many
   days the trip took, so "three days" is out.
-- Stamps say "STOP 1 OF 6" across the middle where a passport stamp has a date. The brief allows no dates.
+- Stamps carry an icon (or, once, the place) where a passport stamp has a date. The brief allows no dates.
 - The button and the postage stamp use `#cf3b76`, a shade deeper than the rose `#d6457f` of the stamps.
   White type on the brief's rose is 4.2 to 1; on the deeper one it is 4.6 to 1.
-- A fourth photograph is left out besides the three named: `overlook-sit.jpg` shows a face in profile.
-  That leaves 22. Nineteen are prints on the six stops; the contact sheet shows all 22 (`ridge-rock`,
-  `sky-wisps` and `sunset-poles` appear only there).
+- Six photographs are left out: the three named, and `overlook-sit`, `overlook-look` and `stand-cliff`,
+  which each show part of a face. That leaves 20. No photograph is a print twice: the cover pile is
+  `sky-wisps`, `sunset-poles`, `road-yellow`, `ridge-rock` and `jordan-shore`, the six stops hold the other
+  15, and the contact sheet shows all 20. With the overlook photographs gone, stop 5 shows the trail and
+  the snag only, and its text no longer mentions the view from the ledge.
+- The postcard's postage stamp is a drawn sun on rose, not the lighthouse photograph.
 - The kraft label lies on top of the loose prints, so a thrown print can never cover the subscribe button.
 - Fonts are National Park (variable), Courier Prime 400 and 700, and Mynerve, from Fontsource, cut down to
   Basic Latin with fonttools (138 KB to 94 KB). None declares a reserved font name; licenses are in `fonts/`.
@@ -136,7 +143,11 @@ Six sections as briefed, in `index.html`, `css/slowroads.css` and four small mod
 
 **Measured** (headless Chromium, `tools/study-shots.js` and my own scripts, November 2026)
 
-- Whole page 874 KB at both widths. The first screen needs 383 KB (document, styles, scripts, four fonts,
+- After the review round (`tools/study-shots.js`): whole page 808 KB at both widths, no errors, failed or
+  outside requests, overflow 0 at 1440 and 390, every caption on every print fully visible at 360 to 1920
+  (checked point by point with `elementFromPoint`). At 1440 every print in view is in full color one second
+  after it enters the window; at 1440, 768 and 390 every stamp has landed by the time its board is 66% down.
+- Before the review round: whole page 874 KB at both widths. The first screen needs 383 KB (document, styles, scripts, four fonts,
   the doodles, five photographs). The browser's lazy-loading look-ahead fetches four to six more photographs
   before any scroll, which makes 470 KB on a phone and 548 KB on a desk arrive up front.
 - Scrolling the whole page: median frame 16.7 ms, 95th percentile 16.8 ms at 1440 and at 390.
@@ -152,11 +163,30 @@ Six sections as briefed, in `index.html`, `css/slowroads.css` and four small mod
   it. Promoting the print to its own layer did not help there; registering its offsets as non-inherited
   properties halved the style work. It needs a look on a real laptop and a real phone before this is called
   smooth.
-- On a phone the prints become a tidy overlapping column and the route a margin line. It reads well but has
-  less of the scattered desk than the wide layout. Between 600 and 860 pixels the same column is used with
-  the prints capped at 520, which leaves the right side of the page empty.
+- On a phone the route is still a margin line, and the prints, now about 220px wide so they can overlap,
+  are smaller than before.
 - The handwriting is one font, so the same letter is always the same shape, and the stamp wear is the same
   on every visit (three filters shared by six stamps). A second handwriting cut or per-visit filter seeds
   would make both less regular.
 - The source photographs are small and heavily compressed; `road-yellow` and `bridge-rail` look soft even at
   print size.
+
+**Review round (punch list of 13)**
+
+- Prints develop from a light sepia (opacity .9) in 0.8s, start when they are 15% of a window below the
+  fold, and are staggered by at most 80ms, so none is ever a blank hole on screen.
+- 600 to 860 wide: prints sit two up, 58% and 46% wide, overlapping by 12%, the second set lower. Under 600:
+  each print 67% wide, a third over its neighbor, tilted -4 and +3 degrees in turn, one per stop over the
+  margin. In both, prints lie in the page flow (no fixed heights) and the stamp is pinned beside its board.
+- The cover pile was re-seated so every caption is clear at every width (upper prints lie on lower ones).
+- Typewriter text is `clamp(16px, 1.25vw, 19px)` in a column of up to 440px; stops are two columns of 1.25
+  to 1, so desk prints are 400 to 430px wide at 1440.
+- Captions and alt text were checked against each picture: the cove has a blue sky, the summit figure is
+  lit, "looking out" replaces "looking back", and the sentences that guessed at what someone meant to do are
+  gone. The pond note now reads "pink roses, gray stones"; the overlook note "blue paint on the bark".
+- The strip map places the stops unevenly (heights 58, 41, 66, 30, 47, 22), the line makes one loop after
+  the coast (desk only), and the pond's label sits across the line.
+- A print keeps at least 60% of its width on screen whether it is dragged, thrown or moved by keys.
+- The contact sheet shows upright frames upright, and the enlargement lies beside the sheet on a desk and
+  below it under 861px, never over it.
+

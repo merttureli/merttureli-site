@@ -1,5 +1,6 @@
 /* The contact sheet. One frame is circled in grease pencil. Choosing a frame moves the circle to it and lays a
-   larger print on the sheet beside it; "Put it back", Escape or the same frame again takes the print away. */
+   larger print beside the sheet (below it on a phone), never over it; "Put it back", Escape or the same frame
+   again takes the print away. */
 
 export function initSheet({ still }) {
   const sheet = document.querySelector('.sheet'), strip = document.getElementById('strip');
@@ -24,20 +25,8 @@ export function initSheet({ still }) {
     grease.classList.add('is-on');
     if (animate && !still) { grease.classList.remove('is-drawing'); void grease.getBoundingClientRect(); grease.classList.add('is-drawing'); }
   }
-  /* Lay the print below the frame's strip if there is room, else above it, else beside it, so the circled
-     frame stays in view. */
-  function place(frame) {
-    const b = box(frame), W = sheet.clientWidth, H = sheet.clientHeight, w = blowup.offsetWidth, h = blowup.offsetHeight, gap = 12;
-    const fit = (v, lo, hi) => Math.min(Math.max(v, lo), Math.max(lo, hi)), mid = b.x + b.w / 2;
-    let left = fit(mid - w / 2 + (mid < W / 2 ? 26 : -26), 8, W - w - 8), top;
-    if (b.y + b.h + gap + h <= H + 28) top = b.y + b.h + gap;
-    else if (b.y - gap - h >= -28) top = b.y - gap - h;
-    else {
-      top = fit(b.y + b.h / 2 - h / 2, -18, H - h + 18);
-      const after = b.x + b.w + gap, before = b.x - gap - w;
-      left = fit(mid > W / 2 ? (before >= 8 ? before : after) : (after + w <= W - 8 ? after : before), 8, W - w - 8);
-    }
-    blowup.style.left = left + 'px'; blowup.style.top = top + 'px';
+  /* The print lies beside the sheet. If it is not on screen (a phone, where it lies below), bring it into view. */
+  function place() {
     const r = blowup.getBoundingClientRect();
     if (r.top < 8 || r.bottom > window.innerHeight - 8) blowup.scrollIntoView({ block: r.height > window.innerHeight - 16 ? 'start' : 'nearest', behavior: still ? 'auto' : 'smooth' });
   }
@@ -54,7 +43,7 @@ export function initSheet({ still }) {
     cap.textContent = frame.dataset.cap || '';
     blowup.hidden = false;
     blowup.classList.remove('is-in'); void blowup.offsetWidth; blowup.classList.add('is-in');
-    place(frame); circle(frame, true);
+    place(); circle(frame, true);
   }
   function hide(focusBack) {
     if (!open) return;
@@ -66,7 +55,7 @@ export function initSheet({ still }) {
 
   frames.forEach(frame => frame.addEventListener('click', () => { if (open === frame) hide(false); else show(frame); }));
   close.addEventListener('click', () => hide(true));
-  sheet.addEventListener('keydown', e => {
+  (document.getElementById('lightbox') || sheet).addEventListener('keydown', e => {
     if (e.key === 'Escape' && open) { e.preventDefault(); hide(true); return; }
     const i = frames.indexOf(document.activeElement);
     if (i < 0) return;
@@ -74,7 +63,7 @@ export function initSheet({ still }) {
     if (to !== undefined && frames[to]) { e.preventDefault(); frames[to].focus(); }
   });
 
-  const refit = () => { circle(marked, false); if (open) place(open); };
+  const refit = () => circle(marked, false);
   refit();
   let t = 0; const later = () => { clearTimeout(t); t = setTimeout(refit, 120); };
   if ('ResizeObserver' in window) new ResizeObserver(later).observe(sheet);
