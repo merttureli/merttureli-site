@@ -9,6 +9,7 @@
      desktop-00.png ...   the page a screen at a time, top to bottom (N steps, default 8), so scroll-driven
      phone-00.png ...     effects are caught in the act
      desktop-full.png, phone-full.png, desktop-reduced.png (prefers-reduced-motion: reduce, first screen)
+     sheet-desktop.jpg, sheet-phone.jpg   every frame on one contact sheet, for a quick look at the whole page
      report.json          console errors, failed and outside requests, bytes by type, sideways overflow,
                           focusable elements with no visible name, images with no alt
 
@@ -74,6 +75,14 @@ const server = http.createServer((req, res) => {
     await ctx.close();
   }
   fs.writeFileSync(path.join(out, 'report.json'), JSON.stringify(report, null, 1));
+  const sheet = await browser.newPage({ viewport: { width: 1800, height: 900 } });
+  for (const [name, per, w] of [['desktop', 4, 446], ['phone', 8, 221]]) {       // contact sheets: frame number in the corner
+    const cells = Array.from({ length: steps }, (_, i) => { const f = path.join(out, `${name}-${String(i).padStart(2, '0')}.png`);
+      return fs.existsSync(f) ? `<figure><img src="data:image/png;base64,${fs.readFileSync(f).toString('base64')}"><figcaption>${i}</figcaption></figure>` : ''; }).join('');
+    await sheet.setContent(`<body style="margin:0;background:#777;display:grid;grid-template-columns:repeat(${per},${w}px);gap:4px;padding:4px;font:12px sans-serif">
+      <style>figure{margin:0;position:relative}img{width:${w}px;display:block}figcaption{position:absolute;left:0;top:0;background:#000;color:#fff;padding:1px 5px}</style>${cells}</body>`, { waitUntil: 'load' });
+    await sheet.screenshot({ path: path.join(out, `sheet-${name}.jpg`), type: 'jpeg', quality: 72, fullPage: true });
+  }
   const d = report.views.desktop, p = report.views.phone;
   console.log(`${key}: desktop ${d.kb} KB, ${d.errors.length} errors, ${d.failed.length} failed, ${d.outside.length} outside requests, overflow ${d.sidewaysOverflow}px; phone ${p.kb} KB, ${p.errors.length} errors, overflow ${p.sidewaysOverflow}px`);
   console.log(`shots and report.json in ${out}`);
