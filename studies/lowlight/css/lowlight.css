@@ -117,7 +117,7 @@ html.js:not(.late) .wave:not([data-ready]){visibility:hidden}
    photograph over them must not be painted again each time */
 .hero-photo,.hero-people,.hero-title,.hero-ground{will-change:transform}
 .hero-photo img,.hero-people img{position:absolute;left:0;top:0;width:100%;height:auto}
-.hero-photo{z-index:1;opacity:.95;-webkit-mask-image:radial-gradient(ellipse 78% 96% at 64% 100%,#000 42%,transparent 100%);mask-image:radial-gradient(ellipse 78% 96% at 64% 100%,#000 42%,transparent 100%)}
+.hero-photo{z-index:1;opacity:.95;-webkit-mask-image:radial-gradient(ellipse 64% 98% at 63% 100%,#000 40%,transparent 100%);mask-image:radial-gradient(ellipse 64% 98% at 63% 100%,#000 40%,transparent 100%)}
 .hero-people{z-index:3}
 /* the ground the two people sit on, carried to the left edge at the height it has in the photograph */
 .hero-ground{position:absolute;z-index:3;left:0;right:calc(var(--pw) - 2px);bottom:0;height:calc(var(--pw)*1.25*(var(--shown) - .4885));background:var(--bg)}

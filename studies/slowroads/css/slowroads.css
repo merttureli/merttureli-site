@@ -110,7 +110,7 @@ a{color:inherit}
 .pile{position:relative;justify-self:start;width:min(100%,700px)}
 .pile::before{content:"";display:block;padding-top:97%}
 .pile .print figcaption{font-size:clamp(22px,1.8vw,26px)}
-.sticker{position:absolute;z-index:3;right:-9%;top:-15%;width:27%;height:auto;rotate:13deg;pointer-events:none;filter:drop-shadow(0 1px 1px rgba(18,12,6,.4))}
+.sticker{position:absolute;z-index:3;right:-10%;top:-17%;width:31%;height:auto;rotate:13deg;pointer-events:none;filter:drop-shadow(0 1px 1px rgba(18,12,6,.4))}
 .sticker__paper{fill:var(--paper);stroke:#fffdf7;stroke-width:3}
 .sticker__rule{fill:none;stroke:var(--desk);stroke-width:1.4}
 .sticker__text{font:800 11px var(--display);letter-spacing:.08em;fill:var(--desk)}
