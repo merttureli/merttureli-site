@@ -30,7 +30,7 @@ A case page's `<title>` is `seo_title` if set, else `title`, plus ` · Mert Ture
 | What | File | Rule |
 |---|---|---|
 | Public page list | `sitemap.xml` | One `<url>` per indexable page. Bump `<lastmod>` when a page's content changes, at release ([release.md](release.md)). |
-| Crawl rules | `robots.txt` | `next/` pages (`/next/*.html`) and `/next/lab/`, `studies/` (except `studies/shared/`), `tools/`, `cards/` stay `Disallow`ed. `next/css`, `next/js`, `next/assets` and `studies/shared/` stay crawlable: the live pages render from them (the robots check FAILs if a sitemap page loads a blocked file). |
+| Crawl rules | `robots.txt` | `next/` pages (`/next/*.html`) and `/next/lab/`, `studies/` (except `studies/shared/` and `studies/catalog/assets/`), `tools/`, `cards/` stay `Disallow`ed. `next/css`, `next/js`, `next/assets`, `studies/shared/` and `studies/catalog/assets/` (the posters of the Websites page's catalog) stay crawlable: the live pages render from them (the robots check FAILs if a sitemap page loads a blocked file). |
 | Per page | `<meta name="robots" content="noindex">` | Every page not in the sitemap: `privacy`, `404`, `hi/`, the photography redirect stubs, `next/` sources, studies. |
 | Preview hosts | `_headers` | `noindex` for Cloudflare `*.pages.dev` previews. GitHub Pages ignores it. |
 

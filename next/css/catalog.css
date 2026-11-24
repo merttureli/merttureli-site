@@ -1,0 +1,163 @@
+/* STUDIO websites page (next/websites.html), section #studies: the catalog of sample sites.
+   Eight sample sites and four redesigns of this site, filters by job, posters whose frames step on
+   hover or focus, and the viewer dialog (.cview) that opens one page in an iframe at Desktop, Tablet
+   820 or Phone 390. Behavior: next/js/catalog.js. Loaded after tokens.css, studio.css, showcase.css and
+   websites.css, which give it the page's type, .rule, .label, .pillbtn and .csec rhythm; everything here
+   is prefixed cat- or cview so it cannot reach the rest of the page. The posters (studies/catalog/assets/)
+   carry all the color; the rest is paper, ink, white tiles and hairlines. */
+
+.cat, .cview {
+  /* --muted (#676b72) is 4.4 to 1 on the paper; small labels here take a step darker */
+  --quiet: #565a61;
+  --frame-line: rgba(18, 19, 21, .12);
+  --lnav-h: 56px;   /* the sticky section bar (.lnav) the filters stop under */
+}
+.cat .label { color: var(--quiet); }
+
+/* ------------------------------------------------------------- head */
+.cat__head { flex-wrap: wrap; margin-bottom: var(--space-20-40); }
+.cat__lede { max-width: 40ch; font-size: clamp(18px, 1.6vw, 24px); line-height: 1.34; letter-spacing: -.012em; color: var(--ink-soft); text-wrap: pretty; }
+
+/* ---------------------------------------------------------- filters */
+/* sticks under the section bar while the catalog is on screen; a hairline once it is stuck */
+.cat-filters { position: sticky; top: var(--lnav-h); z-index: calc(var(--z-top) - 1); background: var(--paper); border-bottom: 1px solid transparent; transition: border-color var(--dur-300); }
+.cat-filters.is-stuck { border-bottom-color: var(--line); }
+.cat-filters__in { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.cat-chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 0; }
+.cat-chip { height: 40px; padding: 0 16px; border: var(--hairline); border-radius: var(--radius-pill); background: transparent; font-size: var(--text-xs); font-weight: 500; letter-spacing: -.005em; white-space: nowrap; transition: background var(--dur-300) var(--ease), color var(--dur-300) var(--ease), border-color var(--dur-300) var(--ease); }
+@media (hover: hover) { .cat-chip:hover { border-color: var(--ink); } }
+.cat-chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.cat-filters__count { flex: none; white-space: nowrap; }
+
+/* ----------------------------------------------------------- groups */
+.cat-group { padding-top: var(--space-40-70); }
+.cat-group + .cat-group { padding-top: var(--space-70-140); }
+.cat-group[hidden] { display: none; }
+.cat-group .rule h3 { font-weight: 400; }
+.cat-entries { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(56px, 6.4vw, 104px) var(--bento-gap); }
+.cat-entries--small { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 48px var(--bento-gap); }
+.cat-entry[hidden] { display: none; }
+/* one entry left after a filter: the poster and its text side by side, so the row is not half empty */
+@media (min-width: 761px) {
+  .cat-entries.is-single { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); column-gap: var(--gutter); }
+  .cat-entries.is-single > .cat-entry:not([hidden]) { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; align-items: end; }
+  .cat-entries.is-single .cat-entry__body { padding-top: 0; }
+}
+.cat__note { margin-top: var(--space-40-70); padding-top: 14px; border-top: var(--hairline); max-width: none; font-size: var(--text-2xs); color: var(--quiet); }
+
+/* --------------------------------------------------------- a poster */
+/* a white tile, as the page's other cards, with the desktop frame and the phone frame overlapping it */
+.cat-poster { position: relative; display: block; aspect-ratio: 16 / 10.4; border-radius: var(--radius-tile); background: var(--tile); box-shadow: var(--shadow-tile); overflow: hidden; isolation: isolate; cursor: pointer; transition: box-shadow var(--dur-700) var(--ease); }
+.cat-poster:focus-visible { outline-offset: 4px; border-radius: var(--radius-tile); }
+.cat-poster__desk { position: absolute; left: 5.5%; top: 7%; width: 77%; aspect-ratio: 16 / 10; border-radius: 6px; overflow: hidden; background: var(--paper-2); box-shadow: 0 0 0 1px var(--frame-line), 0 1px 2px rgba(18, 19, 21, .06), 0 22px 44px -26px rgba(18, 19, 21, .45); transition: transform var(--dur-700) var(--ease); }
+.cat-poster__f { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; opacity: 0; }
+.cat-poster__f.is-on { opacity: 1; }
+.cat-poster__phone { position: absolute; right: 5%; top: 17%; width: 20.5%; aspect-ratio: 390 / 844; border-radius: 13% / 6%; overflow: hidden; background: var(--paper-2); border: 3px solid var(--ink); box-shadow: 0 1px 2px rgba(18, 19, 21, .1), 0 26px 40px -22px rgba(18, 19, 21, .55); transition: transform var(--dur-700) var(--ease); }
+.cat-poster__phone img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.cat-poster img[data-src], .cat-poster img.is-broken { visibility: hidden; }
+/* four ticks: which frame of the page is showing */
+.cat-poster__ticks { position: absolute; left: calc(5.5% + 84px); bottom: calc(4.4% + 14px); display: flex; gap: 4px; opacity: 0; transition: opacity var(--dur-300); }
+.cat-poster__ticks i { width: 18px; height: 2px; background: rgba(18, 19, 21, .22); transition: background var(--dur-250); }
+.cat-poster__ticks i.is-on { background: var(--ink); }
+.cat-poster__open { position: absolute; left: 5.5%; bottom: 4.4%; display: inline-flex; align-items: center; height: 30px; padding: 0 14px; border-radius: var(--radius-pill); background: var(--ink); color: var(--paper); font-size: var(--text-2xs); font-weight: 520; opacity: 0; transform: translateY(6px); transition: opacity var(--dur-300) var(--ease), transform var(--dur-500) var(--ease); }
+.cat-poster.is-stepping .cat-poster__ticks, .cat-poster:focus-visible .cat-poster__ticks { opacity: 1; }
+.cat-poster:focus-visible { box-shadow: var(--shadow-tile-hi); }
+.cat-poster:focus-visible .cat-poster__open { opacity: 1; transform: none; }
+.cat-poster:focus-visible .cat-poster__desk { transform: translateY(-4px); }
+.cat-poster:focus-visible .cat-poster__phone { transform: translateY(-8px); }
+@media (hover: hover) {
+  .cat-poster:hover { box-shadow: var(--shadow-tile-hi); }
+  .cat-poster:hover .cat-poster__ticks { opacity: 1; }
+  .cat-poster:hover .cat-poster__open { opacity: 1; transform: none; }
+  .cat-poster:hover .cat-poster__desk { transform: translateY(-4px); }
+  .cat-poster:hover .cat-poster__phone { transform: translateY(-8px); }
+}
+/* no hover on touch: the first frame only, the open label stays hidden (the whole tile is the control) */
+@media (hover: none) { .cat-poster__ticks { display: none; } }
+
+/* ---------------------------------------------------- an entry's text */
+.cat-entry__body { padding-top: 20px; }
+.cat-entry__name { margin: 6px 0 0; font-weight: 680; font-stretch: 106%; font-size: clamp(30px, 2.8vw, 46px); line-height: 1; letter-spacing: -.03em; cursor: pointer; }
+.cat-entry__for { margin-top: 10px; max-width: 44ch; font-size: clamp(17px, 1.3vw, 20px); line-height: 1.35; letter-spacing: -.01em; color: var(--ink); text-wrap: pretty; }
+.cat-entry__note { margin-top: 10px; font-size: var(--text-xs); color: var(--ink-soft); }
+.cat-facts { margin-top: 18px; border-top: var(--hairline); }
+.cat-facts div { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 16px; padding: 10px 0; border-bottom: var(--hairline); }
+.cat-facts dt { font-family: var(--mono); font-size: var(--text-mono-s); font-stretch: var(--mono-stretch); letter-spacing: var(--mono-tracking); text-transform: uppercase; color: var(--quiet); padding-top: 3px; }
+.cat-facts dd { font-size: var(--text-s); line-height: 1.42; color: var(--ink-soft); }
+.cat-entry--small .cat-entry__name { font-size: clamp(24px, 1.9vw, 32px); }
+.cat-entry--small .cat-entry__for { font-size: var(--text-s); color: var(--ink-soft); }
+.cat-entry--small .cat-poster { border-radius: var(--radius-tile-s); }
+.cat-entry--small .cat-poster__desk { left: 6%; width: 72%; }
+.cat-entry--small .cat-poster__phone { border-width: 2px; }
+
+/* ----------------------------------------------------------- viewer */
+html.is-viewing { overflow: hidden; }
+.cview { position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: var(--paper); color: var(--ink); overflow: hidden; font-family: var(--display); }
+.cview[open] { display: grid; grid-template-rows: auto minmax(0, 1fr); }
+.cview::backdrop { background: var(--paper); }
+.cview .label { color: var(--quiet); }
+.cview__bar { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px; min-height: 64px; padding: 10px var(--gutter); border-bottom: var(--hairline); background: var(--tile); }
+.cview__title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cview__head { display: flex; align-items: baseline; gap: 12px; min-width: 0; white-space: nowrap; }
+.cview__name { margin: 0; font-weight: 680; font-stretch: 106%; font-size: 20px; line-height: 1.2; letter-spacing: -.02em; overflow: hidden; text-overflow: ellipsis; }
+.cview__where { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.cview__url { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--mono); font-size: var(--text-mono-m); font-stretch: var(--mono-stretch); letter-spacing: var(--mono-tracking); color: var(--quiet); }
+/* the eight sample sites are marked as samples; the four redesigns of this site are not */
+.cview__tag { flex: none; display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: var(--radius-pill); background: var(--ink); color: var(--paper); font-family: var(--mono); font-size: var(--text-mono-xs); font-stretch: var(--mono-stretch); letter-spacing: var(--mono-tracking); text-transform: uppercase; white-space: nowrap; }
+.cview__tag[hidden] { display: none; }
+.cview__sizes { display: flex; padding: 3px; gap: 2px; border: var(--hairline); border-radius: var(--radius-pill); background: var(--paper-2); }
+.cview__size { height: 34px; padding: 0 14px; border-radius: var(--radius-pill); font-size: var(--text-2xs); font-weight: 520; white-space: nowrap; color: var(--ink-soft); transition: background var(--dur-300) var(--ease), color var(--dur-300) var(--ease); }
+@media (hover: hover) { .cview__size:hover { color: var(--ink); } }
+.cview__size[aria-pressed="true"] { background: var(--tile); color: var(--ink); box-shadow: 0 0 0 1px var(--line), 0 1px 2px rgba(18, 19, 21, .08); }
+.cview__acts { display: flex; justify-content: flex-end; gap: 8px; }
+.cview__acts .pillbtn--sm { height: 40px; }
+.cview__stage { position: relative; background: var(--paper-2); overflow: hidden; }
+.cview__loading { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.cview__frame { position: absolute; left: 50%; top: 0; transform: translateX(-50%); overflow: hidden; background: var(--tile); transition: width var(--dur-500) var(--ease), height var(--dur-500) var(--ease), top var(--dur-500) var(--ease); }
+.cview__frame iframe { display: block; border: 0; transform-origin: 0 0; background: transparent; }
+.cview[data-size="tablet"] .cview__frame, .cview[data-size="phone"] .cview__frame { border-radius: 14px; box-shadow: 0 0 0 1px var(--frame-line), 0 30px 70px -40px rgba(18, 19, 21, .5); }
+.cview[data-size="phone"] .cview__frame { border-radius: 22px; }
+.cview.is-scaled .cview__frame { border-radius: 8px; }
+
+/* ----------------------------------------------------------- tablet */
+@media (max-width: 1100px) {
+  .cat-entries--small { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cview__bar { grid-template-columns: minmax(0, 1fr) auto; }
+  .cview__title { grid-column: 1; grid-row: 1; }
+  .cview__acts { grid-column: 2; grid-row: 1; }
+  .cview__sizes { grid-column: 1 / -1; grid-row: 2; justify-self: center; }
+}
+
+/* ------------------------------------------------------------ phone */
+@media (max-width: 760px) {
+  .cat, .cview { --lnav-h: 64px; }
+  .cat__head { flex-direction: column; align-items: flex-start; }
+  .cat__lede { font-size: 18px; }
+  .cat-filters__in { display: block; }
+  .cat-chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 calc(var(--gutter) * -1); padding: 12px var(--gutter) 6px; scroll-padding: 0 var(--gutter); }
+  .cat-chips::-webkit-scrollbar { display: none; }
+  .cat-chip { height: 38px; padding: 0 14px; flex: none; }
+  .cat-filters__count { padding: 0 0 10px; }
+  .cat-entries, .cat-entries--small { grid-template-columns: minmax(0, 1fr); gap: 56px; }
+  .cat-poster, .cat-entry--small .cat-poster { aspect-ratio: 16 / 11.5; border-radius: var(--radius-tile-s); }
+  .cat-poster__desk { left: 4.5%; top: 9%; width: 72%; border-radius: 4px; }
+  .cat-poster__phone { right: 4.5%; top: 17%; width: 23%; border-width: 2px; }
+  .cat-facts div { grid-template-columns: 92px minmax(0, 1fr); gap: 12px; }
+  .cview__bar { padding: 8px 12px; gap: 8px 10px; }
+  .cview__name { font-size: 18px; }
+  .cview__head .label { display: none; }
+  .cview__tab { padding: 0 12px; }
+  .cview__size { padding: 0 12px; }
+}
+/* phones: the new-tab link keeps only its arrow, so the address and the tag keep their room */
+@media (max-width: 400px) {
+  .cview__host { display: none; }
+  .cview__acts .cview__tab { width: 40px; padding: 0; font-size: 0; gap: 0; }
+  .cview__acts .cview__tab span { font-size: var(--text-s); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cat-poster, .cat-poster__desk, .cat-poster__phone, .cat-poster__open, .cat-poster__ticks, .cat-chip, .cat-filters, .cview__frame, .cview__size { transition: none; }
+  .cat-poster:hover .cat-poster__desk, .cat-poster:hover .cat-poster__phone,
+  .cat-poster:focus-visible .cat-poster__desk, .cat-poster:focus-visible .cat-poster__phone { transform: none; }
+}

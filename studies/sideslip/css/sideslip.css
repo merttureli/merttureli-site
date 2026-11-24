@@ -301,12 +301,18 @@ input[type=range]:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
 @media (max-width:1039px){
   :root{--gut:24px}
   html{scroll-padding-top:16px}
+  html.js{scroll-padding-top:80px}
   .bar{position:relative;height:auto;min-height:64px;column-gap:16px;padding:8px var(--gut)}
   .brand-b{display:none}
   .picto-nav{margin:0 auto;gap:0}
   .picto-nav a{flex-direction:column;justify-content:center;gap:0;height:48px;padding:0 12px;font-size:10px;line-height:12px;border-radius:8px}
   .batch{display:none}
+  /* the bar scrolls away here; the way back stays at the top right, and once the bar has gone a band of plate
+     (the dock's ::before, under the bar's own items) runs behind it, so it never sits over the page */
   .study-back.study-back--sideslip{position:absolute;top:12px}
+  .js .study-back.study-back--sideslip{position:fixed}
+  .dock::before{content:"";position:fixed;z-index:-1;left:0;right:0;top:0;height:64px;background:var(--plate);border-bottom:1px solid var(--ink);visibility:hidden;pointer-events:none}
+  .is-veiled .dock::before{visibility:visible}
   .skip:focus{top:72px}
   .hero-grid{grid-template-columns:280px minmax(0,1fr);gap:16px 24px;height:min(calc(100svh - 64px - 40px),760px);min-height:440px;max-height:none}
   .stage--hero{grid-column:2;grid-row:1;margin-left:0}

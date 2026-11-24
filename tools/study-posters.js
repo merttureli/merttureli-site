@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-/* Poster frames for the catalog of sample sites (studies/index.html).
+/* Poster frames for the catalog of sample sites (the Websites page, next/websites.html section #studies;
+   studies/index.html only sends old links there).
 
      node tools/study-posters.js [key ...] [--wait MS]
 
@@ -11,7 +12,7 @@
 
    Each frame waits for fonts, the images in view and a settle time (3D pages need several seconds in headless
    Chromium: a page with a <canvas> gets --wait, default 7000 ms, the others half of it). The page is told it is
-   framed (data-study-framed), so its "Back to websites" pill hides as it does in the catalog's viewer.
+   framed (data-study-framed), so its "Back to websites" pill hides as it does in the catalog's viewer dialog.
    No poster may show HOTBOX or the bend fixture (the site's IP rule): elements that name them are hidden first.
    A key whose page is missing, fails to load or paints nothing gets neutral placeholder frames; the run never
    fails on one sample. Nothing is clicked or submitted; analytics and form hosts are blocked. */

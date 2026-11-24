@@ -14,3 +14,14 @@ initPrints({ still });
 initRoads({ still });
 initSheet({ still });
 initPost({ still });
+
+// The way back is a luggage tag that says this is a sample site. It stays pinned to the top left corner of the
+// window; once the page moves, a strip of the desk (body::before in the CSS) slides under it, so the tag never
+// lies over a heading, a print or a field passing by.
+{
+  const root = document.documentElement;
+  root.classList.add('pinned');
+  const edge = () => root.classList.toggle('is-veiled', window.scrollY > 4);
+  addEventListener('scroll', edge, { passive: true });
+  edge();
+}

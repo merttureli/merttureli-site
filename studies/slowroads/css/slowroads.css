@@ -34,6 +34,7 @@
 
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%;scroll-padding-top:24px}
+html.pinned{scroll-padding-top:86px}
 html.moving{scroll-behavior:smooth}
 body{margin:0;background:var(--desk) var(--felt);color:var(--ink);font:400 16px/1.6 var(--typed);-webkit-font-smoothing:antialiased}
 img,svg{display:block}
@@ -360,12 +361,14 @@ a{color:inherit}
 .foot__top{margin:26px 0 0;text-align:center;font:400 16px/1 var(--typed)}
 .foot__top a{display:inline-block;padding:14px 8px;text-underline-offset:4px}
 
-/* ---- the way back: a kraft luggage tag tied to the top left corner of the page ----------------------------------------
-   The shared pill is fixed at the bottom left, where it would sit over prints, contact frames and the email
-   field as they scroll by. This page has no bar and, on a phone, no margin a fixed thing could live in, so the
-   tag belongs to the page instead: it sits on the bare desk above the label and scrolls away with it. It is
-   still the first thing in the tab order, and "Back to the top of the pile" in the footer leads back to it.
-   (display is left alone so the shared rule that hides the pill inside the preview frame still wins.) */
+/* ---- the way back: a kraft luggage tag tied to the top left corner of the window -------------------------------------
+   It reads "Sample site", so nobody takes the postcard for a real subscription, and it stays on screen. The shared
+   pill is fixed at the bottom left, where it would sit over prints, contact frames and the email field as they
+   scroll by; this page has no bar and, on a phone, no margin a fixed thing could live in. So the tag is pinned to
+   the top left (once js/slowroads.js has run), and as soon as the page moves a strip of the desk (body::before)
+   slides in under it: the sheets pass beneath the strip and nothing they carry is ever under the tag. It is still
+   the first thing in the tab order. (display is left alone so the shared rule that hides the pill inside the
+   preview frame still wins; the strip is hidden there too.) */
 .study-back--slowroads{position:absolute;left:max(16px,env(safe-area-inset-left));top:max(14px,env(safe-area-inset-top));bottom:auto;
   min-height:44px;padding:1px 16px 0 36px;gap:7px;border-radius:0;background:none;color:var(--ink);
   font:700 14px/1 var(--typed);letter-spacing:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;
@@ -379,6 +382,11 @@ a{color:inherit}
 .study-back--slowroads::after{content:"";position:absolute;z-index:-1;right:calc(100% - 20px);top:50%;width:64px;height:17px;margin-top:-9px;
   border:1.6px solid #e9dfc6;border-radius:50%;rotate:27deg;transform-origin:100% 50%;pointer-events:none}
 .study-back--slowroads svg{width:15px;height:15px}
+.pinned .study-back--slowroads{position:fixed}
+body::before{content:"";position:fixed;z-index:2147482999;left:0;right:0;top:0;height:70px;background:var(--desk) var(--felt);
+  box-shadow:0 1px 0 rgba(0,0,0,.25),0 10px 16px -10px rgba(0,0,0,.6);visibility:hidden;opacity:0;pointer-events:none;transition:opacity .2s ease,visibility 0s .2s}
+.pinned.is-veiled body::before{visibility:visible;opacity:1;transition:opacity .2s ease}
+[data-study-framed] body::before{display:none}
 .study-back--slowroads:hover{background:none;transform:none}
 @media (hover:hover){.study-back--slowroads:hover{rotate:-6deg}}
 .study-back--slowroads:focus-visible{outline:3px solid var(--focus);outline-offset:4px;border-radius:2px;box-shadow:none;rotate:-6deg}

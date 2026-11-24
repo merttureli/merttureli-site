@@ -11,15 +11,16 @@ site    the live site, exactly what GitHub Pages serves (the Studio home, websit
 studio  next/ as a standalone copy (the Studio sources, noindex, before build.py publishes them): every file under next/ at the copy root (index.html,
         websites.html, projects/*.html, css/, js/, assets/ ...), shared/ (studies/shared),
         and, pulled in by reference (whole folder when the target is an .html page):
-        site/ (root assets/), site/js/ (root js/), studies/ (the four design studies).
-        STEP files are left out (the host refuses them).
-samples the catalog of sample sites: studies/ at the copy root (studies/index.html, the catalog, is
-        the entry; every study folder, shared/, catalog/ beside it), and, pulled in by reference
-        (HTML, CSS, JS, the .bin a model .json names, every file under a folder a script uses as a
-        base URL): next/ as next/, root assets/ as assets/, root js/ as js/. So "../../next/x" from
-        a study becomes "../next/x". Links that would leave the copy: a study's "/websites.html"
-        (the back pill) points to the catalog; the catalog's "/" and "/websites.html", and any link
-        to the old explorer page, become https://merttureli.com/... in a new tab.
+        site/ (root assets/), site/js/ (root js/), studies/catalog/ (the catalog's posters; the
+        twelve pages the websites page's catalog opens are in the samples copy, which this copy
+        would not fit beside). STEP files are left out (the host refuses them).
+samples the catalog of sample sites, which is the Websites page: the built websites.html is the
+        entry (index.html), and, pulled in by reference at their repo paths (HTML, CSS, JS, the .bin
+        a model .json names, every file under a folder a script uses as a base URL): studies/ (the
+        twelve pages its catalog opens, and the posters), next/, root assets/ and root js/. Small
+        enough to publish, unlike site. A study's back pill (/websites.html#studies) comes back to
+        the entry; links to the home page and the old explorer page become https://merttureli.com/...
+        in a new tab. Run python3 tools/build.py first if next/websites.html changed.
 
 The artifact host rules this applies to every copy:
   * top-level paths starting with "_" are rejected  -> "_ds/" becomes "ds/"
@@ -92,9 +93,12 @@ MODES = {
     "studio": {
         # every page under next/ (index.html, websites.html, projects/*.html, lab/...) at the copy root
         "roots": [("next/", ""), ("studies/shared/", "shared/")],
-        # outside files the Studio links: root assets, the four design studies, root scripts
+        # outside files the Studio links: root assets, the catalog's posters, root scripts
         # (the websites page reuses the live inquiry form wiring in js/)
-        "pull": [("assets/", "site/"), ("studies/", "studies/"), ("js/", "site/js/")],
+        "pull": [("assets/", "site/"), ("studies/catalog/", "studies/catalog/"), ("js/", "site/js/")],
+        # the twelve pages the websites page's catalog opens would put this copy over the host's
+        # per-version file limit: they are in the samples copy, so the catalog's viewer is empty here
+        "left_out_on_purpose": {"studies/": "use the samples copy for the catalog of sample sites"},
         "exclude_ext": {".step"},   # the artifact host refuses STEP files
         "entry": "next/index.html",
         "doc_dir": "next/",
@@ -102,31 +106,29 @@ MODES = {
                   "index.html#charger"],
     },
     "samples": {
-        # the catalog and every study beside it: "../../next/x" from a study becomes "../next/x"
-        "roots": [("studies/", "")],
-        "pull": [("next/", "next/"), ("assets/", "assets/"), ("js/", "js/")],
+        # the Websites page (its #studies section is the catalog) as the copy's index.html, and
+        # everything it and the twelve pages it opens reference, at their repo paths
+        "roots": [("websites.html", "index.html")],
+        "pull": [("studies/", "studies/"), ("next/", "next/"), ("assets/", "assets/"), ("js/", "js/")],
         "exclude_ext": {".step"},
-        "entry": "studies/index.html",
-        "doc_dir": "studies/",
+        "entry": "websites.html",
+        "doc_dir": "",
         # a folder a script uses as a base URL ('../x/', or the fixed part of `../x/${name}.json`)
         # brings every file under it (not its pages)
         "pull_folders": True,
         # also read data-srcset, data-video and the like, the .bin a model .json names beside it,
         # and the folder of `../x/${name}.json`
         "wide_scan": True,
-        "folder_templates": True, # `${key}/` in a script (the catalog's viewer) -> `${key}/index.html`
         "local_only": True,       # the smoke fails on any request that leaves the copy
         "smoke_wait": 7000,       # 3D pages load their models after the first view
-        # repo page -> page in the copy, for links from every page but the entry (the back pill)
-        "redirect": {"websites.html": "studies/index.html"},
-        # repo page -> live URL (opens in a new tab); the entry's links, and the old explorer page
+        # repo page -> live URL (opens in a new tab): the home page and the old explorer page
         "external": {"index.html": "https://merttureli.com/",
-                     "websites.html": "https://merttureli.com/websites.html",
                      "assets/charger-explorer/index.html": "https://merttureli.com/#charger"},
         # if the version limit is passed: drop unreferenced root files, heaviest first, from these
         # an entry whose catalog label matches this (the four portfolio redesigns) goes first
         "trim_first": r"entry__idx[^>]*>[^<]*\bRedesign\b",
         "smoke": "entry_links",   # the entry plus every page it links to
+        "smoke_also": ["index.html#vireo"],   # and the catalog's viewer open on one sample
     },
 }
 
@@ -390,10 +392,10 @@ class Build:
         return new
 
     def link_rule(self, f, kind, path):
-        """('redirect', repo page) or ('external', url) for a link that would leave the copy: an
-        HTML attribute, or a page path in a script (markup a script writes, e.g. specimen's cards)."""
-        redirect, external = self.cfg.get("redirect", {}), self.cfg.get("external", {})
-        if not (redirect or external):
+        """('external', url) for a link that would leave the copy: an HTML attribute, or a page
+        path in a script (markup a script writes, e.g. specimen's cards)."""
+        external = self.cfg.get("external", {})
+        if not external:
             return None
         if kind == "nav" and f.endswith((".html", ".htm")):
             bases = [posixpath.dirname(f)]
@@ -403,14 +405,12 @@ class Build:
             return None
         for base in bases:
             target, _ = resolve(base, path, self.universe, nav=True)
-            if target and (target in redirect or target in external):
+            if target and target in external:
                 break
         else:
             return None
         if target in self.dst:
             return None
-        if target in redirect and f != self.cfg["entry"] and redirect[target] in self.dst:
-            return "redirect", redirect[target]
         if target in external:
             return "external", external[target]
         return None
@@ -503,13 +503,8 @@ class Build:
                 continue
             rule = self.link_rule(f, kind, path)
             if rule:
-                if rule[0] == "redirect":   # the page it stood for is not in the copy: drop the #hash too
-                    new = posixpath.relpath(self.dst[rule[1]], here_dst or ".")
-                else:
-                    url = rule[1] + ("" if "#" in rule[1] else frag)
-                    new, external = url + "\0", True   # marks the tag for target="_blank"
-                if f == self.cfg["entry"] and rule[0] == "redirect":
-                    self.entry_links.append(self.dst[rule[1]])
+                url = rule[1] + ("" if "#" in rule[1] else frag)
+                new, external = url + "\0", True   # marks the tag for target="_blank"
                 pieces.append(text[pos:start])
                 pieces.append(new)
                 pos = end
@@ -528,6 +523,12 @@ class Build:
             if not target:
                 if kind not in ("loose", "sibling") and why != "outside repo":
                     level = "warn" if why in ("missing", "not in this copy", "excluded from copy") else "info"
+                    left = self.cfg.get("left_out_on_purpose", {})
+                    if why == "not in this copy" and left:
+                        aim = resolve(here_src, path, self.universe)[0] or ""
+                        note = next((v for k, v in left.items() if aim.startswith(k)), None)
+                        if note:
+                            level, why = "info", f"not in this copy ({note})"
                     self.issues.append((level, self.dst[f], f"{ref!r}: {why}"))
                 continue
             if query:
@@ -565,10 +566,6 @@ class Build:
                 return tag[:-1].rstrip("/").rstrip() + ' target="_blank" rel="noopener">'
             text = re.sub(r"(<a\b[^>]*?)\0([^>]*>)", blank, text, flags=re.I)
             text = text.replace("\0", "")
-        if self.cfg.get("folder_templates") and ext in (".js", ".mjs"):
-            # `${key}/` names a folder page: the host serves explicit files only
-            text, n = re.subn(r"(`(?:[\w./-]|\$\{[\w.]+\})*\$\{[\w.]+\}/)`", r"\1index.html`", text)
-            count += n
         # bare filenames of renamed files (e.g. fetch(base + 'charger-hero.bin'))
         if self.renamed_re:
             text, n = self.renamed_re.subn(r"\1.wasm", text)
@@ -870,7 +867,8 @@ def main():
                "  python3 tools/preview.py site --dry-run          # plan only, writes nothing",
         formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("mode", choices=sorted(MODES),
-                    help="site: the whole site; studio: next/ standalone; samples: the catalog of sample sites")
+                    help="site: the whole site; studio: next/ standalone; samples: the Websites page and the "
+                         "sample sites its catalog opens")
     ap.add_argument("--out", help="output folder (default: a new temp dir); replaced on re-run")
     ap.add_argument("--dry-run", action="store_true", help="scan and plan only, write nothing")
     ap.add_argument("--serve", type=int, metavar="PORT", help="after building, serve the copy on 127.0.0.1:PORT")
@@ -965,7 +963,7 @@ def main():
         cfg = MODES[a.mode]
         pages = cfg["smoke"]
         if pages == "entry_links":   # the entry and every page it links to, in the order it lists them
-            pages = list(dict.fromkeys(["index.html"] + b.entry_links))
+            pages = list(dict.fromkeys(["index.html"] + cfg.get("smoke_also", []) + b.entry_links))
         pages = a.pages.split(",") if a.pages else pages
         pages = [p for p in pages if p.split("#")[0] in b.dst.values()] or die("no smoke pages exist in the copy")
         bad = smoke(out, pages, a.port, a.shots, cfg.get("smoke_wait", 2500), cfg.get("local_only", False))

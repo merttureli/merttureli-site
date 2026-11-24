@@ -28,7 +28,9 @@ export function initSheet({ still }) {
   /* The print lies beside the sheet. If it is not on screen (a phone, where it lies below), bring it into view. */
   function place() {
     const r = blowup.getBoundingClientRect();
-    if (r.top < 8 || r.bottom > window.innerHeight - 8) blowup.scrollIntoView({ block: r.height > window.innerHeight - 16 ? 'start' : 'nearest', behavior: still ? 'auto' : 'smooth' });
+    // the top edge the page can use: under the desk strip behind the pinned way back (the scroll padding less 16)
+    const top = (parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 24) - 16;
+    if (r.top < top || r.bottom > window.innerHeight - 8) blowup.scrollIntoView({ block: r.height > window.innerHeight - 16 ? 'start' : 'nearest', behavior: still ? 'auto' : 'smooth' });
   }
   function show(frame) {
     const src = frame.querySelector('img'), tall = frame.classList.contains('frame--tall');

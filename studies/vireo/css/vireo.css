@@ -82,7 +82,7 @@ sup a:hover { text-decoration: underline; }
 
 /* ---------- the way back: the shared pill, docked in the local bar as a quiet glass chip after the product name.
    Inside the bar it is never over a headline, a control, a field, the price pill or the phone's bottom bar.
-   Same link and text; under 480px only its arrow shows (the text stays for assistive tech). 160px is the wordmark,
+   Same link; it reads "Sample site", so a visitor who lands here knows the shop is not real. 160px is the wordmark,
    the rule and the product name (144px) plus a gap. ---------- */
 .study-back.study-back--vireo {
   left: calc(max(var(--gutter), (100% - var(--col)) / 2) + 160px); top: 10px; bottom: auto; translate: none;
@@ -101,7 +101,13 @@ sup a:hover { text-decoration: underline; }
   .study-back.study-back--vireo:hover { background: rgba(255, 255, 255, .2); transform: none; }
   .study-back.study-back--vireo[data-theme="light"]:hover { background: rgba(0, 0, 0, .11); }
 }
-@media (max-width: 480px) { .study-back.study-back--vireo { width: 28px; padding: 0; gap: 0; justify-content: center; font-size: 0; } }
+/* It reads "Sample site" at every width. On a phone it tightens a little, and under 390px, where the wordmark, the
+   product name, the chip and Reserve do not fit in one bar, the product name (also the hero's eyebrow) steps out. */
+@media (max-width: 480px) { .study-back.study-back--vireo { padding: 0 9px 0 7px; gap: 4px; font-size: 11px; } .study-back.study-back--vireo svg { width: 12px; height: 12px; } }
+@media (max-width: 389px) {
+  .bar__product { display: none; }
+  .study-back.study-back--vireo { left: calc(var(--gutter) + 60px); }
+}
 html:not(.js) .bar, html:not(.js) .study-back.study-back--vireo { position: absolute; }
 
 /* ---------- local bar ---------- */

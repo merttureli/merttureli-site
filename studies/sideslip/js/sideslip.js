@@ -253,8 +253,19 @@ for (const b of $$('[data-view]')) b.addEventListener('click', () => {
 const FRAME = 5 / 4;   // the model's reference frame (stage3d.js FRAME)
 const shotFor = s => (s.dataset.slot === 'try' ? view : 'hero');
 const bar = $('.bar');
-// the top of the window that the page can show: under the legend bar while it is sticky (wide screens)
-const topEdge = () => (getComputedStyle(bar).position === 'sticky' ? Math.max(0, bar.getBoundingClientRect().bottom) : 0);
+// the top of the window that the page can show: under the legend bar while it is sticky (wide screens), under the
+// band behind the way back once the bar has scrolled away (narrower screens)
+const topEdge = () => (getComputedStyle(bar).position === 'sticky' ? Math.max(0, bar.getBoundingClientRect().bottom) : document.documentElement.classList.contains('is-veiled') ? 64 : 0);
+// Under 1040 wide the bar scrolls away. The way back, which says this is a sample site, stays at the top right,
+// and once the bar has gone a band of plate (.dock::before in the CSS) runs behind it.
+{
+  const html = document.documentElement;
+  html.classList.add('js');
+  const veil = () => html.classList.toggle('is-veiled', bar.getBoundingClientRect().bottom <= 64);
+  addEventListener('scroll', veil, { passive: true });
+  addEventListener('resize', veil);
+  veil();
+}
 
 // How much of the model a slot would show: the model is framed in a 5 : 4 box fitted into the slot like
 // object-fit: contain, and sits in the middle of it (about 70 % of its width and 80 % of its height). The canvas

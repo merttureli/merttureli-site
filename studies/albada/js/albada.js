@@ -1,7 +1,7 @@
 /* Albada. The page is one morning: the scroll drives the color of the ground, the clock in the bar,
    the balloon on the flight strip, the drift of the photographs and the walk of the arcade.
    With prefers-reduced-motion none of that runs: the grounds change by section (in the CSS),
-   and only the clock and the ink of the bar and of the way back are kept in step here. */
+   and only the clock and the ink of the bar (and of the way back, which takes the bar's ink) are kept in step here. */
 import { makeJourney, inkFor, accentFor, luminance, parseColor, css } from './journey.js';
 import { initBooking } from './booking.js';
 
@@ -22,7 +22,7 @@ if (booking && $('nextOpen')) $('nextOpen').textContent = booking.label;
 const bar = $('bar'), hero = $('top'), heroMedia = $('heroMedia'), letters = [...document.querySelectorAll('#wordmark .wm b')];
 const strip = $('strip'), stripFly = $('stripFly'), stripTime = $('stripTime'), barClock = $('barClock');
 const arcade = $('arcade'), arcadeView = $('arcadeView'), arcadeTrack = $('arcadeTrack'), arcadeIntro = $('arcadeIntro');
-const foot = document.querySelector('.foot'), back = document.querySelector('.study-back--albada');
+const foot = document.querySelector('.foot');
 const book = $('book'), bookForm = $('bookForm'), stepDate = $('stepDate'), calGrid = $('calGrid');
 const tones = [...document.querySelectorAll('.tone:not(.tone--fixed)')];
 const allTones = [...document.querySelectorAll('.tone')];
@@ -93,9 +93,8 @@ function frame() {
   queued = false;
   const y = scrollY, probe = y + vh * 0.5;
   const footTop = foot.getBoundingClientRect().top, overFoot = footTop < barH * 0.5;
-  const backY = vh - 42, backOnFoot = footTop < backY;      // the way back sits at the bottom left from 900 wide
 
-  /* the ground and the ink: for the page, for the bar and for the way back */
+  /* the ground and the ink: for the page and for the bar (the way back takes the bar's ink) */
   if (!reduce) {
     const bg = colorAt(probe), ink = inkFor(bg), dark = luminance(bg) < FLIP;
     put(root, '--bg', css(bg)); put(root, '--ink', css(ink)); put(root, '--accent', css(accentFor(bg, ink)));
@@ -104,12 +103,9 @@ function frame() {
     const d = overFoot || dark;
     put(root, '--bar-ink', css(overFoot ? CREAM : ink)); put(root, '--bar-bg', css(overFoot ? NIGHT : bg));
     put(root, '--bar-action', css(d ? BURNER : TERRA)); put(root, '--bar-on-action', d ? css(NIGHT) : '#fff');
-    if (back) { put(back, '--back-ink', css(backOnFoot ? CREAM : ink)); put(back, '--back-bg', css(backOnFoot ? NIGHT : bg)); }
   } else {
     const under = toneAt(barH * 0.5);
     if (last.under !== under) { last.under = under; copyTone(root, under, [['--bar-ink', '--ink'], ['--bar-bg', '--sec-bg'], ['--bar-action', '--action'], ['--bar-on-action', '--on-action']]); }
-    const below = toneAt(backY);
-    if (back && last.below !== below) { last.below = below; copyTone(back, below, [['--back-ink', '--ink'], ['--back-bg', '--sec-bg']]); }
   }
   bar.classList.toggle('is-veiled', y >= 8);                // clear only at rest on the first screen
 

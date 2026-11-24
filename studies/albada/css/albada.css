@@ -26,7 +26,6 @@
   /* the journey: written by js/albada.js while scrolling; these are the values at the top of the page */
   --bg:var(--night); --ink:var(--ink-light); --accent:var(--burner); --action:var(--burner); --on-action:var(--night);
   --bar-ink:var(--ink-light); --bar-bg:var(--night); --bar-action:var(--burner); --bar-on-action:var(--night);
-  --back-ink:var(--ink-light); --back-bg:var(--night);
 }
 @media (min-width:1440px){:root{--t-label:13px}}
 
@@ -53,14 +52,18 @@ section:focus,article:focus{outline:none}
 .skip{position:fixed;left:16px;top:-80px;z-index:2147483001;padding:12px 16px;background:var(--cream);color:var(--ink-dark);font:500 var(--t-label)/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;text-decoration:none;border:1px solid var(--ink-dark)}
 .skip:focus{top:16px;outline:2px solid var(--ink-dark);outline-offset:2px}
 
-/* ---------- the way back: an arrow in the left gutter, where nothing else runs (docked in the bar under 900) ---------- */
-.study-back--albada{left:max(8px,calc((var(--m) - 44px)/2));bottom:max(20px,env(safe-area-inset-bottom));width:44px;height:44px;min-height:0;padding:0;gap:0;justify-content:center;border:1px solid color-mix(in srgb,var(--back-ink) 50%,transparent);border-radius:50%;background:var(--back-bg);color:var(--back-ink);box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;font:500 var(--t-label)/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;transition:color .3s,background-color .3s,border-color .3s}
-.study-back--albada .study-back__t{position:absolute;left:calc(100% + 10px);top:50%;translate:0 -50%;padding:11px 13px;white-space:nowrap;background:var(--back-bg);border:1px solid color-mix(in srgb,var(--back-ink) 50%,transparent);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .4s var(--slow),visibility 0s .4s}
-.study-back--albada:hover,.study-back--albada:focus-visible{background:var(--back-bg);transform:none;border-color:var(--back-ink)}
-.study-back--albada:hover .study-back__t,.study-back--albada:focus-visible .study-back__t{opacity:1;visibility:visible;transition:opacity .4s var(--slow)}
-.study-back--albada:focus-visible{outline:2px solid var(--back-ink);outline-offset:3px;box-shadow:none}
-.study-back--albada:active{background:color-mix(in srgb,var(--back-ink) 16%,var(--back-bg))}
-html.sheet-open .study-back--albada{--back-ink:var(--ink-light)!important}
+/* ---------- the way back: a tag in the bar that says this is a sample site, in the bar's ink ----------
+   From 900 wide it sits after the wordmark, an outlined twin of the Book tag; under 900 it hangs just below
+   the bar at the left edge (the bar has no room for it there), where the bar's veil runs on to cover it. */
+.study-back--albada{left:calc(var(--edge) + 128px);top:calc((var(--bar-h) - 38px)/2);bottom:auto;width:auto;height:38px;min-height:0;padding:0 15px 0 12px;gap:10px;justify-content:flex-start;border:1px solid color-mix(in srgb,var(--bar-ink) 55%,transparent);border-radius:0;background:none;color:var(--bar-ink);box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;font:500 var(--t-label)/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;transition:color .3s,background-color .3s,border-color .3s}
+.study-back--albada::after{content:"";position:absolute;inset:-4px -1px}    /* a 46px tall target */
+.study-back--albada svg{transition:transform .6s var(--slow)}
+.study-back--albada:hover,.study-back--albada:focus-visible{background:none;transform:none;border-color:var(--bar-ink)}
+@media (hover:hover){.study-back--albada:hover{background:color-mix(in srgb,var(--bar-ink) 9%,transparent)}.study-back--albada:hover svg{transform:translateX(-4px)}}
+.study-back--albada:focus-visible{outline:2px solid var(--bar-ink);outline-offset:3px;box-shadow:none}
+.study-back--albada:active{background:color-mix(in srgb,var(--bar-ink) 18%,transparent)}
+html.sheet-open .study-back--albada{color:var(--ink-light);border-color:color-mix(in srgb,var(--ink-light) 55%,transparent)}
+@media (prefers-reduced-motion:reduce){.study-back--albada svg{transition:none}.study-back--albada:hover svg{transform:none}}
 
 /* ---------- the grounds ---------- */
 .tone{--ink:var(--sec-ink);--accent:var(--sec-accent,var(--sec-ink));--action:var(--sec-action,var(--terra));--on-action:var(--sec-on-action,#fff);background:var(--sec-bg);color:var(--ink)}
@@ -417,17 +420,11 @@ html.sheet-open{overflow:hidden}
 /* ---------- phone and tablet: one column, one left edge ---------- */
 @media (max-width:899px){
   :root{--bar-h:60px;--cap:70svh}
-  /* the way back docks in the bar, before the wordmark */
-  .study-back--albada{left:var(--edge);top:calc((var(--bar-h) - 40px)/2);bottom:auto;width:40px;height:40px;background:none;color:var(--bar-ink);border-color:color-mix(in srgb,var(--bar-ink) 50%,transparent)}
-  .study-back--albada::after{content:"";position:absolute;inset:-3px}
-  .study-back--albada:hover,.study-back--albada:focus-visible{background:none;border-color:var(--bar-ink)}
-  .study-back--albada:active{background:color-mix(in srgb,var(--bar-ink) 18%,transparent)}
-  .study-back--albada:focus-visible{outline-color:var(--bar-ink)}
-  .study-back--albada .study-back__t{display:none}
-  html.sheet-open .study-back--albada{color:var(--ink-light);border-color:color-mix(in srgb,var(--ink-light) 50%,transparent)}
-  .bar{padding-left:calc(var(--edge) + 52px)}
-  [data-study-framed] .bar{padding-left:var(--edge)}
-  .skip:focus{top:calc(var(--bar-h) + 8px)}
+  /* the way back hangs under the bar at the left edge; the veil runs 32px further down to keep it on the ground */
+  .study-back--albada{left:var(--edge);top:var(--bar-h);height:32px;padding:0 13px 0 10px;gap:9px}
+  .study-back--albada::after{inset:-6px -1px}    /* a 44px tall target, clear of the bar's own controls */
+  .bar::before{bottom:-64px;background:linear-gradient(var(--bar-bg) 0,var(--bar-bg) 78%,transparent)}
+  .skip:focus{top:calc(var(--bar-h) + 44px)}
 
   .bar__nav{display:none}
   .bar__menu{display:block}

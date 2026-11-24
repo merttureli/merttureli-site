@@ -33,8 +33,8 @@ export function initPost({ still }) {
       card.hidden = false;
       card.classList.add('is-in');
       card.focus({ preventScroll: true });
-      const r = card.getBoundingClientRect();
-      if (r.top < 12 || r.bottom > window.innerHeight - 12) card.scrollIntoView({ block: 'center', behavior: still ? 'auto' : 'smooth' });
+      const r = card.getBoundingClientRect(), top = (parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 24) - 12;
+      if (r.top < top || r.bottom > window.innerHeight - 12) card.scrollIntoView({ block: 'center', behavior: still ? 'auto' : 'smooth' });
     }, still ? 0 : 520);
   });
   input.addEventListener('input', () => { if (input.hasAttribute('aria-invalid')) clear(); });

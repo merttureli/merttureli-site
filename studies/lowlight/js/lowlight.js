@@ -13,6 +13,14 @@ const store = {
   set(k, v) { try { sessionStorage.setItem(k, v); } catch (e) { /* private mode: the visit just forgets */ } },
 };
 
+/* ---------- the bar: clear over the first screen; once the page moves, a band of the night runs behind it so
+   its chips, and the way back that says this is a sample site, never sit over words or fields scrolling past ---------- */
+{
+  const veil = () => root.classList.toggle('is-veiled', window.scrollY > 4);
+  window.addEventListener('scroll', veil, { passive: true });
+  veil();
+}
+
 /* ---------- meteor tally: kept for the visit ---------- */
 let tally = Math.max(0, parseInt(store.get('lowlight-meteors'), 10) || 0);
 const tallyEls = [...document.querySelectorAll('[data-tally]')];

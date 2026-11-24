@@ -4,8 +4,13 @@ Each folder here is one self-contained page that shows a style of website. The f
 `studio`, `specimen`) are redesigns of the portfolio. The rest are sample client sites: each has an invented
 brand, one job, and is built from the owner's real projects, renders, 3D models and photos.
 
-Nothing here is linked from a live page until the owner says so. `robots.txt` keeps `/studies/` out of search and
-every page carries `noindex`.
+The catalog of all twelve is the Websites page: `next/websites.html`, section `#studies` (built to `websites.html`;
+styles `next/css/catalog.css`, script `next/js/catalog.js`, posters in `catalog/assets/`, made by
+`tools/study-posters.js`). It opens each page in a viewer dialog at desktop, tablet and phone width, and
+`websites.html#<key>` opens one directly. `studies/index.html` only sends old links there, carrying a `#<key>`.
+A new sample needs an entry there, its posters and its key in `studies/index.html`. `robots.txt` keeps `/studies/`
+out of search (except `shared/` and `catalog/assets/`, which the Websites page loads) and every page carries
+`noindex`.
 
 ## The folder
 
@@ -35,7 +40,7 @@ left by default, fixed, and there it takes taps meant for the page: a review fou
 fields and footer links on phones. So every sample places it in its own CSS (never in `shared/study.css`):
 docked in the sample's own bar where there is room, restyled to belong to that bar, and at no width from 360
 to 1920 on top of a headline, a control, a form field or a dialog. Its text and link stay. Inside the
-Websites page's preview frame it hides itself.
+catalog's viewer on the Websites page it hides itself.
 
 ## Rules for a sample site
 
