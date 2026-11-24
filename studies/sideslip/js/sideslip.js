@@ -20,7 +20,9 @@ const keycaps = $$('kbd[data-key]');
 const ranges = Object.fromEntries(AXES.map(k => [k, $(`input[data-range="${k}"]`)]));
 
 // raw counts the way the firmware reports them
-const count = { x: v => Math.round((v + 1) / 2 * 1023), y: v => Math.round(v * 1023), z: v => Math.round(v * 1023) };
+// (a hair of deadband at rest, as firmware has, so a centered pedal reads 512 and a released brake 0)
+const dead = v => (Math.abs(v) < .003 ? 0 : v);
+const count = { x: v => Math.round(511.5 + dead(v) * 511.5), y: v => Math.round(dead(v) * 1023), z: v => Math.round(dead(v) * 1023) };
 const shown = { x: null, y: null, z: null };
 function showAxis(k, v) {
   const c = Math.max(0, Math.min(1023, count[k](v)));

@@ -91,6 +91,12 @@ img{display:block;max-width:100%;height:auto}
 .hero-facts{display:grid;grid-template-columns:1fr 1.7fr 1fr;border-top:1px solid var(--ink)}
 .hero-facts div{padding:8px 0 0}
 .hero-facts dd{font-size:15px;line-height:24px;font-weight:500}
+.keymap{border:1px dashed var(--ink);border-radius:var(--r);padding:16px}
+.keymap-title{margin-bottom:16px}
+.keymap-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 24px}
+.km{display:flex;align-items:center;gap:8px}
+.km kbd{display:inline-grid;place-items:center;width:32px;height:32px;border:1px solid var(--ink);border-radius:4px;font-size:13px;line-height:1;font-weight:500;background:var(--plate);box-shadow:0 2px 0 var(--ink);translate:0 -1px}
+.km kbd.on{background:var(--ink);color:var(--plate);box-shadow:none;translate:0 1px}
 .stage{position:relative;overflow:hidden;min-height:0}
 .stage .still,.stage canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
 .stage canvas{touch-action:pan-y}
@@ -127,7 +133,7 @@ img{display:block;max-width:100%;height:auto}
 
 /* ---------------------------------------------------------------- sections */
 .sec-head{display:grid;grid-template-columns:304px minmax(0,1fr);column-gap:32px;align-items:baseline;padding:64px 0 32px}
-.sec-no{grid-row:1 / span 2}
+.sec-no{grid-row:1 / span 2;justify-self:start;display:inline-grid;place-items:center;min-width:40px;height:24px;padding:0 8px;border:1px solid var(--ink);border-radius:4px;color:var(--ink);align-self:center}
 .sec-head h2{font-size:28px;line-height:32px;font-weight:300;letter-spacing:-.02em;text-transform:lowercase}
 .sec-lede{grid-column:2;max-width:60ch;margin-top:8px}
 
@@ -282,7 +288,7 @@ input[type=range]:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
   .hero-copy{grid-row:1}
   .test{grid-template-columns:1fr}
   .sec-head{grid-template-columns:1fr}
-  .sec-no{grid-row:auto}
+  .sec-no{grid-row:auto;margin-bottom:16px}
   .sec-lede{grid-column:1}
   .card{grid-template-columns:1fr}
   .card-batch{padding:0 0 24px;border-right:0;border-bottom:1px solid var(--ink);flex-direction:row;flex-wrap:wrap;gap:24px 40px}
@@ -307,6 +313,7 @@ input[type=range]:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
   .strip{grid-row:4}
   .hero-copy>.hero-lede{grid-row:5}
   .hero-copy>.hero-facts{grid-row:6}
+  .keymap{display:none}
   .hero-grid{grid-template-rows:none}
   .stage--hero{height:auto;aspect-ratio:5/4}
   .stage-tag{top:auto;bottom:0}

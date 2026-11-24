@@ -3,6 +3,7 @@
 
     python3 tools/preview.py site   [--out DIR] [--serve PORT | --smoke] [--dry-run]
     python3 tools/preview.py studio [--out DIR] [--serve PORT | --smoke] [--dry-run]
+    python3 tools/preview.py samples [--out DIR] [--serve PORT | --smoke] [--dry-run]
 
 site    the live site, exactly what GitHub Pages serves (the Studio home, websites and case
         pages built from next/, plus the old-design pages in docs/transition.md), entry
@@ -12,6 +13,13 @@ studio  next/ as a standalone copy (the Studio sources, noindex, before build.py
         and, pulled in by reference (whole folder when the target is an .html page):
         site/ (root assets/), site/js/ (root js/), studies/ (the four design studies).
         STEP files are left out (the host refuses them).
+samples the catalog of sample sites: studies/ at the copy root (studies/index.html, the catalog, is
+        the entry; every study folder, shared/, catalog/ beside it), and, pulled in by reference
+        (HTML, CSS, JS, the .bin a model .json names, every file under a folder a script uses as a
+        base URL): next/ as next/, root assets/ as assets/, root js/ as js/. So "../../next/x" from
+        a study becomes "../next/x". Links that would leave the copy: a study's "/websites.html"
+        (the back pill) points to the catalog; the catalog's "/" and "/websites.html", and any link
+        to the old explorer page, become https://merttureli.com/... in a new tab.
 
 The artifact host rules this applies to every copy:
   * top-level paths starting with "_" are rejected  -> "_ds/" becomes "ds/"
@@ -92,6 +100,29 @@ MODES = {
         "doc_dir": "next/",
         "smoke": ["index.html#reel-coaster", "websites.html", "projects/charger.html",
                   "index.html#charger"],
+    },
+    "samples": {
+        # the catalog and every study beside it: "../../next/x" from a study becomes "../next/x"
+        "roots": [("studies/", "")],
+        "pull": [("next/", "next/"), ("assets/", "assets/"), ("js/", "js/")],
+        "exclude_ext": {".step"},
+        "entry": "studies/index.html",
+        "doc_dir": "studies/",
+        "pull_folders": True,     # a folder a script uses as a base URL brings its files (not its pages)
+        "scan_json": True,        # model .json files name their .bin beside them
+        "folder_templates": True, # `${key}/` in a script (the catalog's viewer) -> `${key}/index.html`
+        "local_only": True,       # the smoke fails on any request that leaves the copy
+        "smoke_wait": 7000,       # 3D pages load their models after the first view
+        # repo page -> page in the copy, for links from every page but the entry (the back pill)
+        "redirect": {"websites.html": "studies/index.html"},
+        # repo page -> live URL (opens in a new tab); the entry's links, and the old explorer page
+        "external": {"index.html": "https://merttureli.com/",
+                     "websites.html": "https://merttureli.com/websites.html",
+                     "assets/charger-explorer/index.html": "https://merttureli.com/#charger"},
+        # if the version limit is passed: drop unreferenced root files, heaviest first, from these
+        # an entry whose catalog label matches this (the four portfolio redesigns) goes first
+        "trim_first": r"entry__idx[^>]*>[^<]*\bRedesign\b",
+        "smoke": "entry_links",   # the entry plus every page it links to
     },
 }
 
@@ -185,11 +216,11 @@ INERT_RE = re.compile(r"<script\b[^>]*\btype\s*=\s*[\"']?text/(?:html|plain|temp
 SKIP_SCHEMES = re.compile(r"^(?:[a-z][a-z0-9+.-]*:|//|#|\{|\$|<)", re.I)
 
 
-def find_refs(path, text):
+def find_refs(path, text, scan_json=False):
     """Return [(start, end, ref, kind)] for one file. kind: 'nav' (an HTML attribute; a folder
     means its index.html), 'file' (relative to the file; a folder stays a folder), 'doc'
     (relative to the page that loads the script), 'loose' (a quoted path-like JS string:
-    try the file's folder, then the page's)."""
+    try the file's folder, then the page's), 'sibling' (a string in a .json file: its folder only)."""
     ext = os.path.splitext(path)[1].lower()
     spans = []
 
@@ -226,6 +257,10 @@ def find_refs(path, text):
             add(m.start(2), m.group(2), "file")
     elif ext in (".js", ".mjs"):
         js_refs(text, add)
+    elif ext == ".json" and scan_json:
+        # a model .json names its .bin by bare file name, beside it
+        for m in JS_STR_RE.finditer(text):
+            add(m.start(2), m.group(2) + m.group(3), "sibling")
     # first match wins on overlapping spans
     spans.sort(key=lambda s: (s[0], -s[1]))
     out, last = [], -1
@@ -279,6 +314,9 @@ class Build:
         self.rewrites = {}       # copy path -> count
         self.queries = []
         self.loaders = {}        # script -> folders of the pages that load it (directly or by import)
+        self.referenced = set()  # repo files some reference in the copy resolves to
+        self.left_out = []       # (copy path, bytes) dropped to fit the version limit
+        self.entry_links = []    # copy pages the entry links to (the samples smoke list)
 
     def skip(self, f):
         return os.path.splitext(f)[1].lower() in self.cfg.get("exclude_ext", ())
@@ -313,11 +351,41 @@ class Build:
                     new.append(f)
         return new
 
+    def pull_folder(self, folder):
+        """A folder used as a base URL: bring every file under it except its pages."""
+        new = []
+        for f in sorted(self.universe):
+            if (f.startswith(folder) and f not in self.dst and not self.skip(f)
+                    and not f.endswith((".html", ".htm"))):
+                d = self.pull_target(f)
+                if d:
+                    self.dst[f] = host_name(d)
+                    new.append(f)
+        return new
+
+    def link_rule(self, f, kind, path, base):
+        """('redirect', repo page) or ('external', url) for an HTML link that would leave the copy."""
+        if kind != "nav" or not f.endswith((".html", ".htm")):
+            return None
+        redirect, external = self.cfg.get("redirect", {}), self.cfg.get("external", {})
+        if not (redirect or external):
+            return None
+        target, _ = resolve(base, path, self.universe, nav=True)
+        if not target or target in self.dst:
+            return None
+        if target in redirect and f != self.cfg["entry"] and redirect[target] in self.dst:
+            return "redirect", redirect[target]
+        if target in external:
+            return "external", external[target]
+        return None
+
     def lookup(self, base_dir, path, kind="nav"):
         target, why = resolve(base_dir, path, self.universe, nav=(kind == "nav"))
         if target and target.endswith("/"):
             pre = "" if target == "/" else target
             inside = any(s.startswith(pre) for s in self.dst)
+            if not inside and self.cfg.get("pull_folders") and pre and self.pull_target(pre):
+                return target, "pull"
             return (target, None) if inside else (None, "not in this copy")
         if target and self.skip(target):
             return None, "excluded from copy"
@@ -339,15 +407,20 @@ class Build:
             text = self.read(f)
             if text is None:
                 continue
-            for _, _, ref, kind in find_refs(f, text):
+            for _, _, ref, kind in find_refs(f, text, self.cfg.get("scan_json")):
                 path, _, _ = split_ref(ref)
                 if not path or SKIP_SCHEMES.match(ref):
+                    continue
+                if self.link_rule(f, kind, path, posixpath.dirname(f)):
                     continue
                 for base in self.bases(f, kind):
                     target, why = self.lookup(base, path, kind)
                     if why == "pull" and not target.endswith("/"):
                         queue += [n for n in self.pull(target) if n.lower().endswith(tuple(TEXT_EXT))]
+                    elif why == "pull":
+                        queue += [n for n in self.pull_folder(target) if n.lower().endswith(tuple(TEXT_EXT))]
                     if target:
+                        self.referenced.add(target)
                         # remember which pages load which scripts: a script's loose and
                         # document-relative paths resolve against those pages' folders
                         if target.endswith((".js", ".mjs")) and kind in ("nav", "file"):
@@ -364,7 +437,7 @@ class Build:
     def bases(self, f, kind):
         here = posixpath.dirname(f)
         doc = self.cfg["doc_dir"].rstrip("/")
-        if kind in ("nav", "file") or f.endswith((".html", ".htm")):
+        if kind in ("nav", "file", "sibling") or f.endswith((".html", ".htm")):
             return [here]
         pages = sorted(self.loaders.get(f, ()))
         if kind == "doc":
@@ -385,9 +458,23 @@ class Build:
         here_dst = posixpath.dirname(self.dst[f])
         ext = os.path.splitext(f)[1].lower()
         pieces, pos, count = [], 0, 0
-        for start, end, ref, kind in find_refs(f, text):
+        external = False
+        for start, end, ref, kind in find_refs(f, text, self.cfg.get("scan_json")):
             path, query, frag = split_ref(ref)
             if not path or SKIP_SCHEMES.match(ref):
+                continue
+            rule = self.link_rule(f, kind, path, here_src)
+            if rule:
+                if rule[0] == "redirect":   # the page it stood for is not in the copy: drop the #hash too
+                    new = posixpath.relpath(self.dst[rule[1]], here_dst or ".")
+                else:
+                    new, external = rule[1] + "\0", True   # marks the tag for target="_blank"
+                if f == self.cfg["entry"] and rule[0] == "redirect":
+                    self.entry_links.append(self.dst[rule[1]])
+                pieces.append(text[pos:start])
+                pieces.append(new)
+                pos = end
+                count += 1
                 continue
             if path.startswith("/") and kind in ("doc", "loose") and ext in (".js", ".mjs"):
                 # root-absolute in a script: what it means depends on code we cannot read
@@ -400,12 +487,14 @@ class Build:
                     base_src = base
                     break
             if not target:
-                if kind != "loose" and why != "outside repo":
+                if kind not in ("loose", "sibling") and why != "outside repo":
                     level = "warn" if why in ("missing", "not in this copy", "excluded from copy") else "info"
                     self.issues.append((level, self.dst[f], f"{ref!r}: {why}"))
                 continue
             if query:
                 self.queries.append((self.dst[f], ref))
+            if f == self.cfg["entry"] and kind == "nav" and target.endswith((".html", ".htm")):
+                self.entry_links.append(self.dst[target])
             # destination dir the browser resolves this ref against
             base_dst = here_dst if base_src == here_src else self.dst_dir(base_src)
             raw = unquote(path)
@@ -428,6 +517,19 @@ class Build:
             count += 1
         pieces.append(text[pos:])
         text = "".join(pieces)
+        if external:
+            # a link to the live site opens in a new tab (the copy is framed by the preview host)
+            def blank(m):
+                tag = m.group(1) + m.group(2)
+                if re.search(r"\starget\s*=", tag):
+                    return tag
+                return tag[:-1].rstrip("/").rstrip() + ' target="_blank" rel="noopener">'
+            text = re.sub(r"(<a\b[^>]*?)\0([^>]*>)", blank, text, flags=re.I)
+            text = text.replace("\0", "")
+        if self.cfg.get("folder_templates") and ext in (".js", ".mjs"):
+            # `${key}/` names a folder page: the host serves explicit files only
+            text, n = re.subn(r"(`(?:[\w./-]|\$\{[\w.]+\})*\$\{[\w.]+\}/)`", r"\1index.html`", text)
+            count += n
         # bare filenames of renamed files (e.g. fetch(base + 'charger-hero.bin'))
         if self.renamed_re:
             text, n = self.renamed_re.subn(r"\1.wasm", text)
@@ -460,6 +562,7 @@ class Build:
         if self.cfg["entry"] not in self.dst:
             die(f"entry {self.cfg['entry']} not found under {ROOT}")
         self.collect()
+        self.trim()
         names = sorted({posixpath.basename(s) for s, d in self.dst.items() if d.endswith(".wasm")
                         and not s.endswith(".wasm")}, key=len, reverse=True)
         self.renamed_re = (re.compile(r"(?<![\w.-])(" + "|".join(map(re.escape, names)) +
@@ -492,6 +595,35 @@ class Build:
                     fh.write(data)
             else:
                 shutil.copy2(os.path.join(ROOT, s), path)
+
+    def trim(self):
+        """Over the per-version limit: drop root files nothing references, heaviest first, those
+        of the entries matching trim_first before the rest. Never a referenced file."""
+        size = lambda s: os.path.getsize(os.path.join(ROOT, s))
+        total = sum(size(s) for s in self.dst)
+        if len(self.dst) <= VERSION_MAX_FILES and total <= VERSION_MAX_BYTES:
+            return
+        first = set()
+        pat, entry = self.cfg.get("trim_first"), self.cfg["entry"]
+        if pat:
+            text = self.read(entry) or ""
+            for m in re.finditer(r"<article\b[^>]*\bdata-key=\"([\w-]+)\"(.*?)(?=<article\b|$)", text, re.S):
+                if re.search(pat, m.group(2)):
+                    first.add(m.group(1))
+        roots = [p for p, _ in self.cfg["roots"]]
+        def group(s):
+            rest = next((s[len(p):] for p in roots if s.startswith(p)), s)
+            return 0 if rest.split("/")[0] in first else 1
+        folders = [t for t in self.referenced if t.endswith("/")]
+        spare = sorted((s for s in self.dst if s not in self.referenced and s != entry
+                        and not any(s.startswith(t) for t in folders)
+                        and not s.endswith((".html", ".htm")) and any(s.startswith(p) for p in roots)),
+                       key=lambda s: (group(s), -size(s)))
+        for s in spare:
+            if len(self.dst) <= VERSION_MAX_FILES and total <= VERSION_MAX_BYTES:
+                break
+            total -= size(s)
+            self.left_out.append((self.dst.pop(s), size(s)))
 
     def prepare_out(self):
         if os.path.exists(self.out):
@@ -568,7 +700,8 @@ class Build:
                 "batches": [{"files": len(b) + (1 if i == 0 else 0),
                              "bytes": sum(sizes[d] for d in b) + (sizes.get(page, 0) if i == 0 else 0)}
                             for i, b in enumerate(batches)],
-                "uncommon_ext": odd, "errors": errors, "publish": calls}
+                "uncommon_ext": odd, "errors": errors, "publish": calls,
+                **({"left_out": [d for d, _ in self.left_out]} if self.left_out else {})}
 
 
 # ---------------------------------------------------------------- serve + smoke
@@ -602,8 +735,9 @@ def start_server(directory, port):
 
 SMOKE_JS = r"""
 const pw = require(process.env.PW_PATH);
-const [base, pagesJson, shots, blockedJson] = process.argv.slice(2);
-const pages = JSON.parse(pagesJson), blocked = JSON.parse(blockedJson);
+const [base, pagesJson, shots, blockedJson, waitMs, localOnly] = process.argv.slice(2);
+const pages = JSON.parse(pagesJson), blocked = JSON.parse(blockedJson), wait = +waitMs || 2500;
+const origin = new URL(base).origin;
 (async () => {
   const browser = await pw.chromium.launch();
   const results = [];
@@ -624,9 +758,15 @@ const pages = JSON.parse(pagesJson), blocked = JSON.parse(blockedJson);
         errs.push('failed: ' + u + ' ' + why);
       });
       page.on('response', r => { if (r.status() >= 400) errs.push('http ' + r.status() + ': ' + r.url()); });
+      // a copy that must be self-contained: any request that leaves it is a failure
+      if (localOnly === '1') page.on('request', r => {
+        const u = r.url();
+        if (/^(data|blob|about):/.test(u)) return;
+        try { if (new URL(u).origin !== origin) errs.push('outside the copy: ' + u); } catch (e) {}
+      });
       try {
         await page.goto(base + p, { waitUntil: 'load', timeout: 30000 });
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(wait);
         if (shots) await page.screenshot({ path: `${shots}/${p.replace(/[^\w.-]+/g, '_')}-${width}.png` });
         // scroll through once so lazy media and in-view code also load
         for (const f of [0.33, 0.66, 1]) {
@@ -645,7 +785,7 @@ const pages = JSON.parse(pagesJson), blocked = JSON.parse(blockedJson);
 """
 
 
-def smoke(out, pages, port, shots):
+def smoke(out, pages, port, shots, wait=2500, local_only=False):
     pw = os.environ.get("PW_PATH", "/opt/node22/lib/node_modules/playwright")
     node = shutil.which("node") or "/opt/node22/bin/node"
     if not os.path.exists(pw):
@@ -658,7 +798,8 @@ def smoke(out, pages, port, shots):
             fh.write(SMOKE_JS)
         if shots:
             os.makedirs(shots, exist_ok=True)
-        r = subprocess.run([node, js, base, json.dumps(pages), shots or "", json.dumps(BLOCKED_HOSTS)],
+        r = subprocess.run([node, js, base, json.dumps(pages), shots or "", json.dumps(BLOCKED_HOSTS),
+                            str(wait), "1" if local_only else ""],
                            capture_output=True, text=True, env={**os.environ, "PW_PATH": pw}, cwd=td)
     srv.shutdown()
     if r.returncode != 0:
@@ -684,9 +825,11 @@ def main():
                "  python3 tools/preview.py studio --out $SCRATCH/studio-pub\n"
                "  python3 tools/preview.py site --out $SCRATCH/site-pub --smoke --port 8986\n"
                "  python3 tools/preview.py studio --serve 8986   # look at it in a browser\n"
+               "  python3 tools/preview.py samples --out $SCRATCH/samples-pub --smoke\n"
                "  python3 tools/preview.py site --dry-run          # plan only, writes nothing",
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("mode", choices=sorted(MODES), help="site: the whole site; studio: next/ standalone")
+    ap.add_argument("mode", choices=sorted(MODES),
+                    help="site: the whole site; studio: next/ standalone; samples: the catalog of sample sites")
     ap.add_argument("--out", help="output folder (default: a new temp dir); replaced on re-run")
     ap.add_argument("--dry-run", action="store_true", help="scan and plan only, write nothing")
     ap.add_argument("--serve", type=int, metavar="PORT", help="after building, serve the copy on 127.0.0.1:PORT")
@@ -738,6 +881,11 @@ def main():
             print(f"  over one publish: {len(plan['batches'])} batches")
         for i, bt in enumerate(plan["batches"]):
             print(f"    batch {i + 1}: {bt['files']} files, {bt['bytes']/1e6:.1f} MB")
+        if b.left_out:
+            print(f"  left out to fit the version limit ({len(b.left_out)} unreferenced files, "
+                  f"{sum(n for _, n in b.left_out)/1e6:.1f} MB):")
+            for d, n in b.left_out:
+                print(f"    {d}  {n/1e6:.1f} MB")
         if plan["uncommon_ext"]:
             print(f"  uncommon types (check the publish accepts them): {', '.join(plan['uncommon_ext'])}")
         warns = [i for i in b.issues if i[0] == "warn"]
@@ -773,9 +921,13 @@ def main():
         sys.exit(2)
 
     if a.smoke:
-        pages = a.pages.split(",") if a.pages else MODES[a.mode]["smoke"]
+        cfg = MODES[a.mode]
+        pages = cfg["smoke"]
+        if pages == "entry_links":   # the entry and every page it links to, in the order it lists them
+            pages = list(dict.fromkeys(["index.html"] + b.entry_links))
+        pages = a.pages.split(",") if a.pages else pages
         pages = [p for p in pages if p.split("#")[0] in b.dst.values()] or die("no smoke pages exist in the copy")
-        bad = smoke(out, pages, a.port, a.shots)
+        bad = smoke(out, pages, a.port, a.shots, cfg.get("smoke_wait", 2500), cfg.get("local_only", False))
         if bad:
             sys.exit(1)
     if a.serve:

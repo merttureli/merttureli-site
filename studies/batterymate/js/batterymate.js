@@ -159,7 +159,8 @@ function arc(x, y) {
   fx.insertAdjacentHTML('beforeend', `<svg class="fx-arc"><path d="M${x0.toFixed(1)} ${y0.toFixed(1)}Q${((x0 + x1) / 2).toFixed(1)} ${(Math.min(y0, y1) - lift).toFixed(1)} ${x1.toFixed(1)} ${y1.toFixed(1)}"/><circle cx="${x0.toFixed(1)}" cy="${y0.toFixed(1)}" r="9"/><circle cx="${x1.toFixed(1)}" cy="${y1.toFixed(1)}" r="9"/></svg>`);
 }
 function pitch(x, y) {
-  if (machine && machine.mode === 'hero') {
+  if (machine) {
+    if (machine.mode !== 'hero' || !hero.classList.contains('is-live')) heroLive();   // the still stood in; the live machine takes the catch
     if (!machine.throwFrom(x, y)) {                         // five in the air already
       throwBtn.classList.add('is-full'); setTimeout(() => throwBtn.classList.remove('is-full'), 260);
       return;
@@ -238,36 +239,41 @@ function howAt() {
 // ------------------------------------------------------------ the machine
 // One canvas. It is in the hero or in the pinned stage, whichever shows more of itself; off screen it draws nothing.
 const live = html.classList.contains('live');
+function heroLive() {
+  machine.mount('hero', $('#heroStage'), heroBox, [.5, 1]); hero.classList.add('is-live'); how.classList.remove('is-live');
+  machine.show(true);
+}
 function place() {
   if (!machine) return;
   const visible = el => { const r = el.getBoundingClientRect(); return Math.max(0, Math.min(r.bottom, vh) - Math.max(r.top, barH())); };
   const a = visible(hero), b = visible(howPin);
   heroSeen = a > vh * .4;
   if (!a && !b) { machine.show(false); return; }
-  // before and after the pinned run the scene stands in its first and last pose, which is exactly the still: the
-  // still stands in while the window slides on or off the screen, and the GPU rests
-  if (b > a && (howP <= 0 || howP >= 1)) { machine.show(false); how.classList.remove('is-live'); hero.classList.remove('is-live'); return; }
-  if (b > a) { machine.mount('how', $('#howStage'), howBox, [.5, .6]); how.classList.add('is-live'); hero.classList.remove('is-live'); }
-  else { machine.mount('hero', $('#heroStage'), heroBox, [.5, 1]); hero.classList.add('is-live'); how.classList.remove('is-live'); }
+  // The canvas stands in only while its scene moves. Before and after the pinned run the scene stands in its first and
+  // last pose, and a hero scrolled part way off with no ball in the air stands still: both are exactly the stills,
+  // which take over there (the GPU rests, and a canvas running off the top of the window is never shown cut short)
+  if (b > a) {
+    if (howP <= 0 || howP >= 1) { machine.show(false); how.classList.remove('is-live'); hero.classList.remove('is-live'); return; }
+    machine.mount('how', $('#howStage'), howBox, [.5, .6]); how.classList.add('is-live'); hero.classList.remove('is-live');
+  } else {
+    if (hero.getBoundingClientRect().top < barH() - 2 && !machine.busy) { machine.show(false); hero.classList.remove('is-live'); how.classList.remove('is-live'); return; }
+    heroLive();
+    return;
+  }
   machine.show(true);
   if (machine.mode === 'how') machine.story(howP);
 }
 if (live) {
   // the words change in this frame; the machine is drawn in the next, so a slow frame of 3D never holds the words back
-  let placing = false, settle = 0;
-  followers.push(() => {
-    howAt();
-    if (!placing) { placing = true; requestAnimationFrame(() => { placing = false; place(); }); }
-    clearTimeout(settle);
-    settle = setTimeout(() => { if (machine) machine.redraw(); }, 140);
-  });
+  let placing = false;
+  followers.push(() => { howAt(); if (!placing) { placing = true; requestAnimationFrame(() => { placing = false; place(); }); } });
   const start = async () => {
     try {
       const { createMachine } = await import('./machine.js');
       const quality = (innerWidth < 760 || (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4) ? 'low' : 'high';
       const canvas = document.createElement('canvas');
       canvas.setAttribute('aria-hidden', 'true');
-      machine = await createMachine({ canvas, quality, capture: true, on: { returned: onReturned } });
+      machine = await createMachine({ canvas, quality, on: { returned: onReturned } });
       window.__batterymate = machine;
       place();
       warmUp(true);
