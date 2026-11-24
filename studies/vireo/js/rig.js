@@ -39,7 +39,7 @@ export const STAGE_STUDIO = {
 // black and the softbox reads as one long highlight) and the gray studio of the "Look closer" view.
 export const GRADES = {
   dark: { exposure: 1.05, light: [0.35, 0.4, 0.05], hemi: 1.35, key: 3.8, fill: 0.5, rim: 7, keyFront: 0.3, lift: 0.35 },
-  light: { exposure: 0.95, light: [0.45, 0.25, 0.3], hemi: 1.35, key: 3.8, fill: 1.1, rim: 2.4, keyFront: 0.5, lift: 0.15 },
+  light: { exposure: 0.95, light: [0.36, 0.22, 1.2], hemi: 1.8, key: 3.8, fill: 1.1, rim: 2.4, keyFront: 0.5, lift: 0.15 },
 };
 
 const nextTask = () => new Promise(r => { const c = new MessageChannel(); c.port1.onmessage = () => r(); c.port2.postMessage(0); });
@@ -146,7 +146,7 @@ export async function createRig({ canvas, quality = 'high', pixelRatio = default
   const ghostDepth = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: true, transparent: true, side: THREE.DoubleSide });
   const ghostColor = new THREE.MeshStandardMaterial({ color: 0xd2d2d7, roughness: 0.62, metalness: 0, transparent: true, opacity: 0.3, depthWrite: false, depthFunc: THREE.LessEqualDepth, side: THREE.DoubleSide });
   ghostDepth.name = 'vireo:ghostDepth'; ghostColor.name = 'vireo:ghost';
-  const GHOST_ALPHA = 0.3;
+  ghostColor.userData.alpha = 0.3;
   for (const P of parts) for (const m of P.meshes) {
     if (used.has(m.material)) m.material = twin(m.material);
     used.add(m.material);
@@ -210,7 +210,7 @@ export async function createRig({ canvas, quality = 'high', pixelRatio = default
         m.visible = true;
       }
     }
-    ghostColor.opacity = GHOST_ALPHA;
+    ghostColor.opacity = ghostColor.userData.alpha;
   }
   function pose() {
     qT.setFromAxisAngle(Z, -S.tilt); qL.setFromAxisAngle(X, S.lean); qR.setFromAxisAngle(Y, S.roll); qO.setFromAxisAngle(Y, S.turn);
@@ -328,7 +328,7 @@ export async function createRig({ canvas, quality = 'high', pixelRatio = default
   try { if (relabel(renderer, tubes)) for (const m of tubes) if (m.material.map) renderer.initTexture && renderer.initTexture(m.material.map); } catch (e) { console.warn('[vireo] livery left as drawn', e); }
 
   return {
-    THREE, renderer, scene, camera, pivot, model, parts, byId, lights, look, dressed, state: S,
+    THREE, renderer, scene, camera, pivot, model, parts, byId, lights, look, dressed, state: S, ghost: ghostColor,
     size, setFrame, setGrade, setGhost, stepOpacity, snapOpacity, render, project, warmGhosts,
     dispose() { if (dressed && dressed.dispose) dressed.dispose(); if (built.dispose) built.dispose(); renderer.dispose(); },
   };

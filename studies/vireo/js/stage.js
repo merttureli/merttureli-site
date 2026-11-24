@@ -114,6 +114,7 @@ export async function mount(api) {
     S.tilt = pose.tilt; S.lean = pose.lean + leanOff * w; S.roll = pose.roll + rollNow; S.turn = turn * w;
     S.station = pose.station; S.dist = pose.dist; S.ox = pose.ox; S.oy = pose.oy; S.explode = pose.explode; S.pull = pose.pull; S.side = pose.side;
     fitFrame(...ks(uCur));
+    stage.classList.toggle('in-pin', uCur > 1.9);       // on a phone or a short screen the model fades out above the words (CSS)
     setInsideUI(clamp01(p));
     return uCur !== uGoal || idle > 0 || dragging || turnVel !== 0;
   }

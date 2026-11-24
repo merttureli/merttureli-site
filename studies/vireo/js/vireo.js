@@ -103,7 +103,7 @@ function heroFit() {
   const R = containRect(W, H, port ? 0.62 : 1.6, port ? 0 : 0.5), b = HERO_BOX[port ? 'port' : 'land'];
   const x1 = R.x + b[2] * R.w, y0 = R.y + b[1] * R.h, y1 = R.y + b[3] * R.h;
   const m = Math.min(64, H * 0.1), top = $('#bar').offsetHeight + m;
-  const bottom = heroCopy.offsetTop + (hero.getBoundingClientRect().top - stage.getBoundingClientRect().top) - m;
+  const bottom = heroCopy.parentElement.offsetTop + heroCopy.offsetTop + (hero.getBoundingClientRect().top - stage.getBoundingClientRect().top) - m;
   const s = Math.max(0.45, Math.min(1, (bottom - top) / (y1 - y0)));
   const ny0 = Math.min(Math.max(y0, top), bottom - (y1 - y0) * s);
   const dx = s < 1 ? Math.min(x1 * (1 - s), Math.max(0, W - 24 - x1 * s)) : 0, dy = ny0 - y0 * s;
