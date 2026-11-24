@@ -101,6 +101,7 @@ async function shoot(browser, base, helper, key) {
     await ctx.route(u => !u.href.startsWith(base) && !/^(data|blob):/.test(u.href), r => r.abort());   // nothing leaves this machine
     await ctx.addInitScript(FRAMED);
     const page = await ctx.newPage();
+    page.setDefaultTimeout(120000);   // a software-GL frame of a 3D page can take seconds to capture
     page.on('pageerror', e => warn.push(String(e).slice(0, 160)));
     try {
       const res = await page.goto(`${base}/studies/${key}/`, { waitUntil: 'load', timeout: 45000 });
