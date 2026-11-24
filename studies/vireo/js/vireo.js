@@ -31,17 +31,13 @@ addEventListener('resize', () => { cancelAnimationFrame(rz); rz = requestAnimati
 {
   const bar = $('#bar'), buybar = $('#buybar'), back = $('.study-back'), themed = $$('main [data-theme], footer[data-theme]'), links = $$('.bar__nav a');
   const targets = links.map(a => $(a.getAttribute('href')));
-  let lastY = scrollY;
   const update = () => {
     bar.classList.toggle('is-glass', scrollY > vh() * 0.45);
     let theme = 'dark', low = 'dark';
     for (const s of themed) { const top = s.getBoundingClientRect().top; if (top <= 24) theme = s.dataset.theme; if (top <= vh() - 44) low = s.dataset.theme; }
     if (bar.dataset.theme !== theme) bar.dataset.theme = theme;
     if (buybar.dataset.theme !== low) buybar.dataset.theme = low;
-    // the way back steps aside while the page is read downward and returns on the way up
-    const dy = scrollY - lastY;
-    if (scrollY < vh() * 0.5) back.classList.remove('is-tucked'); else if (dy > 4) back.classList.add('is-tucked'); else if (dy < -4) back.classList.remove('is-tucked');
-    lastY = scrollY;
+    if (back && back.dataset.theme !== theme) back.dataset.theme = theme;      // the way back is docked in the bar and takes its theme
     let here = -1;
     targets.forEach((t, i) => { if (t && t.getBoundingClientRect().top <= vh() * 0.4) here = i; });
     links.forEach((a, i) => { if (i === here) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); });

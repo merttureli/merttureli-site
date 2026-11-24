@@ -43,9 +43,14 @@ i, b { font-style: normal; font-weight: inherit; }
 :focus-visible { outline: 3px solid var(--navy); outline-offset: 3px; }
 .band--navy :focus-visible, .bar :focus-visible { outline-color: var(--yellow); }
 
-/* the way back: in the bar's free middle on a wide screen (the first screen ends in the ticker), bottom right on a phone */
-.study-back--batterymate { left: 50%; bottom: auto; top: 8px; translate: -50% 0; box-shadow: 0 0 0 1px rgba(243, 242, 234, .28) inset; }
-@media (max-width: 899px) { .study-back--batterymate { left: auto; right: max(12px, env(safe-area-inset-right)); top: auto; bottom: max(12px, env(safe-area-inset-bottom)); translate: none; } }
+/* The way back is docked in the bar as a slanted tag that belongs to it (the bar is the one place the page never
+   scrolls under): beside the wordmark on a wide screen, on the bar's second row on a phone. The link is not leaned;
+   the tag behind it is, so the words stay upright. */
+.study-back.study-back--batterymate { position: fixed; left: calc(var(--m) + 160px); right: auto; top: calc((var(--bar) - 34px) / 2); bottom: auto; translate: none; min-height: 34px; padding: 0 14px 0 11px; gap: 7px; border-radius: 0; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; color: var(--chalk); font: 600 13px/1 var(--text); letter-spacing: .01em; isolation: isolate; transition: color .12s; }
+.study-back--batterymate::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--line-navy); transform: skewX(var(--slant)); transition: background-color .12s; }
+.study-back--batterymate svg { width: 14px; height: 14px; }
+.study-back.study-back--batterymate:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; box-shadow: none; }
+@media (hover: hover) { .study-back.study-back--batterymate:hover { background: none; transform: none; color: var(--navy); } .study-back--batterymate:hover::before { background: var(--chalk); } }
 
 /* ------------------------------------------------------------------ type */
 .display { font: italic 900 1em/.86 var(--display); letter-spacing: -.01em; text-transform: uppercase; }
@@ -62,6 +67,7 @@ i, b { font-style: normal; font-weight: inherit; }
 html.js:not(.still) .reveal .line > span, html.js:not(.still) .hero__title .line > span { transform: translateX(-108%); }
 html.js:not(.still) .is-in .line > span { transform: none; transition: transform .45s var(--snap); }
 html.js:not(.still) .is-in .line:nth-child(2) > span { transition-delay: .09s; }
+html.js:not(.still) .is-in .line:nth-child(3) > span { transition-delay: .18s; }
 
 /* ------------------------------------------------------------- buttons */
 /* a parallelogram: the box leans, the words stay upright */
@@ -78,9 +84,9 @@ html.js:not(.still) .is-in .line:nth-child(2) > span { transition-delay: .09s; }
 .btn:active { transform: skewX(var(--slant)) translateX(1px) scale(.98); }
 
 /* ------------------------------------------------------------------ bar */
-.bar { position: fixed; z-index: 50; inset: 0 0 auto 0; height: var(--bar); display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 var(--m); background: var(--navy); color: var(--chalk); }
-.bar__mark { font: italic 900 30px/1 var(--display); letter-spacing: .005em; text-transform: uppercase; text-decoration: none; padding: 8px 0; }
-.bar__nav { display: flex; align-items: center; gap: clamp(14px, 2.2vw, 34px); }
+.bar { position: fixed; z-index: 50; inset: 0 0 auto 0; height: var(--bar); display: flex; align-items: center; gap: clamp(14px, 2.2vw, 34px); padding: 0 var(--m); background: var(--navy); color: var(--chalk); }
+.bar__mark { flex: none; width: 144px; overflow: hidden; white-space: nowrap; font: italic 900 30px/1 var(--display); letter-spacing: .005em; text-transform: uppercase; text-decoration: none; padding: 8px 0; }
+.bar__nav { display: flex; align-items: center; gap: clamp(14px, 2.2vw, 34px); margin-left: auto; }
 .bar__link { font: 600 15px/1 var(--text); text-decoration: none; padding: 12px 0; border-bottom: 2px solid transparent; }
 @media (hover: hover) { .bar__link:hover { border-bottom-color: var(--yellow); } }
 
@@ -157,7 +163,7 @@ html.still .ticker__lean, html:not(.js) .ticker__lean { flex: 1 1 auto; }
 .how__hint { font: 500 17px/1.3 var(--text); margin-top: 6px; }
 .how__steps { display: grid; gap: 56px; }
 .step { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); grid-template-rows: auto auto 1fr; column-gap: 4vw; align-items: start; }
-.step__no { grid-column: 1; font: 800 clamp(30px, 3vw, 44px)/1 var(--display); letter-spacing: .04em; font-variant-numeric: tabular-nums; }
+.step__no { grid-column: 1; font: italic 900 clamp(60px, 9vw, 150px)/.86 var(--display); color: var(--chalk); -webkit-text-stroke: .052em var(--navy); paint-order: stroke fill; padding-left: .04em; }
 .step__verb { grid-column: 1; font-size: clamp(88px, 15vw, 250px); margin-top: .04em; }
 .step__say { grid-column: 1; font: 600 clamp(19px, 1.7vw, 25px)/1.25 var(--text); max-width: 18em; margin-top: 18px; text-wrap: balance; }
 .step__still { grid-column: 2; grid-row: 1 / 4; width: 100%; border: 2px solid var(--navy); }
@@ -167,11 +173,11 @@ html.still .ticker__lean, html:not(.js) .ticker__lean { flex: 1 1 auto; }
 html.live .how { height: 400svh; }
 html.live .how__pin { position: sticky; top: var(--bar); height: calc(100svh - var(--bar)); padding: 0; display: block; }
 html.live .how__head { position: absolute; left: var(--m); top: clamp(22px, 4svh, 40px); }
-html.live .how__steps { position: absolute; left: var(--m); bottom: clamp(26px, 5.5svh, 60px); width: 38%; height: 70%; display: block; }
+html.live .how__steps { position: absolute; left: var(--m); bottom: clamp(26px, 5.5svh, 60px); width: calc(44% - var(--m) - 24px); height: 74%; display: block; }
 html.live .step { position: absolute; left: 0; bottom: 0; width: 100%; display: block; }
 html.live .step__still { display: none; }
-html.live .step__verb { font-size: min(16.5vw, 33svh); }
-html.live .step__no { display: block; font-size: clamp(34px, 3.4vw, 52px); }
+html.live .step__verb, html.live .step__no { font-size: min(13.9vw, 25svh); }
+html.live .step__no { display: block; font: italic 900 min(13.9vw, 25svh)/.86 var(--display); letter-spacing: -.01em; }
 html.live .step .line > span { transition: transform .42s var(--snap); }
 html.live .step__no, html.live .step__say { transition: transform .4s var(--snap), opacity .14s linear; }
 html.live .step:not(.is-on) .line > span { transform: translateX(-108%); transition-duration: .2s; transition-timing-function: cubic-bezier(.6, 0, .9, .4); }
@@ -179,7 +185,7 @@ html.live .step:not(.is-on) .step__no, html.live .step:not(.is-on) .step__say { 
 html.live .step.is-on .line > span { transition-delay: .1s; }
 html.live .step.is-on .step__no { transition-delay: .06s; }
 html.live .step.is-on .step__say { transition-delay: .16s; }
-html.live .how__window { display: block; position: absolute; left: 43%; right: calc(var(--m) + 1vw); top: clamp(22px, 4svh, 40px); bottom: clamp(26px, 5.5svh, 60px); border: 2px solid var(--navy); overflow: clip; }
+html.live .how__window { display: block; position: absolute; left: 44%; right: calc(var(--m) + 1vw); top: clamp(22px, 4svh, 40px); bottom: clamp(26px, 5.5svh, 60px); border: 2px solid var(--navy); background: var(--chalk); overflow: clip; }
 .how__still { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: 50% 60%; }
 .how.is-live .how__still { visibility: hidden; }
 .how__stage { position: absolute; inset: 0; }
@@ -191,7 +197,7 @@ html.live .how__window { display: block; position: absolute; left: 43%; right: c
 /* ---------------------------------------------------------- section heads */
 .sec__head { padding: clamp(64px, 10vw, 150px) var(--m) 0; }
 .sec__head .label { margin-bottom: 14px; }
-.sec__head .display { font-size: clamp(76px, 13.5vw, 230px); }
+.sec__head .display { font-size: clamp(76px, 16vw, 300px); }
 
 /* ---------------------------------------------------------- the numbers */
 .numbers { padding-bottom: clamp(64px, 9vw, 130px); }
@@ -216,8 +222,7 @@ html.js:not(.still) .linescore:not(.is-lit) .lamp, html.js:not(.still) .inning:n
 html.js:not(.still) .inning:not(.is-lit) .ls__val, html.js:not(.still) .inning:not(.is-lit) .ls__note { color: var(--line-navy); }
 html.js:not(.still) .inning .ls__val, html.js:not(.still) .inning .ls__note { transition: color .12s linear; }
 html.js:not(.still) .inning.is-lit .flip { animation: flip .42s var(--snap) both; }
-.numbers__kicker { font-size: clamp(44px, 7.4vw, 128px); margin: clamp(40px, 6vw, 90px) var(--m) 0; }
-.numbers__kicker .outline { -webkit-text-stroke-width: .06em; }
+.numbers__kicker { font-size: clamp(76px, 16vw, 300px); margin: clamp(40px, 6vw, 90px) var(--m) 0; }
 
 /* ------------------------------------------------------ built for practice */
 .practice { padding-bottom: clamp(64px, 9vw, 130px); }
@@ -291,15 +296,19 @@ html:not(.still) .lineup.is-in .lineup__stamp { animation: stamp .3s .32s var(--
 .foot__nav { display: grid; gap: 4px; justify-items: end; }
 .foot__nav a { font: 700 15px/1 var(--text); letter-spacing: .03em; text-transform: uppercase; text-decoration: none; padding: 9px 0; border-bottom: 2px solid transparent; }
 @media (hover: hover) { .foot__nav a:hover { border-bottom-color: var(--yellow); } }
-.foot__mark { font-size: 27.5vw; line-height: .8; margin: clamp(30px, 5vw, 70px) 0 -.19em; white-space: nowrap; text-align: center; }
-.foot__mark .outline { -webkit-text-stroke-width: .03em; padding-right: .06em; }
+.foot__mark { font-size: 21.6vw; line-height: .8; margin: clamp(30px, 5vw, 70px) 0 -.3em; white-space: nowrap; text-align: center; }
+.foot__mark .outline { -webkit-text-stroke-width: .034em; padding-right: .06em; }
 
 /* ---------------------------------------------------------------- phone */
 @media (max-width: 899px) {
-  :root { --bar: 54px; --tick: 46px; }
-  .bar__mark { font-size: 26px; }
-  .bar__link { display: none; }
-  .btn--bar { min-height: 38px; padding: 0 14px; font-size: 13px; }
+  /* the bar in two rows: wordmark and the booking button, then the way back and the sections */
+  :root { --bar: 82px; --tick: 46px; }
+  .bar { display: grid; grid-template: "mark book" 48px "back nav" 34px / 1fr auto; align-items: center; gap: 0 12px; }
+  .bar__mark { grid-area: mark; font-size: 26px; width: 126px; padding: 6px 0; }
+  .bar > .btn--bar { grid-area: book; min-height: 36px; padding: 0 14px; font-size: 13px; }
+  .bar__nav { grid-area: nav; margin: 0; gap: 16px; align-self: start; height: 28px; }
+  .bar__link { font-size: 13px; padding: 7px 0; }
+  .study-back.study-back--batterymate { left: var(--m); top: 46px; min-height: 28px; padding: 0 11px 0 8px; font-size: 12.5px; }
   .hero { height: auto; min-height: calc(100svh - var(--bar) - var(--tick)); --fs: min(26.2vw, 190px); display: flex; flex-direction: column; padding: 0 0 22px; }
   .hero > .hero__title { position: relative; left: auto; top: auto; margin: calc(var(--fs) * .04) var(--m) 0; }
   .hero > .hero__machine { position: relative; left: auto; right: auto; top: auto; bottom: auto; width: 100%; aspect-ratio: 1.04; max-height: 46svh; margin-top: calc(var(--fs) * -.06); flex: 1 1 auto; }
@@ -319,8 +328,7 @@ html:not(.still) .lineup.is-in .lineup__stamp { animation: stamp .3s .32s var(--
   html.live .how__hint { display: none; }
   html.live .how__window { left: var(--m); right: var(--m); top: 44px; bottom: auto; height: 48svh; }
   html.live .how__steps { width: calc(100% - 2 * var(--m)); bottom: 22px; height: 40%; }
-  html.live .step__verb { font-size: min(30vw, 19svh); }
-  html.live .step__no { font-size: 30px; }
+  html.live .step__verb, html.live .step__no { font-size: min(27vw, 13svh); }
   html.live .step__say { font-size: 18px; margin-top: 8px; }
   .sec__head .display { font-size: min(24vw, 130px); }
   .linescore { grid-template-columns: 1fr; }
@@ -332,7 +340,7 @@ html:not(.still) .lineup.is-in .lineup__stamp { animation: stamp .3s .32s var(--
   .ls__val { grid-column: 2; grid-row: 2; padding: 0; justify-content: flex-end; }
   .ls__val .flip { font-size: 78px; }
   .ls__note { grid-column: 1; grid-row: 2; padding: 0 12px 4px 0; font-size: 16px; }
-  .numbers__kicker { font-size: min(14.4vw, 76px); }
+  .numbers__kicker { font-size: min(24vw, 130px); }
   .drills { grid-template-columns: 1fr; }
   .drill + .drill { border-left: 0; border-top: 2px solid var(--navy); }
   .drill__verb { font-size: 56px; padding: 16px 16px 0; }
@@ -345,7 +353,6 @@ html:not(.still) .lineup.is-in .lineup__stamp { animation: stamp .3s .32s var(--
   .lineup__table tbody th { width: 30%; }
   .foot__row { grid-template-columns: 1fr; }
   .foot__nav { justify-items: start; grid-template-columns: 1fr 1fr; gap: 0 20px; }
-  .foot__mark { font-size: 29vw; }
 }
 
 /* ------------------------------------------------------- reduced motion */

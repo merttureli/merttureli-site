@@ -101,7 +101,7 @@ a{color:inherit}
 
 /* ---- 1. cover ----------------------------------------------------------------------------------------------------- */
 .cover{position:relative;display:grid;grid-template-columns:minmax(0,.92fr) minmax(0,1.2fr);align-items:center;gap:clamp(28px,5vw,88px);
-  min-height:100vh;min-height:100svh;padding:clamp(40px,7vh,84px) clamp(24px,6vw,104px) clamp(84px,11vh,120px);overflow-x:clip}
+  min-height:100vh;min-height:100svh;padding:clamp(72px,8vh,92px) clamp(24px,6vw,104px) clamp(72px,10vh,110px);overflow-x:clip}
 .label{position:relative;z-index:2;justify-self:end;width:min(100%,512px);padding:50px 48px 44px;background:var(--kraft) var(--fiber);rotate:-1.6deg;box-shadow:var(--lie);border-radius:3px}
 .label::before{content:"";position:absolute;inset:11px;border:1.5px solid rgba(79,52,34,.6);border-radius:2px;pointer-events:none}
 .label::after{content:"";position:absolute;inset:15px;border:.75px solid rgba(79,52,34,.45);pointer-events:none}
@@ -344,12 +344,33 @@ a{color:inherit}
 .postcard__again{grid-column:1/-1;justify-self:start;min-height:44px;padding:6px 0;background:none;border:0;font:700 16px/1 var(--typed);color:var(--ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 
 /* ---- 6. footer ------------------------------------------------------------------------------------------------------- */
-.foot{padding:0 clamp(20px,6vw,104px) clamp(110px,12vw,140px);color:var(--paper);overflow-x:clip}
+.foot{padding:0 clamp(20px,6vw,104px) clamp(56px,7vw,84px);color:var(--paper);overflow-x:clip}
 .foot__sun{width:96px;height:53px;margin:0 auto 14px;opacity:.9}
 .foot__line{max-width:27em;margin:0 auto;text-align:center;font-size:27px;line-height:1.22;text-wrap:balance}
 .foot__top{margin:26px 0 0;text-align:center;font:400 16px/1 var(--typed)}
 .foot__top a{display:inline-block;padding:14px 8px;text-underline-offset:4px}
-.study-back--slowroads{font-family:var(--typed)}
+
+/* ---- the way back: a kraft luggage tag tied to the top left corner of the page ----------------------------------------
+   The shared pill is fixed at the bottom left, where it would sit over prints, contact frames and the email
+   field as they scroll by. This page has no bar and, on a phone, no margin a fixed thing could live in, so the
+   tag belongs to the page instead: it sits on the bare desk above the label and scrolls away with it. It is
+   still the first thing in the tab order, and "Back to the top of the pile" in the footer leads back to it.
+   (display is left alone so the shared rule that hides the pill inside the preview frame still wins.) */
+.study-back--slowroads{position:absolute;left:max(16px,env(safe-area-inset-left));top:max(14px,env(safe-area-inset-top));bottom:auto;
+  min-height:44px;padding:1px 16px 0 36px;gap:7px;border-radius:0;background:none;color:var(--ink);
+  font:700 14px/1 var(--typed);letter-spacing:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;
+  rotate:-2.5deg;transform-origin:18px 50%;filter:drop-shadow(0 1px 1px rgba(18,12,6,.35)) drop-shadow(0 5px 5px rgba(18,12,6,.28));
+  transition:rotate .25s cubic-bezier(.3,1.5,.5,1)}
+.study-back--slowroads::before{content:"";position:absolute;z-index:-1;inset:0;
+  background:
+    radial-gradient(circle at 18px 50%,var(--desk) 0 3.6px,#efe3c8 4.2px 8.4px,rgba(79,52,34,.4) 8.9px 9.6px,transparent 10.2px),
+    var(--kraft) var(--fiber);
+  clip-path:polygon(13px 0,100% 0,100% 100%,13px 100%,0 calc(100% - 12px),0 12px)}
+.study-back--slowroads::after{content:"";position:absolute;z-index:-1;right:calc(100% - 20px);top:50%;width:64px;height:17px;margin-top:-9px;
+  border:1.6px solid #e9dfc6;border-radius:50%;rotate:27deg;transform-origin:100% 50%;pointer-events:none}
+.study-back--slowroads svg{width:15px;height:15px}
+.study-back--slowroads:hover{background:none;transform:none;rotate:-6deg}
+.study-back--slowroads:focus-visible{outline:3px solid var(--focus);outline-offset:4px;border-radius:2px;box-shadow:none;rotate:-6deg}
 
 /* ---- motion: only when the visitor has not asked for less ------------------------------------------------------------ */
 .moving .print[data-move]{opacity:0}
@@ -390,7 +411,7 @@ a{color:inherit}
   .stamp{right:-10px}
 }
 @media (max-width:860px){
-  .cover{grid-template-columns:minmax(0,1fr);align-content:start;gap:26px;padding:18px 16px 76px}
+  .cover{grid-template-columns:minmax(0,1fr);align-content:start;gap:26px;padding:80px 16px 56px}
   .label{justify-self:center;width:min(100%,440px);padding:30px 26px 26px;rotate:-1deg}
   .label::before{inset:8px}.label::after{inset:11.5px}
   .label__kicker{margin-bottom:12px;font-size:14px}
