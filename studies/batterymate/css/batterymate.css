@@ -91,13 +91,16 @@ html.js:not(.still) .is-in .line:nth-child(3) > span { transition-delay: .18s; }
 @media (hover: hover) { .bar__link:hover { border-bottom-color: var(--yellow); } }
 
 /* ------------------------------------------------------- bands and field */
-.band { position: relative; clip-path: inset(0); }
+.band { position: relative; overflow: clip; isolation: isolate; }
+/* the field is fixed to the window, so only a clip-path clips it to its band. The clip-path sits on a layer of its own:
+   on the band itself it also clipped the WebGL canvas, which Chromium then showed cut short once it ran off the top. */
+.band > .field-clip { position: absolute; inset: 0; z-index: 0; clip-path: inset(0); pointer-events: none; }
 .band--chalk { background: var(--chalk); color: var(--navy); --field: var(--line); }
 .band--navy { background: var(--navy); color: var(--chalk); --field: var(--line-navy); }
 .band--yellow { background: var(--yellow); color: var(--navy); --field: #c4e407; }
 .band > * { position: relative; z-index: 1; }
 /* The field is one drawing fixed to the window; each band shows its part of it in its own line color. */
-.band > .field { position: fixed; z-index: 0; left: 50%; top: 0; color: var(--field); pointer-events: none; transform-origin: 50% 0; will-change: transform; }
+.field-clip > .field { position: fixed; z-index: 0; left: 50%; top: 0; color: var(--field); pointer-events: none; transform-origin: 50% 0; will-change: transform; }
 .field path { stroke-width: var(--fw, .4); stroke-dasharray: 1; stroke-dashoffset: 0; }
 html.js:not(.still) .field path { stroke-dashoffset: 1; }
 

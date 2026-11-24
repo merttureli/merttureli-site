@@ -25,13 +25,16 @@ const layouts = [];
 
 // ------------------------------------------------------------------- field
 // The chalk lines of a softball field, to scale (feet), fixed to the window behind every band. Each band shows its
-// part in its own line color (clip-path on the band). The drawing drifts up as the page is read and its lines are
+// part in its own line color (clip-path on a layer of the band). The drawing drifts up as the page is read and its lines are
 // drawn as they come into view: the outfield first, home plate last. Still: the whole field, drawn, not moving.
 {
   const tpl = $('#field'), FW = 320, FH = 262;
   const fields = $$('[data-field]').map(band => {
     const svg = tpl.content.firstElementChild.cloneNode(true);
-    band.prepend(svg);
+    const clip = document.createElement('div');
+    clip.className = 'field-clip';
+    clip.append(svg);
+    band.prepend(clip);
     return { band, svg, paths: $$('path', svg).map(el => { const [a, b] = el.dataset.w.split(' ').map(Number); return { el, a, b, v: -1 }; }) };
   });
   let H = 0, top = 0, intro = still ? 1 : 0;
@@ -264,7 +267,7 @@ if (live) {
       const quality = (innerWidth < 760 || (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4) ? 'low' : 'high';
       const canvas = document.createElement('canvas');
       canvas.setAttribute('aria-hidden', 'true');
-      machine = await createMachine({ canvas, quality, on: { returned: onReturned } });
+      machine = await createMachine({ canvas, quality, capture: true, on: { returned: onReturned } });
       window.__batterymate = machine;
       place();
       warmUp(true);
