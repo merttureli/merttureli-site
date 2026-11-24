@@ -1,13 +1,17 @@
 // The Hall sensing instrument: a magnet on the moving part passes over the sensor with an air gap between them,
 // and the output follows the field the sensor sees. Illustration of the principle, not a calibration: the
-// field is that of a small bar magnet (vertical component at the sensor), scaled to the 0..1023 readout.
+// field is that of a small bar magnet (vertical component at the sensor). That field rises and then falls again
+// past the poles, so, as on an axis, the travel is kept to the span where it only rises (+-SPAN of the drawing's
+// unit) and that span is scaled to the full 0..1023 readout: the output runs one way from end to end of the slider.
 import { makeSeg } from './seg.js';
 
-const X0 = 144, TRAVEL = 112, GAP = 54 / TRAVEL;   // svg units: sensor at x 144, magnet travels +-112, gap 54
+const X0 = 144, TRAVEL = 112, GAP = 54 / TRAVEL;   // svg units: sensor at x 144, one drawing unit is 112, gap 54
+const SPAN = .22;                                   // the rising part of the field is +-GAP/2 (0.24): keep inside it
 const field = u => u / (u * u + GAP * GAP) ** 2.5;
-const PEAK = field(GAP / 2);
-export const hallOut = m => Math.max(0, Math.min(1023, Math.round(512 + 496 * field(m) / PEAK)));
-const sx = m => 128 + m * 124, sy = c => 36 - (c - 512) / 512 * 30;
+const EDGE = field(SPAN);
+// s is the slider position, -1..1; the magnet sits at s * SPAN
+export const hallOut = s => Math.max(0, Math.min(1023, Math.round(511.5 + 511.5 * field(s * SPAN) / EDGE)));
+const sx = s => 128 + s * 120, sy = c => 36 - (c - 511.5) / 511.5 * 30;
 
 export function createHall({ reduced }) {
   const root = document.querySelector('.inst .hall');
@@ -30,7 +34,7 @@ export function createHall({ reduced }) {
   function draw() {
     if (m === lastM) return;
     lastM = m;
-    mag.setAttribute('transform', `translate(${(X0 + m * TRAVEL).toFixed(2)} 0)`);
+    mag.setAttribute('transform', `translate(${(X0 + m * SPAN * TRAVEL).toFixed(2)} 0)`);
     const c = hallOut(m);
     seg(c);
     dot.setAttribute('cx', sx(m).toFixed(1)); dot.setAttribute('cy', sy(c).toFixed(1));

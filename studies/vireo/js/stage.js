@@ -109,7 +109,8 @@ export async function mount(api) {
     const rest = Math.round(rollIdle / TAU) * TAU, rollNow = rollIdle + (rest - rollIdle) * smooth(1.95, 2.14, uCur);
     // turned by hand at the end of the scene
     const p = uCur - 2, w = smooth(TURN_FROM - 0.06, TURN_FROM, p);
-    if (!dragging) { turn += turnVel * dt; turnVel *= Math.exp(-dt * 3.2); if (Math.abs(turnVel) < 0.002) turnVel = 0; }
+    // exact for any frame time, so a press on the chip turns a quarter
+    if (!dragging) { const f = Math.exp(-dt * 3.2); turn += turnVel * (1 - f) / 3.2; turnVel *= f; if (Math.abs(turnVel) < 0.002) turnVel = 0; }
     if (w <= 0 && (turn || leanOff)) { turn = 0; leanOff = 0; turnVel = 0; }
     S.tilt = pose.tilt; S.lean = pose.lean + leanOff * w; S.roll = pose.roll + rollNow; S.turn = turn * w;
     S.station = pose.station; S.dist = pose.dist; S.ox = pose.ox; S.oy = pose.oy; S.explode = pose.explode; S.pull = pose.pull; S.side = pose.side;

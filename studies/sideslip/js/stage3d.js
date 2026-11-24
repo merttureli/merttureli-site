@@ -17,7 +17,7 @@ const FOV = 22;
 // yaw and tilt of the assembly (rad), camera distance (m), the point the camera looks at (model meters, before
 // the turn) and a shift of the picture in the frame (share of the frame height, + is up)
 export const SHOTS = {
-  hero: { yaw: -1.02, tilt: .36, dist: 1.2, at: [0, .118, 0], lift: .1 },
+  hero: { yaw: -1.02, tilt: .36, dist: 1.2, at: [0, .118, 0], lift: -.02 },
   seat: { yaw: -Math.PI / 2, tilt: .5, dist: 1.12, at: [0, .118, 0], lift: 0 },
   side: { yaw: 0, tilt: .08, dist: 1.04, at: [0, .13, 0], lift: 0 },
 };
@@ -62,9 +62,13 @@ export async function createStage({ canvas, quality = 'high', preserve = false, 
     camera.lookAt(target.x, target.y - shot.lift * 2 * half * shot.dist, 0);
     camera.updateProjectionMatrix();
   }
-  function size(cw, ch) {
+  // cw x ch is the slot's whole inner box, which the framing is computed for. `cut` px at its top are left out
+  // (under the sticky bar): the canvas is that much shorter and the camera draws only the lower window of the frame.
+  function size(cw, ch, cut = 0) {
     w = Math.max(2, Math.round(cw)); h = Math.max(2, Math.round(ch));
-    renderer.setSize(w, h, false);
+    const c = Math.max(0, Math.min(h - 2, Math.round(cut)));
+    renderer.setSize(w, h - c, false);
+    if (c > 0) camera.setViewOffset(w, h, 0, c, w, h - c); else camera.clearViewOffset();
     frame();
   }
   const easeOut = t => 1 - (1 - t) ** 3;

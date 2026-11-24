@@ -15,10 +15,10 @@
 <script>(function(d){d.classList.add('js');var r=matchMedia('(prefers-reduced-motion: reduce)').matches;if(r)d.classList.add('still');try{if(!r&&window.WebGL2RenderingContext&&!(navigator.connection&&navigator.connection.saveData))d.classList.add('live')}catch(e){}})(document.documentElement)</script>
 </head>
 <body>
-<a class="study-back study-back--batterymate" href="/websites.html#studies"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13 8H3.5M7.5 3.5 3 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Back to websites</a>
 <a class="skip" href="#main">Skip to content</a>
+<a class="study-back study-back--batterymate" href="/websites.html#studies"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13 8H3.5M7.5 3.5 3 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Back to websites</a>
 
-<!-- The way back (first in the body, above) is docked in this bar as a tag: beside the wordmark on a wide screen,
+<!-- The way back (above, after the skip link) is docked in this bar as a tag: beside the wordmark on a wide screen,
      on the bar's second row on a phone. It never sits over the page. -->
 <header class="bar">
   <a class="bar__mark" href="#top" aria-label="Batterymate, back to top">Batterymate</a>
@@ -138,6 +138,7 @@
     <h2 class="display reveal"><span class="line"><span class="fill">Read the</span></span><span class="line"><span class="outline">board.</span></span></h2>
   </header>
   <div class="linescore" id="linescore">
+    <div class="ls__bulbs" aria-hidden="true"><i class="ls__bulbs-on"></i></div>
     <div class="ls__team" aria-hidden="true"><span>Inning</span><span>Batterymate</span></div>
     <dl class="ls__grid">
       <div class="inning"><dt><i class="ls__no" aria-hidden="true">1</i><i class="lamp" aria-hidden="true"></i><span>Feed</span></dt><dd class="ls__val"><span class="flip">100</span><small>%</small></dd><dd class="ls__note">Feed indexing on competition day.</dd></div>
@@ -148,7 +149,7 @@
       <div class="inning inning--wide"><dt><i class="ls__no" aria-hidden="true">6</i><i class="lamp" aria-hidden="true"></i><span>Control</span></dt><dd class="ls__val"><span class="flip">ESP32</span></dd><dd class="ls__note">One ESP32 runs everything. A wireless remote starts and stops it.</dd></div>
     </dl>
   </div>
-  <p class="numbers__kicker display reveal"><span class="line"><span class="outline">Every ball</span></span><span class="line"><span class="outline">delivered.</span></span><span class="line"><span class="fill">No misses.</span></span></p>
+  <p class="numbers__kicker display reveal"><span class="line"><span class="fill">Every ball</span></span><span class="line"><span class="fill">delivered.</span></span><span class="line"><span class="outline">No misses.</span></span></p>
 </section>
 
 <section class="practice band band--chalk" id="practice" data-field>
@@ -163,12 +164,12 @@
       <p>It weighs 55 lb. One person carries it.</p>
     </li>
     <li class="drill">
-      <img src="assets/draw-setup.webp" width="1200" height="900" loading="lazy" decoding="async" alt="Line drawing of the machine taken apart: net, bed, ramps, feeder and thrower.">
+      <img src="assets/draw-setup.webp" width="1200" height="900" loading="lazy" decoding="async" alt="Line drawing of the machine taken apart, every part pulled out along its own line: net, bed, ramps, feeder and thrower.">
       <h3 class="drill__verb"><i aria-hidden="true">02</i>Set it up.</h3>
       <p>It assembles with no tools. Leave the toolbox at home.</p>
     </li>
     <li class="drill">
-      <img src="assets/draw-run.webp" width="1200" height="900" loading="lazy" decoding="async" alt="Line drawing of the feeder and the two wheel thrower, close up.">
+      <img src="assets/draw-run.webp" width="1200" height="900" loading="lazy" decoding="async" alt="Line drawing of the whole machine at work: a ball leaves the two wheel thrower on a dotted arc.">
       <h3 class="drill__verb"><i aria-hidden="true">03</i>Run it.</h3>
       <p>A wireless remote starts and stops it. One battery runs it for 1.5 hours.</p>
     </li>
@@ -186,7 +187,7 @@
     <fieldset class="fixtures" id="fixtures">
       <legend class="label">1. Pick a slot this week</legend>
       <ul class="fixtures__list">
-        <li><label class="slot"><input type="radio" name="slot" value="Monday, 4:00 PM" required><span class="slot__day">Mon</span><span class="slot__time">4:00 PM</span><span class="tag">Open</span></label></li>
+        <li><label class="slot"><input type="radio" name="slot" value="Monday, 4:00 PM" required aria-describedby="errSlot"><span class="slot__day">Mon</span><span class="slot__time">4:00 PM</span><span class="tag">Open</span></label></li>
         <li><label class="slot is-taken"><input type="radio" name="slot" value="Tuesday, 5:30 PM" aria-disabled="true"><span class="slot__day">Tue</span><span class="slot__time">5:30 PM</span><span class="tag">Taken</span></label></li>
         <li><label class="slot"><input type="radio" name="slot" value="Wednesday, 4:00 PM"><span class="slot__day">Wed</span><span class="slot__time">4:00 PM</span><span class="tag">Open</span></label></li>
         <li><label class="slot"><input type="radio" name="slot" value="Thursday, 6:00 PM"><span class="slot__day">Thu</span><span class="slot__time">6:00 PM</span><span class="tag">Open</span></label></li>
@@ -194,7 +195,7 @@
         <li><label class="slot"><input type="radio" name="slot" value="Saturday, 9:00 AM"><span class="slot__day">Sat</span><span class="slot__time">9:00 AM</span><span class="tag">Open</span></label></li>
         <li><label class="slot"><input type="radio" name="slot" value="Sunday, 10:00 AM"><span class="slot__day">Sun</span><span class="slot__time">10:00 AM</span><span class="tag">Open</span></label></li>
       </ul>
-      <p class="err" id="errSlot" role="alert"></p>
+      <p class="err" id="errSlot"></p>
     </fieldset>
 
     <fieldset class="roster">
@@ -202,7 +203,7 @@
       <div class="field-row">
         <label for="team">Team name</label>
         <input id="team" name="team" type="text" autocomplete="organization" required aria-describedby="errTeam">
-        <p class="err" id="errTeam" role="alert"></p>
+        <p class="err" id="errTeam"></p>
       </div>
       <div class="field-pair">
         <div class="field-row">
@@ -212,25 +213,29 @@
             <option>10U</option><option>12U</option><option>14U</option><option>16U</option><option>18U</option>
             <option>High school</option><option>College</option><option>Adult league</option>
           </select>
-          <p class="err" id="errLevel" role="alert"></p>
+          <p class="err" id="errLevel"></p>
         </div>
         <div class="field-row">
           <label for="players">Players</label>
           <input id="players" name="players" type="number" inputmode="numeric" min="1" max="40" required aria-describedby="errPlayers">
-          <p class="err" id="errPlayers" role="alert"></p>
+          <p class="err" id="errPlayers"></p>
         </div>
       </div>
       <div class="field-row">
         <label for="email">Coach's email</label>
         <input id="email" name="email" type="email" autocomplete="email" required aria-describedby="errEmail">
-        <p class="err" id="errEmail" role="alert"></p>
+        <p class="err" id="errEmail"></p>
       </div>
+      <div class="err-sum" id="errSum" role="alert"></div>
       <button class="btn btn--navy btn--big" type="submit"><span>Book the demo</span></button>
       <p class="roster__note">This is a sample. Nothing is sent.</p>
+      <p class="sr-only" id="bookSay" role="status"></p>
     </fieldset>
   </form>
 
-  <article class="lineup" id="lineup" hidden tabindex="-1" aria-labelledby="lineupTitle">
+  <article class="done" id="lineup" hidden tabindex="-1" aria-labelledby="lineupSee lineupTitle">
+    <p class="done__see display" id="lineupSee"><span class="line"><span class="fill">See you</span></span><span class="line"><span class="outline" id="outDay">Thursday.</span></span></p>
+    <div class="lineup">
     <header class="lineup__head">
       <p class="label">Batterymate demo</p>
       <h3 class="lineup__title" id="lineupTitle">Lineup card</h3>
@@ -249,6 +254,7 @@
     <p class="lineup__stamp">Sample. Nothing was sent.</p>
     <p class="lineup__note">This page is a sample site. No demo was booked and nothing left this page.</p>
     <button class="btn btn--navy" type="button" id="again"><span>Change the card</span></button>
+    </div>
   </article>
 </section>
 

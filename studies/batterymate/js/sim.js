@@ -98,7 +98,7 @@ export function createSim({ THREE, model, radius }) {
   const net = { on: false, t0: 0, x: 0, y: 0, vn: 0, c: V3(), v: V3(), depth: 0, phase: 0 };
   const idx = { base: 0, t0: -1e3, turning: false };
   const wheel = { w: 0, top: 0, bottom: 0, last: -1e3 };
-  const sim = { balls, on: null, zone, R, restZ, pGrip, pLower, pUpper, bedY, get time() { return T; }, get net() { return net; }, get index() { return idx.base + (idx.turning ? halfTurn(T - idx.t0) : 0); }, wheel };
+  const sim = { balls, on: null, zone, R, restZ, pGrip, pLower, pUpper, bedY, idxAxis, get time() { return T; }, get net() { return net; }, get index() { return idx.base + (idx.turning ? halfTurn(T - idx.t0) : 0); }, wheel };
   const qa = new THREE.Quaternion(), tmp = V3();
   const turn = (b, axis, angle) => { qa.setFromAxisAngle(axis, angle); b.q.premultiply(qa); };
   const emit = (type, b) => { if (sim.on) sim.on(type, b); };

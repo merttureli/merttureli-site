@@ -14,12 +14,12 @@
 <script type="module" src="js/sideslip.js"></script>
 </head>
 <body>
-<a class="study-back study-back--sideslip" href="/websites.html#studies"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13 8H3.5M7.5 3.5 3 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Back to websites</a>
 <a class="skip" href="#main">skip to content</a>
+<a class="study-back study-back--sideslip" href="/websites.html#studies"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13 8H3.5M7.5 3.5 3 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Back to websites</a>
 
 <!-- pictograms: one family, 24px grid, 1.5px stroke, round joins -->
 <svg class="sprite" aria-hidden="true" focusable="false">
-  <symbol id="i-mark" viewBox="0 0 24 24"><path d="M2.75 8.5Q12 14.5 21.25 8.5M2.75 14.5Q12 20.5 21.25 14.5M2.75 8.5v6M21.25 8.5v6M10.25 11.6v2.2M13.75 11.6v2.2"/><circle cx="17.4" cy="14" r="2.1" class="fill"/></symbol>
+  <symbol id="i-mark" viewBox="0 0 24 24"><rect x="2.75" y="8.25" width="18.5" height="7.5" rx="3.75"/><path d="M8.75 6.25v11.5M15.25 6.25v11.5"/><circle cx="12" cy="12" r="2.25" class="fill"/></symbol>
   <symbol id="i-pedals" viewBox="0 0 24 24"><path d="M3 3.75h18M7 3.75v5M17 3.75v3"/><rect x="3.75" y="8.75" width="6.5" height="11.5" rx="1.75"/><rect x="13.75" y="6.75" width="6.5" height="11.5" rx="1.75"/></symbol>
   <symbol id="i-axes" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.25"/><path d="M12 3.75v16.5M3.75 12h16.5"/><circle cx="15.5" cy="9" r="1.75" class="fill"/></symbol>
   <symbol id="i-magnet" viewBox="0 0 24 24"><path d="M5.75 3.75h4.5v8.5a1.75 1.75 0 0 0 3.5 0v-8.5h4.5v8.5a6.25 6.25 0 0 1-12.5 0z"/><path d="M5.75 8h4.5M13.75 8h4.5"/></symbol>
@@ -45,10 +45,9 @@
     <a href="#product"><svg class="ico" aria-hidden="true"><use href="#i-pedals"/></svg><span>product</span></a>
     <a href="#try"><svg class="ico" aria-hidden="true"><use href="#i-axes"/></svg><span>try it</span></a>
     <a href="#inside"><svg class="ico" aria-hidden="true"><use href="#i-magnet"/></svg><span>inside</span></a>
-    <a href="#reserve"><svg class="ico" aria-hidden="true"><use href="#i-box"/></svg><span>reserve</span></a>
   </nav>
-  <p class="batch lg"><span class="lamp lamp--green" aria-hidden="true"></span>batch 02 open</p>
-  <a class="pill pill--ink bar-reserve" href="#reserve">reserve</a>
+  <p class="batch lg"><span class="lamp lamp--green" data-batch-lamp aria-hidden="true"></span><span data-batch-state>batch 02 open</span></p>
+  <a class="pill pill--ink bar-reserve" href="#reserve"><svg class="ico" aria-hidden="true"><use href="#i-box"/></svg>reserve</a>
   <span class="dock" aria-hidden="true"></span>
 </header>
 
@@ -59,10 +58,11 @@
   <div class="hero-grid wrap">
     <div class="hero-copy">
       <div class="placard screws">
+        <p class="sec-no sec-no--in lg" aria-hidden="true">01</p>
         <h1 id="h-product" class="name">rp-3</h1>
         <p class="lg">rudder pedals, three axes,<br> no potentiometers</p>
       </div>
-      <p class="hero-lede">Fighter style geometry, an A1301 Hall sensor on each axis and a Pro Micro that shows up as a standard USB gamepad. Press a, d, w or e to work them.</p>
+      <p class="hero-lede">Fighter style geometry, an A1301 Hall sensor on each axis and a Pro Micro that shows up as a standard USB gamepad. <span class="say-keys">Press a, d, w or e to work them.</span><span class="say-touch">Hold a pad in the test panel to work them.</span></p>
       <div class="hero-actions">
         <a class="pill pill--line" href="#try"><svg class="ico" aria-hidden="true"><use href="#i-axes"/></svg>try it</a>
         <a class="pill pill--ink" href="#reserve"><svg class="ico" aria-hidden="true"><use href="#i-box"/></svg>reserve, $240</a>
@@ -83,7 +83,7 @@
       </div>
     </div>
     <div class="stage stage--hero" data-slot="hero">
-      <img class="still" src="assets/rp3-hero-1600.webp" srcset="assets/rp3-hero-800.webp 800w, assets/rp3-hero-1600.webp 1600w" sizes="(min-width: 1040px) 70vw, 100vw" width="1600" height="1280" alt="The RP-3 rudder pedals rendered from the CAD model: two red pedals hanging from light gray lever arms on two dark side walls.">
+      <img class="still" src="assets/rp3-hero-1600.webp" srcset="assets/rp3-hero-800.webp 800w, assets/rp3-hero-1600.webp 1600w" sizes="(min-width: 1040px) 70vw, 100vw" width="1600" height="1280" alt="The RP-3 rudder pedals rendered from the CAD model: two red pedals, light gray arms and two dark side walls.">
       <p class="stage-tag lg" aria-hidden="true">live, cad model</p>
     </div>
     <div class="strip" aria-label="Axis readouts">
@@ -124,14 +124,19 @@
             <button type="button" class="tb" data-view="side" aria-pressed="false">side</button>
             <button type="button" class="tb" data-view="seat" aria-pressed="false">front</button>
           </div>
-          <button type="button" class="tb tb--icon" id="sweep" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-sweep"/></svg>sweep</button>
-          <button type="button" class="tb tb--icon" id="center"><svg class="ico" aria-hidden="true"><use href="#i-center"/></svg>center</button>
-          <button type="button" class="tb tb--icon" id="tilt" aria-pressed="false" hidden><svg class="ico" aria-hidden="true"><use href="#i-tilt"/></svg>tilt to steer</button>
+          <button type="button" class="tb tb--icon" id="sweep" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-sweep"/></svg><span class="tb-t">sweep</span></button>
+          <button type="button" class="tb tb--icon" id="center"><svg class="ico" aria-hidden="true"><use href="#i-center"/></svg><span class="tb-t">center</span></button>
+          <button type="button" class="tb tb--icon" id="tilt" aria-pressed="false" hidden><svg class="ico" aria-hidden="true"><use href="#i-tilt"/></svg><span class="tb-t">tilt to steer</span></button>
         </div>
         <div class="stage stage--try" data-slot="try">
           <img class="still" src="assets/rp3-hero-1600.webp" srcset="assets/rp3-hero-800.webp 800w, assets/rp3-hero-1600.webp 1600w" sizes="(min-width: 1040px) 60vw, 100vw" width="1600" height="1280" alt="The RP-3 rudder pedals at rest, rendered from the CAD model." loading="lazy">
         </div>
-        <div class="pads" aria-label="Touch pads">
+        <div class="strip strip--try" aria-hidden="true">
+          <div class="ch"><p class="ch-head"><span class="ch-id">x</span><span class="lg">rudder</span></p><div class="win"><svg class="seg" data-n="4" data-of="x"></svg><div class="bar-m bar-m--center" data-of="x" data-cells="fit"><i></i></div></div></div>
+          <div class="ch"><p class="ch-head"><span class="ch-id">y</span><span class="lg">left brake</span></p><div class="win"><svg class="seg" data-n="4" data-of="y"></svg><div class="bar-m" data-of="y" data-cells="fit"><i></i></div></div></div>
+          <div class="ch"><p class="ch-head"><span class="ch-id">z</span><span class="lg">right brake</span></p><div class="win"><svg class="seg" data-n="4" data-of="z"></svg><div class="bar-m" data-of="z" data-cells="fit"><i></i></div></div></div>
+        </div>
+        <div class="pads" role="group" aria-label="Touch pads">
           <div class="pfoot">
             <p class="lg foot-lg">left foot</p>
             <button type="button" class="pad pad--toe" data-pad="y" aria-label="Hold for left toe brake"><span class="lg">toe</span><kbd>w</kbd></button>
@@ -148,7 +153,7 @@
         <div class="ax" data-axis="x">
           <p class="ch-head"><span class="ch-id">x</span><span class="lg">rudder</span><span class="keys" aria-hidden="true"><kbd data-key="a">a</kbd><kbd data-key="d">d</kbd></span></p>
           <div class="win win--lg"><svg class="seg" data-n="4" data-of="x" aria-hidden="true"></svg><div class="bar-m bar-m--center" data-of="x" data-cells="fit"><i></i></div></div>
-          <p class="scale lg" aria-hidden="true"><span>left</span><span>0512</span><span>right</span></p>
+          <p class="scale lg" aria-hidden="true"><span>left</span><span>512</span><span>right</span></p>
           <label class="range"><span class="lg">set rudder</span><input type="range" min="-100" max="100" step="1" value="0" data-range="x"></label>
         </div>
         <div class="ax" data-axis="y">
@@ -167,7 +172,7 @@
           <p class="lamp-row"><span class="lamp lamp--red" data-lamp="diff" aria-hidden="true"></span><span class="lg">differential braking</span></p>
           <p class="lamp-row"><span class="lamp lamp--green" aria-hidden="true"></span><span class="lg">usb hid connected</span></p>
         </div>
-        <p class="hint lg">hold a or d for rudder, w or e for the toe brakes. let go and the springs center it.</p>
+        <p class="hint lg"><span class="say-keys">hold a or d for rudder, w or e for the toe brakes, or drag a slider.</span><span class="say-touch">hold a pad for rudder or a toe brake, or drag a slider.</span> let go and it returns to center.</p>
       </div>
     </div>
     <p class="sr-only" aria-live="polite" id="axes-status"></p>
@@ -188,7 +193,7 @@
         <h3 id="h-hall">hall sensing</h3>
         <div class="hall-view win-gray">
           <svg class="hall" viewBox="0 0 288 136" aria-hidden="true">
-            <path class="hall-track" d="M16 24H272"/>
+            <path class="hall-track" d="M96 24H192"/>
             <text class="hall-txt" x="16" y="130">air gap, no contact</text>
             <g class="hall-mag">
               <g class="hall-field"><path d="M-20 34C-20 60 20 60 20 34"/><path d="M-28 34C-28 76 28 76 28 34"/><path d="M-36 34C-36 92 36 92 36 34"/></g>
@@ -220,10 +225,12 @@
         <div class="hid win-gray">
           <p class="hid-dev"><span class="lamp lamp--green" aria-hidden="true"></span><span class="lg lg--ink">rp-3, usb gamepad</span><span class="lg">connected</span></p>
           <div class="hid-rows" aria-hidden="true">
-            <p class="hid-row"><span class="lg">x axis</span><span class="bar-m bar-m--ink bar-m--center" data-of="x" data-cells="fit" data-max="20"><i></i></span></p>
-            <p class="hid-row"><span class="lg">y axis</span><span class="bar-m bar-m--ink" data-of="y" data-cells="fit" data-max="20"><i></i></span></p>
-            <p class="hid-row"><span class="lg">z axis</span><span class="bar-m bar-m--ink" data-of="z" data-cells="fit" data-max="20"><i></i></span></p>
+            <p class="hid-row"><span class="lg">x axis</span><span class="bar-m bar-m--ink bar-m--center" data-of="x" data-cells="fit"><i></i></span><span class="hid-n" data-count="x">512</span></p>
+            <p class="hid-row"><span class="lg">y axis</span><span class="bar-m bar-m--ink" data-of="y" data-cells="fit"><i></i></span><span class="hid-n" data-count="y">0</span></p>
+            <p class="hid-row"><span class="lg">z axis</span><span class="bar-m bar-m--ink" data-of="z" data-cells="fit"><i></i></span><span class="hid-n" data-count="z">0</span></p>
+            <p class="hid-scale lg"><span>raw counts, 0 to 1023</span></p>
           </div>
+          <p class="hid-foot lg"><span>report</span><span class="lg--ink">3 axes</span></p>
           <p class="hid-foot lg"><span>driver</span><span class="lg--ink">none needed</span></p>
           <p class="hid-foot lg"><span>controller</span><span class="lg--ink">pro micro</span></p>
         </div>
@@ -233,10 +240,13 @@
         <p class="inst-head"><svg class="ico" aria-hidden="true"><use href="#i-geometry"/></svg><span class="inst-no lg">c</span></p>
         <h3 id="h-geo">geometry</h3>
         <figure class="geo win-gray">
-          <img src="assets/rp3-side-line.webp" width="475" height="730" alt="Side view line drawing from the CAD model: the pedal hangs from a lever arm that pivots on a bolt at the top of the side wall, with the centering spring behind it." loading="lazy">
-          <figcaption class="lg">side view, from the cad model</figcaption>
+          <div class="geo-pic">
+            <img src="assets/rp3-side-line.webp" width="475" height="730" alt="Side view line drawing of the RP-3 from the CAD model, with the pivot bolt and the arc of the pedal marked in red." loading="lazy">
+            <svg class="geo-over" viewBox="0 0 475 730" aria-hidden="true"><path class="geo-arc" d="M327.4 359.1A300 300 0 0 0 472.6 359.1"/><path class="geo-tick" d="M400 68 327.4 359.1M400 68 472.6 359.1"/><circle class="geo-piv" cx="400" cy="68" r="14"/></svg>
+          </div>
+          <figcaption class="lg"><span class="geo-key" aria-hidden="true"></span>side view from the cad model, pivot and pedal arc in red</figcaption>
         </figure>
-        <p class="inst-text">Fighter style geometry: the pedals hang from lever arms that pivot at the top, so each foot swings on an arc.</p>
+        <p class="inst-text">Fighter style geometry, designed in SolidWorks and 3D printed.</p>
       </article>
     </div>
   </div>
@@ -247,6 +257,7 @@
   <div class="wrap">
     <div class="placard-ink screws screws--plate">
       <header class="spec-head">
+        <p class="sec-no sec-no--plate lg" aria-hidden="true">04</p>
         <h2 id="h-spec">rp-3 specification</h2>
         <p class="lg lg--plate">sideslip instruments, batch 02</p>
       </header>
@@ -274,7 +285,7 @@
     </header>
     <div class="card screws">
       <div class="card-batch">
-        <p class="lamp-row"><span class="lamp lamp--green" aria-hidden="true"></span><span class="lg lg--ink">batch 02 open</span></p>
+        <p class="lamp-row"><span class="lamp lamp--green" data-batch-lamp aria-hidden="true"></span><span class="lg lg--ink" data-batch-state>batch 02 open</span></p>
         <div class="readout">
           <p class="lg">sets left</p>
           <div class="win"><svg class="seg" data-n="3" id="left-seg" aria-hidden="true"></svg></div>
@@ -294,7 +305,7 @@
             <button type="button" class="step" id="qty-plus" aria-label="One more set"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg></button>
             <output class="sr-only" id="qty-out" aria-live="polite">1 set</output>
           </div>
-          <p class="lg field-note">up to 4 per order</p>
+          <p class="lg field-note" id="qty-note">up to 4 per order</p>
         </div>
         <div class="field">
           <p class="lg">total</p>
@@ -307,8 +318,8 @@
           <p class="err" id="email-err" hidden><svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg><span></span></p>
         </div>
         <div class="field field--go">
-          <button type="submit" class="pill pill--ink pill--big"><svg class="ico" aria-hidden="true"><use href="#i-box"/></svg>reserve</button>
-          <p class="lg field-note">sample site: nothing is sent</p>
+          <button type="submit" class="pill pill--ink pill--big" id="go"><svg class="ico" aria-hidden="true"><use href="#i-box"/></svg>reserve</button>
+          <p class="lg field-note" id="go-note">sample site: nothing is sent</p>
         </div>
       </form>
       <div class="done" id="done" hidden>

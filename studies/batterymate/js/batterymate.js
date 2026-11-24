@@ -143,6 +143,10 @@ const hero = $('.hero'), heroBox = $('#heroBox'), fx = $('#fx'), throwBtn = $('#
 const NET_AT = [.42, .4];                                   // where the net is in the still (share of the box)
 let machine = null, pointer = null, heroSeen = true;
 if (matchMedia('(hover: none)').matches) chipText.textContent = chipText.dataset.touch;
+// the pinned scene needs a screen at least 561px tall; under that the steps stand one under another (CSS agrees)
+const pinMQ = matchMedia('(min-height: 561px)');
+const pinned = () => html.classList.contains('live') && pinMQ.matches;
+pinMQ.addEventListener('change', () => request());
 
 function ring(x, y, back) {
   if (still) return;
@@ -151,6 +155,18 @@ function ring(x, y, back) {
   el.style.left = x - r.left + 'px'; el.style.top = y - r.top + 'px';
   fx.append(el);
   el.addEventListener('animationend', () => el.remove());
+}
+// a click that cannot be thrown: five balls are in the air already. A crossed ring at the pointer says so.
+function nope(x, y) {
+  const r = hero.getBoundingClientRect();
+  $$('.fx-no', fx).forEach(n => n.remove());
+  const el = document.createElement('i');
+  el.className = 'fx-no' + (x - r.left > r.width - 280 ? ' is-left' : '');
+  el.innerHTML = '<b>Five in the air</b>';
+  el.style.left = x - r.left + 'px'; el.style.top = y - r.top + 'px';
+  fx.append(el);
+  if (still) setTimeout(() => el.remove(), 1400); else el.addEventListener('animationend', () => el.remove());
+  say('Five balls are in the air. Wait for one to come back.');
 }
 function arc(x, y) {
   const r = hero.getBoundingClientRect(), b = heroBox.getBoundingClientRect();
@@ -164,6 +180,7 @@ function pitch(x, y) {
     if (machine.mode !== 'hero' || !hero.classList.contains('is-live')) heroLive();   // the still stood in; the live machine takes the catch
     if (!machine.throwFrom(x, y)) {                         // five in the air already
       throwBtn.classList.add('is-full'); setTimeout(() => throwBtn.classList.remove('is-full'), 260);
+      nope(x, y);
       return;
     }
     setNum($('#nThrown'), ++score.thrown);
@@ -201,17 +218,29 @@ throwBtn.addEventListener('click', e => {
   const p = e.detail === 0 ? spot() : { x: e.clientX, y: e.clientY };   // keyboard: no pointer
   pitch(p.x, p.y);
 });
-// Space throws while the first screen is up and focus is nowhere in particular. In a field, on a link or on a
-// button the key keeps its own meaning (the throw control is a button: Space and Enter press it).
+// Keys. Space throws only at the very top of the page with focus nowhere in particular; anywhere else it scrolls.
+// In a field, on a link or on a button a key keeps its own meaning (the throw control is a button: Space and Enter
+// press it). Inside the pinned scene the browser's own page step is tiny (the pinned layer fills the screen and is
+// left out of it), so Space, Shift+Space, Page Down and Page Up step the page there by nine tenths of a screen.
+const typing = el => !!el && el.matches && el.matches('input, select, textarea, [contenteditable], [contenteditable] *');
 document.addEventListener('keydown', e => {
-  if (e.code !== 'Space' || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
-  const a = document.activeElement;
-  if (a && a !== document.body && a !== html) return;
-  if (!heroSeen) return;
+  if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
+  const a = document.activeElement, free = !a || a === document.body || a === html;
+  const space = e.code === 'Space' || e.key === ' ';
+  if (space && !e.shiftKey && free && scrollY < 40) {
+    e.preventDefault();
+    if (e.repeat) return;
+    userPlayed();
+    const p = spot();
+    pitch(p.x, p.y);
+    return;
+  }
+  const page = space || e.code === 'PageDown' || e.code === 'PageUp' || e.key === 'PageDown' || e.key === 'PageUp';
+  if (!page || typing(a) || !pinActive()) return;
+  if (space && !free && !a.matches('a[href]')) return;
   e.preventDefault();
-  userPlayed();
-  const p = spot();
-  pitch(p.x, p.y);
+  const up = e.code === 'PageUp' || e.key === 'PageUp' || (space && e.shiftKey);
+  scrollBy({ top: (up ? -1 : 1) * Math.round((vh - barH()) * .9), behavior: still ? 'auto' : 'smooth' });
 });
 
 // until the visitor throws, the page shows how: a warm-up toss from the chip every few seconds
@@ -230,6 +259,11 @@ function warmUp(first) {
 // Pinned for three screens; the scroll runs the three steps on the same machine.
 const how = $('#how'), howPin = $('.how__pin'), steps = $$('.step', how), howBox = $('#howBox');
 let howP = 0, howStep = 0;
+function pinActive() {
+  if (!pinned()) return false;
+  const r = how.getBoundingClientRect();
+  return r.top <= barH() + 2 && r.bottom >= vh - 2;
+}
 function howAt() {
   const r = how.getBoundingClientRect(), top = barH(), range = r.height - (vh - top);
   howP = range > 0 ? clamp01((top - r.top) / range) : 0;
@@ -247,22 +281,17 @@ function heroLive() {
 function place() {
   if (!machine) return;
   const visible = el => { const r = el.getBoundingClientRect(); return Math.max(0, Math.min(r.bottom, vh) - Math.max(r.top, barH())); };
-  const a = visible(hero), b = visible(howPin);
+  const a = visible(hero), b = pinned() ? visible(howPin) : 0;
   heroSeen = a > vh * .4;
+  // Off screen the canvas draws nothing. On screen the live machine is always shown: it goes to whichever of the hero
+  // and the pinned window shows more of itself (the other, mostly scrolled away, keeps its rendered still). The hero
+  // draws only while something moves, so a hero standing still costs the GPU nothing.
   if (!a && !b) { machine.show(false); return; }
-  // The canvas stands in only while its scene moves. Before and after the pinned run the scene stands in its first and
-  // last pose, and a hero scrolled part way off with no ball in the air stands still: both are exactly the stills,
-  // which take over there (the GPU rests, and a canvas running off the top of the window is never shown cut short)
   if (b > a) {
-    if (howP <= 0 || howP >= 1) { machine.show(false); how.classList.remove('is-live'); hero.classList.remove('is-live'); return; }
     machine.mount('how', $('#howStage'), howBox, [.5, .6]); how.classList.add('is-live'); hero.classList.remove('is-live');
-  } else {
-    if (hero.getBoundingClientRect().top < barH() - 2 && !machine.busy) { machine.show(false); hero.classList.remove('is-live'); how.classList.remove('is-live'); return; }
-    heroLive();
-    return;
-  }
-  machine.show(true);
-  if (machine.mode === 'how') machine.story(howP);
+    machine.show(true);
+    machine.story(howP);
+  } else heroLive();
 }
 if (live) {
   // the words change in this frame; the machine is drawn in the next, so a slow frame of 3D never holds the words back
@@ -274,7 +303,10 @@ if (live) {
       const quality = (innerWidth < 760 || (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4) ? 'low' : 'high';
       const canvas = document.createElement('canvas');
       canvas.setAttribute('aria-hidden', 'true');
-      machine = await createMachine({ canvas, quality, on: { returned: onReturned } });
+      const trail = document.createElement('canvas'), overlay = document.createElement('canvas');
+      trail.className = 'hero__trail'; overlay.className = 'how__overlay';
+      $('#heroStage').append(trail); $('#howStage').after(overlay);
+      machine = await createMachine({ canvas, quality, on: { returned: onReturned }, trail, overlay });
       window.__batterymate = machine;
       place();
       warmUp(true);
@@ -282,6 +314,7 @@ if (live) {
       // no WebGL after all: the page keeps its stills, and the steps stand one under another
       console.info('[batterymate] the live machine is not available; keeping the stills', err);
       html.classList.remove('live');
+      $$('.hero__trail, .how__overlay').forEach(n => n.remove());
       request();
     }
   };
@@ -294,25 +327,34 @@ if (live) {
 // ------------------------------------------------------------ the numbers
 // Lamps light left to right as the board comes into view; each numeral flips over as its lamp comes on.
 {
-  const board = $('#linescore'), innings = $$('.inning', board);
+  // The lamp row lights a bulb at a time over the same 0.84 s.
+  const board = $('#linescore'), innings = $$('.inning', board), bulbs = $('.ls__bulbs-on', board), PITCH_PX = 20, RUN = 140 * innings.length;
   if (still) innings.forEach(el => el.classList.add('is-lit'));
   else new IntersectionObserver((es, io) => {
     if (!es.some(e => e.isIntersecting)) return;
     io.disconnect();
     innings.forEach((el, i) => setTimeout(() => el.classList.add('is-lit'), 140 * i));
+    const t0 = performance.now(), n = Math.ceil(bulbs.parentElement.clientWidth / PITCH_PX);
+    const run = now => {
+      const k = Math.min(1, (now - t0) / RUN);
+      bulbs.style.width = k >= 1 ? '100%' : Math.ceil(k * n) * PITCH_PX + 'px';
+      if (k < 1) requestAnimationFrame(run);
+    };
+    requestAnimationFrame(run);
   }, { rootMargin: '0px 0px -22% 0px' }).observe(board);
 }
 
 // ------------------------------------------------------------- book a demo
 // Checked here, answered here. Nothing leaves the page.
 {
-  const form = $('#booking'), card = $('#lineup');
+  // One alert speaks for a failed submit (a summary above the button); the notes under each field are plain text.
+  const form = $('#booking'), card = $('#lineup'), sum = $('#errSum');
   const err = (id, text) => { $('#' + id).textContent = text; };
   const fields = {
-    team: { el: $('#team'), err: 'errTeam', test: v => (v.trim() ? '' : 'Enter the team name.') },
-    level: { el: $('#level'), err: 'errLevel', test: v => (v ? '' : 'Pick a level.') },
-    players: { el: $('#players'), err: 'errPlayers', test: v => (!v.trim() ? 'Enter the number of players.' : /^\d+$/.test(v.trim()) && +v >= 1 && +v <= 40 ? '' : 'Enter a number from 1 to 40.') },
-    email: { el: $('#email'), err: 'errEmail', test: v => (!v.trim() ? 'Enter an email.' : /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) ? '' : 'That email does not look right. Check it.') },
+    team: { el: $('#team'), err: 'errTeam', name: 'team name', test: v => (v.trim() ? '' : 'Enter the team name.') },
+    level: { el: $('#level'), err: 'errLevel', name: 'level', test: v => (v ? '' : 'Pick a level.') },
+    players: { el: $('#players'), err: 'errPlayers', name: 'players', test: v => (!v.trim() ? 'Enter the number of players.' : /^\d+$/.test(v.trim()) && +v >= 1 && +v <= 40 ? '' : 'Enter a number from 1 to 40.') },
+    email: { el: $('#email'), err: 'errEmail', name: 'email', test: v => (!v.trim() ? 'Enter an email.' : /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) ? '' : 'That email does not look right. Check it.') },
   };
   const check = f => { const m = f.test(f.el.value); err(f.err, m); if (m) f.el.setAttribute('aria-invalid', 'true'); else f.el.removeAttribute('aria-invalid'); return !m; };
   for (const f of Object.values(fields)) {
@@ -327,6 +369,7 @@ if (live) {
       if (!taken) return;
       e.preventDefault();
       err('errSlot', `${r.value.replace(',', '')} is taken. Pick an open slot.`);
+      $('#bookSay').textContent = $('#errSlot').textContent;
     });
     r.addEventListener('change', () => {
       if (taken) { r.checked = false; if (picked) picked.checked = true; return; }
@@ -339,17 +382,26 @@ if (live) {
     const okSlot = !!slot && !slot.closest('.slot').classList.contains('is-taken');
     err('errSlot', okSlot ? '' : 'Pick an open slot.');
     const bad = Object.values(fields).filter(f => !check(f));
-    if (!okSlot) { ($('.slot:not(.is-taken) input', form)).focus(); return; }
-    if (bad.length) { bad[0].el.focus(); return; }
+    const names = (okSlot ? [] : ['a slot']).concat(bad.map(f => f.name));
+    if (names.length) {
+      const list = names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] : names[0];
+      sum.textContent = '';
+      sum.append(Object.assign(document.createElement('b'), { textContent: names.length === 1 ? 'One thing to fix: ' : `${names.length} things to fix: ` }), `${list}. The notes are under each one.`);
+      if (!okSlot) ($('.slot:not(.is-taken) input', form)).focus(); else bad[0].el.focus();
+      return;
+    }
+    sum.textContent = '';
     $('#outTeam').textContent = fields.team.el.value.trim();
     $('#outLevel').textContent = fields.level.el.value;
     $('#outPlayers').textContent = String(+fields.players.el.value);
     $('#outSlot').textContent = slot.value;
     $('#outEmail').textContent = fields.email.el.value.trim();
+    $('#outEmail').classList.add('is-case');
+    $('#outDay').textContent = slot.value.split(',')[0] + '.';
     form.hidden = true; card.hidden = false;
     card.classList.remove('is-in'); void card.offsetWidth; card.classList.add('is-in');
     card.focus({ preventScroll: true });
-    card.scrollIntoView({ block: 'nearest', behavior: still ? 'auto' : 'smooth' });
+    card.scrollIntoView({ block: 'start', behavior: still ? 'auto' : 'smooth' });
     request();
   });
   $('#again').addEventListener('click', () => {

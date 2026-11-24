@@ -1,6 +1,6 @@
 // Sideslip: the page's one loop. Three axes (rudder -1..1, left brake 0..1, right brake 0..1) take input from
 // held keys, touch pads, range inputs, a drag on the model, an optional phone tilt and the sweep; the pose
-// follows the input on a short spring (as the centering springs do), and the readouts show what a simulator
+// follows the input on a short spring, and the readouts show what a simulator
 // reads, 0 to 1023 per axis. The WebGL view (stage3d.js, with three.js) loads after the first paint.
 import { makeSeg, makeBar } from './seg.js';
 import { createHall } from './hall.js';
@@ -15,6 +15,7 @@ const NAMES = { x: 'rudder', y: 'left brake', z: 'right brake' };
 const segs = { x: [], y: [], z: [] }, bars = { x: [], y: [], z: [] };
 for (const svg of $$('svg.seg[data-of]')) { const k = svg.dataset.of; if (segs[k]) segs[k].push(makeSeg(svg)); }
 for (const el of $$('.bar-m[data-of]')) { const k = el.dataset.of; if (bars[k]) bars[k].push(makeBar(el)); }
+const counts = { x: $$('[data-count="x"]'), y: $$('[data-count="y"]'), z: $$('[data-count="z"]') };
 const lamps = { diff: $$('[data-lamp="diff"]'), sweep: $$('[data-lamp="sweep"]') };
 const keycaps = $$('kbd[data-key]');
 const ranges = Object.fromEntries(AXES.map(k => [k, $(`input[data-range="${k}"]`)]));
@@ -30,6 +31,7 @@ function showAxis(k, v) {
   shown[k] = c;
   for (const s of segs[k]) s(c);
   for (const b of bars[k]) b(v);
+  for (const n of counts[k]) n.textContent = String(c);
   return true;
 }
 const setLamp = (name, on) => { for (const l of lamps[name]) l.classList.toggle('on', on); };
@@ -37,7 +39,7 @@ const setLamp = (name, on) => { for (const l of lamps[name]) l.classList.toggle(
 // ---------------------------------------------------------------- input
 const input = { x: 0, y: 0, z: 0 };        // what the feet ask for
 const pose = { x: 0, y: 0, z: 0 }, vel = { x: 0, y: 0, z: 0 };  // where the mechanism is
-const manual = { x: null, y: null, z: null };  // a value set on a range input (or by tilt) holds until a key or pad takes over
+const manual = { x: null, y: null, z: null };  // a value held on a range input (or by tilt); let go and it springs back, like a key
 const held = new Set();                     // 'a','d','w','e' from keys and pads
 let drag = null;                            // rudder from a drag on the model
 let touched = false;                        // any user input yet (stops the idle sweep)
@@ -63,7 +65,7 @@ addEventListener('keyup', e => { const k = KEYS[e.key && e.key.toLowerCase()]; i
 addEventListener('blur', () => { held.clear(); drag = null; });
 document.addEventListener('visibilitychange', () => { if (document.hidden) held.clear(); });
 
-// touch pads: hold to press, let go and the springs return it
+// touch pads: hold to press, let go and it returns to center
 const PAD_KEY = { 'x-': 'a', 'x+': 'd', y: 'w', z: 'e' };
 const padEls = $$('.pad[data-pad]');
 for (const pad of padEls) {
@@ -80,11 +82,21 @@ for (const pad of padEls) {
   pad.addEventListener('blur', up);
 }
 
-// range inputs: a real labeled control per axis
+// range inputs: a real labeled control per axis. The value holds while the slider is held (pointer down, or an
+// arrow key down) and springs back to rest on release, as a key does, so the hint "let go and it returns" is true.
+const SLIDE_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End']);
 for (const k of AXES) {
   const r = ranges[k];
   if (!r) continue;
+  let down = false;
+  const release = () => { down = false; if (manual[k] != null) { manual[k] = null; announceSoon(); } };
+  r.addEventListener('pointerdown', () => { down = true; });
   r.addEventListener('input', () => { userInput(); manual[k] = +r.value / 100; });
+  r.addEventListener('pointerup', release);
+  r.addEventListener('pointercancel', release);
+  r.addEventListener('lostpointercapture', release);
+  r.addEventListener('keyup', e => { if (SLIDE_KEYS.has(e.key)) release(); });
+  r.addEventListener('blur', release);
 }
 
 // center: everything back to rest
@@ -96,7 +108,7 @@ $('#center').addEventListener('click', () => { userInput(); for (const k of AXES
 const SWEEP = [
   [0, 0, 0, 0], [.5, 0, 0, 0], [1.3, 1, 0, 0], [1.9, 1, 0, 0], [2.9, -1, 0, 0], [3.5, -1, 0, 0], [4.1, 0, 0, 0],
   [4.5, 0, 0, 0], [5, 0, 1, 0], [5.5, 0, 1, 0], [5.9, 0, 0, 0], [6.1, 0, 0, 0], [6.6, 0, 0, 1], [7.1, 0, 0, 1], [7.5, 0, 0, 0],
-  [7.8, 0, 0, 0], [8.4, -.25, 1, .3], [9.1, -.25, 1, .3], [9.7, .25, .3, 1], [10.4, .25, .3, 1], [11, 0, 0, 0], [11.8, 0, 0, 0],
+  [7.8, 0, 0, 0], [8.4, -.25, 1, .4], [9.1, -.25, 1, .4], [9.7, .25, .4, 1], [10.4, .25, .4, 1], [11, 0, 0, 0], [11.8, 0, 0, 0],
 ];
 const SWEEP_T = SWEEP[SWEEP.length - 1][0];
 const inOut = t => (t < .5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
@@ -140,7 +152,8 @@ function announce() {
   const parts = AXES.map(k => `${NAMES[k]} ${count[k](input[k])}`);
   live.textContent = `${parts.join(', ')}${diffOn(input) ? ', differential braking on' : ''}.`;
 }
-const diffOn = p => Math.max(p.y, p.z) > .5 && Math.abs(p.y - p.z) > .4;
+// differential braking: both brakes on (above 0.3) and one clearly harder than the other (by more than 0.4)
+const diffOn = p => Math.min(p.y, p.z) > .3 && Math.abs(p.y - p.z) > .4;
 
 // ---------------------------------------------------------------- lamp test
 let lampTest = REDUCED ? null : { t: 0 };
@@ -212,7 +225,7 @@ function frame(now) {
   // ranges mirror the axis unless one is being set by hand
   for (const k of AXES) {
     const r = ranges[k];
-    if (r && manual[k] == null && document.activeElement !== r) { const v = String(Math.round(input[k] * 100)); if (r.value !== v) r.value = v; }
+    if (r && manual[k] == null) { const v = String(Math.round(input[k] * 100)); if (r.value !== v) r.value = v; }
   }
   hall.step(dt);
   if (stage && slot) {
@@ -231,33 +244,61 @@ createReserve();
 
 // ---------------------------------------------------------------- the WebGL view (one, shared by hero and test panel)
 const slots = $$('.stage[data-slot]');
-const ratio = new Map(slots.map(s => [s, 0]));
 let view = 'hero';
 for (const b of $$('[data-view]')) b.addEventListener('click', () => {
   view = b.dataset.view;
   for (const o of $$('[data-view]')) o.setAttribute('aria-pressed', String(o === b));
   if (stage && slot && slot.dataset.slot === 'try') { stage.setShot(view, REDUCED); needDraw = true; }
 });
+const FRAME = 5 / 4;   // the model's reference frame (stage3d.js FRAME)
 const shotFor = s => (s.dataset.slot === 'try' ? view : 'hero');
+const bar = $('.bar');
+// the top of the window that the page can show: under the legend bar while it is sticky (wide screens)
+const topEdge = () => (getComputedStyle(bar).position === 'sticky' ? Math.max(0, bar.getBoundingClientRect().bottom) : 0);
 
-function placeCanvas(canvas) {
-  let best = null, r = 0;
-  for (const [s, v] of ratio) if (v > r) { r = v; best = s; }
-  if (best === slot) return;
+// How much of the model a slot would show: the model is framed in a 5 : 4 box fitted into the slot like
+// object-fit: contain, and sits in the middle of it (about 70 % of its width and 80 % of its height). The canvas
+// goes to the slot that shows the larger share of that box; on a tie it stays where it is.
+function modelShare(s) {
+  const r = s.getBoundingClientRect(), k = Math.min(r.width / FRAME, r.height);
+  const w = k * FRAME * .7, h = k * .8, cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  const L = cx - w / 2, R = cx + w / 2, T = cy - h / 2, B = cy + h / 2;
+  const vis = Math.max(0, Math.min(R, innerWidth) - Math.max(L, 0)) * Math.max(0, Math.min(B, innerHeight) - Math.max(T, topEdge()));
+  return w * h > 0 ? vis / (w * h) : 0;
+}
+function placeCanvas() {
+  if (!stage) return;
+  let best = slot, r = slot ? modelShare(slot) : 0;
+  for (const s of slots) { const v = modelShare(s); if (v > r + .02) { r = v; best = s; } }
+  if (r <= 0) best = null;
+  if (best === slot) { fit(); return; }
   slot = best;
   for (const s of slots) s.classList.toggle('live', s === slot);
   if (!slot) return;
-  slot.appendChild(canvas);
-  fit();
+  slot.appendChild(stage.canvas);
+  cut = -1; fit();
   stage.setShot(shotFor(slot), true);
   needDraw = true;
 }
+// The canvas fills the slot's inner box (clientWidth x clientHeight, inside its border). While the slot's top is
+// under the sticky bar, the part under the bar is left out: the canvas starts at the bar (in 32px steps, so
+// scrolling does not resize it every frame) and the camera draws only that lower window of the full frame
+// (setViewOffset), so the picture does not move or scale. Nothing of the canvas is ever above the window.
+let cut = -1, boxW = 0, boxH = 0;
 function fit() {
   if (!stage || !slot) return;
-  const r = slot.getBoundingClientRect();
-  stage.size(r.width, r.height);
+  const w = slot.clientWidth, h = slot.clientHeight, top = slot.getBoundingClientRect().top + slot.clientTop;
+  const hidden = Math.max(0, topEdge() - top);
+  const c = Math.min(Math.max(0, h - 64), Math.floor(hidden / 32) * 32);
+  if (c === cut && w === boxW && h === boxH) return;
+  cut = c; boxW = w; boxH = h;
+  const cv = stage.canvas;
+  cv.style.top = c + 'px'; cv.style.height = (h - c) + 'px';
+  stage.size(w, h, c);
   needDraw = true;
 }
+let placeQueued = false;
+const queuePlace = () => { if (placeQueued) return; placeQueued = true; requestAnimationFrame(() => { placeQueued = false; placeCanvas(); }); };
 
 async function loadStage() {
   const canvas = document.createElement('canvas');
@@ -267,11 +308,12 @@ async function loadStage() {
     mod = await import('./stage3d.js');
     stage = await mod.createStage({ canvas, quality: matchMedia('(max-width: 760px)').matches ? 'low' : 'high' });
   } catch (e) { console.warn('[sideslip] 3D view not available, the still stays', e); stage = null; return; }
-  const io = new IntersectionObserver(es => { for (const e of es) ratio.set(e.target, e.isIntersecting ? e.intersectionRatio : 0); placeCanvas(canvas); },
-    { threshold: [0, .05, .1, .2, .3, .4, .5, .6, .7, .8, .9, 1] });
-  for (const s of slots) io.observe(s);
-  new ResizeObserver(() => fit()).observe(document.documentElement);
-  for (const s of slots) new ResizeObserver(() => { if (s === slot) fit(); }).observe(s);
+  stage.canvas = canvas;
+  addEventListener('scroll', queuePlace, { passive: true });
+  addEventListener('resize', queuePlace);
+  new ResizeObserver(queuePlace).observe(document.documentElement);
+  for (const s of slots) new ResizeObserver(() => { if (s === slot) { boxW = -1; fit(); } }).observe(s);
+  placeCanvas();
   // drag on the model for rudder (sideways only, so the page still scrolls)
   canvas.addEventListener('pointerdown', e => {
     if (e.button !== 0) return;
@@ -288,7 +330,7 @@ const later = f => ('requestIdleCallback' in window ? requestIdleCallback(f, { t
 if (document.readyState === 'complete') later(loadStage); else addEventListener('load', () => later(loadStage), { once: true });
 
 // test hooks for the review scripts (no effect on the page)
-window.__sideslip = { input, pose, held, get sweep() { return sweep.on; }, startSweep, stopSweep, get stage() { return stage; }, get slot() { return slot && slot.dataset.slot; } };
+window.__sideslip = { input, pose, held, manual, get sweep() { return sweep.on; }, startSweep, stopSweep, get stage() { return stage; }, get slot() { return slot && slot.dataset.slot; } };
 
 if (REDUCED) for (const k of AXES) showAxis(k, 0);
 requestAnimationFrame(t => { last = t; frame(t); });

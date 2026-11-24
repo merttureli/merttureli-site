@@ -92,8 +92,8 @@ html.js:not(.still) .is-in .line:nth-child(3) > span { transition-delay: .18s; }
 
 /* ------------------------------------------------------- bands and field */
 .band { position: relative; overflow: clip; isolation: isolate; }
-/* the field is fixed to the window, so only a clip-path clips it to its band. The clip-path sits on a layer of its own:
-   on the band itself it also clipped the WebGL canvas, which Chromium then showed cut short once it ran off the top. */
+/* the field is fixed to the window, so only a clip-path clips it to its band. The clip-path sits on a layer of its own
+   so it never clips the band's other content (the WebGL canvas in the hero and the pinned window). */
 .band > .field-clip { position: absolute; inset: 0; z-index: 0; clip-path: inset(0); pointer-events: none; }
 .band--chalk { background: var(--chalk); color: var(--navy); --field: var(--line); }
 .band--navy { background: var(--navy); color: var(--chalk); --field: var(--line-navy); }
@@ -113,13 +113,16 @@ html.js:not(.still) .field path { stroke-dashoffset: 1; }
 @media (max-width: 899px) { .seam__stitch { stroke-width: 8px; stroke-dasharray: 1.5 8; } .seam__ball { width: 11px; height: 11px; margin: -5.5px 0 0 -5.5px; } }
 
 /* ----------------------------------------------------------------- hero */
-.hero { margin-top: var(--bar); height: calc(100svh - var(--bar) - var(--tick)); min-height: 560px; --fs: min(20vw, 33svh); cursor: crosshair; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+/* A grid: the headline on top, the copy at the foot, so the two can never overlap at any height (the hero grows
+   instead). The headline's size leaves the copy its room: 250px under two lines of .88em. */
+.hero { margin-top: var(--bar); --hh: max(560px, calc(100svh - var(--bar) - var(--tick))); min-height: var(--hh); --fs: min(20vw, calc((var(--hh) - 250px) / 1.76)); display: grid; grid-template-rows: auto 1fr auto; padding-bottom: clamp(20px, 4.4svh, 44px); cursor: crosshair; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
 .hero a, .hero button { cursor: pointer; }
-.hero > .hero__title { position: absolute; left: var(--m); top: calc(var(--fs) * .035); font-size: var(--fs); }
-.hero > .hero__machine { position: absolute; right: calc(var(--m) + 1vw); bottom: 0; top: calc(var(--fs) * .8); left: 46%; }
+/* the type sits over the 3D: the net rises behind "THROWS" */
+.hero > .hero__title { grid-row: 1; justify-self: start; margin: calc(var(--fs) * .035) 0 0 var(--m); font-size: var(--fs); z-index: 3; }
+.hero > .hero__machine { position: absolute; right: calc(var(--m) + 1vw); bottom: 0; top: calc(var(--fs) * .5); left: 40%; }
 .hero__still { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; }
 .hero.is-live .hero__still { visibility: hidden; }
-.hero > .hero__copy { position: absolute; left: var(--m); bottom: clamp(20px, 4.4svh, 44px); width: min(34%, 460px); }
+.hero > .hero__copy { grid-row: 3; margin: 18px 0 0 var(--m); width: min(34%, 460px); z-index: 3; }
 .hero__lede { font: 600 clamp(19px, 1.7vw, 25px)/1.22 var(--text); max-width: 17em; text-wrap: balance; }
 .hero__cta { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 18px; margin-top: clamp(16px, 2.6svh, 26px); }
 .chip { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px 0 12px; background: transparent; border: 2px solid var(--navy); border-radius: 0; font: 700 14px/1 var(--text); letter-spacing: .02em; text-transform: uppercase; transform: skewX(var(--slant)); }
@@ -130,11 +133,19 @@ html.js:not(.still) .chip__ball { animation: toss 1.6s var(--snap) infinite; }
 .chip.is-full { background: var(--navy); color: var(--chalk); }
 .hero > .hero__stage { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
 .hero__stage canvas, .how__stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-.hero > .hero__fx { position: absolute; inset: 0; z-index: 3; pointer-events: none; overflow: clip; }
-.fx-ring { position: absolute; width: 56px; height: 56px; margin: -28px 0 0 -28px; border: 3px solid var(--navy); border-radius: 50%; animation: ring .36s cubic-bezier(.2, .8, .3, 1) both; }
-.fx-ring--back { border-color: var(--navy); background: var(--yellow); animation-name: pop; animation-duration: .32s; }
-@keyframes ring { from { transform: scale(.25); opacity: 1; } to { transform: scale(1); opacity: 0; } }
+.hero > .hero__fx { position: absolute; inset: 0; z-index: 4; pointer-events: none; overflow: clip; }
+.hero__trail { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* the release: an 80px yellow ring with navy edges (it reads on chalk and on navy type), held for 450ms */
+.fx-ring { position: absolute; width: 80px; height: 80px; margin: -40px 0 0 -40px; border: 6px solid var(--yellow); border-radius: 50%; box-shadow: 0 0 0 2px var(--navy), inset 0 0 0 2px var(--navy); animation: ring .58s both; }
+.fx-ring--back { width: 64px; height: 64px; margin: -32px 0 0 -32px; background: var(--yellow); border-width: 2px; border-color: var(--navy); box-shadow: none; animation-name: pop; animation-duration: .4s; }
+@keyframes ring { 0% { transform: scale(.3); opacity: 1; animation-timing-function: cubic-bezier(.2, 1.3, .3, 1); } 20% { transform: scale(1); opacity: 1; } 80% { transform: scale(1); opacity: 1; animation-timing-function: ease-in; } 100% { transform: scale(1.14); opacity: 0; } }
 @keyframes pop { 0% { transform: scale(.3); opacity: 1; } 55% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1.25); opacity: 0; } }
+/* a click that cannot be thrown (five already in the air): a crossed ring at the pointer and why */
+.fx-no { position: absolute; width: 80px; height: 80px; margin: -40px 0 0 -40px; border: 5px solid var(--navy); border-radius: 50%; background: rgba(243, 242, 234, .7); animation: nope .9s both; }
+.fx-no::before { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 5px; margin-left: -2.5px; background: var(--navy); transform: rotate(45deg); }
+.fx-no > b { position: absolute; left: calc(100% + 10px); top: 50%; translate: 0 -50%; padding: 7px 12px 8px; background: var(--navy); color: var(--chalk); font: 800 15px/1 var(--text); letter-spacing: .03em; text-transform: uppercase; white-space: nowrap; }
+.fx-no.is-left > b { left: auto; right: calc(100% + 10px); }
+@keyframes nope { 0% { transform: scale(.5); opacity: 0; animation-timing-function: cubic-bezier(.2, 1.3, .3, 1); } 15% { transform: none; opacity: 1; } 22% { transform: translateX(-5px); } 29% { transform: translateX(5px); } 36% { transform: none; } 80% { opacity: 1; } 100% { opacity: 0; } }
 .fx-arc { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .fx-arc path { fill: none; stroke: var(--navy); stroke-width: 3px; stroke-dasharray: 2 11; stroke-linecap: round; }
 .fx-arc circle { fill: var(--yellow); stroke: var(--navy); stroke-width: 2px; }
@@ -172,7 +183,9 @@ html.still .ticker__lean, html:not(.js) .ticker__lean { flex: 1 1 auto; }
 .step__still { grid-column: 2; grid-row: 1 / 4; width: 100%; border: 2px solid var(--navy); }
 .how__window { display: none; }
 
-/* live: one pinned screen, the scroll runs the three steps in the window */
+/* live: one pinned screen, the scroll runs the three steps in the window. On a screen under 561px tall (a phone
+   on its side, a laptop at 200% zoom) there is no room for it: the steps stand one under another with their stills. */
+@media (min-height: 561px) {
 html.live .how { height: 400svh; }
 html.live .how__pin { position: sticky; top: var(--bar); height: calc(100svh - var(--bar)); padding: 0; display: block; }
 html.live .how__head { position: absolute; left: var(--m); top: clamp(22px, 4svh, 40px); }
@@ -188,7 +201,9 @@ html.live .step.is-on .line > span { transition-delay: .1s; }
 html.live .step.is-on .step__verb .line > span { transition-delay: .15s; }
 html.live .step.is-on .step__say { transition-delay: .2s; }
 html.live .how__window { display: block; position: absolute; left: 44%; right: calc(var(--m) + 1vw); top: clamp(22px, 4svh, 40px); bottom: clamp(26px, 5.5svh, 60px); border: 2px solid var(--navy); background: var(--chalk); overflow: clip; }
+}
 .how__still { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: 50% 60%; }
+.how__overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .how.is-live .how__still { visibility: hidden; }
 .how__stage { position: absolute; inset: 0; }
 .how__pips { position: absolute; left: -2px; top: -2px; display: flex; }
@@ -215,14 +230,19 @@ html.live .how__window { display: block; position: absolute; left: 44%; right: c
 .ls__no { font: 800 22px/1 var(--display); color: #b9bfd3; }
 .lamp { width: 12px; height: 12px; border-radius: 50%; background: var(--lamp); box-shadow: 0 0 0 3px rgba(255, 255, 255, .22); flex: none; order: 3; margin-left: auto; transition: background-color .08s; }
 .ls__val { padding: clamp(14px, 1.8vw, 26px) 16px 0; display: flex; align-items: flex-end; gap: 6px; color: var(--lamp); perspective: 500px; }
-.ls__val .flip { display: inline-block; font: 800 clamp(56px, 6.5vw, 116px)/.8 var(--display); font-variant-numeric: tabular-nums; letter-spacing: .01em; transform-origin: 50% 0; }
+.ls__val .flip { display: inline-block; font: 800 clamp(80px, 9vw, 160px)/.8 var(--display); font-variant-numeric: tabular-nums; letter-spacing: .01em; transform-origin: 50% 0; }
 .ls__val small { font: 800 clamp(20px, 2vw, 30px)/1 var(--display); letter-spacing: .04em; text-transform: uppercase; padding-bottom: .1em; }
 .ls__note { padding: 14px 16px 20px; font: 500 15px/1.35 var(--text); color: #cfd3e2; text-wrap: balance; }
 /* lamps light left to right; a numeral flips over as its lamp comes on */
 html.js:not(.still) .inning:not(.is-lit) .lamp { background: var(--line-navy); box-shadow: none; }
-html.js:not(.still) .inning:not(.is-lit) .ls__val, html.js:not(.still) .inning:not(.is-lit) .ls__note { color: var(--line-navy); }
+/* unlit, a numeral is dim but still readable (4.9 to 1), in case the board is never seen lighting */
+html.js:not(.still) .inning:not(.is-lit) .ls__val, html.js:not(.still) .inning:not(.is-lit) .ls__note { color: #7d86a3; }
 html.js:not(.still) .inning .ls__val, html.js:not(.still) .inning .ls__note { transition: color .12s linear; }
 html.js:not(.still) .inning.is-lit .flip { animation: flip .42s var(--snap) both; }
+/* the lamp row across the top of the board: bulbs light one by one, left to right, with the innings */
+.ls__bulbs { grid-column: 1 / -1; position: relative; height: 40px; border-bottom: 2px solid var(--chalk); background: radial-gradient(circle, var(--line-navy) 0 5px, transparent 6px) 9px 50% / 20px 20px repeat-x; }
+.ls__bulbs-on { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; background: radial-gradient(circle, var(--lamp) 0 5px, transparent 6px) 9px 50% / 20px 20px repeat-x; filter: drop-shadow(0 0 3px rgba(255, 255, 255, .8)); }
+html.js:not(.still) .ls__bulbs-on { width: 0; }
 .numbers__kicker { font-size: clamp(76px, 16vw, 300px); margin: clamp(40px, 6vw, 90px) var(--m) 0; }
 
 /* ------------------------------------------------------ built for practice */
@@ -264,29 +284,41 @@ html.js:not(.still) .inning.is-lit .flip { animation: flip .42s var(--snap) both
 .err { font: 700 15px/1.3 var(--text); }
 .err:not(:empty) { margin-top: 8px; padding-left: 12px; border-left: 4px solid var(--navy); }
 .fixtures .err:not(:empty) { margin-top: 14px; }
+.err-sum:empty { display: none; }
+.err-sum { background: var(--navy); color: var(--chalk); padding: 14px 18px 15px; font: 700 17px/1.35 var(--text); }
+.err-sum b { font-weight: 800; }
 .roster .btn { justify-self: start; margin-top: 8px; margin-left: 4px; }
 .roster__note { font: 500 15px/1.3 var(--text); }
 
 /* the confirmation: a lineup card */
-.lineup { margin: clamp(34px, 5vw, 64px) var(--m) 0; max-width: 760px; background: var(--chalk); border: 2px solid var(--navy); padding: clamp(20px, 3vw, 40px); }
-.lineup:focus-visible { outline-offset: 5px; }
+/* the card, and beside it a headline made from the slot: SEE YOU THURSDAY. */
+.done { margin: clamp(34px, 5vw, 64px) var(--m) 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 640px); gap: clamp(24px, 4vw, 64px); align-items: center; scroll-margin-top: 24px; }  /* plus the page's scroll-padding, the bar */
+.done:focus { outline: none; }
+.done:focus-visible { outline: 3px solid var(--navy); outline-offset: 6px; }
+.done__see { font-size: clamp(64px, 10vw, 170px); }
+.lineup { background: var(--chalk); border: 2px solid var(--navy); padding: clamp(20px, 2.6vw, 36px); }
 .lineup__head { position: relative; padding-bottom: 34px; }
-.lineup__title { font: italic 900 clamp(64px, 9vw, 132px)/.86 var(--display); text-transform: uppercase; margin-top: 8px; }
+.lineup__title { font: italic 900 clamp(52px, 6vw, 96px)/.86 var(--display); text-transform: uppercase; margin-top: 8px; }
 .lineup__seam { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 30px; overflow: visible; }
 .lineup__seam path { fill: none; stroke: var(--red); vector-effect: non-scaling-stroke; }
 .lineup__seam path:first-child { stroke-width: 1.5px; }
 .lineup__seam path:last-child { stroke-width: 11px; stroke-dasharray: 2 9; }
 .lineup__table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-.lineup__table th, .lineup__table td { text-align: left; padding: 12px 10px; border-bottom: 2px solid var(--navy); vertical-align: baseline; }
+.lineup__table th, .lineup__table td { text-align: left; padding: 10px 10px; border-bottom: 2px solid var(--navy); vertical-align: baseline; }
 .lineup__table thead th { font: 700 13px/1 var(--text); letter-spacing: .06em; text-transform: uppercase; padding-top: 0; }
 .lineup__table tbody td:first-child { font: 800 30px/1 var(--display); width: 54px; }
 .lineup__table tbody th { font: 700 14px/1 var(--text); letter-spacing: .04em; text-transform: uppercase; width: 26%; }
-.lineup__table tbody td:last-child { font: italic 900 clamp(26px, 3vw, 40px)/1 var(--display); text-transform: uppercase; letter-spacing: .01em; overflow-wrap: anywhere; }
-.lineup__stamp { display: inline-block; margin-top: 26px; padding: 8px 16px 9px; border: 3px solid var(--navy); font: italic 900 clamp(26px, 3vw, 40px)/1 var(--display); text-transform: uppercase; transform: rotate(-3deg); }
-.lineup__note { margin-top: 20px; font: 600 17px/1.4 var(--text); max-width: 30em; }
-.lineup .btn { margin-top: 22px; margin-left: 4px; }
-html:not(.still) .lineup.is-in { animation: card .42s var(--snap) both; }
-html:not(.still) .lineup.is-in .lineup__stamp { animation: stamp .3s .32s var(--snap) both; }
+.lineup__table tbody td:last-child { font: italic 900 clamp(26px, 2.6vw, 38px)/1 var(--display); text-transform: uppercase; letter-spacing: .01em; overflow-wrap: anywhere; }
+/* an email keeps its own case */
+.lineup__table tbody td.is-case { text-transform: none; font: 700 clamp(18px, 1.6vw, 22px)/1.2 var(--text); letter-spacing: 0; }
+.lineup__stamp { display: inline-block; margin-top: 22px; padding: 8px 16px 9px; border: 3px solid var(--navy); font: italic 900 clamp(26px, 3vw, 40px)/1 var(--display); text-transform: uppercase; transform: rotate(-3deg); }
+.lineup__note { margin-top: 16px; font: 600 17px/1.4 var(--text); max-width: 30em; }
+.lineup .btn { margin-top: 18px; margin-left: 4px; }
+html:not(.still) .done.is-in .lineup { animation: card .42s var(--snap) both; }
+html:not(.still) .done.is-in .done__see .line > span { animation: slam .45s var(--snap) both; }
+html:not(.still) .done.is-in .done__see .line:nth-child(2) > span { animation-delay: .09s; }
+@keyframes slam { from { transform: translateX(-135%); } to { transform: none; } }
+html:not(.still) .done.is-in .lineup__stamp { animation: stamp .3s .32s var(--snap) both; }
 @keyframes card { from { transform: translateX(-40px) skewX(-4deg); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes stamp { from { transform: rotate(-3deg) scale(1.5); opacity: 0; } to { transform: rotate(-3deg); opacity: 1; } }
 
@@ -314,6 +346,7 @@ html:not(.still) .lineup.is-in .lineup__stamp { animation: stamp .3s .32s var(--
   .hero > .hero__title { position: relative; left: auto; top: auto; margin: calc(var(--fs) * .04) var(--m) 0; }
   .hero > .hero__machine { position: relative; left: auto; right: auto; top: auto; bottom: auto; width: 100%; aspect-ratio: 1.04; max-height: 46svh; margin-top: calc(var(--fs) * -.06); flex: 1 1 auto; }
   .hero > .hero__copy { position: relative; left: auto; bottom: auto; width: auto; margin: 4px var(--m) 0; }
+  .hero > .hero__title { z-index: 1; }
   .hero__lede { font-size: 19px; max-width: none; }
   .hero__cta { gap: 12px; margin-top: 14px; }
   .hero__cta .btn { flex: 1 1 auto; }
@@ -327,12 +360,14 @@ html:not(.still) .lineup.is-in .lineup__stamp { animation: stamp .3s .32s var(--
   .ticker__run li::after { width: 12px; height: 12px; margin: 0 18px; }
   .step { grid-template-columns: 1fr; }
   .step__still { grid-column: 1; grid-row: auto; margin-top: 18px; }
-  html.live .how__head { top: 14px; }
-  html.live .how__hint { display: none; }
-  html.live .how__window { left: var(--m); right: var(--m); top: 44px; bottom: auto; height: 48svh; }
-  html.live .how__steps { width: calc(100% - 2 * var(--m)); bottom: 22px; height: 40%; }
-  html.live .step__verb, html.live .step__no { font-size: min(27vw, 13svh); }
-  html.live .step__say { font-size: 18px; margin-top: 8px; }
+  @media (min-height: 561px) {
+    html.live .how__head { top: 14px; }
+    html.live .how__hint { display: none; }
+    html.live .how__window { left: var(--m); right: var(--m); top: 44px; bottom: auto; height: 48svh; }
+    html.live .how__steps { width: calc(100% - 2 * var(--m)); bottom: 22px; height: 40%; }
+    html.live .step__verb, html.live .step__no { font-size: min(27vw, 13svh); }
+    html.live .step__say { font-size: 18px; margin-top: 8px; }
+  }
   .sec__head .display { font-size: min(24vw, 130px); }
   .linescore { grid-template-columns: 1fr; }
   .ls__team { display: none; }
@@ -355,9 +390,40 @@ html:not(.still) .lineup.is-in .lineup__stamp { animation: stamp .3s .32s var(--
   .slot__time { font-size: 30px; }
   .roster .btn { justify-self: stretch; margin-inline: 6px; }
   .lineup__table tbody th { width: 30%; }
+  .done { grid-template-columns: 1fr; gap: 18px; }
+  .done__see { font-size: min(21vw, 120px); }
+  .lineup { padding: 18px 16px 20px; }
+  .lineup__head { padding-bottom: 26px; }
+  .lineup__title { font-size: 52px; }
+  .lineup__table th, .lineup__table td { padding: 8px 6px; }
+  .lineup__table thead { display: none; }
+  .lineup__table tbody td:first-child { font-size: 24px; width: 34px; }
+  .lineup__stamp { margin-top: 16px; font-size: 24px; }
+  .lineup__note { margin-top: 12px; font-size: 16px; }
+  .lineup .btn { margin-top: 14px; }
   .foot__row { grid-template-columns: 1fr; }
   .foot__nav { justify-items: start; grid-template-columns: 1fr 1fr; gap: 0 20px; }
 }
+
+/* -------------------------------------------- short screens on their side */
+/* A phone on its side or a laptop at 200% zoom (640 x 400): the one-row bar, the machine beside the headline. */
+@media (max-width: 899px) and (max-height: 560px) and (orientation: landscape) {
+  :root { --bar: 54px; --tick: 42px; }
+  .bar { display: flex; gap: 14px; }
+  .bar__mark { width: 118px; font-size: 24px; }
+  .bar__nav { margin-left: auto; height: auto; gap: 14px; }
+  .bar__link { font-size: 13px; }
+  .study-back.study-back--batterymate { left: calc(var(--m) + 128px); top: 13px; }
+  .hero { display: grid; padding: 0 0 18px; --fs: min(15vw, calc((100svh - var(--bar) - var(--tick)) * .36)); min-height: calc(100svh - var(--bar) - var(--tick)); }
+  .hero > .hero__title { margin: 6px 0 0 var(--m); z-index: 3; }
+  .hero > .hero__machine { position: absolute; left: 44%; right: var(--m); top: 64px; bottom: auto; width: auto; height: calc(100svh - var(--bar) - var(--tick) - 70px); max-height: none; aspect-ratio: auto; margin: 0; }
+  .hero > .hero__copy { width: 44%; margin: 10px 0 0 var(--m); }
+  .hero__lede { font-size: 16px; }
+  .hero__cta { margin-top: 10px; gap: 8px 10px; }
+  .hero__cta .btn { flex: 0 0 auto; min-height: 44px; padding: 0 18px; font-size: 15px; }
+  .hero > .score { top: 6px; right: var(--m); }
+}
+@media (max-width: 699px) and (max-height: 560px) and (orientation: landscape) { .bar__nav { display: none; } .bar > .btn--bar { margin-left: auto; } }
 
 /* ------------------------------------------------------- reduced motion */
 @media (prefers-reduced-motion: reduce) {
