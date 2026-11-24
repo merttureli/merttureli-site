@@ -222,7 +222,7 @@ input[type=range]:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
 .geo-over{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .geo-over path{fill:none;stroke:var(--seg-on);vector-effect:non-scaling-stroke}
 .geo-arc{stroke-width:2;stroke-dasharray:4 4}
-.geo-tick{stroke-width:1;stroke-dasharray:2 4}
+.geo-tick{stroke-width:2}
 .geo-piv{fill:var(--seg-on);stroke:var(--ink);stroke-width:1.5;vector-effect:non-scaling-stroke}
 .geo figcaption{display:flex;align-items:center;gap:8px}
 .geo-key{width:16px;height:0;border-top:2px dashed var(--seg-on);flex:none}
@@ -395,6 +395,7 @@ input[type=range]:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
 }
 @media (max-width:380px){
   .strip .ch-head .lg{letter-spacing:.02em}
+  .strip--try .ch-id{display:none}
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{transition:none!important}

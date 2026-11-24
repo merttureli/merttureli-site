@@ -100,10 +100,15 @@ sweep by itself, the model moves only in direct answer to input.
   sensor lever and toe hinges from the CAD joints. Lights, environment, finish and ground shadow are the shared
   studio rig (`engine.js`, `look.js`). Three numbers pose it. The sweep program in `sideslip.js` follows the
   sequence the project describes (yaw both ways, each toe brake, then differential braking).
-- **One WebGL view.** A single canvas moves between the hero and the test panel, whichever is more on screen,
-  and draws nothing when neither is (or the tab is hidden). three.js loads on idle after `load`.
+- **One WebGL view.** A single canvas moves to the slot (hero or test panel) that shows the larger share of the
+  model's framed box below the bar, checked on scroll and resize, and draws nothing when neither shows it (or the
+  tab is hidden). It fills the slot's inner box (inside its border). While a slot's top is under the sticky bar,
+  the canvas starts at the bar (in 32px steps) and the camera draws only that lower window of the frame
+  (`setViewOffset`), so the picture does not move and no part of the canvas sits above the window. three.js loads
+  on idle after `load`.
 - **Stills.** Rendered from the same stage in a one-off Playwright script (scratch folder, `tools/still.js`):
-  the hero shot at 800 x 640 CSS pixels at 2x on a transparent background, saved as webp with alpha at 1600
+  the hero shot at 800 x 640 CSS pixels at 2x on a transparent background (re-rendered in the review round for the
+  new framing), saved as webp with alpha at 1600
   and 800 wide, so the still and the live canvas line up in any box. The side view line drawing swaps every
   material for plate white and draws `EdgesGeometry` lines in ink, then is cropped.
 
@@ -111,17 +116,55 @@ sweep by itself, the model moves only in direct answer to input.
 
 - Pedals are red (`#d62a1f`) and the signal wires plate white on the model: the brief's palette has no product
   colors, and red is the page's one signal color. The levers and walls keep the studio grays.
-- Added a "keyboard, as your feet" key map under the hero placard (desktop only) to fill the column with an
+- Added a "keyboard, as your feet" key map under the hero placard (desktop at 860px tall or more) to fill the column with an
   instrument rather than whitespace, and a small render of the set in the reserve card at 1280 and wider.
 - The hero runs the sweep by itself after the lamp test until the first input (never with reduced motion).
 - The Hall instrument plots output against magnet position (the transfer curve, lit near the magnet), not
   against time, so it reads the same with reduced motion. The field is a small bar magnet's, an illustration
   without claimed numbers.
-- The phone hero leaves out the status lamps and key legends; the touch pads live in the test panel.
+- The phone and tablet heroes leave out the status lamps; touch screens show touch wording and no key caps.
+
+### Review round (fixes to the critic's punch list)
+
+- **First screen.** The hero grid is the window less the bar (no 680px floor, at most 960px) and the stage sits
+  above the readout strip instead of behind it; the hero shot's lift went from .1 to -.02, so the model is centered
+  in its frame with headroom. Checked by reading the WebGL buffer at full left and full right rudder: the model is
+  whole inside its stage and the three readouts are on the first screen at 1920 x 1080, 1440 x 900, 1280 x 640,
+  1040 x 600, 1024 x 768, 800 x 600, 768 x 1024, 390 x 844 and 360 x 640. Short wide screens drop the key map
+  (under 860px) and the fact row (under 700px). 761 to 1039px: one bar row, a 280px copy column beside the stage
+  (copy above a full width stage when the screen is upright). Phones: the stage takes the height left over.
+- **Phone test panel.** Under 760px a compact row of the three readouts (24px digits) sits between the stage and
+  the pads, so a held pad, the model and the numbers are in view together at 390 x 844 and 360 x 640. The view,
+  sweep, center and tilt controls are one row; sweep, center and tilt are icon buttons (their names stay for
+  screen readers).
+- **Hall instrument.** The magnet's travel is kept to the span where the field only rises (plus or minus 0.22 of the
+  drawing's unit, the peak is at 0.24) and that span is scaled to 0 to 1023, so the output runs one way from end to
+  end of the slider (0, 150, 512, 873, 1023 at the five marks). The scope plots that span.
+- **Inside.** The HID bars fill their panel and show the raw count beside each bar. The geometry drawing marks the
+  pivot bolt and the arc of the pedal in red; the pivot was found by projecting the lever's fixed point and the
+  pedal's path from the CAD linkage in the side shot.
+- **Words.** Statements not in the project file are gone (lever arms that pivot at the top, the centering spring,
+  "the springs center it"). Geometry is "fighter style geometry"; the hint says "let go and it returns to center".
+- **Behavior.** A slider value holds while the slider is held and springs back on release, like a key. The
+  differential braking lamp lights only with both brakes above 0.3 and 0.4 apart (the sweep's differential step
+  now uses 1 and 0.4). Reserve: the stepper uses `aria-disabled`, so focus stays and repeated Enter on plus stays
+  at the limit; at 0 sets left the form cannot be sent and both batch lamps read "batch 02 full"; start over
+  resets the live text.
+- **Small things.** Panels numbered 01 to 05 (the hero placard and the spec placard got theirs). One reserve
+  control in the bar (the pill; the footer keeps the pictogram link). Skip link first in the tab order. Rudder
+  scale label "512". Email placeholder `#5b5d5a`. The brand mark is now a straight tube with the ball centered
+  between two reference lines.
+- **The cut-off render.** In headless Chromium the test panel's render looked cut along a horizontal line when its
+  top was under the sticky bar, while the WebGL buffer itself was whole (read back after a render). The cut
+  followed the canvas's offset above the window (visible height about H less twice the part above) and went away
+  when nothing overlapped the canvas, so it is the headless compositor, not the renderer's size, viewport or
+  scissor (scissor off, viewport the full buffer). Keeping the canvas below the bar (above) avoids it either way.
+  One real sizing fault was fixed on the way: the buffer was sized from the slot's border box while the canvas
+  showed in its padding box, so the picture was scaled by 2px.
 
 ### Known weak spots
 
 - In headless Chromium (SwiftShader) a frame of the large canvas takes a second or more; the input is
   integrated in real time with substeps, so it stays right, but the motion there is not smooth.
-- The phone test panel puts the readouts below the pads, so a thumb on a pad sees the model but not the numbers.
-- The geometry drawing is the CAD side view as is; at its size the springs read as dense hatching.
+- The geometry drawing is the CAD side view as is; at its size the springs still read as dense hatching.
+- On a 768px wide tablet the readout bars are short (7 cells).
