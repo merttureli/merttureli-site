@@ -159,6 +159,7 @@ html:not(.js) .bar, html:not(.js) .study-back.study-back--vireo { position: abso
 
 /* the phone's fixed bar: price left, action right */
 .buybar { display: none; }
+.buybar[hidden] { display: none !important; }
 
 /* ---------- statement ---------- */
 .statement { position: relative; z-index: 1; min-height: var(--vh); display: grid; place-items: center; padding: 22vh 0 26vh; }

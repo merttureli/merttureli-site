@@ -54,15 +54,17 @@ const server = http.createServer((req, res) => {
     page.on('request', r => { if (!r.url().startsWith(base) && !r.url().startsWith('data:') && !r.url().startsWith('blob:')) v.outside.push(r.url().slice(0, 120)); });
     page.on('response', async r => { if (!r.url().startsWith(base)) return; if (r.status() >= 400) v.failed.push(`${r.status()} ${r.url().replace(base, '')}`);
       try { const n = (await r.body()).length, t = r.request().resourceType(); v.bytes[t] = (v.bytes[t] || 0) + n; } catch (e) {} });
+    // A clip makes Chromium composite the frame as the screen shows it: an unclipped capture cuts a WebGL canvas that starts above the window.
+    const clip = { x: 0, y: 0, width: viewport.width, height: viewport.height };
     await page.goto(base + page0, { waitUntil: 'load' });
     await page.waitForTimeout(2500);
-    if (reduced) { await page.screenshot({ path: path.join(out, 'desktop-reduced.png') }); await ctx.close(); continue; }
+    if (reduced) { await page.screenshot({ path: path.join(out, 'desktop-reduced.png'), clip }); await ctx.close(); continue; }
     const size = await page.evaluate(() => ({ h: document.documentElement.scrollHeight, w: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
     v.height = size.h; v.sidewaysOverflow = size.w - size.cw;
     for (let i = 0; i < steps; i++) {
       await page.evaluate(y => window.scrollTo({ top: y, behavior: 'instant' }), Math.round((size.h - viewport.height) * i / Math.max(1, steps - 1)));
       await page.waitForTimeout(900);
-      await page.screenshot({ path: path.join(out, `${name}-${String(i).padStart(2, '0')}.png`) });
+      await page.screenshot({ path: path.join(out, `${name}-${String(i).padStart(2, '0')}.png`), clip });
     }
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' })); await page.waitForTimeout(400);
     await page.screenshot({ path: path.join(out, `${name}-full.png`), fullPage: true }).catch(() => {});

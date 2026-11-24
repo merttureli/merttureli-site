@@ -68,7 +68,8 @@ const SCRUB = () => {
 async function scrubbed(page) {
   const left = await page.evaluate(SCRUB);
   if (left.length) throw new Error('a HOTBOX or bend fixture mention is still on screen: ' + left.join(' | '));
-  return page.screenshot({ type: 'png' });
+  const v = page.viewportSize();   // clipped: an unclipped capture cuts a WebGL canvas that starts above the window
+  return page.screenshot({ type: 'png', clip: { x: 0, y: 0, width: v.width, height: v.height } });
 }
 
 // Wait for web fonts and every image that intersects the viewport (lazy ones included), with a cap.

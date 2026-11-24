@@ -56,9 +56,14 @@ addEventListener('resize', () => { cancelAnimationFrame(rz); rz = requestAnimati
     const y = scrollY;
     if (Math.abs(y - lastY) > 6) { down = y > lastY; lastY = y; }
     const away = y < vh() * 0.9 || seen.size > 0 || down;
-    buybar.classList.toggle('is-away', away);
+    if (away === isAway) return;
+    isAway = away;
+    clearTimeout(gone);
     buybar.inert = away;
+    if (away) { buybar.classList.add('is-away'); gone = setTimeout(() => { buybar.hidden = true; }, 320); }
+    else { buybar.hidden = false; requestAnimationFrame(() => requestAnimationFrame(() => buybar.classList.remove('is-away'))); }
   };
+  let isAway = null, gone = 0;
   const io = new IntersectionObserver(es => {
     for (const e of es) { if (e.isIntersecting) seen.add(e.target); else seen.delete(e.target); }
     update();
