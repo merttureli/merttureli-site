@@ -39,10 +39,12 @@ try{if(sessionStorage.getItem('lowlight-red')==='1')document.documentElement.set
     <!-- luminance, as the eye weighs it -->
     <filter id="ll-lum" color-interpolation-filters="sRGB" x="0" y="0" width="1" height="1">
       <feColorMatrix type="matrix" values=".30 .56 .14 0 0  .30 .56 .14 0 0  .30 .56 .14 0 0  0 0 0 1 0"/>
+      <!-- a little more weight in the darks, so a branch or a balloon reaches night -->
+      <feComponentTransfer><feFuncR type="gamma" exponent="1.45"/><feFuncG type="gamma" exponent="1.45"/><feFuncB type="gamma" exponent="1.45"/></feComponentTransfer>
     </filter>
     <!-- luminance through a red filter: a blue daytime sky falls to dark, stone and cloth stay bright -->
     <filter id="ll-lum-night" color-interpolation-filters="sRGB" x="0" y="0" width="1" height="1">
-      <feColorMatrix type="matrix" values="1.25 .15 -.55 0 -.04  1.25 .15 -.55 0 -.04  1.25 .15 -.55 0 -.04  0 0 0 1 0"/>
+      <feColorMatrix type="matrix" values="1 .15 -.3 0 -.04  1 .15 -.3 0 -.04  1 .15 -.3 0 -.04  0 0 0 1 0"/>
     </filter>
     <!-- luminance with the shadows opened, for the two frames shot near dark -->
     <filter id="ll-lum-lift" color-interpolation-filters="sRGB" x="0" y="0" width="1" height="1">
@@ -52,17 +54,17 @@ try{if(sessionStorage.getItem('lowlight-red')==='1')document.documentElement.set
     <!-- ramp: night, indigo, a violet between, cream -->
     <filter id="ll-ramp" color-interpolation-filters="sRGB" x="0" y="0" width="1" height="1">
       <feComponentTransfer>
-        <feFuncR type="table" tableValues=".024 .075 .31 .72 .949"/>
-        <feFuncG type="table" tableValues=".031 .09 .29 .67 .914"/>
-        <feFuncB type="table" tableValues=".078 .25 .58 .80 .816"/>
+        <feFuncR type="table" tableValues=".024 .075 .22 .72 .949"/>
+        <feFuncG type="table" tableValues=".031 .09 .20 .67 .914"/>
+        <feFuncB type="table" tableValues=".078 .25 .48 .80 .816"/>
       </feComponentTransfer>
     </filter>
-    <!-- ramp for red light mode: black to the one red -->
+    <!-- ramp for red light mode: black to a red a little under the type's, so a photograph is never the brightest thing -->
     <filter id="ll-ramp-red" color-interpolation-filters="sRGB" x="0" y="0" width="1" height="1">
       <feComponentTransfer>
-        <feFuncR type="table" tableValues="0 .22 .50 .80 1"/>
-        <feFuncG type="table" tableValues="0 .03 .07 .15 .231"/>
-        <feFuncB type="table" tableValues="0 .025 .06 .12 .184"/>
+        <feFuncR type="table" tableValues="0 .17 .38 .60 .76"/>
+        <feFuncG type="table" tableValues="0 .02 .05 .11 .175"/>
+        <feFuncB type="table" tableValues="0 .02 .045 .09 .14"/>
       </feComponentTransfer>
     </filter>
     <!-- silhouette: everything dark in the frame becomes solid night, the sky becomes clear -->
@@ -144,20 +146,19 @@ try{if(sessionStorage.getItem('lowlight-red')==='1')document.documentElement.set
 </section>
 
 <!-- 03 PROGRAM -->
-<section class="program" id="program" aria-labelledby="program-h">
+<section class="program" id="program" data-sky aria-labelledby="program-h">
   <header class="head">
-    <p class="kicker"><span>02</span><span>Program</span><span class="kicker-end">Dusk to dawn, three times</span></p>
-    <h2 class="word" id="program-h"><span class="vh">Program</span><span class="wave" aria-hidden="true" data-wave>PROGRAM</span></h2>
+    <h2 class="kicker" id="program-h"><span aria-hidden="true">01</span><span>Program</span><span class="kicker-end">Dusk to dawn, three times</span></h2>
   </header>
 
   <div class="clock" id="clock">
+    <div class="dial" id="dial" aria-hidden="true"></div>
+
     <div class="clock-tabs" role="tablist" aria-label="Nights">
       <button class="chip" type="button" role="tab" id="tab-thu" aria-controls="night-thu" aria-selected="true">Thu 12</button>
       <button class="chip" type="button" role="tab" id="tab-fri" aria-controls="night-fri" aria-selected="false" tabindex="-1">Fri 13</button>
       <button class="chip" type="button" role="tab" id="tab-sat" aria-controls="night-sat" aria-selected="false" tabindex="-1">Sat 14</button>
     </div>
-
-    <div class="dial" id="dial" aria-hidden="true"></div>
 
     <div class="night" role="tabpanel" id="night-thu" aria-labelledby="tab-thu" tabindex="0" data-night="Thursday" data-date="12 August" data-note="First night. Arrive before dark.">
       <h3 class="night-h vh">Thursday 12 August</h3>
@@ -192,7 +193,7 @@ try{if(sessionStorage.getItem('lowlight-red')==='1')document.documentElement.set
 <!-- 04 THE FIELD -->
 <section class="field" id="field" data-sky aria-labelledby="field-h">
   <header class="head">
-    <p class="kicker"><span>03</span><span>The field</span><span class="kicker-end">Location sent with your RSVP</span></p>
+    <p class="kicker"><span>02</span><span>The field</span><span class="kicker-end">Location sent with your RSVP</span></p>
     <h2 class="word" id="field-h"><span class="vh">The field</span><span class="wave" aria-hidden="true" data-wave data-dir="-1">THE FIELD</span></h2>
   </header>
   <div class="panels" role="group" aria-label="Four photographs from other nights">
@@ -205,7 +206,7 @@ try{if(sessionStorage.getItem('lowlight-red')==='1')document.documentElement.set
     <button class="panel" type="button" aria-pressed="false">
       <span class="panel-img"><img class="duo-night" src="../../next/assets/img/beyond/alcazar-moon-960.webp"
         srcset="../../next/assets/img/beyond/alcazar-moon-480.webp 480w, ../../next/assets/img/beyond/alcazar-moon-960.webp 960w, ../../next/assets/img/beyond/alcazar-moon-1280.webp 1280w"
-        sizes="(max-width: 700px) 150vw, 56vw" width="1920" height="1440" alt="The Alc&aacute;zar with a balloon and a small moon" loading="lazy" decoding="async" style="object-position:86% 50%"></span>
+        sizes="(max-width: 700px) 150vw, 56vw" width="1920" height="1440" alt="A castle on a hill, a balloon and a small moon" loading="lazy" decoding="async" style="object-position:86% 50%"></span>
       <span class="panel-cap"><span class="panel-n" aria-hidden="true">02</span><span class="panel-t">A castle, a balloon and a small moon.</span></span>
     </button>
     <button class="panel" type="button" aria-pressed="false">
@@ -226,9 +227,9 @@ try{if(sessionStorage.getItem('lowlight-red')==='1')document.documentElement.set
 
 <!-- 05 HOUSE RULES -->
 <section class="rules" id="rules" aria-labelledby="rules-h">
+  <div class="rules-inner">
   <header class="head">
-    <p class="kicker"><span>04</span><span>House rules</span><span class="kicker-end">Five, all short</span></p>
-    <h2 class="word" id="rules-h"><span class="vh">House rules</span><span class="wave" aria-hidden="true" data-wave>RULES</span></h2>
+    <h2 class="kicker" id="rules-h"><span aria-hidden="true">03</span><span>House rules</span><span class="kicker-end">Five, all short</span></h2>
   </header>
   <ol class="rules-list">
     <li><p class="rule-meta"><span aria-hidden="true">01</span><span>Red light protects night vision. The switch in the bar shows how it looks.</span></p><p class="rule" data-fit>Red light only</p></li>
@@ -237,13 +238,15 @@ try{if(sessionStorage.getItem('lowlight-red')==='1')document.documentElement.set
     <li><p class="rule-meta"><span aria-hidden="true">04</span><span>One that leans back. Your neck will thank you.</span></p><p class="rule" data-fit>Bring a chair</p></li>
     <li><p class="rule-meta"><span aria-hidden="true">05</span><span>What comes in goes home with you.</span></p><p class="rule" data-fit>Leave no trace</p></li>
   </ol>
+  </div>
+  <!-- the disc: a round window that carries an inverted copy of the list (made by the script); it moves by transform only -->
   <div class="rules-disc" aria-hidden="true"></div>
 </section>
 
 <!-- 06 RSVP -->
 <section class="rsvp" id="rsvp" data-sky aria-labelledby="rsvp-h">
   <header class="head">
-    <p class="kicker"><span>05</span><span>RSVP</span><span class="kicker-end">Free. One pass per group</span></p>
+    <p class="kicker"><span>04</span><span>RSVP</span><span class="kicker-end">Free. One pass per group</span></p>
     <h2 class="word" id="rsvp-h"><span class="vh">RSVP</span><span class="wave" aria-hidden="true" data-wave data-dir="-1">RSVP</span></h2>
   </header>
 
@@ -281,7 +284,7 @@ try{if(sessionStorage.getItem('lowlight-red')==='1')document.documentElement.set
 
       <div class="f">
         <label class="f-l" for="name"><span aria-hidden="true">D</span>Name <i>As it goes on the pass</i></label>
-        <input class="f-in f-in-name" id="name" type="text" autocomplete="name" autocapitalize="words" spellcheck="false" maxlength="28" required aria-describedby="err-name">
+        <input class="f-in f-in-name" id="name" type="text" autocomplete="name" autocapitalize="words" spellcheck="false" maxlength="60" required aria-describedby="err-name">
         <p class="err" id="err-name"></p>
       </div>
 

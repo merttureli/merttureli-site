@@ -14,16 +14,17 @@ function rng(seed) {                       // small seeded generator: the same s
 export function createSky(canvas, { reduced, onMeteor }) {
   const ctx = canvas.getContext('2d', { alpha: false });   // opaque: nothing is ever behind the sky, so it need not be blended
   const TURN = TAU / 1500;                 // at rest: one turn in 25 minutes
-  const GEAR = 0.00028;                    // radians of sky per pixel of scroll
+  const GEAR = 0.0005;                     // radians of sky per pixel of scroll
   const BUCKETS = 5;
   let w = 0, h = 0, dpr = 1, px = 0, py = 0, phone = false;
   let stars = [], bright = [], buckets = [];
   let red = false, color = '255,255,255', ground = '#060814', sprite = null;
   const REST = 0.0007;                     // a sweep smaller than this is drawn as a point
-  const SWEEP = 0.46;                      // the longest arc a star may draw, in radians
+  const SWEEP = 0.72;                      // the longest arc a star may draw, in radians
   let clock = 0, headS = 0, tailS = 0, started = false;
   let active = true, meteors = [], nextMeteor = 3.5, radiant = { x: 0, y: 0 };
   let dirty = true, skip = false;
+  let tx = -1, ty = -1;                    // where the page wants the pole: each band puts it in its own free sky
   let slow = 0, lite = false;              // a device that cannot keep up draws every other faint star from then on
   const rand = rng(20270812);
 
@@ -32,10 +33,12 @@ export function createSky(canvas, { reduced, onMeteor }) {
     // device pixel ratio capped at 2, and lower still on a very large screen: stars are dots, they do not need the pixels
     dpr = Math.min(window.devicePixelRatio || 1, 2, Math.max(1, Math.sqrt(3.4e6 / Math.max(1, w * h))));
     canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
-    px = w * (phone ? 0.64 : 0.61); py = h * (phone ? 0.3 : 0.33);          // the pole the sky turns about
+    // the pole the sky turns about; the page moves it band by band, so the field is made to cover the
+    // screen from a pole anywhere on it
+    if (tx < 0) { px = w * (phone ? 0.64 : 0.7); py = h * 0.22; } else { px = tx; py = ty; }
     radiant = { x: w * (phone ? 0.2 : 0.3), y: h * 0.1 };
-    const R = Math.hypot(Math.max(px, w - px), Math.max(py, h - py)) + 8;
-    const count = Math.min(phone ? 1100 : 2800, Math.round(Math.PI * R * R * (phone ? 0.00082 : 0.00066)));
+    const R = Math.hypot(w, h) + 8;
+    const count = Math.min(phone ? 2600 : 6500, Math.round(Math.PI * R * R * (phone ? 0.00082 : 0.00066)));
     const r = rng(812);
     stars = []; bright = []; buckets = Array.from({ length: BUCKETS }, () => []);
     // a loose band of denser stars crosses the field; the rest are spread evenly
@@ -74,7 +77,7 @@ export function createSky(canvas, { reduced, onMeteor }) {
     const sweep = head - tail, trailing = Math.abs(sweep) > REST, ccw = sweep < 0;
     const pad = 4;
     ctx.fillStyle = `rgb(${color})`; ctx.strokeStyle = `rgb(${color})`; ctx.lineCap = 'round';
-    const dim = red ? 0.85 : 1;
+    const dim = red ? 0.7 : 1;
     for (let b = 0; b < BUCKETS; b++) {
       const list = buckets[b]; if (!list.length) continue;
       const alpha = (0.2 + 0.66 * Math.pow(b / (BUCKETS - 1), 1.2)) * dim, size = 0.9 + 0.9 * (b / (BUCKETS - 1));
@@ -149,6 +152,10 @@ export function createSky(canvas, { reduced, onMeteor }) {
     headS += (target - headS) * (1 - Math.exp(-dt / 0.11));
     tailS += (headS - tailS) * (1 - Math.exp(-dt / 0.52));
     if (Math.abs(headS - tailS) > SWEEP) tailS = headS - Math.sign(headS - tailS) * SWEEP;   // a long jump still leaves arcs, not a whirlpool
+    if (tx >= 0) {                          // the pole glides to where the band in view wants it
+      const k = 1 - Math.exp(-dt / 0.16), dx = (tx - px) * k, dy = (ty - py) * k;
+      if (Math.abs(dx) + Math.abs(dy) > 0.02) { px += dx; py += dy; dirty = true; }
+    }
     if (!active) return;
     nextMeteor -= dt;
     if (nextMeteor <= 0) { nextMeteor = spawn() ? 5 + rand() * 7 : 0.4; }
@@ -169,6 +176,7 @@ export function createSky(canvas, { reduced, onMeteor }) {
 
   return {
     build, frame, still,
+    setPole(x, y, now) { tx = x; ty = y; if (now) { px = x; py = y; dirty = true; } },
     setActive(on) { if (on && !active) dirty = true; active = on; },
     setRed(on) {
       red = on; color = on ? '255,59,47' : '255,255,255'; ground = on ? '#000' : '#060814'; paint(); dirty = true;

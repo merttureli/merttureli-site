@@ -1,6 +1,6 @@
 /* Low Light: the RSVP. Everything happens in the page: the pass at the side fills in as the form is
    answered, the form is checked, and then the pass is confirmed. Nothing is sent or stored. */
-import { fitText } from './type.js';
+import { fitText, fitBlock } from './type.js';
 
 const $ = id => document.getElementById(id);
 const NIGHTS = { thu: 'Thu 12', fri: 'Fri 13', sat: 'Sat 14' };
@@ -55,14 +55,27 @@ export function createRsvp({ reduced }) {
   Object.values(err).forEach(e => e.setAttribute('role', 'alert'));
   const svg = $('pass-chart'), passName = $('pass-name');
 
+  /* The name fills the pass's width on one line. A long name that would go small breaks at the space nearest
+     its middle, and the two lines are set at one size, each at the width that fills the measure. */
   function refit() {
-    const text = name.value.trim() || 'Your name';
-    fitText(passName, text, { width: passName.clientWidth, size: 64, maxSize: 104 });
+    const text = (name.value.trim() || 'Your name').toUpperCase().replace(/\s+/g, ' ');
+    passName.textContent = text; passName.style.marginLeft = passName.style.fontVariationSettings = '';
+    const width = passName.clientWidth;
+    fitText(passName, text, { width, size: 64, maxSize: 104 });
+    if (parseFloat(passName.style.fontSize) > 63.9 || !text.includes(' ')) return;      // it fits at the usual size
+    let cut = -1;
+    for (let i = 0; i < text.length; i++) if (text[i] === ' ' && (cut < 0 || Math.abs(i - text.length / 2) < Math.abs(cut - text.length / 2))) cut = i;
+    const parts = [text.slice(0, cut), text.slice(cut + 1)], weight = getComputedStyle(passName).fontWeight;
+    passName.textContent = ''; passName.style.marginLeft = passName.style.fontVariationSettings = '';
+    const spans = parts.map(t => { const el = document.createElement('span'); el.textContent = t; passName.appendChild(el); return el; });
+    // one size for both lines, no larger than a one-line name would be, so the pass keeps its height
+    const { fs } = fitBlock(parts.map(t => ({ text: t, weight })), { width, floor: 50 }), size = Math.min(fs, 72);
+    passName.style.fontSize = size.toFixed(2) + 'px';
+    spans.forEach((el, i) => fitText(el, parts[i], { width, size, maxSize: size }));
   }
   function render() {
     const text = name.value.trim();
     $('pass-name-text').textContent = text || 'Your name';
-    passName.textContent = (text || 'Your name').toUpperCase();
     refit();
     chart(svg, text);
     let h = 0; for (const ch of plain(text)) h = (h * 31 + ch.charCodeAt(0)) % 9973;
@@ -90,7 +103,7 @@ export function createRsvp({ reduced }) {
     scope.querySelector('.toggle-state').textContent = state.scope ? 'Yes' : 'No';
     render();
   });
-  name.addEventListener('input', () => { if (name.value.trim().length > 1) clear('name'); render(); });
+  name.addEventListener('input', () => { if (name.value.trim()) clear('name'); render(); });
   email.addEventListener('input', () => { if (okEmail()) clear('email'); });
 
   const okEmail = () => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.value.trim());
@@ -101,7 +114,7 @@ export function createRsvp({ reduced }) {
     e.preventDefault();
     let first = null;
     if (!state.nights.size) { fail('nights', 'Pick at least one night.'); first = first || chips[0]; } else clear('nights');
-    if (name.value.trim().length < 2) { fail('name', 'A name is needed for the pass.', name); first = first || name; } else clear('name');
+    if (!name.value.trim()) { fail('name', 'A name is needed for the pass.', name); first = first || name; } else clear('name');
     if (!okEmail()) { fail('email', email.value.trim() ? 'That does not look like an email address.' : 'An email address is needed.', email); first = first || email; } else clear('email');
     if (first) { first.focus(); return; }
     confirm();
@@ -116,7 +129,11 @@ export function createRsvp({ reduced }) {
     $('pass-after').hidden = false;
     form.setAttribute('data-locked', ''); form.inert = true;
     pass.focus({ preventScroll: true });
-    pass.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' });
+    // bring the pass and the answer under it into view, clear of the bar; if both cannot fit, the answer wins
+    const wrap = pass.parentElement, r = wrap.getBoundingClientRect();
+    const bar = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 64;
+    const top = r.height <= innerHeight - bar - 24 ? r.top - bar - 12 : r.bottom - innerHeight + 16;
+    window.scrollTo({ top: window.scrollY + top, behavior: reduced ? 'auto' : 'smooth' });
   }
   $('pass-edit').addEventListener('click', () => {
     pass.dataset.state = 'draft';

@@ -76,7 +76,7 @@ export function createWaves({ reduced }) {
     // per letter: advance at 50 and gain per unit of width; the two outer letters give up their outer bearing
     const lo = adv.map((v, i) => v[0] - (i === 0 ? v[2] : 0) - (i === n - 1 ? v[4] : 0));
     const gain = adv.map((v, i) => ((v[1] - v[0]) - (i === 0 ? v[3] - v[2] : 0) - (i === n - 1 ? v[5] - v[4] : 0)) / SPAN);
-    return { el, text, weight, spans, lo, gain, m: span(text, weight), l: adv[0][2], lg: (adv[0][3] - adv[0][2]) / SPAN,
+    return { el, text, weight, spans, adv, lo, gain, m: span(text, weight), l: adv[0][2], lg: (adv[0][3] - adv[0][2]) / SPAN,
       dir: el.dataset.dir === '-1' ? -1 : 1, hero: !!el.dataset.hero, fs: 0, mean: 100, need: 0, x: [], top: 0, h: 0, applied: [] };
   });
   let vh = window.innerHeight, heroH = 1;
@@ -87,14 +87,17 @@ export function createWaves({ reduced }) {
     if (heroes.length === 2 && hero) {
       // The two hero lines share one mean width, chosen so that both fill the measure and together fill the height that is free.
       const title = heroes[0].el.parentElement, cs = getComputedStyle(hero);
+      title.style.paddingLeft = '';
       const W = title.clientWidth, gap = parseFloat(cs.getPropertyValue('--hero-gap')) || 0, reserve = parseFloat(cs.getPropertyValue('--reserve')) || 0;
       heroH = hero.offsetHeight;
       const H = heroH - title.offsetTop - reserve - gap;
       const tall = w => BOX * W * (1 / emAt(heroes[0].m, w) + 1 / emAt(heroes[1].m, w));
-      let lo = W < 700 ? 57 : 64, hi = 132;
-      let mean = lo;
-      if (tall(lo) > H) { if (tall(hi) >= H) mean = hi; else { for (let k = 0; k < 30; k++) { mean = (lo + hi) / 2; if (tall(mean) > H) lo = mean; else hi = mean; } } }
-      for (const it of heroes) { it.mean = mean; it.W = W; it.fs = W / emAt(it.m, mean); }
+      let lo = W < 700 ? 57 : WMIN, hi = WMAX;
+      let mean = lo, k = 1;
+      if (tall(lo) > H) { if (tall(hi) >= H) { mean = hi; k = H / tall(hi); } else { for (let j = 0; j < 30; j++) { mean = (lo + hi) / 2; if (tall(mean) > H) lo = mean; else hi = mean; } } }
+      // a screen too short for both lines even at the widest setting: the pair shrinks to fit the height and sits centered
+      for (const it of heroes) { it.mean = mean; it.W = W * k; it.fs = it.W / emAt(it.m, mean); }
+      if (k < 1) title.style.paddingLeft = (W * (1 - k) / 2).toFixed(1) + 'px';
     }
     for (const it of items) {
       if (!it.hero) {
@@ -144,7 +147,17 @@ export function createWaves({ reduced }) {
       solve(it, from + (to - from) * t);
     }
   }
-  return { layout, update, items };
+  /* Where the ink of the hero's last letter (the T of LIGHT) is centered now, in px from the line's left edge.
+     Arithmetic from the widths just applied, so it costs no layout. */
+  function heroT() {
+    const it = items.find(i => i.hero && i.el.dataset.hero === '2');
+    if (!it || !it.applied.length) return null;
+    const n = it.lo.length, at = i => it.lo[i] + it.gain[i] * (it.applied[i] - WMIN);
+    let run = 0; for (let i = 0; i < n - 1; i++) run += at(i);
+    const row = it.adv[n - 1], lb = row[2] + (row[3] - row[2]) * (it.applied[n - 1] - WMIN) / SPAN;
+    return (run + (lb + at(n - 1)) / 2) * it.fs;
+  }
+  return { layout, update, heroT, items };
 }
 
 /* ---------- blocks ---------- */

@@ -10,7 +10,6 @@
   --bg:var(--night);--ink:var(--cream);--ink-2:#aaa493;--line:rgba(242,233,208,.3);
   --accent:var(--lilac);--on-accent:var(--night);
   --ring:var(--cream);--ring-back:var(--night);
-  --disc:var(--cream);
   --display:"Anybody","Arial Narrow","Helvetica Neue",Arial,sans-serif;
   --mono:"Azeret Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
   --g:20px;--bar-row:64px;--bar-h:64px;--back-w:194px;
@@ -20,7 +19,7 @@
 /* Red light mode: every color becomes a red on black. */
 :root[data-red]{
   --night:#000;--indigo:#000;--cream:#ff3b2f;--lilac:#ff3b2f;
-  --ink-2:#ff3b2f;--line:#5a0e0a;--disc:#ff3b2f;
+  --ink-2:#ff3b2f;--line:#5a0e0a;
 }
 /* on a phone the way back has its own row under the bar, at the top of the page: the hero starts below it */
 @media (max-width:700px){:root{--g:12px;--bar-row:60px;--bar-h:98px}:root[data-study-framed]{--bar-h:60px}}
@@ -81,6 +80,7 @@ html.js:not(.late) .wave:not([data-ready]){visibility:hidden}
 /* small text never sits straight on the stars: over the sky it carries its own ground */
 [data-sky] .kicker span,.hero-lede span{background:var(--bg);box-shadow:0 0 0 3px var(--bg)}
 .word{margin-top:18px;font-size:inherit;font-weight:inherit}
+h2.kicker{font-size:inherit;font-weight:inherit;line-height:inherit}
 @media (max-width:700px){
   .kicker{flex-wrap:wrap;row-gap:2px}
   .kicker span:nth-child(2){white-space:nowrap}
@@ -138,7 +138,7 @@ html.js:not(.late) .wave:not([data-ready]){visibility:hidden}
 .hero-photo{z-index:1;opacity:.95;-webkit-mask-image:radial-gradient(ellipse 64% 98% at 63% 100%,#000 40%,transparent 100%);mask-image:radial-gradient(ellipse 64% 98% at 63% 100%,#000 40%,transparent 100%)}
 .hero-people{z-index:3}
 /* the ground the two people sit on, carried to the left edge at the height it has in the photograph */
-.hero-ground{position:absolute;z-index:3;left:0;right:calc(var(--pw) - 2px);bottom:0;height:calc(var(--pw)*1.25*(var(--shown) - .4885));background:var(--bg)}
+.hero-ground{position:absolute;z-index:3;left:-50vw;right:calc(var(--pw) - 2px);bottom:0;height:calc(var(--pw)*1.25*(var(--shown) - .4885));background:var(--bg)}
 .hero-foot{position:absolute;z-index:4;left:var(--g);bottom:14px;display:flex;align-items:center;gap:22px}
 .hero-lede{font-size:13px;white-space:nowrap}
 .hero-lede span:last-child{display:block;width:fit-content}
@@ -180,6 +180,12 @@ html.js:not(.late) .wave:not([data-ready]){visibility:hidden}
   .badge-ring text{font-size:14.2px}
 }
 @media (max-width:380px){.badge{width:124px;height:124px}}
+/* a portrait tablet: the photograph is larger, so the two people fill the room under the words */
+@media (min-width:701px) and (max-width:1099px) and (orientation:portrait){.hero{--pw:60vw}}
+/* a short laptop screen: the badge steps aside and the words take the height it held */
+@media (min-width:1100px) and (max-height:699px){.hero{--reserve:78px}.badge{display:none}}
+/* a very large screen: the photograph sits a little lower, so the heads stay under the bar of the T */
+@media (min-width:1800px) and (min-aspect-ratio:3/2){.hero{--shown:.47}}
 
 /* ---------- 03 marquee band ---------- */
 .shout{position:relative;background:var(--bg);color:var(--ink);padding:26px 0 0;overflow:hidden;overflow:clip;
@@ -188,7 +194,7 @@ html.js:not(.late) .wave:not([data-ready]){visibility:hidden}
 /* each row is clipped at the sides only, so the tail of a Q is free to hang below its line */
 .marquee{overflow:hidden}
 @supports (overflow:clip){.marquee{overflow-x:clip;overflow-y:visible}}
-.marquee+.marquee{margin-top:14px}
+.marquee+.marquee{margin-top:calc(14px + clamp(4.6px,.75vw,11px))}
 .marquee-track{display:flex;width:max-content;will-change:transform}
 .marquee-group{flex:none;display:flex;align-items:center;font-size:clamp(76px,12.4vw,184px);font-stretch:75%}
 .marquee-group span{display:block}
@@ -207,15 +213,14 @@ html.js .marquee[data-run][data-reverse] .marquee-track{animation-direction:reve
 html:not(.js) .shout-pause{display:none}
 
 /* ---------- 04 program: the night clock ---------- */
-.program{background:var(--bg);padding:var(--g) 0 84px;--bg:var(--indigo)}
-.clock{padding:34px var(--g) 0;display:grid;justify-items:center}
-.clock-tabs{display:flex;gap:8px}
+.program{background:var(--bg);background:color-mix(in srgb,var(--indigo) 80%,transparent);padding:var(--g) 0 84px;--bg:var(--indigo)}
+.clock{padding:18px var(--g) 0;display:grid;justify-items:center}
+.clock-tabs{display:flex;gap:8px;margin-top:22px}
 .clock-tabs .chip{min-height:44px;padding:0 22px}
 
-.dial{position:relative;width:min(100%,1040px);margin-top:26px;--R:200px}
+.dial{position:relative;width:min(100%,1240px);--R:200px}
 .dial svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .dial-arc{fill:none;stroke:var(--ink);stroke-width:1.5}
-.dial-in{fill:none;stroke:var(--line);stroke-width:1;stroke-dasharray:2 7}
 .dial-base{stroke:var(--line);stroke-width:1}
 .dial-tick{stroke:var(--ink);stroke-width:1}
 .dial-tick.s{stroke:var(--line)}
@@ -225,14 +230,15 @@ html:not(.js) .shout-pause{display:none}
 /* everything that turns is anchored at the hub: the middle of the base line */
 .dial-hub{position:absolute;left:50%;top:var(--cy);width:0;height:0}
 .dial-hand{position:absolute;left:0;top:0;width:0;height:0;transform:rotate(var(--a,0deg));transition:transform 1s cubic-bezier(.34,1.42,.5,1)}
-.dial-hand::before{content:"";position:absolute;right:calc(var(--R)*.62);top:-1px;width:calc(var(--R)*.38 - var(--hand-in,48px));height:2px;background:var(--accent)}
+.dial-hand::before{content:"";position:absolute;right:-6px;top:-1.5px;width:calc(var(--R)*.9 + 6px);height:3px;border-radius:2px;background:var(--accent)}
+.dial-hub::after{content:"";position:absolute;left:-7px;top:-7px;width:14px;height:14px;border-radius:50%;background:var(--accent)}
 .dial-mark{position:absolute;left:0;top:0;width:0;height:0;transform:rotate(var(--a,0deg)) translateX(calc(var(--R)*-1)) rotate(calc(var(--a,0deg)*-1));transition:transform 1s cubic-bezier(.34,1.42,.5,1)}
 .dial[data-instant] .dial-mark,.dial[data-instant] .dial-hand,.dial[data-instant] .dial-watch{transition:none}
 .dial-mark b{position:absolute;left:-13px;top:-13px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--bg);border:1px solid var(--ink);font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:0;line-height:1;color:var(--ink);transition:background-color .2s,color .2s}
 .dial-mark[data-on] b{background:var(--ink);color:var(--bg)}
 .dial-mark[data-key="watch"] b{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
-.dial-read{position:absolute;left:50%;bottom:calc(100% - var(--cy) + var(--R)*.07);width:calc(var(--R)*1.02);translate:-50% 0;text-align:center;display:grid;justify-items:center;gap:calc(var(--R)*.04)}
-.dial-night{font-family:var(--display);font-weight:400;font-stretch:75%;font-size:calc(var(--R)*.25);line-height:.9;letter-spacing:0;white-space:nowrap}
+.dial-read{position:absolute;left:50%;top:calc(var(--cy) + 22px);width:calc(var(--R)*1.1);translate:-50% 0;text-align:center;display:grid;justify-items:center;gap:8px}
+.dial-night{font-family:var(--display);font-weight:400;font-stretch:75%;font-size:clamp(40px,calc(var(--R)*.15),84px);line-height:.9;letter-spacing:0;white-space:nowrap}
 .dial-date{font-size:13px;font-weight:600}
 .dial-note{font-size:12px;color:var(--ink-2);max-width:26ch;text-wrap:balance}
 html:not(.js) .dial{display:none}
@@ -260,12 +266,9 @@ html:not(.js) .night-h{position:static;width:auto;height:auto;margin:0 0 10px;cl
 }
 @media (max-width:700px){
   .program{padding-bottom:56px}
-  .clock{padding-top:26px}
+  .clock{padding-top:14px}
   .clock-tabs .chip{padding:0 16px}
-  .dial{margin-top:20px}
-  .dial{--hand-in:42px}
-  .dial-read{bottom:calc(100% - var(--cy) + 10px);gap:5px}
-  .dial-night{font-size:calc(var(--R)*.25)}
+  .dial-read{gap:5px}
   .dial-date{font-size:12px}
   .dial-note{display:none}
   .night{margin-top:26px}
@@ -277,10 +280,11 @@ html:not(.js) .night-h{position:static;width:auto;height:auto;margin:0 0 10px;cl
 .panel{flex:1 1 0;min-width:0;display:flex;flex-direction:column;padding:0;border:0;border-radius:0;background:none;color:inherit;text-align:left;transition:flex-grow .7s var(--ease);container-type:inline-size}
 .panel-img{flex:1 1 0;min-height:0;display:block;overflow:hidden;background:var(--indigo)}
 .panel-img img{width:100%;height:100%;object-fit:cover}
-.panel-cap{flex:none;display:flex;gap:12px;align-items:baseline;height:38px;padding:11px 0 0;background:var(--bg);font-size:12px;white-space:nowrap;overflow:hidden}
-.panel-n{font-weight:600;color:var(--accent)}
-.panel-t{overflow:hidden;text-overflow:ellipsis;transition:opacity .3s}
-@container (max-width:150px){.panel-t{opacity:0}}
+.panel-cap{flex:none;display:flex;gap:12px;align-items:baseline;height:56px;padding:11px 10px 0 0;background:var(--bg);font-size:12px;line-height:1.45;white-space:normal;overflow:hidden}
+.panel-n{flex:none;font-weight:600;color:var(--accent)}
+.panel-t{min-width:0;transition:opacity .3s}
+/* a closed panel shows only its number */
+@container (max-width:209px){.panel-t{display:none}}
 .panel[aria-pressed="true"]{flex-grow:2.6}
 @media (hover:hover){.panel:hover{flex-grow:2.6}}
 .panel:focus-visible{flex-grow:2.6;outline:2px solid var(--ring);outline-offset:2px;box-shadow:none}
@@ -298,9 +302,10 @@ html:not(.js) .night-h{position:static;width:auto;height:auto;margin:0 0 10px;cl
 }
 
 /* ---------- 06 house rules: the one light section ---------- */
-.rules{position:relative;isolation:isolate;overflow:hidden;overflow:clip;background:var(--bg);color:var(--ink);padding:var(--g) 0 64px;
+.rules{position:relative;overflow:hidden;overflow:clip;background:var(--bg);color:var(--ink);
   --bg:var(--cream);--ink:var(--night);--ink-2:#34364a;--line:rgba(6,8,20,.34);--accent:var(--night);--on-accent:var(--cream);--ring:var(--night);--ring-back:var(--cream)}
 :root[data-red] .rules{--bg:#000;--ink:#ff3b2f;--ink-2:#ff3b2f;--line:#5a0e0a;--accent:#ff3b2f;--on-accent:#000;--ring:#ff3b2f;--ring-back:#000}
+.rules-inner{padding:var(--g) 0 64px}
 .rules-list{padding:0 var(--g);margin-top:40px}
 .rules-list li{border-top:1px solid var(--line);padding:11px 0 30px}
 .rules-list li:last-child{padding-bottom:0}
@@ -310,9 +315,16 @@ html:not(.js) .night-h{position:static;width:auto;height:auto;margin:0 0 10px;cl
 .rule{font-stretch:75%;font-size:var(--rule-fs,8.6vw)}
 .rule span{display:inline}
 /* one shape that moves: a disc that crosses the list as the page scrolls and turns what it covers inside out */
-.rules-disc{position:absolute;z-index:2;left:0;top:0;width:var(--d,40vw);height:var(--d,40vw);border-radius:50%;background:var(--disc);mix-blend-mode:difference;pointer-events:none;transform:translate3d(var(--x,58vw),var(--y,30%),0);will-change:transform}
+.rules-disc{position:absolute;z-index:2;left:0;top:0;width:40vw;height:40vw;border-radius:50%;overflow:hidden;pointer-events:none;transform:translate3d(58vw,30%,0);will-change:transform;
+  /* the colors a cream disc in "difference" over the cream band would give: black ground, warm light letters */
+  --bg:#000;--ink:#ece1bc;--ink-2:#beb386;--line:#504d40;background:var(--bg);color:var(--ink)}
+.rules-inv{position:absolute;left:0;top:0;will-change:transform}
+html:not(.js) .rules-disc{display:none}
+:root[data-red] .rules-disc{--bg:#000;--ink:#ff3b2f;--ink-2:#ff3b2f;--line:#5a0e0a;box-shadow:inset 0 0 0 2px #ff3b2f}
 @media (max-width:700px){
-  .rules{padding-bottom:48px}
+  .rules-inner{padding-bottom:48px}
+  .rule-meta{flex-direction:column;gap:4px}
+  .rule-meta span:last-child{text-align:left}
   .rules-list{margin-top:28px}
   .rules-list li{padding:10px 0 22px}
   .rule-meta{margin-bottom:12px}
@@ -380,6 +392,11 @@ html:not(.js) .night-h{position:static;width:auto;height:auto;margin:0 0 10px;cl
 .pass-chart .hint{font-family:var(--mono);font-size:8.5px;letter-spacing:.05em;fill:currentColor;text-anchor:middle}
 .pass-name{padding:14px var(--pass-pad) 16px;font-size:inherit;font-weight:inherit;overflow:hidden;contain:inline-size}
 .pass-name-fit{display:block;font-size:64px;font-stretch:100%}
+.pass-name-fit>span{display:block;padding-top:.1225em}
+.pass-name-fit:has(>span){padding-top:0}
+.pass-name-fit>span+span{margin-top:6px}
+/* a short screen: the pass is not held in place, and its chart is smaller, so the whole pass and its answer fit */
+@media (min-width:901px) and (max-height:940px){.pass-wrap{position:static}.pass-chart{width:min(100%,210px)}.pass-sky{padding-top:12px}}
 .pass-facts{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line)}
 .pass-facts>div{padding:10px var(--pass-pad) 12px;display:grid;gap:4px}
 .pass-facts>div:nth-child(2){border-left:1px solid var(--line)}
@@ -461,6 +478,19 @@ html:not(.js) .night-h{position:static;width:auto;height:auto;margin:0 0 10px;cl
   .pass[data-state="confirmed"] .pass-chart .link{stroke-dasharray:none;stroke-dashoffset:0;animation:none}
   .pass[data-state="confirmed"] .pass-chart .star{animation:none}
 }
+
+/* ---------- red light: dimmer, not brighter ----------
+   The big words become 2px outlines with no fill, pills become outlines, the band goes black. Small text stays
+   solid red, where it is 5.9 to 1 on black. */
+:root[data-red] .wave,:root[data-red] .rule,:root[data-red] .marquee-group,:root[data-red] .foot-n,:root[data-red] .pass-name-fit{color:transparent;-webkit-text-stroke:2px #ff3b2f}
+:root[data-red] .rules-disc .rule{color:#ff3b2f;-webkit-text-stroke:0}
+:root[data-red] .marquee-group i{background:none;box-shadow:inset 0 0 0 2px #ff3b2f}
+:root[data-red] .shout{--bg:#000;border-block:1px solid #5a0e0a}
+:root[data-red] .shout-foot{border-top:1px solid #5a0e0a}
+:root[data-red] .pill,:root[data-red] .bar-rsvp{background:#000;color:#ff3b2f;border:2px solid #ff3b2f}
+@media (hover:hover){:root[data-red] .pill:hover,:root[data-red] .bar-rsvp:hover{background:#5a0e0a;color:#ff3b2f;border-color:#ff3b2f}}
+:root[data-red] .redswitch[aria-pressed="true"] .redswitch-track{background:#5a0e0a}
+:root[data-red] .redswitch[aria-pressed="true"] .redswitch-knob{background:#ff3b2f}
 
 /* the switch between the two modes cross-fades the whole page */
 ::view-transition-old(root),::view-transition-new(root){animation-duration:.45s}
