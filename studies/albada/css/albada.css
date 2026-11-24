@@ -431,6 +431,7 @@ html.sheet-open{overflow:hidden}
 
   .bar__nav{display:none}
   .bar__menu{display:block}
+  .bar{grid-template-columns:auto minmax(0,1fr) auto}   /* the clock centers in the room between the name and the menu */
   .bar__brand{font-size:17px;letter-spacing:.14em}
   .bar__right{gap:16px}
   .bar__book{min-height:36px;padding:0 11px;gap:8px}
@@ -444,7 +445,7 @@ html.sheet-open{overflow:hidden}
 
   .ch__grid,.q__grid,.bk{display:block}
   .ch__text,.ch--cloud .ch__text{max-width:30em;margin-inline:0;align-self:auto}
-  .ch--field .ch__text{padding:0;margin-top:36px}
+  .ch--field .ch__text{padding:0;margin-top:36px;align-self:auto}
   .ch--field .ch__grid{display:flex;flex-direction:column-reverse}
   .ch--lift .display{text-align:left}
   .ch--lift .ch__a{width:86%}
@@ -467,9 +468,9 @@ html.sheet-open{overflow:hidden}
   .ch--wheat .ch__b{width:62%;margin:0 0 0 auto}
 
   .timetable__list{grid-template-columns:1fr;border-top:1px solid var(--ink)}
-  .timetable__list li{grid-template-columns:3.4em 1fr;align-items:baseline;gap:16px;padding:14px 0 12px;border-bottom:1px solid var(--line)}
+  .timetable__list li{grid-template-columns:max-content 1fr;align-items:baseline;gap:18px;padding:14px 0 12px;border-bottom:1px solid var(--line)}
   .timetable__list li::before{content:none}
-  .timetable__list .num{font-size:var(--t-serif-l);line-height:.9}
+  .timetable__list .num{font-size:var(--t-serif-l);line-height:.9;min-width:2.6em}
 
   .q__arch{width:70%;margin:0 0 48px auto}
   .qa summary{padding:20px 0}
@@ -501,6 +502,7 @@ html.sheet-open{overflow:hidden}
   .pax__note{flex-basis:100%;margin-left:0}
   .card__grid dd{font-size:var(--t-serif-s)}
 }
+@media (max-width:439px){.bar__brand{font-size:16px;letter-spacing:.1em}.bar__right{gap:14px}}
 @media (max-width:379px){.bar__clock{display:none}}
 
 /* ---------- reduced motion: no drift, no lift-off, no balloon travel; the grounds change by section ---------- */

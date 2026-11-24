@@ -111,7 +111,7 @@ function frame() {
     const below = toneAt(backY);
     if (back && last.below !== below) { last.below = below; copyTone(back, below, [['--back-ink', '--ink'], ['--back-bg', '--sec-bg']]); }
   }
-  bar.classList.toggle('is-veiled', y > 8);                 // clear only at rest on the first screen
+  bar.classList.toggle('is-veiled', y >= 8);                // clear only at rest on the first screen
 
   /* the clock */
   let i = 0;

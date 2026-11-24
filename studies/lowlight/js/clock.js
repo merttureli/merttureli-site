@@ -1,10 +1,12 @@
-/* Low Light: the night clock. A half dial from 20:00 (left) to 05:00 (right), nine even hours.
+/* Low Light: the night clock. A half dial from 20:00 (left) through midnight (top) to 05:00 (right):
+   the four hours before midnight share the left quarter and the five after it the right quarter.
    The times are read from the lists in the page, so the lists stay the one source of the program. */
 
 const START = 20 * 60, SPAN = 9 * 60;
 const NS = 'http://www.w3.org/2000/svg';
 const mins = s => { const [h, m] = s.split(':').map(Number); let t = h * 60 + m; if (t < 12 * 60) t += 24 * 60; return t - START; };
-const deg = m => 180 * m / SPAN;
+const MID = 4 * 60;
+const deg = m => m <= MID ? 90 * m / MID : 90 + 90 * (m - MID) / (SPAN - MID);
 const el = (name, attrs = {}, text) => { const n = document.createElementNS(NS, name); for (const k in attrs) n.setAttribute(k, attrs[k]); if (text != null) n.textContent = text; return n; };
 
 export function createClock() {
@@ -36,7 +38,7 @@ export function createClock() {
     dial.style.height = H + 'px'; dial.style.setProperty('--R', R + 'px'); dial.style.setProperty('--cy', cy + 'px');
     svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
     svg.textContent = '';
-    const at = (m, r) => { const a = Math.PI * (1 - m / SPAN); return [cx + Math.cos(a) * r, cy - Math.sin(a) * r]; };
+    const at = (m, r) => { const a = Math.PI * (1 - deg(m) / 180); return [cx + Math.cos(a) * r, cy - Math.sin(a) * r]; };
     const half = r => `M${cx - r} ${cy}A${r} ${r} 0 0 1 ${cx + r} ${cy}`;
     svg.append(el('line', { class: 'dial-base', x1: cx - R - padX + 2, y1: cy, x2: cx + R + padX - 2, y2: cy }));
     svg.append(el('path', { class: 'dial-in', d: half(R * 0.6) }));
@@ -53,7 +55,7 @@ export function createClock() {
     }
     svg.append(el('text', { class: 'dial-end', x: cx - R, y: cy + 22, 'text-anchor': 'start' }, 'DUSK'));
     svg.append(el('text', { class: 'dial-end', x: cx + R, y: cy + 22, 'text-anchor': 'end' }, 'DAWN'));
-    watch = el('path', { class: 'dial-watch', d: half(R), pathLength: SPAN });
+    watch = el('path', { class: 'dial-watch', d: half(R), pathLength: 180 });
     svg.append(watch);
     apply(current, true);
   }
@@ -63,7 +65,7 @@ export function createClock() {
     if (instant) dial.setAttribute('data-instant', ''); else dial.removeAttribute('data-instant');
     hand.style.setProperty('--a', deg(w.t) + 'deg');
     for (const it of n.items) if (marks[it.key]) marks[it.key].style.setProperty('--a', deg(it.t) + 'deg');
-    if (watch) { const end = w.until == null ? SPAN : w.until; watch.style.strokeDasharray = `${end - w.t} ${SPAN * 2}`; watch.style.strokeDashoffset = -w.t; }
+    if (watch) { const end = w.until == null ? SPAN : w.until; watch.style.strokeDasharray = `${deg(end) - deg(w.t)} 360`; watch.style.strokeDashoffset = -deg(w.t); }
     read.children[0].textContent = n.name; read.children[1].textContent = n.date; read.children[2].textContent = n.note;
   }
 

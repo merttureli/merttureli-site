@@ -9,8 +9,8 @@
 import { THREE, createEngine } from '../../../next/js/showreel/engine.js';
 import { createModel } from '../../../next/js/showreel/rudder-pedals.js';
 
-// The model is always framed inside a 3 : 2 reference rectangle that is fitted into the canvas like
-// `object-fit: contain`, so the rendered still (assets/rp3-*.webp, made at 3 : 2 with the 'hero' shot) and the
+// The model is always framed inside a 5 : 4 reference rectangle that is fitted into the canvas like
+// `object-fit: contain`, so the rendered still (assets/rp3-hero-*.webp, made at 5 : 4 with the 'hero' shot) and the
 // live canvas line up in any box.
 export const FRAME = 5 / 4;
 const FOV = 22;
