@@ -424,6 +424,10 @@ html.sheet-open{overflow:hidden}
   .study-back--albada{left:var(--edge);top:var(--bar-h);height:32px;padding:0 13px 0 10px;gap:9px}
   .study-back--albada::after{inset:-6px -1px}    /* a 44px tall target, clear of the bar's own controls */
   .bar::before{bottom:-64px;background:linear-gradient(var(--bar-bg) 0,var(--bar-bg) 78%,transparent)}
+  /* with the menu open the sheet starts below the tag, and its links fade out under the veil as the sheet scrolls */
+  .sheet{padding-top:calc(var(--bar-h) + 64px)}
+  .bar.bar--sheet{--bar-bg:var(--night)!important}
+  .bar.bar--sheet::before{opacity:1}
   .skip:focus{top:calc(var(--bar-h) + 44px)}
 
   .bar__nav{display:none}
