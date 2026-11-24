@@ -154,7 +154,7 @@ The rocket is not copied: `rig.js` imports `next/js/viewer/products/charger.js` 
   diagonal. The camera then moves in to the payload and to the motor mount (out a little between them, and turned
   so the livery is round the back at the motor), and the rocket goes back together in the middle to be turned by
   hand. The title is top left and the captions bottom right, on either side of the diagonal. The pin is 4.5
-  screens; the chip shows from 0.82, the model fades and steps back (opacity, scale 0.94) over the last 5 percent,
+  screens; the chip shows from 0.82, the model stays on stage as the pin lets go and rides up under the light section like a curtain, fading and stepping back (opacity, scale 0.94, the chip with it),
   and a press on the chip (pointer, Enter or Space) turns the model a quarter.
 - **Phone and short screens.** No wide shot: the rocket whole on a phone diagonal, then the upper half apart with
   the payload out of its tube, the payload, the motor mount, and back together. The captions sit under the model
