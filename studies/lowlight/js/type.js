@@ -70,7 +70,7 @@ export function createWaves({ reduced }) {
     const text = el.textContent.trim().toUpperCase();
     const weight = getComputedStyle(el).fontWeight;
     el.textContent = '';
-    const spans = [...text].map(c => { const s = document.createElement('i'); s.textContent = c === ' ' ? ' ' : c; el.appendChild(s); return s; });
+    const spans = [...text].map(c => { const s = document.createElement('i'); s.textContent = c === ' ' ? '\u00a0' : c; el.appendChild(s); return s; });
     measure([...text], weight);
     const adv = [...text].map(c => table.get(weight + '|' + c)), n = adv.length;
     // per letter: advance at 50 and gain per unit of width; the two outer letters give up their outer bearing

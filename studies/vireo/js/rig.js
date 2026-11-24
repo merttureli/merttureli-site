@@ -37,8 +37,8 @@ export const STAGE_STUDIO = {
 // Two grades of the one studio: the dark stage (low key: the ambient is taken down so the far side falls to
 // black and the softbox reads as one long highlight) and the gray studio of the "Look closer" view.
 export const GRADES = {
-  dark: { exposure: 1.0, light: [0.2, 0.34, 0.02], hemi: 1.35, key: 3.8, fill: 0.5, rim: 6 },
-  light: { exposure: 0.95, light: [0.45, 0.25, 0.3], hemi: 1.35, key: 3.8, fill: 1.1, rim: 2.4 },
+  dark: { exposure: 1.05, light: [0.35, 0.4, 0.05], hemi: 1.35, key: 3.8, fill: 0.5, rim: 7, keyFront: 0.3, lift: 0.35 },
+  light: { exposure: 0.95, light: [0.45, 0.25, 0.3], hemi: 1.35, key: 3.8, fill: 1.1, rim: 2.4, keyFront: 0.5, lift: 0.15 },
 };
 
 const nextTask = () => new Promise(r => { const c = new MessageChannel(); c.port1.onmessage = () => r(); c.port2.postMessage(0); });
@@ -127,6 +127,7 @@ export async function createRig({ canvas, quality = 'high', pixelRatio = Math.mi
     const g = GRADES[name];
     if (look) { look.uniforms.lookExposure.value = g.exposure; look.uniforms.lookLight.value.set(...g.light); }
     lights.hemi.intensity = g.hemi; lights.key.intensity = g.key; lights.fill.intensity = g.fill; lights.rim.intensity = g.rim;
+    S.keyFront = g.keyFront; S.lift = g.lift;
   }
   // slide the sections apart: k = 0 assembled .. 1 apart. A part that travels farther leaves a little earlier.
   function placeParts(k) {
@@ -180,26 +181,28 @@ export async function createRig({ canvas, quality = 'high', pixelRatio = Math.mi
   // The studio's key for this pose. look.js dressRocket aims it once, for the hero page's fixed tilt (its rocket
   // object stays private to charger.js); here the airframe turns on screen, so the same aim is redone per pose:
   // the studio turns about the vertical until the key softbox lies along the airframe (as far as it stays in
-  // front), then about the airframe (`lift`), which carries its long reflection up the tube. `S.lift` is animated
-  // once on load: the light sweeps onto the body.
+  // front), then about the airframe (`lift`), which carries the key up and back on either side: the light rakes
+  // across the tube and the side away from it falls off. A turn by hand (S.turn) is left out on purpose: the
+  // lights stay where they are while the model is turned under them.
   const lookMats = [];
   model.traverse(o => { for (const m of [].concat(o.material || [])) if (m.userData && m.userData.look && m.envMapRotation && !lookMats.includes(m)) lookMats.push(m); });
   const K = new THREE.Vector3(...(look ? look.studio.key : [-0.62, 0.58, 0.52])).normalize(), hor = Math.hypot(K.x, K.z);
-  const q1 = new THREE.Quaternion(), q2 = new THREE.Quaternion(), m4 = new THREE.Matrix4(), eul = new THREE.Euler(), axis = new THREE.Vector3();
+  const q1 = new THREE.Quaternion(), q2 = new THREE.Quaternion(), qA = new THREE.Quaternion(), m4 = new THREE.Matrix4(), eul = new THREE.Euler(), axis = new THREE.Vector3();
   const keyDir = rk ? rk.key : new THREE.Vector3();
   let aimed = '';
   function aimKey() {
     if (!rk) return;
-    const sig = S.tilt.toFixed(4) + '|' + S.lift.toFixed(4) + '|' + S.turn.toFixed(4);
+    const sig = S.tilt.toFixed(4) + '|' + S.lean.toFixed(3) + '|' + S.lift.toFixed(4) + '|' + S.keyFront.toFixed(3);
     if (sig === aimed) return;
     aimed = sig;
-    axis.set(0, 1, 0).applyQuaternion(pivot.quaternion); axis.z = 0;
+    axis.set(0, 1, 0).applyQuaternion(qA.copy(qT).multiply(qL)); axis.z = 0;
     if (axis.lengthSq() < 1e-6) axis.set(0, 1, 0);
     axis.normalize();
     const lim = Math.sqrt(Math.max(0, hor * hor - S.keyFront * S.keyFront));
-    const kx = Math.abs(axis.x) > 1e-3 ? Math.max(-lim, Math.min(lim, -K.y * axis.y / axis.x)) : (S.keySide || -1) * lim * 0.6;
+    const side = axis.x >= -1e-3 ? -1 : 1;            // nose to the right, or straight up: the key stands to the left
+    const kx = Math.abs(axis.x) > 1e-3 ? Math.max(-lim, Math.min(lim, -K.y * axis.y / axis.x)) : side * lim;
     q1.setFromAxisAngle(Y, Math.atan2(kx, Math.sqrt(hor * hor - kx * kx)) - Math.atan2(K.x, K.z));
-    q1.premultiply(q2.setFromAxisAngle(axis, S.lift));
+    q1.premultiply(q2.setFromAxisAngle(axis, side * S.lift));
     keyDir.copy(K).applyQuaternion(q1);
     lights.key.position.copy(keyDir).multiplyScalar(6);
     eul.setFromRotationMatrix(m4.makeRotationFromQuaternion(q2.copy(q1).invert()), 'XYZ');

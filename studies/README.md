@@ -31,8 +31,11 @@ studies/<key>/
 ```
 
 First thing in `<body>`, the pill back to the Websites page (copy it from `launch/index.html`). It sits bottom
-left by default. If the sample needs it elsewhere, move it with a rule in the sample's own CSS, not in
-`shared/study.css`. Inside the Websites page's preview frame it hides itself.
+left by default, fixed, and there it takes taps meant for the page: a review found it over option cells, form
+fields and footer links on phones. So every sample places it in its own CSS (never in `shared/study.css`):
+docked in the sample's own bar where there is room, restyled to belong to that bar, and at no width from 360
+to 1920 on top of a headline, a control, a form field or a dialog. Its text and link stay. Inside the
+Websites page's preview frame it hides itself.
 
 ## Rules for a sample site
 

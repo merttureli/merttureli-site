@@ -18,11 +18,16 @@
   --typed:"Courier Prime","Courier New",Courier,monospace;
   --hand:"Mynerve","Segoe Print","Bradley Hand","Comic Sans MS",cursive;
   --focus:#f0d678;
-  /* Grain, fibers and felt: small SVG noise tiles. The browser rasterizes each once and repeats it, so no
-     filter runs while the page scrolls. */
-  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .31 0 0 0 0 .2 0 0 0 0 .1 .55 0 0 0 -.25'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
-  --fiber:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.035 .6' numOctaves='2' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .3 0 0 0 0 .18 0 0 0 0 .06 .42 0 0 0 -.185'/%3E%3C/filter%3E%3Cfilter id='m' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='1' seed='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .95 0 0 0 0 .8 .5 0 0 0 -.25'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3Crect width='300' height='300' filter='url(%23m)'/%3E%3C/svg%3E");
-  --felt:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.7' numOctaves='2' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 .03 0 0 0 0 .02 .7 0 0 0 -.27'/%3E%3C/filter%3E%3Cfilter id='m' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.5' numOctaves='1' seed='8' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .8 0 0 0 0 1 0 0 0 0 .85 .22 0 0 0 -.1'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23n)'/%3E%3Crect width='260' height='260' filter='url(%23m)'/%3E%3C/svg%3E");
+  /* Grain, fibers and felt: small SVG noise tiles (feTurbulence, no image files). The browser rasterizes each
+     once and repeats it, so no filter runs while the page scrolls. They are base64 here only because the
+     site's link check reads a nested url(#id) as a file reference. The sources:
+     grain: <svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .31 0 0 0 0 .2 0 0 0 0 .1 .55 0 0 0 -.25'/></filter><rect width='240' height='240' filter='url(#n)'/></svg>
+     fiber: <svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.035 .6' numOctaves='2' seed='5' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .3 0 0 0 0 .18 0 0 0 0 .06 .42 0 0 0 -.185'/></filter><filter id='m' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='1' seed='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 .95 0 0 0 0 .8 .5 0 0 0 -.25'/></filter><rect width='300' height='300' filter='url(#n)'/><rect width='300' height='300' filter='url(#m)'/></svg>
+     felt: <svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='n' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.7' numOctaves='2' seed='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 .03 0 0 0 0 .02 .7 0 0 0 -.27'/></filter><filter id='m' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.5' numOctaves='1' seed='8' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .8 0 0 0 0 1 0 0 0 0 .85 .22 0 0 0 -.1'/></filter><rect width='260' height='260' filter='url(#n)'/><rect width='260' height='260' filter='url(#m)'/></svg>
+  */
+  --grain:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScyNDAnIGhlaWdodD0nMjQwJz48ZmlsdGVyIGlkPSduJyB4PScwJyB5PScwJyB3aWR0aD0nMTAwJScgaGVpZ2h0PScxMDAlJz48ZmVUdXJidWxlbmNlIHR5cGU9J2ZyYWN0YWxOb2lzZScgYmFzZUZyZXF1ZW5jeT0nLjgnIG51bU9jdGF2ZXM9JzInIHN0aXRjaFRpbGVzPSdzdGl0Y2gnLz48ZmVDb2xvck1hdHJpeCB2YWx1ZXM9JzAgMCAwIDAgLjMxIDAgMCAwIDAgLjIgMCAwIDAgMCAuMSAuNTUgMCAwIDAgLS4yNScvPjwvZmlsdGVyPjxyZWN0IHdpZHRoPScyNDAnIGhlaWdodD0nMjQwJyBmaWx0ZXI9J3VybCgjbiknLz48L3N2Zz4=");
+  --fiber:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSczMDAnIGhlaWdodD0nMzAwJz48ZmlsdGVyIGlkPSduJyB4PScwJyB5PScwJyB3aWR0aD0nMTAwJScgaGVpZ2h0PScxMDAlJz48ZmVUdXJidWxlbmNlIHR5cGU9J2ZyYWN0YWxOb2lzZScgYmFzZUZyZXF1ZW5jeT0nLjAzNSAuNicgbnVtT2N0YXZlcz0nMicgc2VlZD0nNScgc3RpdGNoVGlsZXM9J3N0aXRjaCcvPjxmZUNvbG9yTWF0cml4IHZhbHVlcz0nMCAwIDAgMCAuMyAwIDAgMCAwIC4xOCAwIDAgMCAwIC4wNiAuNDIgMCAwIDAgLS4xODUnLz48L2ZpbHRlcj48ZmlsdGVyIGlkPSdtJyB4PScwJyB5PScwJyB3aWR0aD0nMTAwJScgaGVpZ2h0PScxMDAlJz48ZmVUdXJidWxlbmNlIHR5cGU9J2ZyYWN0YWxOb2lzZScgYmFzZUZyZXF1ZW5jeT0nLjknIG51bU9jdGF2ZXM9JzEnIHNlZWQ9JzInIHN0aXRjaFRpbGVzPSdzdGl0Y2gnLz48ZmVDb2xvck1hdHJpeCB2YWx1ZXM9JzAgMCAwIDAgMSAwIDAgMCAwIC45NSAwIDAgMCAwIC44IC41IDAgMCAwIC0uMjUnLz48L2ZpbHRlcj48cmVjdCB3aWR0aD0nMzAwJyBoZWlnaHQ9JzMwMCcgZmlsdGVyPSd1cmwoI24pJy8+PHJlY3Qgd2lkdGg9JzMwMCcgaGVpZ2h0PSczMDAnIGZpbHRlcj0ndXJsKCNtKScvPjwvc3ZnPg==");
+  --felt:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScyNjAnIGhlaWdodD0nMjYwJz48ZmlsdGVyIGlkPSduJyB4PScwJyB5PScwJyB3aWR0aD0nMTAwJScgaGVpZ2h0PScxMDAlJz48ZmVUdXJidWxlbmNlIHR5cGU9J2ZyYWN0YWxOb2lzZScgYmFzZUZyZXF1ZW5jeT0nLjcnIG51bU9jdGF2ZXM9JzInIHNlZWQ9JzMnIHN0aXRjaFRpbGVzPSdzdGl0Y2gnLz48ZmVDb2xvck1hdHJpeCB2YWx1ZXM9JzAgMCAwIDAgMCAwIDAgMCAwIC4wMyAwIDAgMCAwIC4wMiAuNyAwIDAgMCAtLjI3Jy8+PC9maWx0ZXI+PGZpbHRlciBpZD0nbScgeD0nMCcgeT0nMCcgd2lkdGg9JzEwMCUnIGhlaWdodD0nMTAwJSc+PGZlVHVyYnVsZW5jZSB0eXBlPSdmcmFjdGFsTm9pc2UnIGJhc2VGcmVxdWVuY3k9Jy41JyBudW1PY3RhdmVzPScxJyBzZWVkPSc4JyBzdGl0Y2hUaWxlcz0nc3RpdGNoJy8+PGZlQ29sb3JNYXRyaXggdmFsdWVzPScwIDAgMCAwIC44IDAgMCAwIDAgMSAwIDAgMCAwIC44NSAuMjIgMCAwIDAgLS4xJy8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9JzI2MCcgaGVpZ2h0PScyNjAnIGZpbHRlcj0ndXJsKCNuKScvPjxyZWN0IHdpZHRoPScyNjAnIGhlaWdodD0nMjYwJyBmaWx0ZXI9J3VybCgjbSknLz48L3N2Zz4=");
   --lie:0 1px 1px rgba(18,12,6,.24),0 3px 6px -2px rgba(18,12,6,.3),0 16px 22px -16px rgba(18,12,6,.45);           /* a sheet lying flat */
   --lift:0 2px 3px rgba(18,12,6,.14),0 22px 30px -12px rgba(18,12,6,.42),0 44px 56px -30px rgba(18,12,6,.5);     /* a sheet held above the desk */
 }
@@ -46,7 +51,8 @@ a{color:inherit}
 .hand{font-family:var(--hand);font-weight:400;font-size:25px;line-height:1.1;letter-spacing:.005em}
 .typed{max-width:56ch;margin:0 0 1em;font:400 16px/1.6 var(--typed)}
 .typed--light{color:var(--paper)}
-.heading{margin:0;font:800 clamp(44px,6.6vw,92px)/.92 var(--display);letter-spacing:.04em;text-transform:uppercase;color:var(--ink);text-wrap:balance}
+.heading{margin:0;font:800 clamp(44px,6.6vw,92px)/.92 var(--display);letter-spacing:.04em;text-transform:uppercase;color:var(--ink)}
+.label__note span{display:inline-block}
 .heading--light{color:var(--paper)}
 .heading--brown{color:var(--brown);font-size:clamp(34px,4.6vw,58px)}
 
@@ -68,6 +74,11 @@ a{color:inherit}
 .tape--seam{top:-15px;width:128px;height:30px}
 .tape--seam-l{left:11%;rotate:-2.5deg}
 .tape--seam-r{right:8%;rotate:3deg}
+
+/* Where a loose print has been moved to. Registered so a change restyles the print alone, not its children. */
+@property --dx{syntax:"<length>";inherits:false;initial-value:0px}
+@property --dy{syntax:"<length>";inherits:false;initial-value:0px}
+@property --tilt{syntax:"<angle>";inherits:false;initial-value:0deg}
 
 /* ---- a print: white border, thicker at the foot, a caption written on it ------------------------------------------- */
 .print{position:absolute;z-index:var(--z,var(--k,3));left:calc(var(--x)*1%);top:0;width:calc(var(--w)*1%);margin:calc(var(--y)*1%) 0 0;
@@ -91,7 +102,7 @@ a{color:inherit}
 /* ---- 1. cover ----------------------------------------------------------------------------------------------------- */
 .cover{position:relative;display:grid;grid-template-columns:minmax(0,.92fr) minmax(0,1.2fr);align-items:center;gap:clamp(28px,5vw,88px);
   min-height:100vh;min-height:100svh;padding:clamp(40px,7vh,84px) clamp(24px,6vw,104px) clamp(84px,11vh,120px);overflow-x:clip}
-.label{position:relative;z-index:1;justify-self:end;width:min(100%,512px);padding:50px 48px 44px;background:var(--kraft) var(--fiber);rotate:-1.6deg;box-shadow:var(--lie);border-radius:3px}
+.label{position:relative;z-index:2;justify-self:end;width:min(100%,512px);padding:50px 48px 44px;background:var(--kraft) var(--fiber);rotate:-1.6deg;box-shadow:var(--lie);border-radius:3px}
 .label::before{content:"";position:absolute;inset:11px;border:1.5px solid rgba(79,52,34,.6);border-radius:2px;pointer-events:none}
 .label::after{content:"";position:absolute;inset:15px;border:.75px solid rgba(79,52,34,.45);pointer-events:none}
 .label__kicker{margin:0 0 20px;font:400 15px/1.35 var(--typed);color:var(--ink)}
@@ -107,7 +118,7 @@ a{color:inherit}
 .btn:active{translate:4px 4px;box-shadow:1px 1px 0 var(--ink)}
 .label :focus-visible{--focus:#1d1a16}
 
-.pile{position:relative;justify-self:start;width:min(100%,700px)}
+.pile{position:relative;z-index:1;isolation:isolate;justify-self:start;width:min(100%,700px)}
 .pile::before{content:"";display:block;padding-top:97%}
 .pile .print figcaption{font-size:clamp(22px,1.8vw,26px)}
 .sticker{position:absolute;z-index:3;right:-10%;top:-17%;width:31%;height:auto;rotate:13deg;pointer-events:none;filter:drop-shadow(0 1px 1px rgba(18,12,6,.4))}
@@ -161,8 +172,8 @@ a{color:inherit}
 .map__mark--w1{left:22%;top:93%;width:60px;height:28px;rotate:-4deg}
 .map__mark--w2{left:60%;top:87%;width:52px;height:24px;rotate:3deg}
 .map__mark--w3{left:88%;top:66%;width:58px;height:27px;rotate:-7deg}
-.map__mark--p1{left:13%;top:4%;width:30px;height:41px;color:var(--ink);opacity:.7;rotate:-3deg}
-.map__mark--p2{left:16.5%;top:9%;width:23px;height:31px;color:var(--ink);opacity:.7;rotate:4deg}
+.map__mark--p1{left:9.5%;top:5%;width:30px;height:41px;color:var(--ink);opacity:.7;rotate:-3deg}
+.map__mark--p2{left:12.6%;top:11%;width:23px;height:31px;color:var(--ink);opacity:.7;rotate:4deg}
 .map__mark--p3{left:40%;top:1%;width:27px;height:37px;color:var(--ink);opacity:.7}
 .map__sea{position:absolute;left:30%;top:97%;margin:0;font-size:23px;color:var(--sea);rotate:-2deg}
 
@@ -171,16 +182,16 @@ a{color:inherit}
 .stop{position:relative;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-template-rows:auto 1fr;column-gap:clamp(16px,2.2vw,30px);align-items:start;padding-block:clamp(40px,5.5vw,76px)}
 .stop:focus{outline:none}
 .stop--odd .stop__prints{grid-column:1/8;grid-row:1/3}
-.stop--odd .stop__head,.stop--odd .stop__text{grid-column:8/13;padding-left:44px}
+.stop--odd .stop__head,.stop--odd .stop__text{grid-column:8/13;padding-left:58px}
 .stop--even .stop__prints{grid-column:6/13;grid-row:1/3}
-.stop--even .stop__head,.stop--even .stop__text{grid-column:1/6;padding-right:44px}
+.stop--even .stop__head,.stop--even .stop__text{grid-column:1/6;padding-right:58px}
 .stop__head{position:relative;z-index:2;grid-row:1;padding-top:86px}
 .stop__text{grid-row:2;padding-top:30px}
 .cluster{position:relative}
 .cluster::before{content:"";display:block;padding-top:calc(var(--h)*1%)}
 
 .stop__count{margin:0 0 14px;font:700 15px/1 var(--typed);color:var(--brown)}
-.board{position:relative;display:inline-block;margin:0;padding:.44em .82em .36em;max-width:100%;
+.board{position:relative;z-index:2;display:inline-block;margin:0;padding:.44em .82em .36em;max-width:100%;
   background:
     radial-gradient(circle at .42em 50%,#e9dcc0 0 .075em,rgba(0,0,0,.35) .085em .11em,transparent .12em),
     radial-gradient(circle at calc(100% - .42em) 50%,#e9dcc0 0 .075em,rgba(0,0,0,.35) .085em .11em,transparent .12em),
@@ -190,8 +201,8 @@ a{color:inherit}
   border-radius:.2em;rotate:-1.3deg;box-shadow:0 .09em 0 #2f1d10,0 .16em .22em rgba(18,12,6,.4);text-shadow:0 -1px 0 rgba(0,0,0,.6),0 1px 0 rgba(255,255,255,.1)}
 .stop--even .board{rotate:1.1deg}
 .stop--3 .board{rotate:.8deg}.stop--6 .board{rotate:-.9deg}
-.stop__dot{position:absolute;left:-13px;top:124px;width:40px;height:40px;color:var(--sea)}
-.stop--even .stop__dot{left:auto;right:-13px}
+.stop__dot{position:absolute;left:-18px;top:124px;width:40px;height:40px;color:var(--sea)}
+.stop--even .stop__dot{left:auto;right:-18px}
 .stop__dot::before{content:"";position:absolute;inset:7px;border-radius:50%;background:var(--paper)}
 .stop__dot::after{content:"";position:absolute;inset:13px;border-radius:50%;background:var(--sea);scale:1;transition:scale .3s cubic-bezier(.3,1.6,.5,1) .05s}
 .stop__dot svg{position:absolute;inset:0;width:100%;height:100%}
@@ -202,8 +213,8 @@ a{color:inherit}
 .stamp{position:absolute;z-index:1;right:-18px;top:-26px;width:clamp(138px,13vw,172px);height:auto;aspect-ratio:1;pointer-events:none;rotate:-11deg;mix-blend-mode:multiply}
 .stop--even .stamp{right:22px}
 .stop--2 .stamp{rotate:9deg;top:-34px}
-.stop--3 .stamp{rotate:-6deg;top:-22px;right:-30px}
-.stop--4 .stamp{rotate:13deg;top:-30px;right:40px}
+.stop--3 .stamp{rotate:-6deg;top:6px;right:-34px}
+.stop--4 .stamp{rotate:13deg;top:4px;right:34px}
 .stop--5 .stamp{rotate:-14deg;top:-36px}
 .stop--6 .stamp{rotate:7deg;top:-40px;right:10px}
 .s-ring{fill:none;stroke:var(--rose);stroke-width:1.5}
@@ -222,6 +233,13 @@ a{color:inherit}
 .note svg{display:inline-block;width:52px;height:30px;vertical-align:-6px}
 .note svg{scale:-1 1;margin:0 10px 0 0}
 .note--b{rotate:2deg;margin-left:16px}.note--c{rotate:-1.5deg}.note--d{rotate:1.8deg;margin-left:10px}.note--e{rotate:-3.5deg;margin-left:28px}
+.mark{display:inline-block;vertical-align:top;color:var(--sea);opacity:.9}
+.mark--w1{width:62px;height:29px;margin:34px 0 0 46%;rotate:-5deg}
+.mark--w2{width:50px;height:23px;margin:60px 0 0 -34%;rotate:4deg}
+.mark--p1{width:32px;height:43px;margin:30px 0 0 52%;color:var(--ink);opacity:.75;rotate:-4deg}
+.mark--p2{width:25px;height:34px;margin:44px 0 0 2px;color:var(--ink);opacity:.75;rotate:5deg}
+.mark--p3{width:29px;height:39px;margin:22px 0 0 14px;color:var(--ink);opacity:.75}
+.via--low{left:33%;top:77%}
 .via--end{left:19%;top:87%}
 .stop__sun{position:absolute;left:8.5%;top:82%;width:108px;height:60px;color:var(--sea);rotate:-5deg}
 .stop .note--f{position:absolute;left:10%;top:92%;margin:0;rotate:-3deg}
@@ -367,8 +385,8 @@ a{color:inherit}
 
 /* ---- narrower desks --------------------------------------------------------------------------------------------------- */
 @media (max-width:1100px){
-  .stop--odd .stop__head,.stop--odd .stop__text{padding-left:36px}
-  .stop--even .stop__head,.stop--even .stop__text{padding-right:36px}
+  .stop--odd .stop__head,.stop--odd .stop__text{padding-left:48px}
+  .stop--even .stop__head,.stop--even .stop__text{padding-right:48px}
   .stamp{right:-10px}
 }
 @media (max-width:860px){
@@ -377,13 +395,13 @@ a{color:inherit}
   .label::before{inset:8px}.label::after{inset:11.5px}
   .label__kicker{margin-bottom:12px;font-size:14px}
   .label__title{font-size:clamp(68px,21vw,96px)}
-  .label__issue{right:20px;top:66px;font-size:14px;padding:8px 11px 6px}
+  .label__issue{right:20px;top:66px;font-size:14px;padding:12px 11px 6px}
   .label__rule{margin:12px 0 8px}
   .label__note{font-size:24px;margin-top:8px}
   .label__cta{margin-top:20px}
   .btn{font-size:19px;padding:15px 22px 12px}
   .pile{justify-self:center;width:min(100%,440px)}
-  .pile::before{padding-top:98%}
+  .pile::before{padding-top:110%}
   .cover__hint{position:relative;right:auto;bottom:auto;justify-self:end;margin:-6px 6px 0 0;font-size:25px}
   .cover__hint svg{width:62px;height:40px;margin-bottom:10px}
 
@@ -401,10 +419,11 @@ a{color:inherit}
   .map__mark--w1{left:80%;top:50%}.map__mark--w2{left:72%;top:66%}.map__mark--w3{left:82%;top:84%}
   .map__mark--p1,.map__mark--p2,.map__mark--p3,.map__sea{display:none}
   .via{left:calc(var(--xs)*1%);top:calc(var(--ys)*1%)}
-  .via--end{left:14%;top:auto;bottom:34px}
+  .via--low{left:-9%;top:auto;bottom:150px}
+  .via--end{left:13%;top:auto;bottom:40px}
   .stop__sun{left:20%;top:auto;bottom:6px;width:88px;height:49px}
   .stop .note--f{left:auto;right:4%;top:auto;bottom:18px}
-  .stop--6{padding-bottom:110px}
+  .stop.stop--6{padding-bottom:132px}
 
   .stop{display:block;padding-block:36px}
   .stop--odd .stop__head,.stop--odd .stop__text,.stop--even .stop__head,.stop--even .stop__text{padding-inline:0}
@@ -412,7 +431,7 @@ a{color:inherit}
   .stop__dot,.stop--even .stop__dot{left:-45px;right:auto;top:100px}
   .board{font-size:clamp(28px,8.4vw,36px)}
   .stamp,.stop--even .stamp,.stop--3 .stamp,.stop--4 .stamp,.stop--6 .stamp{right:-6px;top:-34px;width:128px}
-  .cluster{margin-top:34px}
+  .cluster{margin-top:34px;max-width:570px}   /* a print never grows past its 520 source pixels */
   .cluster::before{padding-top:calc(var(--hs)*1%)}
   .print{z-index:var(--z,var(--ks,3));left:calc(var(--xs)*1%);width:calc(var(--ws)*1%);margin-top:calc(var(--ys)*1%);padding:calc(var(--ws)*.036%) calc(var(--ws)*.036%) 0}
   .tape{width:74px;height:23px}

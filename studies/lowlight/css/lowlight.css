@@ -48,10 +48,10 @@ button{text-transform:inherit;cursor:pointer}
 .study-back--lowlight{left:50%;translate:-50% 0;bottom:auto;top:14px;min-height:36px;padding:0 16px 0 12px;font-family:var(--mono);font-size:12px;font-weight:400;letter-spacing:.05em;text-transform:uppercase;background:var(--night);color:var(--cream);border:1px solid var(--line);box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
 .study-back--lowlight:focus-visible{outline:2px solid var(--cream);outline-offset:3px;box-shadow:0 0 0 7px var(--night)}
 @media (hover:hover){.study-back--lowlight:hover{background:var(--cream);color:var(--night)}}
-@media (max-width:860px){.study-back--lowlight{left:max(12px,env(safe-area-inset-left));translate:none;top:auto;bottom:max(12px,env(safe-area-inset-bottom));min-height:44px}}
+@media (max-width:1099px){.study-back--lowlight{left:max(12px,env(safe-area-inset-left));translate:none;top:auto;bottom:max(12px,env(safe-area-inset-bottom));min-height:44px}}
 
 /* ---------- the sky: one canvas behind the whole page ---------- */
-.sky{position:fixed;left:0;top:0;width:100%;height:100vh;height:100lvh;z-index:0;pointer-events:none}
+.sky{position:fixed;left:0;top:0;width:100%;height:100vh;height:100lvh;z-index:0;pointer-events:none;background:var(--night)}
 main,.foot{position:relative;z-index:1}
 
 /* ---------- shared pieces ---------- */
@@ -65,7 +65,7 @@ main,.foot{position:relative;z-index:1}
 /* Display lines. The line box is cut to the capitals (cap height .6875em), so stacked lines sit tight
    and nothing is clipped: top of the box is the top of the letters, bottom is just under the baseline. */
 .wave,.rule,.marquee-group,.pass-name-fit{font-family:var(--display);font-weight:800;line-height:.595;padding-top:.1225em;white-space:nowrap;text-transform:uppercase;letter-spacing:0;font-kerning:none}
-.wave{display:block;font-stretch:100%;font-size:17vw}
+.wave{display:block;font-stretch:100%;font-size:17vw;contain:layout}
 .wave i{font-style:normal}
 html.js:not(.late) .wave:not([data-ready]){visibility:hidden}
 
@@ -102,6 +102,16 @@ html.js:not(.late) .wave:not([data-ready]){visibility:hidden}
   .bar-date{display:none}
   .bar-brand,.redswitch,.bar-rsvp{height:40px}
 }
+@media (max-width:389px){
+  .bar{gap:6px}
+  .bar-brand{padding:1px 10px 0;font-size:13px}
+  .redswitch{gap:7px;padding:0 8px 0 10px}
+  .redswitch-track{width:30px}
+  .redswitch[aria-pressed="true"] .redswitch-knob{transform:translateX(12px)}
+  .bar-rsvp{padding:0 13px}
+}
+/* the narrowest phones: the switch's label shortens to "Red" on screen and keeps its full name for readers */
+@media (max-width:345px){.redswitch-label span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}}
 
 /* ---------- 02 hero ---------- */
 .hero{position:relative;height:100vh;height:100svh;min-height:620px;overflow:hidden;overflow:clip;
@@ -110,8 +120,9 @@ html.js:not(.late) .wave:not([data-ready]){visibility:hidden}
   --reserve:118px;        /* kept free under the two words */
   --hero-gap:16px}
 .hero-title{position:absolute;z-index:2;left:var(--g);right:var(--g);top:calc(var(--bar-h) + 8px);display:flex;flex-direction:column;gap:var(--hero-gap);font-size:inherit;font-weight:inherit}
-.hero-line:first-of-type{font-size:27.5vw;font-stretch:150%}
-.hero-line:last-of-type{font-size:22vw;font-stretch:132%}
+/* sizes for a page without scripting; with it, type.js sets each line to fill the measure */
+.hero-line[data-hero="1"]{font-size:27.4vw;font-stretch:150%}
+.hero-line[data-hero="2"]{font-size:22.4vw;font-stretch:132%}
 .hero-photo,.hero-people{position:absolute;right:0;bottom:0;width:var(--pw);height:calc(var(--pw)*1.25*var(--shown));overflow:hidden;pointer-events:none}
 /* each piece of the hero keeps its own layer: the letters change every frame of a scroll, and the filtered
    photograph over them must not be painted again each time */
@@ -125,7 +136,8 @@ html.js:not(.late) .wave:not([data-ready]){visibility:hidden}
 .hero-lede{font-size:13px;white-space:nowrap}
 .hero-lede span:last-child{display:block;width:fit-content}
 .hero-actions{display:flex;align-items:center;gap:10px}
-.pill-go{min-height:44px;padding:0 22px;font-size:14px}
+.pill-go{min-height:48px;padding:0 26px;font-size:15px}
+.tally-chip{min-height:48px}
 .tally-chip{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--bg);font-size:12px;white-space:nowrap}
 .tally-chip b{font-weight:600;color:var(--accent);min-width:2ch}
 
@@ -139,10 +151,17 @@ html.js:not(.late) .wave:not([data-ready]){visibility:hidden}
 @keyframes turn{to{transform:rotate(360deg)}}
 .badge-ring{transform-origin:50% 50%}
 
+/* a tablet or a small laptop: the foot stacks as it does on a phone, above the way back */
+@media (max-width:1099px){
+  .hero{--reserve:236px}
+  .hero-foot{left:var(--g);right:var(--g);bottom:calc(70px + env(safe-area-inset-bottom));flex-direction:column;align-items:flex-start;gap:16px}
+  .hero-lede span{display:block;width:fit-content}
+  .badge{bottom:calc(128px + env(safe-area-inset-bottom))}
+}
 @media (max-width:700px){
   .hero{--pw:136vw;--shown:.69;--reserve:330px;--hero-gap:10px;min-height:640px}
-  .hero-line:first-of-type{font-size:67vw;font-stretch:50%}
-  .hero-line:last-of-type{font-size:55vw;font-stretch:50%}
+  .hero-line[data-hero="1"]{font-size:67vw;font-stretch:57%}
+  .hero-line[data-hero="2"]{font-size:54vw;font-stretch:57%}
   .hero-ground{display:none}
   .hero-foot{left:var(--g);right:var(--g);bottom:calc(70px + env(safe-area-inset-bottom));height:auto;max-width:none;flex-direction:column;align-items:flex-start;gap:16px}
   .hero-lede{font-size:12px}
@@ -151,12 +170,15 @@ html.js:not(.late) .wave:not([data-ready]){visibility:hidden}
   .badge{width:104px;height:104px;right:var(--g);bottom:calc(128px + env(safe-area-inset-bottom))}
   .badge-ring text{font-size:14.6px}
 }
+@media (max-width:380px){.badge{width:92px;height:92px;bottom:calc(198px + env(safe-area-inset-bottom))}}
 
 /* ---------- 03 marquee band ---------- */
 .shout{position:relative;background:var(--bg);color:var(--ink);padding:26px 0 0;overflow:hidden;overflow:clip;
   --bg:var(--lilac);--ink:var(--night);--line:rgba(6,8,20,.34);--accent:var(--night);--on-accent:var(--lilac);--ring:var(--night);--ring-back:var(--lilac)}
 :root[data-red] .shout{--bg:#5a0e0a;--ink:#ff3b2f;--accent:#ff3b2f;--on-accent:#000;--ring:#ff3b2f;--ring-back:#000}
-.marquee{overflow:hidden;overflow:clip}
+/* each row is clipped at the sides only, so the tail of a Q is free to hang below its line */
+.marquee{overflow:hidden}
+@supports (overflow:clip){.marquee{overflow-x:clip;overflow-y:visible}}
 .marquee+.marquee{margin-top:14px}
 .marquee-track{display:flex;width:max-content;will-change:transform}
 .marquee-group{flex:none;display:flex;align-items:center;font-size:clamp(76px,12.4vw,184px);font-stretch:75%}
@@ -252,8 +274,7 @@ html:not(.js) .night-h{position:static;width:auto;height:auto;margin:0 0 10px;cl
 @container (max-width:150px){.panel-t{opacity:0}}
 .panel[aria-pressed="true"]{flex-grow:2.6}
 @media (hover:hover){.panel:hover{flex-grow:2.6}}
-.panel:focus-visible{flex-grow:2.6;outline-offset:-2px;box-shadow:none}
-.panel:focus-visible .panel-img{outline:2px solid var(--ring);outline-offset:-2px}
+.panel:focus-visible{flex-grow:2.6;outline:2px solid var(--ring);outline-offset:2px;box-shadow:none}
 .field-note{display:flex;justify-content:space-between;gap:20px;margin:22px var(--g) 0;padding-top:12px;border-top:1px solid var(--line)}
 .field-note span{background:var(--bg)}
 .field-note span:last-child{color:var(--ink-2);text-align:right}
@@ -321,6 +342,8 @@ html:not(.js) .night-h{position:static;width:auto;height:auto;margin:0 0 10px;cl
 .f-in-name{text-transform:uppercase}
 .f-in:focus-visible{outline:none;box-shadow:none;border-bottom:3px solid var(--accent);padding-bottom:6px}
 .f-in[aria-invalid="true"]{border-bottom-style:dashed}
+/* a browser's own fill color would break both light modes */
+.f-in:-webkit-autofill,.f-in:-webkit-autofill:focus{-webkit-text-fill-color:var(--ink);box-shadow:0 0 0 1000px var(--bg) inset;caret-color:var(--accent)}
 .err{min-height:0;margin-top:0;font-size:12px;font-weight:600;color:var(--ink)}
 .err:not(:empty){margin-top:12px;display:flex;gap:10px;align-items:center}
 .err:not(:empty)::before{content:"!";flex:none;display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--ink);color:var(--bg);font-weight:600;letter-spacing:0;line-height:1}
@@ -419,10 +442,13 @@ html:not(.js) .night-h{position:static;width:auto;height:auto;margin:0 0 10px;cl
   html{scroll-behavior:auto}
   *,*::before,*::after{transition-duration:0s!important;animation-duration:0s!important;animation-delay:0s!important}
   .badge-ring{animation:none}
+  /* the marquee stands still: its four lines stack, centered, each whole */
   html.js .marquee .marquee-track{animation:none}
-  .marquee-track{width:auto;flex-wrap:wrap;justify-content:center}
-  .marquee-group{flex-wrap:wrap;justify-content:center;row-gap:14px;white-space:normal}
-  .marquee-group[aria-hidden="true"],.shout-pause{display:none}
+  .marquee-track{display:block;width:auto}
+  .marquee-group{display:block;padding-top:0;font-size:min(9.3vw,150px);text-align:center}
+  .marquee-group span{padding-top:.1225em}
+  .marquee-group span+i+span,.marquee+.marquee{margin-top:14px}
+  .marquee-group i,.marquee-group[aria-hidden="true"],.shout-pause{display:none}
   .pass[data-state="confirmed"] .pass-chart .link{stroke-dasharray:none;stroke-dashoffset:0;animation:none}
   .pass[data-state="confirmed"] .pass-chart .star{animation:none}
 }

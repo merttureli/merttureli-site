@@ -5,6 +5,7 @@
 // eased toward the picked part, the rest ghosted). It is moved between them while neither is on screen.
 // Frames are drawn only while something moves, the place is on screen and the tab is visible.
 import { createRig, containRect, FRAME } from './rig.js';
+import { createGovernor } from '../../../next/js/showreel/engine.js';
 import { FILM, CLOSER, TURN_FROM, poseAt } from './poses.js';
 
 const clamp01 = v => (v < 0 ? 0 : v > 1 ? 1 : v);
@@ -17,6 +18,8 @@ export async function mount(api) {
   const quality = (innerWidth < 760 || (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4) ? 'low' : 'high';
   const rig = await createRig({ canvas, quality });
   const S = rig.state;
+  // the site's own frame-time governor: steps the pixel ratio down when the median frame is slow (off under automation)
+  const gov = createGovernor(rig.renderer);
   await api.sweepDone;
 
   let host = null, raf = 0, last = 0, shown = false;
@@ -64,13 +67,13 @@ export async function mount(api) {
     host = h; shown = false;
     if (h === 'stage') {
       stage.append(canvas);
-      rig.setGrade('dark'); S.keyFront = 0.15; S.lift = 0.85;
+      rig.setGrade('dark');
       rig.setGhost(null); rig.snapOpacity();
       measure();
       uCur = uGoal = filmU();
     } else {
       closerView.append(canvas);
-      rig.setGrade('light'); S.keyFront = 0.5; S.lift = 0.42;
+      rig.setGrade('light');
       S.explode = 0; S.turn = 0;
       measure();
       pick(closer.current, true);
@@ -86,7 +89,7 @@ export async function mount(api) {
     poseAt(FILM[portQ.matches ? 'port' : 'land'], uCur, pose);
     // the slow roll of the first screens; it comes to rest on a whole turn as the pinned scene takes the roll over
     const idle = rollOn ? 1 - smooth(1.9, 2.05, uCur) : 0;
-    rollIdle += 0.13 * dt * idle;
+    rollIdle += 0.13 * Math.min(dt, 0.1) * idle;
     const rest = Math.round(rollIdle / TAU) * TAU, rollNow = rollIdle + (rest - rollIdle) * smooth(1.95, 2.14, uCur);
     // turned by hand at the end of the scene
     const p = uCur - 2, w = smooth(TURN_FROM - 0.06, TURN_FROM, p);
@@ -120,7 +123,9 @@ export async function mount(api) {
   function frame(now) {
     raf = 0;
     if (document.hidden || !host) return;
-    const dt = last ? Math.min(0.05, (now - last) / 1000) : 1 / 60;
+    // the real frame time (capped at a quarter second), so a slow machine gets fewer frames, not slow motion
+    const dt = last ? Math.min(0.25, (now - last) / 1000) : 1 / 60;
+    if (last) gov.sample(now - last);
     last = now;
     const moving = host === 'stage' ? stepStage(dt) : stepCloser(dt);
     rig.render();

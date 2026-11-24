@@ -12,27 +12,30 @@ function rng(seed) {                       // small seeded generator: the same s
 }
 
 export function createSky(canvas, { reduced, onMeteor }) {
-  const ctx = canvas.getContext('2d', { alpha: true });
+  const ctx = canvas.getContext('2d', { alpha: false });   // opaque: nothing is ever behind the sky, so it need not be blended
   const TURN = TAU / 1500;                 // at rest: one turn in 25 minutes
-  const GEAR = 0.00021;                    // radians of sky per pixel of scroll
+  const GEAR = 0.00028;                    // radians of sky per pixel of scroll
   const BUCKETS = 5;
   let w = 0, h = 0, dpr = 1, px = 0, py = 0, phone = false;
   let stars = [], bright = [], buckets = [];
-  let red = false, color = '255,255,255', sprite = null;
+  let red = false, color = '255,255,255', ground = '#060814', sprite = null;
   const REST = 0.0007;                     // a sweep smaller than this is drawn as a point
+  const SWEEP = 0.46;                      // the longest arc a star may draw, in radians
   let clock = 0, headS = 0, tailS = 0, started = false;
   let active = true, meteors = [], nextMeteor = 3.5, radiant = { x: 0, y: 0 };
   let dirty = true, skip = false;
+  let slow = 0, lite = false;              // a device that cannot keep up draws every other faint star from then on
   const rand = rng(20270812);
 
   function build() {
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
     w = canvas.clientWidth; h = canvas.clientHeight; phone = w < 700;
+    // device pixel ratio capped at 2, and lower still on a very large screen: stars are dots, they do not need the pixels
+    dpr = Math.min(window.devicePixelRatio || 1, 2, Math.max(1, Math.sqrt(3.4e6 / Math.max(1, w * h))));
     canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
-    px = w * (phone ? 0.74 : 0.69); py = h * (phone ? 0.2 : 0.17);          // the pole
+    px = w * (phone ? 0.64 : 0.61); py = h * (phone ? 0.3 : 0.33);          // the pole the sky turns about
     radiant = { x: w * (phone ? 0.2 : 0.3), y: h * 0.1 };
     const R = Math.hypot(Math.max(px, w - px), Math.max(py, h - py)) + 8;
-    const count = Math.min(phone ? 1300 : 3400, Math.round(Math.PI * R * R * (phone ? 0.0009 : 0.00078)));
+    const count = Math.min(phone ? 1100 : 2800, Math.round(Math.PI * R * R * (phone ? 0.00082 : 0.00066)));
     const r = rng(812);
     stars = []; bright = []; buckets = Array.from({ length: BUCKETS }, () => []);
     // a loose band of denser stars crosses the field; the rest are spread evenly
@@ -49,6 +52,9 @@ export function createSky(canvas, { reduced, onMeteor }) {
       if (m > 0.62) bright.push(s); else buckets[Math.min(BUCKETS - 1, Math.floor(Math.pow(m / 0.62, 0.5) * BUCKETS))].push(s);
       stars.push(s);
     }
+    // one steady star almost on the pole
+    const pole = { x: 3, y: -2, r: Math.hypot(3, 2), a: Math.atan2(-2, 3), m: 0.9, size: 2.4, alpha: 0.95, tw: 0, sp: 0.4 };
+    bright.push(pole); stars.push(pole);
     paint();
     dirty = true;
   }
@@ -62,7 +68,7 @@ export function createSky(canvas, { reduced, onMeteor }) {
 
   function draw(t) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, w, h);
+    ctx.globalAlpha = 1; ctx.fillStyle = ground; ctx.fillRect(0, 0, w, h);
     const base = -clock * TURN, head = base + headS, tail = base + tailS;       // counterclockwise, as the northern sky turns
     const ch = Math.cos(head), sh = Math.sin(head), ct = Math.cos(tail), st = Math.sin(tail);
     const sweep = head - tail, trailing = Math.abs(sweep) > REST, ccw = sweep < 0;
@@ -73,16 +79,17 @@ export function createSky(canvas, { reduced, onMeteor }) {
       const list = buckets[b]; if (!list.length) continue;
       const alpha = (0.2 + 0.66 * Math.pow(b / (BUCKETS - 1), 1.2)) * dim, size = 0.9 + 0.9 * (b / (BUCKETS - 1));
       ctx.globalAlpha = alpha; ctx.beginPath();
+      const step = lite && b < 3 ? 2 : 1;
       if (!trailing) {
-        for (let i = 0; i < list.length; i++) {
+        for (let i = 0; i < list.length; i += step) {
           const s = list[i], x = px + s.x * ch - s.y * sh, y = py + s.x * sh + s.y * ch;
           if (x < -pad || y < -pad || x > w + pad || y > h + pad) continue;
           ctx.rect(x - size / 2, y - size / 2, size, size);
         }
         ctx.fill();
       } else {
-        ctx.lineWidth = size;
-        for (let i = 0; i < list.length; i++) {
+        ctx.lineWidth = size; ctx.lineCap = b < 3 ? 'butt' : 'round';
+        for (let i = 0; i < list.length; i += step) {
           const s = list[i], x = px + s.x * ch - s.y * sh, y = py + s.x * sh + s.y * ch;
           const x0 = px + s.x * ct - s.y * st, y0 = py + s.x * st + s.y * ct;
           if ((x < -pad && x0 < -pad) || (y < -pad && y0 < -pad) || (x > w + pad && x0 > w + pad) || (y > h + pad && y0 > h + pad)) continue;
@@ -99,10 +106,11 @@ export function createSky(canvas, { reduced, onMeteor }) {
       if ((x < -30 && x0 < -30) || (y < -30 && y0 < -30) || (x > w + 30 && x0 > w + 30) || (y > h + 30 && y0 > h + 30)) continue;
       const tw = reduced ? 1 : 0.86 + 0.14 * Math.sin(t * s.sp + s.tw);
       const a = Math.min(1, s.alpha * tw) * dim;
-      if (trailing) {
-        ctx.globalAlpha = a; ctx.lineWidth = s.size; ctx.beginPath(); ctx.moveTo(x0, y0);
+      if (trailing) {                                    // a trail carries its own light: no glow, no head
+        ctx.globalAlpha = a; ctx.lineWidth = s.size; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x0, y0);
         if (s.r * Math.abs(sweep) < 26) ctx.lineTo(x, y); else ctx.arc(px, py, s.r, s.a + tail, s.a + head, ccw);
         ctx.stroke();
+        continue;
       }
       const g = s.size * (2.2 + 3.2 * s.m);
       ctx.globalAlpha = a * 0.55; ctx.drawImage(sprite, x - g, y - g, g * 2, g * 2);
@@ -140,6 +148,7 @@ export function createSky(canvas, { reduced, onMeteor }) {
     if (!started) { headS = tailS = target; started = true; }
     headS += (target - headS) * (1 - Math.exp(-dt / 0.11));
     tailS += (headS - tailS) * (1 - Math.exp(-dt / 0.52));
+    if (Math.abs(headS - tailS) > SWEEP) tailS = headS - Math.sign(headS - tailS) * SWEEP;   // a long jump still leaves arcs, not a whirlpool
     if (!active) return;
     nextMeteor -= dt;
     if (nextMeteor <= 0) { nextMeteor = spawn() ? 5 + rand() * 7 : 0.4; }
@@ -147,6 +156,7 @@ export function createSky(canvas, { reduced, onMeteor }) {
     meteors = meteors.filter(m => m.age < m.life);
     // at rest the sky moves a twentieth of a pixel a frame: every other frame is plenty
     const busy = Math.abs(headS - tailS) > REST || meteors.length > 0 || dirty;
+    if (!lite && busy) { slow = dt > 0.03 ? slow + 1 : Math.max(0, slow - 2); if (slow > 45) lite = true; }
     skip = !busy && !skip;
     if (skip) return;
     dirty = false;
@@ -160,7 +170,10 @@ export function createSky(canvas, { reduced, onMeteor }) {
   return {
     build, frame, still,
     setActive(on) { if (on && !active) dirty = true; active = on; },
-    setRed(on) { red = on; color = on ? '255,59,47' : '255,255,255'; paint(); dirty = true; if (reduced && stars.length) still(); },
+    setRed(on) {
+      red = on; color = on ? '255,59,47' : '255,255,255'; ground = on ? '#000' : '#060814'; paint(); dirty = true;
+      if (stars.length) { if (reduced) still(); else draw(performance.now() / 1000); }       // at once, so the sky changes with the page
+    },
     resize() { const nw = canvas.clientWidth, nh = canvas.clientHeight; if (nw !== w || Math.abs(nh - h) > 1) { build(); if (reduced) still(); } },
     get count() { return stars.length; },
   };

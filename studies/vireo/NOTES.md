@@ -121,3 +121,89 @@ College Rocket Team."
 First view (before three.js) under 400 KB. Whole page under 2.5 MB. At most two WebGL views, each paused
 when off screen. With reduced motion: no scroll scenes, the rocket assembled and still, the exploded view
 shown as one rendered still, every word readable.
+
+## What was built
+
+Files: `index.html`, `css/vireo.css`, `js/vireo.js` (the page: bar, reveals, statement, gallery, pills, chart,
+counters, traces, form), `js/stage.js` (scroll and pills to poses), `js/rig.js` (the one renderer and the rocket),
+`js/poses.js` (every pose and the pinned scene's timing), `fonts/` (Inter Variable, Latin, with the optical size
+axis, 73 KB, and its license), `assets/` (18 stills, 330 KB together).
+
+The rocket is not copied: `rig.js` imports `next/js/viewer/products/charger.js` (the 11 exterior meshes of
+`charger-hero` plus the interior parts of `charger-explorer`, with its slide along the body per part) and its
+`charger-finish.js` dress on `showreel/look.js`. This page adds a black studio description for the look
+(`STAGE_STUDIO`), two grades of it (`GRADES`: dark stage, gray studio) and a key that is re-aimed per pose.
+
+### Where it leaves the brief, and why
+
+- **Hero to statement.** The brief has the rocket swing from the hero pose to upright at the side. At 1440 and
+  at 390 that swing crossed the headline and the buy pill. Built instead: as the scroll starts the rocket flies
+  out along its own axis, then comes back standing at the side, rising under the hero's last line. It is on
+  stage again as the statement's first words light up.
+- **One WebGL view, not two.** The budget allows two. The same canvas is moved between the stage and "Look
+  closer" while neither is on screen, so the model, the look and the programs are built once.
+- **The light sweep is CSS.** three.js is not loaded when the page first paints, so the sweep is a mask that
+  uncovers the poster from tail to nose with a brighter band on its edge. The live canvas fades in over the
+  finished poster and only then starts to roll.
+- **Phone.** A fixed glass bar at the bottom carries the price and Reserve (the hero's own pill is dropped
+  there). The statement is set at 32px, left aligned, beside the standing rocket, not centered at 40px. The
+  whole exploded rocket stands upright at the side and is small (about 20px across); the two close-ups carry
+  the scene.
+- **Flight has no running T+ clock.** Only T+0 and burnout at T+1.25 s are in the source. The curve is a
+  sketch, says so under it, and its markers carry only source facts.
+- **"28 parts" is the headline only.** The model on screen has 26 drawn pieces (11 exterior, 15 interior: the
+  model's old battery placeholder is left out, as on the live explorer, and the camera holder has no
+  geometry). Nothing on the page counts or labels the pieces on screen.
+- **Fins.** `charger.json` says balsa; the live explorer's notes say plywood. The page names no fin material.
+- **Gray on the stills.** The second sentence of a gallery caption is `#636366`, a step darker than the
+  brief's `#6e6e73`, because the still's studio gray is darker than the page and `#6e6e73` fell to 4.0 to 1.
+- **No orange text on light sections** (2.8 to 1 on `#f5f5f7`): orange there is fills only (the selected kit,
+  the open pill's icon, buttons). The focus ring is orange on dark sections and ink on light ones.
+- **The way back** sits top left under the bar, steps aside while the page is scrolled down and returns on the
+  way up or on keyboard focus, so it does not sit on the headings.
+- **No reveal on the "Look closer" panel**: it holds the live view, so it is never hidden.
+- **A second font file is fetched with the 3D**: the shared Archivo (90 KB), only so the rocket's own livery
+  lettering is drawn as on the live site (`hero3d.js` paints it on a canvas). No page text uses it.
+
+### How the stills were made
+
+A lab page kept in the scratchpad imports this folder's `rig.js` and `poses.js`, so a still and the live view
+come from the same code. Playwright (headless Chromium, software GL) opened it at the target size, at 2x (3x for
+the phone hero), set a pose and a grade, and read the canvas back as a PNG with alpha. Pillow did the rest:
+black for the dark stills; for the light cards a studio gray that fades to white (`#e6e6eb`, `#f2f2f5`, `#fff`)
+with two soft shadows cut from the alpha; the two "Look closer" posters keep their alpha. Saved as WebP at
+quality 80 to 86.
+
+| Still | Pose |
+|---|---|
+| `hero-land-*`, `hero-port-*` | `FILM.land[0]`, `FILM.port[0]`, dark grade, frame 16:10 and 0.62 |
+| `inside-land`, `inside-port` | apart at 0.62: tilt 90 degrees, dist 2.05, frame 1440 x 560; upright, dist 4.9 |
+| `closer-land`, `closer-port` | `CLOSER.nose`, light grade, the rest ghosted, frames 980 x 685 and 390 x 420 |
+| `card-1` | whole rocket, dark: tilt 0.74, lean 0.25, dist 2.42 (phone: tilt 0.9, dist 2.9) |
+| `card-2` | upper tube's open aft end and the coupler, light: tilt 1.15, lean -0.5, station -0.15, dist 0.78, apart 0.62 |
+| `card-3` | motor mount out the back, light: tilt 1.15, lean -0.4, station -0.93, dist 0.95, apart 0.62 |
+| `card-4` | payload board, dark: tilt 1.42, lean 0.3, roll 0.62, station 0.385, dist 0.74, apart 0.62 |
+| `card-5` | nose cone lifted alone, light: tilt 0.7, lean 0.4, station 0.46, dist 1.15, `slideIds: [0]`, apart 0.36 |
+
+If the hero pose (`FILM.*[0]`), `STAGE_STUDIO` or `GRADES.dark` change, the hero stills must be rendered again
+or the poster and the live canvas no longer line up.
+
+### Checked
+
+`node tools/study-shots.js vireo`: 2,045 KB on the desktop pass (173 KB before three.js is asked for), no console
+errors, failed or outside requests, no sideways overflow at 1440 or 390, no unnamed controls, no image without
+`alt`, one `h1`. The reserve flow by pointer and by keyboard alone (pick, bad email, good email, confirmation,
+start over): no request other than GET, no navigation. Frames stop when the stage or the view is off screen,
+when nothing moves, and in a hidden tab. Without three.js, without WebGL, with reduced motion and without
+script the page falls back to the stills and every word is readable.
+
+### Known weak spots
+
+- With the nose up and to the right, the livery's stacked lettering reads from the nose down, so it looks
+  turned over in the hero and in the wide exploded view.
+- Between the hero and the statement the stage is empty for about a third of a screen while the rocket is away.
+- The wide exploded view on a phone is small, as noted above.
+- All looking was done in headless Chromium with software GL, where a frame takes about half a second. Frame
+  pacing, the pixel ratio governor and `backdrop-filter` on real phones are not verified on hardware.
+- The gallery's auto advance pauses on focus and pointer hold but has no swipe velocity handling of its own; it
+  relies on native scroll snap.

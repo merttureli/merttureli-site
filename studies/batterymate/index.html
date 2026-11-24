@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="../shared/study.css">
+<script src="../shared/study.js"></script>
+<title>Batterymate: it throws back</title>
+<meta name="description" content="Batterymate is a sample site for a softball machine that catches the ball and returns it. Throw one at it, see how it works, book a demo for your team.">
+<meta name="theme-color" content="#0a1126">
+<link rel="preload" href="fonts/sofia-sans-extra-condensed-latin-wght-italic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/sofia-sans-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/batterymate.css">
+<script>(function(d){d.classList.add('js');var r=matchMedia('(prefers-reduced-motion: reduce)').matches;if(r)d.classList.add('still');try{if(!r&&window.WebGL2RenderingContext&&!(navigator.connection&&navigator.connection.saveData))d.classList.add('live')}catch(e){}})(document.documentElement)</script>
+</head>
+<body>
+<a class="study-back study-back--batterymate" href="/websites.html#studies"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13 8H3.5M7.5 3.5 3 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Back to websites</a>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="bar">
+  <a class="bar__mark" href="#top" aria-label="Batterymate, back to top">Batterymate</a>
+  <nav class="bar__nav" aria-label="Sections">
+    <a class="bar__link" href="#how">How it works</a>
+    <a class="bar__link" href="#numbers">The numbers</a>
+    <a class="btn btn--bar" href="#book"><span>Book a demo</span></a>
+  </nav>
+</header>
+
+<!-- The softball's seam, as the page's scroll path: it is stitched as the page is read. -->
+<div class="seam" aria-hidden="true">
+  <svg class="seam__svg" focusable="false"><path class="seam__thread"/><path class="seam__stitch"/></svg>
+  <span class="seam__ball"></span>
+</div>
+
+<!-- The chalk lines of a softball field, in feet (home plate at 0,0, center field up). Cloned behind every band. -->
+<template id="field">
+  <svg class="field" viewBox="-160 -232 320 262" preserveAspectRatio="xMidYMin meet" aria-hidden="true" focusable="false">
+    <g fill="none" stroke="currentColor">
+      <path data-w="0 .06" pathLength="1" d="M-155.6 -155.6A220 220 0 0 1 155.6 -155.6"/>
+      <path data-w="0 .08" pathLength="1" d="M-146.4 -146.4A207 207 0 0 1 146.4 -146.4"/>
+      <path data-w=".02 .2" pathLength="1" d="M0 0L-155.6 -155.6"/>
+      <path data-w=".02 .2" pathLength="1" d="M0 0L155.6 -155.6"/>
+      <path data-w=".04 .16" pathLength="1" d="M42.43 -42.43L0 -84.85L-42.43 -42.43"/>
+      <path data-w=".1 .3" pathLength="1" d="M-58.07 -58.07A60 60 0 0 1 58.07 -58.07"/>
+      <path data-w=".3 .48" pathLength="1" d="M8 -43A8 8 0 1 1 -8 -43A8 8 0 1 1 8 -43"/>
+      <path data-w=".4 .5" pathLength="1" d="M-1 -43.25h2v.5h-2z"/>
+      <path data-w=".02 .14" pathLength="1" d="M-1.2 -86.05L0 -87.25L1.2 -86.05L0 -84.85z"/>
+      <path data-w=".3 .42" pathLength="1" d="M41.23 -42.43L42.43 -43.63L43.63 -42.43L42.43 -41.23z"/>
+      <path data-w=".3 .42" pathLength="1" d="M-41.23 -42.43L-42.43 -43.63L-43.63 -42.43L-42.43 -41.23z"/>
+      <path data-w=".66 .74" pathLength="1" d="M0 0L-.71 -.71V-1.42H.71V-.71z"/>
+      <path data-w=".55 .72" pathLength="1" d="M1.2 -4.2h3v7h-3z"/>
+      <path data-w=".55 .72" pathLength="1" d="M-1.2 -4.2h-3v7h3z"/>
+      <path data-w=".6 .8" pathLength="1" d="M-4.2 2.8V12.8H4.2V2.8"/>
+      <path data-w=".62 .86" pathLength="1" d="M-17.7 -17.7A25 25 0 1 0 17.7 -17.7"/>
+      <path data-w=".3 .45" pathLength="1" d="M23.33 -19.09L44.55 -40.31"/>
+    </g>
+  </svg>
+</template>
+
+<main id="main">
+
+<section class="hero band band--chalk" id="top" data-field>
+  <h1 class="hero__title display">
+    <span class="line"><span class="fill">It throws</span></span>
+    <span class="line"><span class="outline">back.</span></span>
+  </h1>
+  <div class="hero__machine" id="heroBox">
+    <img class="hero__still" src="assets/machine-hero-720.webp" srcset="assets/machine-hero-720.webp 720w, assets/machine-hero-1280.webp 1280w" sizes="(max-width: 899px) 92vw, 40vw" width="1280" height="1230" alt="The Batterymate machine: a tall catch net over a sloped bed, a caged feeder beside it and a two wheel thrower at the end." fetchpriority="high" decoding="async">
+  </div>
+  <div class="hero__copy">
+    <p class="hero__lede">A machine that catches the ball and returns it.</p>
+    <div class="hero__cta">
+      <a class="btn btn--big" href="#book"><span>Book a demo</span></a>
+      <button class="chip" type="button" id="throw"><span><i class="chip__ball" aria-hidden="true"></i><b class="chip__text" data-mouse="Click anywhere to throw" data-touch="Tap anywhere to throw">Click anywhere to throw</b></span></button>
+    </div>
+  </div>
+  <div class="score" role="group" aria-label="Scoreboard">
+    <p class="score__cell"><span class="score__label">Thrown</span><span class="score__num" id="nThrown">00</span></p>
+    <p class="score__cell"><span class="score__label">Returned</span><span class="score__num" id="nReturned">00</span></p>
+  </div>
+  <div class="hero__stage" id="heroStage" aria-hidden="true"></div>
+  <div class="hero__fx" id="fx" aria-hidden="true"></div>
+  <p class="sr-only" id="say" role="status"></p>
+</section>
+
+<div class="ticker" id="ticker">
+  <div class="ticker__lean">
+    <ul class="ticker__run">
+      <li class="is-boxed"><span>100% feed indexing on competition day</span></li>
+      <li><span>55 lb</span></li>
+      <li class="is-boxed"><span>1.5 hours on one battery</span></li>
+      <li><span>Assembles with no tools</span></li>
+      <li class="is-boxed"><span>One person portable</span></li>
+    </ul>
+  </div>
+</div>
+
+<section class="how band band--chalk" id="how" data-field>
+  <div class="how__pin">
+    <header class="how__head">
+      <h2 class="label">How it works</h2>
+      <p class="how__hint">Three steps. Scroll to run them.</p>
+    </header>
+    <ol class="how__steps">
+      <li class="step is-on">
+        <span class="step__no" aria-hidden="true">01</span>
+        <h3 class="step__verb display"><span class="line"><span class="fill">Catch.</span></span></h3>
+        <p class="step__say">The feeder is a rotating dual chamber that catches the ball.</p>
+        <img class="step__still" src="assets/step-catch.webp" width="1200" height="1000" loading="lazy" decoding="async" alt="The machine with its feeder cage lifted off. A ball has dropped off the net and rolls down the bed toward the chamber.">
+      </li>
+      <li class="step">
+        <span class="step__no" aria-hidden="true">02</span>
+        <h3 class="step__verb display"><span class="line"><span class="fill">Turn.</span></span></h3>
+        <p class="step__say">The chamber rotates 180 degrees.</p>
+        <img class="step__still" src="assets/step-turn.webp" width="1200" height="1000" loading="lazy" decoding="async" alt="Close on the feeder: the dual chamber half way through its turn, lifting the ball to the exit side.">
+      </li>
+      <li class="step">
+        <span class="step__no" aria-hidden="true">03</span>
+        <h3 class="step__verb display"><span class="line"><span class="fill">Return.</span></span></h3>
+        <p class="step__say">It hands the ball to the return flywheel, driven by a 120 W DC motor.</p>
+        <img class="step__still" src="assets/step-return.webp" width="1200" height="1000" loading="lazy" decoding="async" alt="Close on the thrower with its plates lifted: the ball leaves between the two flywheels.">
+      </li>
+    </ol>
+    <div class="how__window" id="howBox">
+      <img class="how__still" src="assets/machine-hero-720.webp" srcset="assets/machine-hero-720.webp 720w, assets/machine-hero-1280.webp 1280w" sizes="(max-width: 899px) 92vw, 40vw" width="1280" height="1230" loading="lazy" decoding="async" alt="">
+      <div class="how__stage" id="howStage" aria-hidden="true"></div>
+      <ol class="how__pips" aria-hidden="true"><li>Catch</li><li>Turn</li><li>Return</li></ol>
+    </div>
+  </div>
+</section>
+
+<section class="numbers band band--navy" id="numbers" data-field>
+  <header class="sec__head">
+    <p class="label">The numbers</p>
+    <h2 class="display reveal"><span class="line"><span class="fill">Read the</span></span><span class="line"><span class="outline">board.</span></span></h2>
+  </header>
+  <div class="linescore" id="linescore">
+    <div class="ls__team" aria-hidden="true"><span>Inning</span><span>Batterymate</span></div>
+    <dl class="ls__grid">
+      <div class="inning"><dt><i class="ls__no" aria-hidden="true">1</i><i class="lamp" aria-hidden="true"></i><span>Feed</span></dt><dd class="ls__val"><span class="flip">100</span><small>%</small></dd><dd class="ls__note">Feed indexing on competition day.</dd></div>
+      <div class="inning"><dt><i class="ls__no" aria-hidden="true">2</i><i class="lamp" aria-hidden="true"></i><span>Weight</span></dt><dd class="ls__val"><span class="flip">55</span><small>lb</small></dd><dd class="ls__note">One person portable.</dd></div>
+      <div class="inning"><dt><i class="ls__no" aria-hidden="true">3</i><i class="lamp" aria-hidden="true"></i><span>Runtime</span></dt><dd class="ls__val"><span class="flip">1.5</span><small>hr</small></dd><dd class="ls__note">Continuous, on a single battery.</dd></div>
+      <div class="inning"><dt><i class="ls__no" aria-hidden="true">4</i><i class="lamp" aria-hidden="true"></i><span>Battery</span></dt><dd class="ls__val"><span class="flip">12</span><small>V</small></dd><dd class="ls__note">One 12 V 20 Ah SLA battery.</dd></div>
+      <div class="inning"><dt><i class="ls__no" aria-hidden="true">5</i><i class="lamp" aria-hidden="true"></i><span>Tools</span></dt><dd class="ls__val"><span class="flip">0</span></dd><dd class="ls__note">Assembles with no tools.</dd></div>
+      <div class="inning inning--wide"><dt><i class="ls__no" aria-hidden="true">6</i><i class="lamp" aria-hidden="true"></i><span>Control</span></dt><dd class="ls__val"><span class="flip">ESP32</span></dd><dd class="ls__note">One ESP32 runs everything. A wireless remote starts and stops it.</dd></div>
+    </dl>
+  </div>
+  <p class="numbers__kicker display reveal"><span class="line"><span class="outline">Every ball delivered.</span></span><span class="line"><span class="fill">No misses.</span></span></p>
+</section>
+
+<section class="practice band band--chalk" id="practice" data-field>
+  <header class="sec__head">
+    <p class="label">On the field</p>
+    <h2 class="display reveal"><span class="line"><span class="fill">Built for</span></span><span class="line"><span class="outline">practice.</span></span></h2>
+  </header>
+  <ol class="drills">
+    <li class="drill">
+      <img src="assets/draw-carry.webp" width="1200" height="900" loading="lazy" decoding="async" alt="Line drawing of the whole machine, assembled.">
+      <h3 class="drill__verb"><i aria-hidden="true">01</i>Carry it.</h3>
+      <p>It weighs 55 lb. One person carries it.</p>
+    </li>
+    <li class="drill">
+      <img src="assets/draw-setup.webp" width="1200" height="900" loading="lazy" decoding="async" alt="Line drawing of the machine taken apart: net, bed, ramps, feeder and thrower.">
+      <h3 class="drill__verb"><i aria-hidden="true">02</i>Set it up.</h3>
+      <p>It assembles with no tools. Leave the toolbox at home.</p>
+    </li>
+    <li class="drill">
+      <img src="assets/draw-run.webp" width="1200" height="900" loading="lazy" decoding="async" alt="Line drawing of the feeder and the two wheel thrower, close up.">
+      <h3 class="drill__verb"><i aria-hidden="true">03</i>Run it.</h3>
+      <p>A wireless remote starts and stops it. One battery runs it for 1.5 hours.</p>
+    </li>
+  </ol>
+</section>
+
+<section class="book band band--yellow" id="book" data-field>
+  <header class="sec__head">
+    <p class="label">Book a demo</p>
+    <h2 class="display reveal"><span class="line"><span class="fill">Put it in</span></span><span class="line"><span class="outline">the lineup.</span></span></h2>
+    <p class="book__lede">Pick a practice. We bring the machine to your field and your team throws at it.</p>
+  </header>
+
+  <form class="booking" id="booking" novalidate>
+    <fieldset class="fixtures" id="fixtures">
+      <legend class="label">1. Pick a slot this week</legend>
+      <ul class="fixtures__list">
+        <li><label class="slot"><input type="radio" name="slot" value="Monday, 4:00 PM" required><span class="slot__day">Mon</span><span class="slot__time">4:00 PM</span><span class="tag">Open</span></label></li>
+        <li><label class="slot is-taken"><input type="radio" name="slot" value="Tuesday, 5:30 PM" aria-disabled="true"><span class="slot__day">Tue</span><span class="slot__time">5:30 PM</span><span class="tag">Taken</span></label></li>
+        <li><label class="slot"><input type="radio" name="slot" value="Wednesday, 4:00 PM"><span class="slot__day">Wed</span><span class="slot__time">4:00 PM</span><span class="tag">Open</span></label></li>
+        <li><label class="slot"><input type="radio" name="slot" value="Thursday, 6:00 PM"><span class="slot__day">Thu</span><span class="slot__time">6:00 PM</span><span class="tag">Open</span></label></li>
+        <li><label class="slot is-taken"><input type="radio" name="slot" value="Friday, 4:30 PM" aria-disabled="true"><span class="slot__day">Fri</span><span class="slot__time">4:30 PM</span><span class="tag">Taken</span></label></li>
+        <li><label class="slot"><input type="radio" name="slot" value="Saturday, 9:00 AM"><span class="slot__day">Sat</span><span class="slot__time">9:00 AM</span><span class="tag">Open</span></label></li>
+        <li><label class="slot"><input type="radio" name="slot" value="Sunday, 10:00 AM"><span class="slot__day">Sun</span><span class="slot__time">10:00 AM</span><span class="tag">Open</span></label></li>
+      </ul>
+      <p class="err" id="errSlot" role="alert"></p>
+    </fieldset>
+
+    <fieldset class="roster">
+      <legend class="label">2. Tell us who is on the field</legend>
+      <div class="field-row">
+        <label for="team">Team name</label>
+        <input id="team" name="team" type="text" autocomplete="organization" required aria-describedby="errTeam">
+        <p class="err" id="errTeam" role="alert"></p>
+      </div>
+      <div class="field-pair">
+        <div class="field-row">
+          <label for="level">Level</label>
+          <select id="level" name="level" required aria-describedby="errLevel">
+            <option value="">Pick one</option>
+            <option>10U</option><option>12U</option><option>14U</option><option>16U</option><option>18U</option>
+            <option>High school</option><option>College</option><option>Adult league</option>
+          </select>
+          <p class="err" id="errLevel" role="alert"></p>
+        </div>
+        <div class="field-row">
+          <label for="players">Players</label>
+          <input id="players" name="players" type="number" inputmode="numeric" min="1" max="40" required aria-describedby="errPlayers">
+          <p class="err" id="errPlayers" role="alert"></p>
+        </div>
+      </div>
+      <div class="field-row">
+        <label for="email">Coach's email</label>
+        <input id="email" name="email" type="email" autocomplete="email" required aria-describedby="errEmail">
+        <p class="err" id="errEmail" role="alert"></p>
+      </div>
+      <button class="btn btn--navy btn--big" type="submit"><span>Book the demo</span></button>
+      <p class="roster__note">This is a sample. Nothing is sent.</p>
+    </fieldset>
+  </form>
+
+  <article class="lineup" id="lineup" hidden tabindex="-1" aria-labelledby="lineupTitle">
+    <header class="lineup__head">
+      <p class="label">Batterymate demo</p>
+      <h3 class="lineup__title" id="lineupTitle">Lineup card</h3>
+      <svg class="lineup__seam" viewBox="0 0 600 40" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="M0 28C150 -6 450 -6 600 28"/><path d="M0 28C150 -6 450 -6 600 28"/></svg>
+    </header>
+    <table class="lineup__table">
+      <thead><tr><th scope="col">No.</th><th scope="col">Position</th><th scope="col">On the card</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><th scope="row">Team</th><td id="outTeam"></td></tr>
+        <tr><td>2</td><th scope="row">Level</th><td id="outLevel"></td></tr>
+        <tr><td>3</td><th scope="row">Players</th><td id="outPlayers"></td></tr>
+        <tr><td>4</td><th scope="row">Slot</th><td id="outSlot"></td></tr>
+        <tr><td>5</td><th scope="row">Coach</th><td id="outEmail"></td></tr>
+      </tbody>
+    </table>
+    <p class="lineup__stamp">Sample. Nothing was sent.</p>
+    <p class="lineup__note">This page is a sample site. No demo was booked and nothing left this page.</p>
+    <button class="btn btn--navy" type="button" id="again"><span>Change the card</span></button>
+  </article>
+</section>
+
+</main>
+
+<footer class="foot band band--navy" data-field>
+  <div class="foot__row">
+    <p class="foot__line">A sample site by Mert Tureli. Batterymate is an invented brand and no demos are booked here. The machine is real: the Robo-Catcher, built by a 12 person capstone team. I did its electronics and firmware.</p>
+    <nav class="foot__nav" aria-label="Footer">
+      <a href="#how">How it works</a>
+      <a href="#numbers">The numbers</a>
+      <a href="#book">Book a demo</a>
+      <a href="#top">Back to top</a>
+    </nav>
+  </div>
+  <p class="foot__mark display" aria-hidden="true"><span class="outline">Batterymate</span></p>
+</footer>
+
+<script type="module" src="js/batterymate.js"></script>
+</body>
+</html>

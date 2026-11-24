@@ -7,7 +7,7 @@ const NIGHTS = { thu: 'Thu 12', fri: 'Fri 13', sat: 'Sat 14' };
 const TAU = Math.PI * 2;
 const frac = v => v - Math.floor(v);
 const hash = (a, b) => frac(Math.sin(a * 12.9898 + b * 78.233) * 43758.5453);
-const plain = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
+const plain = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
 const list = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
 
 /* The constellation: a small round chart with the alphabet around its rim. Each letter of the name is a

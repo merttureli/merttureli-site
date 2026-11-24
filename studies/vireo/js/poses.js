@@ -22,16 +22,16 @@ export const FILM = {
     { u: 1.30, tilt: 0, lean: 0, roll: ROLL0 + 1.1, station: -0.02, dist: 3.25, ox: 0.8, oy: -0.011, explode: 0 },
     { u: 2.00, tilt: 0, lean: 0, roll: ROLL0 + 1.1, station: -0.02, dist: 3.25, ox: 0.8, oy: -0.011, explode: 0 },
     // apart, the whole length of it across the screen
-    { u: 2.17, tilt: H, lean: 0.16, roll: 0.6, station: -0.093, dist: 3.35, ox: 0.0, oy: -0.1, explode: 0.55 },
-    { u: 2.25, tilt: H, lean: 0.16, roll: 0.6, station: -0.093, dist: 3.35, ox: 0.0, oy: -0.1, explode: 0.55 },
+    { u: 2.15,tilt: H, lean: 0.16, roll: 0.6, station: -0.093, dist: 3.35, ox: 0.0, oy: -0.1, explode: 0.55 },
+    { u: 2.24,tilt: H, lean: 0.16, roll: 0.6, station: -0.093, dist: 3.35, ox: 0.0, oy: -0.1, explode: 0.55 },
     // the payload
-    { u: 2.43, tilt: H - 0.1, lean: 0.30, roll: 0.62, station: 0.40, dist: 0.86, ox: -0.04, oy: 0.1, explode: 0.62 },
-    { u: 2.52, tilt: H - 0.1, lean: 0.30, roll: 0.72, station: 0.40, dist: 0.86, ox: -0.04, oy: 0.1, explode: 0.62 },
+    { u: 2.40,tilt: H - 0.1, lean: 0.30, roll: 0.62, station: 0.40, dist: 0.86, ox: -0.04, oy: 0.1, explode: 0.62 },
+    { u: 2.54,tilt: H - 0.1, lean: 0.30, roll: 0.72, station: 0.40, dist: 0.86, ox: -0.04, oy: 0.1, explode: 0.62 },
     // the motor mount
-    { u: 2.70, tilt: H + 0.1, lean: -0.24, roll: 1.1, station: -0.98, dist: 0.9, ox: 0.04, oy: 0.1, explode: 0.62 },
-    { u: 2.78, tilt: H + 0.1, lean: -0.24, roll: 1.25, station: -0.98, dist: 0.9, ox: 0.04, oy: 0.1, explode: 0.62 },
+    { u: 2.66,tilt: H + 0.1, lean: -0.24, roll: 1.1, station: -0.98, dist: 0.9, ox: 0.04, oy: 0.1, explode: 0.62 },
+    { u: 2.80,tilt: H + 0.1, lean: -0.24, roll: 1.25, station: -0.98, dist: 0.9, ox: 0.04, oy: 0.1, explode: 0.62 },
     // back together, to be turned by hand
-    { u: 2.94, tilt: 1.0, lean: 0.2, roll: ROLL0, station: -0.02, dist: 2.35, ox: 0.0, oy: 0.05, explode: 0 },
+    { u: 2.93,tilt: 1.0, lean: 0.2, roll: ROLL0, station: -0.02, dist: 2.35, ox: 0.0, oy: 0.05, explode: 0 },
     { u: 3.00, tilt: 1.0, lean: 0.2, roll: ROLL0, station: -0.02, dist: 2.35, ox: 0.0, oy: 0.05, explode: 0 },
   ],
   port: [
@@ -42,13 +42,13 @@ export const FILM = {
     { u: 0.92, tilt: 0, lean: 0, roll: ROLL0 + 1.1, station: 0.5707, dist: 3.4, ox: 0.82, oy: 0.83, explode: 0 },
     { u: 1.00, tilt: 0, lean: 0, roll: ROLL0 + 1.1, station: -0.02, dist: 3.4, ox: 0.82, oy: 0.013, explode: 0 },
     { u: 2.00, tilt: 0, lean: 0, roll: ROLL0 + 1.1, station: -0.02, dist: 3.4, ox: 0.82, oy: 0.013, explode: 0 },
-    { u: 2.17, tilt: 0, lean: 0, roll: 0.6, station: -0.093, dist: 5.4, ox: 0.66, oy: 0.0, explode: 0.55 },
-    { u: 2.25, tilt: 0, lean: 0, roll: 0.6, station: -0.093, dist: 5.4, ox: 0.66, oy: 0.0, explode: 0.55 },
-    { u: 2.43, tilt: 1.0, lean: 0.28, roll: 0.62, station: 0.40, dist: 1.3, ox: 0.05, oy: 0.2, explode: 0.62 },
-    { u: 2.52, tilt: 1.0, lean: 0.28, roll: 0.72, station: 0.40, dist: 1.3, ox: 0.05, oy: 0.2, explode: 0.62 },
-    { u: 2.70, tilt: 1.0, lean: -0.2, roll: 1.1, station: -0.98, dist: 1.25, ox: 0.0, oy: 0.2, explode: 0.62 },
-    { u: 2.78, tilt: 1.0, lean: -0.2, roll: 1.25, station: -0.98, dist: 1.25, ox: 0.0, oy: 0.2, explode: 0.62 },
-    { u: 2.94, tilt: 0.6, lean: 0.2, roll: ROLL0, station: -0.02, dist: 3.3, ox: 0.0, oy: 0.08, explode: 0 },
+    { u: 2.15,tilt: 0, lean: 0, roll: 0.6, station: -0.093, dist: 5.4, ox: 0.66, oy: 0.0, explode: 0.55 },
+    { u: 2.24,tilt: 0, lean: 0, roll: 0.6, station: -0.093, dist: 5.4, ox: 0.66, oy: 0.0, explode: 0.55 },
+    { u: 2.40,tilt: 1.0, lean: 0.28, roll: 0.62, station: 0.40, dist: 1.3, ox: 0.05, oy: 0.2, explode: 0.62 },
+    { u: 2.54,tilt: 1.0, lean: 0.28, roll: 0.72, station: 0.40, dist: 1.3, ox: 0.05, oy: 0.2, explode: 0.62 },
+    { u: 2.66,tilt: 1.0, lean: -0.2, roll: 1.1, station: -0.98, dist: 1.25, ox: 0.0, oy: 0.2, explode: 0.62 },
+    { u: 2.80,tilt: 1.0, lean: -0.2, roll: 1.25, station: -0.98, dist: 1.25, ox: 0.0, oy: 0.2, explode: 0.62 },
+    { u: 2.93,tilt: 0.6, lean: 0.2, roll: ROLL0, station: -0.02, dist: 3.3, ox: 0.0, oy: 0.08, explode: 0 },
     { u: 3.00, tilt: 0.6, lean: 0.2, roll: ROLL0, station: -0.02, dist: 3.3, ox: 0.0, oy: 0.08, explode: 0 },
   ],
 };
@@ -56,8 +56,8 @@ export const FILM = {
 // The pinned scene's words, by its own progress p = u - 2: [fade in from, full from, full to, gone by].
 export const INSIDE_UI = {
   title: [-1, -0.5, 0.19, 0.25],
-  caps: [[0.12, 0.17, 0.24, 0.29], [0.38, 0.43, 0.52, 0.57], [0.65, 0.70, 0.78, 0.83]],
-  chip: [0.9, 0.95, 2, 3],
+  caps: [[0.11, 0.15, 0.31, 0.35], [0.37, 0.41, 0.58, 0.62], [0.64, 0.68, 0.85, 0.89]],
+  chip: [0.91, 0.95, 2, 3],
 };
 export const TURN_FROM = 0.9;      // p from which the model can be turned by hand
 

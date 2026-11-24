@@ -66,8 +66,13 @@ if (shout) {
 
 /* ---------- the field: a panel opens on hover and focus, and stays open when pressed ---------- */
 const panels = [...document.querySelectorAll('.panel')];
-const openPanel = k => panels.forEach((p, i) => p.setAttribute('aria-pressed', i === k ? 'true' : 'false'));
-panels.forEach((p, i) => p.addEventListener('click', () => openPanel(p.getAttribute('aria-pressed') === 'true' && !phoneQ.matches ? -1 : i)));
+// At rest a panel is narrow and takes a small file. The first time it opens it asks for the size it then needs.
+const sharpen = p => { const img = p.querySelector('img'); if (img && !img.dataset.wide) { img.dataset.wide = '1'; img.sizes = +img.getAttribute('width') > +img.getAttribute('height') ? '(max-width: 700px) 150vw, 62vw' : '(max-width: 700px) 90vw, 46vw'; } };
+const openPanel = k => panels.forEach((p, i) => { p.setAttribute('aria-pressed', i === k ? 'true' : 'false'); if (i === k) sharpen(p); });
+panels.forEach((p, i) => {
+  p.addEventListener('click', () => openPanel(p.getAttribute('aria-pressed') === 'true' && !phoneQ.matches ? -1 : i));
+  p.addEventListener('pointerenter', () => sharpen(p)); p.addEventListener('focus', () => sharpen(p));
+});
 const panelDefault = () => openPanel(phoneQ.matches ? 0 : -1);
 panelDefault(); phoneQ.addEventListener('change', panelDefault);
 

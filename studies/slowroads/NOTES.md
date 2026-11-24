@@ -84,3 +84,70 @@ collected. The photographs are mine, from a road trip to Acadia."
 
 First view under 400 KB. Whole page under 2 MB (the photographs are small). Dragging must work with a
 mouse, with touch, and with the keyboard (a focused print moves with the arrow keys).
+
+## What was built
+
+Six sections as briefed, in `index.html`, `css/slowroads.css` and four small modules loaded by
+`js/slowroads.js`: `prints.js` (pick up, move, let go), `road.js` (the route and the stamps), `sheet.js`
+(the contact sheet), `post.js` (the envelope and the postcard).
+
+**How the pieces are made**
+
+- **Prints.** Each keeps its place in the layout and only gets `--dx`, `--dy` and `--tilt` when moved. Mouse:
+  press and move. Touch: press and hold for a quarter second, then move (a quick swipe still scrolls the
+  page; `touch-action: pan-y`). Keyboard: focus lifts a print, arrow keys move it 16px (48px with Shift),
+  Escape puts it back. A print's middle stays inside its own section, and it lands a little crooked in the
+  direction it was thrown.
+- **The route.** Not a path file. `road.js` draws it at run time through invisible anchors that the
+  stylesheet places (`[data-road]`), so one line follows the layout at any width: down the gutter between
+  prints and text on a desk, down the left margin on a phone. Every leg gets one off-center bend, then the
+  line is pushed sideways by smooth noise and dashed with dashes of different lengths.
+- **Stamps.** Inline SVG: text on two arcs, a different border for each stop, a small drawn icon, and three
+  ink filters (`#ink-a`, `#ink-b`, `#ink-c`: fine grain plus large dry patches) so neighbors are worn
+  differently. A second, faint, offset copy is the lighter second impression.
+- **Textures.** Paper grain, kraft fibers and desk felt are small SVG noise tiles used as repeating
+  backgrounds, so no filter runs while the page scrolls. Live filters sit only on the six stamps, the
+  postmark, the rubber stamp and the grease-pencil circle.
+- **Doodles.** `assets/doodles.svg` is one sprite of 17 pen marks (arrows, map icons, waves, pines, the
+  postmark bars), drawn from a few points each and shaken with noise. Tape is CSS.
+
+**Deviations from the brief, and why**
+
+- The cover note reads "one lighthouse, one pond, a lot of granite". The photographs do not say how many
+  days the trip took, so "three days" is out.
+- Stamps say "STOP 1 OF 6" across the middle where a passport stamp has a date. The brief allows no dates.
+- The button and the postage stamp use `#cf3b76`, a shade deeper than the rose `#d6457f` of the stamps.
+  White type on the brief's rose is 4.2 to 1; on the deeper one it is 4.6 to 1.
+- A fourth photograph is left out besides the three named: `overlook-sit.jpg` shows a face in profile.
+  That leaves 22. Nineteen are prints on the six stops; the contact sheet shows all 22 (`ridge-rock`,
+  `sky-wisps` and `sunset-poles` appear only there).
+- The kraft label lies on top of the loose prints, so a thrown print can never cover the subscribe button.
+- Fonts are National Park (variable), Courier Prime 400 and 700, and Mynerve, from Fontsource, cut down to
+  Basic Latin with fonttools (138 KB to 94 KB). None declares a reserved font name; licenses are in `fonts/`.
+- Photographs are used in place as the 520px jpg files (no webp copies). No print is shown wider than 520px.
+- The texture tiles are base64 in the stylesheet (their sources are in the comment above them) because the
+  site's link check reads a nested `url(#id)` inside a data URI as a missing file.
+
+**Measured** (headless Chromium, `tools/study-shots.js` and my own scripts, November 2026)
+
+- Whole page 872 KB at both widths. The first screen needs 381 KB (document, styles, scripts, four fonts,
+  the doodles, five photographs). The browser's lazy-loading look-ahead fetches four to six more photographs
+  before any scroll, which makes 467 KB on a phone and 546 KB on a desk arrive up front.
+- Scrolling the whole page: median frame 16.7 ms, 95th percentile 16.8 ms at 1440 and at 390.
+- Dragging a print: median 16.7 ms, 95th percentile 33 ms at 1440 (16.8 ms at 390).
+- No console errors, failed requests, outside requests, sideways overflow (320 to 1920), unnamed controls or
+  images without `alt`. 58 tab stops, all with a visible ring. Lowest text contrast 4.6 to 1.
+
+**Known weak spots**
+
+- Dragging at 1440 drops to 30 frames a second in bursts in the headless test, because the lifted print's
+  shadow repaints the prints under it. Promoting the print to its own layer did not help there. It needs a
+  look on a real laptop and a real phone before this is called smooth.
+- On a phone the prints become a tidy overlapping column and the route a margin line. It reads well but has
+  less of the scattered desk than the wide layout. Between 600 and 860 pixels the same column is used with
+  the prints capped at 520, which leaves the right side of the page empty.
+- The handwriting is one font, so the same letter is always the same shape, and the stamp wear is the same
+  on every visit (three filters shared by six stamps). A second handwriting cut or per-visit filter seeds
+  would make both less regular.
+- The source photographs are small and heavily compressed; `road-yellow` and `bridge-rail` look soft even at
+  print size.

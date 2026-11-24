@@ -40,14 +40,25 @@ function build(road) {
   if (anchors.length < 2) return false;
   svg.setAttribute('viewBox', `0 0 ${hb.width.toFixed(1)} ${hb.height.toFixed(1)}`);
 
-  /* wobble: the hand drifts slowly and trembles quickly. Pinned at the anchors so the line still meets its dots. */
-  const pts = spline(anchors, 7), drift = noise(road.seed), tremble = noise(road.seed + 9), wide = Math.min(1, hb.width / 900);
+  /* Nobody draws a clean S between two points. Each leg gets one extra bend, a little off the straight
+     line and never in the middle, so every curve comes out lopsided. */
+  const kink = rng(road.seed + 5), ctrl = [], at = [], wide = Math.min(1, hb.width / 900);
+  anchors.forEach((a, i) => {
+    at[i] = ctrl.length; ctrl.push(a);
+    const b = anchors[i + 1]; if (!b) return;
+    const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy), t = 0.3 + kink() * 0.4, side = (kink() * 2 - 1) * Math.min(30 * wide + 6, len * 0.13) * road.bend * (0.5 + 0.5 * wide);
+    if (len > 90) ctrl.push({ x: a.x + dx * t - dy / len * side, y: a.y + dy * t + dx / len * side });
+  });
+
+  /* wobble: the hand drifts slowly, sways, and trembles a little. Pinned at the anchors so the line still meets its dots. */
+  const pts = spline(ctrl, 7), drift = noise(road.seed), sway = noise(road.seed + 4), tremble = noise(road.seed + 9);
   let s = 0; const knots = [];
   for (let i = 0; i < pts.length; i++) { if (i) s += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y); pts[i].s = s; if (pts[i].knot >= 0) knots[pts[i].knot] = s; }
+  const pins = at.map(k => knots[k]);
   for (let i = 1; i < pts.length - 1; i++) {
     const a = pts[i - 1], b = pts[i + 1], len = Math.hypot(b.x - a.x, b.y - a.y) || 1, nx = -(b.y - a.y) / len, ny = (b.x - a.x) / len;
-    let near = Infinity; for (const k of knots) near = Math.min(near, Math.abs(pts[i].s - k));
-    const pin = Math.min(1, near / 46), off = (drift(pts[i].s / 150) * (5 + 6 * wide) + tremble(pts[i].s / 38) * 2.1) * pin;
+    let near = Infinity; for (const k of pins) near = Math.min(near, Math.abs(pts[i].s - k));
+    const pin = Math.min(1, near / 40), off = (drift(pts[i].s / 170) * (3 + 7 * wide) + sway(pts[i].s / 64) * (2.2 + 1.6 * wide) + tremble(pts[i].s / 23) * 1.1) * pin;
     pts[i].wx = pts[i].x + nx * off; pts[i].wy = pts[i].y + ny * off;
   }
   pts[0].wx = pts[0].x; pts[0].wy = pts[0].y; const z = pts[pts.length - 1]; z.wx = z.x; z.wy = z.y;
@@ -60,7 +71,7 @@ function build(road) {
   const scale = road.total / (s || 1);
 
   /* where each stop sits along the line, and how far the pen has to be for a given height on the page */
-  road.stops = anchors.map((a, i) => ({ el: a.el.closest('.stop'), at: knots[i] * scale, on: a.el.dataset.road === 'stop' })).filter(a => a.on && a.el);
+  road.stops = anchors.map((a, i) => ({ el: a.el.closest('.stop'), at: pins[i] * scale, on: a.el.dataset.road === 'stop' })).filter(a => a.on && a.el);
   road.table = []; let far = -Infinity;
   for (const p of pts) { if (p.wy === undefined) continue; far = Math.max(far, p.wy); road.table.push([far, p.s * scale]); }
 
@@ -107,7 +118,7 @@ function wanted(road) {
 export function initRoads({ still }) {
   const roads = [...document.querySelectorAll('[data-road-host]')].map((host, i) => ({
     host, mode: host.dataset.roadHost, svg: host.querySelector('.road'), line: host.querySelector('.road__line'), head: host.querySelector('.road__head'),
-    seed: 41 + i * 17, total: 0, at: 0, ok: false, stops: [], table: [], dash: [],
+    seed: 41 + i * 17, bend: parseFloat(host.dataset.roadBend || '1'), total: 0, at: 0, ok: false, stops: [], table: [], dash: [],
   })).filter(r => r.svg && r.line);
   if (!roads.length) return;
 

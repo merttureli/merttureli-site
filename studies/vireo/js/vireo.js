@@ -5,7 +5,16 @@ import { INSIDE_UI, TURN_FROM, band } from './poses.js';
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const html = document.documentElement;
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-if (reduced) html.classList.add('static');
+// No WebGL 2: the 3D is never asked for and the page keeps its stills, as it does with reduced motion.
+const hasGL = (() => {
+  try {
+    const gl = document.createElement('canvas').getContext('webgl2');
+    if (!gl) return false;
+    const lose = gl.getExtension('WEBGL_lose_context'); if (lose) lose.loseContext();
+    return true;
+  } catch (e) { return false; }
+})();
+if (reduced || !hasGL) html.classList.add('static');
 const isStatic = () => html.classList.contains('static');
 const clamp01 = v => (v < 0 ? 0 : v > 1 ? 1 : v);
 const vh = () => window.innerHeight;
@@ -239,7 +248,7 @@ if (!isStatic()) {
     for (const e of es) {
       if (!e.isIntersecting) continue;
       io.unobserve(e.target);
-      const el = e.target, end = +el.dataset.count, dec = +(el.dataset.dec || 0), sep = !!el.dataset.sep, t0 = performance.now(), D = 1400;
+      const el = e.target, end = +el.dataset.count, dec = +(el.dataset.dec || 0), sep = !!el.dataset.sep, t0 = performance.now(), D = 900;
       el.style.minWidth = el.getBoundingClientRect().width + 'px';
       const step = now => {
         const t = clamp01((now - t0) / D), k = 1 - (1 - t) ** 4;
@@ -249,7 +258,7 @@ if (!isStatic()) {
       el.textContent = fmt(0, dec, sep);
       requestAnimationFrame(step);
     }
-  }, { rootMargin: '0px 0px -12% 0px', threshold: 0.6 });
+  }, { rootMargin: '0px 0px -6% 0px', threshold: 0.3 });
   $$('.num__v').forEach(el => io.observe(el));
 }
 
@@ -339,7 +348,8 @@ if (!isStatic()) {
     });
   };
   const idle = window.requestIdleCallback || (f => setTimeout(f, 200));
-  if (isStatic()) new IntersectionObserver((es, io) => { if (es.some(e => e.isIntersecting)) { io.disconnect(); load(); } }, { rootMargin: '120% 0px' }).observe(api.closerView);
+  if (!hasGL) { /* stills only */ }
+  else if (isStatic()) new IntersectionObserver((es, io) => { if (es.some(e => e.isIntersecting)) { io.disconnect(); load(); } }, { rootMargin: '120% 0px' }).observe(api.closerView);
   else if (document.readyState === 'complete') idle(load, { timeout: 1200 });
   else addEventListener('load', () => idle(load, { timeout: 1200 }), { once: true });
 }
