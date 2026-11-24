@@ -20,7 +20,7 @@ Sample 6 of 8. The brief the page was built to, then what was built.
 | commercialtype.com | Type as the image: one word per band, very large, its variable axes animating |
 | abcdinamo.com | Full-bleed flat color sections, uppercase centered headlines, tiny interface text, pill chips |
 | studiodumbar.com | One flat field of color per screen and a shape that moves; nothing else |
-| stedelijk.nl | A program set as large rows with a time at the left and an arrow at the right |
+| config.figma.com | 80px headlines at weight 400 beside 16px mono capitals; square corners; a schedule you can read at a glance |
 | A festival wristband and a gig poster | The pass; the rotating circular line of rules |
 
 **What is its own:** the sky answers the scroll. Behind the type is a field of stars turning slowly about
@@ -40,8 +40,7 @@ words squeeze and stretch as the page moves.
 - **Type.** Display: Anybody, variable (width 50 to 150, weight 100 to 900), uppercase. The hero words run
   from width 50 to width 150 with the scroll; rows sit at width 75, weight 800. Details: Azeret Mono,
   12 to 14px, uppercase with +0.05em tracking. Two families, no more.
-- **Shape.** Bands, rows, pill chips with a 1px cream outline, one circle (the rotating badge). Thick cream
-  rules between program rows.
+- **Shape.** Bands, pill chips with a 1px cream outline, circles (the rotating badge, the night clock).
 - **Motion.** Constant but slow in the sky, exact in the type. Marquees run in opposite directions on
   alternate rows and pause on hover and focus. The badge turns once every 30 seconds. Everything in the sky
   stops with reduced motion: the stars are still points, no meteors, type sits at one width.
@@ -56,8 +55,10 @@ words squeeze and stretch as the page moves.
    "RED TORCHES ONLY, NO HEADLIGHTS, BRING A CHAIR".
 3. **Marquee band** (lilac, night ink). Two rows running opposite ways: "NO MOONLIGHT REQUIRED", "LOOK UP",
    "BRING A BLANKET", "IT GETS COLD".
-4. **Program** (indigo). Three nights as blocks of large rows: time in mono at left, the item in display
-   type, an arrow. About four rows a night (gates, a talk on finding the radiant, scopes open, the watch).
+4. **Program** (indigo). Not rows: a night clock. One large dial from dusk to dawn (20:00 at the left,
+   midnight at the top, 05:00 at the right) with the night's four items placed on its arc (gates, a talk on
+   finding the radiant, scopes open, the watch); night tabs THU, FRI, SAT swing the hand and swap the items.
+   Under it the same program as a plain mono list, for reading and for screen readers.
 5. **The field** (night). The four other photographs in duotone as a row of tall panels that widen on
    hover and focus, each with a one-line mono caption that says only what is in the picture.
 6. **House rules** (cream ground, night ink: the one light section). Five rules as a numbered list in

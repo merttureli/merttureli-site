@@ -63,6 +63,20 @@ left by default. If the sample needs it elsewhere, move it with a rule in the sa
 | Project photos | `../../assets/photos/` (most are 520 wide: use small) |
 | Smooth scrolling | `../../next/js/lenis.min.js` |
 
+## Browser features (checked November 2026)
+
+| Feature | Use it how |
+|---|---|
+| Scroll-driven animations (`animation-timeline`) | As an enhancement only (Firefox got it in October 2026). Scroll scenes are driven from JavaScript, or work without the animation |
+| View transitions in one page, `@starting-style`, `text-wrap: balance`, container queries, `:has`, `color-mix` | Freely |
+| Cross-page view transitions, anchor positioning, `text-wrap: pretty` | As an enhancement only |
+| Relative colors, P3 color | With a plain sRGB fallback first |
+| `backdrop-filter` blur | Freely, but never as the only thing between text and a busy picture |
+
+Dated in late 2026, so not in any sample: purple gradients and glowing orbs, glass behind running text, a
+"new" badge on everything, wide-tracked uppercase labels as the only idea, the hard-shadow kit look on every
+card, letters animating in on every heading, taking over the scroll.
+
 ## Checking one
 
 ```sh

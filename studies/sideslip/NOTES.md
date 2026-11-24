@@ -34,9 +34,11 @@ output trace follows it, with no contact.
   `#5b5d5a`, display black `#0a0a0a` (readout windows only), segment red `#ff2a1f` lit and `#3a0d0a` unlit,
   one indicator green `#19c15a` used only for "connected" lamps. No other color. No gradients except the
   ground shadow under the product.
-- **Type.** Albert Sans, variable: display at weight 250 to 300, very large (up to 14vw), lowercase,
-  tracking -0.03em; legends at 10 to 11px, weight 500, lowercase with +0.04em tracking; body 15 to 16px.
-  Readouts are not a font: seven-segment digits are drawn in SVG or CSS so unlit segments show.
+- **Type.** Small, on purpose: this is the one sample with no large type. Albert Sans, variable. Nothing on
+  the page is set larger than 28px (teenage.engineering's home page tops out at 26px); the product name is
+  28px at weight 300, lowercase, tracking -0.02em. Legends are 10 to 11px, weight 500, lowercase, tracking
+  +0.1em; body 15px. Hierarchy comes from the panels, the pictograms, the readouts and the model, not from
+  size. Readouts are not a font: seven-segment digits are drawn in SVG or CSS so unlit segments show.
 - **Shape.** Panels with a 1px ink outline and 6px corners, a screw head (a slotted circle) in each corner of
   the main panels, pill buttons in ink with plate text, pictograms on a 24px grid with a 1.5px stroke.
   Everything sits on a visible 8px module.
@@ -49,9 +51,9 @@ output trace follows it, with no contact.
 1. **Legend bar** (top, not fixed on a phone). Left: the Sideslip mark (a small ball offset in a tube, as in
    a slip indicator) and "sideslip instruments". Then four pictogram links with tiny labels: product (pedals),
    try it (axes), inside (magnet), reserve (box). Right: "batch 02" with a green lamp and "reserve" pill.
-2. **Hero** (panel gray). "rp-3" very large and thin, top left; "rudder pedals, three axes, no
-   potentiometers" as a legend line. The pedals in live 3D on the right on a soft ground shadow (a rendered
-   still first). Below, the readout strip: X RUDDER, Y LEFT BRAKE, Z RIGHT BRAKE as three seven-segment
+2. **Hero** (panel gray). The pedals in live 3D fill most of the screen on a soft ground shadow (a rendered
+   still first): the object is the headline. Top left, a small placard: "rp-3" at 28px and the legend
+   "rudder pedals, three axes, no potentiometers". Below, the readout strip: X RUDDER, Y LEFT BRAKE, Z RIGHT BRAKE as three seven-segment
    windows with bar meters, and the key legends ("a", "d", "w", "e"). The strip is live from the first
    second.
 3. **Try it** (plate). The full test panel: the 3D model large, the three axes, a differential braking
