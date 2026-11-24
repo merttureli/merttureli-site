@@ -364,7 +364,7 @@ html:not(.js) .plus__body p { opacity: 1; padding-bottom: 22px; }
   .buybar.is-away { opacity: 0; transform: translateY(16px); visibility: hidden; transition: opacity .3s var(--ease), transform .3s var(--ease), visibility 0s .3s; }
 
   .statement { display: block; padding: 30vh 0 34vh; }
-  .statement__text { width: auto; margin: 0 92px 0 var(--gutter); font-size: clamp(28px, 8.2vw, 40px); line-height: 1.12; text-align: left; text-wrap: pretty; }
+  .statement__text { width: auto; margin: 0 100px 0 var(--gutter); font-size: clamp(28px, 8.2vw, 40px); line-height: 1.12; text-align: left; text-wrap: pretty; }
 
   .inside__title { left: var(--gutter); top: calc(var(--bar) + 5vh); font-size: clamp(40px, 11.5vw, 56px); }
   .inside__caps { left: var(--gutter); right: auto; bottom: calc(40px + env(safe-area-inset-bottom)); width: min(340px, 100% - 2 * var(--gutter)); }
