@@ -144,7 +144,9 @@ pixel at 0.85; at 1 every block is shaded. The label reads "1-bit", "N tones", "
   read and mesh times. The shipped files cannot tell them.
 - The railway rail is a left rail on wide screens. Below 1020 px there is no room for it, so the bar grows a
   32 px strip with the way back on the left, the section in view on the right and a progress line along it.
-- "Back to websites" is docked in the bar as a mono label between hairlines.
+- The way back is docked in the bar as a mono label between hairlines. It reads "Sample site" (November 2026, the
+  owner's call), so nobody takes the package for a real one; its name for readers is "Sample site by Mert Tureli.
+  Back to websites".
 
 **Known weak spots.**
 - Smoothness on a slow laptop GPU was not measured: headless checks render through SwiftShader. Copying each

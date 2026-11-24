@@ -150,10 +150,13 @@ licenses in `fonts/`, one icon in `assets/`. No build step, no outside request.
    In normal light the switch's knob is the one red thing on the page.
 9. **The bar** is transparent, but each item is a solid pill, so it reads over every section.
 10. **The way back** is docked in the bar as its first chip, in the bar's colors, and follows red light mode.
-    On a wide screen it stays with the bar, so the page scrolls under it as it does under the bar's own chips.
-    A phone's bar has no room for it, so there it has a row of its own under the bar at the top of the page
-    and scrolls away with the first screen: further down it is never over a button or a form field. Checked
-    at 85 widths from 360 to 1920: at the top of the page it touches no headline, control, field or the badge.
+    A phone's bar has no room for it, so there it has a row of its own under the bar. Checked at 85 widths from
+    360 to 1920: at the top of the page it touches no headline, control, field or the badge.
+    Since November 2026 it reads "Sample site" (the owner's call), so nobody takes the RSVP for a real event, and it
+    stays on screen at every width (on a phone it used to scroll away with the first screen). Once the page
+    moves, a band of the night runs behind the bar and that row (`.bar::before`, faded at its foot), so neither the
+    chip nor the bar's own chips ever sit over a heading, a button or a field scrolling past. Its name for readers
+    is "Sample site by Mert Tureli. Back to websites".
 11. **House rules** carry one moving shape that the brief did not list: a disc that crosses the list with the
     scroll and inverts what it covers. It is drawn as a round window holding an inverted copy of the list (the
     colors a cream disc in "difference" would give), the window moving one way and the copy back by as much, so

@@ -154,6 +154,10 @@ sweep by itself, the model moves only in direct answer to input.
   control in the bar (the pill; the footer keeps the pictogram link). Skip link first in the tab order. Rudder
   scale label "512". Email placeholder `#5b5d5a`. The brand mark is now a straight tube with the ball centered
   between two reference lines.
+- **The way back** is the outlined pill at the right of the bar. Since November 2026 it reads "sample site" (the
+  owner's call), so nobody takes the reservation for a real one, and it stays on screen at every width: below
+  1040, where the bar scrolls away, it is pinned at the top right and a 64px band of plate (`.dock::before`) runs
+  behind it once the bar has gone. Its name for readers is "Sample site by Mert Tureli. Back to websites".
 - **The cut-off render.** In headless Chromium the test panel's render looked cut along a horizontal line when its
   top was under the sticky bar, while the WebGL buffer itself was whole (read back after a render). The cut
   followed the canvas's offset above the window (visible height about H less twice the part above) and went away

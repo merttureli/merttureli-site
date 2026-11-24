@@ -147,6 +147,8 @@ with its center at 58 in. A size is the sheet: the photograph keeps its own rati
 
 - **The way back** is a cell of the bar: beside the bag from 1100 up, at the right of the wordmark row below that.
   Square, hairline sides, the page's small type. Measured inside the bar at 16 widths from 360 to 1920.
+  It reads "Sample site" (November 2026, the owner's call) so nobody takes the prints for a real shop; its name
+  for readers is "Sample site by Mert Tureli. Back to websites". It sits under the bag while the bag is open.
 - **Sticker** hangs from the rule (it crosses it by 15% of its height at every width) and its text is sized from the
   circle: small type below 1600, head type from 1600, where the circle is large enough to hold it.
 - **Section links** land exactly under the bar (one `scroll-padding-top`, no `scroll-margin`).

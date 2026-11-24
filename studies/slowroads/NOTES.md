@@ -114,12 +114,14 @@ Six sections as briefed, in `index.html`, `css/slowroads.css` and four small mod
   postmark, the rubber stamp and the grease-pencil circle.
 - **Doodles.** `assets/doodles.svg` is one sprite of 17 pen marks (arrows, map icons, waves, pines, the
   postmark bars), drawn from a few points each and shaken with noise. Tape is CSS.
-- **The way back.** "Back to websites" is a kraft luggage tag tied to the top left corner of the page, not
-  the fixed pill. It is placed in this sample's CSS, sits on bare desk above the label, and scrolls away
-  with the cover: on a phone there is no margin where a fixed link could stay without covering prints,
-  contact frames or the email field as they pass. Checked at 16 sizes from 360 to 1920 wide, at every scroll
-  position: it is never over a headline, a print, a control or text. It is first in the tab order, and
-  "Back to the top of the pile" in the footer leads back to it.
+- **The way back** is a kraft luggage tag tied to the top left corner, not the fixed pill. It is first in the
+  tab order. Since November 2026 it reads "Sample site" (the owner's call), so nobody takes the postcard for a
+  real subscription, and it stays on screen: it used to scroll away with the cover, because on a phone there is
+  no margin where a fixed link could stay without covering prints, contact frames or the email field. Now it is
+  pinned to the window, and as soon as the page moves a strip of the desk (`body::before`, 70px, with a soft
+  shadow) slides in under it, so the sheets pass beneath the strip and nothing is ever under the tag. The scroll
+  padding grew to match, and the contact sheet's enlargement and the postcard scroll clear of the strip. Its
+  name for readers is "Sample site by Mert Tureli. Back to websites".
 
 **Deviations from the brief, and why**
 

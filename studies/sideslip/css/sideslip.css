@@ -313,6 +313,7 @@ input[type=range]:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
   .js .study-back.study-back--sideslip{position:fixed}
   .dock::before{content:"";position:fixed;z-index:-1;left:0;right:0;top:0;height:64px;background:var(--plate);border-bottom:1px solid var(--ink);visibility:hidden;pointer-events:none}
   .is-veiled .dock::before{visibility:visible}
+  [data-study-framed] .dock::before{display:none}
   .skip:focus{top:72px}
   .hero-grid{grid-template-columns:280px minmax(0,1fr);gap:16px 24px;height:min(calc(100svh - 64px - 40px),760px);min-height:440px;max-height:none}
   .stage--hero{grid-column:2;grid-row:1;margin-left:0}

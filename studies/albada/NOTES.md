@@ -146,11 +146,16 @@ narrow band where neither reaches 4.5 to 1 it goes to pure white or pure black a
 
 **Review round (critic's punch list)**
 
-- **The way back** is no longer the shared pill. From 900 wide it is a 44px circle with an arrow in the left
-  gutter at the bottom, hairline, in the ink of the ground under it; the words show on hover and focus. Under
-  900 it is the same arrow docked in the bar before the wordmark. Checked over the whole scroll at 360, 390,
+- **The way back** is no longer the shared pill. (Superseded below: the circle became a tag.) From 900 wide it
+  was a 44px circle with an arrow in the left gutter at the bottom, hairline, in the ink of the ground under it;
+  the words showed on hover and focus. Under 900 it was the same arrow docked in the bar before the wordmark. Checked over the whole scroll at 360, 390,
   768, 1024, 1440 and 1920: it never sits on a headline, a control or a field (the calendar, the FAQ, the
   hero line). The bar's clock now centers in the room between the name and the menu, and hides under 380.
+- **The way back reads "Sample site"** (November 2026, the owner's call), so nobody takes the booking for a real
+  flight. The circle could not hold the words, so it is now an outlined tag in the bar's ink, an empty twin of the
+  Book tag: after the wordmark from 900 wide, and hanging just under the bar at the left edge below 900, where the
+  bar row has no room. Under 900 the bar's veil runs 32px further down to keep it on the ground, and the menu sheet
+  starts below it. Its name for readers is "Sample site by Mert Tureli. Back to websites".
 - **Long jumps** (more than two screens) cut inside a view transition instead of racing through every
   ground; with reduced motion or without view transitions they jump. The booking's scroll margin is set by
   the script so the calendar head and its rows land in view (checked at 1440 x 900 and 1280 x 640).

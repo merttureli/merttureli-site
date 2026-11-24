@@ -101,7 +101,8 @@ from a pose table keyed by scroll (`js/poses.js`).
 Deviations and why:
 - The back pill is docked in the bar as a small slanted tag (beside the wordmark; on the bar's second row on a
   phone). Checked at every 10 px from 360 to 1920: inside the bar, clear of the wordmark, links and button. It is
-  outside the hero, so a tap on it never throws.
+  outside the hero, so a tap on it never throws. It reads "Sample site" (November 2026, the owner's call), so
+  nobody takes the demo booking for a real one; its name for readers is "Sample site by Mert Tureli. Back to websites".
 - One WebGL canvas. On screen the live machine is always shown, in the hero or in the pinned window, whichever shows
   more of itself; the other, by then mostly scrolled away, keeps its rendered still. The hero draws only while
   something moves. The stills are otherwise only the poster before three.js is in and the picture for reduced motion

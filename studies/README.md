@@ -35,12 +35,21 @@ studies/<key>/
 <title>...</title>
 ```
 
-First thing in `<body>`, the pill back to the Websites page (copy it from `launch/index.html`). It sits bottom
+First thing in `<body>`, the pill back to the Websites page (copy it from `vireo/index.html`). It sits bottom
 left by default, fixed, and there it takes taps meant for the page: a review found it over option cells, form
 fields and footer links on phones. So every sample places it in its own CSS (never in `shared/study.css`):
 docked in the sample's own bar where there is room, restyled to belong to that bar, and at no width from 360
-to 1920 on top of a headline, a control, a form field or a dialog. Its text and link stay. Inside the
-catalog's viewer on the Websites page it hides itself.
+to 1920 on top of a headline, a control, a form field or a dialog. Its link stays.
+
+On a sample site the pill is also the mark that the page is a sample (the owner's decision, November 2026):
+several samples show prices and a booking or reserve flow, and a visitor who lands on one directly must not take
+it for a real shop. So it reads "Sample site" with its back arrow, never shorter and never an icon alone, at
+every width from 360 to 1920 ("Sample site by Mert Tureli" is fine where there is clear room), and its name for
+readers says both things: `aria-label="Sample site by Mert Tureli. Back to websites"`. It shows on the first
+screen and stays on screen while the page scrolls: where a sample's bar scrolls away or is clear, the sample
+gives the pill a band to sit on, so the page passes under the band and never under the pill. The four
+redesigns of the portfolio keep "Back to websites". Inside the catalog's viewer on the Websites page the pill
+hides itself (the viewer's own bar says the page is a sample).
 
 ## Rules for a sample site
 
