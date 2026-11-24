@@ -223,7 +223,10 @@ html.live .how__window { display: block; position: absolute; left: 44%; right: c
 .ls__team span { display: flex; align-items: center; padding: 0 14px; }
 .ls__team span:first-child { border-bottom: 2px solid var(--line-navy); color: #b9bfd3; }
 .ls__team span:last-child { align-items: flex-start; padding-top: clamp(26px, 3vw, 44px); writing-mode: horizontal-tb; }
-.ls__grid { display: grid; grid-template-columns: minmax(0, 1.2fr) repeat(4, minmax(0, 1fr)) minmax(0, 1.6fr); grid-template-rows: 58px auto auto; }
+/* the big numerals need the width: the team column is left out and each inning gets the room its figure takes */
+.linescore { grid-template-columns: minmax(0, 1fr); }
+.ls__team { display: none; }
+.ls__grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, .7fr) minmax(0, 1.6fr); grid-template-rows: 58px auto auto; }
 .inning { display: grid; grid-row: span 3; grid-template-rows: subgrid; }
 .inning + .inning { border-left: 2px solid var(--line-navy); }
 .inning dt { display: flex; align-items: center; gap: 10px; padding: 0 16px; border-bottom: 2px solid var(--line-navy); font: 700 13px/1 var(--text); letter-spacing: .06em; text-transform: uppercase; }
@@ -240,8 +243,8 @@ html.js:not(.still) .inning:not(.is-lit) .ls__val, html.js:not(.still) .inning:n
 html.js:not(.still) .inning .ls__val, html.js:not(.still) .inning .ls__note { transition: color .12s linear; }
 html.js:not(.still) .inning.is-lit .flip { animation: flip .42s var(--snap) both; }
 /* the lamp row across the top of the board: bulbs light one by one, left to right, with the innings */
-.ls__bulbs { grid-column: 1 / -1; position: relative; height: 40px; border-bottom: 2px solid var(--chalk); background: radial-gradient(circle, var(--line-navy) 0 5px, transparent 6px) 9px 50% / 20px 20px repeat-x; }
-.ls__bulbs-on { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; background: radial-gradient(circle, var(--lamp) 0 5px, transparent 6px) 9px 50% / 20px 20px repeat-x; filter: drop-shadow(0 0 3px rgba(255, 255, 255, .8)); }
+.ls__bulbs { grid-column: 1 / -1; position: relative; height: 40px; border-bottom: 2px solid var(--chalk); background: radial-gradient(circle, var(--line-navy) 0 5px, transparent 6px) 0 50% / 20px 20px repeat-x; }
+.ls__bulbs-on { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; background: radial-gradient(circle, var(--lamp) 0 5px, transparent 6px) 0 50% / 20px 20px repeat-x; filter: drop-shadow(0 0 3px rgba(255, 255, 255, .8)); }
 html.js:not(.still) .ls__bulbs-on { width: 0; }
 .numbers__kicker { font-size: clamp(76px, 16vw, 300px); margin: clamp(40px, 6vw, 90px) var(--m) 0; }
 
@@ -286,16 +289,15 @@ html.js:not(.still) .ls__bulbs-on { width: 0; }
 .fixtures .err:not(:empty) { margin-top: 14px; }
 .err-sum:empty { display: none; }
 .err-sum { background: var(--navy); color: var(--chalk); padding: 14px 18px 15px; font: 700 17px/1.35 var(--text); }
-.err-sum b { font-weight: 800; }
 .roster .btn { justify-self: start; margin-top: 8px; margin-left: 4px; }
 .roster__note { font: 500 15px/1.3 var(--text); }
 
 /* the confirmation: a lineup card */
 /* the card, and beside it a headline made from the slot: SEE YOU THURSDAY. */
-.done { margin: clamp(34px, 5vw, 64px) var(--m) 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 640px); gap: clamp(24px, 4vw, 64px); align-items: center; scroll-margin-top: 24px; }  /* plus the page's scroll-padding, the bar */
+.done { margin: clamp(34px, 5vw, 64px) var(--m) 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, min(640px, 52%)); gap: clamp(24px, 4vw, 64px); align-items: center; scroll-margin-top: 24px; }  /* plus the page's scroll-padding, the bar */
 .done:focus { outline: none; }
 .done:focus-visible { outline: 3px solid var(--navy); outline-offset: 6px; }
-.done__see { font-size: clamp(64px, 10vw, 170px); }
+.done__see { font-size: clamp(56px, 9.4vw, 170px); }
 .lineup { background: var(--chalk); border: 2px solid var(--navy); padding: clamp(20px, 2.6vw, 36px); }
 .lineup__head { position: relative; padding-bottom: 34px; }
 .lineup__title { font: italic 900 clamp(52px, 6vw, 96px)/.86 var(--display); text-transform: uppercase; margin-top: 8px; }
@@ -377,6 +379,7 @@ html:not(.still) .done.is-in .lineup__stamp { animation: stamp .3s .32s var(--sn
   .inning dt { grid-column: 1 / 3; border-bottom: 0; padding: 0 0 6px; }
   .ls__val { grid-column: 2; grid-row: 2; padding: 0; justify-content: flex-end; }
   .ls__val .flip { font-size: 78px; }
+  .inning--wide .ls__val .flip { font-size: 64px; }
   .ls__note { grid-column: 1; grid-row: 2; padding: 0 12px 4px 0; font-size: 16px; }
   .numbers__kicker { font-size: min(24vw, 130px); }
   .drills { grid-template-columns: 1fr; grid-template-rows: none; }

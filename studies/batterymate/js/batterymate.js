@@ -385,8 +385,7 @@ if (live) {
     const names = (okSlot ? [] : ['a slot']).concat(bad.map(f => f.name));
     if (names.length) {
       const list = names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] : names[0];
-      sum.textContent = '';
-      sum.append(Object.assign(document.createElement('b'), { textContent: names.length === 1 ? 'One thing to fix: ' : `${names.length} things to fix: ` }), `${list}. The notes are under each one.`);
+      sum.textContent = `${names.length === 1 ? 'One thing to fix' : names.length + ' things to fix'}: ${list}. The notes are under each one.`;
       if (!okSlot) ($('.slot:not(.is-taken) input', form)).focus(); else bad[0].el.focus();
       return;
     }

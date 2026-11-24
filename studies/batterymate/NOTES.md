@@ -102,9 +102,11 @@ Deviations and why:
 - The back pill is docked in the bar as a small slanted tag (beside the wordmark; on the bar's second row on a
   phone). Checked at every 10 px from 360 to 1920: inside the bar, clear of the wordmark, links and button. It is
   outside the hero, so a tap on it never throws.
-- The canvas only runs while its scene moves. Before and after the pinned run, and when the hero is scrolled part
-  way off with no ball in the air, the rendered stills (same pose, same layout) stand in. In headless Chromium a
-  canvas that runs off the top of the window was captured cut short; the stills avoid that and rest the GPU.
+- One WebGL canvas. On screen the live machine is always shown, in the hero or in the pinned window, whichever shows
+  more of itself; the other, by then mostly scrolled away, keeps its rendered still. The hero draws only while
+  something moves. The stills are otherwise only the poster before three.js is in and the picture for reduced motion
+  and short screens. (A "machine cut short" seen in earlier reviews was never the page: an unclipped headless
+  screenshot cuts a WebGL canvas that starts above the window. Captures are clipped to the viewport now.)
 - The fixed field drawing is clipped by a `clip-path` on a layer of each band, not on the band itself.
 - Taken slots stay focusable so a click or tap on one can say it is taken.
 
@@ -112,6 +114,36 @@ Stills: rendered from the page's own code with Playwright at 2x (scratch `tools/
 drawings: a solid pass and a line pass of the same model, composed with Pillow into navy line art (`tools/draw.js`,
 `tools/ink.py`). Sofia Sans Extra Condensed italic holds up at 22vw; no other face was needed.
 
+Review fix round (the critic's 13 items):
+- Keys: Space throws only at the very top of the page (scroll under 40px, focus nowhere in particular); anywhere else
+  it scrolls. Inside the pinned scene Space, Shift+Space, Page Down and Page Up step the page by 0.9 of a screen (the
+  browser's own step there was about 60px). A field, a link or a button keeps its own keys.
+- Hero: a grid, headline on top and copy at the foot, so they never overlap at any height; the headline size leaves
+  the copy 250px (288px at 1440 x 900 as before, smaller only on short screens). The machine's box starts at 40% and
+  at half the headline's size, so it is larger and its net rises behind "THROWS" (the type sits over the canvas).
+- Short screens (under 561px tall: a phone on its side, 1280 at 200% zoom): no pinned scene, the steps stand one
+  under another with their stills; on a narrow landscape screen the bar is one row and the machine sits beside
+  the headline.
+- The throw: balls in flight drawn 1.3x, easing to true size at the net; a shadow never fainter than 0.26 and
+  tighter at height; a short navy speed streak under each ball in flight (2D canvas under the 3D one); an 80px
+  yellow release ring with navy edges held about 450ms. A click with five balls in the air shows a crossed ring at
+  the pointer with "Five in the air" and says so to screen readers.
+- Pinned scene: the pitch starts inside the frame, so the ball is there from the first moment of CATCH and comes
+  back to that spot in RETURN. The cage and the thrower's plates lift straight out of the frame and are hidden; in
+  TURN the bed slides back and the view is nearly face on to the dual chamber, with an arc, an arrowhead and a
+  degree count (0 to 180) drawn over the window as it turns. The step stills were re-rendered from the new poses
+  with that overlay (scratch `fix/stills2.js`).
+- Drawings: one set from one camera, one scale (all framed on the exploded machine's extent) and one line weight:
+  the whole machine, a true exploded view (each part's explode vector times 1.7), and the whole machine at work
+  with the ball leaving the wheels on a dotted arc (scratch `draw2.html`, `fix/draw2.js`).
+- Lineup card: a headline built from the slot beside it ("SEE YOU THURSDAY."), the email in its own case, and it
+  scrolls fully into view under the bar.
+- Numbers: "EVERY BALL DELIVERED." filled, "NO MISSES." outlined; numerals at clamp(80px, 9vw, 160px) with the team
+  column dropped to give them room; a lamp row of bulbs across the top lights one by one with the innings. Unlit
+  numerals are #7d86a3 (4.9 to 1), readable even if the board is never seen lighting.
+- Access: the skip link is the first tab stop, before the back tag. A failed submit speaks through one summary
+  alert above the button; the notes under each field are plain text; a taken slot is announced in a polite status.
+
 Known weak spots: SwiftShader renders the hero at a few frames a second, so headless timing of a throw is not the
-real feel; the lineup card leaves the right half of the yellow band empty on a wide screen; the third line drawing
-is a close crop and reads busier than the other two.
+real feel. A high throw from the top left starts with its shadow under the ticker for its first tenth of a second.
+In TURN the drum floats once the bed slides back (a diagram view, not the assembled machine).
