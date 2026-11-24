@@ -1,11 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 244 694" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter">
-<!-- Standing figure, 5 ft 9 in (69 in), seen from behind, facing the wall. 10 units = 1 in; crown at y 0, floor at y 690. -->
-<path vector-effect="non-scaling-stroke" d="M120 0C143 0 154 18 154 42C154 62 157 78 155 94L85 94C83 78 86 62 86 42C86 18 97 0 120 0Z"/>
-<g id="half">
-<path vector-effect="non-scaling-stroke" d="M147 94C160 103 182 108 194 119C204 128 208 160 209 200C210 230 212 250 210 268C208 295 205 320 203 345C205 395 209 440 212 484L120 484"/>
-<path vector-effect="non-scaling-stroke" d="M181 184C183 230 186 290 187 338L203 345"/>
-<path vector-effect="non-scaling-stroke" d="M158 484C159 520 157 560 153 600C151 625 150 642 150 656C153 665 160 676 161 685L161 690L130 690L130 679C130 670 133 664 133 656C133 646 132 632 131 610C129 570 128 525 128 484M133 656L150 656"/>
-</g>
-<use href="#half" transform="translate(240 0) scale(-1 1)"/>
-<path vector-effect="non-scaling-stroke" d="M120 384V484"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-4 -4 248 698" fill="none" stroke="#0a0a0a" stroke-linecap="butt" stroke-linejoin="round">
+<!-- Standing figure, 5 ft 9 in (69 in), seen from behind in a coat: weight on one leg, head turned toward the print.
+     10 units = 1 in; crown at y 0, floor at y 690. Outline 2px, inner lines 1px, both kept at any scale. -->
+<path vector-effect="non-scaling-stroke" stroke-width="2" d="M112 0C128 0 140 8 145 24C147 32 147 40 149 46C152 52 152 58 149 62C149 70 146 80 137 87L133 91L134 102C150 108 172 110 184 118C193 124 197 150 198 196C199 230 201 250 201 266C201 292 198 318 194 344C197 358 197 376 193 392C191 404 185 411 180 410C176 409 174 401 175 390C175 376 176 360 178 346C181 314 182 276 180 244C178 214 174 190 168 174C167 230 169 300 172 360C175 402 179 444 183 486L52 476C56 432 61 382 62 330C63 280 64 220 62 178C58 200 54 230 52 262C51 292 52 322 54 350C56 364 57 380 56 396C55 408 51 417 46 417C41 417 38 408 37 396C35 380 34 364 34 350C31 322 29 294 29 266C29 240 30 200 33 160C35 142 39 132 46 126C60 116 82 112 96 104L97 88L80 86C77 70 80 54 80 38C80 14 94 0 112 0ZM88 479C90 540 93 600 96 648C94 656 90 664 90 676L90 690L120 690L120 676L119 660L118 648C118 600 118 540 118 481M134 482C140 540 146 600 148 646C148 656 146 664 146 676L146 690L181 690L180 678C175 668 165 656 162 646C162 600 161 540 160 484"/>
+<path vector-effect="non-scaling-stroke" stroke-width="1" d="M141 12C137 30 137 60 134 89M97 88L133 91M96 103C106 110 124 110 134 101M114 340L117 481M34 350L54 350M194 344L178 346M96 648L118 648M148 646L162 646"/>
 </svg>

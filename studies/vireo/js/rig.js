@@ -1,7 +1,7 @@
 // Vireo rig: one WebGL renderer and one CHARGER for the whole page.
 //
-// The rocket is the site's own: next/js/viewer/products/charger.js builds the 28 parts (the hero's eleven exterior
-// meshes plus the seventeen interior CAD parts, with a slide along the body axis per part) and charger-finish.js
+// The rocket is the site's own: next/js/viewer/products/charger.js builds it (the hero's eleven exterior meshes
+// plus the interior CAD parts, 26 drawn pieces, with a slide along the body axis per part) and charger-finish.js
 // dresses them with the studio look (showreel/look.js). Nothing of that is copied here: this file only owns the
 // renderer, the camera, the pose and which parts are shown, ghosted or slid apart.
 //
@@ -112,7 +112,7 @@ export async function createRig({ canvas, quality = 'high', pixelRatio = Math.mi
     frame: { x: 0, y: 0, w: 1, h: 1 }, W: 1, H: 1, aspect: FRAME.land,
     tilt: 0, lean: 0, roll: 0, turn: 0,       // rad: nose right of up on screen; nose toward the camera; about the body; orbit about screen-up
     station: STATION.mid, dist: 2.6, ox: 0, oy: 0, explode: 0, slideIds: null,   // slideIds: only these parts slide (stills)
-    lift: 0.42, keyFront: 0.5, keySide: -1,     // the studio key: lift about the airframe (rad), how far in front it stays
+    lift: 0.35, keyFront: 0.3,                  // the studio key: lift about the airframe (rad), how far in front it stays
   };
   const qT = new THREE.Quaternion(), qL = new THREE.Quaternion(), qR = new THREE.Quaternion(), qO = new THREE.Quaternion();
   const X = new THREE.Vector3(1, 0, 0), Y = new THREE.Vector3(0, 1, 0), Z = new THREE.Vector3(0, 0, 1), V = new THREE.Vector3();

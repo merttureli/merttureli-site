@@ -32,7 +32,6 @@ const WIDE = HERO;
 const BED = { yaw: .46, pitch: .3, boxes: one([-.62, 0, -.44, 1.08, 1.02, .5]), fill: 1, align: [.5, .5] };    // the ball rolls to the feeder
 const DRUM = { yaw: .5, pitch: .4, boxes: one([.3, 0, -.44, .98, .52, .0]), fill: 1, align: [.5, .5] };       // the dual chamber
 const WHEELS = { yaw: -.3, pitch: .3, boxes: one([.42, 0, -.44, 1.08, .6, .28]), fill: 1, align: [.5, .5] };  // the elbow and the flywheels
-const OUT = { yaw: -.05, pitch: .28, boxes: one([-.2, 0, -.44, 1.08, 1.1, 1.3]), fill: 1, align: [.5, .5] };   // the ball leaves
 
 function blend(a, b, t) {
   if (t <= 0) return a;
@@ -55,10 +54,11 @@ export function storyAt(p, take) {
     t = M.turn + TURN_S * turnTime(win(u, .14, .86));
     view = blend(blend(BED, DRUM, ease(win(u, -.2, .12))), WHEELS, ease(win(u, .88, 1.2)));
   } else {
-    const run = win(u, .05, .5), fly = win(u, .5, .84);
+    // the run through the elbow is seen close; the view is back out wide by the time the wheels throw
+    const run = win(u, .04, .46), fly = win(u, .46, .8);
     t = fly > 0 ? mix(M.out, take.end - 1 / 120, fly) : mix(M.exit, M.out, run);
-    view = blend(blend(blend(DRUM, WHEELS, ease(win(u, -.12, .2))), OUT, ease(win(u, .46, .7))), WIDE, ease(win(u, .8, 1)));
+    view = blend(blend(DRUM, WHEELS, ease(win(u, -.12, .16))), WIDE, ease(win(u, .36, .6)));
   }
-  const open = ease(win(x, .0, .24)) * (1 - ease(win(x, 2.78, 3)));
-  return { step, u, t, view, open, ball: p > .002 && p < .998 && !(step === 2 && u > .84) };
+  const open = ease(win(x, .0, .24)) * (1 - ease(win(x, 2.72, 2.96)));
+  return { step, u, t, view, open, ball: p > .002 && !(step === 2 && u >= .8) };
 }

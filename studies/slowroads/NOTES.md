@@ -110,6 +110,12 @@ Six sections as briefed, in `index.html`, `css/slowroads.css` and four small mod
   postmark, the rubber stamp and the grease-pencil circle.
 - **Doodles.** `assets/doodles.svg` is one sprite of 17 pen marks (arrows, map icons, waves, pines, the
   postmark bars), drawn from a few points each and shaken with noise. Tape is CSS.
+- **The way back.** "Back to websites" is a kraft luggage tag tied to the top left corner of the page, not
+  the fixed pill. It is placed in this sample's CSS, sits on bare desk above the label, and scrolls away
+  with the cover: on a phone there is no margin where a fixed link could stay without covering prints,
+  contact frames or the email field as they pass. Checked at 16 sizes from 360 to 1920 wide, at every scroll
+  position: it is never over a headline, a print, a control or text. It is first in the tab order, and
+  "Back to the top of the pile" in the footer leads back to it.
 
 **Deviations from the brief, and why**
 
@@ -130,19 +136,22 @@ Six sections as briefed, in `index.html`, `css/slowroads.css` and four small mod
 
 **Measured** (headless Chromium, `tools/study-shots.js` and my own scripts, November 2026)
 
-- Whole page 872 KB at both widths. The first screen needs 381 KB (document, styles, scripts, four fonts,
+- Whole page 874 KB at both widths. The first screen needs 383 KB (document, styles, scripts, four fonts,
   the doodles, five photographs). The browser's lazy-loading look-ahead fetches four to six more photographs
-  before any scroll, which makes 467 KB on a phone and 546 KB on a desk arrive up front.
+  before any scroll, which makes 470 KB on a phone and 548 KB on a desk arrive up front.
 - Scrolling the whole page: median frame 16.7 ms, 95th percentile 16.8 ms at 1440 and at 390.
-- Dragging a print: median 16.7 ms, 95th percentile 33 ms at 1440 (16.8 ms at 390).
+- Dragging a print: median 16.7 ms at both widths; 95th percentile 33 ms at 1440 and 16.8 ms at 390. The
+  main thread uses about a quarter of each frame; the rest is painting.
 - No console errors, failed requests, outside requests, sideways overflow (320 to 1920), unnamed controls or
   images without `alt`. 58 tab stops, all with a visible ring. Lowest text contrast 4.6 to 1.
 
 **Known weak spots**
 
-- Dragging at 1440 drops to 30 frames a second in bursts in the headless test, because the lifted print's
-  shadow repaints the prints under it. Promoting the print to its own layer did not help there. It needs a
-  look on a real laptop and a real phone before this is called smooth.
+- Dragging at 1440 drops to 30 frames a second in bursts in the headless test (software painting, on a
+  machine shared with other test runs), because the lifted print and its shadow repaint the prints under
+  it. Promoting the print to its own layer did not help there; registering its offsets as non-inherited
+  properties halved the style work. It needs a look on a real laptop and a real phone before this is called
+  smooth.
 - On a phone the prints become a tidy overlapping column and the route a margin line. It reads well but has
   less of the scattered desk than the wide layout. Between 600 and 860 pixels the same column is used with
   the prints capped at 520, which leaves the right side of the page empty.

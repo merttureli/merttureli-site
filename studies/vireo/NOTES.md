@@ -159,8 +159,11 @@ The rocket is not copied: `rig.js` imports `next/js/viewer/products/charger.js` 
   brief's `#6e6e73`, because the still's studio gray is darker than the page and `#6e6e73` fell to 4.0 to 1.
 - **No orange text on light sections** (2.8 to 1 on `#f5f5f7`): orange there is fills only (the selected kit,
   the open pill's icon, buttons). The focus ring is orange on dark sections and ink on light ones.
-- **The way back** sits top left under the bar, steps aside while the page is scrolled down and returns on the
-  way up or on keyboard focus, so it does not sit on the headings.
+- **The way back** is docked in the local bar as a quiet glass chip after the product name, with the same link
+  and text, and takes the bar's dark or light theme. Under 480px only its arrow shows (the text stays for
+  assistive tech; the target is 48px tall). Checked at 15 widths from 360 to 1920 down the whole page: it stays
+  inside the bar, 16px after the product name, and is never over a headline, a control, a field, the price pill
+  or the phone's bottom bar.
 - **No reveal on the "Look closer" panel**: it holds the live view, so it is never hidden.
 - **A second font file is fetched with the 3D**: the shared Archivo (90 KB), only so the rocket's own livery
   lettering is drawn as on the live site (`hero3d.js` paints it on a canvas). No page text uses it.

@@ -72,8 +72,9 @@
       <div class="fig__panel" id="heroPanel" role="tabpanel" aria-labelledby="tab-rudder-pedals">
         <div class="fig__stage" id="stageHero" data-fig="hero" tabindex="0" role="application" aria-roledescription="3D view" aria-label="Rudder pedals, 8 parts. Arrow keys turn the model. Home resets the view.">
           <picture>
-            <source media="(max-width: 759px)" srcset="assets/fig-hero-s.png" width="179" height="150">
-            <img class="fig__still" src="assets/fig-hero.png" width="315" height="250" alt="The rudder pedal assembly drawn as green dots on black: two side walls, two lever arms, two pedals and a sensor lever." decoding="async">
+            <source media="(prefers-reduced-motion: reduce)" srcset="assets/fig-hero-shaded.webp" width="628" height="500">
+            <source media="(max-width: 759px)" srcset="assets/fig-hero-s.png" width="178" height="150">
+            <img class="fig__still" src="assets/fig-hero.png" width="314" height="250" alt="The rudder pedal assembly drawn as green dots on black: two side walls, two lever arms, two pedals and a sensor lever." decoding="async">
           </picture>
           <canvas aria-hidden="true"></canvas>
         </div>
@@ -100,7 +101,7 @@
 
     <dl class="facts">
       <div><dt>Reads</dt><dd>STEP AP214 and AP203, any unit</dd></div>
-      <div><dt>Writes</dt><dd>One .bin and a JSON header, meters, +Y up</dd></div>
+      <div><dt>Writes</dt><dd>One .bin and a JSON header, in meters</dd></div>
       <div><dt>Loader</dt><dd>122 lines, 6.5 KB, no imports</dd></div>
       <div><dt>Keeps</dt><dd>Every CAD part name</dd></div>
     </dl>
@@ -124,11 +125,11 @@
           <p><code>inspect</code> reads the assembly and prints every part with its CAD name and the name Stepwise suggests for it. It reports the unit, the size and the longest side, so you know if the file is Z up before you mesh it.</p>
           <p>Add <code>--map-out</code> and it writes a starter map with one rule per part.</p>
           <figure class="fig fig--step">
-            <figcaption class="fig__cap"><span class="fig__no">FIG 02</span><span>Inspect</span><span data-cap="names">39 CAD names</span></figcaption>
+            <figcaption class="fig__cap"><span class="fig__no">FIG 02</span><span>Inspect</span><span data-cap="names">41 CAD names</span></figcaption>
             <div class="fig__stage" data-fig="inspect">
               <picture>
-                <source media="(max-width: 759px)" srcset="assets/fig-inspect-s.png" width="179" height="120">
-                <img class="fig__still" src="assets/fig-inspect.png" width="261" height="160" alt="The same assembly in dither with one part picked out." loading="lazy" decoding="async">
+                <source media="(max-width: 759px)" srcset="assets/fig-inspect-s.png" width="178" height="120">
+                <img class="fig__still" src="assets/fig-inspect.png" width="250" height="153" alt="The same assembly in dither with one part picked out." loading="lazy" decoding="async">
               </picture>
               <canvas aria-hidden="true"></canvas>
             </div>
@@ -141,7 +142,7 @@
               <button class="run" type="button" data-run="inspect" aria-label="Run the inspect command again">Run</button>
               <button class="copy" type="button" data-copy-from="term-inspect" aria-label="Copy the inspect command">Copy</button>
             </div>
-            <pre class="term" id="term-inspect" data-term="inspect" tabindex="0" role="region" aria-label="Terminal: inspect"><span class="ln ln--cmd"><span class="prompt" aria-hidden="true">$ </span><span class="cmd">stepwise inspect rudder-pedals.step</span></span></pre>
+            <pre class="term" id="term-inspect" data-term="inspect" tabindex="0" role="region" aria-label="Terminal: inspect"><span class="ln ln--cmd"><span class="prompt" aria-hidden="true">$ </span><span class="cmd">stepwise inspect rudder-pedals.step --map-out rudder-pedals.map.json</span></span></pre>
           </div>
         </div>
       </li>
@@ -162,8 +163,8 @@
             <figcaption class="fig__cap"><span class="fig__no">FIG 03</span><span>Import</span><span data-cap="parts">8 parts on their vectors</span></figcaption>
             <div class="fig__stage" data-fig="import">
               <picture>
-                <source media="(max-width: 759px)" srcset="assets/fig-import-s.png" width="179" height="120">
-                <img class="fig__still" src="assets/fig-import.png" width="261" height="160" alt="The assembly exploded: each part moved out along its own vector." loading="lazy" decoding="async">
+                <source media="(max-width: 759px)" srcset="assets/fig-import-s.png" width="178" height="120">
+                <img class="fig__still" src="assets/fig-import.png" width="250" height="153" alt="The assembly exploded: each part moved out along its own vector." loading="lazy" decoding="async">
               </picture>
               <canvas aria-hidden="true"></canvas>
             </div>
@@ -195,9 +196,9 @@
           <p><code>loadCadMesh</code> fetches the two files and builds one <code>Group</code> per part, placed at its pivot. <code>setProgress(p)</code> moves every part along its explode vector: 0 is exploded, 1 is assembled.</p>
           <p>The loader has no imports. You pass it the three.js your page already uses.</p>
           <figure class="fig fig--step">
-            <figcaption class="fig__cap"><span class="fig__no">FIG 04</span><span>Load</span><span data-cap="mats">4 materials, studio light</span></figcaption>
+            <figcaption class="fig__cap"><span class="fig__no">FIG 04</span><span>Load</span><span data-cap="mats">5 materials, studio light</span></figcaption>
             <div class="fig__stage" data-fig="load">
-              <img class="fig__still fig__still--shaded" src="assets/fig-load.webp" width="522" height="320" alt="The assembly fully shaded: charcoal walls, light gray levers and orange pedals." loading="lazy" decoding="async">
+              <img class="fig__still fig__still--shaded" src="assets/fig-load.webp" width="500" height="306" alt="The assembly fully shaded: charcoal walls, light gray levers and orange pedals." loading="lazy" decoding="async">
               <canvas aria-hidden="true"></canvas>
             </div>
             <div class="fig__controls fig__controls--one">
@@ -240,7 +241,7 @@
         <p>The STEP product name is the key. A rule maps it to the name your code uses, and <code>model.parts</code> holds the part under that name.</p>
         <dl class="chain" aria-label="A name from the STEP file to the page">
           <div><dt>STEP name</dt><dd>Sensor lever</dd></div>
-          <div><dt>Map rule</dt><dd>{ "match": "Sensor lever", "name": "rocker" }</dd></div>
+          <div><dt>Map rule</dt><dd>{ "match": ["Sensor lever", "Center magnet holder"], "name": "rocker" }</dd></div>
           <div><dt>In the page</dt><dd>model.parts.rocker</dd></div>
         </dl>
       </article>
@@ -278,15 +279,19 @@
       </article>
       <article class="cell cell--e">
         <h3>Repeated instances, one rule</h3>
-        <p><code>M3x6 Screw-1</code> to <code>-4</code> become one part with one glob. In the rudder pedals, eleven bearings, bolts and a pedal ride in <code>leverR</code>.</p>
-        <pre class="snip" tabindex="0" role="region" aria-label="A merge rule"><code><span class="t-p">{ </span><span class="t-f">"match"</span><span class="t-p">: </span><span class="t-s">"M3x6 Screw*"</span><span class="t-p">, </span><span class="t-f">"name"</span><span class="t-p">: </span><span class="t-s">"screws"</span><span class="t-p"> }</span></code></pre>
+        <p>A glob catches every instance, and rules that share a <code>name</code> merge. This rule from the rudder pedals map puts three ball bearings in <code>leverR</code>.</p>
+        <pre class="snip" tabindex="0" role="region" aria-label="A merge rule"><code><span class="t-p">{</span>
+  <span class="t-f">"match"</span><span class="t-p">: [</span><span class="t-s">"*8_68-2"</span><span class="t-p">, </span><span class="t-s">"*8_68-6"</span><span class="t-p">, </span><span class="t-s">"*8_68-9"</span><span class="t-p">],</span>
+  <span class="t-f">"name"</span><span class="t-p">: </span><span class="t-s">"leverR"</span><span class="t-p">,</span>
+  <span class="t-f">"material"</span><span class="t-p">: </span><span class="t-s">"steel"</span>
+<span class="t-p">}</span></code></pre>
       </article>
       <article class="cell cell--f">
         <h3>A screenshot command that fails on console errors</h3>
         <p><code>shot</code> opens the viewer in headless Chromium, saves the model assembled and exploded, and exits 1 on a console error or a failed request.</p>
         <div class="shots">
-          <figure><img src="assets/shot-assembled.png" width="125" height="76" alt="Small dithered still of the assembled model." loading="lazy" decoding="async"><figcaption>rudder-pedals-shot.png</figcaption></figure>
-          <figure><img src="assets/shot-exploded.png" width="125" height="76" alt="Small dithered still of the exploded model." loading="lazy" decoding="async"><figcaption>rudder-pedals-shot-exploded.png</figcaption></figure>
+          <figure><img src="assets/shot-assembled.png" width="112" height="70" alt="Small dithered still of the assembled model." loading="lazy" decoding="async"><figcaption>rudder-pedals-shot.png</figcaption></figure>
+          <figure><img src="assets/shot-exploded.png" width="112" height="70" alt="Small dithered still of the exploded model." loading="lazy" decoding="async"><figcaption>rudder-pedals-shot-exploded.png</figcaption></figure>
         </div>
       </article>
     </div>
@@ -308,7 +313,7 @@
       </thead>
       <tbody role="rowgroup">
         <tr role="row" data-row="rudder-pedals">
-          <td role="cell" class="mtable__still"><img src="assets/still-rudder-pedals.png" width="100" height="70" alt="Rudder pedals in dither." loading="lazy" decoding="async"></td>
+          <td role="cell" class="mtable__still"><img src="assets/still-rudder-pedals.png" width="80" height="56" alt="Rudder pedals in dither." loading="lazy" decoding="async"></td>
           <th role="rowheader" scope="row"><span class="mtable__name">Rudder pedals</span><span class="mtable__file">rudder-pedals.json</span><span class="mtable__what">Flight sim rudder pedals. Three axes, Hall sensors.</span></th>
           <td role="cell" class="num" data-th="Parts">8</td>
           <td role="cell" class="num" data-th="Triangles">23,946</td>
@@ -317,7 +322,7 @@
           <td role="cell" class="mtable__go"><button type="button" class="link" data-open="rudder-pedals">View in FIG 01</button></td>
         </tr>
         <tr role="row" data-row="robo-catcher">
-          <td role="cell" class="mtable__still"><img src="assets/still-robo-catcher.png" width="100" height="70" alt="Robo-Catcher in dither." loading="lazy" decoding="async"></td>
+          <td role="cell" class="mtable__still"><img src="assets/still-robo-catcher.png" width="80" height="56" alt="Robo-Catcher in dither." loading="lazy" decoding="async"></td>
           <th role="rowheader" scope="row"><span class="mtable__name">Robo-Catcher</span><span class="mtable__file">robo-catcher.json</span><span class="mtable__what">A machine that catches the ball and returns it.</span></th>
           <td role="cell" class="num" data-th="Parts">11</td>
           <td role="cell" class="num" data-th="Triangles">21,069</td>
@@ -326,7 +331,7 @@
           <td role="cell" class="mtable__go"><button type="button" class="link" data-open="robo-catcher">View in FIG 01</button></td>
         </tr>
         <tr role="row" data-row="charger">
-          <td role="cell" class="mtable__still"><img src="assets/still-charger.png" width="100" height="70" alt="The CHARGER rocket interior in dither." loading="lazy" decoding="async"></td>
+          <td role="cell" class="mtable__still"><img src="assets/still-charger.png" width="80" height="56" alt="The CHARGER rocket interior in dither." loading="lazy" decoding="async"></td>
           <th role="rowheader" scope="row"><span class="mtable__name">CHARGER</span><span class="mtable__file">charger-explorer.json</span><span class="mtable__what">The interior of a rocket that drops a sensor payload.</span></th>
           <td role="cell" class="num" data-th="Parts">17</td>
           <td role="cell" class="num" data-th="Triangles">22,772</td>
@@ -397,5 +402,6 @@
 </footer>
 
 <div class="tip" id="tip" aria-hidden="true" hidden><b></b><span></span><i></i></div>
+<p class="visually-hidden" id="live" role="status"></p>
 </body>
 </html>
