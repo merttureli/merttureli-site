@@ -34,8 +34,14 @@ export function createHall({ reduced }) {
     const c = hallOut(m);
     seg(c);
     dot.setAttribute('cx', sx(m).toFixed(1)); dot.setAttribute('cy', sy(c).toFixed(1));
-    hist.push(m); if (hist.length > 18) hist.shift();
-    trace.setAttribute('d', hist.map((v, i) => (i ? 'L' : 'M') + sx(v).toFixed(1) + ' ' + sy(hallOut(v)).toFixed(1)).join(''));
+    hist.push(m); if (hist.length > (auto ? 18 : 2)) hist.splice(0, hist.length - (auto ? 18 : 2));
+    // the lit trace runs along the curve through the last positions (sampled, so a jump follows the curve too)
+    let p = '';
+    for (let i = 0; i < hist.length; i++) {
+      const a = i ? hist[i - 1] : hist[0], b = hist[i], k = i ? Math.max(1, Math.ceil(Math.abs(b - a) * 64)) : 1;
+      for (let j = i ? 1 : 0; j <= k; j++) { const v = a + (b - a) * j / k; p += (p ? 'L' : 'M') + sx(v).toFixed(1) + ' ' + sy(hallOut(v)).toFixed(1); }
+    }
+    trace.setAttribute('d', p);
     if (document.activeElement !== range) range.value = String(Math.round(m * 100));
   }
   draw();

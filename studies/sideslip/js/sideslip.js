@@ -68,7 +68,7 @@ for (const pad of padEls) {
   const k = PAD_KEY[pad.dataset.pad];
   const down = () => { held.add(k); userInput(keyAxis[k]); };
   const up = () => { if (held.delete(k)) announceSoon(); };
-  pad.addEventListener('pointerdown', e => { e.preventDefault(); pad.setPointerCapture(e.pointerId); down(); });
+  pad.addEventListener('pointerdown', e => { e.preventDefault(); try { pad.setPointerCapture(e.pointerId); } catch (err) { /* synthetic pointer */ } down(); });
   pad.addEventListener('pointerup', up);
   pad.addEventListener('pointercancel', up);
   pad.addEventListener('lostpointercapture', up);
@@ -195,8 +195,10 @@ function step(dt) {
 const approach = (v, to, d) => (v < to ? Math.min(to, v + d) : Math.max(to, v - d));
 
 function frame(now) {
-  const dt = Math.min(.05, (now - last) / 1000); last = now;
-  step(dt);
+  // a slow frame still moves the pedals in real time: the spring is stepped at 240 Hz at most
+  const dt = Math.min(.25, (now - last) / 1000); last = now;
+  const n = Math.max(1, Math.ceil(dt * 240));
+  for (let i = 0; i < n; i++) step(dt / n);
   const testing = lampTest && runLampTest(dt);
   if (!testing) {
     for (const k of AXES) showAxis(k, pose[k]);
@@ -271,7 +273,7 @@ async function loadStage() {
   // drag on the model for rudder (sideways only, so the page still scrolls)
   canvas.addEventListener('pointerdown', e => {
     if (e.button !== 0) return;
-    canvas.setPointerCapture(e.pointerId);
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* synthetic pointer */ }
     drag = { x0: e.clientX, v: input.x, v0: input.x };
     userInput('x');
   });

@@ -84,3 +84,42 @@ name and there is nothing to install. The pipeline is real: it is how the 3D on 
 First view (before three.js) under 350 KB, with a pre-rendered dithered still as the poster. Whole page
 under 2.5 MB. One WebGL view on screen at a time, paused when off screen. With reduced motion: the model
 is shown resolved and still, terminals show their full output at once.
+
+## What was built
+
+All seven sections are in the page in the order above. Every number comes from `next/assets/3d/*.json` and
+the `.bin` sizes on disk. The terminals print what `tools/cad/pipeline.py` prints, built from each model's own
+JSON header, and the rudder pedals map is the real `tools/cad/maps/rudder-pedals.json`.
+
+**How the dither works** (`js/figure.js`). One WebGL renderer serves all four figures and draws only the one
+on screen. Its frame is copied into that figure's 2D canvas, so the others keep their last frame as a still.
+Each frame takes three passes. The first draws part ids and depth at cell resolution, for outlines and seams.
+The second draws the CAD materials under the showreel's studio lights (`addStudioLights`,
+`createStudioEnvironment`). The third is a full-screen pass that decides each cell. A cell is a whole number of
+device pixels counted from the canvas corner, so the 8x8 Bayer pattern is locked to the screen: it does not
+swim when the model turns, and the cells stay square and sharp. The 1-bit tone is a hard key light from the
+upper left, scaled by how light each part's material is, because a 1-bit picture needs faces that differ a
+lot. Resolve walks from 1-bit to 64 tone levels while the cells shrink to one pixel, then cross-fades to the
+shaded render. Hovering raycasts against the part meshes: the part under the pointer is drawn solid, the rest
+thin out, and a tooltip gives the part name, its label and its CAD names.
+
+**Deviations.**
+- The brief's code comment color `#5d6b7a` is 3.4 to 1 on the raised panel. The page uses `#74828f`
+  (4.7 to 1). Quiet text stays `#8c98a6`.
+- The rudder pedals open FIG 01, not the Robo-Catcher. They are the one model that came straight from a STEP
+  file through `import`, so the quickstart shows a real map file and real output from the start.
+- The inspect terminal leaves out the per-part size and color columns, and the import terminal leaves out the
+  read and mesh times. The shipped files cannot tell them.
+- The railway rail is a left rail on wide screens. Below 1020 px there is no room for it, so the bar grows a
+  32 px strip with the way back on the left, the section in view on the right and a progress line along it.
+- "Back to websites" is docked in the bar as a mono label between hairlines. A script checked every width from
+  360 to 1920 at several scroll positions: it sits on no headline, control, copy button or field.
+
+**Known weak spots.**
+- The CHARGER model is the interior of a rocket, almost a meter long and 67 mm wide, with gaps where the body
+  tube would be. Even laid on the diagonal it reads as five small pieces, and its 1-bit view is the thinnest
+  on the page.
+- The inspect terminal's suggested names sit right of very long CAD screw names, so on most screens you
+  scroll the block sideways to see them. That is what the real tool prints.
+- The figures render through SwiftShader in headless checks, so smoothness on a slow laptop GPU was not
+  measured.

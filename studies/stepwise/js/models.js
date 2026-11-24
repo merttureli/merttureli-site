@@ -1,9 +1,9 @@
 // The three CAD models on the page. Everything else about them is read from their own files at run time.
-// `step` is the stand-in file name the quickstart shows; `part` is the part the load example turns.
+// `step` is the stem of the stand-in STEP file the quickstart shows; `part` is the part the load example turns.
 export const MODELS = {
-  'robo-catcher': { file: 'robo-catcher', title: 'Robo-Catcher', step: 'robo-catcher.step', part: 'indexer', yaw: -0.62, pitch: 0.34 },
-  'rudder-pedals': { file: 'rudder-pedals', title: 'Rudder pedals', step: 'rudder-pedals.step', part: 'rocker', yaw: 0.95, pitch: 0.3 },
-  'charger': { file: 'charger-explorer', title: 'CHARGER', step: 'charger.step', part: 'payload', yaw: 0.5, pitch: 0.1, lay: -0.93 },
+  'robo-catcher': { file: 'robo-catcher', title: 'Robo-Catcher', step: 'robo-catcher', part: 'indexer', yaw: -0.62, pitch: 0.34 },
+  'rudder-pedals': { file: 'rudder-pedals', title: 'Rudder pedals', step: 'rudder-pedals', part: 'rocker', yaw: 0.95, pitch: 0.3 },
+  'charger': { file: 'charger-explorer', title: 'CHARGER', step: 'charger', part: 'payload', yaw: 0.5, pitch: 0.1, lay: -0.93 },
 };
 export const ORDER = ['robo-catcher', 'rudder-pedals', 'charger'];
 export const modelUrl = key => new URL(`../../../next/assets/3d/${MODELS[key].file}.json`, import.meta.url).href;

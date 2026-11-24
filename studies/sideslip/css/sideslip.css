@@ -268,7 +268,7 @@ input[type=range]:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
   :root{--gut:24px}
   html{scroll-padding-top:16px}
   .bar{position:relative;flex-wrap:wrap;height:auto;row-gap:0;column-gap:16px;padding:8px var(--gut)}
-  .brand{order:1;flex:1 1 auto}
+  .brand{order:1;flex:1 1 calc(100% - 168px - 16px)}
   .dock{order:2}
   .picto-nav{order:3;margin:0;flex:1 1 auto}
   .batch{display:none}
@@ -326,6 +326,7 @@ input[type=range]:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
   .seg-btns{flex:1 1 100%}
   .seg-btns .tb{flex:1 1 0;justify-content:center}
   .stage--try{min-height:0;aspect-ratio:5/4}
+  .test-view{grid-template-rows:auto auto auto}
   .pads{gap:16px}
   .foot{grid-template-columns:1fr}
   .pad{height:72px;padding:0 16px}

@@ -12,6 +12,7 @@
    Each frame waits for fonts, the images in view and a settle time (3D pages need several seconds in headless
    Chromium: a page with a <canvas> gets --wait, default 7000 ms, the others half of it). The page is told it is
    framed (data-study-framed), so its "Back to websites" pill hides as it does in the catalog's viewer.
+   No poster may show HOTBOX or the bend fixture (the site's IP rule): elements that name them are hidden first.
    A key whose page is missing, fails to load or paints nothing gets neutral placeholder frames; the run never
    fails on one sample. Nothing is clicked or submitted; analytics and form hosts are blocked. */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
@@ -49,6 +50,27 @@ const server = http.createServer((req, res) => {
 const FRAMED = `(() => { const mark = () => document.documentElement && document.documentElement.setAttribute('data-study-framed', '');
   mark(); document.addEventListener('DOMContentLoaded', mark); })();`;
 
+// The site's IP rule: no HOTBOX and no bend fixture in a poster. The four portfolio redesigns predate the rule
+// and still show HOTBOX, so before each capture every element that names either (text, alt, src) is hidden
+// with the card or figure around it, and the capture is refused if one is still on screen.
+const SCRUB = () => {
+  const bad = /hotbox|bend[\s-]*fixture/i, hide = el => { const box = el.closest('article, li, figure, .project, .card, .tile, [class*=card], [class*=project]') || el; box.style.setProperty('visibility', 'hidden', 'important'); };
+  const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let n; (n = walk.nextNode());) if (bad.test(n.nodeValue) && n.parentElement) hide(n.parentElement);
+  document.querySelectorAll('img, video, [aria-label], [title]').forEach(el => { if (bad.test([el.getAttribute('alt'), el.getAttribute('src'), el.getAttribute('poster'), el.getAttribute('aria-label'), el.getAttribute('title')].join(' '))) hide(el); });
+  const left = [];
+  const w2 = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let n; (n = w2.nextNode());) { const el = n.parentElement; if (!el || !bad.test(n.nodeValue)) continue;
+    const r = el.getBoundingClientRect(), cs = getComputedStyle(el);
+    if (cs.visibility !== 'hidden' && r.bottom > 0 && r.top < innerHeight && r.width > 0) left.push(n.nodeValue.trim().slice(0, 40)); }
+  return left;
+};
+async function scrubbed(page) {
+  const left = await page.evaluate(SCRUB);
+  if (left.length) throw new Error('a HOTBOX or bend fixture mention is still on screen: ' + left.join(' | '));
+  return page.screenshot({ type: 'png' });
+}
+
 // Wait for web fonts and every image that intersects the viewport (lazy ones included), with a cap.
 async function settle(page, ms) {
   await page.evaluate(() => document.fonts && document.fonts.ready).catch(() => {});
@@ -76,8 +98,6 @@ async function placeholder(helper, width, height) {
   const url = await helper.evaluate(({ width, height, q }) => {
     const c = document.createElement('canvas'); c.width = width; c.height = height;
     const g = c.getContext('2d'); g.fillStyle = '#dcdee1'; g.fillRect(0, 0, width, height);
-    g.strokeStyle = 'rgba(18,19,21,.16)'; g.lineWidth = Math.max(1, width / 480);
-    g.beginPath(); g.moveTo(0, 0); g.lineTo(width, height); g.moveTo(width, 0); g.lineTo(0, height); g.stroke();
     return c.toDataURL('image/jpeg', q);
   }, { width, height, q: QUALITY });
   return Buffer.from(url.split(',')[1], 'base64');
@@ -111,7 +131,7 @@ async function shoot(browser, base, helper, key) {
       await settle(page, first);
       const tall = await page.evaluate(() => document.documentElement.scrollHeight);
       if (tall < 200) throw new Error('the page paints nothing');
-      if (name === 'phone') { frames.phone = await page.screenshot({ type: 'png' }); }
+      if (name === 'phone') { frames.phone = await scrubbed(page); }
       else {
         frames.desk = [];
         for (let i = 0; i < 4; i++) {
@@ -120,7 +140,7 @@ async function shoot(browser, base, helper, key) {
             await page.evaluate(y => window.scrollTo({ top: y, behavior: 'instant' }), Math.round((h - viewport.height) * i / 3));
             await settle(page, has3d ? Math.max(2500, WAIT / 2) : 1800);
           }
-          frames.desk.push(await page.screenshot({ type: 'png' }));
+          frames.desk.push(await scrubbed(page));
         }
       }
     } catch (e) {

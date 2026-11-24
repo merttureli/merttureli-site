@@ -35,7 +35,7 @@ export function inspectTerm(key, { meta }, map) {
   const size = [0, 1, 2].map(i => (meta.bounds[1][i] - meta.bounds[0][i]) * 1000), longest = 'xyz'[size.indexOf(Math.max(...size))];
   const w = Math.max(12, ...rows.map(r => r.cad.length));
   const lines = [
-    { text: `${cfg.step}: ${rows.length} parts, unit ${meta.source.unit}, size ${size.map(v => v.toFixed(1)).join(' x ')} mm (x y z)`, cls: 'ok' },
+    { text: `${cfg.step}.step: ${rows.length} parts, unit ${meta.source.unit}, size ${size.map(v => v.toFixed(1)).join(' x ')} mm (x y z)`, cls: 'ok' },
     { text: `The longest side is ${longest}. Output is +Y up: pass --up z if the model is Z-up.` },
     { text: '' },
     { text: `  ${pad('CAD name', w)}  suggested name`, cls: 'head' },
@@ -43,7 +43,7 @@ export function inspectTerm(key, { meta }, map) {
     { text: '' },
     { text: `wrote starter map ${cfg.file}.map.json`, cls: 'ok' },
   ];
-  return { cmd: `stepwise inspect ${cfg.step} --map-out ${cfg.file}.map.json`, lines, names: rows.length };
+  return { cmd: `stepwise inspect ${cfg.step}.step --map-out ${cfg.file}.map.json`, lines, names: rows.length };
 }
 
 // ---- 02 import
@@ -52,7 +52,7 @@ export function importTerm(key, { meta, jsonBytes }, map) {
   const w = Math.max(10, ...meta.parts.map(p => p.name.length));
   const how = [src.deflection_mm != null && `deflection ${src.deflection_mm.toFixed(3)} mm`, src.angle_rad != null && `angle ${src.angle_rad.toFixed(2)} rad`, `up ${src.up}`, `origin ${src.origin}`].filter(Boolean).join(', ');
   const lines = [
-    { text: `${cfg.step} -> ${meta.name}: ${meta.parts.length} parts, ${meta.triangles} triangles (${how})`, cls: 'ok' },
+    { text: `${cfg.step}.step -> ${meta.name}: ${meta.parts.length} parts, ${meta.triangles} triangles (${how})`, cls: 'ok' },
     { text: '' },
     { text: `  ${pad('name', w)}  ${lpad('tris', 7)}  ${pad('material', 15)} cad`, cls: 'head' },
     ...meta.parts.map((p, i) => {
@@ -70,7 +70,7 @@ export function importTerm(key, { meta, jsonBytes }, map) {
     { text: '' },
     { text: `look at it:  stepwise view ${out.replace(/\/$/, '')} --name ${meta.name} --serve PORT`, cls: 'note' },
   );
-  return { cmd: `stepwise import ${cfg.step} --map ${cfg.file}.map.json`, lines };
+  return { cmd: `stepwise import ${cfg.step}.step --map ${cfg.file}.map.json`, lines };
 }
 
 // ---- 03 load
@@ -108,7 +108,7 @@ export function pageCode() {
   return `<canvas id="view"></canvas>
 
 <script type="importmap">
-  { "imports": { "three": "/vendor/three.module.min.js", "stepwise": "/vendor/stepwise.js" } }
+  { "imports": { "three": "/vendor/three.module.min.js", "stepwise": "/vendor/${'stepwise'}.js" } }
 </script>
 <script type="module" src="/viewer.js"></script>
 `;

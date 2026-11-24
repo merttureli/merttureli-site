@@ -131,7 +131,7 @@ p > code, dd > code, dt > code { font-size: .8125em; color: var(--ink); backgrou
 .fig__no, .fig__cap [data-cap=model] { color: var(--ink); }
 .fig__mode { margin-left: auto; padding-left: 16px; color: var(--green); }
 .fig__panel { position: relative; }
-.fig__stage { position: relative; height: 500px; background: var(--ground) var(--dots); overflow: hidden; touch-action: pan-y; cursor: grab; user-select: none; -webkit-user-select: none; }
+.fig__stage { position: relative; height: 468px; background: var(--ground) var(--dots); overflow: hidden; touch-action: pan-y; cursor: grab; user-select: none; -webkit-user-select: none; }
 .fig__stage:active { cursor: grabbing; }
 .fig__stage:focus-visible { outline-offset: -2px; }
 .fig__stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
@@ -142,7 +142,7 @@ p > code, dd > code, dt > code { font-size: .8125em; color: var(--ink); backgrou
 .still #stageHero .fig__still { scale: 1; width: 100%; height: 100%; object-fit: contain; image-rendering: auto; }
 .no-3d .fig__controls, .no-3d .fig__hint, .no-3d .fig__mode { display: none; }
 .fig__stage.is-live .fig__still { visibility: hidden; }
-.fig__hint { position: absolute; left: 14px; bottom: 12px; color: var(--quiet); font-size: 11px; pointer-events: none; }
+.fig__hint { padding: 11px 14px 10px; border-top: 1px solid var(--line); background: var(--ground); color: var(--quiet); font-size: 11px; line-height: 1.35; }
 .fig__hint-touch { display: none; }
 @media (hover: none) { .fig__hint-mouse { display: none; } .fig__hint-touch { display: inline; } }
 .fig--step { margin-top: 32px; }

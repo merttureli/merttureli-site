@@ -241,6 +241,9 @@ function place() {
   const a = visible(hero), b = visible(howPin);
   heroSeen = a > vh * .4;
   if (!a && !b) { machine.show(false); return; }
+  // before and after the pinned run the scene stands in its first and last pose, which is exactly the still: the
+  // still stands in while the window slides on or off the screen, and the GPU rests
+  if (b > a && (howP <= 0 || howP >= 1)) { machine.show(false); how.classList.remove('is-live'); hero.classList.remove('is-live'); return; }
   if (b > a) { machine.mount('how', $('#howStage'), howBox, [.5, .6]); how.classList.add('is-live'); hero.classList.remove('is-live'); }
   else { machine.mount('hero', $('#heroStage'), heroBox, [.5, 1]); hero.classList.add('is-live'); how.classList.remove('is-live'); }
   machine.show(true);
@@ -248,8 +251,13 @@ function place() {
 }
 if (live) {
   // the words change in this frame; the machine is drawn in the next, so a slow frame of 3D never holds the words back
-  let placing = false;
-  followers.push(() => { howAt(); if (!placing) { placing = true; requestAnimationFrame(() => { placing = false; place(); }); } });
+  let placing = false, settle = 0;
+  followers.push(() => {
+    howAt();
+    if (!placing) { placing = true; requestAnimationFrame(() => { placing = false; place(); }); }
+    clearTimeout(settle);
+    settle = setTimeout(() => { if (machine) machine.redraw(); }, 140);
+  });
   const start = async () => {
     try {
       const { createMachine } = await import('./machine.js');

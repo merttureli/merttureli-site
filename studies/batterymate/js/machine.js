@@ -239,10 +239,13 @@ export async function createMachine({ canvas, quality = 'high', on = {}, capture
     if (!shown) { if (raf) cancelAnimationFrame(raf); raf = 0; last = 0; return; }
     if (mode === 'how') story(storyP); else { dirty = true; kick(); }
   }
+  // one more frame once the page stands still: a frame drawn while the page scrolled can be shown cut short by the
+  // compositor (seen in Chromium when the canvas runs off the top of the window)
+  function redraw() { if (!shown) return; if (mode === 'how') story(storyP); else { heroFrame(); dirty = true; draw(); } }
   document.addEventListener('visibilitychange', () => { if (!document.hidden && shown) { last = 0; dirty = true; kick(); } });
 
   return {
-    mount, show, throwFrom, story, clientOf, kick,
+    mount, show, throwFrom, story, clientOf, kick, redraw,
     get mode() { return mode; }, get busy() { return sim.busy; }, get balls() { return sim.count(); },
     // for the stills and line drawings (scratch scripts) and for looking around while tuning
     debug: { engine, model, dress, sim, view, turn, stage, accents, frameTo, reframe, draw, heroFrame, placeBall, setOpen, tick(dt) { sim.step(dt); heroFrame(); engine.render(); }, get take() { return take; }, set pose(p) { pose = p; }, get pose() { return pose; }, base, THREE },
