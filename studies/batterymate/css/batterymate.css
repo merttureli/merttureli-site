@@ -205,14 +205,14 @@ html.live .how__window { display: block; position: absolute; left: 44%; right: c
 .ls__team span { display: flex; align-items: center; padding: 0 14px; }
 .ls__team span:first-child { border-bottom: 2px solid var(--line-navy); color: #b9bfd3; }
 .ls__team span:last-child { align-items: flex-start; padding-top: clamp(26px, 3vw, 44px); writing-mode: horizontal-tb; }
-.ls__grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(0, 1.6fr); grid-template-rows: 58px auto auto; }
+.ls__grid { display: grid; grid-template-columns: minmax(0, 1.2fr) repeat(4, minmax(0, 1fr)) minmax(0, 1.6fr); grid-template-rows: 58px auto auto; }
 .inning { display: grid; grid-row: span 3; grid-template-rows: subgrid; }
 .inning + .inning { border-left: 2px solid var(--line-navy); }
 .inning dt { display: flex; align-items: center; gap: 10px; padding: 0 16px; border-bottom: 2px solid var(--line-navy); font: 700 13px/1 var(--text); letter-spacing: .06em; text-transform: uppercase; }
 .ls__no { font: 800 22px/1 var(--display); color: #b9bfd3; }
 .lamp { width: 12px; height: 12px; border-radius: 50%; background: var(--lamp); box-shadow: 0 0 0 3px rgba(255, 255, 255, .22); flex: none; order: 3; margin-left: auto; transition: background-color .08s; }
 .ls__val { padding: clamp(14px, 1.8vw, 26px) 16px 0; display: flex; align-items: flex-end; gap: 6px; color: var(--lamp); perspective: 500px; }
-.ls__val .flip { display: inline-block; font: 800 clamp(60px, 7.3vw, 124px)/.8 var(--display); font-variant-numeric: tabular-nums; letter-spacing: .01em; transform-origin: 50% 0; }
+.ls__val .flip { display: inline-block; font: 800 clamp(56px, 6.5vw, 116px)/.8 var(--display); font-variant-numeric: tabular-nums; letter-spacing: .01em; transform-origin: 50% 0; }
 .ls__val small { font: 800 clamp(20px, 2vw, 30px)/1 var(--display); letter-spacing: .04em; text-transform: uppercase; padding-bottom: .1em; }
 .ls__note { padding: 14px 16px 20px; font: 500 15px/1.35 var(--text); color: #cfd3e2; text-wrap: balance; }
 /* lamps light left to right; a numeral flips over as its lamp comes on */
