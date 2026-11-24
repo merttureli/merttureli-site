@@ -83,7 +83,8 @@ import { loadCadMesh } from 'stepwise';
 const canvas = document.querySelector('#view');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(24, canvas.clientWidth / canvas.clientHeight, 0.05, 30);
+const camera = new THREE.PerspectiveCamera(24, 16 / 9, 0.05, 30);
+camera.position.z = 2.2;
 scene.add(new THREE.HemisphereLight(0xffffff, 0x7d828c, 1.35));
 
 // one call fetches ${meta.name}.json and ${meta.bin}

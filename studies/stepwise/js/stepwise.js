@@ -265,8 +265,19 @@ function setResolve(r) {
   $('#heroMode').textContent = modeText(r);
   if (hosts.hero) hosts.hero.set({ resolve: r });
 }
-// In the hero the scroll is the resolve control too, until the slider is touched.
-function scrollResolve() { if (!manual && !still) { const r = clamp01(scrollY / 280); if (Math.abs(r - resolveNow) > .004) setResolve(r); } }
+// In the hero the scroll is the resolve control too, until the slider is touched. It is measured on the figure, not
+// the page: resolving starts where the stage stood at load (on a phone, once it is well in view) and ends about a
+// third of a screen later, while most of it can still be seen.
+const heroStage = $('#stageHero');
+let resolveFrom = null;
+function scrollResolve() {
+  if (manual || still) return;
+  const top = heroStage.getBoundingClientRect().top;
+  if (resolveFrom == null) resolveFrom = Math.min(top + scrollY, innerHeight * .3);
+  const r = clamp01((resolveFrom - top) / (innerHeight * .3));
+  if (Math.abs(r - resolveNow) > .004 || (r === 0 || r === 1) && r !== resolveNow) setResolve(r);
+}
+addEventListener('resize', () => { resolveFrom = null; });
 resolve.addEventListener('input', () => { manual = true; setResolve(resolve.value / 100); });
 explode.addEventListener('input', () => { setRange(explode, explode.value); if (hosts.hero) hosts.hero.set({ explode: explode.value / 100 }); });
 progress.addEventListener('input', () => { setRange(progress, progress.value); if (hosts.load) hosts.load.set({ explode: 1 - progress.value / 100 }); });

@@ -142,13 +142,14 @@ html.js:not(.late) .wave:not([data-ready]){visibility:hidden}
 .hero-foot{position:absolute;z-index:4;left:var(--g);bottom:14px;display:flex;align-items:center;gap:22px}
 .hero-lede{font-size:13px;white-space:nowrap}
 .hero-lede span:last-child{display:block;width:fit-content}
+.hero-lede br{display:none}
 .hero-actions{display:flex;align-items:center;gap:10px}
 .pill-go{min-height:48px;padding:0 26px;font-size:15px}
 .tally-chip{min-height:48px}
 .tally-chip{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--bg);font-size:12px;white-space:nowrap}
 .tally-chip b{font-weight:600;color:var(--accent);min-width:2ch}
 
-.badge{position:absolute;z-index:5;right:calc(var(--g) + 6px);bottom:22px;width:164px;height:164px;color:var(--ink)}
+.badge{position:absolute;z-index:5;right:calc(var(--g) + 4px);bottom:20px;width:180px;height:180px;color:var(--ink)}
 .badge svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .badge-ring{animation:turn 30s linear infinite}
 .badge-ring text{font-family:var(--mono);font-size:13.4px;font-weight:500;letter-spacing:0;fill:currentColor}
@@ -173,10 +174,12 @@ html.js:not(.late) .wave:not([data-ready]){visibility:hidden}
   .hero-lede{font-size:12px}
   .hero-lede span{display:block;width:fit-content}
   .tally-chip{padding:0 14px}
-  .badge{width:104px;height:104px;right:var(--g);bottom:calc(82px + env(safe-area-inset-bottom))}
-  .badge-ring text{font-size:14.6px}
+  /* the middle line breaks in two on a phone, which leaves the badge room to keep its ring text readable */
+  .hero-lede br{display:inline}
+  .badge{width:138px;height:138px;right:var(--g);bottom:calc(80px + env(safe-area-inset-bottom))}
+  .badge-ring text{font-size:14.2px}
 }
-@media (max-width:380px){.badge{width:92px;height:92px;bottom:calc(158px + env(safe-area-inset-bottom))}}
+@media (max-width:380px){.badge{width:124px;height:124px}}
 
 /* ---------- 03 marquee band ---------- */
 .shout{position:relative;background:var(--bg);color:var(--ink);padding:26px 0 0;overflow:hidden;overflow:clip;

@@ -193,7 +193,7 @@ or the poster and the live canvas no longer line up.
 
 ### Checked
 
-`node tools/study-shots.js vireo`: 2,045 KB on the desktop pass (173 KB before three.js is asked for), no console
+`node tools/study-shots.js vireo`: 2,046 KB on the desktop pass (174 KB before three.js is asked for), no console
 errors, failed or outside requests, no sideways overflow at 1440 or 390, no unnamed controls, no image without
 `alt`, one `h1`. The reserve flow by pointer and by keyboard alone (pick, bad email, good email, confirmation,
 start over): no request other than GET, no navigation. Frames stop when the stage or the view is off screen,

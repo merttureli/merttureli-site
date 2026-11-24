@@ -1,8 +1,8 @@
 // The bag: what is in it (memory, mirrored to sessionStorage) and the panel from the right.
 // Nothing is sent anywhere. "Check out" ends on a notice that this is a sample.
-import { price, summary, money, SIZES, PAPERS, FRAMES } from './catalog.js';
+import { price, summary, money, SIZES, PAPERS, FRAMES, MAX_PER_LINE as MAX } from './catalog.js';
 
-const KEY = 'halfstop.bag.v1', MAX = 10;
+const KEY = 'halfstop.bag.v2';
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const listeners = new Set();
 let items = [];
@@ -11,8 +11,8 @@ const known = (list, id) => list.some(x => x.id === id);
 try {
   const saved = JSON.parse(sessionStorage.getItem(KEY) || '[]');
   if (Array.isArray(saved)) items = saved.filter(it => it && typeof it.slug === 'string' && typeof it.title === 'string' && typeof it.thumb === 'string' &&
-    known(SIZES, it.size) && known(PAPERS, it.paper) && known(FRAMES, it.frame) && it.qty >= 1 && it.qty <= MAX)
-    .map(it => ({ slug: it.slug, title: it.title, thumb: it.thumb, size: it.size, paper: it.paper, frame: it.frame, qty: Math.floor(it.qty) }));
+    known(SIZES, it.size) && known(PAPERS, it.paper) && known(FRAMES, it.frame) && it.qty >= 1)
+    .map(it => ({ slug: it.slug, title: it.title, thumb: it.thumb, size: it.size, paper: it.paper, frame: it.frame, qty: Math.min(MAX, Math.floor(it.qty)) }));
 } catch (e) { items = []; }
 
 const keyOf = it => [it.slug, it.size, it.paper, it.frame].join('|');
@@ -26,10 +26,12 @@ export const bag = {
   count: () => items.reduce((n, it) => n + it.qty, 0),
   countOf: slug => items.reduce((n, it) => n + (it.slug === slug ? it.qty : 0), 0),
   subtotal: () => items.reduce((n, it) => n + it.qty * price(it), 0),
-  add(it) {
+  add(it) {                                                 // false when that line already holds the most one order may
     const hit = items.find(x => keyOf(x) === keyOf(it));
-    if (hit) hit.qty = Math.min(MAX, hit.qty + 1); else items.push({ ...it, qty: 1 });
+    if (hit && hit.qty >= MAX) return false;
+    if (hit) hit.qty += 1; else items.push({ ...it, qty: 1 });
     changed();
+    return true;
   },
   setQty(key, qty) { const hit = items.find(x => keyOf(x) === key); if (hit) { hit.qty = Math.max(1, Math.min(MAX, qty)); changed(); } },
   remove(key) { items = items.filter(x => keyOf(x) !== key); changed(); },
@@ -37,23 +39,26 @@ export const bag = {
   subscribe(fn) { listeners.add(fn); },
 };
 
-// One polite live region for the whole page.
-const live = document.getElementById('live');
+const dialog = document.getElementById('bag'), body = document.getElementById('bag-body'), title = document.getElementById('bag-title');
+const openBtn = document.getElementById('bag-open'), closeBtn = document.getElementById('bag-close');
+const counts = [document.getElementById('bag-count'), document.getElementById('bag-count-2')];
+
+// Two polite live regions: one for the page, one inside the bag, because the page is inert while the bag is open.
+const pageLive = document.getElementById('live'), bagLive = document.getElementById('bag-live');
 let liveTimer = 0;
 export function say(text) {
+  const live = dialog.open && bagLive ? bagLive : pageLive;
   if (!live) return;
-  live.textContent = '';
+  [pageLive, bagLive].forEach(el => { if (el) el.textContent = ''; });
   clearTimeout(liveTimer);
-  liveTimer = setTimeout(() => { live.textContent = text; }, 60);
+  liveTimer = setTimeout(() => { live.textContent = text; }, 80);
 }
 const prints = n => `${n} ${n === 1 ? 'print' : 'prints'}`;
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 // ---- the panel -------------------------------------------------------------------------------------
-const dialog = document.getElementById('bag'), body = document.getElementById('bag-body'), title = document.getElementById('bag-title');
-const openBtn = document.getElementById('bag-open'), closeBtn = document.getElementById('bag-close');
-const counts = [document.getElementById('bag-count'), document.getElementById('bag-count-2')];
-let opener = null, view = 'list', closing = 0;
+let opener = null, closing = 0, openedAt = 0;
+const settled = () => performance.now() - openedAt > 450;  // a double click on "Add to bag" must not land on anything in the bag
 
 function renderCount() {
   const n = bag.count();
@@ -63,28 +68,28 @@ function renderCount() {
 }
 
 function renderList() {
-  view = 'list';
   if (!items.length) {
     body.innerHTML = `<div class="bag__empty"><p>The bag is empty.</p><button class="btn" type="button" data-act="index">Go to the index</button></div>`;
     return;
   }
   body.innerHTML = `<ul class="bag__list">${items.map(it => {
-    const k = esc(keyOf(it)), t = esc(it.title);
+    const k = esc(keyOf(it)), t = esc(it.title), full = it.qty >= MAX;
     return `<li class="bag__item" data-key="${k}">
       <div class="bag__thumb"><img src="${esc(it.thumb)}" alt="" decoding="async"></div>
       <div class="bag__what">
         <p class="bag__title">${t}</p>
         <p class="bag__opts">${esc(summary(it))}</p>
-        <div class="bag__ctl">
-          <div class="qty" role="group" aria-label="Quantity of ${t}">
-            <button type="button" data-act="less" aria-label="One fewer"${it.qty <= 1 ? ' aria-disabled="true"' : ''}>&minus;</button>
-            <output aria-label="Quantity">${it.qty}</output>
-            <button type="button" data-act="more" aria-label="One more"${it.qty >= MAX ? ' aria-disabled="true"' : ''}>+</button>
-          </div>
-          <button class="bag__remove" type="button" data-act="remove" aria-label="Remove ${t}, ${esc(summary(it))}">Remove</button>
-        </div>
       </div>
       <p class="bag__price">${money(it.qty * price(it))}</p>
+      <div class="bag__ctl">
+        <div class="qty" role="group" aria-label="Quantity of ${t}">
+          <button type="button" data-act="less" aria-label="One fewer"${it.qty <= 1 ? ' aria-disabled="true"' : ''}>&minus;</button>
+          <output aria-label="Quantity">${it.qty}</output>
+          <button type="button" data-act="more" aria-label="One more"${full ? ' aria-disabled="true"' : ''}>+</button>
+        </div>
+        <button class="bag__remove" type="button" data-act="remove" aria-label="Remove ${t}, ${esc(summary(it))}">Remove</button>
+        ${full ? `<p class="bag__cap">${MAX} per order</p>` : ''}
+      </div>
     </li>`;
   }).join('')}</ul>
   <div class="bag__foot">
@@ -95,7 +100,6 @@ function renderList() {
 }
 
 function renderNotice(n, total) {
-  view = 'notice';
   body.innerHTML = `<div class="bag__notice">
     <p class="head" id="bag-notice" tabindex="-1">Nothing was ordered.</p>
     <p>This is a sample site by Mert Tureli. Halfstop Editions is an invented shop, so no order was placed, nothing was charged and nothing was sent or stored.</p>
@@ -112,6 +116,7 @@ export function openBag(from) {
   if (dialog.open) return;
   clearTimeout(closing);
   opener = from || document.activeElement;
+  openedAt = performance.now();
   renderList();
   const rootEl = document.documentElement;
   rootEl.style.setProperty('--sbw', (window.innerWidth - rootEl.clientWidth) + 'px');   // keep the page still when its scrollbar goes
@@ -142,10 +147,11 @@ export function closeBag(then) {
 
 function onAction(e) {
   const btn = e.target.closest('[data-act]');
-  if (!btn || btn.getAttribute('aria-disabled') === 'true') return;
+  if (!btn || !settled()) return;
   const act = btn.dataset.act, li = btn.closest('.bag__item'), key = li && li.dataset.key;
+  if (btn.getAttribute('aria-disabled') === 'true') { if (act === 'more') say(`${MAX} per order.`); return; }
   if (act === 'index') {
-    closeBag(() => { const first = document.querySelector('.row__btn'); opener = null; document.getElementById('index').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' }); if (first) first.focus({ preventScroll: true }); });
+    closeBag(() => { const first = document.querySelector('.row__btn'); document.getElementById('index').scrollIntoView({ behavior: reduced ? 'instant' : 'smooth' }); if (first) first.focus({ preventScroll: true }); });
     return;
   }
   if (act === 'checkout') {
@@ -153,7 +159,7 @@ function onAction(e) {
     bag.clear();
     renderNotice(n, total);
     document.getElementById('bag-notice').focus();
-    say(`Nothing was ordered. This is a sample site. The bag is empty again.`);
+    say('Nothing was ordered. This is a sample site. The bag is empty again.');
     return;
   }
   const it = items.find(x => keyOf(x) === key);
@@ -171,19 +177,19 @@ function onAction(e) {
   renderList();
   const again = body.querySelector(`.bag__item[data-key="${CSS.escape(key)}"] [data-act="${act}"]`);
   if (again) (again.getAttribute('aria-disabled') === 'true' ? again.parentElement.querySelector(`[data-act="${act === 'more' ? 'less' : 'more'}"]`) : again).focus();
-  say(`${it.title}: quantity ${it.qty}. Subtotal ${money(bag.subtotal())}.`);
+  say(`${it.title}: quantity ${it.qty}${it.qty >= MAX ? `, ${MAX} per order` : ''}. Subtotal ${money(bag.subtotal())}.`);
 }
 
 export function initBag() {
   renderCount();
   bag.subscribe(renderCount);
   openBtn.addEventListener('click', () => openBag(openBtn));
-  closeBtn.addEventListener('click', () => closeBag());
+  closeBtn.addEventListener('click', () => { if (settled()) closeBag(); });
   body.addEventListener('click', onAction);
   dialog.addEventListener('cancel', e => { e.preventDefault(); closeBag(); });
   dialog.addEventListener('close', () => { if (document.documentElement.classList.contains('bag-open')) finishClose(); });
   dialog.addEventListener('click', e => {               // a click on the scrim, outside the panel
-    if (e.target !== dialog) return;
+    if (e.target !== dialog || !settled()) return;
     const r = dialog.getBoundingClientRect();
     if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) closeBag();
   });

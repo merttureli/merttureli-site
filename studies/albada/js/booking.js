@@ -35,6 +35,8 @@ export function createSchedule(now = new Date()) {
 }
 
 const WHY = { past: 'in the past', closed: 'not open for booking yet', none: 'no flight', full: 'full', open: 'flight morning' };
+/* said under the calendar, in sight, when a morning that cannot be chosen is clicked */
+const SORRY = { past: 'That day has passed.', closed: 'That morning is not open for booking yet.', none: 'No flight that day. The mornings with an arch are open.', full: 'That morning is full.' };
 
 export function initBooking({ reduce = false } = {}) {
   const form = $('bookForm'), body = $('calBody');
@@ -42,6 +44,7 @@ export function initBooking({ reduce = false } = {}) {
   const sched = createSchedule(), firstOpen = sched.nextOpen(addDays(sched.today, 1)) || addDays(sched.today, 1);
   const state = { date: null, basket: 'shared', pax: 2, sharedPax: 2, cursor: firstOpen, y: firstOpen.getFullYear(), m: firstOpen.getMonth(), tried: false };
   const say = msg => { const s = $('bookStatus'); s.textContent = ''; requestAnimationFrame(() => { s.textContent = msg; }); };
+  const status = msg => { const s = $('calStatus'); s.textContent = ''; if (msg) requestAnimationFrame(() => { s.textContent = msg; }); };
 
   /* ----- calendar ----- */
   function drawMonth() {
@@ -75,7 +78,7 @@ export function initBooking({ reduce = false } = {}) {
   function turn(by) {
     const first = new Date(state.y, state.m + by, 1);
     if (first < sched.first || first > sched.last) return;
-    state.y = first.getFullYear(); state.m = first.getMonth();
+    state.y = first.getFullYear(); state.m = first.getMonth(); status('');
     const chosen = state.date && fromKey(state.date), inMonth = d => d && d.getFullYear() === state.y && d.getMonth() === state.m;
     const open = sched.nextOpen(first);
     state.cursor = inMonth(chosen) ? chosen : inMonth(open) ? open : first > sched.today ? first : addDays(sched.today, 1);
@@ -85,12 +88,13 @@ export function initBooking({ reduce = false } = {}) {
   function choose(k) {
     const d = fromKey(k), st = sched.stateOf(d);
     state.cursor = d;
-    if (st !== 'open') { rove(); say(`${longDate(d)}: ${WHY[st]}. Choose a morning with a dot.`); return; }
+    if (st !== 'open') { rove(); status(SORRY[st]); return; }
     state.date = k;
     body.querySelectorAll('.day').forEach(b => { const on = b.dataset.date === k, dd = fromKey(b.dataset.date);
       b.setAttribute('aria-pressed', on); b.setAttribute('aria-label', `${longDate(dd)}, ${on ? 'your morning' : WHY[sched.stateOf(dd)]}`); });
     rove();
     setError('errDate', null, false);
+    status('');
     summary();
     say(`${longDate(d)} chosen. Lift-off at 07:15.`);
   }
@@ -175,7 +179,7 @@ export function initBooking({ reduce = false } = {}) {
   }
   $('passAgain').addEventListener('click', () => {
     $('pass').hidden = true; form.hidden = false; $('book-h').hidden = false; $('book').classList.remove('is-done');
-    state.date = null; state.tried = false;
+    state.date = null; state.tried = false; status('');
     state.y = state.cursor.getFullYear(); state.m = state.cursor.getMonth();
     drawMonth(); summary(); rove(true);
   });

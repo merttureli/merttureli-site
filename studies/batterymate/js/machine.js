@@ -95,7 +95,7 @@ export async function createMachine({ canvas, quality = 'high', on = {}, capture
   // Lay the boxes `b` (model space: [x0, y0, z0, x1, y1, z1]) into the page rect (px in the canvas), seen from (yaw, pitch).
   function frameTo(p, rect) {
     turn.rotation.set(p.pitch, p.yaw, 0);
-    stage.updateMatrixWorld(true);
+    stage.updateMatrixWorld(true); camera.updateMatrixWorld();
     camera.zoom = 1; camera.clearViewOffset(); camera.updateProjectionMatrix();
     let l = Infinity, r = -Infinity, t = Infinity, b = -Infinity;
     for (const B of p.boxes) for (let i = 0; i < 8; i++) {
@@ -245,6 +245,6 @@ export async function createMachine({ canvas, quality = 'high', on = {}, capture
     mount, show, throwFrom, story, clientOf, kick,
     get mode() { return mode; }, get busy() { return sim.busy; }, get balls() { return sim.count(); },
     // for the stills and line drawings (scratch scripts) and for looking around while tuning
-    debug: { engine, model, dress, sim, view, turn, stage, accents, frameTo, reframe, draw, heroFrame, placeBall, setOpen, get take() { return take; }, set pose(p) { pose = p; }, get pose() { return pose; }, base, THREE },
+    debug: { engine, model, dress, sim, view, turn, stage, accents, frameTo, reframe, draw, heroFrame, placeBall, setOpen, tick(dt) { sim.step(dt); heroFrame(); engine.render(); }, get take() { return take; }, set pose(p) { pose = p; }, get pose() { return pose; }, base, THREE },
   };
 }

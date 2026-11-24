@@ -1,5 +1,5 @@
 // The index is the shop. A row opens in place into the photograph, its label, the options and the wall.
-import { SIZES, PAPERS, FRAMES, DEFAULT, HANG_CENTER, sizeOf, paperOf, frameOf, price, summary, geometry, money, inches, sizeName } from './catalog.js';
+import { SIZES, PAPERS, FRAMES, DEFAULT, HANG_CENTER, ROLLED, MAX_PER_LINE, sizeOf, paperOf, frameOf, price, summary, geometry, money, inches, sizeName } from './catalog.js';
 import { bag, say, openBag } from './bag.js';
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -10,11 +10,12 @@ const topOffset = () => { const bar = document.getElementById('bar'), dock = bar
 
 const prints = [...document.querySelectorAll('.row')].map((row, i) => {
   const img = row.querySelector('.row__img'), thumb = img.dataset.src || img.getAttribute('src');
-  const w = +row.dataset.w, h = +row.dataset.h;
+  const w = +row.dataset.w, h = +row.dataset.h, format = row.querySelector('.row__fmt').textContent;
+  const [fa, fb] = (format.match(/(\d+):(\d+)/) || [0, w, h]).slice(1).map(Number);   // the stated ratio, "4:3" or "4:5"
   return {
     slug: row.dataset.slug, n: i + 1, row, btn: row.querySelector('.row__btn'), panel: row.querySelector('.row__panel'), inBag: row.querySelector('.row__bag'),
     title: `${row.querySelector('.row__a').textContent} ${row.querySelector('.row__b').textContent}`.replace(/\s+/g, ' ').trim(),
-    place: row.dataset.place || '', format: row.querySelector('.row__fmt').textContent, alt: img.alt,
+    place: row.dataset.place || '', format, alt: img.alt, ratio: Math.max(fa, fb) / Math.min(fa, fb),
     thumb, base: thumb.replace(/-480\.webp$/, ''), w, h, landscape: w > h, sel: { ...DEFAULT }, built: false, timer: 0,
   };
 });
@@ -27,15 +28,15 @@ function wallMarkup(p) {
     <div class="wall__view">
       <div class="wall__scene" role="img" data-wall-scene>
         <span class="fdim" aria-hidden="true"></span>
-        <img class="wall__fig" src="assets/figure.svg" alt="" width="244" height="694" decoding="async">
-        <img class="wall__sofa" src="assets/sofa.svg" alt="" width="844" height="324" decoding="async">
+        <img class="wall__fig" src="assets/figure.svg" alt="" width="248" height="698" decoding="async">
+        <img class="wall__sofa" src="assets/sofa.svg" alt="" width="848" height="328" decoding="async">
         <div class="wall__hang" data-wall-hang aria-hidden="true">
           <div class="wall__print" data-wall-print><div class="wall__sheet"><img src="${esc(p.thumb)}" alt="" decoding="async"></div></div>
           <span class="pdim pdim--w"><span data-dim-w></span></span>
           <span class="pdim pdim--h"><span data-dim-h></span></span>
         </div>
       </div>
-      <div class="wall__ground"><span class="g-fig" aria-hidden="true">5 ft 9 in</span><span class="g-sofa" aria-hidden="true">Sofa, 84 in</span><button class="wall__close" type="button" data-close>Close</button></div>
+      <div class="wall__ground"><span class="sdim" aria-hidden="true"></span><span class="g g-fig" aria-hidden="true">5 ft 9 in</span><span class="g g-sofa" aria-hidden="true">84 in</span><button class="wall__close" type="button" data-close>Close</button></div>
     </div>
   </section>`;
 }
@@ -65,43 +66,43 @@ const cell = (name, id, label, add, checked) =>
   `<label class="cell"><input type="radio" name="${name}" value="${id}"${checked ? ' checked' : ''}><span class="cell__name">${label}</span><span class="cell__add" data-add="${id}">${add}</span></label>`;
 
 function build(p) {
-  const s = p.slug, sizesW = `(min-width: 1100px) ${p.landscape ? '57vw' : '32vw'}, ${p.landscape ? '94vw' : '(min-width: 760px) 62vw, 92vw'}`;
+  const s = p.slug, sizesW = `(min-width: 1100px) ${p.landscape ? '57vw' : '32vw'}, ${p.landscape ? '94vw' : '(min-width: 760px) 48vw, 92vw'}`;
   p.panel.innerHTML = `<div class="panel"><div class="panel__in ${p.landscape ? 'is-landscape' : 'is-portrait'}">
     <figure class="panel__photo" style="background-image:url('${esc(p.thumb)}')">
       <img src="${esc(p.base)}-1280.webp" srcset="${esc(p.base)}-960.webp 960w, ${esc(p.base)}-1280.webp 1280w" sizes="${sizesW}" width="${p.w}" height="${p.h}" alt="" decoding="async">
     </figure>
-    <div class="panel__label">
+    <div class="panel__side">
       <p class="head label__title">${esc(p.title)}</p>
-      <dl class="label__list">
-        ${p.place ? `<div><dt>Where</dt><dd>${esc(p.place)}</dd></div>` : ''}
-        <div><dt>Process</dt><dd data-process></dd></div>
-        <div><dt>Edition</dt><dd>50, numbered and signed</dd></div>
-        <div><dt>Format</dt><dd>${esc(p.format)}</dd></div>
-      </dl>
+      <form class="panel__buy" novalidate>
+        <fieldset class="opt-set"><legend class="vh">Size</legend><div class="opt">
+          <span class="opt__legend" aria-hidden="true">Size</span>
+          <div class="opt__set">${SIZES.map(z => cell(`size-${s}`, z.id, sizeName(z), money(z.price), z.id === p.sel.size)).join('')}</div>
+          <p class="opt__note" data-note-size></p>
+        </div></fieldset>
+        <fieldset class="opt-set"><legend class="vh">Paper</legend><div class="opt">
+          <span class="opt__legend" aria-hidden="true">Paper</span>
+          <div class="opt__set opt__set--2">${PAPERS.map(z => cell(`paper-${s}`, z.id, z.name, z.add ? `+${money(z.add)}` : 'Included', z.id === p.sel.paper)).join('')}</div>
+          <p class="opt__note" data-note-paper></p>
+        </div></fieldset>
+        <fieldset class="opt-set"><legend class="vh">Frame</legend><div class="opt">
+          <span class="opt__legend" aria-hidden="true">Frame</span>
+          <div class="opt__set">${FRAMES.map(z => cell(`frame-${s}`, z.id, z.name, '', z.id === p.sel.frame)).join('')}</div>
+          <p class="opt__note" data-note-frame></p>
+        </div></fieldset>
+        <div class="buy">
+          <span class="buy__label" id="price-label-${s}">Price</span>
+          <output class="buy__price head" aria-labelledby="price-label-${s}" data-price></output>
+          <button class="buy__add" type="submit">Add to bag</button>
+          <p class="buy__sum" data-sum></p>
+        </div>
+      </form>
     </div>
-    <form class="panel__buy" novalidate>
-      <fieldset class="opt-set"><legend class="vh">Size</legend><div class="opt">
-        <span class="opt__legend" aria-hidden="true">Size</span>
-        <div class="opt__set">${SIZES.map(z => cell(`size-${s}`, z.id, sizeName(z), money(z.price), z.id === p.sel.size)).join('')}</div>
-        <p class="opt__note" data-note-size></p>
-      </div></fieldset>
-      <fieldset class="opt-set"><legend class="vh">Paper</legend><div class="opt">
-        <span class="opt__legend" aria-hidden="true">Paper</span>
-        <div class="opt__set opt__set--2">${PAPERS.map(z => cell(`paper-${s}`, z.id, z.name, z.add ? `+${money(z.add)}` : 'Included', z.id === p.sel.paper)).join('')}</div>
-        <p class="opt__note" data-note-paper></p>
-      </div></fieldset>
-      <fieldset class="opt-set"><legend class="vh">Frame</legend><div class="opt">
-        <span class="opt__legend" aria-hidden="true">Frame</span>
-        <div class="opt__set">${FRAMES.map(z => cell(`frame-${s}`, z.id, z.name, '', z.id === p.sel.frame)).join('')}</div>
-        <p class="opt__note" data-note-frame></p>
-      </div></fieldset>
-      <div class="buy">
-        <span class="buy__label" id="price-label-${s}">Price</span>
-        <output class="buy__price head" aria-labelledby="price-label-${s}" data-price></output>
-        <button class="buy__add" type="submit">Add to bag</button>
-        <p class="buy__sum" data-sum></p>
-      </div>
-    </form>
+    <dl class="label__list">
+      ${p.place ? `<div><dt>Where</dt><dd>${esc(p.place)}</dd></div>` : ''}
+      <div><dt>Process</dt><dd data-process></dd></div>
+      <div><dt>Edition</dt><dd>50, numbered and signed</dd></div>
+      <div><dt>Format</dt><dd>${esc(p.format)}</dd></div>
+    </dl>
     ${wallMarkup(p)}
   </div></div>`;
   p.panel.querySelector('.panel__photo img').alt = p.alt;
@@ -112,9 +113,10 @@ function build(p) {
   });
   form.addEventListener('submit', e => {
     e.preventDefault();
-    bag.add({ slug: p.slug, title: p.title, thumb: p.thumb, ...p.sel });
-    say(`Added ${p.title}, ${summary(p.sel)}. The bag holds ${bag.count()} ${bag.count() === 1 ? 'print' : 'prints'}.`);
-    openBag(form.querySelector('.buy__add'));
+    const added = bag.add({ slug: p.slug, title: p.title, thumb: p.thumb, ...p.sel }), n = bag.count();
+    openBag(form.querySelector('.buy__add'));              // then speak inside the bag: the page behind it is inert
+    say(added ? `Added ${p.title}, ${summary(p.sel)}. The bag holds ${n} ${n === 1 ? 'print' : 'prints'}.`
+      : `The bag already holds ${MAX_PER_LINE} of ${p.title}, ${summary(p.sel)}. ${MAX_PER_LINE} per order.`);
   });
   p.panel.querySelector('[data-close]').addEventListener('click', () => close(p, { focus: true }));
   if (!(window.CSS && CSS.supports && CSS.supports('width', '1cqw')) && 'ResizeObserver' in window) {   // older browsers: set the wall's inch in pixels by hand
@@ -132,11 +134,11 @@ function refresh(p, animate) {
   q('[data-price]').textContent = money(price(p.sel));
   q('[data-sum]').textContent = `${summary(p.sel)}.`;
   q('[data-process]').textContent = `Pigment print on ${paper.name.toLowerCase()}`;
-  q('[data-note-size]').textContent = `The image is ${inches(g.imageW)} × ${inches(g.imageH)} in, inside a white border.`;
+  q('[data-note-size]').textContent = `Sheet ${sizeName(size)}. The image on it is ${inches(g.imageShort)} × ${inches(g.imageLong)} in.`;
   q('[data-note-paper]').textContent = paper.note;
   q('[data-note-frame]').textContent = p.sel.frame === 'none'
-    ? (size.id === '24x36' ? 'No frame. The sheet is sent rolled, ready for your framer.' : 'No frame. The sheet is sent flat, ready for your framer.')
-    : `Solid wood, 0.75 in wide, ${inches(g.outerW)} × ${inches(g.outerH)} in outside.`;
+    ? (size.id === ROLLED ? 'No frame. The sheet is sent rolled, ready for your framer.' : 'No frame. The sheet is sent flat, ready for your framer.')
+    : `Solid wood, 0.75 in. Hangs ${inches(g.outerW)} in wide, ${inches(g.outerH)} in tall.`;
   FRAMES.forEach(f => { q(`input[name="frame-${p.slug}"][value="${f.id}"] ~ .cell__add`).textContent = f.id === 'none' ? 'Print only' : `+${money(size.frame)}`; });
   drawWall(p, animate);
 }
@@ -171,7 +173,12 @@ function open(p) {
   p.btn.setAttribute('aria-expanded', 'true');
   current = p;
   hidePeek();
-  const y = window.scrollY + p.row.getBoundingClientRect().top - topOffset() + 1;
+  // Bring the row under the bar. If its options column would then end below the screen (a short window),
+  // go on to the top of the panel, where that column sticks and "Add to bag" is in view.
+  const under = topOffset(), rowTop = p.row.getBoundingClientRect().top, side = p.panel.querySelector('.panel__side');
+  let y = window.scrollY + rowTop - under + 1;
+  if (getComputedStyle(side).position === 'sticky' && under + side.getBoundingClientRect().bottom - rowTop > window.innerHeight - 12)
+    y = window.scrollY + p.panel.getBoundingClientRect().top - under;
   window.scrollTo({ top: y, behavior: reduced ? 'instant' : 'smooth' });
 }
 

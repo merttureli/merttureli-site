@@ -12,9 +12,17 @@ setWidth();
 
 // ---- the wordmark docks into the bar over the first screen of scroll, and the sticker scrolls away under the bar
 function initDock() {
-  if (reduced || !root.classList.contains('is-dock')) { root.classList.remove('is-dock'); return; }
   const word = $('wordmark'), mark = $('bar-mark-text'), clip = $('sticker-clip'), sticker = $('sticker'), bar = $('bar');
   const line = document.querySelector('.mast__line');
+  if (reduced || !root.classList.contains('is-dock')) {     // no docking: the bar's own mark appears once the masthead has passed
+    root.classList.remove('is-dock');
+    const passed = () => { const dock = bar.querySelector('.bar__dock').getBoundingClientRect();
+      root.classList.toggle('is-docked', line.getBoundingClientRect().top <= Math.max(bar.getBoundingClientRect().bottom, dock.bottom)); };
+    passed();
+    window.addEventListener('scroll', passed, { passive: true });
+    window.addEventListener('resize', passed);
+    return;
+  }
   let g = null, queued = false;
   function measure() {
     const y = window.scrollY, was = word.style.transform;
@@ -63,7 +71,7 @@ function initNews() {
     }
     input.removeAttribute('aria-invalid');
     input.value = '';
-    msg.textContent = 'This is a sample site, so the address was not sent or saved. On the real shop you would now be on the list.';
+    msg.textContent = 'This is a sample site, so the address was not sent or saved.';
   });
   input.addEventListener('input', () => { if (input.hasAttribute('aria-invalid')) input.removeAttribute('aria-invalid'); });
 }

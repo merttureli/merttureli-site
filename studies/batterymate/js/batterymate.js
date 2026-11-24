@@ -214,7 +214,7 @@ let warm = 0, played = false;
 function userPlayed() { played = true; clearTimeout(warm); }
 function warmUp(first) {
   clearTimeout(warm);
-  if (played || still) return;
+  if (played || still || window.__noWarm) return;
   warm = setTimeout(() => {
     if (!played && machine && machine.mode === 'hero' && heroSeen && !document.hidden && scrollY < 40 && machine.balls === 0) { const p = spot(); pitch(p.x, p.y); }
     warmUp(false);
@@ -247,7 +247,9 @@ function place() {
   if (machine.mode === 'how') machine.story(howP);
 }
 if (live) {
-  followers.push(() => { howAt(); place(); });
+  // the words change in this frame; the machine is drawn in the next, so a slow frame of 3D never holds the words back
+  let placing = false;
+  followers.push(() => { howAt(); if (!placing) { placing = true; requestAnimationFrame(() => { placing = false; place(); }); } });
   const start = async () => {
     try {
       const { createMachine } = await import('./machine.js');

@@ -18,7 +18,7 @@
 <script type="module" src="js/albada.js"></script>
 </head>
 <body>
-<a class="study-back study-back--albada" href="/websites.html#studies"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13 8H3.5M7.5 3.5 3 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Back to websites</a>
+<a class="study-back study-back--albada" href="/websites.html#studies" aria-label="Back to websites"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13 8H3.5M7.5 3.5 3 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg><span class="study-back__t" aria-hidden="true">Back to websites</span></a>
 <a class="skip" href="#main">Skip to content</a>
 
 <svg class="defs" width="0" height="0" aria-hidden="true" focusable="false">
@@ -45,11 +45,12 @@
 
 <div class="sheet" id="sheet" hidden>
   <nav class="sheet__nav" aria-label="Sections, phone">
-    <a href="#morning"><span class="num">06:40</span><span class="sheet__t">The morning</span></a>
-    <a href="#arcade"><span class="num">09:00</span><span class="sheet__t">The arcade</span></a>
-    <a href="#basket"><span class="num">09:20</span><span class="sheet__t">The basket</span></a>
-    <a href="#questions"><span class="num">09:40</span><span class="sheet__t">Questions</span></a>
-    <a href="#book"><span class="num">10:00</span><span class="sheet__t">Book a flight</span></a>
+    <a class="sheet__link" href="#morning"><span class="num">06:40</span><span class="sheet__t">The morning</span></a>
+    <a class="sheet__link" href="#arcade"><span class="num">09:00</span><span class="sheet__t">The arcade</span></a>
+    <a class="sheet__link" href="#basket"><span class="num">09:20</span><span class="sheet__t">The basket</span></a>
+    <a class="sheet__link" href="#questions"><span class="num">09:40</span><span class="sheet__t">Questions</span></a>
+    <a class="sheet__link" href="#book"><span class="num">10:00</span><span class="sheet__t">Book a flight</span></a>
+    <a class="label sheet__back" href="/websites.html#studies"><svg class="arr" aria-hidden="true"><use href="#i-back"/></svg>Back to websites</a>
   </nav>
 </div>
 
@@ -73,6 +74,7 @@
            alt="A balloon burner lit on a dark field at blue hour, with the ground crew around the basket and a truck with its headlights on.">
       <span class="hero__glow" aria-hidden="true"></span>
     </div>
+    <div class="hero__grain" aria-hidden="true"></div>
   </div>
   <div class="hero__shade" aria-hidden="true"></div>
   <div class="hero__in">
@@ -109,7 +111,7 @@
           <div class="arch__win" data-drift>
             <img src="../../next/assets/img/beyond/envelope-inflation-960.webp"
                  srcset="../../next/assets/img/beyond/envelope-inflation-480.webp 480w, ../../next/assets/img/beyond/envelope-inflation-960.webp 960w, ../../next/assets/img/beyond/envelope-inflation-1280.webp 1280w, ../../next/assets/img/beyond/envelope-inflation-1920.webp 1920w"
-                 sizes="(min-width: 900px) 52vw, 90vw" width="1920" height="1440" loading="lazy" decoding="async"
+                 sizes="(min-width: 900px) 68vw, 142vw" width="1920" height="1440" loading="lazy" decoding="async"
                  alt="Inside a balloon envelope during inflation: people walk across the fabric under panels of blue, yellow, red and green.">
           </div>
           <figcaption class="label">Inside the envelope as it fills</figcaption>
@@ -129,7 +131,7 @@
           <div class="arch__win">
             <img src="../../next/assets/img/beyond/balloons-dusk-960.webp"
                  srcset="../../next/assets/img/beyond/balloons-dusk-480.webp 480w, ../../next/assets/img/beyond/balloons-dusk-960.webp 960w, ../../next/assets/img/beyond/balloons-dusk-1280.webp 1280w"
-                 sizes="(min-width: 900px) 30vw, 78vw" width="1280" height="1707" loading="lazy" decoding="async"
+                 sizes="(min-width: 900px) 36vw, 97vw" width="1280" height="1707" loading="lazy" decoding="async"
                  alt="Two balloons in silhouette above dark clouds and a skyline.">
           </div>
           <figcaption class="label">Two up, the skyline still dark</figcaption>
@@ -141,7 +143,7 @@
           <div class="arch__win">
             <img src="../../next/assets/img/beyond/cathedral-dawn-960.webp"
                  srcset="../../next/assets/img/beyond/cathedral-dawn-480.webp 480w, ../../next/assets/img/beyond/cathedral-dawn-960.webp 960w, ../../next/assets/img/beyond/cathedral-dawn-1280.webp 1280w, ../../next/assets/img/beyond/cathedral-dawn-1920.webp 1920w"
-                 sizes="(min-width: 900px) 30vw, 64vw" width="1920" height="1440" loading="lazy" decoding="async"
+                 sizes="(min-width: 900px) 46vw, 97vw" width="1920" height="1440" loading="lazy" decoding="async"
                  alt="The cathedral in silhouette at dawn with one balloon above it.">
           </div>
           <figcaption class="label">One balloon over the cathedral</figcaption>
@@ -165,16 +167,16 @@
             <div class="arch__win" data-drift>
               <img src="../../next/assets/img/beyond/segovia-dawn-960.webp"
                    srcset="../../next/assets/img/beyond/segovia-dawn-480.webp 480w, ../../next/assets/img/beyond/segovia-dawn-960.webp 960w, ../../next/assets/img/beyond/segovia-dawn-1280.webp 1280w, ../../next/assets/img/beyond/segovia-dawn-1920.webp 1920w"
-                   sizes="(min-width: 900px) 30vw, 58vw" width="1920" height="1440" loading="lazy" decoding="async"
+                   sizes="(min-width: 900px) 40vw, 71vw" width="1920" height="1440" loading="lazy" decoding="async"
                    alt="Segovia from the air at dawn, the cathedral in the middle of the city.">
             </div>
             <figcaption class="label">Segovia from the air</figcaption>
           </figure>
-          <figure class="arch collage__c" data-rise style="--ar:1/1.5;--pos:56% 30%">
+          <figure class="arch collage__c" data-rise style="--ar:1/1.25;--pos:56% 30%">
             <div class="arch__win" data-drift>
               <img src="../../next/assets/img/beyond/alcazar-aerial-960.webp"
                    srcset="../../next/assets/img/beyond/alcazar-aerial-480.webp 480w, ../../next/assets/img/beyond/alcazar-aerial-960.webp 960w, ../../next/assets/img/beyond/alcazar-aerial-1280.webp 1280w"
-                   sizes="(min-width: 900px) 28vw, 62vw" width="1280" height="1707" loading="lazy" decoding="async"
+                   sizes="(min-width: 900px) 39vw, 74vw" width="1280" height="1707" loading="lazy" decoding="async"
                    alt="Aerial view of the Alcázar of Segovia on its rock, with the cathedral and the city behind it.">
             </div>
             <figcaption class="label">The Alcázar on its rock</figcaption>
@@ -183,7 +185,7 @@
             <div class="arch__win" data-drift>
               <img src="../../next/assets/img/beyond/sunburst-plain-960.webp"
                    srcset="../../next/assets/img/beyond/sunburst-plain-480.webp 480w, ../../next/assets/img/beyond/sunburst-plain-960.webp 960w, ../../next/assets/img/beyond/sunburst-plain-1280.webp 1280w, ../../next/assets/img/beyond/sunburst-plain-1920.webp 1920w"
-                   sizes="(min-width: 900px) 27vw, 54vw" width="1920" height="1440" loading="lazy" decoding="async"
+                   sizes="(min-width: 900px) 44vw, 78vw" width="1920" height="1440" loading="lazy" decoding="async"
                    alt="The sun breaking over the plain, seen from the air above the roofs of the city.">
             </div>
             <figcaption class="label">The sun over the plain</figcaption>
@@ -203,7 +205,7 @@
         <div class="arch__win" data-drift>
           <img src="../../next/assets/img/beyond/balloon-glory-1280.webp"
                srcset="../../next/assets/img/beyond/balloon-glory-480.webp 480w, ../../next/assets/img/beyond/balloon-glory-960.webp 960w, ../../next/assets/img/beyond/balloon-glory-1280.webp 1280w, ../../next/assets/img/beyond/balloon-glory-1920.webp 1920w"
-               sizes="(min-width: 900px) 70vw, 90vw" width="1920" height="1440" loading="lazy" decoding="async"
+               sizes="(min-width: 1500px) 1040px, (min-width: 900px) 73vw, 108vw" width="1920" height="1440" loading="lazy" decoding="async"
                alt="The balloon's shadow inside a rainbow glory on the cloud, with fields far below.">
         </div>
         <figcaption class="label">The balloon's shadow, inside a glory</figcaption>
@@ -227,7 +229,7 @@
           <div class="arch__win" data-drift>
             <img src="../../next/assets/img/beyond/cathedral-fields-960.webp"
                  srcset="../../next/assets/img/beyond/cathedral-fields-480.webp 480w, ../../next/assets/img/beyond/cathedral-fields-960.webp 960w, ../../next/assets/img/beyond/cathedral-fields-1280.webp 1280w, ../../next/assets/img/beyond/cathedral-fields-1920.webp 1920w"
-                 sizes="(min-width: 900px) 50vw, 90vw" width="1920" height="1440" loading="lazy" decoding="async"
+                 sizes="(min-width: 900px) 62vw, 110vw" width="1920" height="1440" loading="lazy" decoding="async"
                  alt="The cathedral above the roofs and the fields in soft morning light.">
           </div>
           <figcaption class="label">The cathedral above the fields</figcaption>
@@ -239,7 +241,7 @@
           <div class="arch__win" data-drift>
             <img src="../../next/assets/img/beyond/balloon-960.webp"
                  srcset="../../next/assets/img/beyond/balloon-480.webp 480w, ../../next/assets/img/beyond/balloon-960.webp 960w, ../../next/assets/img/beyond/balloon-1280.webp 1280w, ../../next/assets/img/beyond/balloon-1920.webp 1920w"
-                 sizes="(min-width: 900px) 40vw, 120vw" width="1920" height="1080" loading="lazy" decoding="async"
+                 sizes="(min-width: 900px) 53vw, 141vw" width="1920" height="1080" loading="lazy" decoding="async"
                  alt="A yellow hot air balloon low over open country at sunrise, with more balloons in the distance.">
           </div>
           <figcaption class="label">Low over open country</figcaption>
@@ -263,55 +265,55 @@
         <ol class="bays">
           <li class="bay">
             <figure class="arch bay__up" style="--pos:44% 40%;--zoom:1.24">
-              <div class="arch__win"><img src="../../next/assets/img/beyond/envelope-inflation-480.webp" srcset="../../next/assets/img/beyond/envelope-inflation-480.webp 480w, ../../next/assets/img/beyond/envelope-inflation-960.webp 960w" sizes="(min-width: 900px) 250px, 46vw" width="1920" height="1440" loading="lazy" decoding="async" alt="Inside the balloon envelope as it fills, people walking under the colored panels."></div>
+              <div class="arch__win"><img src="../../next/assets/img/beyond/envelope-inflation-480.webp" srcset="../../next/assets/img/beyond/envelope-inflation-480.webp 480w, ../../next/assets/img/beyond/envelope-inflation-960.webp 960w, ../../next/assets/img/beyond/envelope-inflation-1280.webp 1280w, ../../next/assets/img/beyond/envelope-inflation-1920.webp 1920w" sizes="(min-width: 900px) and (prefers-reduced-motion: reduce) 420px, (min-width: 900px) 22vw, 80vw" width="1920" height="1440" loading="lazy" decoding="async" alt="Inside the balloon envelope as it fills, people walking under the colored panels."></div>
             </figure>
             <figure class="arch bay__low" style="--pos:48% 46%">
-              <div class="arch__win"><img src="../../next/assets/img/beyond/burner-glow-480.webp" srcset="../../next/assets/img/beyond/burner-glow-480.webp 480w, ../../next/assets/img/beyond/burner-glow-960.webp 960w" sizes="(min-width: 900px) 250px, 46vw" width="1280" height="1707" loading="lazy" decoding="async" alt="The burner lit on the dark field at blue hour."></div>
+              <div class="arch__win"><img src="../../next/assets/img/beyond/burner-glow-480.webp" srcset="../../next/assets/img/beyond/burner-glow-480.webp 480w, ../../next/assets/img/beyond/burner-glow-960.webp 960w, ../../next/assets/img/beyond/burner-glow-1280.webp 1280w" sizes="(min-width: 900px) and (prefers-reduced-motion: reduce) 320px, (min-width: 900px) 16vw, 59vw" width="1280" height="1707" loading="lazy" decoding="async" alt="The burner lit on the dark field at blue hour."></div>
             </figure>
             <p class="bay__cap"><span class="num">06:40</span><span class="bay__t">The envelope fills. The burner lights the field.</span></p>
           </li>
           <li class="bay">
             <figure class="arch bay__up" style="--pos:100% 0%">
-              <div class="arch__win"><img src="../../next/assets/img/beyond/cathedral-dawn-480.webp" srcset="../../next/assets/img/beyond/cathedral-dawn-480.webp 480w, ../../next/assets/img/beyond/cathedral-dawn-960.webp 960w" sizes="(min-width: 900px) 250px, 46vw" width="1920" height="1440" loading="lazy" decoding="async" alt="One balloon above the cathedral in silhouette at dawn."></div>
+              <div class="arch__win"><img src="../../next/assets/img/beyond/cathedral-dawn-480.webp" srcset="../../next/assets/img/beyond/cathedral-dawn-480.webp 480w, ../../next/assets/img/beyond/cathedral-dawn-960.webp 960w, ../../next/assets/img/beyond/cathedral-dawn-1280.webp 1280w, ../../next/assets/img/beyond/cathedral-dawn-1920.webp 1920w" sizes="(min-width: 900px) and (prefers-reduced-motion: reduce) 380px, (min-width: 900px) 20vw, 74vw" width="1920" height="1440" loading="lazy" decoding="async" alt="One balloon above the cathedral in silhouette at dawn."></div>
             </figure>
             <figure class="arch bay__low" style="--pos:100% 50%">
-              <div class="arch__win"><img src="../../next/assets/img/beyond/balloons-dusk-480.webp" srcset="../../next/assets/img/beyond/balloons-dusk-480.webp 480w, ../../next/assets/img/beyond/balloons-dusk-960.webp 960w" sizes="(min-width: 900px) 250px, 46vw" width="1280" height="1707" loading="lazy" decoding="async" alt="Two balloons in silhouette above dark clouds and a skyline."></div>
+              <div class="arch__win"><img src="../../next/assets/img/beyond/balloons-dusk-480.webp" srcset="../../next/assets/img/beyond/balloons-dusk-480.webp 480w, ../../next/assets/img/beyond/balloons-dusk-960.webp 960w, ../../next/assets/img/beyond/balloons-dusk-1280.webp 1280w" sizes="(min-width: 900px) and (prefers-reduced-motion: reduce) 320px, (min-width: 900px) 16vw, 59vw" width="1280" height="1707" loading="lazy" decoding="async" alt="Two balloons in silhouette above dark clouds and a skyline."></div>
             </figure>
             <p class="bay__cap"><span class="num">07:15</span><span class="bay__t">One balloon over the cathedral. Two more above the skyline.</span></p>
           </li>
           <li class="bay">
             <figure class="arch bay__up" style="--pos:34% 44%;--zoom:1.1">
-              <div class="arch__win"><img src="../../next/assets/img/beyond/segovia-dawn-480.webp" srcset="../../next/assets/img/beyond/segovia-dawn-480.webp 480w, ../../next/assets/img/beyond/segovia-dawn-960.webp 960w" sizes="(min-width: 900px) 250px, 46vw" width="1920" height="1440" loading="lazy" decoding="async" alt="Segovia from the air at dawn, the cathedral among the roofs."></div>
+              <div class="arch__win"><img src="../../next/assets/img/beyond/segovia-dawn-480.webp" srcset="../../next/assets/img/beyond/segovia-dawn-480.webp 480w, ../../next/assets/img/beyond/segovia-dawn-960.webp 960w, ../../next/assets/img/beyond/segovia-dawn-1280.webp 1280w, ../../next/assets/img/beyond/segovia-dawn-1920.webp 1920w" sizes="(min-width: 900px) and (prefers-reduced-motion: reduce) 380px, (min-width: 900px) 20vw, 74vw" width="1920" height="1440" loading="lazy" decoding="async" alt="Segovia from the air at dawn, the cathedral among the roofs."></div>
             </figure>
             <figure class="arch bay__low" style="--pos:58% 26%">
-              <div class="arch__win"><img src="../../next/assets/img/beyond/alcazar-aerial-480.webp" srcset="../../next/assets/img/beyond/alcazar-aerial-480.webp 480w, ../../next/assets/img/beyond/alcazar-aerial-960.webp 960w" sizes="(min-width: 900px) 250px, 46vw" width="1280" height="1707" loading="lazy" decoding="async" alt="The Alcázar of Segovia on its rock, from the air."></div>
+              <div class="arch__win"><img src="../../next/assets/img/beyond/alcazar-aerial-480.webp" srcset="../../next/assets/img/beyond/alcazar-aerial-480.webp 480w, ../../next/assets/img/beyond/alcazar-aerial-960.webp 960w, ../../next/assets/img/beyond/alcazar-aerial-1280.webp 1280w" sizes="(min-width: 900px) and (prefers-reduced-motion: reduce) 320px, (min-width: 900px) 16vw, 59vw" width="1280" height="1707" loading="lazy" decoding="async" alt="The Alcázar of Segovia on its rock, from the air."></div>
             </figure>
             <p class="bay__cap"><span class="num">07:40</span><span class="bay__t">Segovia from the air. The Alcázar on its rock.</span></p>
           </li>
           <li class="bay">
             <figure class="arch bay__up" style="--pos:100% 30%;--zoom:1">
-              <div class="arch__win"><img src="../../next/assets/img/beyond/alcazar-moon-480.webp" srcset="../../next/assets/img/beyond/alcazar-moon-480.webp 480w, ../../next/assets/img/beyond/alcazar-moon-960.webp 960w" sizes="(min-width: 900px) 250px, 46vw" width="1920" height="1440" loading="lazy" decoding="async" alt="A balloon beside the towers of the Alcázar, with a small moon in a clear sky."></div>
+              <div class="arch__win"><img src="../../next/assets/img/beyond/alcazar-moon-480.webp" srcset="../../next/assets/img/beyond/alcazar-moon-480.webp 480w, ../../next/assets/img/beyond/alcazar-moon-960.webp 960w, ../../next/assets/img/beyond/alcazar-moon-1280.webp 1280w, ../../next/assets/img/beyond/alcazar-moon-1920.webp 1920w" sizes="(min-width: 900px) and (prefers-reduced-motion: reduce) 380px, (min-width: 900px) 20vw, 74vw" width="1920" height="1440" loading="lazy" decoding="async" alt="A balloon beside the towers of the Alcázar, with a small moon in a clear sky."></div>
             </figure>
             <figure class="arch bay__low" style="--pos:72% 0%">
-              <div class="arch__win"><img src="../../next/assets/img/beyond/sunburst-plain-480.webp" srcset="../../next/assets/img/beyond/sunburst-plain-480.webp 480w, ../../next/assets/img/beyond/sunburst-plain-960.webp 960w" sizes="(min-width: 900px) 250px, 46vw" width="1920" height="1440" loading="lazy" decoding="async" alt="The sun over the plain, above the roofs of the city."></div>
+              <div class="arch__win"><img src="../../next/assets/img/beyond/sunburst-plain-480.webp" srcset="../../next/assets/img/beyond/sunburst-plain-480.webp 480w, ../../next/assets/img/beyond/sunburst-plain-960.webp 960w, ../../next/assets/img/beyond/sunburst-plain-1280.webp 1280w, ../../next/assets/img/beyond/sunburst-plain-1920.webp 1920w" sizes="(min-width: 900px) and (prefers-reduced-motion: reduce) 570px, (min-width: 900px) 28.5vw, 104vw" width="1920" height="1440" loading="lazy" decoding="async" alt="The sun over the plain, above the roofs of the city."></div>
             </figure>
             <p class="bay__cap"><span class="num">07:50</span><span class="bay__t">A small moon, still up. The sun over the plain.</span></p>
           </li>
           <li class="bay">
             <figure class="arch bay__up" style="--pos:48% 36%;--zoom:1.15">
-              <div class="arch__win"><img src="../../next/assets/img/beyond/balloon-glory-480.webp" srcset="../../next/assets/img/beyond/balloon-glory-480.webp 480w, ../../next/assets/img/beyond/balloon-glory-960.webp 960w" sizes="(min-width: 900px) 250px, 46vw" width="1920" height="1440" loading="lazy" decoding="async" alt="The balloon's shadow inside a rainbow glory on the cloud."></div>
+              <div class="arch__win"><img src="../../next/assets/img/beyond/balloon-glory-480.webp" srcset="../../next/assets/img/beyond/balloon-glory-480.webp 480w, ../../next/assets/img/beyond/balloon-glory-960.webp 960w, ../../next/assets/img/beyond/balloon-glory-1280.webp 1280w, ../../next/assets/img/beyond/balloon-glory-1920.webp 1920w" sizes="(min-width: 900px) and (prefers-reduced-motion: reduce) 380px, (min-width: 900px) 20vw, 74vw" width="1920" height="1440" loading="lazy" decoding="async" alt="The balloon's shadow inside a rainbow glory on the cloud."></div>
             </figure>
             <figure class="arch bay__low" style="--pos:44% 50%">
-              <div class="arch__win"><img src="../../next/assets/img/beyond/balloon-backlit-480.webp" srcset="../../next/assets/img/beyond/balloon-backlit-480.webp 480w, ../../next/assets/img/beyond/balloon-backlit-960.webp 960w" sizes="(min-width: 900px) 250px, 46vw" width="1920" height="1440" loading="lazy" decoding="async" alt="A balloon backlit by the sun against bright clouds."></div>
+              <div class="arch__win"><img src="../../next/assets/img/beyond/balloon-backlit-480.webp" srcset="../../next/assets/img/beyond/balloon-backlit-480.webp 480w, ../../next/assets/img/beyond/balloon-backlit-960.webp 960w, ../../next/assets/img/beyond/balloon-backlit-1280.webp 1280w, ../../next/assets/img/beyond/balloon-backlit-1920.webp 1920w" sizes="(min-width: 900px) and (prefers-reduced-motion: reduce) 570px, (min-width: 900px) 28.5vw, 104vw" width="1920" height="1440" loading="lazy" decoding="async" alt="A balloon backlit by the sun against bright clouds."></div>
             </figure>
             <p class="bay__cap"><span class="num">08:10</span><span class="bay__t">The glory on the cloud. A balloon against the sun.</span></p>
           </li>
           <li class="bay">
             <figure class="arch bay__up" style="--pos:16% 60%;--zoom:1.3">
-              <div class="arch__win"><img src="../../next/assets/img/beyond/balloon-480.webp" srcset="../../next/assets/img/beyond/balloon-480.webp 480w, ../../next/assets/img/beyond/balloon-960.webp 960w, ../../next/assets/img/beyond/balloon-1280.webp 1280w" sizes="(min-width: 900px) 480px, 90vw" width="1920" height="1080" loading="lazy" decoding="async" alt="A yellow balloon low over open country at sunrise."></div>
+              <div class="arch__win"><img src="../../next/assets/img/beyond/balloon-480.webp" srcset="../../next/assets/img/beyond/balloon-480.webp 480w, ../../next/assets/img/beyond/balloon-960.webp 960w, ../../next/assets/img/beyond/balloon-1280.webp 1280w, ../../next/assets/img/beyond/balloon-1920.webp 1920w" sizes="(min-width: 900px) and (prefers-reduced-motion: reduce) 600px, (min-width: 900px) 30vw, 111vw" width="1920" height="1080" loading="lazy" decoding="async" alt="A yellow balloon low over open country at sunrise."></div>
             </figure>
             <figure class="arch bay__low" style="--pos:46% 40%">
-              <div class="arch__win"><img src="../../next/assets/img/beyond/cathedral-fields-480.webp" srcset="../../next/assets/img/beyond/cathedral-fields-480.webp 480w, ../../next/assets/img/beyond/cathedral-fields-960.webp 960w, ../../next/assets/img/beyond/cathedral-fields-1280.webp 1280w" sizes="(min-width: 900px) 520px, 105vw" width="1920" height="1440" loading="lazy" decoding="async" alt="The cathedral tower above the roofs and the fields."></div>
+              <div class="arch__win"><img src="../../next/assets/img/beyond/cathedral-fields-480.webp" srcset="../../next/assets/img/beyond/cathedral-fields-480.webp 480w, ../../next/assets/img/beyond/cathedral-fields-960.webp 960w, ../../next/assets/img/beyond/cathedral-fields-1280.webp 1280w, ../../next/assets/img/beyond/cathedral-fields-1920.webp 1920w" sizes="(min-width: 900px) and (prefers-reduced-motion: reduce) 570px, (min-width: 900px) 28.5vw, 104vw" width="1920" height="1440" loading="lazy" decoding="async" alt="The cathedral tower above the roofs and the fields."></div>
             </figure>
             <p class="bay__cap"><span class="num">08:40</span><span class="bay__t">Low over open country. The cathedral above the fields.</span></p>
           </li>
@@ -334,7 +336,7 @@
         <p class="fare__price"><span class="num">175</span><span class="label">euros a person</span></p>
         <p class="fare__lede">Up to eight passengers and the pilot. Everyone stands at the edge, so everyone has the view.</p>
         <ul class="fare__list">
-          <li>About an hour in the air</li>
+          <li>About an hour and a half in the air</li>
           <li>Coffee in the field before lift-off</li>
           <li>Breakfast where you land</li>
           <li>The ride back to town</li>
@@ -345,7 +347,7 @@
       <article class="fare" data-rise aria-labelledby="fare-p">
         <h3 class="label fare__name" id="fare-p">Private basket</h3>
         <p class="fare__price"><span class="num">750</span><span class="label">euros for two</span></p>
-        <p class="fare__lede">The basket to yourselves, with the pilot. The same morning and the same sky, with nobody else in it.</p>
+        <p class="fare__lede">The basket to yourselves, with the pilot. The same morning and the same sky, and nobody else in the basket.</p>
         <ul class="fare__list">
           <li>Everything in the shared basket</li>
           <li>The basket for the two of you</li>
@@ -358,7 +360,10 @@
     </div>
 
     <div class="timetable" data-rise>
-      <h3 class="label timetable__h">The morning in order</h3>
+      <div class="timetable__top">
+        <h3 class="label timetable__h">The morning in order</h3>
+        <p class="timetable__note">Times move with the sunrise. You get the exact hour the evening before.</p>
+      </div>
       <ol class="timetable__list">
         <li><span class="num">06:40</span><span class="label">Meet in the field</span></li>
         <li><span class="num">07:15</span><span class="label">Lift-off</span></li>
@@ -368,7 +373,6 @@
         <li><span class="num">09:00</span><span class="label">Breakfast</span></li>
         <li><span class="num">10:00</span><span class="label">Back in town</span></li>
       </ol>
-      <p class="timetable__note">Times move with the sunrise. You get the exact hour the evening before.</p>
     </div>
   </div>
 </section>
@@ -385,7 +389,7 @@
         <div class="arch__win" data-drift>
           <img src="../../next/assets/img/beyond/balloon-below-960.webp"
                srcset="../../next/assets/img/beyond/balloon-below-480.webp 480w, ../../next/assets/img/beyond/balloon-below-960.webp 960w, ../../next/assets/img/beyond/balloon-below-1280.webp 1280w"
-               sizes="(min-width: 900px) 30vw, 70vw" width="1280" height="1707" loading="lazy" decoding="async"
+               sizes="(min-width: 900px) 32vw, 70vw" width="1280" height="1707" loading="lazy" decoding="async"
                alt="A balloon seen from directly below against a clear blue sky.">
         </div>
         <figcaption class="label">From directly below</figcaption>
@@ -393,7 +397,7 @@
       <div class="faq" data-rise>
         <details class="qa">
           <summary><span class="qa__q">What happens if the weather is bad?</span><span class="qa__mark" aria-hidden="true"></span></summary>
-          <div class="qa__a"><p>Balloons fly only in calm, clear air. The pilot decides the evening before, and if the flight is off you choose another morning or a full refund.</p></div>
+          <div class="qa__a"><p>Balloons fly only in calm air. The pilot decides the evening before, and if the flight is off you choose another morning or a full refund.</p></div>
         </details>
         <details class="qa">
           <summary><span class="qa__q">What should I wear?</span><span class="qa__mark" aria-hidden="true"></span></summary>
@@ -405,11 +409,11 @@
         </details>
         <details class="qa">
           <summary><span class="qa__q">How long does it take?</span><span class="qa__mark" aria-hidden="true"></span></summary>
-          <div class="qa__a"><p>About three and a half hours from the field to the ride back, with roughly one hour of it in the air. Plan nothing before eleven.</p></div>
+          <div class="qa__a"><p>About three and a half hours from the field to the ride back, with about an hour and a half of it in the air. Plan nothing before eleven.</p></div>
         </details>
         <details class="qa">
           <summary><span class="qa__q">Where do we meet?</span><span class="qa__mark" aria-hidden="true"></span></summary>
-          <div class="qa__a"><p>In a field outside the city. The wind chooses which one, so you get the place and the exact hour the evening before. Ask and we collect you in town.</p></div>
+          <div class="qa__a"><p>In a field outside the city. The wind chooses which one, so you get the place and the exact hour the evening before. Ask and we pick you up in town.</p></div>
         </details>
         <details class="qa">
           <summary><span class="qa__q">Can I get a refund?</span><span class="qa__mark" aria-hidden="true"></span></summary>
@@ -456,6 +460,7 @@
               <li class="key key--full">Full</li>
               <li class="key key--yours">Your morning</li>
             </ul>
+            <p class="cal__status" id="calStatus" role="status"></p>
             <p class="vh" id="calHelp">Arrow keys move between days, Page Up and Page Down change the month, Enter chooses a flight morning.</p>
           </div>
           <p class="err" id="errDate" hidden>Choose a flight morning on the calendar.</p>
@@ -542,8 +547,8 @@
 
 <footer class="foot tone tone--fixed t-night">
   <div class="foot__arcade" aria-hidden="true"></div>
+  <p class="foot__mark" aria-hidden="true"><span class="wm"><b>A</b><b>L</b><b>B</b><b>A</b><b>D</b><b>A</b></span></p>
   <div class="wrap foot__in">
-    <p class="foot__mark" aria-hidden="true">Albada</p>
     <div class="foot__row">
       <p class="num foot__greet">Buenos días.</p>
       <p class="foot__sample">A sample site by Mert Tureli. Albada is an invented brand and no flights are sold here. The photographs are mine, from a balloon morning over Segovia.</p>

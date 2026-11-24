@@ -84,3 +84,95 @@ are mine."
 
 First view under 400 KB. Whole page under 2 MB. The sky is one 2D canvas (not WebGL), capped at a number of
 stars that holds 60 frames a second on a laptop and fewer on a phone, paused when the tab is hidden.
+
+## What was built
+
+Built in November 2026 to the brief above. Files: `index.html`, `css/lowlight.css`, five ES modules in `js/`
+(`lowlight.js` start-up and the one loop, `sky.js`, `type.js`, `clock.js`, `rsvp.js`), two font files with their
+licenses in `fonts/`, one icon in `assets/`. No build step, no outside request.
+
+### How the two signature pieces work
+
+- **The sky.** One opaque 2D canvas, fixed behind the page. The stars turn about a pole (one turn in 25 minutes
+  at rest). The scroll position is geared to the same turn (0.00028 radians a pixel), and each star is drawn as
+  the arc between where it is and where a slower "tail" angle has reached, so a scroll draws trails and a rest
+  closes them to points. Arcs are capped at 0.46 radians. Meteors run away from one fixed radiant; the tally is
+  kept in `sessionStorage`. The canvas is not drawn while no night section is in view or while the tab is hidden,
+  draws every other frame at rest, caps device pixel ratio at 2 (lower on very large screens) and thins the
+  faint stars if a device cannot keep up.
+- **The type.** Anybody's advances are linear along the width axis, so each capital is measured once at 50 and
+  at 150 (advance and side bearings) and everything after is arithmetic. A line is laid out by its ink, not its
+  advance box, so every big word starts and ends exactly on the margin.
+
+### Where it differs from the brief, and why
+
+1. **Hero width.** The brief has the hero words run from width 50 to 150 with the scroll. A whole word doing
+   that at one size cannot also stay as wide as the screen. Built instead: a swell of width travels through the
+   letters with the scroll, and the other letters give way by exactly as much, so the line always fills the
+   measure and its height never changes. The mean width is set by the screen (about 112 at 1440 by 900, 57 at
+   390 wide), so single letters reach 150 on a laptop but only about 90 on a phone.
+2. **Section words.** Each section opens with one word set the same way (PROGRAM, THE FIELD, RULES, RSVP),
+   after the "one word per band" reference. The brief did not list them.
+3. **Rows at width 75.** The marquee rows sit at 75. The five house rules are one size and each is set at the
+   width that fills the measure: the longest at 75 (60 on a phone, where "No headlights after dusk" takes two
+   lines), the shortest near 138.
+4. **The night clock.** Nine even hours over the half circle put midnight 10 degrees left of the top, not at
+   the top. An even scale was kept. The hand points at the start of the watch; the watch is the thick arc.
+   Pointing at a line of the list lights its mark.
+5. **The program list** sets its times in the display face at weight 400 (the config.figma idea) with mono
+   text beside them, not as a plain mono list. With scripting off all three nights are listed.
+6. **The stargazers photograph** is used twice from the same file: behind the type as a low dome of glow, and
+   again in front of the letters, where an SVG filter turns everything dark in the frame into solid night. The
+   two people sit in front of the word. The brief asked for inside the letters or behind them.
+7. **Duotone.** A ramp of night, indigo, a violet between, and cream, so the middle tones do not go gray. The
+   castle frame is read through a red filter so its daytime sky falls dark. Two near-dark frames have their
+   shadows opened. All in SVG filters; no file was edited.
+8. **Red light mode.** `#5a0e0a` on black is 1.5 to 1, so "quiet" is used for lines and for the marquee band
+   only (the big letters on it are 3.9 to 1; its one small line gets a black strip). The cream section goes
+   black. A confirmed pass is black with a red border, not a filled block. In normal light the switch's knob is
+   the one red thing on the page.
+9. **The bar** is transparent, but each item is a solid pill, so it reads over every section.
+10. **The way back** is docked in the bar as its first chip, in the bar's colors, and follows red light mode.
+    On a wide screen it stays with the bar, so the page scrolls under it as it does under the bar's own chips.
+    A phone's bar has no room for it, so there it has a row of its own under the bar at the top of the page
+    and scrolls away with the first screen: further down it is never over a button or a form field. Checked
+    at 85 widths from 360 to 1920: at the top of the page it touches no headline, control, field or the badge.
+11. **House rules** carry one moving shape that the brief did not list: a disc that crosses the list with the
+    scroll and inverts what it covers.
+12. **The pass** is live: it fills in beside the form as it is answered, then turns solid on a valid submit.
+    The constellation is a small round chart with the alphabet on its rim; each letter of the name is a star
+    on its own letter's bearing, joined in spelling order within a word.
+13. **Extras for access.** A Pause button on the marquee (it also pauses on hover and on focus). Photograph
+    panels are buttons: they open on hover and focus and stay open when pressed, so they work by touch. Small
+    text over the sky always has its own solid ground.
+14. **Images.** Panels ask for a small file at rest and a larger one the first time they open.
+
+### Measured (headless Chromium, software rendering, on a shared 4 core machine under load)
+
+- Weight: 312 KB for the whole page at both widths, all of it in the first view when the browser loads the
+  lazy images early. Fonts are 83 KB of that.
+- `report.json`: no console errors, no failed or outside requests, no sideways overflow, no unnamed controls,
+  no image without `alt`, one `h1`.
+- Frame times while scrolling the whole page in 9 seconds at 1440 by 900: PERF_DESKTOP
+  At 390 by 844, device pixel ratio 2: PERF_PHONE
+  Script and layout together cost under 2 ms a frame; the rest is painting, which this machine does without a
+  graphics card.
+- Text contrast checked by script in both modes at both widths, with errors showing and with the pass
+  confirmed: nothing under 4.5 to 1 (3 to 1 for large type). Red on black is 5.9 to 1.
+- The RSVP was run end to end by pointer and by keyboard alone at both widths; no request leaves the page,
+  with or without scripting.
+
+### Known weak spots
+
+- On a laptop the hero letters cover most of the sky, so trails and meteors show only in the gaps there. They
+  read best in The field, RSVP and the footer.
+- On a phone the swell in the hero is small, because the letters are already near the narrow end of the axis.
+- Only Chromium was tested. The silhouette and duotone filters, `overflow: clip`, and reading side bearings
+  from a canvas are the parts most likely to behave differently in Safari or Firefox. If the canvas reading
+  fails the lines fall back to their advance boxes and sit a few pixels off the margin.
+- At device pixel ratio 2 on a laptop the frame times here were worse (software painting of a large canvas and
+  very large glyphs). It should be checked on a real screen with a graphics card.
+- With scripting off the big words keep fixed sizes and do not fill the measure, and the dial is hidden.
+- The stars inside the photograph's glow are the photograph's own and do not turn with the canvas.
+- On screens much wider than 1920 the right-hand figure covers the end of the T's bar.
+
