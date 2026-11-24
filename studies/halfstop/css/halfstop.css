@@ -98,7 +98,7 @@ html.is-dock .sticker-clip.is-off{visibility:hidden}
 .sticker{--d:max(76px,calc(var(--wm) * .5));--over:.15;position:absolute;top:calc(var(--pt) + var(--wm) * .703 + var(--pb) - var(--d) * (1 - var(--over)));right:calc(var(--m) - 12px);width:var(--d);height:var(--d);border-radius:50%;
   display:grid;place-items:center;background:var(--yellow);color:var(--ink);rotate:8deg;translate:0 calc(var(--sy) * -1px)}
 .sticker span{display:block;width:4.6em;text-align:center;font-size:var(--small);line-height:1.05;font-weight:700;letter-spacing:-.015em;text-transform:uppercase}
-@media (min-width:1360px){.sticker span{width:5.2em;font-size:var(--head);line-height:1}}
+@media (min-width:1600px){.sticker span{width:5.2em;font-size:var(--head);line-height:1}}   /* head size only where the circle holds it */
 .mast__line{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--g);align-items:baseline;border-top:var(--rule) solid var(--ink);padding:14px var(--m) 44px}
 .mast__tag{grid-column:1 / span 8;font-weight:700}
 @media (max-width:759px){

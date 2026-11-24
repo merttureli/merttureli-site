@@ -82,7 +82,7 @@ Brand voice: dry, exact, short. No exclamation marks. US spelling. No em or en d
 ## Invented
 
 The brand, the editions (each "Edition of 50"), the sizes and prices (8 x 10 in $60, 12 x 16 in $110,
-18 x 24 in $190, 24 x 36 in $320; frame adds $90 to $240 by size; cotton rag is the base paper, baryta adds
+18 x 24 in $190, 24 x 32 in $320; frame adds $90 to $240 by size; cotton rag is the base paper, baryta adds
 $15), shipping and everything under About. The photographs are real. Footer line: "A sample site by Mert
 Tureli. Halfstop Editions is an invented shop and nothing here is for sale. The photographs are mine."
 
@@ -101,7 +101,7 @@ links), `js/shop.js` (rows, open panel, wall, pointer preview), `js/bag.js` (the
 `next/assets/img/beyond/`.
 
 **The twelve titles.** "Moon over the Alcázar", "Alcázar from above", "Balloon from below", "Shadow in a glory",
-"Burner at blue hour", "Cathedral at dawn", "Lake through pines", "Lighthouse, bare branches", "Crescent and pines",
+"Burner at blue hour", "Cathedral at dawn", "Lake through pines", "Lighthouse behind branches", "Crescent and pines",
 "Pier shack, still water", "Wild roses, a lake", "Dead tree, blue ridges". Places come from the photo list in
 `next/beyond.html`: Segovia for the first six, Newport, Shenandoah. The lake, the lighthouse, the crescent and the
 roses have no place there, so their label has no "Where" line.
@@ -117,18 +117,19 @@ with its center at 58 in. A size is the sheet: the photograph keeps its own rati
 - **Row layout.** The number, the format, the edition, the "from" price and the arrow sit on a small line above the
   title, on the 12-column grid, not after it. A long title can then run off the right edge without taking the price
   and the arrow with it. The format (landscape or portrait, with its ratio) is an addition.
-- **Titles tuned to the row.** At 1440 a row holds about 11.8 em. Titles were worded so that each one either fits or
-  is cut by a full letter or more (four are cut: 01, 08, 10, 12). "Balloon from below" lost its comma to end flush
-  with the margin.
+- **Titles tuned to the row.** Row type is sized from the page's inner width (without the scrollbar), capped at 158px.
+  Titles were worded so that each one either fits or is cut by a full letter or more (four are cut: 01, 08, 10, 12),
+  and no cut reads as a different word. "Balloon from below" lost its comma to end flush with the margin.
 - **Portrait photographs open differently.** Photograph on four columns, the label beside it on three like a wall
   label, options on five. Landscape is as the brief: photograph on seven, label and options on five.
 - **No year on the label.** The live site gives no dates. The label has title, where (if known), process, edition
   and format.
-- **The image inside the sheet.** The brief's four sizes are kept as sheet sizes. 24 x 36 in is a 2:3 sheet, so
-  these 4:3, 3:4 and 4:5 photographs sit in it with wide borders. The page says the image size under the options.
+- **The image inside the sheet.** The four sizes are sheet sizes. The largest was 24 x 36 in in the brief, a 2:3 sheet
+  that left very uneven borders around these 4:3 and 4:5 photographs; it is now 24 x 32 in at the same $320. The page
+  says the image size under the options.
 - **Docking distance.** The wordmark docks over the height of the masthead (253px of scroll at 1440, 60px at 390),
   not a fixed 300px, so it never crosses the rule under it.
-- **Phone bar.** Two rows at 390: the three links and the bag, then a 36px row the wordmark docks into. One row
+- **Phone bar.** Two rows below 1100: the three links and the bag, then a 44px row the wordmark docks into, with the way back at its right. One row
   cannot hold all five.
 - **Newsletter row is two lines.** "NEW PRINTS," then "FIRST" with the field in that line. On one line the type alone
   fills the row. On a phone the field goes under the type.
@@ -142,16 +143,33 @@ with its center at 58 in. A size is the sheet: the photograph keeps its own rati
   the large photograph has a 960 and a 1280 source; the pointer preview sits above or below the hovered row and
   shrinks if neither side has room, so it never covers that row or an open panel.
 
+### Review round (fixes from a design critic)
+
+- **The way back** is a cell of the bar: beside the bag from 1100 up, at the right of the wordmark row below that.
+  Square, hairline sides, the page's small type. Measured inside the bar at 16 widths from 360 to 1920.
+- **Sticker** hangs from the rule (it crosses it by 15% of its height at every width) and its text is sized from the
+  circle: small type below 1600, head type from 1600, where the circle is large enough to hold it.
+- **Section links** land exactly under the bar (one `scroll-padding-top`, no `scroll-margin`).
+- **Bag announcements** go to a second live region inside the dialog while it is open.
+- **Open panel from 1100 up:** photograph, label list and wall on columns 1 to 7; title and options on 8 to 12, sticky
+  under the bar, so a change of size or frame redraws the wall in view and Add to bag is on screen at 1440 x 900 and
+  1280 x 640, landscape and portrait.
+- **Phone titles wrap:** the first word and the photograph, then the rest of the title.
+- **Rows:** the same space, `max(18px, .36em)`, above the capitals and below the baseline in every row.
+- **Figure redrawn:** weight on one leg, head turned toward the print, neck and hands; 2px outline, 1px inner lines.
+  A dimension line runs under the sofa.
+- **Dimensions:** sheets are written short by long side, what hangs is written width by height, both rounded to
+  quarter inches from the stated ratio.
+- **Reduced motion:** the bar's wordmark shows only once the masthead has passed.
+- **Small things:** one print line stops at 5 and says "5 per order"; a double click on Add to bag cannot close the
+  bag it opened; Remove has a 44px target; focus rings sit inside the bar's cells and on the bag's Close.
+
 ### Known weak spots
 
-- **Phone titles.** At 390 the row holds about 8.5 em, so every title is cut. The full title is the button's name
-  and the first line of the open panel.
-- **The figure** is a symmetric back view in a coat. It reads as an architect's scale figure, but it is stiff.
 - **Small prints on a phone wall.** An inch is about 3px there, so an 8 x 10 in print is about 24px wide. True, but
   small.
-- **The accent on Á** rises into the gap under the small line. The gap is sized for it (0.29 em), but at some
-  widths it comes within a few pixels of a word on that line.
+- **The sticker's text** is small type in a 76 to 147px circle up to 1600 wide; it reads, but is quieter than the
+  head type it has on large screens.
 - **Browsers.** Checked in Chromium only (no Firefox or WebKit build on this machine). The wall uses container
   query units and the options use `:has()`; both have a script or CSS fallback that was not run in a real old
   browser.
-- **The way back pill** (shared) covers the lower left of whichever row is under it.
