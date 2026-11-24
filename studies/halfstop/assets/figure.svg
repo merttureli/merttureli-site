@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 244 694" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter">
+<!-- Standing figure, 5 ft 9 in (69 in), seen from behind, facing the wall. 10 units = 1 in; crown at y 0, floor at y 690. -->
+<path vector-effect="non-scaling-stroke" d="M120 0C143 0 154 18 154 42C154 62 157 78 155 94L85 94C83 78 86 62 86 42C86 18 97 0 120 0Z"/>
+<g id="half">
+<path vector-effect="non-scaling-stroke" d="M147 94C160 103 182 108 194 119C204 128 208 160 209 200C210 230 212 250 210 268C208 295 205 320 203 345C205 395 209 440 212 484L120 484"/>
+<path vector-effect="non-scaling-stroke" d="M181 184C183 230 186 290 187 338L203 345"/>
+<path vector-effect="non-scaling-stroke" d="M158 484C159 520 157 560 153 600C151 625 150 642 150 656C153 665 160 676 161 685L161 690L130 690L130 679C130 670 133 664 133 656C133 646 132 632 131 610C129 570 128 525 128 484M133 656L150 656"/>
+</g>
+<use href="#half" transform="translate(240 0) scale(-1 1)"/>
+<path vector-effect="non-scaling-stroke" d="M120 384V484"/>
+</svg>

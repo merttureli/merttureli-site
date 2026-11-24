@@ -5,7 +5,7 @@
 // dresses them with the studio look (showreel/look.js). Nothing of that is copied here: this file only owns the
 // renderer, the camera, the pose and which parts are shown, ghosted or slid apart.
 //
-// Framing: every pose is designed inside a reference frame (16:10 on a wide screen, 9:16 on a tall one) that is
+// Framing: every pose is designed inside a reference frame (16:10 on a wide screen, 0.62 on a tall one) that is
 // contained in the canvas, the way `object-fit: contain` places an image. The page is black around it, so the
 // poster stills (rendered with this same file) and the live canvas line up at any window size.
 import * as THREE from '../../../next/js/three.module.min.js';
@@ -15,7 +15,7 @@ import charger from '../../../next/js/viewer/products/charger.js';
 
 export { THREE };
 export const FOV = 24;
-export const FRAME = { land: 16 / 10, port: 9 / 16 };
+export const FRAME = { land: 16 / 10, port: 0.62, closerLand: 980 / 685, closerPort: 39 / 42 };
 const MODEL_Y = 0.12;                    // hero3d.js puts the body's middle on the roll axis: CAD y + 0.12
 export const STATION = { tail: -0.61, nose: 0.5707, mid: -0.02 };   // CAD y along the airframe (m)
 
@@ -37,7 +37,7 @@ export const STAGE_STUDIO = {
 // Two grades of the one studio: the dark stage (low key: the ambient is taken down so the far side falls to
 // black and the softbox reads as one long highlight) and the gray studio of the "Look closer" view.
 export const GRADES = {
-  dark: { exposure: 0.92, light: [0.5, 0.3, 0.06], hemi: 1.35, key: 3.8, fill: 0.5, rim: 4.4 },
+  dark: { exposure: 1.0, light: [0.2, 0.34, 0.02], hemi: 1.35, key: 3.8, fill: 0.5, rim: 6 },
   light: { exposure: 0.95, light: [0.45, 0.25, 0.3], hemi: 1.35, key: 3.8, fill: 1.1, rim: 2.4 },
 };
 
@@ -111,7 +111,7 @@ export async function createRig({ canvas, quality = 'high', pixelRatio = Math.mi
   const S = {
     frame: { x: 0, y: 0, w: 1, h: 1 }, W: 1, H: 1, aspect: FRAME.land,
     tilt: 0, lean: 0, roll: 0, turn: 0,       // rad: nose right of up on screen; nose toward the camera; about the body; orbit about screen-up
-    station: STATION.mid, dist: 2.6, ox: 0, oy: 0, explode: 0,
+    station: STATION.mid, dist: 2.6, ox: 0, oy: 0, explode: 0, slideIds: null,   // slideIds: only these parts slide (stills)
     lift: 0.42, keyFront: 0.5, keySide: -1,     // the studio key: lift about the airframe (rad), how far in front it stays
   };
   const qT = new THREE.Quaternion(), qL = new THREE.Quaternion(), qR = new THREE.Quaternion(), qO = new THREE.Quaternion();
@@ -132,14 +132,15 @@ export async function createRig({ canvas, quality = 'high', pixelRatio = Math.mi
   function placeParts(k) {
     for (const P of parts) {
       const lead = 0.22 * (1 - Math.abs(P.slide) / maxSlide);
-      const t = smoother(clamp01((k - lead * 0.6) / (1 - lead)));
+      const t = S.slideIds && !S.slideIds.includes(P.id) ? 0 : smoother(clamp01((k - lead * 0.6) / (1 - lead)));
       P.obj.position.copy(P.base); P.obj.position.y += P.slide * t;
     }
   }
   function applyOpacity() {
     for (const { m, P } of meshes) {
       const o = P.opacity, t = o < 0.999, mat = m.material;
-      if (mat.transparent !== t) { mat.transparent = t; mat.depthWrite = !t; mat.forceSinglePass = true; mat.needsUpdate = true; }
+      if (mat.transparent !== t) { mat.transparent = t; mat.forceSinglePass = true; mat.needsUpdate = true; }
+      mat.depthWrite = o > 0.5;                  // a part on its way to solid already hides what is behind it
       mat.opacity = o;
       m.visible = o > 0.004;
     }

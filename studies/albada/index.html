@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="../shared/study.css">
+<script src="../shared/study.js"></script>
+<title>Albada: balloon flights at dawn over Segovia (sample site)</title>
+<meta name="description" content="A sample booking site by Mert Tureli. Albada is an invented brand: hot-air balloon flights at dawn over Segovia, booked in the page.">
+<meta name="theme-color" content="#0c1220">
+<link rel="icon" type="image/svg+xml" href="assets/balloon.svg">
+<link rel="preload" href="fonts/ibarra-real-nova-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/hanken-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/ibarra-real-nova-latin-wght-italic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/albada.css">
+<script>document.documentElement.classList.add('js');</script>
+<script type="module" src="js/albada.js"></script>
+</head>
+<body>
+<a class="study-back study-back--albada" href="/websites.html#studies"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13 8H3.5M7.5 3.5 3 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Back to websites</a>
+<a class="skip" href="#main">Skip to content</a>
+
+<svg class="defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <symbol id="i-arrow" viewBox="0 0 16 16"><path d="M1.5 8h12M9.5 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.2"/></symbol>
+  <symbol id="i-back" viewBox="0 0 16 16"><path d="M14.5 8h-12M6.5 4l-4 4 4 4" fill="none" stroke="currentColor" stroke-width="1.2"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 16 16"><path d="M8 2.5v11M2.5 8h11" fill="none" stroke="currentColor" stroke-width="1.2"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 16 16"><path d="M2.5 8h11" fill="none" stroke="currentColor" stroke-width="1.2"/></symbol>
+  <symbol id="i-balloon" viewBox="0 0 24 32"><path d="M12 1C6.2 1 2 5.2 2 10.6c0 4.9 4.3 8.6 6.9 12.6h6.2c2.6-4 6.9-7.7 6.9-12.6C22 5.2 17.8 1 12 1z"/><path d="M9.5 24.7h5v1h-5zM10 27.2h4V31h-4z"/></symbol>
+</svg>
+
+<header class="bar" id="bar">
+  <a class="bar__brand" href="#top" aria-label="Albada, back to the top">Albada</a>
+  <p class="bar__clock" aria-hidden="true"><span class="num" id="barClock">06:40</span></p>
+  <div class="bar__right">
+    <nav class="bar__nav" aria-label="Sections">
+      <a href="#morning">The morning</a>
+      <a href="#basket">The basket</a>
+      <a href="#questions">Questions</a>
+    </nav>
+    <button class="bar__menu" id="menuBtn" type="button" aria-expanded="false" aria-controls="sheet">Menu</button>
+    <a class="tag tag--book bar__book" href="#book">Book<svg class="arr" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+  </div>
+</header>
+
+<div class="sheet" id="sheet" hidden>
+  <nav class="sheet__nav" aria-label="Sections, phone">
+    <a href="#morning"><span class="num">06:40</span><span class="sheet__t">The morning</span></a>
+    <a href="#arcade"><span class="num">09:00</span><span class="sheet__t">The arcade</span></a>
+    <a href="#basket"><span class="num">09:20</span><span class="sheet__t">The basket</span></a>
+    <a href="#questions"><span class="num">09:40</span><span class="sheet__t">Questions</span></a>
+    <a href="#book"><span class="num">10:00</span><span class="sheet__t">Book a flight</span></a>
+  </nav>
+</div>
+
+<div class="strip" id="strip" aria-hidden="true">
+  <span class="strip__line"></span>
+  <span class="strip__fly" id="stripFly">
+    <svg class="strip__balloon"><use href="#i-balloon"/></svg>
+    <span class="num strip__time" id="stripTime">06:40</span>
+  </span>
+</div>
+
+<main id="main">
+
+<!-- 06:40, the field -->
+<section class="hero tone tone--fixed t-night" id="top" data-time="06:40" aria-labelledby="hero-h">
+  <div class="hero__media" id="heroMedia">
+    <div class="hero__cover">
+      <img src="../../next/assets/img/beyond/burner-glow-1280.webp"
+           srcset="../../next/assets/img/beyond/burner-glow-480.webp 480w, ../../next/assets/img/beyond/burner-glow-960.webp 960w, ../../next/assets/img/beyond/burner-glow-1280.webp 1280w"
+           sizes="(max-aspect-ratio: 3/4) 75vh, 100vw" width="1280" height="1707" fetchpriority="high" decoding="async"
+           alt="A balloon burner lit on a dark field at blue hour, with the ground crew around the basket and a truck with its headlights on.">
+      <span class="hero__glow" aria-hidden="true"></span>
+    </div>
+  </div>
+  <div class="hero__shade" aria-hidden="true"></div>
+  <div class="hero__in">
+    <p class="wordmark" id="wordmark"><span class="vh">Albada</span><span class="wm" aria-hidden="true"><b>A</b><b>L</b><b>B</b><b>A</b><b>D</b><b>A</b></span></p>
+    <div class="hero__row">
+      <h1 class="hero__line" id="hero-h">Balloon flights at dawn over Segovia.</h1>
+      <div class="hero__next">
+        <p class="label">Next open morning</p>
+        <p class="num hero__date" id="nextOpen">Thursday to Sunday</p>
+        <a class="tag tag--book" href="#book">Book a flight<svg class="arr" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- The morning, hour by hour -->
+<section class="morning" id="morning" aria-labelledby="morning-h">
+  <header class="intro tone t-night" data-time="06:40">
+    <h2 class="label" id="morning-h" data-rise>The morning, hour by hour</h2>
+    <span class="intro__drop" aria-hidden="true" data-rise></span>
+  </header>
+
+  <article class="ch ch--field tone t-night" id="h0640" data-time="06:40" aria-labelledby="ch1-h">
+    <div class="wrap">
+      <header class="ch__head">
+        <p class="stamp" data-rise><span class="num">06:40</span><span class="label">The field</span></p>
+        <h3 class="display" id="ch1-h" data-rise>It starts <br>in the dark.</h3>
+      </header>
+      <div class="ch__grid">
+        <div class="ch__text" data-rise>
+          <p>You meet us in a field outside the city while the sky is still blue-black. The burner lights the stubble, and the envelope lies on its side and fills until it is a room you could walk into. There is coffee, and nothing to do yet but watch.</p>
+        </div>
+        <figure class="arch ch__a" data-rise style="--ar:1/1.08;--pos:44% 50%">
+          <div class="arch__win" data-drift>
+            <img src="../../next/assets/img/beyond/envelope-inflation-960.webp"
+                 srcset="../../next/assets/img/beyond/envelope-inflation-480.webp 480w, ../../next/assets/img/beyond/envelope-inflation-960.webp 960w, ../../next/assets/img/beyond/envelope-inflation-1280.webp 1280w, ../../next/assets/img/beyond/envelope-inflation-1920.webp 1920w"
+                 sizes="(min-width: 900px) 52vw, 90vw" width="1920" height="1440" loading="lazy" decoding="async"
+                 alt="Inside a balloon envelope during inflation: people walk across the fabric under panels of blue, yellow, red and green.">
+          </div>
+          <figcaption class="label">Inside the envelope as it fills</figcaption>
+        </figure>
+      </div>
+    </div>
+  </article>
+
+  <article class="ch ch--lift tone t-first" id="h0715" data-time="07:15" aria-labelledby="ch2-h">
+    <div class="wrap">
+      <header class="ch__head">
+        <p class="stamp" data-rise><span class="num">07:15</span><span class="label">Lift-off</span></p>
+        <h3 class="display" id="ch2-h" data-rise>Then the ground <br>lets go.</h3>
+      </header>
+      <div class="ch__grid">
+        <figure class="arch ch__a" data-rise data-float style="--ar:1/1.7;--pos:100% 0%">
+          <div class="arch__win">
+            <img src="../../next/assets/img/beyond/balloons-dusk-960.webp"
+                 srcset="../../next/assets/img/beyond/balloons-dusk-480.webp 480w, ../../next/assets/img/beyond/balloons-dusk-960.webp 960w, ../../next/assets/img/beyond/balloons-dusk-1280.webp 1280w"
+                 sizes="(min-width: 900px) 30vw, 78vw" width="1280" height="1707" loading="lazy" decoding="async"
+                 alt="Two balloons in silhouette above dark clouds and a skyline.">
+          </div>
+          <figcaption class="label">Two up, the skyline still dark</figcaption>
+        </figure>
+        <div class="ch__text" data-rise>
+          <p>There is no runway and no rush. The basket gets light, the field drops away without a sound, and you are looking down at the place you were standing. Other balloons rise around you, dark against the first light.</p>
+        </div>
+        <figure class="arch ch__b" data-rise data-float style="--ar:1/1.25;--pos:100% 0%">
+          <div class="arch__win">
+            <img src="../../next/assets/img/beyond/cathedral-dawn-960.webp"
+                 srcset="../../next/assets/img/beyond/cathedral-dawn-480.webp 480w, ../../next/assets/img/beyond/cathedral-dawn-960.webp 960w, ../../next/assets/img/beyond/cathedral-dawn-1280.webp 1280w, ../../next/assets/img/beyond/cathedral-dawn-1920.webp 1920w"
+                 sizes="(min-width: 900px) 30vw, 64vw" width="1920" height="1440" loading="lazy" decoding="async"
+                 alt="The cathedral in silhouette at dawn with one balloon above it.">
+          </div>
+          <figcaption class="label">One balloon over the cathedral</figcaption>
+        </figure>
+      </div>
+    </div>
+  </article>
+
+  <article class="ch ch--city tone t-peach" id="h0740" data-time="07:40" data-via="#8a5470,#e69a6a" aria-labelledby="ch3-h">
+    <div class="wrap">
+      <header class="ch__head">
+        <p class="stamp" data-rise><span class="num">07:40</span><span class="label">Over the city</span></p>
+        <h3 class="display" id="ch3-h" data-rise>The city, <br>before it wakes.</h3>
+      </header>
+      <div class="ch__grid">
+        <div class="ch__text" data-rise>
+          <p>The wind decides the route, so no two mornings cross Segovia the same way. On this one the Alcázar passes below on its rock, then the cathedral and the roofs around it. The sun clears the horizon and the whole plain turns gold.</p>
+        </div>
+        <div class="collage">
+          <figure class="arch collage__l" data-rise style="--ar:1/0.92;--pos:36% 46%">
+            <div class="arch__win" data-drift>
+              <img src="../../next/assets/img/beyond/segovia-dawn-960.webp"
+                   srcset="../../next/assets/img/beyond/segovia-dawn-480.webp 480w, ../../next/assets/img/beyond/segovia-dawn-960.webp 960w, ../../next/assets/img/beyond/segovia-dawn-1280.webp 1280w, ../../next/assets/img/beyond/segovia-dawn-1920.webp 1920w"
+                   sizes="(min-width: 900px) 30vw, 58vw" width="1920" height="1440" loading="lazy" decoding="async"
+                   alt="Segovia from the air at dawn, the cathedral in the middle of the city.">
+            </div>
+            <figcaption class="label">Segovia from the air</figcaption>
+          </figure>
+          <figure class="arch collage__c" data-rise style="--ar:1/1.5;--pos:56% 30%">
+            <div class="arch__win" data-drift>
+              <img src="../../next/assets/img/beyond/alcazar-aerial-960.webp"
+                   srcset="../../next/assets/img/beyond/alcazar-aerial-480.webp 480w, ../../next/assets/img/beyond/alcazar-aerial-960.webp 960w, ../../next/assets/img/beyond/alcazar-aerial-1280.webp 1280w"
+                   sizes="(min-width: 900px) 28vw, 62vw" width="1280" height="1707" loading="lazy" decoding="async"
+                   alt="Aerial view of the Alcázar of Segovia on its rock, with the cathedral and the city behind it.">
+            </div>
+            <figcaption class="label">The Alcázar on its rock</figcaption>
+          </figure>
+          <figure class="arch collage__r" data-rise style="--ar:1/1.02;--pos:68% 20%">
+            <div class="arch__win" data-drift>
+              <img src="../../next/assets/img/beyond/sunburst-plain-960.webp"
+                   srcset="../../next/assets/img/beyond/sunburst-plain-480.webp 480w, ../../next/assets/img/beyond/sunburst-plain-960.webp 960w, ../../next/assets/img/beyond/sunburst-plain-1280.webp 1280w, ../../next/assets/img/beyond/sunburst-plain-1920.webp 1920w"
+                   sizes="(min-width: 900px) 27vw, 54vw" width="1920" height="1440" loading="lazy" decoding="async"
+                   alt="The sun breaking over the plain, seen from the air above the roofs of the city.">
+            </div>
+            <figcaption class="label">The sun over the plain</figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <article class="ch ch--cloud tone t-sky" id="h0810" data-time="08:10" data-via="#f8eadf" aria-labelledby="ch4-h">
+    <div class="wrap">
+      <header class="ch__head">
+        <p class="stamp" data-rise><span class="num">08:10</span><span class="label">Above the cloud</span></p>
+        <h3 class="display" id="ch4-h" data-rise>Above the cloud, <br>a halo.</h3>
+      </header>
+      <figure class="arch ch__a" data-rise style="--ar:1/0.66;--pos:48% 40%">
+        <div class="arch__win" data-drift>
+          <img src="../../next/assets/img/beyond/balloon-glory-1280.webp"
+               srcset="../../next/assets/img/beyond/balloon-glory-480.webp 480w, ../../next/assets/img/beyond/balloon-glory-960.webp 960w, ../../next/assets/img/beyond/balloon-glory-1280.webp 1280w, ../../next/assets/img/beyond/balloon-glory-1920.webp 1920w"
+               sizes="(min-width: 900px) 70vw, 90vw" width="1920" height="1440" loading="lazy" decoding="async"
+               alt="The balloon's shadow inside a rainbow glory on the cloud, with fields far below.">
+        </div>
+        <figcaption class="label">The balloon's shadow, inside a glory</figcaption>
+      </figure>
+      <div class="ch__text" data-rise>
+        <p>Some mornings there is cloud, and the balloon climbs through it into clear sun. Look down and you find your own shadow on the white, with a ring of color around it. It is called a glory: sunlight thrown back by the droplets of the cloud, and it follows you for as long as you stay above it.</p>
+        <span class="rule" aria-hidden="true"></span>
+        <a class="quiet" href="#book">Choose your morning</a>
+      </div>
+    </div>
+  </article>
+
+  <article class="ch ch--wheat tone t-gold" id="h0840" data-time="08:40" data-via="#f6f1e6" aria-labelledby="ch5-h">
+    <div class="wrap">
+      <header class="ch__head">
+        <p class="stamp" data-rise><span class="num">08:40</span><span class="label">Down in the fields</span></p>
+        <h3 class="display" id="ch5-h" data-rise>Down in the wheat, <br>breakfast.</h3>
+      </header>
+      <div class="ch__grid">
+        <figure class="arch ch__a" data-rise style="--ar:1/0.84;--pos:47% 40%">
+          <div class="arch__win" data-drift>
+            <img src="../../next/assets/img/beyond/cathedral-fields-960.webp"
+                 srcset="../../next/assets/img/beyond/cathedral-fields-480.webp 480w, ../../next/assets/img/beyond/cathedral-fields-960.webp 960w, ../../next/assets/img/beyond/cathedral-fields-1280.webp 1280w, ../../next/assets/img/beyond/cathedral-fields-1920.webp 1920w"
+                 sizes="(min-width: 900px) 50vw, 90vw" width="1920" height="1440" loading="lazy" decoding="async"
+                 alt="The cathedral above the roofs and the fields in soft morning light.">
+          </div>
+          <figcaption class="label">The cathedral above the fields</figcaption>
+        </figure>
+        <div class="ch__text" data-rise>
+          <p>The pilot picks a field and brings the basket down as gently as it left. The cathedral is still in view, small now, above the roofs. We fold the envelope together and then there is breakfast, on a table in the field: bread, coffee, and a glass of cava if you like.</p>
+        </div>
+        <figure class="arch ch__b" data-rise style="--ar:1/1.3;--pos:22% 50%">
+          <div class="arch__win" data-drift>
+            <img src="../../next/assets/img/beyond/balloon-960.webp"
+                 srcset="../../next/assets/img/beyond/balloon-480.webp 480w, ../../next/assets/img/beyond/balloon-960.webp 960w, ../../next/assets/img/beyond/balloon-1280.webp 1280w, ../../next/assets/img/beyond/balloon-1920.webp 1920w"
+                 sizes="(min-width: 900px) 40vw, 120vw" width="1920" height="1080" loading="lazy" decoding="async"
+                 alt="A yellow hot air balloon low over open country at sunrise, with more balloons in the distance.">
+          </div>
+          <figcaption class="label">Low over open country</figcaption>
+        </figure>
+      </div>
+    </div>
+  </article>
+</section>
+
+<!-- The arcade -->
+<section class="arcade tone t-gold" id="arcade" data-time="09:00" aria-labelledby="arcade-h">
+  <div class="arcade__pin">
+    <header class="arcade__intro" id="arcadeIntro">
+      <p class="stamp"><span class="num">09:00</span><span class="label">Breakfast, looking back</span></p>
+      <h2 class="display display--m" id="arcade-h">One morning, <br>arch by arch.</h2>
+      <p class="arcade__lede">Twelve photographs, from the dark field to the landing.</p>
+      <p class="label arcade__hint"><span class="hint--pin">Keep scrolling, the arcade walks past</span><span class="hint--swipe">Scroll sideways to walk the arcade</span><svg class="arr" aria-hidden="true"><use href="#i-arrow"/></svg></p>
+    </header>
+    <div class="arcade__view" id="arcadeView" tabindex="0" role="region" aria-labelledby="arcade-h">
+      <div class="arcade__track" id="arcadeTrack">
+        <ol class="bays">
+          <li class="bay">
+            <figure class="arch bay__up" style="--pos:44% 40%;--zoom:1.24">
+              <div class="arch__win"><img src="../../next/assets/img/beyond/envelope-inflation-480.webp" srcset="../../next/assets/img/beyond/envelope-inflation-480.webp 480w, ../../next/assets/img/beyond/envelope-inflation-960.webp 960w" sizes="(min-width: 900px) 250px, 46vw" width="1920" height="1440" loading="lazy" decoding="async" alt="Inside the balloon envelope as it fills, people walking under the colored panels."></div>
+            </figure>
+            <figure class="arch bay__low" style="--pos:48% 46%">
+              <div class="arch__win"><img src="../../next/assets/img/beyond/burner-glow-480.webp" srcset="../../next/assets/img/beyond/burner-glow-480.webp 480w, ../../next/assets/img/beyond/burner-glow-960.webp 960w" sizes="(min-width: 900px) 250px, 46vw" width="1280" height="1707" loading="lazy" decoding="async" alt="The burner lit on the dark field at blue hour."></div>
+            </figure>
+            <p class="bay__cap"><span class="num">06:40</span><span class="bay__t">The envelope fills. The burner lights the field.</span></p>
+          </li>
+          <li class="bay">
+            <figure class="arch bay__up" style="--pos:100% 0%">
+              <div class="arch__win"><img src="../../next/assets/img/beyond/cathedral-dawn-480.webp" srcset="../../next/assets/img/beyond/cathedral-dawn-480.webp 480w, ../../next/assets/img/beyond/cathedral-dawn-960.webp 960w" sizes="(min-width: 900px) 250px, 46vw" width="1920" height="1440" loading="lazy" decoding="async" alt="One balloon above the cathedral in silhouette at dawn."></div>
+            </figure>
+            <figure class="arch bay__low" style="--pos:100% 50%">
+              <div class="arch__win"><img src="../../next/assets/img/beyond/balloons-dusk-480.webp" srcset="../../next/assets/img/beyond/balloons-dusk-480.webp 480w, ../../next/assets/img/beyond/balloons-dusk-960.webp 960w" sizes="(min-width: 900px) 250px, 46vw" width="1280" height="1707" loading="lazy" decoding="async" alt="Two balloons in silhouette above dark clouds and a skyline."></div>
+            </figure>
+            <p class="bay__cap"><span class="num">07:15</span><span class="bay__t">One balloon over the cathedral. Two more above the skyline.</span></p>
+          </li>
+          <li class="bay">
+            <figure class="arch bay__up" style="--pos:34% 44%;--zoom:1.1">
+              <div class="arch__win"><img src="../../next/assets/img/beyond/segovia-dawn-480.webp" srcset="../../next/assets/img/beyond/segovia-dawn-480.webp 480w, ../../next/assets/img/beyond/segovia-dawn-960.webp 960w" sizes="(min-width: 900px) 250px, 46vw" width="1920" height="1440" loading="lazy" decoding="async" alt="Segovia from the air at dawn, the cathedral among the roofs."></div>
+            </figure>
+            <figure class="arch bay__low" style="--pos:58% 26%">
+              <div class="arch__win"><img src="../../next/assets/img/beyond/alcazar-aerial-480.webp" srcset="../../next/assets/img/beyond/alcazar-aerial-480.webp 480w, ../../next/assets/img/beyond/alcazar-aerial-960.webp 960w" sizes="(min-width: 900px) 250px, 46vw" width="1280" height="1707" loading="lazy" decoding="async" alt="The Alcázar of Segovia on its rock, from the air."></div>
+            </figure>
+            <p class="bay__cap"><span class="num">07:40</span><span class="bay__t">Segovia from the air. The Alcázar on its rock.</span></p>
+          </li>
+          <li class="bay">
+            <figure class="arch bay__up" style="--pos:100% 30%;--zoom:1">
+              <div class="arch__win"><img src="../../next/assets/img/beyond/alcazar-moon-480.webp" srcset="../../next/assets/img/beyond/alcazar-moon-480.webp 480w, ../../next/assets/img/beyond/alcazar-moon-960.webp 960w" sizes="(min-width: 900px) 250px, 46vw" width="1920" height="1440" loading="lazy" decoding="async" alt="A balloon beside the towers of the Alcázar, with a small moon in a clear sky."></div>
+            </figure>
+            <figure class="arch bay__low" style="--pos:72% 0%">
+              <div class="arch__win"><img src="../../next/assets/img/beyond/sunburst-plain-480.webp" srcset="../../next/assets/img/beyond/sunburst-plain-480.webp 480w, ../../next/assets/img/beyond/sunburst-plain-960.webp 960w" sizes="(min-width: 900px) 250px, 46vw" width="1920" height="1440" loading="lazy" decoding="async" alt="The sun over the plain, above the roofs of the city."></div>
+            </figure>
+            <p class="bay__cap"><span class="num">07:50</span><span class="bay__t">A small moon, still up. The sun over the plain.</span></p>
+          </li>
+          <li class="bay">
+            <figure class="arch bay__up" style="--pos:48% 36%;--zoom:1.15">
+              <div class="arch__win"><img src="../../next/assets/img/beyond/balloon-glory-480.webp" srcset="../../next/assets/img/beyond/balloon-glory-480.webp 480w, ../../next/assets/img/beyond/balloon-glory-960.webp 960w" sizes="(min-width: 900px) 250px, 46vw" width="1920" height="1440" loading="lazy" decoding="async" alt="The balloon's shadow inside a rainbow glory on the cloud."></div>
+            </figure>
+            <figure class="arch bay__low" style="--pos:44% 50%">
+              <div class="arch__win"><img src="../../next/assets/img/beyond/balloon-backlit-480.webp" srcset="../../next/assets/img/beyond/balloon-backlit-480.webp 480w, ../../next/assets/img/beyond/balloon-backlit-960.webp 960w" sizes="(min-width: 900px) 250px, 46vw" width="1920" height="1440" loading="lazy" decoding="async" alt="A balloon backlit by the sun against bright clouds."></div>
+            </figure>
+            <p class="bay__cap"><span class="num">08:10</span><span class="bay__t">The glory on the cloud. A balloon against the sun.</span></p>
+          </li>
+          <li class="bay">
+            <figure class="arch bay__up" style="--pos:16% 60%;--zoom:1.3">
+              <div class="arch__win"><img src="../../next/assets/img/beyond/balloon-480.webp" srcset="../../next/assets/img/beyond/balloon-480.webp 480w, ../../next/assets/img/beyond/balloon-960.webp 960w, ../../next/assets/img/beyond/balloon-1280.webp 1280w" sizes="(min-width: 900px) 480px, 90vw" width="1920" height="1080" loading="lazy" decoding="async" alt="A yellow balloon low over open country at sunrise."></div>
+            </figure>
+            <figure class="arch bay__low" style="--pos:46% 40%">
+              <div class="arch__win"><img src="../../next/assets/img/beyond/cathedral-fields-480.webp" srcset="../../next/assets/img/beyond/cathedral-fields-480.webp 480w, ../../next/assets/img/beyond/cathedral-fields-960.webp 960w, ../../next/assets/img/beyond/cathedral-fields-1280.webp 1280w" sizes="(min-width: 900px) 520px, 105vw" width="1920" height="1440" loading="lazy" decoding="async" alt="The cathedral tower above the roofs and the fields."></div>
+            </figure>
+            <p class="bay__cap"><span class="num">08:40</span><span class="bay__t">Low over open country. The cathedral above the fields.</span></p>
+          </li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- The basket -->
+<section class="basket tone t-sky" id="basket" data-time="09:20" data-via="#f6f1e6" aria-labelledby="basket-h">
+  <div class="wrap">
+    <header class="sec__head">
+      <p class="stamp" data-rise><span class="num">From 175 euros</span><span class="label">The basket</span></p>
+      <h2 class="display" id="basket-h" data-rise>Two ways <br>to fly.</h2>
+    </header>
+    <div class="fares">
+      <article class="fare" data-rise aria-labelledby="fare-s">
+        <h3 class="label fare__name" id="fare-s">Shared basket</h3>
+        <p class="fare__price"><span class="num">175</span><span class="label">euros a person</span></p>
+        <p class="fare__lede">Up to eight passengers and the pilot. Everyone stands at the edge, so everyone has the view.</p>
+        <ul class="fare__list">
+          <li>About an hour in the air</li>
+          <li>Coffee in the field before lift-off</li>
+          <li>Breakfast where you land</li>
+          <li>The ride back to town</li>
+        </ul>
+        <p class="fare__suits"><span class="label">Suits</span><span>Couples, friends, anyone flying for the first time.</span></p>
+        <a class="tag" href="#book" data-pick="shared">Book the shared basket<svg class="arr" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      </article>
+      <article class="fare" data-rise aria-labelledby="fare-p">
+        <h3 class="label fare__name" id="fare-p">Private basket</h3>
+        <p class="fare__price"><span class="num">750</span><span class="label">euros for two</span></p>
+        <p class="fare__lede">The basket to yourselves, with the pilot. The same morning and the same sky, with nobody else in it.</p>
+        <ul class="fare__list">
+          <li>Everything in the shared basket</li>
+          <li>The basket for the two of you</li>
+          <li>A table of your own at breakfast</li>
+          <li>A print of one photograph from your flight</li>
+        </ul>
+        <p class="fare__suits"><span class="label">Suits</span><span>A proposal, an anniversary, a quiet birthday.</span></p>
+        <a class="tag" href="#book" data-pick="private">Book the private basket<svg class="arr" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      </article>
+    </div>
+
+    <div class="timetable" data-rise>
+      <h3 class="label timetable__h">The morning in order</h3>
+      <ol class="timetable__list">
+        <li><span class="num">06:40</span><span class="label">Meet in the field</span></li>
+        <li><span class="num">07:15</span><span class="label">Lift-off</span></li>
+        <li><span class="num">07:40</span><span class="label">Over the city</span></li>
+        <li><span class="num">08:10</span><span class="label">Highest point</span></li>
+        <li><span class="num">08:40</span><span class="label">Landing</span></li>
+        <li><span class="num">09:00</span><span class="label">Breakfast</span></li>
+        <li><span class="num">10:00</span><span class="label">Back in town</span></li>
+      </ol>
+      <p class="timetable__note">Times move with the sunrise. You get the exact hour the evening before.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Questions -->
+<section class="questions tone t-cream" id="questions" data-time="09:40" data-via="#f6f5f1" aria-labelledby="questions-h">
+  <div class="wrap">
+    <header class="sec__head">
+      <p class="stamp" data-rise><span class="num">Six answers</span><span class="label">Questions</span></p>
+      <h2 class="display" id="questions-h" data-rise>Before <br>you fly.</h2>
+    </header>
+    <div class="q__grid">
+      <figure class="arch q__arch" data-rise style="--ar:1/1.36;--pos:52% 52%">
+        <div class="arch__win" data-drift>
+          <img src="../../next/assets/img/beyond/balloon-below-960.webp"
+               srcset="../../next/assets/img/beyond/balloon-below-480.webp 480w, ../../next/assets/img/beyond/balloon-below-960.webp 960w, ../../next/assets/img/beyond/balloon-below-1280.webp 1280w"
+               sizes="(min-width: 900px) 30vw, 70vw" width="1280" height="1707" loading="lazy" decoding="async"
+               alt="A balloon seen from directly below against a clear blue sky.">
+        </div>
+        <figcaption class="label">From directly below</figcaption>
+      </figure>
+      <div class="faq" data-rise>
+        <details class="qa">
+          <summary><span class="qa__q">What happens if the weather is bad?</span><span class="qa__mark" aria-hidden="true"></span></summary>
+          <div class="qa__a"><p>Balloons fly only in calm, clear air. The pilot decides the evening before, and if the flight is off you choose another morning or a full refund.</p></div>
+        </details>
+        <details class="qa">
+          <summary><span class="qa__q">What should I wear?</span><span class="qa__mark" aria-hidden="true"></span></summary>
+          <div class="qa__a"><p>Dress as you would for a walk at that hour: layers and flat, closed shoes. The burner is warm overhead, so a hat helps if you are tall.</p></div>
+        </details>
+        <details class="qa">
+          <summary><span class="qa__q">Can children fly?</span><span class="qa__mark" aria-hidden="true"></span></summary>
+          <div class="qa__a"><p>Yes, from seven years old, as long as they can see over the edge of the basket. Anyone under sixteen flies with an adult.</p></div>
+        </details>
+        <details class="qa">
+          <summary><span class="qa__q">How long does it take?</span><span class="qa__mark" aria-hidden="true"></span></summary>
+          <div class="qa__a"><p>About three and a half hours from the field to the ride back, with roughly one hour of it in the air. Plan nothing before eleven.</p></div>
+        </details>
+        <details class="qa">
+          <summary><span class="qa__q">Where do we meet?</span><span class="qa__mark" aria-hidden="true"></span></summary>
+          <div class="qa__a"><p>In a field outside the city. The wind chooses which one, so you get the place and the exact hour the evening before. Ask and we collect you in town.</p></div>
+        </details>
+        <details class="qa">
+          <summary><span class="qa__q">Can I get a refund?</span><span class="qa__mark" aria-hidden="true"></span></summary>
+          <div class="qa__a"><p>In full up to seven days before your morning, and always if the weather cancels the flight. Inside seven days you can move to another morning once, at no cost.</p></div>
+        </details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Book -->
+<section class="book tone t-cream" id="book" data-time="10:00" aria-labelledby="book-h">
+  <div class="wrap">
+    <header class="sec__head">
+      <p class="stamp" data-rise><span class="num">Thursday to Sunday</span><span class="label">Book a flight</span></p>
+      <h2 class="display" id="book-h" data-rise>Choose your <br>morning.</h2>
+    </header>
+
+    <form class="bk" id="bookForm" novalidate onsubmit="return false">
+      <div class="bk__left">
+        <fieldset class="bk__step" id="stepDate">
+          <legend class="label"><span class="bk__n">1</span>The morning</legend>
+          <div class="cal" id="cal">
+            <div class="cal__head">
+              <button class="sq" type="button" id="calPrev" aria-label="Previous month"><svg aria-hidden="true"><use href="#i-back"/></svg></button>
+              <h3 class="cal__month" id="calMonth" aria-live="polite">The calendar</h3>
+              <button class="sq" type="button" id="calNext" aria-label="Next month"><svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
+            </div>
+            <table class="cal__grid" id="calGrid" role="grid" aria-labelledby="calMonth" aria-describedby="calHelp errDate">
+              <thead><tr>
+                <th scope="col" abbr="Monday"><span aria-hidden="true">Mon</span></th>
+                <th scope="col" abbr="Tuesday"><span aria-hidden="true">Tue</span></th>
+                <th scope="col" abbr="Wednesday"><span aria-hidden="true">Wed</span></th>
+                <th scope="col" abbr="Thursday"><span aria-hidden="true">Thu</span></th>
+                <th scope="col" abbr="Friday"><span aria-hidden="true">Fri</span></th>
+                <th scope="col" abbr="Saturday"><span aria-hidden="true">Sat</span></th>
+                <th scope="col" abbr="Sunday"><span aria-hidden="true">Sun</span></th>
+              </tr></thead>
+              <tbody id="calBody"></tbody>
+            </table>
+            <noscript><p class="cal__nojs">The calendar needs JavaScript. Flight mornings are Thursday to Sunday.</p></noscript>
+            <ul class="cal__key" aria-hidden="true">
+              <li class="key key--open">Flight morning</li>
+              <li class="key key--full">Full</li>
+              <li class="key key--yours">Your morning</li>
+            </ul>
+            <p class="vh" id="calHelp">Arrow keys move between days, Page Up and Page Down change the month, Enter chooses a flight morning.</p>
+          </div>
+          <p class="err" id="errDate" hidden>Choose a flight morning on the calendar.</p>
+        </fieldset>
+
+        <fieldset class="bk__step">
+          <legend class="label"><span class="bk__n">2</span>The basket</legend>
+          <div class="opts">
+            <label class="opt"><input type="radio" name="basket" value="shared" checked><span class="opt__box"><span class="opt__name">Shared basket</span><span class="opt__price">175 euros a person</span></span></label>
+            <label class="opt"><input type="radio" name="basket" value="private"><span class="opt__box"><span class="opt__name">Private basket</span><span class="opt__price">750 euros for two</span></span></label>
+          </div>
+        </fieldset>
+
+        <fieldset class="bk__step">
+          <legend class="label" id="paxLegend"><span class="bk__n">3</span>Passengers</legend>
+          <div class="pax">
+            <button class="sq" type="button" id="paxLess" aria-label="One passenger fewer"><svg aria-hidden="true"><use href="#i-minus"/></svg></button>
+            <output class="num pax__n" id="paxOut" aria-labelledby="paxLegend" aria-live="polite">2</output>
+            <button class="sq" type="button" id="paxMore" aria-label="One passenger more"><svg aria-hidden="true"><use href="#i-plus"/></svg></button>
+            <p class="pax__note" id="paxNote" aria-live="polite">From one to eight in the shared basket.</p>
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="bk__right">
+        <div class="sum" aria-live="polite">
+          <p class="label sum__h">Your flight</p>
+          <dl class="sum__list">
+            <div><dt class="label">Morning</dt><dd id="sumDate">Not chosen yet</dd></div>
+            <div><dt class="label">Lift-off</dt><dd>07:15, meet in the field at 06:40</dd></div>
+            <div><dt class="label">Basket</dt><dd id="sumBasket">Shared, 2 passengers</dd></div>
+          </dl>
+          <p class="sum__total"><span class="label">Total</span><span class="num sum__num" id="sumTotal">350</span><span class="label sum__unit">euros</span></p>
+        </div>
+
+        <div class="field">
+          <label class="label" for="fName">Name</label>
+          <input id="fName" name="name" type="text" autocomplete="name" aria-describedby="errName" required>
+          <p class="err" id="errName" hidden>Add the name for the booking.</p>
+        </div>
+        <div class="field">
+          <label class="label" for="fEmail">Email</label>
+          <input id="fEmail" name="email" type="email" autocomplete="email" inputmode="email" aria-describedby="errEmail" required>
+          <p class="err" id="errEmail" hidden>That email does not look complete. Check it and try again.</p>
+        </div>
+
+        <button class="tag tag--book tag--lg" type="submit" id="bookSubmit">Request this flight<svg class="arr" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+        <p class="fine">This is a sample site. Nothing is sent when you press the button.</p>
+      </div>
+    </form>
+
+    <div class="pass" id="pass" hidden>
+      <h3 class="display pass__hello" id="passHello" tabindex="-1">Buenos días.</h3>
+      <p class="pass__lede" id="passLede">Your morning is held.</p>
+      <div class="card" aria-label="Boarding card">
+        <div class="card__main">
+          <p class="card__top"><span class="card__brand">Albada</span><span class="label">Boarding card</span><span class="label card__sample">Sample</span></p>
+          <dl class="card__grid">
+            <div class="card__wide"><dt class="label">Passenger</dt><dd id="cName">Name</dd></div>
+            <div class="card__wide"><dt class="label">Morning</dt><dd id="cDate">Date</dd></div>
+            <div><dt class="label">Meet</dt><dd class="num">06:40</dd></div>
+            <div><dt class="label">Lift-off</dt><dd class="num">07:15</dd></div>
+            <div><dt class="label">Landing</dt><dd class="num">08:40</dd></div>
+            <div><dt class="label">Basket</dt><dd id="cBasket">Shared</dd></div>
+            <div><dt class="label">Passengers</dt><dd class="num" id="cPax">2</dd></div>
+            <div><dt class="label">Total</dt><dd id="cTotal">350 euros</dd></div>
+          </dl>
+        </div>
+        <div class="card__stub">
+          <span class="card__arch" aria-hidden="true"><svg class="card__balloon"><use href="#i-balloon"/></svg></span>
+          <p class="num card__time">07:15</p>
+          <p class="label">Segovia, the field</p>
+          <p class="label card__ref" id="cRef">ALB 0000</p>
+        </div>
+      </div>
+      <p class="pass__sample" id="passSample">This is a sample, so nothing was sent and no flight is booked.</p>
+      <button class="tag" type="button" id="passAgain">Start again<svg class="arr" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+    </div>
+    <p class="vh" id="bookStatus" role="status" aria-live="polite"></p>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot tone tone--fixed t-night">
+  <div class="foot__arcade" aria-hidden="true"></div>
+  <div class="wrap foot__in">
+    <p class="foot__mark" aria-hidden="true">Albada</p>
+    <div class="foot__row">
+      <p class="num foot__greet">Buenos días.</p>
+      <p class="foot__sample">A sample site by Mert Tureli. Albada is an invented brand and no flights are sold here. The photographs are mine, from a balloon morning over Segovia.</p>
+      <nav class="foot__nav" aria-label="Footer">
+        <a class="quiet" href="#book">Book a flight</a>
+        <a class="quiet" href="#top">Back to the top</a>
+      </nav>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

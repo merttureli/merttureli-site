@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="../shared/study.css">
+<script src="../shared/study.js"></script>
+<title>Slow Roads, Issue No. 7: Up the coast to Acadia</title>
+<meta name="description" content="Slow Roads is a sample travel journal by Mert Tureli: a road trip up the Maine coast to Acadia, told with small prints you can pick up, a hand-drawn route and a stamp for every stop.">
+<meta name="theme-color" content="#22382c">
+<link rel="preload" href="fonts/national-park-wght.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/courier-prime-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/mynerve-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/slowroads.css">
+<script>
+/* Motion is opt-in: the page is complete without it. "moving" hides what is about to drop, draw or land.
+   If the module never arrives, the class comes off again so nothing stays hidden. */
+(function (d) {
+  var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  d.classList.add(still ? 'still' : 'moving');
+  setTimeout(function () { if (!window.slowRoadsReady) { d.classList.remove('moving'); d.classList.add('still'); } }, 4000);
+})(document.documentElement);
+</script>
+<script type="module" src="js/slowroads.js"></script>
+</head>
+<body>
+<a class="study-back study-back--slowroads" href="/websites.html#studies"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8H3.5M7.5 3.5 3 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Back to websites</a>
+<a class="skip" href="#route">Skip to the trip</a>
+
+<!-- Ink for the rubber stamps. Fine grain and large dry patches eat the print away and its edges tremble; three
+     mixes so no two neighbors are worn the same way. "wax" is the grease pencil on the contact sheet. -->
+<svg class="defs" width="0" height="0" aria-hidden="true">
+  <defs>
+    <filter id="ink-a" x="-6%" y="-6%" width="112%" height="112%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4" result="grain"/>
+      <feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="61" result="patch"/>
+      <feComposite in="grain" in2="patch" operator="arithmetic" k1="0" k2=".3" k3=".9" k4="0" result="mix"/>
+      <feColorMatrix in="mix" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  5 0 0 0 -1.5" result="holes"/>
+      <feDisplacementMap in="SourceGraphic" in2="grain" scale="1.6" xChannelSelector="R" yChannelSelector="G" result="rough"/>
+      <feComposite in="rough" in2="holes" operator="in"/>
+    </filter>
+    <filter id="ink-b" x="-6%" y="-6%" width="112%" height="112%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency=".75" numOctaves="2" seed="15" result="grain"/>
+      <feTurbulence type="fractalNoise" baseFrequency=".021" numOctaves="2" seed="7" result="patch"/>
+      <feComposite in="grain" in2="patch" operator="arithmetic" k1="0" k2=".5" k3=".85" k4="0" result="mix"/>
+      <feColorMatrix in="mix" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  7 0 0 0 -2.75" result="holes"/>
+      <feDisplacementMap in="SourceGraphic" in2="grain" scale="2.2" xChannelSelector="G" yChannelSelector="R" result="rough"/>
+      <feComposite in="rough" in2="holes" operator="in"/>
+    </filter>
+    <filter id="ink-c" x="-6%" y="-6%" width="112%" height="112%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="31" result="grain"/>
+      <feTurbulence type="fractalNoise" baseFrequency=".026" numOctaves="2" seed="52" result="patch"/>
+      <feComposite in="grain" in2="patch" operator="arithmetic" k1="0" k2=".3" k3="1" k4="0" result="mix"/>
+      <feColorMatrix in="mix" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  4.6 0 0 0 -1.45" result="holes"/>
+      <feDisplacementMap in="SourceGraphic" in2="grain" scale="1.5" xChannelSelector="R" yChannelSelector="G" result="rough"/>
+      <feComposite in="rough" in2="holes" operator="in"/>
+    </filter>
+    <filter id="wax" x="-8%" y="-8%" width="116%" height="116%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="1" seed="9" result="grain"/>
+      <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  5 0 0 0 -1.7" result="holes"/>
+      <feDisplacementMap in="SourceGraphic" in2="grain" scale="3" xChannelSelector="R" yChannelSelector="G" result="rough"/>
+      <feComposite in="rough" in2="holes" operator="in"/>
+    </filter>
+  </defs>
+</svg>
+
+<main id="main">
+
+<!-- 1. Cover: the desk, a kraft label, five loose prints -->
+<section class="cover" id="top" data-zone aria-labelledby="h-cover">
+  <div class="label">
+    <span class="tape tape--label" aria-hidden="true"></span>
+    <p class="label__kicker">A journal of road trips. One trip per issue.</p>
+    <h1 class="label__title" id="h-cover"><span>Slow</span> <span>Roads</span></h1>
+    <p class="label__issue"><span class="tape tape--chip" aria-hidden="true"></span>Issue No. 7</p>
+    <svg class="label__rule" viewBox="0 0 220 18" preserveAspectRatio="none" aria-hidden="true"><use href="assets/doodles.svg#underline"/></svg>
+    <p class="label__trip">Up the coast to Acadia</p>
+    <p class="label__note hand">one lighthouse, one pond, a lot of granite</p>
+    <p class="label__cta"><a class="btn" href="#subscribe">Get the next trip</a></p>
+  </div>
+
+  <div class="pile">
+    <figure class="print" data-move tabindex="0" role="group" aria-label="Print: stop ahead" aria-describedby="print-help" style="--x:0;--y:11;--w:48;--r:-9deg;--xs:0;--ys:5;--ws:58;--i:0"><span class="print__photo"><img src="../../assets/photos/acadia-road-trip-photography/road-yellow.jpg" width="520" height="346" alt="A tree lined road with STOP AHEAD painted on the asphalt and a yellow diamond warning sign on the right." draggable="false"></span><figcaption class="hand">stop ahead</figcaption></figure>
+    <figure class="print print--tall" data-move tabindex="0" role="group" aria-label="Print: last light" aria-describedby="print-help" style="--x:64;--y:0;--w:33;--r:7deg;--xs:60;--ys:0;--ws:38;--i:1"><span class="print__photo"><img src="../../assets/photos/acadia-road-trip-photography/sunset-lake.jpg" width="520" height="780" alt="The sun setting behind a band of cloud, lighting the cloud edges orange above dark hills and a lake." draggable="false"></span><figcaption class="hand">last light</figcaption></figure>
+    <figure class="print" data-move tabindex="0" role="group" aria-label="Print: granite" aria-describedby="print-help" style="--x:51;--y:56;--w:48;--r:5deg;--xs:42;--ys:58;--ws:56;--i:2"><span class="print__photo"><img src="../../assets/photos/acadia-road-trip-photography/granite-coast.jpg" width="520" height="346" alt="Pink and orange granite boulders at the water&#x27;s edge with tufts of grass growing from the cracks." draggable="false"></span><figcaption class="hand">granite</figcaption></figure>
+    <figure class="print" data-move tabindex="0" role="group" aria-label="Print: roses by the pond" aria-describedby="print-help" style="--x:2;--y:49;--w:51;--r:-4deg;--xs:0;--ys:55;--ws:57;--i:3"><span class="print__photo"><img src="../../assets/photos/acadia-road-trip-photography/pond-wide.jpg" width="520" height="346" alt="A pond ringed by forest with two rounded hills in the distance and pink wild roses blooming among the shore stones." draggable="false"></span><figcaption class="hand">roses by the pond</figcaption></figure>
+    <figure class="print" data-move tabindex="0" role="group" aria-label="Print: the lighthouse" aria-describedby="print-help" style="--x:22;--y:19;--w:55;--r:1.5deg;--xs:15;--ys:23;--ws:65;--i:4"><span class="print__photo"><img src="../../assets/photos/acadia-road-trip-photography/lighthouse.jpg" width="520" height="346" alt="A white lighthouse tower beside a red roofed keeper&#x27;s house, seen across green shrubs with the sea behind." draggable="false"></span><figcaption class="hand">the lighthouse</figcaption><svg class="sticker" viewBox="0 0 120 120" aria-hidden="true"><defs><path id="stk" d="M17 60a43 43 0 1 1 86 0a43 43 0 1 1-86 0"/></defs><circle cx="60" cy="60" r="58" class="sticker__paper"/><circle cx="60" cy="60" r="53" class="sticker__rule"/><text class="sticker__text"><textPath href="#stk" textLength="262">SLOW ROADS · UP THE COAST TO ACADIA · </textPath></text><use href="assets/doodles.svg#sunset" x="33" y="44" width="54" height="30" class="sticker__art"/></svg></figure>
+  </div>
+
+  <p class="cover__hint hand" aria-hidden="true">
+    <svg viewBox="0 0 130 84"><use href="assets/doodles.svg#arrow-curl"/></svg>
+    <span class="for-mouse">pick them up</span><span class="for-touch">press, hold, then move them</span>
+  </p>
+  <p id="print-help" class="sr-only">This print is loose. The arrow keys move it, with Shift for bigger steps. Escape puts it back.</p>
+  <p class="sr-only" id="print-said" aria-live="polite"></p>
+</section>
+
+<div class="paper">
+<!-- 2. The route: a strip map on its own page -->
+<section class="page page--map" id="route" aria-labelledby="h-route" tabindex="-1">
+  <div class="page__in">
+    <header class="maphead">
+      <h2 class="heading" id="h-route">The route</h2>
+      <p class="typed">Six stops, in the order we made them. Pick one to jump ahead, or just keep scrolling and the line will take you there.</p>
+    </header>
+    <nav class="map" aria-label="The six stops" data-road-host="map">
+      <svg class="road" aria-hidden="true"><path class="road__line"/><path class="road__head" d="M-10 -6.5 0 0-10 6.5"/></svg>
+      <i class="via" data-road style="--x:-4;--y:78;--xs:16;--ys:-4"></i>
+      <ol class="map__stops">
+        <li style="--x:7;--y:60;--xs:10;--ys:7" class="is-below"><a href="#stop-1"><i class="map__dot" data-road><svg viewBox="0 0 40 40" aria-hidden="true"><use href="assets/doodles.svg#dot"/></svg></i><svg class="map__icon" viewBox="0 0 52 52" aria-hidden="true"><use href="assets/doodles.svg#i-road"/></svg><span class="map__name hand">1. the road north</span></a></li>
+        <li style="--x:24;--y:36;--xs:22;--ys:24" class="is-above"><a href="#stop-2"><i class="map__dot" data-road><svg viewBox="0 0 40 40" aria-hidden="true"><use href="assets/doodles.svg#dot"/></svg></i><svg class="map__icon" viewBox="0 0 52 52" aria-hidden="true"><use href="assets/doodles.svg#i-light"/></svg><span class="map__name hand">2. the lighthouse</span></a></li>
+        <li style="--x:41;--y:62;--xs:9;--ys:41" class="is-below"><a href="#stop-3"><i class="map__dot" data-road><svg viewBox="0 0 40 40" aria-hidden="true"><use href="assets/doodles.svg#dot"/></svg></i><svg class="map__icon" viewBox="0 0 52 52" aria-hidden="true"><use href="assets/doodles.svg#i-coast"/></svg><span class="map__name hand">3. the coast</span></a></li>
+        <li style="--x:57;--y:32;--xs:21;--ys:58" class="is-above"><a href="#stop-4"><i class="map__dot" data-road><svg viewBox="0 0 40 40" aria-hidden="true"><use href="assets/doodles.svg#dot"/></svg></i><svg class="map__icon" viewBox="0 0 52 52" aria-hidden="true"><use href="assets/doodles.svg#i-pond"/></svg><span class="map__name hand">4. the pond</span></a></li>
+        <li style="--x:74;--y:56;--xs:10;--ys:75" class="is-below"><a href="#stop-5"><i class="map__dot" data-road><svg viewBox="0 0 40 40" aria-hidden="true"><use href="assets/doodles.svg#dot"/></svg></i><svg class="map__icon" viewBox="0 0 52 52" aria-hidden="true"><use href="assets/doodles.svg#i-look"/></svg><span class="map__name hand">5. the overlook</span></a></li>
+        <li style="--x:91;--y:30;--xs:20;--ys:92" class="is-above"><a href="#stop-6"><i class="map__dot" data-road><svg viewBox="0 0 40 40" aria-hidden="true"><use href="assets/doodles.svg#dot"/></svg></i><svg class="map__icon" viewBox="0 0 52 52" aria-hidden="true"><use href="assets/doodles.svg#i-summit"/></svg><span class="map__name hand">6. the summit at sunset</span></a></li>
+      </ol>
+      <p class="map__scale hand" aria-hidden="true">not to scale!<svg viewBox="0 0 220 18" preserveAspectRatio="none"><use href="assets/doodles.svg#underline"/></svg></p>
+      <span class="map__north" aria-hidden="true"><svg viewBox="0 0 56 72"><use href="assets/doodles.svg#compass"/></svg><b class="hand">N</b></span>
+      <svg class="map__mark map__mark--w1" viewBox="0 0 64 30" aria-hidden="true"><use href="assets/doodles.svg#waves"/></svg>
+      <svg class="map__mark map__mark--w2" viewBox="0 0 64 30" aria-hidden="true"><use href="assets/doodles.svg#waves"/></svg>
+      <svg class="map__mark map__mark--w3" viewBox="0 0 64 30" aria-hidden="true"><use href="assets/doodles.svg#waves"/></svg>
+      <svg class="map__mark map__mark--p1" viewBox="0 0 34 46" aria-hidden="true"><use href="assets/doodles.svg#pine"/></svg>
+      <svg class="map__mark map__mark--p2" viewBox="0 0 34 46" aria-hidden="true"><use href="assets/doodles.svg#pine"/></svg>
+      <svg class="map__mark map__mark--p3" viewBox="0 0 34 46" aria-hidden="true"><use href="assets/doodles.svg#pine"/></svg>
+      <p class="map__sea hand" aria-hidden="true">the sea, this whole side</p>
+    </nav>
+    <p class="sr-only">The map is drawn by hand and is not to scale.</p>
+  </div>
+</section>
+
+<!-- 3. Six stops, on three pages taped end to end. The road is drawn by js/road.js through every [data-road]. -->
+<div class="stops" data-road-host="stops">
+  <svg class="road" aria-hidden="true"><path class="road__line"/><path class="road__head" d="M-10 -6.5 0 0-10 6.5"/></svg>
+
+  <div class="page page--a"><span class="tape tape--seam tape--seam-l" aria-hidden="true"></span><span class="tape tape--seam tape--seam-r" aria-hidden="true"></span>
+  <div class="page__in">
+    <i class="via" data-road style="--x:54;--y:1;--xs:6;--ys:0.5"></i>
+    <article class="stop stop--1 stop--odd" id="stop-1" data-zone aria-labelledby="h-stop-1" tabindex="-1">
+      <header class="stop__head">
+        <i class="stop__dot" data-road="stop"><svg viewBox="0 0 40 40" aria-hidden="true"><use href="assets/doodles.svg#dot"/></svg></i>
+        <p class="stop__count">Stop 1 of 6</p>
+        <h2 class="board" id="h-stop-1">The road<br>north</h2>
+        <svg class="stamp" viewBox="0 0 200 200" aria-hidden="true">
+          <defs><path id="st1a" d="M33 100A67 67 0 0 1 167 100"/><path id="st1b" d="M21 100A79 79 0 0 0 179 100"/></defs>
+          <g id="st1" filter="url(#ink-a)">
+            <circle cx="100" cy="100" r="93" class="s-ring s-ring--3"/><circle cx="100" cy="100" r="86.5" class="s-ring s-ring--1"/><circle cx="100" cy="100" r="53" class="s-ring s-ring--15"/>
+            <text class="s-place"><textPath href="#st1a" startOffset="50%" text-anchor="middle">THE ROAD NORTH</textPath></text>
+            <text class="s-brand"><textPath href="#st1b" startOffset="50%" text-anchor="middle">SLOW ROADS · ISSUE No. 7</textPath></text>
+            <path class="s-ring s-ring--15" d="M53 88H147M53 112H147"/>
+            <text class="s-date" x="100" y="104.6" text-anchor="middle">STOP 1 OF 6</text>
+            <use href="assets/doodles.svg#i-road" x="87" y="57" width="26" height="26" class="s-icon"/>
+            <path class="s-dots" d="M86 127h.1M100 130h.1M114 127h.1"/>
+          </g>
+          <use href="#st1" class="stamp__ghost" transform="rotate(3 100 100) translate(4 -3)"/>
+        </svg>
+      </header>
+      <div class="stop__prints cluster" style="--h:96;--hs:254">
+        <figure class="print" data-move tabindex="0" role="group" aria-label="Print: two lanes, big sky" aria-describedby="print-help" style="--x:0;--y:0;--w:58;--r:-2.5deg;--k:3;--xs:0;--ys:0;--ws:82;--ks:6;--i:0"><span class="tape tape--t" aria-hidden="true"></span><span class="print__photo"><img src="../../assets/photos/acadia-road-trip-photography/road-open.jpg" width="520" height="346" alt="A two lane road seen from a car, with guardrails, pines on the left, power lines on the right and two vehicles ahead under a pale blue sky." loading="lazy" decoding="async" draggable="false"></span><figcaption class="hand">two lanes, big sky</figcaption></figure>
+        <figure class="print" data-move tabindex="0" role="group" aria-label="Print: the double yellow" aria-describedby="print-help" style="--x:43;--y:21;--w:50;--r:3.5deg;--k:5;--xs:16;--ys:62;--ws:82;--ks:5;--i:1"><span class="tape tape--tr" aria-hidden="true"></span><span class="print__photo"><img src="../../assets/photos/acadia-road-trip-photography/road-trees.jpg" width="520" height="346" alt="A road with a double yellow center line curving past a brown fence and tall leafy trees, with cars ahead." loading="lazy" decoding="async" draggable="false"></span><figcaption class="hand">the double yellow</figcaption></figure>
+        <figure class="print" data-move tabindex="0" role="group" aria-label="Print: boats past the rail" aria-describedby="print-help" style="--x:55;--y:58;--w:42;--r:-4deg;--k:4;--xs:0;--ys:124;--ws:76;--ks:4;--i:3"><span class="tape tape--r" aria-hidden="true"></span><span class="print__photo"><img src="../../assets/photos/acadia-road-trip-photography/bridge-rail.jpg" width="520" height="346" alt="Small boats on gray water seen through a blurred bridge railing." loading="lazy" decoding="async" draggable="false"></span><figcaption class="hand">boats past the rail</figcaption></figure>
+        <figure class="print" data-move tabindex="0" role="group" aria-label="Print: stop ahead, twice" aria-describedby="print-help" style="--x:5;--y:51;--w:47;--r:2deg;--k:4;--xs:15;--ys:183;--ws:84;--ks:3;--i:2"><span class="tape tape--tl" aria-hidden="true"></span><span class="print__photo"><img src="../../assets/photos/acadia-road-trip-photography/road-yellow.jpg" width="520" height="346" alt="A tree lined road with STOP AHEAD painted on the asphalt and a yellow diamond warning sign on the right." loading="lazy" decoding="async" draggable="false"></span><figcaption class="hand">stop ahead, twice</figcaption></figure>
+      </div>
+      <div class="stop__text">
+        <p class="typed">The first pictures are all from the car. Two lanes, a double yellow line, and trees close on both sides with power lines running along. On a bridge the railing went by in a blur, with a few boats sitting on gray water behind it. One sign and the paint on the road agreed with each other: stop ahead.</p>
+        <p class="note hand note--a"><svg viewBox="0 0 70 40" aria-hidden="true"><use href="assets/doodles.svg#arrow-short"/></svg>all through the windshield</p>
+      </div>
+      <i class="via" data-road style="--x:57;--y:104;--xs:-10;--ys:56"></i>
+    </article>
+
+    <article class="stop stop--2 stop--even" id="stop-2" data-zone aria-labelledby="h-stop-2" tabindex="-1">
+      <header class="stop__head">
+        <i class="stop__dot" data-road="stop"><svg viewBox="0 0 40 40" aria-hidden="true"><use href="assets/doodles.svg#dot"/></svg></i>
+        <p class="stop__count">Stop 2 of 6</p>
+        <h2 class="board" id="h-stop-2">The<br>lighthouse</h2>
+        <svg class="stamp" viewBox="0 0 200 200" aria-hidden="true">
+          <defs><path id="st2a" d="M33 100A67 67 0 0 1 167 100"/><path id="st2b" d="M21 100A79 79 0 0 0 179 100"/></defs>
+          <g id="st2" filter="url(#ink-b)">
+            <circle cx="100" cy="100" r="92" class="s-ring s-ring--5"/><circle cx="100" cy="100" r="53" class="s-ring s-ring--bead"/>
+            <text class="s-place"><textPath href="#st2a" startOffset="50%" text-anchor="middle">THE LIGHTHOUSE</textPath></text>
+            <text class="s-brand"><textPath href="#st2b" startOffset="50%" text-anchor="middle">SLOW ROADS · ISSUE No. 7</textPath></text>
+            <path class="s-ring s-ring--15" d="M53 88H147M53 112H147"/>
+            <text class="s-date" x="100" y="104.6" text-anchor="middle">STOP 2 OF 6</text>
+            <use href="assets/doodles.svg#i-light" x="87" y="57" width="26" height="26" class="s-icon"/>
+            <path class="s-dots" d="M86 127h.1M100 130h.1M114 127h.1"/>
+          </g>
+          <use href="#st2" class="stamp__ghost" transform="rotate(-2.5 100 100) translate(-4 -2)"/>
+        </svg>
+      </header>
+      <div class="stop__prints cluster" style="--h:84;--hs:139">
+        <figure class="print" data-move tabindex="0" role="group" aria-label="Print: white tower, red roof" aria-describedby="print-help" style="--x:2;--y:0;--w:66;--r:2deg;--k:3;--xs:0;--ys:0;--ws:88;--ks:5;--i:0"><span class="tape tape--tl" aria-hidden="true"></span><span class="tape tape--tr2" aria-hidden="true"></span><span class="print__photo"><img src="../../assets/photos/acadia-road-trip-photography/lighthouse.jpg" width="520" height="346" alt="A white lighthouse tower beside a red roofed keeper&#x27;s house, seen across green shrubs with the sea behind." loading="lazy" decoding="async" draggable="false"></span><figcaption class="hand">white tower, red roof</figcaption></figure>
+        <figure class="print" data-move tabindex="0" role="group" aria-label="Print: around the back" aria-describedby="print-help" style="--x:47;--y:39;--w:50;--r:-3.5deg;--k:4;--xs:16;--ys:66;--ws:84;--ks:4;--i:1"><span class="tape tape--r" aria-hidden="true"></span><span class="print__photo"><img src="../../assets/photos/acadia-road-trip-photography/lighthouse-close.jpg" width="520" height="346" alt="The lighthouse from behind the keeper&#x27;s house: a dark red roof, arched windows, the lantern room above, and a few visitors on the path." loading="lazy" decoding="async" draggable="false"></span><figcaption class="hand">around the back</figcaption></figure>
+      </div>
+      <div class="stop__text">
+        <p class="typed">A white tower with a black lantern room, and a house with a red roof built right up against it. From the shrubs on the far side, the sea sat flat and pale behind it all the way to the horizon. Up close the house was all gables and arched windows, dark under a heavy sky, and people were walking the path around it.</p>
+        <p class="note hand note--b">the only lighthouse in this issue</p>
+      </div>
+      <i class="via" data-road style="--x:44;--y:104;--xs:-6;--ys:58"></i>
+    </article>
+  </div></div>
+
+  <div class="page page--b"><span class="tape tape--seam tape--seam-l" aria-hidden="true"></span><span class="tape tape--seam tape--seam-r" aria-hidden="true"></span>
+  <div class="page__in">
+    <article class="stop stop--3 stop--odd" id="stop-3" data-zone aria-labelledby="h-stop-3" tabindex="-1">
+      <header class="stop__head">
+        <i class="stop__dot" data-road="stop"><svg viewBox="0 0 40 40" aria-hidden="true"><use href="assets/doodles.svg#dot"/></svg></i>
+        <p class="stop__count">Stop 3 of 6</p>
+        <h2 class="board" id="h-stop-3">The coast</h2>
+        <svg class="stamp" viewBox="0 0 200 200" aria-hidden="true">
+          <defs><path id="st3a" d="M33 100A67 67 0 0 1 167 100"/><path id="st3b" d="M21 100A79 79 0 0 0 179 100"/></defs>
+          <g id="st3" filter="url(#ink-c)">
+            <circle cx="100" cy="100" r="90" class="s-ring s-ring--tick"/><circle cx="100" cy="100" r="84.5" class="s-ring s-ring--15"/><circle cx="100" cy="100" r="53" class="s-ring s-ring--15"/>
+            <text class="s-place"><textPath href="#st3a" startOffset="50%" text-anchor="middle">THE COAST</textPath></text>
+            <text class="s-brand"><textPath href="#st3b" startOffset="50%" text-anchor="middle">SLOW ROADS · ISSUE No. 7</textPath></text>
+            <path class="s-ring s-ring--15" d="M53 88H147M53 112H147"/>
+            <text class="s-date" x="100" y="104.6" text-anchor="middle">STOP 3 OF 6</text>
+            <use href="assets/doodles.svg#i-coast" x="87" y="57" width="26" height="26" class="s-icon"/>
+            <path class="s-dots" d="M86 127h.1M100 130h.1M114 127h.1"/>
+          </g>
+          <use href="#st3" class="stamp__ghost" transform="rotate(2 100 100) translate(3 4)"/>
+        </svg>
+      </header>
+      <div class="stop__prints cluster" style="--h:95;--hs:238">
+        <figure class="print print--tall" data-move tabindex="0" role="group" aria-label="Print: stacked like books" aria-describedby="print-help" style="--x:61;--y:0;--w:37;--r:3deg;--k:4;--xs:26;--ys:0;--ws:62;--ks:5;--i:1"><span class="tape tape--t" aria-hidden="true"></span><span class="print__photo"><img src="../../assets/photos/acadia-road-trip-photography/sea-cliff.jpg" width="520" height="780" alt="A dark cliff of stacked rock ledges overhanging the sea, with pale sky behind." loading="lazy" decoding="async" draggable="false"></span><figcaption class="hand">stacked like books</figcaption></figure>
+        <figure class="print" data-move tabindex="0" role="group" aria-label="Print: pink granite, really" aria-describedby="print-help" style="--x:0;--y:5;--w:63;--r:-2deg;--k:5;--xs:0;--ys:100;--ws:86;--ks:4;--i:0"><span class="tape tape--tl" aria-hidden="true"></span><span class="print__photo"><img src="../../assets/photos/acadia-road-trip-photography/granite-coast.jpg" width="520" height="346" alt="Pink and orange granite boulders at the water&#x27;s edge with tufts of grass growing from the cracks." loading="lazy" decoding="async" draggable="false"></span><figcaption class="hand">pink granite, really</figcaption></figure>
+        <figure class="print" data-move tabindex="0" role="group" aria-label="Print: spruce to the edge" aria-describedby="print-help" style="--x:18;--y:51;--w:50;--r:1.5deg;--k:3;--xs:14;--ys:165;--ws:84;--ks:3;--i:2"><span class="tape tape--l" aria-hidden="true"></span><span class="print__photo"><img src="../../assets/photos/acadia-road-trip-photography/cove-blue.jpg" width="520" height="346" alt="A low rocky shore topped with dense spruce forest above deep blue water under a gray sky." loading="lazy" decoding="async" draggable="false"></span><figcaption class="hand">spruce to the edge</figcaption></figure>
+      </div>
+      <div class="stop__text">
+        <p class="typed">Up close the granite was pink and orange, with grass growing out of every crack. Across the water, spruce came down a low shore and stopped at a pale ledge of rock. One cliff stood dark and stacked in heavy layers, leaning out over the swell.</p>
+        <p class="note hand note--c">the water really was this blue</p>
+      </div>
+      <i class="via" data-road style="--x:56;--y:104;--xs:-10;--ys:56"></i>
+    </article>
+
+    <article class="stop stop--4 stop--even" id="stop-4" data-zone aria-labelledby="h-stop-4" tabindex="-1">
+      <header class="stop__head">
+        <i class="stop__dot" data-road="stop"><svg viewBox="0 0 40 40" aria-hidden="true"><use href="assets/doodles.svg#dot"/></svg></i>
+        <p class="stop__count">Stop 4 of 6</p>
+        <h2 class="board" id="h-stop-4">The pond</h2>
+        <svg class="stamp" viewBox="0 0 200 200" aria-hidden="true">
+          <defs><path id="st4a" d="M33 100A67 67 0 0 1 167 100"/><path id="st4b" d="M21 100A79 79 0 0 0 179 100"/></defs>
+          <g id="st4" filter="url(#ink-b)">
+            <circle cx="100" cy="100" r="92" class="s-ring s-ring--bead2"/><circle cx="100" cy="100" r="85" class="s-ring s-ring--2"/><circle cx="100" cy="100" r="53" class="s-ring s-ring--15"/>
+            <text class="s-place"><textPath href="#st4a" startOffset="50%" text-anchor="middle">THE POND</textPath></text>
+            <text class="s-brand"><textPath href="#st4b" startOffset="50%" text-anchor="middle">SLOW ROADS · ISSUE No. 7</textPath></text>
+            <path class="s-ring s-ring--15" d="M53 88H147M53 112H147"/>
+            <text class="s-date" x="100" y="104.6" text-anchor="middle">STOP 4 OF 6</text>
+            <use href="assets/doodles.svg#i-pond" x="87" y="57" width="26" height="26" class="s-icon"/>
+            <path class="s-dots" d="M86 127h.1M100 130h.1M114 127h.1"/>
+          </g>
+          <use href="#st4" class="stamp__ghost" transform="rotate(-3 100 100) translate(4 3)"/>
+        </svg>
+      </header>
+      <div class="stop__prints cluster" style="--h:90;--hs:202">
+        <figure class="print" data-move tabindex="0" role="group" aria-label="Print: wild roses at the edge" aria-describedby="print-help" style="--x:0;--y:0;--w:62;--r:-1.5deg;--k:4;--xs:0;--ys:0;--ws:88;--ks:5;--i:0"><span class="tape tape--t" aria-hidden="true"></span><span class="print__photo"><img src="../../assets/photos/acadia-road-trip-photography/pond-wide.jpg" width="520" height="346" alt="A pond ringed by forest with two rounded hills in the distance and pink wild roses blooming among the shore stones." loading="lazy" decoding="async" draggable="false"></span><figcaption class="hand">wild roses at the edge</figcaption></figure>
+        <figure class="print" data-move tabindex="0" role="group" aria-label="Print: the Bubbles" aria-describedby="print-help" style="--x:49;--y:31;--w:49;--r:3deg;--k:5;--xs:16;--ys:66;--ws:82;--ks:4;--i:1"><span class="tape tape--tr" aria-hidden="true"></span><span class="print__photo"><img src="../../assets/photos/acadia-road-trip-photography/jordan-bubbles.jpg" width="520" height="346" alt="Jordan Pond with choppy dark water and the two rounded hills called the Bubbles on the far side." loading="lazy" decoding="async" draggable="false"></span><figcaption class="hand">the Bubbles</figcaption></figure>
+        <figure class="print" data-move tabindex="0" role="group" aria-label="Print: had to touch the water" aria-describedby="print-help" style="--x:6;--y:46;--w:50;--r:-3deg;--k:3;--xs:0;--ys:128;--ws:86;--ks:3;--i:2"><span class="tape tape--l" aria-hidden="true"></span><span class="print__photo"><img src="../../assets/photos/acadia-road-trip-photography/jordan-shore.jpg" width="520" height="346" alt="The rocky shore of Jordan Pond, where a person crouches on the boulders at the water&#x27;s edge, with hills on both sides." loading="lazy" decoding="async" draggable="false"></span><figcaption class="hand">had to touch the water</figcaption></figure>
+      </div>
+      <div class="stop__text">
+        <p class="typed">Jordan Pond, with the two round hills called the Bubbles sitting at the far end. Wild roses were blooming at the edge, bright pink against the gray stones. The wind had put a chop on the water, and somebody still climbed out on the boulders to get a hand in it.</p>
+        <p class="note hand note--d">the stamps on these pages got their pink from the roses</p>
+      </div>
+      <i class="via" data-road style="--x:43;--y:104;--xs:-6;--ys:58"></i>
+    </article>
+  </div></div>
+
+  <div class="page page--c"><span class="tape tape--seam tape--seam-l" aria-hidden="true"></span><span class="tape tape--seam tape--seam-r" aria-hidden="true"></span>
+  <div class="page__in">
+    <article class="stop stop--5 stop--odd" id="stop-5" data-zone aria-labelledby="h-stop-5" tabindex="-1">
+      <header class="stop__head">
+        <i class="stop__dot" data-road="stop"><svg viewBox="0 0 40 40" aria-hidden="true"><use href="assets/doodles.svg#dot"/></svg></i>
+        <p class="stop__count">Stop 5 of 6</p>
+        <h2 class="board" id="h-stop-5">The<br>overlook</h2>
+        <svg class="stamp" viewBox="0 0 200 200" aria-hidden="true">
+          <defs><path id="st5a" d="M33 100A67 67 0 0 1 167 100"/><path id="st5b" d="M21 100A79 79 0 0 0 179 100"/></defs>
+          <g id="st5" filter="url(#ink-a)">
+            <circle cx="100" cy="100" r="93" class="s-ring s-ring--15"/><circle cx="100" cy="100" r="89" class="s-ring s-ring--15"/><circle cx="100" cy="100" r="85" class="s-ring s-ring--15"/><circle cx="100" cy="100" r="53" class="s-ring s-ring--2"/>
+            <text class="s-place"><textPath href="#st5a" startOffset="50%" text-anchor="middle">THE OVERLOOK</textPath></text>
+            <text class="s-brand"><textPath href="#st5b" startOffset="50%" text-anchor="middle">SLOW ROADS · ISSUE No. 7</textPath></text>
+            <path class="s-ring s-ring--15" d="M53 88H147M53 112H147"/>
+            <text class="s-date" x="100" y="104.6" text-anchor="middle">STOP 5 OF 6</text>
+            <use href="assets/doodles.svg#i-look" x="87" y="57" width="26" height="26" class="s-icon"/>
+            <path class="s-dots" d="M86 127h.1M100 130h.1M114 127h.1"/>
+          </g>
+          <use href="#st5" class="stamp__ghost" transform="rotate(2.5 100 100) translate(-3 3)"/>
+        </svg>
+      </header>
+      <div class="stop__prints cluster" style="--h:92;--hs:204">
+        <figure class="print" data-move tabindex="0" role="group" aria-label="Print: follow the blue blaze" aria-describedby="print-help" style="--x:32;--y:0;--w:58;--r:2deg;--k:5;--xs:12;--ys:0;--ws:88;--ks:5;--i:0"><span class="tape tape--t" aria-hidden="true"></span><span class="print__photo"><img src="../../assets/photos/acadia-road-trip-photography/pine-trail.jpg" width="520" height="346" alt="A forest trail of bare granite passing rounded boulders, with a blue trail blaze painted on a spruce trunk in the foreground." loading="lazy" decoding="async" draggable="false"></span><figcaption class="hand">follow the blue blaze</figcaption></figure>
+        <figure class="print" data-move tabindex="0" role="group" aria-label="Print: snag, full of holes" aria-describedby="print-help" style="--x:0;--y:29;--w:46;--r:-4deg;--k:3;--xs:0;--ys:66;--ws:80;--ks:4;--i:1"><span class="tape tape--tl" aria-hidden="true"></span><span class="print__photo"><img src="../../assets/photos/acadia-road-trip-photography/forest-path.jpg" width="520" height="346" alt="A mossy spruce forest floor littered with fallen branches around a dead tree trunk full of holes." loading="lazy" decoding="async" draggable="false"></span><figcaption class="hand">snag, full of holes</figcaption></figure>
+        <figure class="print" data-move tabindex="0" role="group" aria-label="Print: the view from the ledge" aria-describedby="print-help" style="--x:42;--y:44;--w:56;--r:-1deg;--k:4;--xs:10;--ys:127;--ws:90;--ks:3;--i:2"><span class="tape tape--r" aria-hidden="true"></span><span class="print__photo"><img src="../../assets/photos/acadia-road-trip-photography/overlook-look.jpg" width="520" height="346" alt="A person seen from behind, sitting on a granite ledge and looking out over green forest to the ocean under a cloudy sky." loading="lazy" decoding="async" draggable="false"></span><figcaption class="hand">the view from the ledge</figcaption></figure>
+      </div>
+      <div class="stop__text">
+        <p class="typed">The trail ran over bare granite between spruce trunks and around boulders, with a blue blaze painted on a tree to follow. Off to one side stood a dead trunk full of holes, on a floor of moss and fallen branches. Then the trees stopped at a ledge, with forest below and the ocean laid flat along the horizon under a lot of cloud.</p>
+        <p class="note hand note--e">a good place to sit</p>
+      </div>
+      <i class="via" data-road style="--x:57;--y:104;--xs:-10;--ys:56"></i>
+    </article>
+
+    <article class="stop stop--6 stop--even" id="stop-6" data-zone aria-labelledby="h-stop-6" tabindex="-1">
+      <header class="stop__head">
+        <i class="stop__dot" data-road="stop"><svg viewBox="0 0 40 40" aria-hidden="true"><use href="assets/doodles.svg#dot"/></svg></i>
+        <p class="stop__count">Stop 6 of 6</p>
+        <h2 class="board" id="h-stop-6">The summit<br>at sunset</h2>
+        <svg class="stamp" viewBox="0 0 200 200" aria-hidden="true">
+          <defs><path id="st6a" d="M33 100A67 67 0 0 1 167 100"/><path id="st6b" d="M21 100A79 79 0 0 0 179 100"/></defs>
+          <g id="st6" filter="url(#ink-c)">
+            <circle cx="100" cy="100" r="91" class="s-ring s-ring--6"/><circle cx="100" cy="100" r="53" class="s-ring s-ring--15"/><circle cx="100" cy="100" r="49.5" class="s-ring s-ring--1"/>
+            <text class="s-place"><textPath href="#st6a" startOffset="50%" text-anchor="middle">THE SUMMIT</textPath></text>
+            <text class="s-brand"><textPath href="#st6b" startOffset="50%" text-anchor="middle">SLOW ROADS · ISSUE No. 7</textPath></text>
+            <path class="s-ring s-ring--15" d="M53 88H147M53 112H147"/>
+            <text class="s-date" x="100" y="104.6" text-anchor="middle">STOP 6 OF 6</text>
+            <use href="assets/doodles.svg#i-summit" x="87" y="57" width="26" height="26" class="s-icon"/>
+            <path class="s-dots" d="M86 127h.1M100 130h.1M114 127h.1"/>
+          </g>
+          <use href="#st6" class="stamp__ghost" transform="rotate(-2 100 100) translate(4 -3)"/>
+        </svg>
+      </header>
+      <div class="stop__prints cluster" style="--h:126;--hs:342">
+        <figure class="print" data-move tabindex="0" role="group" aria-label="Print: low sun, long shadows" aria-describedby="print-help" style="--x:0;--y:0;--w:57;--r:-2.5deg;--k:5;--xs:0;--ys:0;--ws:88;--ks:6;--i:0"><span class="tape tape--tl" aria-hidden="true"></span><span class="print__photo"><img src="../../assets/photos/acadia-road-trip-photography/summit-sun.jpg" width="520" height="346" alt="Two people on a granite summit in low sun, one crouching in the foreground, with a long lake and forested hills below." loading="lazy" decoding="async" draggable="false"></span><figcaption class="hand">low sun, long shadows</figcaption></figure>
+        <figure class="print print--tall" data-move tabindex="0" role="group" aria-label="Print: looking back" aria-describedby="print-help" style="--x:61;--y:5;--w:36;--r:3.5deg;--k:5;--xs:34;--ys:66;--ws:60;--ks:5;--i:1"><span class="tape tape--t" aria-hidden="true"></span><span class="print__photo"><img src="../../assets/photos/acadia-road-trip-photography/stand-cliff.jpg" width="520" height="780" alt="A person seen from the side and behind, standing on a granite block and looking over green brush toward the water under a clear blue sky." loading="lazy" decoding="async" draggable="false"></span><figcaption class="hand">looking back</figcaption></figure>
+        <figure class="print" data-move tabindex="0" role="group" aria-label="Print: the lakes went silver" aria-describedby="print-help" style="--x:4;--y:44;--w:50;--r:2deg;--k:3;--xs:0;--ys:163;--ws:84;--ks:4;--i:2"><span class="tape tape--l" aria-hidden="true"></span><span class="print__photo"><img src="../../assets/photos/acadia-road-trip-photography/summit-sunset.jpg" width="520" height="346" alt="A person seen from behind in silhouette, facing lakes and forest that fade into evening haze." loading="lazy" decoding="async" draggable="false"></span><figcaption class="hand">the lakes went silver</figcaption></figure>
+        <figure class="print print--tall" data-move tabindex="0" role="group" aria-label="Print: last light" aria-describedby="print-help" style="--x:49;--y:57;--w:40;--r:-2deg;--k:4;--xs:28;--ys:226;--ws:66;--ks:3;--i:3"><span class="tape tape--tr" aria-hidden="true"></span><span class="print__photo"><img src="../../assets/photos/acadia-road-trip-photography/sunset-lake.jpg" width="520" height="780" alt="The sun setting behind a band of cloud, lighting the cloud edges orange above dark hills and a lake." loading="lazy" decoding="async" draggable="false"></span><figcaption class="hand">last light</figcaption></figure>
+      </div>
+      <div class="stop__text">
+        <p class="typed">From the top, bare granite ran down toward a long lake, and the low sun threw a shadow behind everything standing. The lakes went silver while the hills around them went dark. Then the sun slid behind a bank of cloud and lit its edges orange over the water.</p>
+      </div>
+      <i class="via" data-road style="--x:43;--y:60;--xs:-9;--ys:60"></i>
+      <i class="via via--end" data-road></i>
+      <p class="note hand note--f">end of the line</p>
+      <svg class="stop__sun" viewBox="0 0 90 50" aria-hidden="true"><use href="assets/doodles.svg#sunset"/></svg>
+    </article>
+  </div></div>
+</div>
+</div>
+
+<!-- 4. The contact sheet -->
+<section class="sheetband" id="sheet" aria-labelledby="h-sheet">
+  <header class="sheethead">
+    <h2 class="heading heading--light" id="h-sheet">The contact sheet</h2>
+    <p class="typed typed--light">All twenty-two frames, small. Pick one to see it larger.</p>
+  </header>
+  <div class="sheet">
+    <p class="sheet__edge" aria-hidden="true">SLOW ROADS No. 7 &nbsp; ACADIA &nbsp; 22 FRAMES</p>
+    <ol class="strip" id="strip">
+      <li><button type="button" class="frame" aria-expanded="false" aria-controls="blowup" data-cap="two lanes, big sky"><span class="frame__pic"><img src="../../assets/photos/acadia-road-trip-photography/road-open.jpg" width="520" height="346" alt="Frame 1: a two lane road with guardrails and two vehicles ahead." loading="lazy" decoding="async"></span><span class="frame__no" aria-hidden="true">1</span></button></li>
+      <li><button type="button" class="frame" aria-expanded="false" aria-controls="blowup" data-cap="the double yellow"><span class="frame__pic"><img src="../../assets/photos/acadia-road-trip-photography/road-trees.jpg" width="520" height="346" alt="Frame 2: a road with a double yellow line beside a brown fence." loading="lazy" decoding="async"></span><span class="frame__no" aria-hidden="true">2</span></button></li>
+      <li><button type="button" class="frame" aria-expanded="false" aria-controls="blowup" data-cap="stop ahead, twice"><span class="frame__pic"><img src="../../assets/photos/acadia-road-trip-photography/road-yellow.jpg" width="520" height="346" alt="Frame 3: a road with STOP AHEAD painted on it and a yellow warning sign." loading="lazy" decoding="async"></span><span class="frame__no" aria-hidden="true">3</span></button></li>
+      <li><button type="button" class="frame" aria-expanded="false" aria-controls="blowup" data-cap="boats past the rail"><span class="frame__pic"><img src="../../assets/photos/acadia-road-trip-photography/bridge-rail.jpg" width="520" height="346" alt="Frame 4: boats on gray water behind a blurred bridge railing." loading="lazy" decoding="async"></span><span class="frame__no" aria-hidden="true">4</span></button></li>
+      <li><button type="button" class="frame is-marked" aria-expanded="false" aria-controls="blowup" data-cap="white tower, red roof"><span class="frame__pic"><img src="../../assets/photos/acadia-road-trip-photography/lighthouse.jpg" width="520" height="346" alt="Frame 5: the white lighthouse and the red roofed house beside it." loading="lazy" decoding="async"></span><span class="frame__no" aria-hidden="true">5</span></button></li>
+      <li><button type="button" class="frame" aria-expanded="false" aria-controls="blowup" data-cap="around the back"><span class="frame__pic"><img src="../../assets/photos/acadia-road-trip-photography/lighthouse-close.jpg" width="520" height="346" alt="Frame 6: the lighthouse from behind the house, with visitors on the path." loading="lazy" decoding="async"></span><span class="frame__no" aria-hidden="true">6</span></button></li>
+      <li><button type="button" class="frame" aria-expanded="false" aria-controls="blowup" data-cap="pink granite, really"><span class="frame__pic"><img src="../../assets/photos/acadia-road-trip-photography/granite-coast.jpg" width="520" height="346" alt="Frame 7: pink granite boulders with grass in the cracks." loading="lazy" decoding="async"></span><span class="frame__no" aria-hidden="true">7</span></button></li>
+      <li><button type="button" class="frame" aria-expanded="false" aria-controls="blowup" data-cap="spruce to the edge"><span class="frame__pic"><img src="../../assets/photos/acadia-road-trip-photography/cove-blue.jpg" width="520" height="346" alt="Frame 8: a spruce covered shore above blue water." loading="lazy" decoding="async"></span><span class="frame__no" aria-hidden="true">8</span></button></li>
+      <li><button type="button" class="frame frame--tall" aria-expanded="false" aria-controls="blowup" data-cap="stacked like books"><span class="frame__pic"><img src="../../assets/photos/acadia-road-trip-photography/sea-cliff.jpg" width="520" height="780" alt="Frame 9, shot upright: a dark layered cliff over the sea." loading="lazy" decoding="async"></span><span class="frame__no" aria-hidden="true">9</span></button></li>
+      <li><button type="button" class="frame" aria-expanded="false" aria-controls="blowup" data-cap="wild roses at the edge"><span class="frame__pic"><img src="../../assets/photos/acadia-road-trip-photography/pond-wide.jpg" width="520" height="346" alt="Frame 10: a pond with wild roses on the shore and two round hills behind." loading="lazy" decoding="async"></span><span class="frame__no" aria-hidden="true">10</span></button></li>
+      <li><button type="button" class="frame" aria-expanded="false" aria-controls="blowup" data-cap="the Bubbles"><span class="frame__pic"><img src="../../assets/photos/acadia-road-trip-photography/jordan-bubbles.jpg" width="520" height="346" alt="Frame 11: Jordan Pond and the two hills called the Bubbles." loading="lazy" decoding="async"></span><span class="frame__no" aria-hidden="true">11</span></button></li>
+      <li><button type="button" class="frame" aria-expanded="false" aria-controls="blowup" data-cap="had to touch the water"><span class="frame__pic"><img src="../../assets/photos/acadia-road-trip-photography/jordan-shore.jpg" width="520" height="346" alt="Frame 12: a person crouching on the boulders at the edge of Jordan Pond." loading="lazy" decoding="async"></span><span class="frame__no" aria-hidden="true">12</span></button></li>
+      <li><button type="button" class="frame" aria-expanded="false" aria-controls="blowup" data-cap="follow the blue blaze"><span class="frame__pic"><img src="../../assets/photos/acadia-road-trip-photography/pine-trail.jpg" width="520" height="346" alt="Frame 13: a forest trail with a blue blaze on a tree trunk." loading="lazy" decoding="async"></span><span class="frame__no" aria-hidden="true">13</span></button></li>
+      <li><button type="button" class="frame" aria-expanded="false" aria-controls="blowup" data-cap="snag, full of holes"><span class="frame__pic"><img src="../../assets/photos/acadia-road-trip-photography/forest-path.jpg" width="520" height="346" alt="Frame 14: a dead tree trunk full of holes in a mossy forest." loading="lazy" decoding="async"></span><span class="frame__no" aria-hidden="true">14</span></button></li>
+      <li><button type="button" class="frame" aria-expanded="false" aria-controls="blowup" data-cap="the view from the ledge"><span class="frame__pic"><img src="../../assets/photos/acadia-road-trip-photography/overlook-look.jpg" width="520" height="346" alt="Frame 15: a person seen from behind, sitting on a ledge above forest and ocean." loading="lazy" decoding="async"></span><span class="frame__no" aria-hidden="true">15</span></button></li>
+      <li><button type="button" class="frame" aria-expanded="false" aria-controls="blowup" data-cap="granite, and a lake far below"><span class="frame__pic"><img src="../../assets/photos/acadia-road-trip-photography/ridge-rock.jpg" width="520" height="346" alt="Frame 16: a granite ledge between dark spruce, with a long lake in the valley below." loading="lazy" decoding="async"></span><span class="frame__no" aria-hidden="true">16</span></button></li>
+      <li><button type="button" class="frame" aria-expanded="false" aria-controls="blowup" data-cap="low sun, long shadows"><span class="frame__pic"><img src="../../assets/photos/acadia-road-trip-photography/summit-sun.jpg" width="520" height="346" alt="Frame 17: two people on a granite summit in low sun above a long lake." loading="lazy" decoding="async"></span><span class="frame__no" aria-hidden="true">17</span></button></li>
+      <li><button type="button" class="frame frame--tall" aria-expanded="false" aria-controls="blowup" data-cap="looking back"><span class="frame__pic"><img src="../../assets/photos/acadia-road-trip-photography/stand-cliff.jpg" width="520" height="780" alt="Frame 18, shot upright: a person standing on a granite block, looking toward the water." loading="lazy" decoding="async"></span><span class="frame__no" aria-hidden="true">18</span></button></li>
+      <li><button type="button" class="frame" aria-expanded="false" aria-controls="blowup" data-cap="the lakes went silver"><span class="frame__pic"><img src="../../assets/photos/acadia-road-trip-photography/summit-sunset.jpg" width="520" height="346" alt="Frame 19: a person in silhouette facing lakes and hazy forest." loading="lazy" decoding="async"></span><span class="frame__no" aria-hidden="true">19</span></button></li>
+      <li><button type="button" class="frame frame--tall" aria-expanded="false" aria-controls="blowup" data-cap="last light"><span class="frame__pic"><img src="../../assets/photos/acadia-road-trip-photography/sunset-lake.jpg" width="520" height="780" alt="Frame 20, shot upright: the sun setting behind cloud over dark hills and a lake." loading="lazy" decoding="async"></span><span class="frame__no" aria-hidden="true">20</span></button></li>
+      <li><button type="button" class="frame" aria-expanded="false" aria-controls="blowup" data-cap="mare&#x27;s tails over the trees"><span class="frame__pic"><img src="../../assets/photos/acadia-road-trip-photography/sky-wisps.jpg" width="520" height="346" alt="Frame 21: thin wispy clouds in an evening sky above a black tree line." loading="lazy" decoding="async"></span><span class="frame__no" aria-hidden="true">21</span></button></li>
+      <li><button type="button" class="frame" aria-expanded="false" aria-controls="blowup" data-cap="sun behind the power lines"><span class="frame__pic"><img src="../../assets/photos/acadia-road-trip-photography/sunset-poles.jpg" width="520" height="346" alt="Frame 22: the sun setting behind power poles and lines." loading="lazy" decoding="async"></span><span class="frame__no" aria-hidden="true">22</span></button></li>
+    </ol>
+    <svg class="grease" id="grease" viewBox="0 0 200 150" aria-hidden="true"><use href="assets/doodles.svg#loop" filter="url(#wax)"/></svg>
+    <figure class="blowup" id="blowup" hidden aria-live="polite">
+      <span class="print__photo"><img id="blowup-img" src="../../assets/photos/acadia-road-trip-photography/lighthouse.jpg" width="520" height="346" alt="" loading="lazy" decoding="async"></span>
+      <figcaption class="hand" id="blowup-cap"></figcaption>
+      <button type="button" class="blowup__close" id="blowup-close">Put it back</button>
+    </figure>
+    <p class="sheet__hint hand" aria-hidden="true"><svg viewBox="0 0 70 40"><use href="assets/doodles.svg#arrow-short"/></svg>our pick is circled. choose your own</p>
+  </div>
+</section>
+
+<!-- 5. Get the next trip: an envelope, then a postcard. Nothing is sent: no action, no name on the field, no fetch. -->
+<section class="post" id="subscribe" aria-labelledby="h-post" tabindex="-1">
+  <div class="envelope" id="envelope">
+    <p class="envelope__from">Slow Roads<br>A journal of road trips<br>One trip per issue</p>
+    <button type="submit" form="next-trip" class="postage" id="postage">
+      <span class="postage__face"><svg viewBox="0 0 52 40" aria-hidden="true"><use href="assets/doodles.svg#i-mail"/></svg><span class="postage__words">Get the next trip</span></span>
+    </button>
+    <svg class="postmark" viewBox="0 0 300 130" aria-hidden="true">
+      <defs><path id="pm-a" d="M22 65A43 43 0 0 1 108 65"/><path id="pm-b" d="M16 65A49 49 0 0 0 114 65"/></defs>
+      <g filter="url(#ink-a)">
+        <circle cx="65" cy="65" r="58" class="p-ring"/><circle cx="65" cy="65" r="33" class="p-ring p-ring--thin"/>
+        <text class="p-text"><textPath href="#pm-a" startOffset="50%" text-anchor="middle">SLOW ROADS</textPath></text>
+        <text class="p-text"><textPath href="#pm-b" startOffset="50%" text-anchor="middle">SAMPLE · NOT SENT</textPath></text>
+        <text class="p-mid" x="65" y="70" text-anchor="middle">No. 7</text>
+        <use href="assets/doodles.svg#cancel" x="128" y="33" width="168" height="64" class="p-waves"/>
+      </g>
+    </svg>
+    <div class="envelope__ask">
+      <h2 class="heading heading--brown" id="h-post">Get the next trip</h2>
+      <p class="typed">One email when the next trip is written up, and nothing in between. Put your address on the envelope and press the stamp.</p>
+    </div>
+    <div class="envelope__body">
+      <form class="address" id="next-trip" novalidate>
+        <label class="address__label hand" for="email">send it to</label>
+        <input class="address__input" id="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="you@example.com" aria-describedby="email-msg" required>
+        <p class="address__msg" id="email-msg" role="alert"></p>
+        <span class="address__line" aria-hidden="true"><span class="hand">that is all we need</span></span>
+        <span class="address__line" aria-hidden="true"></span>
+      </form>
+      <div class="postcard" id="postcard" hidden tabindex="-1" aria-labelledby="pc-kind">
+        <p class="postcard__kind" id="pc-kind">Post card</p>
+        <div class="postcard__msg hand">
+          <p>Thanks for asking!</p>
+          <p>This page is a sample, so nothing was sent and your address was not kept.</p>
+          <p>See you on the next road.</p>
+        </div>
+        <div class="postcard__to">
+          <span class="ministamp"><img src="../../assets/photos/acadia-road-trip-photography/lighthouse.jpg" width="520" height="346" alt="A small postage stamp showing the white lighthouse." loading="lazy" decoding="async"></span>
+          <svg class="postcard__cancel" viewBox="0 0 170 64" aria-hidden="true"><use href="assets/doodles.svg#cancel"/></svg>
+          <p class="postcard__line hand">to: <span id="pc-email"></span></p>
+          <p class="postcard__line hand">wherever you read it</p>
+          <span class="postcard__line" aria-hidden="true"></span>
+        </div>
+        <p class="postcard__small">Slow Roads is an invented journal. No emails are collected.</p>
+        <button type="button" class="postcard__again" id="again">Start over</button>
+      </div>
+    </div>
+    <svg class="rubber" viewBox="0 0 250 64" aria-hidden="true"><g filter="url(#ink-b)"><rect x="4" y="4" width="242" height="56" rx="5" class="r-box"/><text x="125" y="41" text-anchor="middle" class="r-text">PRINTED MATTER</text></g></svg>
+  </div>
+</section>
+
+</main>
+
+<!-- 6. Footer -->
+<footer class="foot">
+  <svg class="foot__sun" viewBox="0 0 90 50" aria-hidden="true"><use href="assets/doodles.svg#sunset"/></svg>
+  <p class="foot__line hand">A sample site by Mert Tureli. Slow Roads is an invented journal and no emails are collected. The photographs are mine, from a road trip to Acadia.</p>
+  <p class="foot__top"><a href="#top">Back to the top of the pile</a></p>
+</footer>
+</body>
+</html>

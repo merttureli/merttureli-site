@@ -96,3 +96,64 @@ here. The photographs are mine, from a balloon morning over Segovia."
 First view under 500 KB (one hero photograph, sized for the screen, plus fonts). Photographs lazy, with
 `srcset` from the 480, 960, 1280 and 1920 files that exist. Whole page under 3.5 MB. With reduced motion:
 no drift, no lift-off, no balloon travel; the background still changes by section, in steps.
+
+## What was built
+
+One page, no build step: `index.html`, `css/albada.css`, `js/albada.js` (scroll, rises, menu),
+`js/journey.js` (the color math) and `js/booking.js` (calendar, total, boarding card). Fonts are the Latin
+variable files from Fontsource (Ibarra Real Nova roman and italic, Hanken Grotesk). Photographs are read in
+place from `next/assets/img/beyond/`; all thirteen Segovia photographs are used, the film is not.
+
+**How the color journey works.** Each section carries its ground as `--sec-bg` in the CSS. The script reads
+them, mixes in OKLab against the scroll and writes one `--bg`, `--ink`, `--accent` and `--action` on the
+root. The ink is picked from the luminance of the ground: cream on dark, green-black on light, and in the
+narrow band where neither reaches 4.5 to 1 it goes to pure white or pure black and flips once
+(`inkFor` in `journey.js`). Measured every 24 px of scroll: lowest ink contrast 5.2 at 1440 wide, 4.7 at
+390 wide. Without the script, or with reduced motion, the same CSS values paint the sections in steps.
+
+**Deviations from the brief, and why**
+
+- **Display size.** Headlines are 6.8vw (98px at 1440, capped at 140px), line height 1.0, against 12px
+  labels and 16px text, after the note on casamomo.at: the effect is scale contrast. Tracking stays at the
+  brief's +0.02em because the headlines are capitals.
+- **Three colors a screen.** The Book tag is burner amber on the dark grounds and terracotta on the light
+  ones, so a screen never shows more than ground, ink and one action color. Terracotta as small text only
+  reaches 4.4 to 1 on cream, so links are ink with a terracotta rule, and the tag is white on terracotta
+  (4.99 to 1).
+- **Colors between the stops.** First light to dawn peach passes through plum `#8a5470` and apricot
+  `#e69a6a` (a straight mix is gray). The pale stops pass through a lighter tint (`data-via` on the
+  section) so the mix never looks dirty.
+- **Order of the pale stops.** 08:10 is on "above the cloud" and 08:40 on stone gold, which then carries into
+  the arcade; the basket returns to the pale sky, then cream, as in the brief's section list.
+- **The arcade.** Six bays, two arches each, twelve different photographs (all but the hero). The hero
+  photograph is not repeated. `balloon-below` is the arch beside Questions. The arcade's title walks past
+  with the arches when it is pinned (900px and wider, 560px and taller); otherwise the title sits above a
+  strip that scrolls sideways by touch, trackpad or arrow keys.
+- **The flight strip** shows from 1100px wide, only while the flight lasts (it fades in after the first
+  screen and leaves when the arcade starts). Narrower screens get the running clock in the bar instead.
+- **07:15 photographs.** Both balloons in `balloons-dusk` and the one in `cathedral-dawn` sit at the top
+  edge of the frame, where a round arch cuts in. Those two arches are anchored to the top of the photograph
+  and drift as whole frames instead of drifting inside the frame. `cathedral-dawn` is cropped to the dome
+  and the balloon; the tall tower is outside the arch.
+- **Confirmation.** The boarding card replaces the form and the section headline becomes
+  "Buenos días, (first name)." so there is one large statement on screen, not two.
+- **Bar.** Transparent over the first screen. Further down it carries a veil of the current ground color
+  with a soft lower edge, so text passing under it does not collide with the bar's labels.
+- **Phone menu.** The three bar links move into a full-screen sheet ("Menu"), with the arcade and the
+  booking added.
+
+**Known weak spots**
+
+- The hero photograph only exists 1280px wide (portrait), so it is enlarged on wide screens and is soft
+  above about 1600px.
+- The collage captions are rotated with their photographs; rotated 12px capitals are slightly soft on
+  low-density screens.
+- The right balloon in `balloons-dusk` clears the arch by a few pixels. It is whole, but close.
+- "Which mornings are full" is a fixed function of the date (`createSchedule` in `booking.js`), and the
+  calendar is built from today's date, so screenshots differ from day to day.
+- Inside the Websites page's preview frame the pinned arcade depends on the frame being at least 900 by
+  560; smaller frames get the sideways strip.
+
+**Checked.** `node tools/study-shots.js albada` (no errors, no failed or outside requests, no overflow, no
+unnamed controls, no missing alt), the booking by mouse and by keyboard only, and `python3 tools/check.py
+--fast` (nothing under `studies/albada/` fails).

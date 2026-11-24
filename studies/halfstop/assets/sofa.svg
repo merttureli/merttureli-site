@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 844 324" fill="none" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter">
+<!-- Sofa, 84 in wide, 32 in to the top of the back, front elevation. 10 units = 1 in; the floor is y 320. -->
+<g>
+<path vector-effect="non-scaling-stroke" d="M55 0H785V150H55ZM298 0V150M542 0V150"/>
+<path vector-effect="non-scaling-stroke" d="M0 80H55V270H0ZM785 80H840V270H785Z"/>
+<path vector-effect="non-scaling-stroke" d="M55 150H785V210H55ZM298 150V210M542 150V210"/>
+<path vector-effect="non-scaling-stroke" d="M55 210V270H785V210"/>
+<path vector-effect="non-scaling-stroke" d="M22 270H40L37 320H27ZM800 270H818L813 320H803Z"/>
+</g>
+</svg>
