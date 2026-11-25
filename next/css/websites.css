@@ -1,7 +1,8 @@
 /* STUDIO websites page (next/websites.html): the live site's websites page in the V5
    product-showcase language. Loaded after tokens.css, studio.css and showcase.css; reuses the
    case-page pieces (.lnav, .phero, .stage, .csec, .specsheet, .web) and adds the browser stage,
-   the live-sites strip, the studies picker, the four steps and the inquiry drawer. */
+   the live-sites strip, the four steps and the inquiry drawer. The catalog of sample sites (#studies)
+   is in catalog.css. */
 
 mark.flag { background: none; color: inherit; border-bottom: 1px dotted var(--signal-ink); cursor: help; }
 .top__nav a[aria-current="page"]::before { transform: scale(1); }
@@ -43,34 +44,6 @@ mark.flag { background: none; color: inherit; border-bottom: 1px dotted var(--si
 }
 .live__item:has(a:focus-visible) { transform: translateY(-4px); box-shadow: var(--shadow-tile-hi); }
 .live__item a:focus-visible { outline-offset: -3px; border-radius: var(--radius-tile); }
-
-/* --------------------------------------------------------- studies */
-.studies__grid { display: grid; grid-template-columns: minmax(250px, .34fr) minmax(0, 1fr); gap: var(--bento-gap); align-items: start; }
-.picker { display: flex; flex-direction: column; gap: var(--bento-gap); }
-.pick { position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr); grid-template-rows: auto auto; gap: 4px 14px; align-items: start; padding: 18px 20px; border-radius: var(--radius-tile-s); background: var(--tile); box-shadow: var(--shadow-tile); text-align: left; transition: background var(--dur-400) var(--ease), color var(--dur-400) var(--ease), transform var(--dur-600) var(--ease); }
-.pick__letter { grid-row: span 2; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); font-family: var(--mono); font-size: var(--text-mono-l); font-stretch: var(--mono-stretch); transition: background var(--dur-400), border-color var(--dur-400), color var(--dur-400); }
-.pick__name { font-weight: 680; font-size: clamp(18px, 1.4vw, 22px); letter-spacing: -.015em; line-height: 1.15; }
-.pick__line { font-size: var(--text-xs); line-height: 1.4; color: var(--ink-soft); }
-.pick[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
-.pick[aria-pressed="true"] .pick__line { color: var(--paper-soft-hi); }
-.pick[aria-pressed="true"] .pick__letter { background: var(--signal); border-color: var(--signal); color: var(--ink); }
-@media (hover: hover) { .pick:not([aria-pressed="true"]):hover { transform: translateX(4px); } .pick:not([aria-pressed="true"]):hover .pick__letter { border-color: var(--ink); } }
-
-.viewer__frame { position: relative; display: flex; flex-direction: column; aspect-ratio: 16 / 10.4; border-radius: calc(var(--radius-tile) + 8px); background: var(--tile); box-shadow: var(--shadow-stage); overflow: hidden; }
-.viewer__frame .browser__bar { height: 44px; padding: 0 18px; }
-.viewer__state { display: inline-flex; align-items: center; gap: 8px; }
-.viewer__dot { width: 7px; height: 7px; border-radius: 50%; background: var(--paper-3); transition: background var(--dur-400); }
-.viewer__frame[data-state="live"] .viewer__dot { background: var(--live); }
-.viewer__screen { position: relative; flex: 1; overflow: hidden; background: var(--paper-2); }
-.viewer__screen iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; opacity: 0; transition: opacity var(--dur-500) var(--ease); background: transparent; }
-.viewer__frame[data-state="live"] iframe { opacity: 1; }
-.viewer__frame[data-state="swapping"] iframe { opacity: 0; transition-duration: var(--dur-250); }
-.viewer__loading { position: absolute; left: 50%; top: 50%; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--ink); animation: spin 1s linear infinite; }
-.viewer__frame[data-state="live"] .viewer__loading { display: none; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.viewer__foot { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-top: 18px; padding: 0 6px; }
-.viewer__cap { display: flex; flex-direction: column; gap: 4px; }
-.viewer__line { font-size: var(--text-s); color: var(--ink-soft); line-height: 1.4; max-width: 60ch; }
 
 /* ------------------------------------------------------- four steps */
 .steps4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--bento-gap); counter-reset: s; }
@@ -175,8 +148,6 @@ mark.flag { background: none; color: inherit; border-bottom: 1px dotted var(--si
 @media (max-width: 1100px) {
   .live, .steps4 { grid-template-columns: 1fr 1fr; }
   .steps4 li + li::before { display: none; }
-  .studies__grid { grid-template-columns: 1fr; }
-  .picker { display: grid; grid-template-columns: 1fr 1fr; }
 }
 
 /* ------------------------------------------------------------- phone */
@@ -191,12 +162,6 @@ mark.flag { background: none; color: inherit; border-bottom: 1px dotted var(--si
   .live { grid-template-columns: 1fr; gap: 10px; }
   .live__item a { min-height: 0; }
   .live__go { margin-top: 10px; }
-  .picker { grid-template-columns: 1fr 1fr; gap: 8px; }
-  .pick { grid-template-columns: 1fr; padding: 14px; gap: 6px; }
-  .pick__letter { grid-row: auto; width: 32px; height: 32px; }
-  .pick__line { display: none; }
-  .viewer__frame { aspect-ratio: 390 / 600; border-radius: 26px; }
-  .viewer__foot { flex-direction: column; align-items: flex-start; gap: 14px; }
   .steps4 { grid-template-columns: 1fr 1fr; gap: 10px; }
   .steps4 li { min-height: 160px; padding: 18px; gap: 24px; }
   .steps4__n { font-size: 38px; }
@@ -214,7 +179,6 @@ mark.flag { background: none; color: inherit; border-bottom: 1px dotted var(--si
 
 @media (prefers-reduced-motion: reduce) {
   .live__item:hover { transform: none; }
-  .viewer__loading { animation: none; }
 }
 
 /* names shared with other Studio components (.close is the home closing CTA, .steps the home

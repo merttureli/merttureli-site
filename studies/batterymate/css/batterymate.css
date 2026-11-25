@@ -1,0 +1,435 @@
+/* Batterymate: a sports hardware site that plays catch. Sample 4. The brief is in ../NOTES.md.
+   Chalk, night navy, optic yellow; the stitch red is the seam and nothing else. Hard edges, a 6 degree slant. */
+
+@font-face { font-family: "Sofia Sans XC"; font-style: normal; font-weight: 1 1000; font-display: swap; src: url("../fonts/sofia-sans-extra-condensed-latin-wght-normal.woff2") format("woff2"); }
+@font-face { font-family: "Sofia Sans XC"; font-style: italic; font-weight: 1 1000; font-display: swap; src: url("../fonts/sofia-sans-extra-condensed-latin-wght-italic.woff2") format("woff2"); }
+@font-face { font-family: "Sofia Sans"; font-style: normal; font-weight: 1 1000; font-display: swap; src: url("../fonts/sofia-sans-latin-wght-normal.woff2") format("woff2"); }
+
+:root {
+  --chalk: #f3f2ea;
+  --navy: #0a1126;
+  --yellow: #dcff1f;
+  --red: #e03a2f;
+  --line: #c9c8bd;
+  --line-navy: #26304f;
+  --lamp: #ffffff;
+  --m: clamp(16px, 2.8vw, 44px);          /* page margin */
+  --bar: 60px;
+  --tick: 56px;
+  --slant: -6deg;
+  --snap: cubic-bezier(.2, 1.3, .3, 1);   /* fast in, a small overshoot, quick settle */
+  --display: "Sofia Sans XC", "Arial Narrow", "Helvetica Neue Condensed", Impact, sans-serif;
+  --text: "Sofia Sans", "Helvetica Neue", Arial, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; scroll-padding-top: var(--bar); }
+body { margin: 0; background: var(--chalk); color: var(--navy); font: 400 17px/1.45 var(--text); -webkit-font-smoothing: antialiased; overflow-x: clip; }
+h1, h2, h3, p, ul, ol, dl, dd, fieldset, legend { margin: 0; padding: 0; }
+ul, ol { list-style: none; }
+fieldset { border: 0; min-width: 0; }
+img, svg, canvas { display: block; }
+[hidden] { display: none !important; }
+img { max-width: 100%; height: auto; }
+a { color: inherit; }
+button, input, select { font: inherit; color: inherit; }
+i, b { font-style: normal; font-weight: inherit; }
+::selection { background: var(--yellow); color: var(--navy); }
+
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.skip { position: fixed; left: 12px; top: 12px; z-index: 1000; padding: 12px 18px; background: var(--yellow); color: var(--navy); font-weight: 700; text-decoration: none; border: 2px solid var(--navy); transform: translateY(-200%); }
+.skip:focus { transform: none; }
+
+:focus-visible { outline: 3px solid var(--navy); outline-offset: 3px; }
+.band--navy :focus-visible, .bar :focus-visible { outline-color: var(--yellow); }
+
+/* The way back is docked in the bar as a slanted tag that belongs to it (the bar is the one place the page never
+   scrolls under): beside the wordmark on a wide screen, on the bar's second row on a phone. The link is not leaned;
+   the tag behind it is, so the words stay upright. */
+.study-back.study-back--batterymate { position: fixed; left: calc(var(--m) + 160px); right: auto; top: calc((var(--bar) - 34px) / 2); bottom: auto; translate: none; min-height: 34px; padding: 0 14px 0 11px; gap: 7px; border-radius: 0; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; color: var(--chalk); font: 600 13px/1 var(--text); letter-spacing: .01em; isolation: isolate; transition: color .12s; }
+.study-back--batterymate::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--line-navy); transform: skewX(var(--slant)); transition: background-color .12s; }
+.study-back--batterymate svg { width: 14px; height: 14px; }
+.study-back.study-back--batterymate:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; box-shadow: none; }
+@media (hover: hover) { .study-back.study-back--batterymate:hover { background: none; transform: none; color: var(--navy); } .study-back--batterymate:hover::before { background: var(--chalk); } }
+
+/* ------------------------------------------------------------------ type */
+.display { font: italic 900 1em/.86 var(--display); letter-spacing: -.01em; text-transform: uppercase; }
+.display .line { display: block; overflow: clip; overflow-clip-margin: .09em; white-space: nowrap; padding-inline: .04em .12em; margin-inline: -.04em -.12em; }
+.display .fill, .display .outline { display: inline-block; }
+/* the outlined line: the stroke is drawn first and the fill covers its inner half, so the weight is real and
+   the joins inside the letters do not show */
+.outline { color: var(--chalk); -webkit-text-stroke: .052em var(--navy); paint-order: stroke fill; }
+.band--navy .outline { color: var(--navy); -webkit-text-stroke-color: var(--chalk); }
+.band--yellow .outline { color: var(--yellow); }
+.label { font: 700 14px/1.2 var(--text); letter-spacing: .04em; text-transform: uppercase; }
+
+/* headlines slam in from the left, a line at a time */
+html.js:not(.still) .reveal .line > span, html.js:not(.still) .hero__title .line > span { transform: translateX(-135%); }
+html.js:not(.still) .is-in .line > span { transform: none; transition: transform .45s var(--snap); }
+html.js:not(.still) .is-in .line:nth-child(2) > span { transition-delay: .09s; }
+html.js:not(.still) .is-in .line:nth-child(3) > span { transition-delay: .18s; }
+
+/* ------------------------------------------------------------- buttons */
+/* a parallelogram: the box leans, the words stay upright */
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 26px; background: var(--yellow); color: var(--navy); border: 2px solid var(--navy); border-radius: 0; font: 800 16px/1 var(--text); letter-spacing: .02em; text-transform: uppercase; text-decoration: none; transform: skewX(var(--slant)); cursor: pointer; transition: background-color .12s, color .12s, transform .25s var(--snap); }
+.btn > span { display: inline-block; transform: skewX(calc(-1 * var(--slant))); }
+.btn--big { min-height: 60px; padding: 0 34px; font-size: 19px; }
+.btn--bar { min-height: 40px; padding: 0 20px; font-size: 14px; border-color: var(--yellow); }
+.btn--navy { background: var(--navy); color: var(--chalk); }
+@media (hover: hover) {
+  .btn:hover { background: var(--navy); color: var(--yellow); transform: skewX(var(--slant)) translateX(4px); }
+  .btn--bar:hover { background: var(--chalk); color: var(--navy); border-color: var(--chalk); }
+  .btn--navy:hover { background: var(--chalk); color: var(--navy); }
+}
+.btn:active { transform: skewX(var(--slant)) translateX(1px) scale(.98); }
+
+/* ------------------------------------------------------------------ bar */
+.bar { position: fixed; z-index: 50; inset: 0 0 auto 0; height: var(--bar); display: flex; align-items: center; gap: clamp(14px, 2.2vw, 34px); padding: 0 var(--m); background: var(--navy); color: var(--chalk); }
+.bar__mark { flex: none; width: 144px; overflow: hidden; white-space: nowrap; font: italic 900 30px/1 var(--display); letter-spacing: .005em; text-transform: uppercase; text-decoration: none; padding: 8px 0; }
+.bar__nav { display: flex; align-items: center; gap: clamp(14px, 2.2vw, 34px); margin-left: auto; }
+.bar__link { font: 600 15px/1 var(--text); text-decoration: none; padding: 12px 0; border-bottom: 2px solid transparent; }
+@media (hover: hover) { .bar__link:hover { border-bottom-color: var(--yellow); } }
+
+/* ------------------------------------------------------- bands and field */
+.band { position: relative; overflow: clip; isolation: isolate; }
+/* the field is fixed to the window, so only a clip-path clips it to its band. The clip-path sits on a layer of its own
+   so it never clips the band's other content (the WebGL canvas in the hero and the pinned window). */
+.band > .field-clip { position: absolute; inset: 0; z-index: 0; clip-path: inset(0); pointer-events: none; }
+.band--chalk { background: var(--chalk); color: var(--navy); --field: var(--line); }
+.band--navy { background: var(--navy); color: var(--chalk); --field: var(--line-navy); }
+.band--yellow { background: var(--yellow); color: var(--navy); --field: #c4e407; }
+.band > * { position: relative; z-index: 1; }
+/* The field is one drawing fixed to the window; each band shows its part of it in its own line color. */
+.field-clip > .field { position: fixed; z-index: 0; left: 50%; top: 0; color: var(--field); pointer-events: none; transform-origin: 50% 0; will-change: transform; }
+.field path { stroke-width: var(--fw, .4); stroke-dasharray: 1; stroke-dashoffset: 0; }
+html.js:not(.still) .field path { stroke-dashoffset: 1; }
+
+/* ----------------------------------------------------------------- seam */
+.seam { position: fixed; z-index: 40; top: var(--bar); bottom: 0; right: 0; width: var(--m); pointer-events: none; }
+.seam__svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.seam__thread { fill: none; stroke: var(--red); stroke-width: 1.5px; }
+.seam__stitch { fill: none; stroke: var(--red); stroke-width: 11px; stroke-dasharray: 2 9; }
+.seam__ball { position: absolute; left: 50%; top: 0; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: var(--yellow); border: 2px solid var(--navy); }
+@media (max-width: 899px) { .seam__stitch { stroke-width: 8px; stroke-dasharray: 1.5 8; } .seam__ball { width: 11px; height: 11px; margin: -5.5px 0 0 -5.5px; } }
+
+/* ----------------------------------------------------------------- hero */
+/* A grid: the headline on top, the copy at the foot, so the two can never overlap at any height (the hero grows
+   instead). The headline's size leaves the copy its room: 250px under two lines of .88em. */
+.hero { margin-top: var(--bar); --hh: max(560px, calc(100svh - var(--bar) - var(--tick))); min-height: var(--hh); --fs: min(20vw, calc((var(--hh) - 250px) / 1.76)); display: grid; grid-template-rows: auto 1fr auto; padding-bottom: clamp(20px, 4.4svh, 44px); cursor: crosshair; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+.hero a, .hero button { cursor: pointer; }
+/* the type sits over the 3D: the net rises behind "THROWS" */
+.hero > .hero__title { grid-row: 1; justify-self: start; margin: calc(var(--fs) * .035) 0 0 var(--m); font-size: var(--fs); z-index: 3; }
+.hero > .hero__machine { position: absolute; right: calc(var(--m) + 1vw); bottom: 0; top: calc(var(--fs) * .5); left: 40%; }
+.hero__still { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; }
+.hero.is-live .hero__still { visibility: hidden; }
+.hero > .hero__copy { grid-row: 3; margin: 18px 0 0 var(--m); width: min(34%, 460px); z-index: 3; }
+.hero__lede { font: 600 clamp(19px, 1.7vw, 25px)/1.22 var(--text); max-width: 17em; text-wrap: balance; }
+.hero__cta { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 18px; margin-top: clamp(16px, 2.6svh, 26px); }
+.chip { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px 0 12px; background: transparent; border: 2px solid var(--navy); border-radius: 0; font: 700 14px/1 var(--text); letter-spacing: .02em; text-transform: uppercase; transform: skewX(var(--slant)); }
+.chip > span { display: inline-flex; align-items: center; gap: 9px; transform: skewX(calc(-1 * var(--slant))); }
+.chip__ball { width: 14px; height: 14px; border-radius: 50%; background: var(--yellow); border: 2px solid var(--navy); flex: none; }
+html.js:not(.still) .chip__ball { animation: toss 1.6s var(--snap) infinite; }
+@keyframes toss { 0%, 55%, 100% { transform: none; } 70% { transform: translateY(-7px); } 85% { transform: translateY(1px); } }
+.chip.is-full { background: var(--navy); color: var(--chalk); }
+.hero > .hero__stage { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.hero__stage canvas, .how__stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hero > .hero__fx { position: absolute; inset: 0; z-index: 4; pointer-events: none; overflow: clip; }
+.hero__trail { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* the release: an 80px yellow ring with navy edges (it reads on chalk and on navy type), held for 450ms */
+.fx-ring { position: absolute; width: 80px; height: 80px; margin: -40px 0 0 -40px; border: 6px solid var(--yellow); border-radius: 50%; box-shadow: 0 0 0 2px var(--navy), inset 0 0 0 2px var(--navy); animation: ring .58s both; }
+.fx-ring--back { width: 64px; height: 64px; margin: -32px 0 0 -32px; background: var(--yellow); border-width: 2px; border-color: var(--navy); box-shadow: none; animation-name: pop; animation-duration: .4s; }
+@keyframes ring { 0% { transform: scale(.3); opacity: 1; animation-timing-function: cubic-bezier(.2, 1.3, .3, 1); } 20% { transform: scale(1); opacity: 1; } 80% { transform: scale(1); opacity: 1; animation-timing-function: ease-in; } 100% { transform: scale(1.14); opacity: 0; } }
+@keyframes pop { 0% { transform: scale(.3); opacity: 1; } 55% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1.25); opacity: 0; } }
+/* a click that cannot be thrown (five already in the air): a crossed ring at the pointer and why */
+.fx-no { position: absolute; width: 80px; height: 80px; margin: -40px 0 0 -40px; border: 5px solid var(--navy); border-radius: 50%; background: rgba(243, 242, 234, .7); animation: nope .9s both; }
+.fx-no::before { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 5px; margin-left: -2.5px; background: var(--navy); transform: rotate(45deg); }
+.fx-no > b { position: absolute; left: calc(100% + 10px); top: 50%; translate: 0 -50%; padding: 7px 12px 8px; background: var(--navy); color: var(--chalk); font: 800 15px/1 var(--text); letter-spacing: .03em; text-transform: uppercase; white-space: nowrap; }
+.fx-no.is-left > b { left: auto; right: calc(100% + 10px); }
+@keyframes nope { 0% { transform: scale(.5); opacity: 0; animation-timing-function: cubic-bezier(.2, 1.3, .3, 1); } 15% { transform: none; opacity: 1; } 22% { transform: translateX(-5px); } 29% { transform: translateX(5px); } 36% { transform: none; } 80% { opacity: 1; } 100% { opacity: 0; } }
+.fx-arc { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.fx-arc path { fill: none; stroke: var(--navy); stroke-width: 3px; stroke-dasharray: 2 11; stroke-linecap: round; }
+.fx-arc circle { fill: var(--yellow); stroke: var(--navy); stroke-width: 2px; }
+
+/* the hero's scoreboard: white lamps on navy */
+.score { display: flex; background: var(--navy); color: var(--lamp); border: 2px solid var(--navy); }
+.hero > .score { position: absolute; right: calc(var(--m) + 1vw); top: calc(var(--fs) * .1); }
+.score__cell { display: grid; justify-items: start; gap: 6px; padding: 12px 18px 10px; }
+.score__cell + .score__cell { border-left: 2px solid var(--line-navy); }
+.score__label { font: 700 12px/1 var(--text); letter-spacing: .08em; text-transform: uppercase; color: #b9bfd3; }
+.score__num { font: 800 clamp(48px, 5.2vw, 76px)/.82 var(--display); font-variant-numeric: tabular-nums; letter-spacing: .02em; min-width: 1.05em; transform-origin: 50% 0; }
+html:not(.still) .score__num.is-flip { animation: flip .34s var(--snap); }
+@keyframes flip { from { transform: perspective(300px) rotateX(-88deg); } to { transform: none; } }
+
+/* --------------------------------------------------------------- ticker */
+.ticker { position: relative; z-index: 2; height: var(--tick); background: var(--navy); color: var(--yellow); overflow: clip; display: flex; align-items: center; }
+.ticker__lean { display: flex; flex: none; will-change: transform; }
+.ticker__run { display: flex; flex: none; align-items: center; }
+.ticker__run li { display: flex; align-items: center; flex: none; font: italic 800 30px/1 var(--display); letter-spacing: .02em; text-transform: uppercase; white-space: nowrap; }
+.ticker__run li.is-boxed span { border: 2px solid var(--yellow); padding: 2px 12px 4px; transform: skewX(var(--slant)); }
+.ticker__run li::after { content: ""; width: 15px; height: 15px; margin: 0 26px; border-radius: 50%; background: var(--yellow); }
+html.still .ticker, html:not(.js) .ticker { height: auto; padding: 12px var(--m); }
+html.still .ticker__run, html:not(.js) .ticker__run { flex-wrap: wrap; gap: 10px 0; }
+html.still .ticker__lean, html:not(.js) .ticker__lean { flex: 1 1 auto; }
+
+/* ---------------------------------------------------------- how it works */
+/* standing (no WebGL, reduced motion): the three steps one under another, each with its still */
+.how__pin { display: grid; gap: 40px; padding: clamp(64px, 9vw, 120px) var(--m); }
+.how__hint { font: 500 17px/1.3 var(--text); margin-top: 6px; }
+.how__steps { display: grid; gap: 56px; }
+.step { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); grid-template-rows: auto auto 1fr; column-gap: 4vw; align-items: start; }
+.step__no { grid-column: 1; display: block; font-size: clamp(60px, 9vw, 150px); }
+.step__verb { grid-column: 1; font-size: clamp(88px, 15vw, 250px); margin-top: .04em; }
+.step__say { grid-column: 1; font: 600 clamp(19px, 1.7vw, 25px)/1.25 var(--text); max-width: 18em; margin-top: 18px; text-wrap: balance; }
+.step__still { grid-column: 2; grid-row: 1 / 4; width: 100%; border: 2px solid var(--navy); }
+.how__window { display: none; }
+
+/* live: one pinned screen, the scroll runs the three steps in the window. On a screen under 561px tall (a phone
+   on its side, a laptop at 200% zoom) there is no room for it: the steps stand one under another with their stills. */
+@media (min-height: 561px) {
+html.live .how { height: 400svh; }
+html.live .how__pin { position: sticky; top: var(--bar); height: calc(100svh - var(--bar)); padding: 0; display: block; }
+html.live .how__head { position: absolute; left: var(--m); top: clamp(22px, 4svh, 40px); }
+html.live .how__steps { position: absolute; left: var(--m); bottom: clamp(26px, 5.5svh, 60px); width: calc(44% - var(--m) - 24px); height: 74%; display: block; }
+html.live .step { position: absolute; left: 0; bottom: 0; width: 100%; display: block; }
+html.live .step__still { display: none; }
+html.live .step__verb, html.live .step__no { font-size: min(13.9vw, 25svh); }
+html.live .step .line > span { transition: transform .34s var(--snap); }
+html.live .step__say { transition: transform .34s var(--snap), opacity .12s linear; }
+html.live .step:not(.is-on) .line > span { transform: translateX(-135%); transition-duration: .14s; transition-timing-function: cubic-bezier(.6, 0, .9, .4); }
+html.live .step:not(.is-on) .step__say { opacity: 0; transform: translateX(-28px); transition-duration: .1s; }
+html.live .step.is-on .line > span { transition-delay: .1s; }
+html.live .step.is-on .step__verb .line > span { transition-delay: .15s; }
+html.live .step.is-on .step__say { transition-delay: .2s; }
+html.live .how__window { display: block; position: absolute; left: 44%; right: calc(var(--m) + 1vw); top: clamp(22px, 4svh, 40px); bottom: clamp(26px, 5.5svh, 60px); border: 2px solid var(--navy); background: var(--chalk); overflow: clip; }
+}
+.how__still { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: 50% 60%; }
+.how__overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.how.is-live .how__still { visibility: hidden; }
+.how__stage { position: absolute; inset: 0; }
+.how__pips { position: absolute; left: -2px; top: -2px; display: flex; }
+.how__pips li { min-height: 34px; display: flex; align-items: center; padding: 0 14px; border: 2px solid var(--navy); margin-right: -2px; background: var(--chalk); font: 800 13px/1 var(--text); letter-spacing: .06em; text-transform: uppercase; counter-increment: pip; }
+.how__pips li::before { content: "0" counter(pip); margin-right: 8px; font: 800 17px/1 var(--display); letter-spacing: .04em; }
+.how[data-step="0"] .how__pips li:nth-child(1), .how:not([data-step]) .how__pips li:nth-child(1), .how[data-step="1"] .how__pips li:nth-child(2), .how[data-step="2"] .how__pips li:nth-child(3) { background: var(--navy); color: var(--chalk); }
+
+/* ---------------------------------------------------------- section heads */
+.sec__head { padding: clamp(64px, 10vw, 150px) var(--m) 0; }
+.sec__head .label { margin-bottom: 14px; }
+.sec__head .display { font-size: clamp(76px, 16vw, 300px); }
+
+/* ---------------------------------------------------------- the numbers */
+.numbers { padding-bottom: clamp(64px, 9vw, 130px); }
+.linescore { margin: clamp(34px, 5vw, 70px) var(--m) 0; display: grid; grid-template-columns: minmax(96px, .62fr) minmax(0, 6.4fr); border: 2px solid var(--chalk); }
+.ls__team { display: grid; grid-template-rows: 58px 1fr; border-right: 2px solid var(--chalk); font: 700 13px/1.1 var(--text); letter-spacing: .06em; text-transform: uppercase; }
+.ls__team span { display: flex; align-items: center; padding: 0 14px; }
+.ls__team span:first-child { border-bottom: 2px solid var(--line-navy); color: #b9bfd3; }
+.ls__team span:last-child { align-items: flex-start; padding-top: clamp(26px, 3vw, 44px); writing-mode: horizontal-tb; }
+/* the big numerals need the width: the team column is left out and each inning gets the room its figure takes */
+.linescore { grid-template-columns: minmax(0, 1fr); }
+.ls__team { display: none; }
+.ls__grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, .7fr) minmax(0, 1.6fr); grid-template-rows: 58px auto auto; }
+.inning { display: grid; grid-row: span 3; grid-template-rows: subgrid; }
+.inning + .inning { border-left: 2px solid var(--line-navy); }
+.inning dt { display: flex; align-items: center; gap: 10px; padding: 0 16px; border-bottom: 2px solid var(--line-navy); font: 700 13px/1 var(--text); letter-spacing: .06em; text-transform: uppercase; }
+.ls__no { font: 800 22px/1 var(--display); color: #b9bfd3; }
+.lamp { width: 12px; height: 12px; border-radius: 50%; background: var(--lamp); box-shadow: 0 0 0 3px rgba(255, 255, 255, .22); flex: none; order: 3; margin-left: auto; transition: background-color .08s; }
+.ls__val { padding: clamp(14px, 1.8vw, 26px) 16px 0; display: flex; align-items: flex-end; gap: 6px; color: var(--lamp); perspective: 500px; }
+.ls__val .flip { display: inline-block; font: 800 clamp(80px, 9vw, 160px)/.8 var(--display); font-variant-numeric: tabular-nums; letter-spacing: .01em; transform-origin: 50% 0; }
+.ls__val small { font: 800 clamp(20px, 2vw, 30px)/1 var(--display); letter-spacing: .04em; text-transform: uppercase; padding-bottom: .1em; }
+.ls__note { padding: 14px 16px 20px; font: 500 15px/1.35 var(--text); color: #cfd3e2; text-wrap: balance; }
+/* lamps light left to right; a numeral flips over as its lamp comes on */
+html.js:not(.still) .inning:not(.is-lit) .lamp { background: var(--line-navy); box-shadow: none; }
+/* unlit, a numeral is dim but still readable (4.9 to 1), in case the board is never seen lighting */
+html.js:not(.still) .inning:not(.is-lit) .ls__val, html.js:not(.still) .inning:not(.is-lit) .ls__note { color: #7d86a3; }
+html.js:not(.still) .inning .ls__val, html.js:not(.still) .inning .ls__note { transition: color .12s linear; }
+html.js:not(.still) .inning.is-lit .flip { animation: flip .42s var(--snap) both; }
+/* the lamp row across the top of the board: bulbs light one by one, left to right, with the innings */
+.ls__bulbs { grid-column: 1 / -1; position: relative; height: 40px; border-bottom: 2px solid var(--chalk); background: radial-gradient(circle, var(--line-navy) 0 5px, transparent 6px) 0 50% / 20px 20px repeat-x; }
+.ls__bulbs-on { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; background: radial-gradient(circle, var(--lamp) 0 5px, transparent 6px) 0 50% / 20px 20px repeat-x; filter: drop-shadow(0 0 3px rgba(255, 255, 255, .8)); }
+html.js:not(.still) .ls__bulbs-on { width: 0; }
+.numbers__kicker { font-size: clamp(76px, 16vw, 300px); margin: clamp(40px, 6vw, 90px) var(--m) 0; }
+
+/* ------------------------------------------------------ built for practice */
+.practice { padding-bottom: clamp(64px, 9vw, 130px); }
+.drills { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto auto auto; margin: clamp(34px, 5vw, 70px) var(--m) 0; border: 2px solid var(--navy); background: var(--chalk); }
+.drill { display: grid; grid-row: span 3; grid-template-rows: subgrid; align-content: start; padding: 0 0 26px; }
+.drill + .drill { border-left: 2px solid var(--navy); }
+.drill img { width: 100%; height: 100%; aspect-ratio: 4 / 3; object-fit: contain; border-bottom: 2px solid var(--navy); }
+.drill__verb { font: italic 900 clamp(44px, 5vw, 80px)/.9 var(--display); text-transform: uppercase; padding: 20px 22px 0; display: flex; align-items: baseline; gap: 14px; }
+.drill__verb i { font: 800 .42em/1 var(--display); letter-spacing: .04em; }
+.drill p { padding: 12px 22px 0; font: 500 18px/1.4 var(--text); max-width: 24em; }
+
+/* ----------------------------------------------------------- book a demo */
+.book { padding-bottom: clamp(64px, 9vw, 130px); }
+.book__lede { font: 600 clamp(19px, 1.7vw, 25px)/1.25 var(--text); max-width: 26em; margin-top: 22px; text-wrap: balance; }
+.booking { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: clamp(28px, 4vw, 64px); margin: clamp(34px, 5vw, 64px) var(--m) 0; align-items: start; }
+.booking legend { margin-bottom: 14px; }
+.fixtures__list { border-top: 2px solid var(--navy); }
+.slot { position: relative; display: grid; grid-template-columns: minmax(64px, 1.1fr) minmax(0, 2fr) auto; align-items: center; gap: 12px; min-height: 68px; padding: 6px 12px 6px 14px; border-bottom: 2px solid var(--navy); cursor: pointer; }
+.slot input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.slot__day { font: italic 900 46px/.9 var(--display); text-transform: uppercase; }
+.slot__time { font: 800 34px/.9 var(--display); font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+.tag { display: inline-flex; align-items: center; min-height: 30px; padding: 0 12px; border: 2px solid var(--navy); font: 800 13px/1 var(--text); letter-spacing: .05em; text-transform: uppercase; transform: skewX(var(--slant)); }
+.slot.is-taken { cursor: not-allowed; }
+.slot.is-taken .slot__day, .slot.is-taken .slot__time { text-decoration: line-through; text-decoration-thickness: 3px; opacity: .6; }
+.slot.is-taken .tag { border-style: dashed; }
+.slot.is-taken input { cursor: not-allowed; }
+.slot:has(input:checked) { background: var(--navy); color: var(--chalk); }
+.slot:has(input:checked) .tag { background: var(--yellow); color: var(--navy); border-color: var(--yellow); }
+.slot:has(input:focus-visible) { outline: 3px solid var(--navy); outline-offset: 3px; z-index: 1; }
+@media (hover: hover) { .slot:not(.is-taken):not(:has(input:checked)):hover { background: rgba(10, 17, 38, .08); } }
+.roster { display: grid; gap: 16px; }
+.field-pair { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px; }
+.field-row label { display: block; font: 700 14px/1.2 var(--text); letter-spacing: .03em; text-transform: uppercase; margin-bottom: 7px; }
+.field-row input, .field-row select { width: 100%; min-height: 54px; padding: 0 14px; background: var(--chalk); border: 2px solid var(--navy); border-radius: 0; font: 600 18px/1.2 var(--text); appearance: none; -webkit-appearance: none; }
+.field-row select { background-image: linear-gradient(45deg, transparent 50%, var(--navy) 50%), linear-gradient(135deg, var(--navy) 50%, transparent 50%); background-position: calc(100% - 22px) 50%, calc(100% - 14px) 50%; background-size: 8px 8px; background-repeat: no-repeat; padding-right: 40px; }
+.field-row input:focus-visible, .field-row select:focus-visible { outline: 3px solid var(--navy); outline-offset: 2px; }
+.field-row [aria-invalid="true"] { border-width: 4px; padding: 0 12px; }
+.err { font: 700 15px/1.3 var(--text); }
+.err:not(:empty) { margin-top: 8px; padding-left: 12px; border-left: 4px solid var(--navy); }
+.fixtures .err:not(:empty) { margin-top: 14px; }
+.err-sum:empty { display: none; }
+.err-sum { background: var(--navy); color: var(--chalk); padding: 14px 18px 15px; font: 700 17px/1.35 var(--text); }
+.roster .btn { justify-self: start; margin-top: 8px; margin-left: 4px; }
+.roster__note { font: 500 15px/1.3 var(--text); }
+
+/* the confirmation: a lineup card */
+/* the card, and beside it a headline made from the slot: SEE YOU THURSDAY. */
+.done { margin: clamp(34px, 5vw, 64px) var(--m) 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, min(640px, 52%)); gap: clamp(24px, 4vw, 64px); align-items: center; scroll-margin-top: 24px; }  /* plus the page's scroll-padding, the bar */
+.done:focus { outline: none; }
+.done:focus-visible { outline: 3px solid var(--navy); outline-offset: 6px; }
+.done__see { font-size: clamp(56px, 9.4vw, 170px); }
+.lineup { background: var(--chalk); border: 2px solid var(--navy); padding: clamp(20px, 2.6vw, 36px); }
+.lineup__head { position: relative; padding-bottom: 34px; }
+.lineup__title { font: italic 900 clamp(52px, 6vw, 96px)/.86 var(--display); text-transform: uppercase; margin-top: 8px; }
+.lineup__seam { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 30px; overflow: visible; }
+.lineup__seam path { fill: none; stroke: var(--red); vector-effect: non-scaling-stroke; }
+.lineup__seam path:first-child { stroke-width: 1.5px; }
+.lineup__seam path:last-child { stroke-width: 11px; stroke-dasharray: 2 9; }
+.lineup__table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+.lineup__table th, .lineup__table td { text-align: left; padding: 10px 10px; border-bottom: 2px solid var(--navy); vertical-align: baseline; }
+.lineup__table thead th { font: 700 13px/1 var(--text); letter-spacing: .06em; text-transform: uppercase; padding-top: 0; }
+.lineup__table tbody td:first-child { font: 800 30px/1 var(--display); width: 54px; }
+.lineup__table tbody th { font: 700 14px/1 var(--text); letter-spacing: .04em; text-transform: uppercase; width: 26%; }
+.lineup__table tbody td:last-child { font: italic 900 clamp(26px, 2.6vw, 38px)/1 var(--display); text-transform: uppercase; letter-spacing: .01em; overflow-wrap: anywhere; }
+/* an email keeps its own case */
+.lineup__table tbody td.is-case { text-transform: none; font: 700 clamp(18px, 1.6vw, 22px)/1.2 var(--text); letter-spacing: 0; }
+.lineup__stamp { display: inline-block; margin-top: 22px; padding: 8px 16px 9px; border: 3px solid var(--navy); font: italic 900 clamp(26px, 3vw, 40px)/1 var(--display); text-transform: uppercase; transform: rotate(-3deg); }
+.lineup__note { margin-top: 16px; font: 600 17px/1.4 var(--text); max-width: 30em; }
+.lineup .btn { margin-top: 18px; margin-left: 4px; }
+html:not(.still) .done.is-in .lineup { animation: card .42s var(--snap) both; }
+html:not(.still) .done.is-in .done__see .line > span { animation: slam .45s var(--snap) both; }
+html:not(.still) .done.is-in .done__see .line:nth-child(2) > span { animation-delay: .09s; }
+@keyframes slam { from { transform: translateX(-135%); } to { transform: none; } }
+html:not(.still) .done.is-in .lineup__stamp { animation: stamp .3s .32s var(--snap) both; }
+@keyframes card { from { transform: translateX(-40px) skewX(-4deg); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes stamp { from { transform: rotate(-3deg) scale(1.5); opacity: 0; } to { transform: rotate(-3deg); opacity: 1; } }
+
+/* --------------------------------------------------------------- footer */
+.foot { padding-top: clamp(48px, 6vw, 90px); overflow: clip; }
+.foot__row { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: 32px; padding: 0 var(--m); align-items: start; }
+.foot__line { font: 500 17px/1.5 var(--text); max-width: 38em; }
+.foot__nav { display: grid; gap: 4px; justify-items: end; }
+.foot__nav a { font: 700 15px/1 var(--text); letter-spacing: .03em; text-transform: uppercase; text-decoration: none; padding: 9px 0; border-bottom: 2px solid transparent; }
+@media (hover: hover) { .foot__nav a:hover { border-bottom-color: var(--yellow); } }
+.foot__mark { font-size: 21.6vw; line-height: .8; margin: clamp(30px, 5vw, 70px) 0 -.3em; white-space: nowrap; text-align: center; }
+.foot__mark .outline { -webkit-text-stroke-width: .034em; padding-right: .06em; }
+
+/* ---------------------------------------------------------------- phone */
+@media (max-width: 899px) {
+  /* the bar in two rows: wordmark and the booking button, then the way back and the sections */
+  :root { --bar: 82px; --tick: 46px; }
+  .bar { display: grid; grid-template: "mark book" 48px "back nav" 34px / 1fr auto; align-items: center; gap: 0 12px; }
+  .bar__mark { grid-area: mark; font-size: 26px; width: 126px; padding: 6px 0; }
+  .bar > .btn--bar { grid-area: book; min-height: 36px; padding: 0 14px; font-size: 13px; }
+  .bar__nav { grid-area: nav; margin: 0; gap: 16px; align-self: start; height: 28px; }
+  .bar__link { font-size: 13px; padding: 7px 0; }
+  .study-back.study-back--batterymate { left: var(--m); top: 46px; min-height: 28px; padding: 0 11px 0 8px; font-size: 12.5px; }
+  .hero { height: auto; min-height: calc(100svh - var(--bar) - var(--tick)); --fs: min(26.2vw, 190px); display: flex; flex-direction: column; padding: 0 0 22px; }
+  .hero > .hero__title { position: relative; left: auto; top: auto; margin: calc(var(--fs) * .04) var(--m) 0; }
+  .hero > .hero__machine { position: relative; left: auto; right: auto; top: auto; bottom: auto; width: 100%; aspect-ratio: 1.04; max-height: 46svh; margin-top: calc(var(--fs) * -.06); flex: 1 1 auto; }
+  .hero > .hero__copy { position: relative; left: auto; bottom: auto; width: auto; margin: 4px var(--m) 0; }
+  .hero > .hero__title { z-index: 1; }
+  .hero__lede { font-size: 19px; max-width: none; }
+  .hero__cta { gap: 12px; margin-top: 14px; }
+  .hero__cta .btn { flex: 1 1 auto; }
+  .hero > .score { position: absolute; right: var(--m); top: calc(var(--fs) * 1.02); }
+  .score__cell { padding: 8px 10px 7px; gap: 4px; }
+  .score__label { font-size: 10px; }
+  .score__num { font-size: 38px; }
+  /* the narrowest phones: the board shrinks so it stays clear of the headline's period */
+  @media (max-width: 385px) { .score__cell { padding: 6px 8px 6px; } .score__label { font-size: 9px; letter-spacing: .04em; } .score__num { font-size: 32px; } }
+  .ticker__run li { font-size: 24px; }
+  .ticker__run li::after { width: 12px; height: 12px; margin: 0 18px; }
+  .step { grid-template-columns: 1fr; }
+  .step__still { grid-column: 1; grid-row: auto; margin-top: 18px; }
+  @media (min-height: 561px) {
+    html.live .how__head { top: 14px; }
+    html.live .how__hint { display: none; }
+    html.live .how__window { left: var(--m); right: var(--m); top: 44px; bottom: auto; height: 48svh; }
+    html.live .how__steps { width: calc(100% - 2 * var(--m)); bottom: 22px; height: 40%; }
+    html.live .step__verb, html.live .step__no { font-size: min(27vw, 13svh); }
+    html.live .step__say { font-size: 18px; margin-top: 8px; }
+  }
+  .sec__head .display { font-size: min(24vw, 130px); }
+  .linescore { grid-template-columns: 1fr; }
+  .ls__team { display: none; }
+  .ls__grid { grid-template-columns: 1fr; grid-template-rows: none; }
+  .inning { grid-row: auto; grid-template-rows: auto; grid-template-columns: minmax(0, 1fr) auto; align-items: end; padding: 14px 14px 16px; }
+  .inning + .inning { border-left: 0; border-top: 2px solid var(--line-navy); }
+  .inning dt { grid-column: 1 / 3; border-bottom: 0; padding: 0 0 6px; }
+  .ls__val { grid-column: 2; grid-row: 2; padding: 0; justify-content: flex-end; }
+  .ls__val .flip { font-size: 78px; }
+  .inning--wide .ls__val .flip { font-size: 64px; }
+  .ls__note { grid-column: 1; grid-row: 2; padding: 0 12px 4px 0; font-size: 16px; }
+  .numbers__kicker { font-size: min(24vw, 130px); }
+  .drills { grid-template-columns: 1fr; grid-template-rows: none; }
+  .drill { grid-row: auto; grid-template-rows: none; }
+  .drill + .drill { border-left: 0; border-top: 2px solid var(--navy); }
+  .drill__verb { font-size: 56px; padding: 16px 16px 0; }
+  .drill p { padding: 10px 16px 0; }
+  .booking { grid-template-columns: 1fr; }
+  .slot { min-height: 62px; }
+  .slot__day { font-size: 40px; }
+  .slot__time { font-size: 30px; }
+  .roster .btn { justify-self: stretch; margin-inline: 6px; }
+  .lineup__table tbody th { width: 30%; }
+  .done { grid-template-columns: 1fr; gap: 18px; }
+  .done__see { font-size: min(21vw, 120px); }
+  .lineup { padding: 18px 16px 20px; }
+  .lineup__head { padding-bottom: 26px; }
+  .lineup__title { font-size: 52px; }
+  .lineup__table th, .lineup__table td { padding: 8px 6px; }
+  .lineup__table thead { display: none; }
+  .lineup__table tbody td:first-child { font-size: 24px; width: 34px; }
+  .lineup__stamp { margin-top: 16px; font-size: 24px; }
+  .lineup__note { margin-top: 12px; font-size: 16px; }
+  .lineup .btn { margin-top: 14px; }
+  .foot__row { grid-template-columns: 1fr; }
+  .foot__nav { justify-items: start; grid-template-columns: 1fr 1fr; gap: 0 20px; }
+}
+
+/* -------------------------------------------- short screens on their side */
+/* A phone on its side or a laptop at 200% zoom (640 x 400): the one-row bar, the machine beside the headline. */
+@media (max-width: 899px) and (max-height: 560px) and (orientation: landscape) {
+  :root { --bar: 54px; --tick: 42px; }
+  .bar { display: flex; gap: 14px; }
+  .bar__mark { width: 118px; font-size: 24px; }
+  .bar__nav { margin-left: auto; height: auto; gap: 14px; }
+  .bar__link { font-size: 13px; }
+  .study-back.study-back--batterymate { left: calc(var(--m) + 128px); top: 13px; }
+  .hero { display: grid; padding: 0 0 18px; --fs: min(15vw, calc((100svh - var(--bar) - var(--tick)) * .36)); min-height: calc(100svh - var(--bar) - var(--tick)); }
+  .hero > .hero__title { margin: 6px 0 0 var(--m); z-index: 3; }
+  .hero > .hero__machine { position: absolute; left: 44%; right: var(--m); top: 64px; bottom: auto; width: auto; height: calc(100svh - var(--bar) - var(--tick) - 70px); max-height: none; aspect-ratio: auto; margin: 0; }
+  .hero > .hero__copy { width: 44%; margin: 10px 0 0 var(--m); }
+  .hero__lede { font-size: 16px; }
+  .hero__cta { margin-top: 10px; gap: 8px 10px; }
+  .hero__cta .btn { flex: 0 0 auto; min-height: 44px; padding: 0 18px; font-size: 15px; }
+  .hero > .score { top: 6px; right: var(--m); }
+}
+@media (max-width: 699px) and (max-height: 560px) and (orientation: landscape) { .bar__nav { display: none; } .bar > .btn--bar { margin-left: auto; } }
+
+/* ------------------------------------------------------- reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }

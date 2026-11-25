@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="../shared/study.css">
+<script src="../shared/study.js"></script>
+<title>CHARGER. Vireo flight kits (sample site)</title>
+<meta name="description" content="A sample product page by Mert Tureli. Vireo is an invented brand. CHARGER is a real 37 inch rocket that drops a sensor payload and streams five channels of telemetry.">
+<meta name="theme-color" content="#000000">
+<link rel="preload" href="fonts/inter-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/vireo.css">
+<script>document.documentElement.classList.add('js');if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('static');</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<a class="study-back study-back--vireo" href="/websites.html#studies" aria-label="Sample site by Mert Tureli. Back to websites"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13 8H3.5M7.5 3.5 3 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Sample site</a>
+
+<header class="bar" id="bar" data-theme="dark">
+  <div class="bar__in">
+    <a class="bar__brand" href="#top" aria-label="Vireo, back to top">vireo</a>
+    <span class="bar__product">CHARGER</span>
+    <nav class="bar__nav" aria-label="Sections">
+      <a href="#overview">Overview</a>
+      <a href="#inside">Inside</a>
+      <a href="#flight">Flight</a>
+      <a href="#specs">Specs</a>
+    </nav>
+    <a class="btn btn--small" href="#reserve">Reserve</a>
+  </div>
+</header>
+
+<aside class="buybar glass" id="buybar" aria-label="Reserve a kit">
+  <p class="buy__price">From $251<sup><a href="#fn2" aria-label="Footnote 2">2</a></sup></p>
+  <a class="btn" href="#reserve">Reserve</a>
+</aside>
+
+<main id="main">
+
+<div class="film" id="top">
+  <div class="film__stage" id="stage">
+    <picture class="film__poster" id="poster">
+      <source media="(max-aspect-ratio: 68/100)" srcset="assets/hero-port-780.webp 780w, assets/hero-port-1170.webp 1170w" sizes="100vw" width="780" height="1258">
+      <img src="assets/hero-land-1440.webp" srcset="assets/hero-land-1440.webp 1440w, assets/hero-land-2880.webp 2880w" sizes="100vw" width="1440" height="900" alt="CHARGER, an orange rocket with a white nose cone and four white fins, on a black stage with its nose up and to the right." decoding="async" fetchpriority="high">
+    </picture>
+    <picture class="film__glow" aria-hidden="true">
+      <source media="(max-aspect-ratio: 68/100)" srcset="assets/hero-port-780.webp 780w, assets/hero-port-1170.webp 1170w" sizes="100vw" width="780" height="1258">
+      <img src="assets/hero-land-1440.webp" srcset="assets/hero-land-1440.webp 1440w, assets/hero-land-2880.webp 2880w" sizes="100vw" width="1440" height="900" alt="" decoding="async">
+    </picture>
+    <canvas class="film__canvas" id="canvas" aria-hidden="true"></canvas>
+  </div>
+
+  <section class="hero" data-theme="dark" aria-labelledby="hero-h">
+    <div class="hero__in">
+      <div class="hero__copy">
+        <p class="eyebrow">CHARGER</p>
+        <h1 id="hero-h">Flies up. Reports back.</h1>
+      </div>
+      <div class="hero__row">
+        <p class="hero__lede">A 37 inch rocket that drops a sensor payload at apogee and streams five channels of telemetry to a handheld ground station.</p>
+        <div class="buy glass">
+          <p class="buy__price">From $251<sup><a href="#fn2" aria-label="Footnote 2">2</a></sup></p>
+          <a class="btn" href="#reserve">Reserve</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="statement" id="overview" data-theme="dark" aria-label="Overview">
+    <p class="statement__text" id="statement">A G motor carries it to about 1,000 feet. At apogee it drops the payload. On the way down, at 75 percent of peak altitude, the payload releases its nose cone, and a camera films the ground until it lands. From the pad on, five channels of telemetry reach a handheld ground station.</p>
+  </section>
+
+  <section class="inside" id="inside" data-theme="dark" aria-labelledby="inside-h">
+    <div class="inside__pin" id="insidePin">
+      <h2 class="inside__title" id="inside-h">Take it apart.</h2>
+      <ol class="inside__caps" id="insideCaps">
+        <li class="cap"><p class="eyebrow">Airframe</p><p class="cap__text">28 parts, nose cone to motor mount. Two cardboard body tubes, joined by a coupler. The nose cone is a friction fit.</p></li>
+        <li class="cap"><p class="eyebrow">Payload</p><p class="cap__text">Circuit boards, camera, batteries and antenna. The whole upper assembly is the payload.</p></li>
+        <li class="cap"><p class="eyebrow">Motor mount</p><p class="cap__text">A threaded cap holds the motor. Eight screws and the mount slides out the back.</p></li>
+      </ol>
+      <button class="chip glass" id="turnChip" type="button" aria-label="Turn the rocket. Drag it, or press the left and right arrow keys."><svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M3.5 10a6.5 6.5 0 0 1 11.3-4.4M16.5 10a6.5 6.5 0 0 1-11.3 4.4M15.2 2.6v3.2H12M4.8 17.4v-3.2H8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Drag to turn</button>
+      <figure class="inside__still">
+        <picture>
+          <source media="(max-width: 760px)" srcset="assets/inside-port.webp" width="780" height="1258">
+          <img src="assets/inside-land.webp" alt="CHARGER taken apart on a diagonal: the nose cone, the payload with its circuit board pulled out of the upper tube, the coupler, the lower tube, the motor mount with the fins and the motor beside it, and the screw cap." width="2160" height="1350" loading="lazy">
+        </picture>
+      </figure>
+    </div>
+  </section>
+</div>
+
+<section class="short" data-theme="light" aria-labelledby="short-h">
+  <div class="wrap">
+    <h2 class="h2 reveal" id="short-h">The short version.</h2>
+  </div>
+  <div class="gallery" id="gallery" role="group" aria-roledescription="carousel" aria-label="Five highlights">
+    <ul class="gallery__track" id="galleryTrack" tabindex="0" aria-label="Highlights. Use the left and right arrow keys to move.">
+      <li class="card card--dark" aria-roledescription="slide" aria-label="1 of 5">
+        <picture>
+          <source media="(max-width: 760px)" srcset="assets/card-1-port.webp" width="720" height="900">
+          <img src="assets/card-1-land.webp" alt="CHARGER upright on a black stage, lit from the side." width="1600" height="1000" loading="lazy">
+        </picture>
+        <p class="card__cap"><span>First place.</span> <span class="card__more">Deployable Sensor Payload event, Battle of the Rockets 2026.</span></p>
+      </li>
+      <li class="card" aria-roledescription="slide" aria-label="2 of 5">
+        <picture>
+          <source media="(max-width: 760px)" srcset="assets/card-2-port.webp" width="720" height="900">
+          <img src="assets/card-2-land.webp" alt="The open end of the upper body tube, with the cardboard wall showing under the orange paint." width="1600" height="1000" loading="lazy">
+        </picture>
+        <p class="card__cap"><span>Cardboard on purpose.</span> <span class="card__more">Carbon fiber would put a conductive shell around the 2.4 GHz antenna.</span></p>
+      </li>
+      <li class="card" aria-roledescription="slide" aria-label="3 of 5">
+        <picture>
+          <source media="(max-width: 760px)" srcset="assets/card-3-port.webp" width="720" height="900">
+          <img src="assets/card-3-land.webp" alt="The motor mount with its four fins and red screw cap, slid out of the back of the lower tube." width="1600" height="1000" loading="lazy">
+        </picture>
+        <p class="card__cap"><span>A motor mount you can replace.</span> <span class="card__more">Eight screws and it slides out the back.</span></p>
+      </li>
+      <li class="card card--dark" aria-roledescription="slide" aria-label="4 of 5">
+        <picture>
+          <source media="(max-width: 760px)" srcset="assets/card-4-port.webp" width="720" height="900">
+          <img src="assets/card-4-land.webp" alt="The payload out of its tube: a green circuit board on a printed holder." width="1600" height="1000" loading="lazy">
+        </picture>
+        <p class="card__cap"><span>Its own board fires every charge.</span> <span class="card__more">No commercial flight computer in the payload.</span></p>
+      </li>
+      <li class="card" aria-roledescription="slide" aria-label="5 of 5">
+        <picture>
+          <source media="(max-width: 760px)" srcset="assets/card-5-port.webp" width="720" height="900">
+          <img src="assets/card-5-land.webp" alt="The white nose cone lifted off the top of the airframe." width="1600" height="1000" loading="lazy">
+        </picture>
+        <p class="card__cap"><span>13.8 ft/s.</span> <span class="card__more">Descent, against a 15 ft/s limit.</span></p>
+      </li>
+    </ul>
+    <div class="gallery__ctl">
+      <div class="dots glass glass--light" id="galleryDots">
+        <button type="button" class="dot" aria-label="Show highlight 1" aria-current="true"></button>
+        <button type="button" class="dot" aria-label="Show highlight 2"></button>
+        <button type="button" class="dot" aria-label="Show highlight 3"></button>
+        <button type="button" class="dot" aria-label="Show highlight 4"></button>
+        <button type="button" class="dot" aria-label="Show highlight 5"></button>
+      </div>
+      <button type="button" class="round glass glass--light" id="galleryPlay" aria-label="Pause the highlights" aria-pressed="false">
+        <svg class="round__pause" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M7 5v10M13 5v10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+        <svg class="round__play" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M7.2 4.6v10.8L15.6 10z" fill="currentColor"/></svg>
+      </button>
+    </div>
+  </div>
+</section>
+
+<section class="closer" data-theme="light" aria-labelledby="closer-h">
+  <div class="wrap">
+    <h2 class="h2 reveal" id="closer-h">Look closer.</h2>
+    <div class="closer__panel" id="closer">
+      <div class="closer__view" id="closerView">
+        <picture class="closer__poster">
+          <source media="(max-width: 760px)" srcset="assets/closer-nose-port.webp" width="780" height="840">
+          <img src="assets/closer-nose-land.webp" alt="The nose cone of CHARGER, solid, with the rest of the rocket drawn as a faint ghost behind it." width="1960" height="1370" loading="lazy">
+        </picture>
+      </div>
+      <ul class="closer__list" id="closerList">
+        <li class="plus" data-part="nose">
+          <h3><button type="button" class="plus__btn" aria-expanded="false" aria-controls="cl-nose"><span class="plus__icon" aria-hidden="true"></span><span class="plus__label">Nose cone</span></button></h3>
+          <div class="plus__body" id="cl-nose" role="region" aria-label="Nose cone"><p>A hollow PETG ogive that friction fits the body tube. On the way down, at 75 percent of peak altitude, the payload releases it to uncover the camera, and it comes down under its own nine inch parachute.</p></div>
+        </li>
+        <li class="plus" data-part="payload">
+          <h3><button type="button" class="plus__btn" aria-expanded="false" aria-controls="cl-payload"><span class="plus__icon" aria-hidden="true"></span><span class="plus__label">Payload</span></button></h3>
+          <div class="plus__body" id="cl-payload" role="region" aria-label="Payload"><p>The whole upper assembly: circuit boards, camera, batteries and antenna. Its own board and barometric sensor fire every ejection charge.</p></div>
+        </li>
+        <li class="plus" data-part="camera">
+          <h3><button type="button" class="plus__btn" aria-expanded="false" aria-controls="cl-camera"><span class="plus__icon" aria-hidden="true"></span><span class="plus__label">Camera</span></button></h3>
+          <div class="plus__body" id="cl-camera" role="region" aria-label="Camera"><p>It sits in the forward assembly, under the nose cone. A divider on its mount keeps it apart from the charge that releases the cone.</p></div>
+        </li>
+        <li class="plus" data-part="mount">
+          <h3><button type="button" class="plus__btn" aria-expanded="false" aria-controls="cl-mount"><span class="plus__icon" aria-hidden="true"></span><span class="plus__label">Motor mount</span></button></h3>
+          <div class="plus__body" id="cl-mount" role="region" aria-label="Motor mount"><p>Printed PETG with a threaded cap, so the motor is held mechanically and not by friction. Remove eight screws and it slides out through the back.</p></div>
+        </li>
+        <li class="plus" data-part="fins">
+          <h3><button type="button" class="plus__btn" aria-expanded="false" aria-controls="cl-fins"><span class="plus__icon" aria-hidden="true"></span><span class="plus__label">Fins</span></button></h3>
+          <div class="plus__body" id="cl-fins" role="region" aria-label="Fins"><p>Four trapezoidal fins seat in grooves in the motor mount, with no adhesive. Root chord 2.76 inches, height 2.36 inches, sweep 2.17 inches.</p></div>
+        </li>
+        <li class="plus" data-part="recovery">
+          <h3><button type="button" class="plus__btn" aria-expanded="false" aria-controls="cl-recovery"><span class="plus__icon" aria-hidden="true"></span><span class="plus__label">Recovery</span></button></h3>
+          <div class="plus__body" id="cl-recovery" role="region" aria-label="Recovery"><p>A shock cord mount ties the recovery system to the structure. Descent is 13.8 feet per second under a 48 inch ripstop nylon canopy, against a 15 ft/s limit.</p></div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="flight" id="flight" data-theme="dark" aria-labelledby="flight-h">
+  <div class="wrap">
+    <p class="eyebrow reveal">Flight</p>
+    <h2 class="h2 reveal" id="flight-h">One flight, start to finish.</h2>
+    <figure class="chart reveal" id="chart">
+      <svg class="chart__svg chart__svg--land" viewBox="0 0 980 430" role="img" aria-labelledby="chart-t chart-d">
+        <title id="chart-t">Altitude over one flight</title>
+        <desc id="chart-d">A sketch, not to scale. Liftoff at T plus 0. Burnout at T plus 1.25 seconds. Apogee at a simulated 1,033 feet, where the rocket drops the payload. On the way down, at 75 percent of peak altitude, the payload releases its nose cone, and a camera films the ground until it lands. Descent 13.8 feet per second.</desc>
+        <line class="chart__base" x1="0" y1="372" x2="980" y2="372"/>
+        <line class="chart__peak" x1="0" y1="70" x2="980" y2="70"/>
+        <path class="chart__ghost" d="M40 372 C 66 300 92 240 116 205 C 186 104 250 70 330 70 C 420 70 470 104 520 146 L 940 372"/>
+        <path class="chart__line" d="M40 372 C 66 300 92 240 116 205 C 186 104 250 70 330 70 C 420 70 470 104 520 146 L 940 372"/>
+        <g class="mark" data-x="40" data-y="372"><circle cx="40" cy="372" r="5"/><text x="40" y="402">Liftoff</text><text class="mark__sub" x="40" y="422">T+0</text></g>
+        <g class="mark" data-x="116" data-y="205"><circle cx="116" cy="205" r="5"/><text x="140" y="205">Burnout</text><text class="mark__sub" x="140" y="225">T+1.25 s</text></g>
+        <g class="mark" data-x="330" data-y="70"><circle cx="330" cy="70" r="5"/><text x="330" y="26" text-anchor="middle">Apogee, payload drops</text><text class="mark__sub" x="330" y="46" text-anchor="middle">1,033 ft, simulated</text></g>
+        <g class="mark" data-x="520" data-y="146"><circle cx="520" cy="146" r="5"/><text x="544" y="136">Payload releases nose cone</text><text class="mark__sub" x="544" y="156">75 percent of peak altitude</text></g>
+        <g class="mark" data-x="940" data-y="372"><circle cx="940" cy="372" r="5"/><text x="940" y="402" text-anchor="end">Landing</text><text class="mark__sub" x="940" y="422" text-anchor="end">Descent 13.8 ft/s</text></g>
+        <circle class="chart__head" cx="40" cy="372" r="7"/>
+      </svg>
+      <svg class="chart__svg chart__svg--port" viewBox="0 0 342 380" aria-hidden="true" focusable="false">
+        <line class="chart__base" x1="0" y1="322" x2="342" y2="322"/>
+        <line class="chart__peak" x1="0" y1="70" x2="342" y2="70"/>
+        <path class="chart__ghost" d="M14 322 C 26 272 38 232 50 204 C 80 122 106 70 138 70 C 172 70 190 96 208 126 L 328 322"/>
+        <path class="chart__line" d="M14 322 C 26 272 38 232 50 204 C 80 122 106 70 138 70 C 172 70 190 96 208 126 L 328 322"/>
+        <g class="mark" data-x="14" data-y="322"><circle cx="14" cy="322" r="4.5"/><text x="8" y="349">Liftoff</text><text class="mark__sub" x="8" y="367">T+0</text></g>
+        <g class="mark" data-x="50" data-y="204"><circle cx="50" cy="204" r="4.5"/><text x="66" y="206">Burnout</text><text class="mark__sub" x="66" y="224">T+1.25 s</text></g>
+        <g class="mark" data-x="138" data-y="70"><circle cx="138" cy="70" r="4.5"/><text x="138" y="30" text-anchor="middle">Apogee, payload drops</text><text class="mark__sub" x="138" y="48" text-anchor="middle">1,033 ft, simulated</text></g>
+        <g class="mark" data-x="208" data-y="126"><circle cx="208" cy="126" r="4.5"/><text x="224" y="112">Payload releases</text><text class="mark__sub" x="224" y="130">nose cone at 75</text><text class="mark__sub" x="224" y="147">percent of peak</text><text class="mark__sub" x="224" y="164">altitude</text></g>
+        <g class="mark" data-x="328" data-y="322"><circle cx="328" cy="322" r="4.5"/><text x="334" y="349" text-anchor="end">Landing</text><text class="mark__sub" x="334" y="367" text-anchor="end">Descent 13.8 ft/s</text></g>
+        <circle class="chart__head" cx="14" cy="322" r="6"/>
+      </svg>
+      <figcaption class="chart__note">The curve is a sketch of the flight profile, not to scale.</figcaption>
+    </figure>
+
+    <ul class="nums" id="nums">
+      <li class="num reveal"><p class="num__top"><span class="num__v" data-count="1033" data-sep="1">1,033</span><span class="num__u">ft</span></p><p class="num__l">Simulated apogee<sup><a href="#fn1" aria-label="Footnote 1">1</a></sup></p></li>
+      <li class="num reveal"><p class="num__top"><span class="num__v" data-count="8.17" data-dec="2">8.17</span></p><p class="num__l">Thrust to weight</p></li>
+      <li class="num reveal"><p class="num__top"><span class="num__v" data-count="1.25" data-dec="2">1.25</span><span class="num__u">s</span></p><p class="num__l">Motor burn</p></li>
+      <li class="num reveal"><p class="num__top"><span class="num__v" data-count="13.8" data-dec="1">13.8</span><span class="num__u">ft/s</span></p><p class="num__l">Descent, against a 15 ft/s limit</p></li>
+    </ul>
+
+    <div class="tele reveal" id="tele">
+      <p class="tele__cap">Five channels of telemetry, from the pad to a handheld ground station.</p>
+      <ol class="tele__rows" aria-hidden="true">
+        <li><span>01</span><canvas width="600" height="40"></canvas></li>
+        <li><span>02</span><canvas width="600" height="40"></canvas></li>
+        <li><span>03</span><canvas width="600" height="40"></canvas></li>
+        <li><span>04</span><canvas width="600" height="40"></canvas></li>
+        <li><span>05</span><canvas width="600" height="40"></canvas></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section class="proof" data-theme="dark" aria-labelledby="proof-h">
+  <div class="wrap">
+    <h2 class="proof__h reveal" id="proof-h">First place.</h2>
+    <p class="proof__p reveal">Deployable Sensor Payload event, Battle of the Rockets 2026. Culpeper, Virginia.</p>
+  </div>
+</section>
+
+<section class="specs" id="specs" data-theme="light" aria-labelledby="specs-h">
+  <div class="wrap">
+    <h2 class="h2 reveal" id="specs-h">The numbers.</h2>
+    <dl class="rows reveal">
+      <div><dt>Length</dt><dd>37 in</dd></div>
+      <div><dt>Maximum diameter</dt><dd>2.68 in</dd></div>
+      <div><dt>Stages</dt><dd>Single stage</dd></div>
+      <div><dt>Fins</dt><dd>Four trapezoidal fins. Root chord 2.76 in, height 2.36 in, sweep 2.17 in</dd></div>
+      <div><dt>Stability margin</dt><dd>1.80 cal</dd></div>
+      <div><dt>Center of gravity</dt><dd>22 in</dd></div>
+      <div><dt>Motor</dt><dd>Aerotech G77R-7</dd></div>
+      <div><dt>Thrust to weight</dt><dd>8.17</dd></div>
+      <div><dt>Burn</dt><dd>1.25 s</dd></div>
+      <div><dt>Apogee</dt><dd>1,033 ft, simulated<sup><a href="#fn1" aria-label="Footnote 1">1</a></sup></dd></div>
+      <div><dt>Descent</dt><dd>13.8 ft/s on a 48 in parachute</dd></div>
+      <div><dt>Rail buttons</dt><dd>At 2 in from the aft end and 22 in from the nose, near the center of gravity</dd></div>
+    </dl>
+  </div>
+</section>
+
+<section class="reserve" id="reserve" data-theme="light" aria-labelledby="reserve-h">
+  <div class="wrap">
+    <h2 class="h2 reveal" id="reserve-h">Reserve yours.</h2>
+    <form class="order reveal" id="order" method="dialog" novalidate>
+      <fieldset class="kits">
+        <legend class="order__step">Pick a kit.</legend>
+        <div class="kits__grid">
+          <label class="kit">
+            <input type="radio" name="kit" value="Airframe" data-price="$465">
+            <span class="kit__box">
+              <span class="kit__name">Airframe</span>
+              <span class="kit__line">The rocket, ready for a G motor.</span>
+              <span class="kit__price">$465<sup>2</sup></span>
+              <span class="kit__rows">
+                <span class="kit__row"><b>37 in</b><span>Single stage airframe</span></span>
+                <span class="kit__row"><b>1.80 cal</b><span>Stability margin</span></span>
+                <span class="kit__row"><b>48 in</b><span>Ripstop nylon canopy</span></span>
+              </span>
+              <span class="kit__pick" aria-hidden="true"></span>
+            </span>
+          </label>
+          <label class="kit">
+            <input type="radio" name="kit" value="Payload" data-price="$251">
+            <span class="kit__box">
+              <span class="kit__name">Payload</span>
+              <span class="kit__line">The sensor payload and its camera.</span>
+              <span class="kit__price">$251<sup>2</sup></span>
+              <span class="kit__rows">
+                <span class="kit__row"><b>5</b><span>Telemetry channels</span></span>
+                <span class="kit__row"><b>2.4 GHz</b><span>Antenna</span></span>
+                <span class="kit__row"><b>3</b><span>Circuit board holders</span></span>
+              </span>
+              <span class="kit__pick" aria-hidden="true"></span>
+            </span>
+          </label>
+          <label class="kit">
+            <input type="radio" name="kit" value="Flight set" data-price="$716">
+            <span class="kit__box">
+              <span class="kit__name">Flight set</span>
+              <span class="kit__line">Airframe and payload together.</span>
+              <span class="kit__price">$716<sup>2</sup></span>
+              <span class="kit__rows">
+                <span class="kit__row"><b>1,033 ft</b><span>Simulated apogee</span></span>
+                <span class="kit__row"><b>8.17</b><span>Thrust to weight</span></span>
+                <span class="kit__row"><b>13.8 ft/s</b><span>Descent</span></span>
+              </span>
+              <span class="kit__pick" aria-hidden="true"></span>
+            </span>
+          </label>
+        </div>
+        <p class="order__err" id="kitErr" role="alert" hidden>Pick one of the three kits.</p>
+      </fieldset>
+      <div class="order__send">
+        <label class="order__step" for="email">Where should the confirmation go?</label>
+        <div class="field">
+          <input id="email" name="email" type="email" inputmode="email" autocomplete="email" spellcheck="false" placeholder="name@example.com" aria-describedby="emailErr">
+          <button class="btn" type="submit">Reserve</button>
+        </div>
+        <p class="order__err" id="emailErr" role="alert" hidden>Enter an email address, like name@example.com.</p>
+        <p class="order__fine">Sample site: the form checks its fields and sends nothing.</p>
+      </div>
+    </form>
+    <div class="done" id="done" tabindex="-1" hidden>
+      <span class="done__mark" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M5 12.5l4.6 4.6L19 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <h3 class="done__h">Reserved, if this were real.</h3>
+      <p class="done__p" id="doneLine">Flight set, $716, for name@example.com.</p>
+      <p class="done__p">This is a sample site. Nothing was sent, nothing was saved and nothing is for sale.</p>
+      <button class="link" type="button" id="doneBack">Start over</button>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot" data-theme="light">
+  <div class="wrap">
+    <ol class="foot__notes">
+      <li id="fn1">The apogee of 1,033 feet is a simulation result, not a measured flight.</li>
+      <li id="fn2">Prices are the hardware costs of the first CHARGER, rounded: $465.42 for the rocket, $250.53 for the payload, $716 in total.</li>
+    </ol>
+    <p class="foot__line">A sample site by Mert Tureli. Vireo is an invented brand and nothing here is for sale. CHARGER is real: I built it with the Union College Rocket Team.</p>
+  </div>
+</footer>
+
+<script type="module" src="js/vireo.js"></script>
+</body>
+</html>

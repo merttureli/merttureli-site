@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Sample sites, Mert Tureli</title>
+<link rel="canonical" href="https://merttureli.com/websites.html">
+<!-- The catalog of sample sites lives on the Websites page (next/websites.html, section #studies). This page
+     only sends old links there, keeping a deep link to one page (#vireo) so it opens in the viewer. -->
+<script>
+(function () {
+  var keys = ['vireo', 'albada', 'halfstop', 'batterymate', 'stepwise', 'lowlight', 'sideslip', 'slowroads',
+              'hangar', 'launch', 'studio', 'specimen'];
+  var key = location.hash.slice(1);
+  location.replace('../websites.html#' + (keys.indexOf(key) > -1 ? key : 'studies'));
+})();
+</script>
+<meta http-equiv="refresh" content="0; url=../websites.html#studies">
+<style>html{background:#e7e8ea;color:#121315;font:16px/1.5 Archivo,'Arial Narrow',sans-serif}body{margin:0;padding:24px}a{color:inherit}</style>
+</head>
+<body>
+<p>The sample sites are on the <a href="../websites.html#studies">Websites page</a>.</p>
+</body>
+</html>
